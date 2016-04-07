@@ -41,10 +41,10 @@ python preprocess.py --srcfile data/src-train.txt --targetfile data/targ-train.t
 This will take the source/target train/valid files (`src-train.txt, targ-train.txt,
 src-val.txt, targ-val.txt`) and make some hdf5 files to be consumed by Lua.
 
-`demo.src.dict`: Dictionary of source vocab to index mappings
-`demo.targ.dict`: Dictionary of target vocab to index mappings
-`demo-train.hdf5`: hdf5 containing the train data
-`demo-val.hdf5`: hdf5 file containing the validation data
+`demo.src.dict`: Dictionary of source vocab to index mappings.  
+`demo.targ.dict`: Dictionary of target vocab to index mappings.  
+`demo-train.hdf5`: hdf5 containing the train data.  
+`demo-val.hdf5`: hdf5 file containing the validation data.  
 
 The `*.dict` files will be needed when predicting on new data.
 
