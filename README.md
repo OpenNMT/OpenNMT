@@ -59,7 +59,7 @@ as the demo dataset is small. Try running on some larger datasets.
 ###Options for `preprocess.py`
 
 `srcvocabsize, targetvocabsize`: Size of source/target vocabularies. This is constructed
-by taking the top X most frequent words. Rest are replaced with special <unk> tokens
+by taking the top X most frequent words. Rest are replaced with special UNK tokens
 
 `srcfile, targetfile`: Path to source/target training data, where each line represents a single
 source/target sequence
@@ -79,46 +79,32 @@ source/target sequence
 `srcvocabfile, targetvocabfile`: If working with a preset vocab, then including these paths
 will ignore the `srcvocabsize,targetvocabsize`
 
-`unkfilter`: Ignore sentences with too many <unk> tokens. Can be an absolute count limit (if > 1)
+`unkfilter`: Ignore sentences with too many UNK tokens. Can be an absolute count limit (if > 1)
 or a proportional limit (0 < unkfilter < 1).
 
 ###Options for `train.lua`
 
 ###Options for `beam.lua`
 
-`modelfile`: Path to model .t7 file
-
-`srcfile`: Source sequence to decode (one line per sequence)
-
+`modelfile`: Path to model .t7 file  
+`srcfile`: Source sequence to decode (one line per sequence)  
 `targfile`: True target sequence (optional)
-
-`outfile`: Where to output the predictions
-
-`srcdict`: Source vocabulary
-
-`targdict`: Target vocabulary
-
-`chardict`: Character vocabulary
-
-`beam`: Beam size
-
+`outfile`: Path to output the predictions (each line will be the decoded sequence)
+`srcdict`: Path to source vocabulary (`.src.dict` file from `preprocess.py`)  
+`targdict`: Path to target vocabulary (`.targ.dict` file from `preprocess.py`)  
+`chardict`: Path to character vocabulary (`.char.dict` file from `preprocess.py`)  
+`beam`: Beam size  
 `max_sent_l`: Maximum sentence length. If any of the sequences in `srcfile` are longer than this
-it will error out
-
+it will error out  
 `simple`: If = 1, output prediction is simply the first time the top of the beam
 ends with an end-of-sentence token. If = 0, the model considers all hypotheses that have
 been generated so far and ends with end-of-sentence token and takes the highest scoring
-of all of them
-
-`replace_unk`: Replace the generated <unk> tokens with the source token that had the highest
+of all of them  
+`replace_unk`: Replace the generated UNK tokens with the source token that had the highest
 attention weight. If `srctarg_dict` is provided, it will lookup the identified source token
 and give the corresponding target token. If it is not provided (or the identified source token
-does not exist in the table) then it will copy the source token
-
-`srctarg_dict`: Source-target dictionary to replace <unk> tokens
-
-`score_gold`: If = 1, score the true target output as well
-
-`gpuid`: ID of the GPU to use
-
-`gpuid2`: ID if the second GPU (if specified)
+does not exist in the table) then it will copy the source token  
+`srctarg_dict`: Source-target dictionary to replace UNK tokens  
+`score_gold`: If = 1, score the true target output as well  
+`gpuid`: ID of the GPU to use  
+`gpuid2`: ID if the second GPU (if specified)  
