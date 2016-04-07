@@ -27,7 +27,7 @@ cmd:option('-simple', 0, 'if =1, take the top of the beam the first time it gene
 cmd:option('-replace_unk', 0, 'if = 1, replace unknown with argmax aligned source')
 cmd:option('-srctarg_dict', 'data/en-de.dict', 'phrase table from which to replace unk')
 cmd:option('-score_gold', 1, 'if = 1, score the log likelihood of the gold as well')
-cmd:option('-gpuid', 2,'')
+cmd:option('-gpuid', -1,'')
 cmd:option('-gpuid2', -1,'')
 
 opt = cmd:parse(arg)

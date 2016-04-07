@@ -43,7 +43,7 @@ cmd:option('-dropout', 0.3, 'dropout probability')
 cmd:option('-lr_decay', 0.5, 'decay learning rate by this if perf does not improve on val')
 cmd:option('-start_decay_at', 9, 'start decay at this epoch or if val loss does not improve')
 cmd:option('-curriculum', 0, 'use curriculum learning for this many epochs')
-cmd:option('-start_symbol', 1, 'if = 1 use <s> and </s> symbols on source')
+cmd:option('-start_symbol', 0, 'if = 1 use <s> and </s> symbols on source')
 
 -- GPU
 cmd:option('-gpuid', -1, 'which gpu to use. -1 = use CPU')
@@ -220,7 +220,6 @@ function train(train_data, valid_data)
       local num_words_target = 0
       local num_words_source = 0
 
-      local half_epoch = 0
       
       for i = 1, data:size() do
 	 zero_table(grad_params, 'zero')

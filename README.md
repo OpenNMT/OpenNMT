@@ -1,8 +1,8 @@
-# Sequence-to-Sequence Learning with Attentional Neural Networks
+## Sequence-to-Sequence Learning with Attentional Neural Networks
 
 Implementation of a standard sequence-to-sequence model with attention where the encoder-decoder
-are LSTMs. Also has the option to use characters on the input side (output is still at the
-word-level) by running a convolutional neural network followed by a highway network over
+are LSTMs. Also has the option to use characters (instead of input word embeddings)
+by running a convolutional neural network followed by a highway network over
 character embeddings to use as inputs.
 
 The attention model is from
@@ -14,7 +14,7 @@ from the paper.
 The character model is from [Character-Aware Neural
 Language Models](http://arxiv.org/abs/1508.06615), Kim et al. AAAI 2016.
 
-## Dependencies
+### Dependencies
 
 You will need the following packages:
 * hdf5
@@ -28,7 +28,7 @@ If running the character model, you should also install:
 * cudnn
 * luautf8
 
-## Quickstart
+### Quickstart
 
 We are going to be working with some example data in `data/` folder.
 First run the data-processing code
@@ -67,46 +67,113 @@ as the demo dataset is small. Try running on some larger datasets! For example y
 millions of parallel sentences for various language pairs from the [Workshop
 on Machine Translation 2015](http://www.statmt.org/wmt15/translation-task.html).
 
-## Details
-###Options for `preprocess.py`
+### Details
+#### Preprocessing options (`preprocess.py`)
 
 `srcvocabsize, targetvocabsize`: Size of source/target vocabularies. This is constructed
-by taking the top X most frequent words. Rest are replaced with special UNK tokens  
+by taking the top X most frequent words. Rest are replaced with special UNK tokens.  
 `srcfile, targetfile`: Path to source/target training data, where each line represents a single
-source/target sequence  
-`srcvalfile, targetvalfile`: Path to source/target validation data  
-`batchsize`: Size of each mini-batch  
-`seqlength`: Maximum sequence length (sequences longer than this are dropped)  
-`outputfile`: Prefix of the output files  
-`maxwordlength`: For the character models, words are truncated (or zero-padded) to `maxwordlength`  
-`chars`: If 1, construct the character-level dataset as well.  
+source/target sequence.  
+`srcvalfile, targetvalfile`: Path to source/target validation data.  
+`batchsize`: Size of each mini-batch.  
+`seqlength`: Maximum sequence length (sequences longer than this are dropped).  
+`outputfile`: Prefix of the output file names.  
+`maxwordlength`: For the character models, words are truncated (or zero-padded) to `maxwordlength`.  
+`chars`: If 1, construct the character-level dataset as well.  This might take up a lot of space
+depending on your data size, so you may want to break up the training data into different shards.  
 `srcvocabfile, targetvocabfile`: If working with a preset vocab, then including these paths
-will ignore the `srcvocabsize,targetvocabsize`  
+will ignore the `srcvocabsize,targetvocabsize`.  
 `unkfilter`: Ignore sentences with too many UNK tokens. Can be an absolute count limit (if > 1)
 or a proportional limit (0 < unkfilter < 1).  
-###Options for `train.lua`
 
-###Options for `beam.lua`
+#### Training options (`train.lua`)
+**Data options**
+`data_file, val_data_file`: Path to the training/validation `*.hdf5` files created from running
+`preprocess.py`.  
+`savefile`: Savefile name (model will be saved as `savefile_epochX_PPL.t7` after every `save_every`
+epoch where X is the X-th epoch and PPL is the validation perplexity at the epoch.
+`num_shards`: If the training data has been broken up into different shards (by running
+`preprocess-shards.py`), then this is the number of shards.
+`train_from`: If training from a checkpoint then this is the path to the pre-trained model.
 
-`modelfile`: Path to model .t7 file  
-`srcfile`: Source sequence to decode (one line per sequence)  
-`targfile`: True target sequence (optional)
-`outfile`: Path to output the predictions (each line will be the decoded sequence)
-`srcdict`: Path to source vocabulary (`*..src.dict` file from `preprocess.py`)  
-`targdict`: Path to target vocabulary (`*.targ.dict` file from `preprocess.py`)  
-`chardict`: Path to character vocabulary (`*.char.dict` file from `preprocess.py`)  
-`beam`: Beam size (recommend keeping this at 5)  
+**Model options**
+`num_layers`: Number of layers in the LSTM encoder/decoder (i.e. number of stacks).
+`rnn_size`: Size of LSTM hidden states.
+`word_vec_size`: Word embedding size.
+`use_chars_enc`: If 1, use characters on the encoder side (as inputs).
+`use_chars_dec`: If 1, use characters on the decoder side (as inputs).
+`reverse_src`: If 1, reverse the source sequence. The original sequence-to-sequence paper
+found that this was crucial to achieving good performance, but with attention models this
+does not seem necessary. Recommend leaving it to 0.  
+`init_dec`: Inintialize the hidden/cell state of the decoder at time 0 to be the last
+hidden/cell state of the encoder. If 0, the initial states of the decoder are set to zero vectors.  
+`hop_attn`: If > 0, then use a *hop attention* on this layer of the decoder. For example, if
+`num_layers = 3` and `hop_attn = 2`, then the model will do an attention over the source sequence
+on the second layer (and use that as input to the third layer) *and* the penultimate layer.
+See [End-to-End Memory Networks](https://arxiv.org/abs/1503.08895) for more details. We've found that
+this did not really improve performance on translation, but may be helpful for other tasks
+where multiple attentional passes over the source sequence are required (e.g. for more complex
+reasoning tasks).  
+
+The below options only apply if using the character model.
+`char_vec_size`: If using characters, size of the character embeddings.
+`kernel_width`: Size (i.e. width) of the convolutional filter.  
+`num_kernels`: Number of convolutional filters (feature maps). So the representation from characters
+will have this many dimensions.
+`num_highway_layers`: Number of highway layers in the character composition model.
+
+**Optimization options**
+`epochs`: Number of training epochs.
+`start_epoch`: If loading from a pretrained model (or checkpoint), the epoch from which to start at.
+`param_init`: Parameters of the model are initialized over a uniform distribution with support
+`(-param_init, param_init)`.
+`learning_rate`: Starting learning rate.  
+`max_grad_norm`: If the norm of the gradient vector exceeds this, renormalize to have its norm equal
+to `max_grad_norm`.
+`dropout`: Dropout probability. Dropout is applied between vertical LSTM stacks.
+`lr_decay`: Decay learning rate by this much if (i) perplexity does not decrease on the validation
+set (ii) epoch has gone past the `start_decay_at` epoch limit.
+`start_decay_at`: Start decay after this epoch.
+`curriculum`: For this many epochs, order the training set based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).
+
+**Other options**
+`start_symbol`: Use special start-of-sentence and end-of-sentence tokens in the source side.
+We've found this to make minimal difference.    
+`gpuid`: Which gpu to use (-1 = use cpu).  
+`gpuid2`: If this is >=0, then the model will use two gpus whereby the encoder is on the first
+gpu and the decoder is on the second gpu. This will allow you to train bigger models.  
+`cudnn`: Whether to use cudnn or not for convolutions (for the character model). `cudnn`
+has much faster convolutions so this is highly recommended if using the character model.  
+`save_every`: Save every this many epochs.  
+`print_every`: Print various stats after this many batches.  
+#### Decoding options (`beam.lua`)
+
+`modelfile`: Path to model .t7 file.  
+`srcfile`: Source sequence to decode (one line per sequence).  
+`targfile`: True target sequence (optional).  
+`outfile`: Path to output the predictions (each line will be the decoded sequence).  
+`srcdict`: Path to source vocabulary (`*.src.dict` file from `preprocess.py`).    
+`targdict`: Path to target vocabulary (`*.targ.dict` file from `preprocess.py`).    
+`chardict`: Path to character vocabulary (`*.char.dict` file from `preprocess.py`).    
+`beam`: Beam size (recommend keeping this at 5).    
 `max_sent_l`: Maximum sentence length. If any of the sequences in `srcfile` are longer than this
-it will error out  
+it will error out.    
 `simple`: If = 1, output prediction is simply the first time the top of the beam
 ends with an end-of-sentence token. If = 0, the model considers all hypotheses that have
 been generated so far and ends with end-of-sentence token and takes the highest scoring
-of all of them  
+of all of them.    
 `replace_unk`: Replace the generated UNK tokens with the source token that had the highest
 attention weight. If `srctarg_dict` is provided, it will lookup the identified source token
 and give the corresponding target token. If it is not provided (or the identified source token
-does not exist in the table) then it will copy the source token  
-`srctarg_dict`: Source-target dictionary to replace UNK tokens  
-`score_gold`: If = 1, score the true target output as well  
-`gpuid`: ID of the GPU to use  
-`gpuid2`: ID if the second GPU (if specified)  
+does not exist in the table) then it will copy the source token.    
+`srctarg_dict`: Path to source-target dictionary to replace UNK tokens. Each line should be a
+source token and its corresponding target token, separated by `|||`. For example
+```
+hello|||hallo
+ukraine|||ukrainische
+```
+This dictionary can be obtained by, for example, running an alignment model as a preprocessing step.
+We recommend [fast_align](https://github.com/clab/fast_align).  
+`score_gold`: If = 1, score the true target output as well.    
+`gpuid`: ID of the GPU to use.    
+`gpuid2`: ID if the second GPU (if specified).    
