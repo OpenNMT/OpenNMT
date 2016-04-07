@@ -53,6 +53,8 @@ Now run the model
 ```
 th train.lua -data_file data/demo-train.hdf5 -val_data_file data/demo-val.hdf5 -savefile demo-model
 ```
+This will run the default model, which consists of a 2-layer LSTM with 500 hidden units
+on both the encoder/decoder.
 You can also add `-gpuid 1` to use (say) GPU 1 in the cluster.
 
 Now you have a model which you can use to predict on new data. To do this we are
@@ -117,7 +119,7 @@ this did not really improve performance on translation, but may be helpful for o
 where multiple attentional passes over the source sequence are required (e.g. for more complex
 reasoning tasks).  
 
-The below options only apply if using the character model.
+Below options only apply if using the character model.
 
 `char_vec_size`: If using characters, size of the character embeddings.  
 `kernel_width`: Size (i.e. width) of the convolutional filter.   
