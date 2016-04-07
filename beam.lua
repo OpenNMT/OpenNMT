@@ -27,7 +27,6 @@ cmd:option('-simple', 0, 'if =1, take the top of the beam the first time it gene
 cmd:option('-replace_unk', 0, 'if = 1, replace unknown with argmax aligned source')
 cmd:option('-srctarg_dict', 'data/en-de.dict', 'phrase table from which to replace unk')
 cmd:option('-score_gold', 1, 'if = 1, score the log likelihood of the gold as well')
-cmd:option('-time', false,'print timing')
 cmd:option('-gpuid', 2,'')
 cmd:option('-gpuid2', -1,'')
 
@@ -204,10 +203,13 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 --       attn_layer_i:copy(softmax_layers[1].output)
 --       attn_layer_i:add(softmax_layers[2].output)
 --       attn_layer_i[{{},1}]:zero()
---       attn_layer_i[{{},source_l}]:zero()       
+       --       attn_layer_i[{{},source_l}]:zero()
+
+       if model_opt.start_symbol == 1 then
+	  decoder_softmax.output[{{},1}]:zero()
+	  decoder_softmax.output[{{},source_l}]:zero()
+       end
        
-       decoder_softmax.output[{{},1}]:zero()
-       decoder_softmax.output[{{},source_l}]:zero()       
        for k = 1, K do
           while true do
              local score, index = flat_out:max(1)
@@ -344,15 +346,22 @@ function get_layer(layer)
 end
 
 function sent2wordidx(sent, word2idx)
-   local t = {START}
-   local u = {START_WORD}
+   local t = {}
+   local u = {}
+   if model_opt.start_symbol == 1 then
+      table.insert(t, START)
+      table.insert(u, START_WORD)
+   end
+   
    for word in sent:gmatch'([^%s]+)' do
       local idx = word2idx[word] or UNK 
       table.insert(t, idx)
       table.insert(u, word)
    end
-   table.insert(t, END)
-   table.insert(u, END_WORD)
+   if model_opt.start_symbol == 1 then
+      table.insert(t, END)
+      table.insert(u, END_WORD)
+   end   
    return torch.LongTensor(t), u
 end
 
