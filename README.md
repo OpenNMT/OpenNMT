@@ -2,7 +2,17 @@
 
 Implementation of a standard sequence-to-sequence model with attention where the encoder-decoder
 are LSTMs. Also has the option to use characters on the input side (output is still at the
-word-level) by doing a CNN+Highway over character embeddings to use as inputs.
+word-level) by running a convolutional neural network followed by a highway network over
+character embeddings to use as inputs.
+
+The attention model is from
+[Effective Approaches to Attention-based
+Neural Machine Translation](http://stanford.edu/~lmthang/data/papers/emnlp15_attn.pdf),
+Luong et al. EMNLP 2015. We use the *global-attention* model with the *input-feeding* approach
+from the paper.
+
+The character model is from [Character-Aware Neural
+Language Models](http://arxiv.org/abs/1508.06615), Kim et al. AAAI 2016.
 
 ## Dependencies
 
@@ -53,35 +63,27 @@ th beam.lua -srcfile demo/src-train.txt -outfile pred.txt -srcdict demo/demo.src
 -targdict demo.targ.dict
 ```
 This will output predictions into `pred.txt`. The predictions are going to be quite terrible,
-as the demo dataset is small. Try running on some larger datasets.
+as the demo dataset is small. Try running on some larger datasets! For example you can download
+millions of parallel sentences for various language pairs from the [Workshop
+on Machine Translation 2015](http://www.statmt.org/wmt15/translation-task.html).
 
 ## Details
 ###Options for `preprocess.py`
 
 `srcvocabsize, targetvocabsize`: Size of source/target vocabularies. This is constructed
-by taking the top X most frequent words. Rest are replaced with special UNK tokens
-
+by taking the top X most frequent words. Rest are replaced with special UNK tokens  
 `srcfile, targetfile`: Path to source/target training data, where each line represents a single
-source/target sequence
-
-`srcvalfile, targetvalfile`: Path to source/target validation data
-
-`batchsize`: Size of each mini-batch
-
-`seqlength`: Maximum sequence length (sequences longer than this are dropped)
-
-`outputfile`: Prefix of the output files
-
-`maxwordlength`: For the character models, words are truncated (or zero-padded) to `maxwordlength`
-
-`chars`: If 1, construct the character-level dataset as well.
-
+source/target sequence  
+`srcvalfile, targetvalfile`: Path to source/target validation data  
+`batchsize`: Size of each mini-batch  
+`seqlength`: Maximum sequence length (sequences longer than this are dropped)  
+`outputfile`: Prefix of the output files  
+`maxwordlength`: For the character models, words are truncated (or zero-padded) to `maxwordlength`  
+`chars`: If 1, construct the character-level dataset as well.  
 `srcvocabfile, targetvocabfile`: If working with a preset vocab, then including these paths
-will ignore the `srcvocabsize,targetvocabsize`
-
+will ignore the `srcvocabsize,targetvocabsize`  
 `unkfilter`: Ignore sentences with too many UNK tokens. Can be an absolute count limit (if > 1)
-or a proportional limit (0 < unkfilter < 1).
-
+or a proportional limit (0 < unkfilter < 1).  
 ###Options for `train.lua`
 
 ###Options for `beam.lua`
@@ -90,10 +92,10 @@ or a proportional limit (0 < unkfilter < 1).
 `srcfile`: Source sequence to decode (one line per sequence)  
 `targfile`: True target sequence (optional)
 `outfile`: Path to output the predictions (each line will be the decoded sequence)
-`srcdict`: Path to source vocabulary (`.src.dict` file from `preprocess.py`)  
-`targdict`: Path to target vocabulary (`.targ.dict` file from `preprocess.py`)  
-`chardict`: Path to character vocabulary (`.char.dict` file from `preprocess.py`)  
-`beam`: Beam size  
+`srcdict`: Path to source vocabulary (`*..src.dict` file from `preprocess.py`)  
+`targdict`: Path to target vocabulary (`*.targ.dict` file from `preprocess.py`)  
+`chardict`: Path to character vocabulary (`*.char.dict` file from `preprocess.py`)  
+`beam`: Beam size (recommend keeping this at 5)  
 `max_sent_l`: Maximum sentence length. If any of the sequences in `srcfile` are longer than this
 it will error out  
 `simple`: If = 1, output prediction is simply the first time the top of the beam
