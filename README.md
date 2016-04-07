@@ -127,20 +127,22 @@ will have this many dimensions.
 
 **Optimization options**
 
-`epochs`: Number of training epochs.
-`start_epoch`: If loading from a pretrained model (or checkpoint), the epoch from which to start at.
+`epochs`: Number of training epochs.  
+`start_epoch`: If loading from a pretrained model (or checkpoint), the epoch from which to
+start at.  
 `param_init`: Parameters of the model are initialized over a uniform distribution with support
-`(-param_init, param_init)`.
+`(-param_init, param_init)`.  
 `learning_rate`: Starting learning rate.  
 `max_grad_norm`: If the norm of the gradient vector exceeds this, renormalize to have its norm equal
-to `max_grad_norm`.
-`dropout`: Dropout probability. Dropout is applied between vertical LSTM stacks.
+to `max_grad_norm`.  
+`dropout`: Dropout probability. Dropout is applied between vertical LSTM stacks.  
 `lr_decay`: Decay learning rate by this much if (i) perplexity does not decrease on the validation
-set (ii) epoch has gone past the `start_decay_at` epoch limit.
-`start_decay_at`: Start decay after this epoch.
-`curriculum`: For this many epochs, order the training set based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).
+set (ii) epoch has gone past the `start_decay_at` epoch limit.  
+`start_decay_at`: Start decay after this epoch.  
+`curriculum`: For this many epochs, order the training set based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).  
 
 **Other options**
+
 `start_symbol`: Use special start-of-sentence and end-of-sentence tokens in the source side.
 We've found this to make minimal difference.    
 `gpuid`: Which gpu to use (-1 = use cpu).  
