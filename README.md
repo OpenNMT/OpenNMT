@@ -88,20 +88,22 @@ or a proportional limit (0 < unkfilter < 1).
 
 #### Training options (`train.lua`)
 **Data options**
+
 `data_file, val_data_file`: Path to the training/validation `*.hdf5` files created from running
 `preprocess.py`.  
 `savefile`: Savefile name (model will be saved as `savefile_epochX_PPL.t7` after every `save_every`
-epoch where X is the X-th epoch and PPL is the validation perplexity at the epoch.
+epoch where X is the X-th epoch and PPL is the validation perplexity at the epoch.  
 `num_shards`: If the training data has been broken up into different shards (by running
-`preprocess-shards.py`), then this is the number of shards.
-`train_from`: If training from a checkpoint then this is the path to the pre-trained model.
+`preprocess-shards.py`), then this is the number of shards.  
+`train_from`: If training from a checkpoint then this is the path to the pre-trained model.  
 
 **Model options**
-`num_layers`: Number of layers in the LSTM encoder/decoder (i.e. number of stacks).
-`rnn_size`: Size of LSTM hidden states.
-`word_vec_size`: Word embedding size.
-`use_chars_enc`: If 1, use characters on the encoder side (as inputs).
-`use_chars_dec`: If 1, use characters on the decoder side (as inputs).
+
+`num_layers`: Number of layers in the LSTM encoder/decoder (i.e. number of stacks).  
+`rnn_size`: Size of LSTM hidden states.  
+`word_vec_size`: Word embedding size.  
+`use_chars_enc`: If 1, use characters on the encoder side (as inputs).  
+`use_chars_dec`: If 1, use characters on the decoder side (as inputs).  
 `reverse_src`: If 1, reverse the source sequence. The original sequence-to-sequence paper
 found that this was crucial to achieving good performance, but with attention models this
 does not seem necessary. Recommend leaving it to 0.  
@@ -116,13 +118,15 @@ where multiple attentional passes over the source sequence are required (e.g. fo
 reasoning tasks).  
 
 The below options only apply if using the character model.
-`char_vec_size`: If using characters, size of the character embeddings.
-`kernel_width`: Size (i.e. width) of the convolutional filter.  
+
+`char_vec_size`: If using characters, size of the character embeddings.  
+`kernel_width`: Size (i.e. width) of the convolutional filter.   
 `num_kernels`: Number of convolutional filters (feature maps). So the representation from characters
-will have this many dimensions.
-`num_highway_layers`: Number of highway layers in the character composition model.
+will have this many dimensions.  
+`num_highway_layers`: Number of highway layers in the character composition model.  
 
 **Optimization options**
+
 `epochs`: Number of training epochs.
 `start_epoch`: If loading from a pretrained model (or checkpoint), the epoch from which to start at.
 `param_init`: Parameters of the model are initialized over a uniform distribution with support
