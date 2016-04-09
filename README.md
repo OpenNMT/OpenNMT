@@ -184,4 +184,13 @@ This dictionary can be obtained by, for example, running an alignment model as a
 We recommend [fast_align](https://github.com/clab/fast_align).  
 * `score_gold`: If = 1, score the true target output as well.    
 * `gpuid`: ID of the GPU to use.    
-* `gpuid2`: ID if the second GPU (if specified).    
+* `gpuid2`: ID if the second GPU (if specified).
+
+#### Acknowledgments
+Our implementation utilizes code from the following:
+* [Andrej Karpathy's char-rnn repo](https://github.com/karpathy/char-rnn)
+* [Wojciech Zaremba's lstm repo](https://github.com/wojzaremba/lstm)
+* [Element rnn library](https://github.com/Element-Research/rnn)
+
+#### Licence
+MIT
