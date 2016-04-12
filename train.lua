@@ -203,7 +203,6 @@ function train(train_data, valid_data)
 	 local curr_ppl = opt.val_perf[#opt.val_perf]
 	 local prev_ppl = opt.val_perf[#opt.val_perf-1]
 	 if curr_ppl > prev_ppl then
---	    opt.learning_rate = opt.learning_rate * opt.lr_decay
 	    start_decay = 1
 	 end
       end

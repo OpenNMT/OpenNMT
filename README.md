@@ -186,6 +186,40 @@ We recommend [fast_align](https://github.com/clab/fast_align).
 * `gpuid`: ID of the GPU to use.    
 * `gpuid2`: ID if the second GPU (if specified).
 
+#### GPU memory requirements
+Training large sequence-to-sequence models can be memory-intensive. Memory requirements will
+dependend on batch size, maximum sequence length, vocabulary size, and (obviously) model size.
+Here are some benchmark numbers (assuming batch size of 64, maximum sequence length of
+50 on both the source/target sequence, and vocabulary size of 50000):
+
+* 1-layer, 100 hidden units: 1.0G
+* 1-layer, 250 hidden units: 1.5G
+* 1-layer, 500 hidden units: 2.5G
+* 2-layers, 500 hidden units: 3.2G
+* 4-layers, 1000 hidden units: 8.8G
+* 6-layers, 1000 hidden units: 11.5G
+
+If using different batch sizes/sequence length, you should (linearly) scale
+the above numbers accordingly. You can make use of memory on multiple GPUs by using
+`-gpuid2` option in `train.lua`. This will put the encoder on the GPU specified by
+`-gpuid`, and the decoder on the GPU specified by `-gpuid2`. 
+
+#### Evaluation
+For translation, evaluation via BLEU can be done by taking the output from `beam.lua` and using the
+`multi-bleu.perl` script from [Moses](https://github.com/moses-smt). For example
+
+```
+perl multi-bleu.perl gold.txt < pred.txt
+```
+
+#### Pre-trained models
+We will be uploading English <-> German models trained on 4 million sentences from
+[Workshop on Machine Translation 2015](http://www.statmt.org/wmt15/translation-task.html).
+These models are 4-layer LSTMs with 1000 hidden units and essentially replicates the results from
+[Effective Approaches to Attention-based
+Neural Machine Translation](http://stanford.edu/~lmthang/data/papers/emnlp15_attn.pdf),
+Luong et al. EMNLP 2015.
+
 #### Acknowledgments
 Our implementation utilizes code from the following:
 * [Andrej Karpathy's char-rnn repo](https://github.com/karpathy/char-rnn)

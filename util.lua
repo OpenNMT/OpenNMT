@@ -1,27 +1,3 @@
-local Squeeze, parent = torch.class('nn.Squeeze', 'nn.Module')
-
-function Squeeze:updateOutput(input)   
-   self.output = input:squeeze()
-   return self.output
-end
-
-function Squeeze:updateGradInput(input, gradOutput)
-   self.gradInput = gradOutput:view(input:size())
-   return self.gradInput
-end
-
-local Unsqueeze, parent = torch.class('nn.Unsqueeze', 'nn.Module')
-
-function Unsqueeze:updateOutput(input)
-    self.output = input:view(1, input:size(1), -1)
-    return self.output
-end
-
-function Unsqueeze:updateGradInput(input, gradOutput)
-    self.gradInput = gradOutput:view(input:size())
-    return self.gradInput
-end
-
 --LinearNoBias from elements library
 local LinearNoBias, Linear = torch.class('nn.LinearNoBias', 'nn.Linear')
 

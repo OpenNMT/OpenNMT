@@ -1,0 +1,11 @@
+*.t7
+*.out
+*.err
+*.txt
+*.zip
+*.tsv
+*.hdf5
+*.dict
+*.lua~
+*.py~
+*.sh~
