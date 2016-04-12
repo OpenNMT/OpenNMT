@@ -3,9 +3,9 @@ require 'string'
 require 'hdf5'
 require 'nngraph'
 
-require 'models'
-require 'data'
-require 'util'
+require 'models.lua'
+require 'data.lua'
+require 'util.lua'
 
 stringx = require('pl.stringx')
 
