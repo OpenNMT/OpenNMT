@@ -206,7 +206,7 @@ the above numbers accordingly. You can make use of memory on multiple GPUs by us
 
 #### Evaluation
 For translation, evaluation via BLEU can be done by taking the output from `beam.lua` and using the
-`multi-bleu.perl` script from [Moses](https://github.com/moses-smt). For example
+`multi-bleu.perl` script from [Moses](https://github.com/moses-smt/mosesdecoder). For example
 
 ```
 perl multi-bleu.perl gold.txt < pred.txt
