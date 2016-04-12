@@ -13,67 +13,96 @@ cmd = torch.CmdLine()
 cmd:text("")
 cmd:text("**Data options**")
 cmd:text("")
-cmd:option('-data_file','data/demo-train.hdf5','train data path')
-cmd:option('-val_data_file','data/demo-val.hdf5','valid data path')
-cmd:option('-savefile', 'seq2seq_lstm_attn','filename to autosave the checkpont to')
-cmd:option('-num_shards', 0, 'if > 0, then training files are in this many partitions' )
-cmd:option('-train_from', '', 'train from this checkpoint')
+cmd:option('-data_file','data/demo-train.hdf5',[[Path to the training *.hdf5 file 
+                                               from preprocess.py]])
+cmd:option('-val_data_file','data/demo-val.hdf5',[[Path to validation *.hdf5 file 
+                                                 from preprocess.py]])
+cmd:option('-savefile', 'seq2seq_lstm_attn', [[Savefile name (model will be saved as 
+                         savefile_epochX_PPL.t7 where X is the X-th epoch and PPL is 
+                         the validation perplexity]])
+cmd:option('-num_shards', 0, [[If the training data has been broken up into different shards, 
+                             then training files are in this many partitions]])
+cmd:option('-train_from', '', [[If training from a checkpoint then this is the path to the
+                                pretrained model.]])
 
 -- rnn model specs
 cmd:text("")
 cmd:text("**Model options**")
 cmd:text("")
 
-cmd:option('-num_layers', 2, 'number of encoder/decoder LSTM layers')
-cmd:option('-rnn_size', 500, 'size of LSTM layers')
-cmd:option('-word_vec_size', 500, 'word vector sizes')
-cmd:option('-use_chars_enc', 0, 'use character inputs on the encoder if = 1')
-cmd:option('-use_chars_dec', 0, 'use character inputs on the decoder if = 1')
-cmd:option('-reverse_src', 0, 'reverse source sentence if = 1')
-cmd:option('-init_dec', 1, 'initial state of decoder is last state of encoder if = 1')
-cmd:option('-hop_attn', 0, 'use hop attention on this layer in the decoder LSTM')
-cmd:option('-res_net', 0, 'if = 1 use residual connections between LSTM stacks')
+cmd:option('-num_layers', 2, [[Number of layers in the LSTM encoder/decoder]])
+cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
+cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
+cmd:option('-use_chars_enc', 0, [[If 1, use character on the encoder 
+                                side (instead of word embeddings]])
+cmd:option('-use_chars_dec', 0, [[If 1, use character on the decoder 
+                                side (instead of word embeddings]])
+cmd:option('-reverse_src', 0, [[If 1, reverse the source sequence. The original 
+                              sequence-to-sequence paper found that this was crucial to 
+                              achieving good performance, but with attention models this
+                              does not seem necessary. Recommend leaving it to 0]])
+cmd:option('-init_dec', 1, [[Initialize the hidden/cell state of the decoder at time 
+                           0 to be the last hidden/cell state of the encoder. If 0, 
+                           the initial states of the decoder are set to zero vectors]])
+cmd:option('-hop_attn', 0, [[If > 0, then use a *hop attention* on this layer of the decoder. 
+                           For example, if num_layers = 3 and `hop_attn = 2`, then the 
+                           model will do an attention over the source sequence
+                           on the second layer (and use that as input to the third layer) and 
+                           the penultimate layer]])
+cmd:option('-res_net', 0, [[Use residual connections between LSTM stacks whereby the input to 
+                          the l-th LSTM layer if the hidden state of the l-1-th LSTM layer 
+                          added with the l-2th LSTM layer. We didn't find this to help in our 
+                          experiments]])
 
 cmd:text("")
 cmd:text("Below options only apply if using the character model.")
 cmd:text("")
 
 -- char-cnn model specs (if use_chars == 1)
-cmd:option('-char_vec_size', 25, 'char embedding size in the encoder')
-cmd:option('-kernel_width', 6, 'char-cnn kernel widths')
-cmd:option('-num_kernels', 1000, 'number of kernels')
-cmd:option('-num_highway_layers', 2, 'number of highway layers')
+cmd:option('-char_vec_size', 25, [[Size of the character embeddings]])
+cmd:option('-kernel_width', 6, [[Size (i.e. width) of the convolutional filter]])
+cmd:option('-num_kernels', 1000, [[Number of convolutional filters (feature maps). So the
+                                 representation from characters will have this many dimensions]])
+cmd:option('-num_highway_layers', 2, [[Number of highway layers in the character model]])
 
 cmd:text("")
 cmd:text("**Optimization options**")
 cmd:text("")
 
 -- optimization
-cmd:option('-epochs', 13, 'number of training epoch')
-cmd:option('-start_epoch', 1, 'use this if training from checkpoint')
-cmd:option('-param_init', 0.1, 'initialize parameters at')
-cmd:option('-learning_rate', 1, 'starting learning rate')
-cmd:option('-max_grad_norm', 5, 'max l2-norm of grads')
-cmd:option('-dropout', 0.3, 'dropout probability')
-cmd:option('-lr_decay', 0.5, 'decay learning rate by this if perf does not improve on val')
-cmd:option('-start_decay_at', 9, 'start decay at this epoch or if val loss does not improve')
-cmd:option('-curriculum', 0, 'use curriculum learning for this many epochs')
+cmd:option('-epochs', 13, [[Number of training epochs]])
+cmd:option('-start_epoch', 1, [[If loading from a checkpoing, the epoch from which to start]])
+cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support
+                               (-param_init, param_init)]])
+cmd:option('-learning_rate', 1, [[Starting learning rate]])
+cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this, renormalize it
+                                to have the norm equal to max_grad_norm]])
+cmd:option('-dropout', 0.3, [[Dropout probability. 
+                            Dropout is applied between vertical LSTM stacks.]])
+cmd:option('-lr_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
+                      on the validation set or (ii) epoch has gone past the start_decay_at_limit]])
+cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
+cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
+                sequence length. Sometimes setting this to 1 will increase convergence speed.]])
 
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
 
 
-cmd:option('-start_symbol', 0, 'if = 1 use <s> and </s> symbols on source')
-
+cmd:option('-start_symbol', 0, [[Use special start-of-sentence and end-of-sentence tokens
+                       on the source side. We've found this to make minimal difference]])
 -- GPU
-cmd:option('-gpuid', -1, 'which gpu to use. -1 = use CPU')
-cmd:option('-gpuid2', -1, 'second gpu to use. -1 = do not use second gpu')
-cmd:option('-cudnn', 1, 'use cudnn')
-
+cmd:option('-gpuid', -1, [[Which gpu to use. -1 = use CPU]])
+cmd:option('-gpuid2', -1, [[If this is >= 0, then the model will use two GPUs whereby the encoder
+                           is on the first GPU and the decoder is on the second GPU. 
+                           This will allow you to train with bigger batches/models.]])
+cmd:option('-cudnn', 1, [[Whether to use cudnn or not for convolutions (for the character model).
+                         cudnn has much faster convolutions so this is highly recommended 
+                         if using the character model]])
 -- bookkeeping
-cmd:option('-save_every', 1, 'save every this many epochs')
-cmd:option('-print_every', 1000, 'print stats after this many batches')
+cmd:option('-save_every', 1, [[Save every this many epochs]])
+cmd:option('-print_every', 1000, [[Print stats after this many batches]])
 
 opt = cmd:parse(arg)
 
@@ -248,6 +277,7 @@ function train(train_data, valid_data)
 	    d = data[i]
 	 else
 	    d = data[batch_order[i]]
+	    d = data[data:size()-1]
 	 end
          local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
 	 local batch_l, target_l, source_l = d[5], d[6], d[7]
@@ -256,7 +286,10 @@ function train(train_data, valid_data)
 
 	 local rnn_state_enc = reset_state(init_fwd_enc, batch_l, 0)
 	 local context = context_proto[{{1, batch_l}, {1, source_l}}]
-
+	 if opt.gpuid >= 0 then
+	    cutorch.setDevice(opt.gpuid)
+	 end
+	 
 	 -- forward prop encoder
 	 for t = 1, source_l do
 	    encoder_clones[t]:training()

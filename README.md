@@ -1,9 +1,9 @@
 ## Sequence-to-Sequence Learning with Attentional Neural Networks
 
-Implementation of a standard sequence-to-sequence model with attention where the encoder-decoder
-are LSTMs. Also has the option to use characters (instead of input word embeddings)
-by running a convolutional neural network followed by a highway network over
-character embeddings to use as inputs.
+[Torch](http://torch.ch) implementation of a standard sequence-to-sequence model with attention
+where the encoder-decoder are LSTMs. Also has the option to use characters
+(instead of input word embeddings) by running a convolutional neural network followed by a
+highway network over character embeddings to use as inputs.
 
 The attention model is from
 [Effective Approaches to Attention-based
@@ -61,7 +61,7 @@ Now you have a model which you can use to predict on new data. To do this we are
 going to be running beam search
 
 ```
-th beam.lua -srcfile demo/src-train.txt -outfile pred.txt -srcdict demo/demo.src.dict
+th beam.lua -srcfile demo/src-val.txt -outfile pred.txt -srcdict demo/demo.src.dict
 -targdict demo.targ.dict
 ```
 This will output predictions into `pred.txt`. The predictions are going to be quite terrible,
@@ -80,7 +80,8 @@ source/target sequence.
 * `batchsize`: Size of each mini-batch.  
 * `seqlength`: Maximum sequence length (sequences longer than this are dropped).  
 * `outputfile`: Prefix of the output file names.  
-* `maxwordlength`: For the character models, words are truncated (or zero-padded) to `maxwordlength`.  
+* `maxwordlength`: For the character models, words are truncated (if longer than maxwordlength)
+or zero-padded (if shorter) to `maxwordlength`.   
 * `chars`: If 1, construct the character-level dataset as well.  This might take up a lot of space
 depending on your data size, so you may want to break up the training data into different shards.  
 `srcvocabfile, targetvocabfile`: If working with a preset vocab, then including these paths
@@ -95,8 +96,8 @@ or a proportional limit (0 < unkfilter < 1).
 `preprocess.py`.  
 * `savefile`: Savefile name (model will be saved as `savefile_epochX_PPL.t7` after every `save_every`
 epoch where X is the X-th epoch and PPL is the validation perplexity at the epoch.  
-* `num_shards`: If the training data has been broken up into different shards (by running
-`preprocess-shards.py`), then this is the number of shards.  
+* `num_shards`: If the training data has been broken up into different shards,
+then this is the number of shards.  
 * `train_from`: If training from a checkpoint then this is the path to the pre-trained model.  
 
 **Model options**
@@ -109,7 +110,7 @@ epoch where X is the X-th epoch and PPL is the validation perplexity at the epoc
 * `reverse_src`: If 1, reverse the source sequence. The original sequence-to-sequence paper
 found that this was crucial to achieving good performance, but with attention models this
 does not seem necessary. Recommend leaving it to 0.  
-* `init_dec`: Inintialize the hidden/cell state of the decoder at time 0 to be the last
+* `init_dec`: Initialize the hidden/cell state of the decoder at time 0 to be the last
 hidden/cell state of the encoder. If 0, the initial states of the decoder are set to zero vectors.  
 * `hop_attn`: If > 0, then use a *hop attention* on this layer of the decoder. For example, if
 `num_layers = 3` and `hop_attn = 2`, then the model will do an attention over the source sequence
@@ -117,58 +118,58 @@ on the second layer (and use that as input to the third layer) *and* the penulti
 See [End-to-End Memory Networks](https://arxiv.org/abs/1503.08895) for more details. We've found that
 this did not really improve performance on translation, but may be helpful for other tasks
 where multiple attentional passes over the source sequence are required (e.g. for more complex
-reasoning tasks).  
+reasoning tasks).
+* `res_net`: Use residual connections between LSTM stacks whereby the input to the l-th LSTM
+layer if the hidden state of the l-1-th LSTM layer added with the l-2th LSTM layer. We didn't find
+this to help in our experiments.
 
 Below options only apply if using the character model.
 
 * `char_vec_size`: If using characters, size of the character embeddings.  
 * `kernel_width`: Size (i.e. width) of the convolutional filter.   
-* `num_kernels`: Number of convolutional filters (feature maps). So the representation from characters
-will have this many dimensions.  
+* `num_kernels`: Number of convolutional filters (feature maps). So the representation from characters will have this many dimensions.  
 * `num_highway_layers`: Number of highway layers in the character composition model.  
 
 **Optimization options**
 
 * `epochs`: Number of training epochs.  
-* `start_epoch`: If loading from a pretrained model (or checkpoint), the epoch from which to
-start at.  
+* `start_epoch`: If loading from a checkpoint, the epoch from which to start.  
 * `param_init`: Parameters of the model are initialized over a uniform distribution with support
 `(-param_init, param_init)`.  
 * `learning_rate`: Starting learning rate.  
-* `max_grad_norm`: If the norm of the gradient vector exceeds this, renormalize to have its norm equal
-to `max_grad_norm`.  
+* `max_grad_norm`: If the norm of the gradient vector exceeds this, renormalize to have its norm equal to `max_grad_norm`.  
 * `dropout`: Dropout probability. Dropout is applied between vertical LSTM stacks.  
 * `lr_decay`: Decay learning rate by this much if (i) perplexity does not decrease on the validation
-set (ii) epoch has gone past the `start_decay_at` epoch limit.  
+set or (ii) epoch has gone past the `start_decay_at` epoch limit.  
 * `start_decay_at`: Start decay after this epoch.  
-* `curriculum`: For this many epochs, order the training set based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).  
+* `curriculum`: For this many epochs, order the minibatches based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).  
 
 **Other options**
 
-* `start_symbol`: Use special start-of-sentence and end-of-sentence tokens in the source side.
+* `start_symbol`: Use special start-of-sentence and end-of-sentence tokens on the source side.
 We've found this to make minimal difference.    
-* `gpuid`: Which gpu to use (-1 = use cpu).  
-* `gpuid2`: If this is >=0, then the model will use two gpus whereby the encoder is on the first
-gpu and the decoder is on the second gpu. This will allow you to train bigger models.  
+* `gpuid`: Which GPU to use (-1 = use cpu).  
+* `gpuid2`: If this is >=0, then the model will use two GPUs whereby the encoder is on the first
+GPU and the decoder is on the second GPU. This will allow you to train bigger models.  
 * `cudnn`: Whether to use cudnn or not for convolutions (for the character model). `cudnn`
 has much faster convolutions so this is highly recommended if using the character model.  
 * `save_every`: Save every this many epochs.  
 * `print_every`: Print various stats after this many batches.  
 #### Decoding options (`beam.lua`)
 
-* `modelfile`: Path to model .t7 file.  
-* `srcfile`: Source sequence to decode (one line per sequence).  
-* `targfile`: True target sequence (optional).  
-* `outfile`: Path to output the predictions (each line will be the decoded sequence).  
-* `srcdict`: Path to source vocabulary (`*.src.dict` file from `preprocess.py`).    
-* `targdict`: Path to target vocabulary (`*.targ.dict` file from `preprocess.py`).    
-* `chardict`: Path to character vocabulary (`*.char.dict` file from `preprocess.py`).    
+* `model_file`: Path to model .t7 file.  
+* `src_file`: Source sequence to decode (one line per sequence).  
+* `targ_file`: True target sequence (optional).  
+* `output_file`: Path to output the predictions (each line will be the decoded sequence).  
+* `src_dict`: Path to source vocabulary (`*.src.dict` file from `preprocess.py`).    
+* `targ_dict`: Path to target vocabulary (`*.targ.dict` file from `preprocess.py`).    
+* `char_dict`: Path to character vocabulary (`*.char.dict` file from `preprocess.py`).    
 * `beam`: Beam size (recommend keeping this at 5).    
 * `max_sent_l`: Maximum sentence length. If any of the sequences in `srcfile` are longer than this
 it will error out.    
 * `simple`: If = 1, output prediction is simply the first time the top of the beam
 ends with an end-of-sentence token. If = 0, the model considers all hypotheses that have
-been generated so far and ends with end-of-sentence token and takes the highest scoring
+been generated so far that ends with end-of-sentence token and takes the highest scoring
 of all of them.    
 * `replace_unk`: Replace the generated UNK tokens with the source token that had the highest
 attention weight. If `srctarg_dict` is provided, it will lookup the identified source token
@@ -183,22 +184,23 @@ ukraine|||ukrainische
 This dictionary can be obtained by, for example, running an alignment model as a preprocessing step.
 We recommend [fast_align](https://github.com/clab/fast_align).  
 * `score_gold`: If = 1, score the true target output as well.    
-* `gpuid`: ID of the GPU to use.    
+* `gpuid`: ID of the GPU to use (-1 = use CPU).    
 * `gpuid2`: ID if the second GPU (if specified).
 
-#### GPU memory requirements
+#### GPU memory requirements/Training speed
 Training large sequence-to-sequence models can be memory-intensive. Memory requirements will
 dependend on batch size, maximum sequence length, vocabulary size, and (obviously) model size.
-Here are some benchmark numbers (assuming batch size of 64, maximum sequence length of
-50 on both the source/target sequence, and vocabulary size of 50000):
+Here are some benchmark numbers on a GeForce GTX Titan X.
+(assuming batch size of 64, maximum sequence length of 50 on both the source/target sequence,
+vocabulary size of 50000, and word embedding size equal to rnn size):
 
-* 1-layer, 100 hidden units: 1.0G
-* 1-layer, 250 hidden units: 1.5G
-* 1-layer, 500 hidden units: 2.5G
-* 2-layers, 500 hidden units: 3.2G
-* 4-layers, 1000 hidden units: 8.8G
-* 6-layers, 1000 hidden units: 11.5G
+* 1-layer, 100 hidden units: 0.7G, 21.5K tokens/sec
+* 1-layer, 250 hidden units: 1.4G, 14.1K tokens/sec
+* 1-layer, 500 hidden units: 2.6G, 9.4K tokens/sec
+* 2-layers, 500 hidden units: 3.2G, 7.4K tokens/sec
+* 4-layers, 1000 hidden units: 9.4G, 2.5K tokens/sec
 
+Tokens/sec refers to total (i.e. source + target) tokens processed per second.
 If using different batch sizes/sequence length, you should (linearly) scale
 the above numbers accordingly. You can make use of memory on multiple GPUs by using
 `-gpuid2` option in `train.lua`. This will put the encoder on the GPU specified by

@@ -297,26 +297,45 @@ def main(arguments):
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--srcvocabsize', help="Source vocab size", type=int, default=50000)
-    parser.add_argument('--targetvocabsize', help="Target vocab size", type=int, default=50000)
-    parser.add_argument('--srcfile', help="Source Input file")
-    parser.add_argument('--targetfile', help="Target Input file")
-    parser.add_argument('--srcvalfile', help="Source Val file")
-    parser.add_argument('--targetvalfile', help="Target val file")
-    parser.add_argument('--batchsize', help="Batchsize", type=int, default=64)
-    parser.add_argument('--seqlength', help="(Max) Sequence length", type=int, default=50)
-    parser.add_argument('--outputfile', help="HDF5 output file", type=str)
-    parser.add_argument('--maxwordlength', help="Max word length", type=int, default=35)
-    parser.add_argument('--chars', help="Use characters", type=int, default=0)
-    parser.add_argument('--srcvocabfile',
-                         help="Source vocab file, if using pre-specified vocab",
-                         type = str, default='')
-    parser.add_argument('--targvocabfile',
-                         help="Target vocab file, if using pre-specified vocab",
-                         type = str, default='')
-    parser.add_argument('--unkfilter',
-                         help="Ignore sentences with too many <unk> tokens",
-                         type = float, default = 0)
+    parser.add_argument('--srcvocabsize', help="Size of source vocabulary, constructed "
+                                                "by taking the top X most frequent words. "
+                                                " Rest are replaced with special UNK tokens.",
+                                                type=int, default=50000)
+    parser.add_argument('--targetvocabsize', help="Size of target vocabulary, constructed "
+                                                "by taking the top X most frequent words. "
+                                                "Rest are replaced with special UNK tokens.",
+                                                type=int, default=50000)
+    parser.add_argument('--srcfile', help="Path to source training data, "
+                                           "where each line represents a single "
+                                           "source/target sequence.")
+    parser.add_argument('--targetfile', help="Path to target training data, "
+                                           "where each line represents a single "
+                                           "source/target sequence.")
+    parser.add_argument('--srcvalfile', help="Path to source validation data.")
+    parser.add_argument('--targetvalfile', help="Path to target validation data.")
+    parser.add_argument('--batchsize', help="Size of each minibatch.", type=int, default=64)
+    parser.add_argument('--seqlength', help="Maximum sequence length. Sequences longer "
+                                               "than this are dropped.", type=int, default=50)
+    parser.add_argument('--outputfile', help="Prefix of the output file names. ", type=str)
+    parser.add_argument('--maxwordlength', help="For the character models, words are "
+                                           "(if longer than maxwordlength) or zero-padded "
+                                            "(if shorter) to maxwordlength", type=int, default=35)
+    parser.add_argument('--chars', help="If 1, construct the character-level dataset as well. "
+                                        "This might take up a lot of space depending on your data "
+                                        "size, so you may want to break up the training data into "
+                                        "different shards.", type=int, default=0)
+    parser.add_argument('--srcvocabfile', help="If working with a preset vocab, "
+                                          "then including this will ignore srcvocabsize and use the"
+                                          "vocab provided here.",
+                                          type = str, default='')
+    parser.add_argument('--targvocabfile', help="If working with a preset vocab, "
+                                         "then including this will ignore targetvocabsize and "
+                                         "use the vocab provided here.",
+                                          type = str, default='')
+    parser.add_argument('--unkfilter', help="Ignore sentences with too many UNK tokens. "
+                                       "Can be an absolute count limit (if > 1) "
+                                       "or a proportional limit (0 < unkfilter < 1).",
+                                          type = float, default = 0)
     args = parser.parse_args(arguments)
     get_data(args)
 

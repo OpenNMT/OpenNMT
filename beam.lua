@@ -12,23 +12,34 @@ stringx = require('pl.stringx')
 cmd = torch.CmdLine()
 
 -- file location
-cmd:option('-modelfile', 'seq2seq_lstm_attn.t7.','model checkpoint file from training')
-cmd:option('-srcfile', 'data/src-val.txt','source file to load from')
-cmd:option('-targfile', 'data/targ-val.txt', 'target file with gold labels (if given)')
-cmd:option('-outfile', 'pred.txt', 'where to output predictions to')
-cmd:option('-srcdict', 'data/demo.src.dict', 'source idx2word dictionary')
-cmd:option('-targdict', 'data/demo.targ.dict', 'target idx2word dictionary')
-cmd:option('-chardict', 'data/demo.char.dict', 'char idx2char dictionary')
+cmd:option('-model_file', 'seq2seq_lstm_attn.t7.', [[Path to model .t7 file]])
+cmd:option('-src_file', 'data/src-val.txt',[[Source sequence to decode (one line per sequence)]])
+cmd:option('-targ_file', 'data/targ-val.txt', [[True target sequence (optional)]])
+cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the
+                                       decoded sequence]])
+cmd:option('-src_dict', 'data/demo.src.dict', [[Path to source vocabulary (*.src.dict file)]])
+cmd:option('-targ_dict', 'data/demo.targ.dict', [[Path to target vocabulary (*.targ.dict file)]])
+cmd:option('-char_dict', 'data/demo.char.dict', [[If using chars, path to character 
+                                                vocabulary (*.char.dict file)]])
 
 -- beam search options
-cmd:option('-beam', 5,'Beam size')
-cmd:option('-max_sent_l', 250, 'max sentence length during decoding')
-cmd:option('-simple', 0, 'if =1, take the top of the beam the first time it generates EOS')
-cmd:option('-replace_unk', 0, 'if = 1, replace unknown with argmax aligned source')
-cmd:option('-srctarg_dict', 'data/en-de.dict', 'phrase table from which to replace unk')
-cmd:option('-score_gold', 1, 'if = 1, score the log likelihood of the gold as well')
-cmd:option('-gpuid', -1,'')
-cmd:option('-gpuid2', -1,'')
+cmd:option('-beam', 5,[[Beam size]])
+cmd:option('-max_sent_l', 250, [[Maximum sentence length. If any sequences in srcfile are longer
+                               than this then it will error out]])
+cmd:option('-simple', 0, [[If = 1, output prediction is simply the first time the top of the beam
+                         ends with an end-of-sentence token. If = 0, the model considers all 
+                         hypotheses that have been generated so far that ends with end-of-sentence 
+                         token and takes the highest scoring of all of them.]])
+cmd:option('-replace_unk', 0, [[Replace the generated UNK tokens with the source token that 
+                              had the highest attention weight. If srctarg_dict is provided, 
+                              it will lookup the identified source token and give the corresponding 
+                              target token. If it is not provided (or the identified source token
+                              does not exist in the table) then it will copy the source token]])
+cmd:option('-srctarg_dict', 'data/en-de.dict', [[Path to source-target dictionary to replace UNK 
+                             tokens. See README.md for the format this file should be in.]])
+cmd:option('-score_gold', 1, [[If = 1, score the log likelihood of the gold as well]])
+cmd:option('-gpuid', -1,[[ID of the GPU to use (-1 = use CPU)]])
+cmd:option('-gpuid2', -1,[[Second GPU ID]])
 
 opt = cmd:parse(arg)
 
@@ -110,7 +121,6 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
    local scores = torch.FloatTensor(n, K)
    scores:zero()
    local source_l = math.min(source:size(1), opt.max_sent_l)
---   attn_layer_i = attn_layer[{{},{1,source_l}}]
    local attn_argmax = {}   -- store attn weights
    attn_argmax[1] = {}
 
@@ -200,10 +210,6 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
        if i == 2 then
           flat_out = out_float[1] -- all outputs same for first batch
        end
---       attn_layer_i:copy(softmax_layers[1].output)
---       attn_layer_i:add(softmax_layers[2].output)
---       attn_layer_i[{{},1}]:zero()
-       --       attn_layer_i[{{},source_l}]:zero()
 
        if model_opt.start_symbol == 1 then
 	  decoder_softmax.output[{{},1}]:zero()
@@ -321,13 +327,6 @@ function flip_table(u)
    return t   
 end
 
-function set_size(batch_l, source_l)   
-   if model_opt.use_chars_enc == 1 then
-      charcnn_view.size[1] = source_l
-      charcnn_view.size[2] = batch_l
-      charcnn_view.numElements = source_l * batch_l * charcnn_view.size[3]
-   end
-end
 
 function get_layer(layer)
    if layer.name ~= nil then
@@ -444,8 +443,8 @@ function main()
       require 'cunn'
       require 'cudnn'
    end      
-   print('loading ' .. opt.modelfile .. '...')
-   checkpoint = torch.load(opt.modelfile)
+   print('loading ' .. opt.model_file .. '...')
+   checkpoint = torch.load(opt.model_file)
    print('done!')
 
    if opt.replace_unk == 1 then
@@ -461,16 +460,16 @@ function main()
 
    -- load model and word2idx/idx2word dictionaries
    model, model_opt = checkpoint[1], checkpoint[2]
-   idx2word_src = idx2key(opt.srcdict)
+   idx2word_src = idx2key(opt.src_dict)
    word2idx_src = flip_table(idx2word_src)
-   idx2word_targ = idx2key(opt.targdict)
+   idx2word_targ = idx2key(opt.targ_dict)
    word2idx_targ = flip_table(idx2word_targ)
 
    
    -- load character dictionaries if needed
    if model_opt.use_chars_enc == 1 or model_opt.use_chars_dec == 1 then
       utf8 = require 'lua-utf8'      
-      char2idx = flip_table(idx2key(opt.chardict))
+      char2idx = flip_table(idx2key(opt.char_dict))
       model[1]:apply(get_layer)
    end
    if model_opt.use_chars_dec == 1 then
@@ -482,10 +481,10 @@ function main()
    end
    
    -- load gold labels if it exists
-   if path.exists(opt.targfile) then
-      print('loading GOLD labels at ' .. opt.targfile)
+   if path.exists(opt.targ_file) then
+      print('loading GOLD labels at ' .. opt.targ_file)
       gold = {}
-      local file = io.open(opt.targfile, 'r')
+      local file = io.open(opt.targ_file, 'r')
       for line in file:lines() do
 	 table.insert(gold, line)
       end
@@ -556,8 +555,8 @@ function main()
    State = StateAll
    local sent_id = 0
    pred_sents = {}
-   local file = io.open(opt.srcfile, "r")
-   local out_file = io.open(opt.outfile,'w')   
+   local file = io.open(opt.src_file, "r")
+   local out_file = io.open(opt.output_file,'w')   
    for line in file:lines() do
       sent_id = sent_id + 1
       line = clean_sent(line)      
