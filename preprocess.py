@@ -296,7 +296,7 @@ def get_data(args):
 def main(arguments):
     parser = argparse.ArgumentParser(
         description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--srcvocabsize', help="Source vocab size", type=int, default=50000)
     parser.add_argument('--targetvocabsize', help="Target vocab size", type=int, default=50000)
     parser.add_argument('--srcfile', help="Source Input file")

@@ -10,6 +10,9 @@ require 'model_utils'
 cmd = torch.CmdLine()
 
 -- data files
+cmd:text("")
+cmd:text("**Data options**")
+cmd:text("")
 cmd:option('-data_file','data/demo-train.hdf5','train data path')
 cmd:option('-val_data_file','data/demo-val.hdf5','valid data path')
 cmd:option('-savefile', 'seq2seq_lstm_attn','filename to autosave the checkpont to')
@@ -17,6 +20,10 @@ cmd:option('-num_shards', 0, 'if > 0, then training files are in this many parti
 cmd:option('-train_from', '', 'train from this checkpoint')
 
 -- rnn model specs
+cmd:text("")
+cmd:text("**Model options**")
+cmd:text("")
+
 cmd:option('-num_layers', 2, 'number of encoder/decoder LSTM layers')
 cmd:option('-rnn_size', 500, 'size of LSTM layers')
 cmd:option('-word_vec_size', 500, 'word vector sizes')
@@ -27,11 +34,19 @@ cmd:option('-init_dec', 1, 'initial state of decoder is last state of encoder if
 cmd:option('-hop_attn', 0, 'use hop attention on this layer in the decoder LSTM')
 cmd:option('-res_net', 0, 'if = 1 use residual connections between LSTM stacks')
 
+cmd:text("")
+cmd:text("Below options only apply if using the character model.")
+cmd:text("")
+
 -- char-cnn model specs (if use_chars == 1)
 cmd:option('-char_vec_size', 25, 'char embedding size in the encoder')
 cmd:option('-kernel_width', 6, 'char-cnn kernel widths')
 cmd:option('-num_kernels', 1000, 'number of kernels')
 cmd:option('-num_highway_layers', 2, 'number of highway layers')
+
+cmd:text("")
+cmd:text("**Optimization options**")
+cmd:text("")
 
 -- optimization
 cmd:option('-epochs', 13, 'number of training epoch')
@@ -43,6 +58,12 @@ cmd:option('-dropout', 0.3, 'dropout probability')
 cmd:option('-lr_decay', 0.5, 'decay learning rate by this if perf does not improve on val')
 cmd:option('-start_decay_at', 9, 'start decay at this epoch or if val loss does not improve')
 cmd:option('-curriculum', 0, 'use curriculum learning for this many epochs')
+
+cmd:text("")
+cmd:text("**Other options**")
+cmd:text("")
+
+
 cmd:option('-start_symbol', 0, 'if = 1 use <s> and </s> symbols on source')
 
 -- GPU
