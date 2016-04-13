@@ -162,7 +162,7 @@ has much faster convolutions so this is highly recommended if using the characte
 * `print_every`: Print various stats after this many batches.  
 #### Decoding options (`beam.lua`)
 
-* `model_file`: Path to model .t7 file.  
+* `model`: Path to model .t7 file.  
 * `src_file`: Source sequence to decode (one line per sequence).  
 * `targ_file`: True target sequence (optional).  
 * `output_file`: Path to output the predictions (each line will be the decoded sequence).  
@@ -191,6 +191,12 @@ We recommend [fast_align](https://github.com/clab/fast_align).
 * `score_gold`: If = 1, score the true target output as well.    
 * `gpuid`: ID of the GPU to use (-1 = use CPU).    
 * `gpuid2`: ID if the second GPU (if specified).
+
+#### Switching between GPU/CPU models
+By default, the model will always save the final model as a CPU model, but it will save the
+intermediate models as a CPU/GPU model depending on how you specified `-gpuid`.
+If you want to run beam search on the CPU with an intermediate model trained on the GPU,
+you can use `convert_to_cpu.lua` to convert the model to CPU and run beam search.
 
 #### GPU memory requirements/Training speed
 Training large sequence-to-sequence models can be memory-intensive. Memory requirements will

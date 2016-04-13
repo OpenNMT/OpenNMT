@@ -12,7 +12,7 @@ stringx = require('pl.stringx')
 cmd = torch.CmdLine()
 
 -- file location
-cmd:option('-model_file', 'seq2seq_lstm_attn.t7.', [[Path to model .t7 file]])
+cmd:option('-model', 'seq2seq_lstm_attn.t7.', [[Path to model .t7 file]])
 cmd:option('-src_file', '',[[Source sequence to decode (one line per sequence)]])
 cmd:option('-targ_file', '', [[True target sequence (optional)]])
 cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the
@@ -436,6 +436,9 @@ function main()
    PAD_WORD = '<blank>'; UNK_WORD = '<unk>'; START_WORD = '<s>'; END_WORD = '</s>'
    START_CHAR = '{'; END_CHAR = '}'
    MAX_SENT_L = opt.max_sent_l
+   assert(path.exists(opt.src_file), 'src_file does not exist')
+   assert(path.exists(opt.model), 'model does not exist')
+   
    -- parse input params
    opt = cmd:parse(arg)
    if opt.gpuid >= 0 then
@@ -443,8 +446,8 @@ function main()
       require 'cunn'
       require 'cudnn'
    end      
-   print('loading ' .. opt.model_file .. '...')
-   checkpoint = torch.load(opt.model_file)
+   print('loading ' .. opt.model .. '...')
+   checkpoint = torch.load(opt.model)
    print('done!')
 
    if opt.replace_unk == 1 then
@@ -464,7 +467,6 @@ function main()
    word2idx_src = flip_table(idx2word_src)
    idx2word_targ = idx2key(opt.targ_dict)
    word2idx_targ = flip_table(idx2word_targ)
-
    
    -- load character dictionaries if needed
    if model_opt.use_chars_enc == 1 or model_opt.use_chars_dec == 1 then
