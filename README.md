@@ -226,8 +226,14 @@ perl multi-bleu.perl gold.txt < pred.txt
 ```
 
 #### Pre-trained models
-We will be uploading English <-> German models trained on 4 million sentences from
+We've uploaded English <-> German models trained on 4 million sentences from
 [Workshop on Machine Translation 2015](http://www.statmt.org/wmt15/translation-task.html).
+Download link is below:
+
+https://drive.google.com/open?id=0BzhmYioWLRn_aEVnd0ZNcWd0Y2c
+
+It's a 2GB download.
+
 These models are 4-layer LSTMs with 1000 hidden units and essentially replicates the results from
 [Effective Approaches to Attention-based
 Neural Machine Translation](http://stanford.edu/~lmthang/data/papers/emnlp15_attn.pdf),
