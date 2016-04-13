@@ -532,9 +532,6 @@ function get_layer(layer)
 	 decoder_attn = layer
       end
    end
-   if torch.type(layer) == "nn.gModule" then
-      layer:apply(get_layer)
-   end
 end
 
 function main() 

@@ -550,7 +550,6 @@ function main()
    gold_words_total = 0
    gold_length = 0
    pred_length = 0
-   ngram_prec = {}
    
    State = StateAll
    local sent_id = 0
