@@ -13,8 +13,8 @@ cmd = torch.CmdLine()
 
 -- file location
 cmd:option('-model_file', 'seq2seq_lstm_attn.t7.', [[Path to model .t7 file]])
-cmd:option('-src_file', 'data/src-val.txt',[[Source sequence to decode (one line per sequence)]])
-cmd:option('-targ_file', 'data/targ-val.txt', [[True target sequence (optional)]])
+cmd:option('-src_file', '',[[Source sequence to decode (one line per sequence)]])
+cmd:option('-targ_file', '', [[True target sequence (optional)]])
 cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the
                                        decoded sequence]])
 cmd:option('-src_dict', 'data/demo.src.dict', [[Path to source vocabulary (*.src.dict file)]])
@@ -38,7 +38,7 @@ cmd:option('-replace_unk', 0, [[Replace the generated UNK tokens with the source
 cmd:option('-srctarg_dict', 'data/en-de.dict', [[Path to source-target dictionary to replace UNK 
                              tokens. See README.md for the format this file should be in.]])
 cmd:option('-score_gold', 1, [[If = 1, score the log likelihood of the gold as well]])
-cmd:option('-gpuid', -1,[[ID of the GPU to use (-1 = use CPU)]])
+cmd:option('-gpuid',  1,[[ID of the GPU to use (-1 = use CPU)]])
 cmd:option('-gpuid2', -1,[[Second GPU ID]])
 
 opt = cmd:parse(arg)
@@ -113,7 +113,7 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
       cutorch.setDevice(opt.gpuid)
    end
    local n = max_sent_l
-   -- Backpointer table.
+  -- Backpointer table.
    local prev_ks = torch.LongTensor(n, K):fill(1)
    -- Current States.
    local next_ys = torch.LongTensor(n, K):fill(1)
@@ -478,8 +478,7 @@ function main()
 	 word2charidx_targ[i] = word2charidx(idx2word_targ[i], char2idx,
 					     model_opt.max_word_l, word2charidx_targ[i])
       end      
-   end
-   
+   end  
    -- load gold labels if it exists
    if path.exists(opt.targ_file) then
       print('loading GOLD labels at ' .. opt.targ_file)
@@ -510,22 +509,16 @@ function main()
    softmax_layers = {}
    model[2]:apply(get_layer)
    decoder_attn:apply(get_layer)
---   hop_attn:apply(get_layer)
    decoder_softmax = softmax_layers[1]
    attn_layer = torch.zeros(opt.beam, MAX_SENT_L)
    
    context_proto = torch.zeros(1, MAX_SENT_L, model_opt.rnn_size)
    local h_init_dec = torch.zeros(opt.beam, model_opt.rnn_size)
-   local h_init_enc = torch.zeros(1, model_opt.rnn_size) -- only need one example for enc     
+   local h_init_enc = torch.zeros(1, model_opt.rnn_size) 
    if opt.gpuid >= 0 then
       h_init_enc = h_init_enc:cuda()      
       h_init_dec = h_init_dec:cuda()
       cutorch.setDevice(opt.gpuid)
-      init_fwd_enc = {}
-      for L = 1, model_opt.num_layers do
-	 table.insert(init_fwd_enc, h_init_enc:clone())
-	 table.insert(init_fwd_enc, h_init_enc:clone())
-      end      
       if opt.gpuid2 >= 0 then
 	 cutorch.setDevice(opt.gpuid)
 	 context_proto = context_proto:cuda()	 
@@ -535,21 +528,20 @@ function main()
 	 context_proto = context_proto:cuda()
       end
       attn_layer = attn_layer:cuda()
-      
-      init_fwd_dec = {h_init_dec:clone()} -- initial context
-      for L = 1, model_opt.num_layers do
-	 table.insert(init_fwd_dec, h_init_dec:clone()) -- memory cell
-	 table.insert(init_fwd_dec, h_init_dec:clone()) -- hidden state
-      end      
    end
-   
-   
+   init_fwd_enc = {}
+   init_fwd_dec = {h_init_dec:clone()} -- initial context   
+   for L = 1, model_opt.num_layers do
+      table.insert(init_fwd_enc, h_init_enc:clone())
+      table.insert(init_fwd_enc, h_init_enc:clone())
+      table.insert(init_fwd_dec, h_init_dec:clone()) -- memory cell
+      table.insert(init_fwd_dec, h_init_dec:clone()) -- hidden state      
+   end      
+     
    pred_score_total = 0
    gold_score_total = 0
    pred_words_total = 0
    gold_words_total = 0
-   gold_length = 0
-   pred_length = 0
    
    State = StateAll
    local sent_id = 0
