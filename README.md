@@ -232,8 +232,6 @@ Download link is below:
 
 https://drive.google.com/open?id=0BzhmYioWLRn_aEVnd0ZNcWd0Y2c
 
-It's a 2GB download.
-
 These models are 4-layer LSTMs with 1000 hidden units and essentially replicates the results from
 [Effective Approaches to Attention-based
 Neural Machine Translation](http://stanford.edu/~lmthang/data/papers/emnlp15_attn.pdf),
