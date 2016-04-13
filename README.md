@@ -16,6 +16,11 @@ Language Models](http://arxiv.org/abs/1508.06615), Kim et al. AAAI 2016.
 
 ### Dependencies
 
+#### Python
+* h5py
+* numpy
+
+#### Lua 
 You will need the following packages:
 * hdf5
 * nngraph

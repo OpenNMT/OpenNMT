@@ -277,7 +277,6 @@ function train(train_data, valid_data)
 	    d = data[i]
 	 else
 	    d = data[batch_order[i]]
-	    d = data[data:size()-1]
 	 end
          local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
 	 local batch_l, target_l, source_l = d[5], d[6], d[7]
