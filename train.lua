@@ -84,6 +84,14 @@ cmd:option('-lr_decay', 0.5, [[Decay learning rate by this much if (i) perplexit
 cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
 cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
                 sequence length. Sometimes setting this to 1 will increase convergence speed.]])
+cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load 
+                                      pretrained word embeddings (hdf5 file) on the encoder side. 
+                                      See README for specific formatting instructions.]])
+cmd:option('-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load 
+                                      pretrained word embeddings (hdf5 file) on the decoder side. 
+                                      See README for specific formatting instructions.]])
+cmd:option('-fix_word_vecs_enc', 0, [[If = 1, fix word embeddings on the encoder side]])
+cmd:option('-fix_word_vecs_dec', 0, [[If = 1, fix word embeddings on the decoder side]])
 
 cmd:text("")
 cmd:text("**Other options**")
@@ -127,7 +135,7 @@ function train(train_data, valid_data)
    params, grad_params = {}, {}
    opt.train_perf = {}
    opt.val_perf = {}
-
+   
    for i = 1, #layers do
       if opt.gpuid2 >= 0 then
 	 if i == 1 then
@@ -144,7 +152,22 @@ function train(train_data, valid_data)
       params[i] = p
       grad_params[i] = gp
    end
-   
+
+   if opt.pre_word_vecs_enc:len() > 0 then   
+      local f = hdf5.open(opt.pre_word_vecs_enc)     
+      local pre_word_vecs = f:read('word_vecs'):all()
+      for i = 1, pre_word_vecs:size(1) do
+	 word_vecs_enc.weight[1]:copy(pre_word_vecs[i])
+      end      
+   end
+   if opt.pre_word_vecs_dec:len() > 0 then      
+      local f = hdf5.open(opt.pre_word_vecs_dec)     
+      local pre_word_vecs = f:read('word_vecs'):all()
+      for i = 1, pre_word_vecs:size(1) do
+	 word_vecs_dec.weight[1]:copy(pre_word_vecs[i])
+      end      
+   end
+
    print("Number of parameters: " .. num_params)
    
    if opt.gpuid >= 0 and opt.gpuid2 >= 0 then
@@ -350,6 +373,10 @@ function train(train_data, valid_data)
 	    end	    
 	 end
          word_vecs_dec.gradWeight[1]:zero()
+	 if opt.fix_word_vecs_dec == 1 then
+	    word_vecs_dec.gradWeight:zero()
+	 end
+	 
 	 local grad_norm = 0
 	 grad_norm = grad_norm + grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 	 
@@ -380,6 +407,10 @@ function train(train_data, valid_data)
 	 end
 	 
          word_vecs_enc.gradWeight[1]:zero()
+	 if opt.fix_word_vecs_enc == 1 then
+	    word_vecs_enc.gradWeight:zero()
+	 end
+	 
 	 grad_norm = (grad_norm + grad_params[1]:norm()^2)^0.5
 	 
          -- Shrink norm and update params

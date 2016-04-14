@@ -147,7 +147,17 @@ Below options only apply if using the character model.
 * `lr_decay`: Decay learning rate by this much if (i) perplexity does not decrease on the validation
 set or (ii) epoch has gone past the `start_decay_at` epoch limit.  
 * `start_decay_at`: Start decay after this epoch.  
-* `curriculum`: For this many epochs, order the minibatches based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).  
+* `curriculum`: For this many epochs, order the minibatches based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).
+* `pre_word_vecs_enc`: If using pretrained word embeddings (on the encoder side), this is the
+path to the *.hdf5 file with the embeddings. The hdf5 should have a single field `word_vecs`,
+which references an array with dimensions vocab size x embedding size. Each row should is a word
+embedding and should follow the same indexing scheme as the *.dict files from running
+`preprocess.py`. In order to be consistent with `beam.lua`, the first 4 indices should
+always be `<blank>`, `<unk>`, `<s>`, `</s>` tokens.  
+* `pre_word_vecs_dec`: Path to *.hdf5 for pretrained word embeddings on the decoder side. See above
+for formatting of the *.hdf5 file.  
+* `fix_word_vecs_enc`: If = 1, fix word embeddings on the encoder side.  
+* `fix_word_vecs_dec`: If = 1, fix word embeddings on the decoder side.
 
 **Other options**
 
