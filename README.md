@@ -150,8 +150,8 @@ set or (ii) epoch has gone past the `start_decay_at` epoch limit.
 * `curriculum`: For this many epochs, order the minibatches based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).
 * `pre_word_vecs_enc`: If using pretrained word embeddings (on the encoder side), this is the
 path to the *.hdf5 file with the embeddings. The hdf5 should have a single field `word_vecs`,
-which references an array with dimensions vocab size x embedding size. Each row should is a word
-embedding and should follow the same indexing scheme as the *.dict files from running
+which references an array with dimensions vocab size by embedding size. Each row should be a word
+embedding and follow the same indexing scheme as the *.dict files from running
 `preprocess.py`. In order to be consistent with `beam.lua`, the first 4 indices should
 always be `<blank>`, `<unk>`, `<s>`, `</s>` tokens.  
 * `pre_word_vecs_dec`: Path to *.hdf5 for pretrained word embeddings on the decoder side. See above
