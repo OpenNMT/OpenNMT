@@ -161,7 +161,7 @@ function make_generator(data, opt)
    local w = torch.ones(data.target_size)
    w[1] = 0
    criterion = nn.ClassNLLCriterion(w)
-   criterion.isStateless = True
+   criterion.sizeAverage = false
    return model, criterion
 end
 

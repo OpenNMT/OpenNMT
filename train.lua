@@ -110,9 +110,12 @@ cmd:option('-cudnn', 1, [[Whether to use cudnn or not for convolutions (for the 
                          if using the character model]])
 -- bookkeeping
 cmd:option('-save_every', 1, [[Save every this many epochs]])
-cmd:option('-print_every', 1000, [[Print stats after this many batches]])
+cmd:option('-print_every', 50, [[Print stats after this many batches]])
+cmd:option('-seed', 3435, [[Seed for random initialization]])
 
 opt = cmd:parse(arg)
+torch.manualSeed(opt.seed)
+
 
 function zero_table(t)
    for i = 1, #t do
@@ -358,8 +361,9 @@ function train(train_data, valid_data)
 	 local loss = 0
 	 for t = target_l, 1, -1 do
 	    local pred = generator:forward(preds[t])
-	    loss = loss + criterion:forward(pred, target_out[t])
+	    loss = loss + criterion:forward(pred, target_out[t])/batch_l
 	    local dl_dpred = criterion:backward(pred, target_out[t])
+	    dl_dpred:div(batch_l)
 	    local dl_dtarget = generator:backward(preds[t], dl_dpred)
 	    drnn_state_dec[#drnn_state_dec]:add(dl_dtarget)
 	    local decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
@@ -443,7 +447,7 @@ function train(train_data, valid_data)
 					epoch, i, data:size(), batch_l, opt.learning_rate)
 	    stats = stats .. string.format('PPL: %.2f, |Param|: %.2f, |GParam|: %.2f, ',
 				  math.exp(train_loss/train_nonzeros), param_norm, grad_norm)
-	    stats = stats .. string.format('Training: %d/%d/%d total/source/target tokens/sec, ',
+	    stats = stats .. string.format('Training: %d/%d/%d total/source/target tokens/sec',
 					   (num_words_target+num_words_source) / time_taken,
 					   num_words_source / time_taken,
 					   num_words_target / time_taken)			   
@@ -543,7 +547,7 @@ function eval(data)
 	 local pred = generator:forward(out[#out])
 	 loss = loss + criterion:forward(pred, target_out[t])
       end
-      nll = nll + loss * batch_l
+      nll = nll + loss
       total = total + nonzeros
    end
    local valid = math.exp(nll / total)
@@ -579,6 +583,7 @@ function main()
 	 require 'cudnn'
       end      
       cutorch.setDevice(opt.gpuid)
+      cutorch.manualSeed(opt.seed)      
    end
    
    -- Create the data loader class.
