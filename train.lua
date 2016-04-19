@@ -509,14 +509,12 @@ function eval(data)
       local d = data[i]
       local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
       local batch_l, target_l, source_l = d[5], d[6], d[7]
-      cutorch.setDevice(opt.gpuid)
       local rnn_state_enc = reset_state(init_fwd_enc, batch_l, 1)
       local context = context_proto[{{1, batch_l}, {1, source_l}}]
       -- forward prop encoder
       for t = 1, source_l do
-	 encoder_clones[t]:training()
 	 local encoder_input = {source[t], table.unpack(rnn_state_enc)}
-	 local out = encoder_clones[t]:forward(encoder_input)
+	 local out = encoder_clones[1]:forward(encoder_input)
 	 rnn_state_enc = out
 	 context[{{},t}]:copy(out[#out])
       end
