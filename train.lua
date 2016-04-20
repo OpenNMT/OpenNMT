@@ -150,7 +150,7 @@ function train(train_data, valid_data)
       local p, gp = layers[i]:getParameters()
       if opt.train_from:len() == 0 then
 	 p:uniform(-opt.param_init, opt.param_init)
-      end      
+      end
       num_params = num_params + p:size(1)
       params[i] = p
       grad_params[i] = gp
