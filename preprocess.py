@@ -267,9 +267,9 @@ def get_data(args):
     if args.srcvocabfile != '':
         print('Loading pre-specified source vocab from ' + args.srcvocabfile)
         src_indexer.load_vocab(args.srcvocabfile)
-    if args.targvocabfile != '':
-        print('Loading pre-specified target vocab from ' + args.targvocabfile)
-        target_indexer.load_vocab(args.targvocabfile)
+    if args.targetvocabfile != '':
+        print('Loading pre-specified target vocab from ' + args.targetvocabfile)
+        target_indexer.load_vocab(args.targetvocabfile)
         
     src_indexer.write(args.outputfile + ".src.dict")
     target_indexer.write(args.outputfile + ".targ.dict")
@@ -328,7 +328,7 @@ def main(arguments):
                                           "then including this will ignore srcvocabsize and use the"
                                           "vocab provided here.",
                                           type = str, default='')
-    parser.add_argument('--targvocabfile', help="If working with a preset vocab, "
+    parser.add_argument('--targetvocabfile', help="If working with a preset vocab, "
                                          "then including this will ignore targetvocabsize and "
                                          "use the vocab provided here.",
                                           type = str, default='')

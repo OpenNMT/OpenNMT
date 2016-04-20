@@ -33,6 +33,10 @@ If running the character model, you should also install:
 * cudnn
 * luautf8
 
+**Note on CUDA: For some reason the gradients blow up with CUDA 7.5 and hence the
+model fails to train. See [here](https://github.com/harvardnlp/seq2seq-attn/issues/10)
+for more details. For now, models should be trained with CUDA 6.5**
+
 ### Quickstart
 
 We are going to be working with some example data in `data/` folder.

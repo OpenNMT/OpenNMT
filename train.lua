@@ -105,7 +105,7 @@ cmd:option('-gpuid', -1, [[Which gpu to use. -1 = use CPU]])
 cmd:option('-gpuid2', -1, [[If this is >= 0, then the model will use two GPUs whereby the encoder
                            is on the first GPU and the decoder is on the second GPU. 
                            This will allow you to train with bigger batches/models.]])
-cmd:option('-cudnn', 1, [[Whether to use cudnn or not for convolutions (for the character model).
+cmd:option('-cudnn', 0, [[Whether to use cudnn or not for convolutions (for the character model).
                          cudnn has much faster convolutions so this is highly recommended 
                          if using the character model]])
 -- bookkeeping
