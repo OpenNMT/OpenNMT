@@ -613,6 +613,8 @@ function main()
       print('loading ' .. opt.train_from .. '...')
       local checkpoint = torch.load(opt.train_from)
       local model, model_opt = checkpoint[1], checkpoint[2]
+      opt.num_layers = model_opt.num_layers
+      opt.rnn_size = model_opt.rnn_size
       encoder = model[1]:double()
       decoder = model[2]:double()      
       generator = model[3]:double()
