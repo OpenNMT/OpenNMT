@@ -33,10 +33,6 @@ If running the character model, you should also install:
 * cudnn
 * luautf8
 
-**Note on CUDA: For some reason the gradients are incorrectly calculated with CUDA 7.5 and hence the
-model fails to train. See [here](https://github.com/harvardnlp/seq2seq-attn/issues/10)
-for more details. For now, models should be trained with CUDA 7.0.**
-
 ### Quickstart
 
 We are going to be working with some example data in `data/` folder.
@@ -129,8 +125,8 @@ this did not really improve performance on translation, but may be helpful for o
 where multiple attentional passes over the source sequence are required (e.g. for more complex
 reasoning tasks).
 * `res_net`: Use residual connections between LSTM stacks whereby the input to the l-th LSTM
-layer if the hidden state of the l-1-th LSTM layer added with the l-2th LSTM layer. We didn't find
-this to help in our experiments.
+layer of the hidden state of the l-1-th LSTM layer summed with hidden state of the l-2th LSTM layer.
+We didn't find this to really help in our experiments.
 
 Below options only apply if using the character model.
 
@@ -214,7 +210,7 @@ you can use `convert_to_cpu.lua` to convert the model to CPU and run beam search
 
 #### GPU memory requirements/Training speed
 Training large sequence-to-sequence models can be memory-intensive. Memory requirements will
-dependend on batch size, maximum sequence length, vocabulary size, and (obviously) model size.
+dependent on batch size, maximum sequence length, vocabulary size, and (obviously) model size.
 Here are some benchmark numbers on a GeForce GTX Titan X.
 (assuming batch size of 64, maximum sequence length of 50 on both the source/target sequence,
 vocabulary size of 50000, and word embedding size equal to rnn size):

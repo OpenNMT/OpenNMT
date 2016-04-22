@@ -81,7 +81,7 @@ function make_lstm(data, opt, model, use_chars)
 	  x = hop_attn({x, inputs[offset]})
        end
        if dropout > 0 then
-	  x = nn.Dropout(dropout, nil, true)(x)
+	  x = nn.Dropout(dropout, nil, false)(x)
        end       
     end
     -- evaluate the input sums at once for efficiency
@@ -114,7 +114,7 @@ function make_lstm(data, opt, model, use_chars)
      decoder_attn.name = 'decoder_attn'
      local attn_out = decoder_attn({top_h, inputs[offset]})
      if dropout > 0 then
-	attn_out = nn.Dropout(dropout, nil, true)(attn_out)
+	attn_out = nn.Dropout(dropout, nil, false)(attn_out)
      end     
      table.insert(outputs, attn_out)
   end
