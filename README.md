@@ -202,7 +202,7 @@ ukraine|||ukrainische
 This dictionary can be obtained by, for example, running an alignment model as a preprocessing step.
 We recommend [fast_align](https://github.com/clab/fast_align).  
 * `score_gold`: If = 1, score the true target output as well.
-* 'n_best': If > 1, then it will also output an n_best list of decoded sentences in the following
+* `n_best`: If > 1, then it will also output an n_best list of decoded sentences in the following
 format.
 ```
 1 ||| sentence_1 ||| sentence_1_score
