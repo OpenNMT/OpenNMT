@@ -36,9 +36,10 @@ cmd:option('-replace_unk', 0, [[Replace the generated UNK tokens with the source
                               target token. If it is not provided (or the identified source token
                               does not exist in the table) then it will copy the source token]])
 cmd:option('-srctarg_dict', 'data/en-de.dict', [[Path to source-target dictionary to replace UNK 
-                             tokens. See README.md for the format this file should be in.]])
+                             tokens. See README.md for the format this file should be in]])
 cmd:option('-score_gold', 1, [[If = 1, score the log likelihood of the gold as well]])
-cmd:option('-gpuid',  1,[[ID of the GPU to use (-1 = use CPU)]])
+cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
+cmd:option('-gpuid',  -1,[[ID of the GPU to use (-1 = use CPU)]])
 cmd:option('-gpuid2', -1,[[Second GPU ID]])
 
 opt = cmd:parse(arg)
@@ -241,7 +242,6 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
              flat_out[index[1]] = -1e9
           end
        end
-       -- print(scores[i])
        for j = 1, #rnn_state_dec do
 	  rnn_state_dec[j]:copy(rnn_state_dec[j]:index(1, prev_ks[i]))
        end
@@ -303,7 +303,7 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
       max_attn_argmax = end_attn_argmax
    end
 
-   return max_hyp, max_score, max_attn_argmax, gold_score
+   return max_hyp, max_score, max_attn_argmax, gold_score, states[i], scores[i], attn_argmax[i]
 end
 
 function idx2key(file)   
@@ -396,9 +396,16 @@ function word2charidx(word, char2idx, max_word_l, t)
    return t
 end
 
-function wordidx2sent(sent, idx2word, source_str, attn)
+function wordidx2sent(sent, idx2word, source_str, attn, skip_end)
    local t = {}
-   for i = 2, #sent-1 do -- skip START and END
+   local start_i, end_i
+   skip_end = skip_start_end or true
+   if skip_end then
+      end_i = #sent-1
+   else
+      end_i = #sent
+   end   
+   for i = 2, end_i do -- skip START and END
       if sent[i] == UNK then
 	 if opt.replace_unk == 1 then
 	    local s = source_str[attn[i]]
@@ -564,11 +571,11 @@ function main()
 	 target, target_str = sent2wordidx(gold[sent_id], word2idx_targ)
       end
       state = State.initial(START)
-      pred, pred_score, attn, gold_score = generate_beam(model, state, opt.beam,
-							 MAX_SENT_L, source, target)
+      pred, pred_score, attn, gold_score, all_sents, all_scores, all_attn = generate_beam(model,
+  		state, opt.beam, MAX_SENT_L, source, target)
       pred_score_total = pred_score_total + pred_score
       pred_words_total = pred_words_total + #pred - 1
-      pred_sent = wordidx2sent(pred, idx2word_targ, source_str, attn)
+      pred_sent = wordidx2sent(pred, idx2word_targ, source_str, attn, true)
       out_file:write(pred_sent .. '\n')      
       print('PRED ' .. sent_id .. ': ' .. pred_sent)
       if gold ~= nil then
@@ -579,6 +586,15 @@ function main()
 	    gold_words_total = gold_words_total + target:size(1) - 1	 	    
 	 end
       end
+      if opt.n_best > 1 then
+	 for n = 1, opt.n_best do
+	    pred_sent_n = wordidx2sent(all_sents[n], idx2word_targ, source_str, all_attn[n], false)
+	    local out_n = string.format("%d ||| %s ||| %.4f", n, pred_sent_n, all_scores[n])
+	    print(out_n)
+	    out_file:write(out_n .. '\n')
+	 end	 
+      end
+      
       print('')
    end
    print(string.format("PRED AVG SCORE: %.4f, PRED PPL: %.4f", pred_score_total / pred_words_total,

@@ -3,7 +3,7 @@
 [Torch](http://torch.ch) implementation of a standard sequence-to-sequence model with attention
 where the encoder-decoder are LSTMs. Also has the option to use characters
 (instead of input word embeddings) by running a convolutional neural network followed by a
-highway network over character embeddings to use as inputs.
+[highway network](http://arxiv.org/abs/1505.00387) over character embeddings to use as inputs.
 
 The attention model is from
 [Effective Approaches to Attention-based
@@ -13,6 +13,9 @@ from the paper.
 
 The character model is from [Character-Aware Neural
 Language Models](http://arxiv.org/abs/1508.06615), Kim et al. AAAI 2016.
+
+This project is maintained by [Yoon Kim](http://people.fas.harvard.edu/~yoonkim).
+Feel free to [email](yoonkim@seas.harvard.edu) with any questions or post them on the issues page.
 
 ### Dependencies
 
@@ -198,7 +201,13 @@ ukraine|||ukrainische
 ```
 This dictionary can be obtained by, for example, running an alignment model as a preprocessing step.
 We recommend [fast_align](https://github.com/clab/fast_align).  
-* `score_gold`: If = 1, score the true target output as well.    
+* `score_gold`: If = 1, score the true target output as well.
+* 'n_best': If > 1, then it will also output an n_best list of decoded sentences in the following
+format.
+```
+1 ||| sentence_1 ||| sentence_1_score
+2 ||| sentence_2 ||| sentence_2_score
+```
 * `gpuid`: ID of the GPU to use (-1 = use CPU).    
 * `gpuid2`: ID if the second GPU (if specified).
 
