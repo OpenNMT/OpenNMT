@@ -307,16 +307,16 @@ def main(arguments):
                                                 type=int, default=50000)
     parser.add_argument('--srcfile', help="Path to source training data, "
                                            "where each line represents a single "
-                                           "source/target sequence.")
+                                           "source/target sequence.", required=True)
     parser.add_argument('--targetfile', help="Path to target training data, "
                                            "where each line represents a single "
-                                           "source/target sequence.")
-    parser.add_argument('--srcvalfile', help="Path to source validation data.")
-    parser.add_argument('--targetvalfile', help="Path to target validation data.")
+                                           "source/target sequence.", required=True)
+    parser.add_argument('--srcvalfile', help="Path to source validation data.", required=True)
+    parser.add_argument('--targetvalfile', help="Path to target validation data.", required=True)
     parser.add_argument('--batchsize', help="Size of each minibatch.", type=int, default=64)
     parser.add_argument('--seqlength', help="Maximum sequence length. Sequences longer "
                                                "than this are dropped.", type=int, default=50)
-    parser.add_argument('--outputfile', help="Prefix of the output file names. ", type=str)
+    parser.add_argument('--outputfile', help="Prefix of the output file names. ", type=str, required=True)
     parser.add_argument('--maxwordlength', help="For the character models, words are "
                                            "(if longer than maxwordlength) or zero-padded "
                                             "(if shorter) to maxwordlength", type=int, default=35)
