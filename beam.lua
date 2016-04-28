@@ -344,10 +344,10 @@ function get_layer(layer)
    end
 end
 
-function sent2wordidx(sent, word2idx)
+function sent2wordidx(sent, word2idx, start_symbol)
    local t = {}
    local u = {}
-   if model_opt.start_symbol == 1 then
+   if start_symbol == 1 then
       table.insert(t, START)
       table.insert(u, START_WORD)
    end
@@ -357,19 +357,24 @@ function sent2wordidx(sent, word2idx)
       table.insert(t, idx)
       table.insert(u, word)
    end
-   if model_opt.start_symbol == 1 then
+   if start_symbol == 1 then
       table.insert(t, END)
       table.insert(u, END_WORD)
    end   
    return torch.LongTensor(t), u
 end
 
-function sent2charidx(sent, char2idx, max_word_l)
-   local words = {START_WORD}
+function sent2charidx(sent, char2idx, max_word_l, start_symbol)
+   local words = {}
+   if start_symbol == 1 then
+      table.insert(START_WORD)
+   end   
    for word in sent:gmatch'([^%s]+)' do
       table.insert(words, word)
    end
-   table.insert(words, END_WORD)
+   if start_symbol == 1 then
+      table.insert(END_WORD)
+   end   
    local chars = torch.ones(#words, max_word_l)
    for i = 1, #words do
       chars[i] = word2charidx(words[i], char2idx, max_word_l, chars[i])
@@ -566,12 +571,12 @@ function main()
       print('SENT ' .. sent_id .. ': ' ..line)
       local source, source_str
       if model_opt.use_chars_enc == 0 then
-	 source, source_str = sent2wordidx(line, word2idx_src)
+	 source, source_str = sent2wordidx(line, word2idx_src, model_opt.start_symbol)
       else
-	 source, source_str = sent2charidx(line, char2idx, model_opt.max_word_l)
+	 source, source_str = sent2charidx(line, char2idx, model_opt.max_word_l, model_opt.start_symbol)
       end
       if opt.score_gold == 1 then
-	 target, target_str = sent2wordidx(gold[sent_id], word2idx_targ)
+	 target, target_str = sent2wordidx(gold[sent_id], word2idx_targ, 1)
       end
       state = State.initial(START)
       pred, pred_score, attn, gold_score, all_sents, all_scores, all_attn = generate_beam(model,
