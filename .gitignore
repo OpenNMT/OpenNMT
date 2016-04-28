@@ -2,6 +2,7 @@
 *.out
 *.t7
 *.dict
+*.txt
 
 # Compiled Lua sources
 luac.out

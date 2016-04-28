@@ -451,7 +451,6 @@ function main()
    if opt.gpuid >= 0 then
       require 'cutorch'
       require 'cunn'
-      require 'cudnn'
    end      
    print('loading ' .. opt.model .. '...')
    checkpoint = torch.load(opt.model)
@@ -470,6 +469,10 @@ function main()
 
    -- load model and word2idx/idx2word dictionaries
    model, model_opt = checkpoint[1], checkpoint[2]
+   if model_opt.cudnn == 1 then
+      require 'cudnn'
+   end
+   
    idx2word_src = idx2key(opt.src_dict)
    word2idx_src = flip_table(idx2word_src)
    idx2word_targ = idx2key(opt.targ_dict)
