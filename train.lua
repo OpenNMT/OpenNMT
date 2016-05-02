@@ -488,13 +488,13 @@ function train(train_data, valid_data)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, epoch, score)      
       if epoch % opt.save_every == 0 then
          print('saving checkpoint to ' .. savefile)
-	 clean_layer(encoder); clean_layer(decoder); clean_layer(generator)
+	 clean_layer(generator)
 	 torch.save(savefile, {{encoder, decoder, generator}, opt})
       end
    end
    -- save final model
    local savefile = string.format('%s_final.t7', opt.savefile)
-   clean_layer(encoder); clean_layer(decoder); clean_layer(generator)
+   clean_layer(generator)
    print('saving final model to ' .. savefile)   
    torch.save(savefile, {{encoder:double(), decoder:double(), generator:double()}, opt})   
 end
