@@ -27,16 +27,19 @@ function make_lstm(data, opt, model, use_chars)
    table.insert(inputs, nn.Identity()()) -- x (batch_size x max_word_l)
    if model == 'dec' then
       table.insert(inputs, nn.Identity()()) -- all context (batch_size x source_l x rnn_size)
-      table.insert(inputs, nn.Identity()()) -- prev context_attn (batch_size x rnn_size)
-      offset = offset + 2
-   end   
-  for L = 1,n do
-    table.insert(inputs, nn.Identity()()) -- prev_c[L]
-    table.insert(inputs, nn.Identity()()) -- prev_h[L]
-  end
+      offset = offset + 1
+      if opt.input_feed == 1 then
+	 table.insert(inputs, nn.Identity()()) -- prev context_attn (batch_size x rnn_size)
+	 offset = offset + 1
+      end
+   end
+   for L = 1,n do
+      table.insert(inputs, nn.Identity()()) -- prev_c[L]
+      table.insert(inputs, nn.Identity()()) -- prev_h[L]
+   end
 
-  local x, input_size_L
-  local outputs = {}
+   local x, input_size_L
+   local outputs = {}
   for L = 1,n do
      -- c,h from previous timesteps
     local prev_c = inputs[L*2+offset]    
@@ -66,8 +69,10 @@ function make_lstm(data, opt, model, use_chars)
        end
        input_size_L = input_size
        if model == 'dec' then
-	  x = nn.JoinTable(2)({x, inputs[1+offset]}) -- batch_size x (word_vec_size + rnn_size)
-	  input_size_L = input_size + rnn_size
+	  if opt.input_feed == 1 then
+	     x = nn.JoinTable(2)({x, inputs[1+offset]}) -- batch_size x (word_vec_size + rnn_size)
+	     input_size_L = input_size + rnn_size
+	  end	  
        end
     else
        x = outputs[(L-1)*2]
@@ -75,10 +80,10 @@ function make_lstm(data, opt, model, use_chars)
 	  x = nn.CAddTable()({x, outputs[(L-2)*2]})       
        end       
        input_size_L = rnn_size
-       if opt.hop_attn == L and model == 'dec' then
-	  local hop_attn = make_decoder_attn(data, opt, 1)
-	  hop_attn.name = 'hop_attn' .. L
-	  x = hop_attn({x, inputs[offset]})
+       if opt.multi_attn == L and model == 'dec' then
+	  local multi_attn = make_decoder_attn(data, opt, 1)
+	  multi_attn.name = 'multi_attn' .. L
+	  x = multi_attn({x, inputs[2]})
        end
        if dropout > 0 then
 	  x = nn.Dropout(dropout, nil, false)(x)
@@ -112,7 +117,7 @@ function make_lstm(data, opt, model, use_chars)
      local top_h = outputs[#outputs]
      local decoder_attn = make_decoder_attn(data, opt)     
      decoder_attn.name = 'decoder_attn'
-     local attn_out = decoder_attn({top_h, inputs[offset]})
+     local attn_out = decoder_attn({top_h, inputs[2]})
      if dropout > 0 then
 	attn_out = nn.Dropout(dropout, nil, false)(attn_out)
      end     

@@ -33,20 +33,22 @@ cmd:text("")
 cmd:option('-num_layers', 2, [[Number of layers in the LSTM encoder/decoder]])
 cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
-cmd:option('-use_chars_enc', 0, [[If 1, use character on the encoder 
+cmd:option('-use_chars_enc', 0, [[If = 1, use character on the encoder 
                                 side (instead of word embeddings]])
-cmd:option('-use_chars_dec', 0, [[If 1, use character on the decoder 
+cmd:option('-use_chars_dec', 0, [[If = 1, use character on the decoder 
                                 side (instead of word embeddings]])
-cmd:option('-reverse_src', 0, [[If 1, reverse the source sequence. The original 
+cmd:option('-reverse_src', 0, [[If = 1, reverse the source sequence. The original 
                               sequence-to-sequence paper found that this was crucial to 
                               achieving good performance, but with attention models this
                               does not seem necessary. Recommend leaving it to 0]])
 cmd:option('-init_dec', 1, [[Initialize the hidden/cell state of the decoder at time 
                            0 to be the last hidden/cell state of the encoder. If 0, 
                            the initial states of the decoder are set to zero vectors]])
-cmd:option('-hop_attn', 0, [[If > 0, then use a *hop attention* on this layer of the decoder. 
-                           For example, if num_layers = 3 and `hop_attn = 2`, then the 
-                           model will do an attention over the source sequence
+cmd:option('-input_feed', 1, [[If = 1, feed the context vector at each time step as additional
+                             input (vica concatenation with the word embeddings) to the decoder]])
+cmd:option('-multi_attn', 0, [[If > 0, then use a another attention layer on this layer of 
+                           the decoder. For example, if num_layers = 3 and `multi_attn = 2`, 
+                           then the model will do an attention over the source sequence
                            on the second layer (and use that as input to the third layer) and 
                            the penultimate layer]])
 cmd:option('-res_net', 0, [[Use residual connections between LSTM stacks whereby the input to 
@@ -203,11 +205,9 @@ function train(train_data, valid_data)
       end
    end   
 
-   local h_init_dec = torch.zeros(valid_data.batch_l:max(), opt.rnn_size)
-   local h_init_enc = torch.zeros(valid_data.batch_l:max(), opt.rnn_size)      
+   local h_init = torch.zeros(valid_data.batch_l:max(), opt.rnn_size)
    if opt.gpuid >= 0 then
-      h_init_enc = h_init_enc:cuda()      
-      h_init_dec = h_init_dec:cuda()
+      h_init = h_init:cuda()      
       cutorch.setDevice(opt.gpuid)
       if opt.gpuid2 >= 0 then
 	 cutorch.setDevice(opt.gpuid)
@@ -224,19 +224,28 @@ function train(train_data, valid_data)
 
    init_fwd_enc = {}
    init_bwd_enc = {}
-   init_fwd_dec = {h_init_dec:clone()} -- initial context
-   init_bwd_dec = {h_init_dec:clone()} -- just need one copy of this
+   init_fwd_dec = {}
+   init_bwd_dec = {}
+   if opt.input_feed == 1 then
+      table.insert(init_fwd_dec, h_init:clone())
+   end
+   table.insert(init_bwd_dec, h_init:clone())
    
    for L = 1, opt.num_layers do
-      table.insert(init_fwd_enc, h_init_enc:clone())
-      table.insert(init_fwd_enc, h_init_enc:clone())
-      table.insert(init_bwd_enc, h_init_enc:clone())
-      table.insert(init_bwd_enc, h_init_enc:clone())
-      table.insert(init_fwd_dec, h_init_dec:clone()) -- memory cell
-      table.insert(init_fwd_dec, h_init_dec:clone()) -- hidden state
-      table.insert(init_bwd_dec, h_init_dec:clone())
-      table.insert(init_bwd_dec, h_init_dec:clone())      
+      table.insert(init_fwd_enc, h_init:clone())
+      table.insert(init_fwd_enc, h_init:clone())
+      table.insert(init_bwd_enc, h_init:clone())
+      table.insert(init_bwd_enc, h_init:clone())
+      table.insert(init_fwd_dec, h_init:clone()) -- memory cell
+      table.insert(init_fwd_dec, h_init:clone()) -- hidden state
+      table.insert(init_bwd_dec, h_init:clone())
+      table.insert(init_bwd_dec, h_init:clone())      
    end      
+
+   dec_offset = 3 -- offset depends on input feeding/attn
+   if opt.input_feed == 1 then
+      dec_offset = dec_offset + 1
+   end
    
    function reset_state(state, batch_l, t)
       local u = {[t] = {}}
@@ -251,6 +260,7 @@ function train(train_data, valid_data)
       end      
    end
 
+   -- clean layer before saving to make the model smaller
    function clean_layer(layer)
       if opt.gpuid >= 0 then
 	 layer.output = torch.CudaTensor()
@@ -294,7 +304,6 @@ function train(train_data, valid_data)
       local start_time = timer:time().real
       local num_words_target = 0
       local num_words_source = 0
-
       
       for i = 1, data:size() do
 	 zero_table(grad_params, 'zero')
@@ -335,8 +344,8 @@ function train(train_data, valid_data)
 	 local rnn_state_dec = reset_state(init_fwd_dec, batch_l, 0)
 	 if opt.init_dec == 1 then
 	    for L = 1, opt.num_layers do
-	       rnn_state_dec[0][L*2]:copy(rnn_state_enc[source_l][L*2-1])
-	       rnn_state_dec[0][L*2+1]:copy(rnn_state_enc[source_l][L*2])
+	       rnn_state_dec[0][L*2-1+opt.input_feed]:copy(rnn_state_enc[source_l][L*2-1])
+	       rnn_state_dec[0][L*2+opt.input_feed]:copy(rnn_state_enc[source_l][L*2])
 	    end
 	 end	 
 	 
@@ -348,7 +357,9 @@ function train(train_data, valid_data)
 	    local out = decoder_clones[t]:forward(decoder_input)
 	    local next_state = {}
 	    table.insert(preds, out[#out])
-	    table.insert(next_state, out[#out])
+	    if opt.input_feed == 1 then
+	       table.insert(next_state, out[#out])
+	    end
 	    for j = 1, #out-1 do
 	       table.insert(next_state, out[j])
 	    end
@@ -371,9 +382,11 @@ function train(train_data, valid_data)
 	    -- accumulate encoder/decoder grads
 	    encoder_grads:add(dlst[2])
 	    drnn_state_dec[#drnn_state_dec]:zero()
-	    drnn_state_dec[#drnn_state_dec]:add(dlst[3])
-	    for j = 4, #dlst do
-	       drnn_state_dec[j-3]:copy(dlst[j])
+	    if opt.input_feed == 1 then
+	       drnn_state_dec[#drnn_state_dec]:add(dlst[3])
+	    end	    
+	    for j = dec_offset, #dlst do
+	       drnn_state_dec[j-dec_offset+1]:copy(dlst[j])
 	    end	    
 	 end
          word_vecs_dec.gradWeight[1]:zero()
@@ -615,6 +628,7 @@ function main()
       local model, model_opt = checkpoint[1], checkpoint[2]
       opt.num_layers = model_opt.num_layers
       opt.rnn_size = model_opt.rnn_size
+      opt.input_feed = model_opt.input_feed
       encoder = model[1]:double()
       decoder = model[2]:double()      
       generator = model[3]:double()

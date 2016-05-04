@@ -8,8 +8,8 @@ where the encoder-decoder are LSTMs. Also has the option to use characters
 The attention model is from
 [Effective Approaches to Attention-based
 Neural Machine Translation](http://stanford.edu/~lmthang/data/papers/emnlp15_attn.pdf),
-Luong et al. EMNLP 2015. We use the *global-attention* model with the *input-feeding* approach
-from the paper.
+Luong et al. EMNLP 2015. We use the *global-general-attention* model with the
+*input-feeding* approach from the paper. Input-feeding is optional and can be turned off.
 
 The character model is from [Character-Aware Neural
 Language Models](http://arxiv.org/abs/1508.06615), Kim et al. AAAI 2016.
@@ -113,20 +113,21 @@ then this is the number of shards.
 * `num_layers`: Number of layers in the LSTM encoder/decoder (i.e. number of stacks).  
 * `rnn_size`: Size of LSTM hidden states.  
 * `word_vec_size`: Word embedding size.  
-* `use_chars_enc`: If 1, use characters on the encoder side (as inputs).  
-* `use_chars_dec`: If 1, use characters on the decoder side (as inputs).  
-* `reverse_src`: If 1, reverse the source sequence. The original sequence-to-sequence paper
+* `use_chars_enc`: If = 1, use characters on the encoder side (as inputs).  
+* `use_chars_dec`: If = 1, use characters on the decoder side (as inputs).  
+* `reverse_src`: If = 1, reverse the source sequence. The original sequence-to-sequence paper
 found that this was crucial to achieving good performance, but with attention models this
 does not seem necessary. Recommend leaving it to 0.  
 * `init_dec`: Initialize the hidden/cell state of the decoder at time 0 to be the last
-hidden/cell state of the encoder. If 0, the initial states of the decoder are set to zero vectors.  
-* `hop_attn`: If > 0, then use a *hop attention* on this layer of the decoder. For example, if
-`num_layers = 3` and `hop_attn = 2`, then the model will do an attention over the source sequence
+hidden/cell state of the encoder. If 0, the initial states of the decoder are set to zero vectors.
+* `input_feed`: If = 1, feed the context vector at each time step as additional input (via
+concatenation with the word embeddings) to the decoder.  
+* `multi_attn`: If > 0, then use a *multi-attention* on this layer of the decoder. For example, if
+`num_layers = 3` and `multi_attn = 2`, then the model will do an attention over the source sequence
 on the second layer (and use that as input to the third layer) *and* the penultimate layer.
-See [End-to-End Memory Networks](https://arxiv.org/abs/1503.08895) for more details. We've found that
-this did not really improve performance on translation, but may be helpful for other tasks
-where multiple attentional passes over the source sequence are required (e.g. for more complex
-reasoning tasks).
+We've found that this did not really improve performance on translation, but may be helpful for
+other tasks where multiple attentional passes over the source sequence are required
+(e.g. for more complex reasoning tasks).
 * `res_net`: Use residual connections between LSTM stacks whereby the input to the l-th LSTM
 layer of the hidden state of the l-1-th LSTM layer summed with hidden state of the l-2th LSTM layer.
 We didn't find this to really help in our experiments.
