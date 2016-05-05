@@ -196,7 +196,9 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
       local out = model[3]:forward(out_decoder[#out_decoder]) -- K x vocab_size
       
       rnn_state_dec = {} -- to be modified later
-      table.insert(rnn_state_dec, out_decoder[#out_decoder])
+      if model_opt.input_feed == 1 then
+	 table.insert(rnn_state_dec, out_decoder[#out_decoder])
+      end      
       for j = 1, #out_decoder - 1 do
 	 table.insert(rnn_state_dec, out_decoder[j])
       end
@@ -547,7 +549,11 @@ function main()
       attn_layer = attn_layer:cuda()
    end
    init_fwd_enc = {}
-   init_fwd_dec = {h_init_dec:clone()} -- initial context   
+   init_fwd_dec = {} -- initial context
+   if model_opt.input_feed == 1 then
+      table.insert(init_fwd_dec, h_init_dec:clone())
+   end
+   
    for L = 1, model_opt.num_layers do
       table.insert(init_fwd_enc, h_init_enc:clone())
       table.insert(init_fwd_enc, h_init_enc:clone())

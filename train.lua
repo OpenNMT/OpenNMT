@@ -542,8 +542,8 @@ function eval(data)
       local rnn_state_dec = reset_state(init_fwd_dec, batch_l, 1)
       if opt.init_dec == 1 then
 	 for L = 1, opt.num_layers do
-	    rnn_state_dec[L*2]:copy(rnn_state_enc[L*2-1])
-	    rnn_state_dec[L*2+1]:copy(rnn_state_enc[L*2])
+	    rnn_state_dec[L*2-1+opt.input_feed]:copy(rnn_state_enc[L*2-1])
+	    rnn_state_dec[L*2+opt.input_feed]:copy(rnn_state_enc[L*2])
 	 end	 
       end      
       local loss = 0
@@ -551,7 +551,9 @@ function eval(data)
 	 local decoder_input = {target[t], context, table.unpack(rnn_state_dec)}
 	 local out = decoder_clones[1]:forward(decoder_input)
          rnn_state_dec = {}
-         table.insert(rnn_state_dec, out[#out])
+	 if opt.input_feed == 1 then
+	    table.insert(rnn_state_dec, out[#out])
+	 end	 
          for j = 1, #out-1 do
 	    table.insert(rnn_state_dec, out[j])
 	 end
