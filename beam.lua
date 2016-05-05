@@ -168,8 +168,8 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 
    if model_opt.init_dec == 1 then
       for L = 1, model_opt.num_layers do
-	 rnn_state_dec[L*2]:copy(rnn_state_enc[L*2-1]:expand(K, model_opt.rnn_size))
-	 rnn_state_dec[L*2+1]:copy(rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))
+	 rnn_state_dec[L*2-1+model_opt.input_feed]:copy(rnn_state_enc[L*2-1]:expand(K, model_opt.rnn_size))
+	 rnn_state_dec[L*2+model_opt.input_feed]:copy(rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))
       end
    end
    out_float = torch.FloatTensor()
