@@ -7,7 +7,6 @@ require 'models.lua'
 require 'data.lua'
 require 'util.lua'
 require 'cunn'
-require 'cudnn'
 require 'cutorch'
 
 cmd = torch.CmdLine()
@@ -21,6 +20,9 @@ function main()
    print('loading gpu model ' .. opt.gpu_file)
    checkpoint = torch.load(opt.gpu_file)
    model, model_opt = checkpoint[1], checkpoint[2]
+   if model_opt.cudnn == 1 then
+      require 'cudnn'
+   end   
    cutorch.setDevice(opt.gpuid)
    for i = 1, #model do
       model[i]:double()

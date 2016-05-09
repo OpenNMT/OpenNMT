@@ -162,14 +162,14 @@ function train(train_data, valid_data)
       local f = hdf5.open(opt.pre_word_vecs_enc)     
       local pre_word_vecs = f:read('word_vecs'):all()
       for i = 1, pre_word_vecs:size(1) do
-	 word_vecs_enc.weight[1]:copy(pre_word_vecs[i])
+	 word_vecs_enc.weight[i]:copy(pre_word_vecs[i])
       end      
    end
    if opt.pre_word_vecs_dec:len() > 0 then      
       local f = hdf5.open(opt.pre_word_vecs_dec)     
       local pre_word_vecs = f:read('word_vecs'):all()
       for i = 1, pre_word_vecs:size(1) do
-	 word_vecs_dec.weight[1]:copy(pre_word_vecs[i])
+	 word_vecs_dec.weight[i]:copy(pre_word_vecs[i])
       end      
    end
 
