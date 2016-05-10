@@ -476,6 +476,10 @@ function main()
 
    -- load model and word2idx/idx2word dictionaries
    model, model_opt = checkpoint[1], checkpoint[2]
+   for i = 1, #model do
+      model[i]:evaluate()
+   end
+   
    if model_opt.cudnn == 1 then
       require 'cudnn'
    end
