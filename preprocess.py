@@ -270,13 +270,17 @@ def get_data(args):
     if args.targetvocabfile != '':
         print('Loading pre-specified target vocab from ' + args.targetvocabfile)
         target_indexer.load_vocab(args.targetvocabfile)
+    if args.charvocabfile != '':
+        print('Loading pre-specified char vocab from ' + args.charvocabfile)
+        char_indexer.load_vocab(args.charvocabfile)
         
     src_indexer.write(args.outputfile + ".src.dict")
     target_indexer.write(args.outputfile + ".targ.dict")
     if args.chars == 1:
-        char_indexer.prune_vocab(200)
+        if args.charvocabfile == '':
+            char_indexer.prune_vocab(200)
         char_indexer.write(args.outputfile + ".char.dict")
-        print("Character vocab size: {}".format(len(char_indexer.pruned_vocab)))
+        print("Character vocab size: {}".format(len(char_indexer.vocab)))
     
     print("Source vocab size: Original = {}, Pruned = {}".format(len(src_indexer.vocab), 
                                                           len(src_indexer.d)))
@@ -332,6 +336,9 @@ def main(arguments):
                                          "then including this will ignore targetvocabsize and "
                                          "use the vocab provided here.",
                                           type = str, default='')
+    parser.add_argument('--charvocabfile', help="If working with a preset vocab, "
+                                         "then including this use the char vocab provided here.",
+                                          type = str, default='')    
     parser.add_argument('--unkfilter', help="Ignore sentences with too many UNK tokens. "
                                        "Can be an absolute count limit (if > 1) "
                                        "or a proportional limit (0 < unkfilter < 1).",
