@@ -73,7 +73,7 @@ cmd:text("")
 
 -- optimization
 cmd:option('-epochs', 13, [[Number of training epochs]])
-cmd:option('-start_epoch', 1, [[If loading from a checkpoing, the epoch from which to start]])
+cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support
                                (-param_init, param_init)]])
 cmd:option('-learning_rate', 1, [[Starting learning rate]])

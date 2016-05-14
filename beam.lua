@@ -39,9 +39,10 @@ cmd:option('-srctarg_dict', 'data/en-de.dict', [[Path to source-target dictionar
                              tokens. See README.md for the format this file should be in]])
 cmd:option('-score_gold', 1, [[If = 1, score the log likelihood of the gold as well]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
-cmd:option('-gpuid',  -1,[[ID of the GPU to use (-1 = use CPU)]])
-cmd:option('-gpuid2', -1,[[Second GPU ID]])
-
+cmd:option('-gpuid',  -1, [[ID of the GPU to use (-1 = use CPU)]])
+cmd:option('-gpuid2', -1, [[Second GPU ID]])
+cmd:option('-cudnn', 0, [[If using character model, this should be = 1 if the character model
+                          was trained using cudnn]])
 opt = cmd:parse(arg)
 
 function copy(orig)
@@ -474,15 +475,16 @@ function main()
       end      
    end
 
+   if opt.cudnn == 1 then
+      require 'cudnn'
+   end
+
    -- load model and word2idx/idx2word dictionaries
    model, model_opt = checkpoint[1], checkpoint[2]
    for i = 1, #model do
       model[i]:evaluate()
    end
    
-   if model_opt.cudnn == 1 then
-      require 'cudnn'
-   end
    
    idx2word_src = idx2key(opt.src_dict)
    word2idx_src = flip_table(idx2word_src)
