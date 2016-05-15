@@ -15,7 +15,7 @@ The character model is from [Character-Aware Neural
 Language Models](http://arxiv.org/abs/1508.06615), Kim et al. AAAI 2016.
 
 This project is maintained by [Yoon Kim](http://people.fas.harvard.edu/~yoonkim).
-Feel free to [email](yoonkim@seas.harvard.edu) with any questions or post them on the issues page.
+Feel free to post any questions/issues on the issues page.
 
 ### Dependencies
 
@@ -74,8 +74,8 @@ th beam.lua -model demo-model_final.t7 -src_file data/src-val.txt -output_file p
 ```
 This will output predictions into `pred.txt`. The predictions are going to be quite terrible,
 as the demo dataset is small. Try running on some larger datasets! For example you can download
-millions of parallel sentences for various language pairs from the [Workshop
-on Machine Translation 2015](http://www.statmt.org/wmt15/translation-task.html).
+millions of parallel sentences for [translation](http://www.statmt.org/wmt15/translation-task.html)
+or [summarization](https://github.com/harvardnlp/sent-summary).
 
 ### Details
 #### Preprocessing options (`preprocess.py`)
@@ -92,7 +92,7 @@ source/target sequence.
 or zero-padded (if shorter) to `maxwordlength`.   
 * `chars`: If 1, construct the character-level dataset as well.  This might take up a lot of space
 depending on your data size, so you may want to break up the training data into different shards.  
-`srcvocabfile, targetvocabfile`: If working with a preset vocab, then including these paths
+* `srcvocabfile, targetvocabfile`: If working with a preset vocab, then including these paths
 will ignore the `srcvocabsize,targetvocabsize`.  
 * `unkfilter`: Ignore sentences with too many UNK tokens. Can be an absolute count limit (if > 1)
 or a proportional limit (0 < unkfilter < 1).  
