@@ -194,16 +194,16 @@ function train(train_data, valid_data)
    context_proto2 = torch.zeros(opt.max_batch_l, opt.max_sent_l, opt.rnn_size)
    
    -- clone encoder/decoder up to max source/target length   
-   decoder_clones = clone_many_times(decoder, opt.max_sent_l_src)
-   encoder_clones = clone_many_times(encoder, opt.max_sent_l_targ)
-   for i = 1, opt.max_sent_l do
-      attn_clones_idx = i
-      decoder_clones[i]:apply(get_layer)
-      if decoder_clones[i].apply then
-	 decoder_clones[i]:apply(function(m) m:setReuse() end)
-      end
+   decoder_clones = clone_many_times(decoder, opt.max_sent_l_targ)
+   encoder_clones = clone_many_times(encoder, opt.max_sent_l_src)
+   for i = 1, opt.max_sent_l_src do
       if encoder_clones[i].apply then
 	 encoder_clones[i]:apply(function(m) m:setReuse() end)
+      end
+   end
+   for i = 1, opt.max_sent_l_targ do
+      if decoder_clones[i].apply then
+	 decoder_clones[i]:apply(function(m) m:setReuse() end)
       end
    end   
 
