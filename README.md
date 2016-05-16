@@ -161,7 +161,9 @@ always be `<blank>`, `<unk>`, `<s>`, `</s>` tokens.
 * `pre_word_vecs_dec`: Path to *.hdf5 for pretrained word embeddings on the decoder side. See above
 for formatting of the *.hdf5 file.  
 * `fix_word_vecs_enc`: If = 1, fix word embeddings on the encoder side.  
-* `fix_word_vecs_dec`: If = 1, fix word embeddings on the decoder side.
+* `fix_word_vecs_dec`: If = 1, fix word embeddings on the decoder side.  
+* `max_batch_l`: Batch size used to create the data in `preprocess.py`. If this is left blank
+(recommended), then the batch size will be inferred from the validation set.  
 
 **Other options**
 
@@ -173,7 +175,8 @@ GPU and the decoder is on the second GPU. This will allow you to train bigger mo
 * `cudnn`: Whether to use cudnn or not for convolutions (for the character model). `cudnn`
 has much faster convolutions so this is highly recommended if using the character model.  
 * `save_every`: Save every this many epochs.  
-* `print_every`: Print various stats after this many batches.  
+* `print_every`: Print various stats after this many batches.
+
 #### Decoding options (`beam.lua`)
 
 * `model`: Path to model .t7 file.  
@@ -210,7 +213,9 @@ format.
 2 ||| sentence_2 ||| sentence_2_score
 ```
 * `gpuid`: ID of the GPU to use (-1 = use CPU).    
-* `gpuid2`: ID if the second GPU (if specified).
+* `gpuid2`: ID if the second GPU (if specified).  
+* `cudnn`: If the model was trained with `cudnn`, then this should be set to 1 (otherwise the model
+will fail to load).
 
 #### Switching between GPU/CPU models
 By default, the model will always save the final model as a CPU model, but it will save the

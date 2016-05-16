@@ -94,7 +94,9 @@ cmd:option('-pre_word_vecs_dec', '', [[If a valid path is specified, then this w
                                       See README for specific formatting instructions.]])
 cmd:option('-fix_word_vecs_enc', 0, [[If = 1, fix word embeddings on the encoder side]])
 cmd:option('-fix_word_vecs_dec', 0, [[If = 1, fix word embeddings on the decoder side]])
-
+cmd:option('-max_batch_l', '', [[If blank, then it will infer the max batch size from validation 
+                               data. You should only use this if your validation set uses a different
+                               batch size in the preprocessing step]])
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
@@ -186,14 +188,14 @@ function train(train_data, valid_data)
    end         
    
    -- prototypes for gradients so there is no need to clone
-   local encoder_grad_proto = torch.zeros(valid_data.batch_l:max(), opt.max_sent_l, opt.rnn_size)
-   local encoder_grad_proto2 = torch.zeros(valid_data.batch_l:max(), opt.max_sent_l, opt.rnn_size)
-   context_proto = torch.zeros(valid_data.batch_l:max(), opt.max_sent_l, opt.rnn_size)
-   context_proto2 = torch.zeros(valid_data.batch_l:max(), opt.max_sent_l, opt.rnn_size)
+   local encoder_grad_proto = torch.zeros(opt.max_batch_l, opt.max_sent_l, opt.rnn_size)
+   local encoder_grad_proto2 = torch.zeros(opt.max_batch_l, opt.max_sent_l, opt.rnn_size)
+   context_proto = torch.zeros(opt.max_batch_l, opt.max_sent_l, opt.rnn_size)
+   context_proto2 = torch.zeros(opt.max_batch_l, opt.max_sent_l, opt.rnn_size)
    
    -- clone encoder/decoder up to max source/target length   
-   decoder_clones = clone_many_times(decoder, opt.max_sent_l)
-   encoder_clones = clone_many_times(encoder, opt.max_sent_l)
+   decoder_clones = clone_many_times(decoder, opt.max_sent_l_src)
+   encoder_clones = clone_many_times(encoder, opt.max_sent_l_targ)
    for i = 1, opt.max_sent_l do
       attn_clones_idx = i
       decoder_clones[i]:apply(get_layer)
@@ -205,7 +207,7 @@ function train(train_data, valid_data)
       end
    end   
 
-   local h_init = torch.zeros(valid_data.batch_l:max(), opt.rnn_size)
+   local h_init = torch.zeros(opt.max_batch_l, opt.rnn_size)
    if opt.gpuid >= 0 then
       h_init = h_init:cuda()      
       cutorch.setDevice(opt.gpuid)
@@ -611,7 +613,13 @@ function main()
    print('done!')
    print(string.format('Source vocab size: %d, Target vocab size: %d',
 		       valid_data.source_size, valid_data.target_size))   
-   opt.max_sent_l = math.max(valid_data.source:size(2), valid_data.target:size(2))
+   opt.max_sent_l_src = valid_data.source:size(2)
+   opt.max_sent_l_targ = valid_data.target:size(2)
+   opt.max_sent_l = math.max(opt.max_sent_l_src, opt.max_sent_l_targ)
+   if opt.max_batch_l == '' then
+      opt.max_batch_l = valid_data.batch_l:max()
+   end
+   
    if opt.use_chars_enc == 1 or opt.use_chars_dec == 1 then
       opt.max_word_l = valid_data.char_length
    end
