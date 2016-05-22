@@ -370,13 +370,13 @@ end
 function sent2charidx(sent, char2idx, max_word_l, start_symbol)
    local words = {}
    if start_symbol == 1 then
-      table.insert(START_WORD)
+      table.insert(words, START_WORD)
    end   
    for word in sent:gmatch'([^%s]+)' do
       table.insert(words, word)
    end
    if start_symbol == 1 then
-      table.insert(END_WORD)
+      table.insert(words, END_WORD)
    end   
    local chars = torch.ones(#words, max_word_l)
    for i = 1, #words do
