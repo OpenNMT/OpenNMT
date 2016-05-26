@@ -33,6 +33,8 @@ cmd:text("")
 cmd:option('-num_layers', 2, [[Number of layers in the LSTM encoder/decoder]])
 cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
+cmd:option('-attn', 1, [[If = 1, use attention on the decoder side. If = 0, it uses the last
+                       hidden state of the decoder as context at each time step.]])
 cmd:option('-use_chars_enc', 0, [[If = 1, use character on the encoder 
                                 side (instead of word embeddings]])
 cmd:option('-use_chars_dec', 0, [[If = 1, use character on the decoder 
@@ -355,7 +357,12 @@ function train(train_data, valid_data)
 	 local decoder_input
 	 for t = 1, target_l do
 	    decoder_clones[t]:training()
-	    local decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
+	    local decoder_input
+	    if opt.attn == 1 then
+	       decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
+	    else
+	       decoder_input = {target[t], context[{{}, source_l}], table.unpack(rnn_state_dec[t-1])}
+	    end	    
 	    local out = decoder_clones[t]:forward(decoder_input)
 	    local next_state = {}
 	    table.insert(preds, out[#out])
@@ -382,7 +389,11 @@ function train(train_data, valid_data)
 	    local decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
 	    local dlst = decoder_clones[t]:backward(decoder_input, drnn_state_dec)
 	    -- accumulate encoder/decoder grads
-	    encoder_grads:add(dlst[2])
+	    if opt.attn == 1 then
+	       encoder_grads:add(dlst[2])
+	    else
+	       encoder_grads[{{}, source_l}]:add(dlst[2])
+	    end	    
 	    drnn_state_dec[#drnn_state_dec]:zero()
 	    if opt.input_feed == 1 then
 	       drnn_state_dec[#drnn_state_dec]:add(dlst[3])
@@ -418,7 +429,13 @@ function train(train_data, valid_data)
 	 
 	 for t = source_l, 1, -1 do
 	    local encoder_input = {source[t], table.unpack(rnn_state_enc[t-1])}
-	    drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
+	    if opt.attn == 1 then
+	       drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
+	    else
+	       if t == source_l then
+		  drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
+	       end
+	    end	    		  
 	    local dlst = encoder_clones[t]:backward(encoder_input, drnn_state_enc)
 	    for j = 1, #drnn_state_enc do
 	       drnn_state_enc[j]:copy(dlst[j+1])
@@ -550,7 +567,12 @@ function eval(data)
       end      
       local loss = 0
       for t = 1, target_l do
-	 local decoder_input = {target[t], context, table.unpack(rnn_state_dec)}
+	 local decoder_input
+	 if opt.attn == 1 then
+	    decoder_input = {target[t], context, table.unpack(rnn_state_dec)}
+	 else
+	    decoder_input = {target[t], context[{{},source_l}], table.unpack(rnn_state_dec)}
+	 end	 
 	 local out = decoder_clones[1]:forward(decoder_input)
          rnn_state_dec = {}
 	 if opt.input_feed == 1 then

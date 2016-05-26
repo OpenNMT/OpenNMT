@@ -115,13 +115,19 @@ function make_lstm(data, opt, model, use_chars)
   end
   if model == 'dec' then
      local top_h = outputs[#outputs]
-     local decoder_attn = make_decoder_attn(data, opt)     
-     decoder_attn.name = 'decoder_attn'
-     local attn_out = decoder_attn({top_h, inputs[2]})
+     local decoder_out
+     if opt.attn == 1 then
+	local decoder_attn = make_decoder_attn(data, opt)
+	decoder_attn.name = 'decoder_attn'
+	decoder_out = decoder_attn({top_h, inputs[2]})
+     else
+	decoder_out = nn.JoinTable(2)({top_h, inputs[2]})
+	decoder_out = nn.Tanh()(nn.LinearNoBias(opt.rnn_size*2, opt.rnn_size)(decoder_out))
+     end
      if dropout > 0 then
-	attn_out = nn.Dropout(dropout, nil, false)(attn_out)
+	decoder_out = nn.Dropout(dropout, nil, false)(decoder_out)
      end     
-     table.insert(outputs, attn_out)
+     table.insert(outputs, decoder_out)
   end
   return nn.gModule(inputs, outputs)
 end

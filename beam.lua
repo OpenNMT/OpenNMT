@@ -169,8 +169,10 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 
    if model_opt.init_dec == 1 then
       for L = 1, model_opt.num_layers do
-	 rnn_state_dec[L*2-1+model_opt.input_feed]:copy(rnn_state_enc[L*2-1]:expand(K, model_opt.rnn_size))
-	 rnn_state_dec[L*2+model_opt.input_feed]:copy(rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))
+	 rnn_state_dec[L*2-1+model_opt.input_feed]:copy(
+	    rnn_state_enc[L*2-1]:expand(K, model_opt.rnn_size))
+	 rnn_state_dec[L*2+model_opt.input_feed]:copy(
+	    rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))
       end
    end
    out_float = torch.FloatTensor()
@@ -192,7 +194,12 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 	    decoder_input1 = torch.LongTensor({decoder_input1})
 	 end	
       end
-      local decoder_input = {decoder_input1, context, table.unpack(rnn_state_dec)}
+      local decoder_input
+      if model_opt.attn == 1 then
+	 decoder_input = {decoder_input1, context, table.unpack(rnn_state_dec)}
+      else
+	 decoder_input = {decoder_input1, context[{{}, source_l}], table.unpack(rnn_state_dec)}
+      end      
       local out_decoder = model[2]:forward(decoder_input)
       local out = model[3]:forward(out_decoder[#out_decoder]) -- K x vocab_size
       
@@ -233,10 +240,12 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
                 end
              end
 	     
-             if i < 2 or diff then		
-		local max_attn, max_index = decoder_softmax.output[prev_k]:max(1)
-		attn_argmax[i][k] = State.advance(attn_argmax[i-1][prev_k],max_index[1])
-                prev_ks[i][k] = prev_k
+             if i < 2 or diff then
+		if model_opt.attn == 1 then
+		   max_attn, max_index = decoder_softmax.output[prev_k]:max(1)
+		   attn_argmax[i][k] = State.advance(attn_argmax[i-1][prev_k],max_index[1])         
+		end		
+	        prev_ks[i][k] = prev_k
                 next_ys[i][k] = y_i
                 scores[i][k] = score
                 flat_out[index[1]] = -1e9
@@ -250,7 +259,9 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
        end
        end_hyp = states[i][1]
        end_score = scores[i][1]
-       end_attn_argmax = attn_argmax[i][1]
+       if model_opt.attn == 1 then
+	  end_attn_argmax = attn_argmax[i][1]
+       end       
        if end_hyp[#end_hyp] == END then
 	  done = true
 	  found_eos = true
@@ -262,7 +273,9 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 		if scores[i][k] > max_score then
 		   max_hyp = possible_hyp
 		   max_score = scores[i][k]
-		   max_attn_argmax = attn_argmax[i][k]
+		   if model_opt.attn == 1 then
+		      max_attn_argmax = attn_argmax[i][k]
+		   end		   
 		end
 	     end	     
 	  end	  
@@ -533,9 +546,12 @@ function main()
 
    softmax_layers = {}
    model[2]:apply(get_layer)
-   decoder_attn:apply(get_layer)
-   decoder_softmax = softmax_layers[1]
-   attn_layer = torch.zeros(opt.beam, MAX_SENT_L)
+   if model_opt.attn == 1 then
+      decoder_attn:apply(get_layer)
+      decoder_softmax = softmax_layers[1]
+      attn_layer = torch.zeros(opt.beam, MAX_SENT_L)      
+   end
+   
    
    context_proto = torch.zeros(1, MAX_SENT_L, model_opt.rnn_size)
    local h_init_dec = torch.zeros(opt.beam, model_opt.rnn_size)
@@ -552,7 +568,9 @@ function main()
       else
 	 context_proto = context_proto:cuda()
       end
-      attn_layer = attn_layer:cuda()
+      if model_opt.attn == 1 then
+	 attn_layer = attn_layer:cuda()
+      end      
    end
    init_fwd_enc = {}
    init_fwd_dec = {} -- initial context
