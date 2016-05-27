@@ -661,6 +661,7 @@ function main()
       opt.num_layers = model_opt.num_layers
       opt.rnn_size = model_opt.rnn_size
       opt.input_feed = model_opt.input_feed
+      opt.attn = model_opt.attn
       encoder = model[1]:double()
       decoder = model[2]:double()      
       generator = model[3]:double()
