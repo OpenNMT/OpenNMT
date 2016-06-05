@@ -1,7 +1,8 @@
 ## Sequence-to-Sequence Learning with Attentional Neural Networks
 
 [Torch](http://torch.ch) implementation of a standard sequence-to-sequence model with (optional)
-attention where the encoder-decoder are LSTMs. Also has the option to use characters
+attention where the encoder-decoder are LSTMs. Encoder can be a bidirectional LSTM.
+Additionally has the option to use characters
 (instead of input word embeddings) by running a convolutional neural network followed by a
 [highway network](http://arxiv.org/abs/1505.00387) over character embeddings to use as inputs.
 
@@ -115,6 +116,10 @@ then this is the number of shards.
 * `word_vec_size`: Word embedding size.  
 * `attn`:  If = 1, use attention over the source sequence during decoding. If = 0, then it
 uses the last hidden state of the decoder as the context at each time step.  
+* `brnn`: If = 1, use a bidirectional LSTM on the encoder side. Input embeddings (or CharCNN
+if using characters)  are shared between the forward/backward LSTM, and hidden states of the
+corresponding forward/backward LSTMs are added to obtain the hidden representation for that
+time step.  
 * `use_chars_enc`: If = 1, use characters on the encoder side (as inputs).  
 * `use_chars_dec`: If = 1, use characters on the decoder side (as inputs).  
 * `reverse_src`: If = 1, reverse the source sequence. The original sequence-to-sequence paper

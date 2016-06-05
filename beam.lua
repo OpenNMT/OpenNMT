@@ -153,15 +153,6 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
       rnn_state_enc = out
       context[{{},t}]:copy(out[#out])
    end
-   context = context:expand(K, source_l, model_opt.rnn_size)
-   
-   if opt.gpuid >= 0 and opt.gpuid2 >= 0 then
-      cutorch.setDevice(opt.gpuid2)
-      local context2 = context_proto2[{{1, K}, {1, source_l}}]
-      context2:copy(context)
-      context = context2
-   end
-
    rnn_state_dec = {}
    for i = 1, #init_fwd_dec do
       table.insert(rnn_state_dec, init_fwd_dec[i]:zero())
@@ -175,6 +166,35 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 	    rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))
       end
    end
+   
+   if model_opt.brnn == 1 then
+      for i = 1, #rnn_state_enc do
+	 rnn_state_enc[i]:zero()
+      end      
+      for t = source_l, 1, -1 do
+	 local encoder_input = {source_input[t], table.unpack(rnn_state_enc)}
+	 local out = model[1]:forward(encoder_input)
+	 rnn_state_enc = out
+	 context[{{},t}]:add(out[#out])
+      end
+      if model_opt.init_dec == 1 then
+	 for L = 1, model_opt.num_layers do
+	    rnn_state_dec[L*2-1+model_opt.input_feed]:add(
+	       rnn_state_enc[L*2-1]:expand(K, model_opt.rnn_size))
+	    rnn_state_dec[L*2+model_opt.input_feed]:add(
+	       rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))	    
+	 end	 
+      end      
+   end   
+   context = context:expand(K, source_l, model_opt.rnn_size)
+   
+   if opt.gpuid >= 0 and opt.gpuid2 >= 0 then
+      cutorch.setDevice(opt.gpuid2)
+      local context2 = context_proto2[{{1, K}, {1, source_l}}]
+      context2:copy(context)
+      context = context2
+   end
+
    out_float = torch.FloatTensor()
    
    local i = 1
@@ -472,6 +492,9 @@ function main()
    if opt.gpuid >= 0 then
       require 'cutorch'
       require 'cunn'
+      if opt.cudnn == 1 then
+	 require 'cudnn'
+      end      
    end      
    print('loading ' .. opt.model .. '...')
    checkpoint = torch.load(opt.model)
@@ -488,9 +511,6 @@ function main()
       end      
    end
 
-   if opt.cudnn == 1 then
-      require 'cudnn'
-   end
 
    -- load model and word2idx/idx2word dictionaries
    model, model_opt = checkpoint[1], checkpoint[2]

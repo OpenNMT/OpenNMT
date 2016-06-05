@@ -279,20 +279,20 @@ def get_data(args):
     target_indexer.prune_vocab(args.targetvocabsize)
     if args.srcvocabfile != '':
         print('Loading pre-specified source vocab from ' + args.srcvocabfile)
-        src_indexer.load_vocab(args.srcvocabfile)
+        src_indexer.load_vocab(args.srcvocabfile, args.chars)
     if args.targetvocabfile != '':
         print('Loading pre-specified target vocab from ' + args.targetvocabfile)
-        target_indexer.load_vocab(args.targetvocabfile)
+        target_indexer.load_vocab(args.targetvocabfile, args.chars)
     if args.charvocabfile != '':
         print('Loading pre-specified char vocab from ' + args.charvocabfile)
-        char_indexer.load_vocab(args.charvocabfile)
+        char_indexer.load_vocab(args.charvocabfile, args.chars)
         
-    src_indexer.write(args.outputfile + ".src.dict")
-    target_indexer.write(args.outputfile + ".targ.dict")
+    src_indexer.write(args.outputfile + ".src.dict", args.chars)
+    target_indexer.write(args.outputfile + ".targ.dict", args.chars)
     if args.chars == 1:
         if args.charvocabfile == '':
-            char_indexer.prune_vocab(200)
-        char_indexer.write(args.outputfile + ".char.dict")
+            char_indexer.prune_vocab(500)
+        char_indexer.write(args.outputfile + ".char.dict", args.chars)
         print("Character vocab size: {}".format(len(char_indexer.vocab)))
     
     print("Source vocab size: Original = {}, Pruned = {}".format(len(src_indexer.vocab), 
