@@ -622,16 +622,25 @@ function train(train_data, valid_data)
       if epoch % opt.save_every == 0 then
          print('saving checkpoint to ' .. savefile)
 	 clean_layer(generator)
-	 torch.save(savefile, {{encoder, decoder, generator}, opt})
-      end
+	 if opt.brnn == 0 then
+	    torch.save(savefile, {{encoder, decoder, generator}, opt})
+	 else
+	    torch.save(savefile, {{encoder, decoder, generator, encoder_bwd}, opt})
+	 end
+      end      
    end
    -- save final model
    local savefile = string.format('%s_final.t7', opt.savefile)
    clean_layer(generator)
-   print('saving final model to ' .. savefile)   
-   torch.save(savefile, {{encoder:double(), decoder:double(), generator:double()}, opt})   
+   print('saving final model to ' .. savefile)
+   if opt.brnn == 0 then
+      torch.save(savefile, {{encoder:double(), decoder:double(), generator:double()}, opt})
+   else
+      torch.save(savefile, {{encoder:double(), decoder:double(), generator:double(),
+			     encoder_bwd:double()}, opt})
+   end
 end
-
+   
 function eval(data)
    encoder_clones[1]:evaluate()   
    decoder_clones[1]:evaluate() -- just need one clone
