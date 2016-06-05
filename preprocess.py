@@ -34,17 +34,19 @@ class Indexer:
 
     def clean(self, s):
         s = s.replace(self.PAD, "")
-#        s = s.replace(self.UNK, "")
         s = s.replace(self.BOS, "")
         s = s.replace(self.EOS, "")
         return s
         
-    def write(self, outfile):
+    def write(self, outfile, chars=0):
         out = open(outfile, "w")
         items = [(v, k) for k, v in self.d.iteritems()]
         items.sort()
         for v, k in items:
-            print >>out, k.encode('utf-8'), v
+            if chars == 1:
+                print >>out, k.encode('utf-8'), v
+            else:
+                print >>out, k, v                
         out.close()
 
     def prune_vocab(self, k):
@@ -56,10 +58,13 @@ class Indexer:
             if word not in self.d:
                 self.d[word] = len(self.d) + 1
 
-    def load_vocab(self, vocab_file):
+    def load_vocab(self, vocab_file, chars=0):
         self.d = {}
         for line in open(vocab_file, 'r'):
-            v, k = line.decode("utf-8").strip().split()
+            if chars == 1:
+                v, k = line.decode("utf-8").strip().split()
+            else:
+                v, k = line.strip().split()                
             self.d[v] = int(k)
             
 def pad(ls, length, symbol):
@@ -77,8 +82,12 @@ def get_data(args):
         num_sents = 0
         for _, (src_orig, targ_orig) in \
                 enumerate(itertools.izip(open(srcfile,'r'), open(targetfile,'r'))):
-            src_orig = src_indexer.clean(src_orig.decode("utf-8").strip())
-            targ_orig = target_indexer.clean(targ_orig.decode("utf-8").strip())
+            if chars == 1: 
+                src_orig = src_indexer.clean(src_orig.decode("utf-8").strip())
+                targ_orig = target_indexer.clean(targ_orig.decode("utf-8").strip())
+            else:
+                src_orig = src_indexer.clean(src_orig.strip())
+                targ_orig = target_indexer.clean(targ_orig.strip())                
             targ = targ_orig.strip().split()
             src = src_orig.strip().split()
             if len(targ) > seqlength or len(src) > seqlength or len(targ) < 1 or len(src) < 1:
@@ -122,8 +131,12 @@ def get_data(args):
         sent_id = 0
         for _, (src_orig, targ_orig) in \
                 enumerate(itertools.izip(open(srcfile,'r'), open(targetfile,'r'))):
-            src_orig = src_indexer.clean(src_orig.decode("utf-8").strip())
-            targ_orig = target_indexer.clean(targ_orig.decode("utf-8").strip())
+            if chars == 1:
+                src_orig = src_indexer.clean(src_orig.decode("utf-8").strip())
+                targ_orig = target_indexer.clean(targ_orig.decode("utf-8").strip())
+            else:
+                src_orig = src_indexer.clean(src_orig.strip())
+                targ_orig = target_indexer.clean(targ_orig.strip())
             targ = [target_indexer.BOS] + targ_orig.strip().split() + [target_indexer.EOS]
             src =  [src_indexer.BOS] + src_orig.strip().split() + [src_indexer.EOS]
             max_sent_l = max(len(targ), len(src), max_sent_l)
