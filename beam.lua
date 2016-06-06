@@ -173,7 +173,7 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
       end      
       for t = source_l, 1, -1 do
 	 local encoder_input = {source_input[t], table.unpack(rnn_state_enc)}
-	 local out = model[1]:forward(encoder_input)
+	 local out = model[4]:forward(encoder_input)
 	 rnn_state_enc = out
 	 context[{{},t}]:add(out[#out])
       end
@@ -553,7 +553,7 @@ function main()
       cutorch.setDevice(opt.gpuid)
       for i = 1, #model do
 	 if opt.gpuid2 >= 0 then
-	    if i == 1 then
+	    if i == 1 or i == 4 then
 	       cutorch.setDevice(opt.gpuid)
 	    else
 	       cutorch.setDevice(opt.gpuid2)
