@@ -675,7 +675,7 @@ function eval(data)
 
       if opt.brnn == 1 then
 	 local rnn_state_enc = reset_state(init_fwd_enc, batch_l)
-	 for t = source_l, 1 do
+	 for t = source_l, 1, -1 do
 	    local encoder_input = {source[t], table.unpack(rnn_state_enc)}
 	    local out = encoder_clones[1]:forward(encoder_input)
 	    rnn_state_enc = out
