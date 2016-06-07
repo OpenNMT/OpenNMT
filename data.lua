@@ -28,7 +28,10 @@ function data:__init(opt, data_file)
    if opt.use_chars_enc == 1 then
       self.source_char = f:read('source_char'):all()
       self.char_size = f:read('char_size'):all()[1]
-      self.char_length = self.source_char:size(3)      
+      self.char_length = self.source_char:size(3)
+      if opt.start_symbol == 0 then
+	 self.source_char = self.source_char[{{}, {2, self.source_char:size(2)-1}}]
+      end      
    end
    
    if opt.use_chars_dec == 1 then
