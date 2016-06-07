@@ -116,7 +116,7 @@ def get_data(args):
         return max_word_l, num_sents
                 
     def convert(srcfile, targetfile, batchsize, seqlength, outfile, num_sents,
-                max_word_l, max_sent_l=0,chars=0, unkfilter=0):
+                max_word_l, max_sent_l=0,chars=0, unkfilter=0, shuffle=0):
         
         newseqlength = seqlength + 2 #add 2 for EOS and BOS
         targets = np.zeros((num_sents, newseqlength), dtype=int)
@@ -199,6 +199,17 @@ def get_data(args):
                 print("{}/{} sentences processed".format(sent_id, num_sents))
 
         print(sent_id, num_sents)
+        if shuffle == 1:
+            rand_idx = np.random.permutation(sent_id)
+            targets = targets[rand_idx]
+            target_output = target_output[rand_idx]
+            sources = sources[rand_idx]
+            source_lengths = source_lengths[rand_idx]
+            target_lengths = target_lengths[rand_idx]
+            if chars==1:
+                sources_char = sources_char[rand_idx]
+                targets_char = targets_char[rand_idx]
+        
         #break up batches based on source lengths
         source_lengths = source_lengths[:sent_id]
         source_sort = np.argsort(source_lengths) 
@@ -303,10 +314,10 @@ def get_data(args):
     max_sent_l = 0
     max_sent_l = convert(args.srcvalfile, args.targetvalfile, args.batchsize, args.seqlength,
                          args.outputfile + "-val.hdf5", num_sents_valid,
-                         max_word_l, max_sent_l, args.chars, args.unkfilter)
+                         max_word_l, max_sent_l, args.chars, args.unkfilter, args.shuffle)
     max_sent_l = convert(args.srcfile, args.targetfile, args.batchsize, args.seqlength,
                          args.outputfile + "-train.hdf5", num_sents_train, max_word_l,
-                         max_sent_l, args.chars, args.unkfilter)
+                         max_sent_l, args.chars, args.unkfilter, args.shuffle)
     
     print("Max sent length (before dropping): {}".format(max_sent_l))    
     
@@ -356,6 +367,10 @@ def main(arguments):
                                        "Can be an absolute count limit (if > 1) "
                                        "or a proportional limit (0 < unkfilter < 1).",
                                           type = float, default = 0)
+    parser.add_argument('--shuffle', help="If = 1, shuffle sentences before sorting (based on  "
+                                           "source length).",
+                                          type = int, default = 0)
+    
     args = parser.parse_args(arguments)
     get_data(args)
 
