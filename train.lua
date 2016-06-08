@@ -590,8 +590,6 @@ function train(train_data, valid_data)
 					   num_words_source / time_taken,
 					   num_words_target / time_taken)			   
             print(stats)
-	    print(layer_etas)
-            print(optStates[1].std:norm(), optStates[2].std:norm(), optStates[3].std:norm())
          end
 	 if i % 200 == 0 then
 	    collectgarbage()
