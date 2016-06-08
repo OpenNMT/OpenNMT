@@ -448,7 +448,7 @@ function train(train_data, valid_data)
 	    else
 	       encoder_grads[{{}, source_l}]:add(dlst[2])
 	       if opt.brnn == 1 then
-		  encoder_bwd_grads[{{}, source_l}]:add(dlst[2])
+		  encoder_bwd_grads[{{}, 1}]:add(dlst[2])
 	       end	       
 	    end	    
 	    drnn_state_dec[#drnn_state_dec]:zero()
@@ -522,8 +522,7 @@ function train(train_data, valid_data)
 	       end
 	    end	      	    
 	 end
-	    
-	 
+	    	 
          word_vec_layers[1].gradWeight[1]:zero()
 	 if opt.fix_word_vecs_enc == 1 then
 	    word_vec_layers[1].gradWeight:zero()
@@ -558,7 +557,7 @@ function train(train_data, valid_data)
 	    end	    
 	    params[j]:add(grad_params[j]:mul(-opt.learning_rate))
 	    param_norm = param_norm + params[j]:norm()^2
-	 end	    
+	 end	 
 	 param_norm = param_norm^0.5
 	 if opt.brnn == 1 then
 	    word_vec_layers[3].weight:copy(word_vec_layers[1].weight)
@@ -677,7 +676,7 @@ function eval(data)
 	 local rnn_state_enc = reset_state(init_fwd_enc, batch_l)
 	 for t = source_l, 1, -1 do
 	    local encoder_input = {source[t], table.unpack(rnn_state_enc)}
-	    local out = encoder_clones[1]:forward(encoder_input)
+	    local out = encoder_bwd_clones[1]:forward(encoder_input)
 	    rnn_state_enc = out
 	    context[{{},t}]:add(out[#out])
 	 end
