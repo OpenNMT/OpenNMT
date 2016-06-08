@@ -47,3 +47,13 @@ function clone_many_times(net, T)
     return clones
 end
 
+function adagradStep(x, dfdx, eta, state)
+   if not state.var then
+      state.var  = torch.Tensor():typeAs(x):resizeAs(x):zero()
+      state.std = torch.Tensor():typeAs(x):resizeAs(x)
+   end
+
+   state.var:addcmul(1, dfdx, dfdx)
+   state.std:sqrt(state.var)
+   x:addcdiv(-eta, dfdx, state.std:add(1e-10))
+end

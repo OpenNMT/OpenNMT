@@ -80,7 +80,9 @@ cmd:option('-epochs', 13, [[Number of training epochs]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support
                                (-param_init, param_init)]])
-cmd:option('-learning_rate', 1, [[Starting learning rate]])
+cmd:option('-learning_rate', 1, [[Starting learning rate. If AdaGrad is used, then this is the
+                                  global learning rate.]])
+cmd:option('-adagrad', 0, [[Use AdaGrad instead of vanilla SGD.]])
 cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this, renormalize it
                                 to have the norm equal to max_grad_norm]])
 cmd:option('-dropout', 0.3, [[Dropout probability. 
@@ -554,8 +556,12 @@ function train(train_data, valid_data)
 	    end
 	    if shrinkage < 1 then
 	       grad_params[j]:mul(shrinkage)
+	    end
+	    if opt.adagrad == 1 then
+	       adagradStep(params[j], grad_params[j], layer_etas[j], optStates[j])
+	    else
+	       params[j]:add(grad_params[j]:mul(-opt.learning_rate))
 	    end	    
-	    params[j]:add(grad_params[j]:mul(-opt.learning_rate))
 	    param_norm = param_norm + params[j]:norm()^2
 	 end	 
 	 param_norm = param_norm^0.5
@@ -584,6 +590,8 @@ function train(train_data, valid_data)
 					   num_words_source / time_taken,
 					   num_words_target / time_taken)			   
             print(stats)
+	    print(layer_etas)
+            print(optStates[1].std:norm(), optStates[2].std:norm(), optStates[3].std:norm())
          end
 	 if i % 200 == 0 then
 	    collectgarbage()
@@ -615,7 +623,9 @@ function train(train_data, valid_data)
       opt.train_perf[#opt.train_perf + 1] = train_score
       local score = eval(valid_data)
       opt.val_perf[#opt.val_perf + 1] = score
-      decay_lr(epoch)
+      if opt.adagrad == 0 then --unncessary with adagrad
+	 decay_lr(epoch)
+      end      
       -- clean and save models
       local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, epoch, score)      
       if epoch % opt.save_every == 0 then
@@ -719,6 +729,7 @@ function eval(data)
    end
    local valid = math.exp(nll / total)
    print("Valid", valid)
+   collectgarbage()
    return valid
 end
 
@@ -812,6 +823,15 @@ function main()
    layers = {encoder, decoder, generator}
    if opt.brnn == 1 then
       table.insert(layers, encoder_bwd)
+   end
+
+   if opt.adagrad == 1 then
+      layer_etas = {}
+      optStates = {}
+      for i = 1, #layers do
+	 layer_etas[i] = opt.learning_rate
+	 optStates[i] = {}
+      end     
    end
    
    if opt.gpuid >= 0 then

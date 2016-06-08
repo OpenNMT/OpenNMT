@@ -97,6 +97,7 @@ depending on your data size, so you may want to break up the training data into 
 will ignore the `srcvocabsize,targetvocabsize`.  
 * `unkfilter`: Ignore sentences with too many UNK tokens. Can be an absolute count limit (if > 1)
 or a proportional limit (0 < unkfilter < 1).  
+* `shuffle`: Shuffle sentences.  
 
 #### Training options (`train.lua`)
 **Data options**
@@ -151,8 +152,10 @@ Below options only apply if using the character model.
 * `epochs`: Number of training epochs.  
 * `start_epoch`: If loading from a checkpoint, the epoch from which to start.  
 * `param_init`: Parameters of the model are initialized over a uniform distribution with support
-`(-param_init, param_init)`.  
-* `learning_rate`: Starting learning rate.  
+`(-param_init, param_init)`.
+* `adagrad`: If = 1, use AdaGrad.
+* `learning_rate`: Starting learning rate. If `adagrad` = 1, then this is the global
+adagrad learning rate.  
 * `max_grad_norm`: If the norm of the gradient vector exceeds this, renormalize to have its norm equal to `max_grad_norm`.  
 * `dropout`: Dropout probability. Dropout is applied between vertical LSTM stacks.  
 * `lr_decay`: Decay learning rate by this much if (i) perplexity does not decrease on the validation
