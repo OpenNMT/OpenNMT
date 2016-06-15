@@ -13,7 +13,7 @@ import itertools
 from collections import defaultdict
 
 class Indexer:
-    def __init__(self, symbols = ["*blank*","<unk>","<s>","</s>"]):
+    def __init__(self, symbols = ["<blank>","<unk>","<s>","</s>"]):
         self.vocab = defaultdict(int)
         self.PAD = symbols[0]
         self.UNK = symbols[1]
