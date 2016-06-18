@@ -439,7 +439,12 @@ function train(train_data, valid_data)
 	    dl_dpred:div(batch_l)
 	    local dl_dtarget = generator:backward(preds[t], dl_dpred)
 	    drnn_state_dec[#drnn_state_dec]:add(dl_dtarget)
-	    local decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
+	    local decoder_input
+	    if opt.attn == 1 then
+	       decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
+	    else
+	       decoder_input = {target[t], context[{{}, source_l}], table.unpack(rnn_state_dec[t-1])}
+	    end	    
 	    local dlst = decoder_clones[t]:backward(decoder_input, drnn_state_dec)
 	    -- accumulate encoder/decoder grads
 	    if opt.attn == 1 then
