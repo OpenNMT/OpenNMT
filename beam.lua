@@ -515,11 +515,14 @@ function main()
 
 
    -- load model and word2idx/idx2word dictionaries
-   model, model_opt = checkpoint[1], checkpoint[2]
+   model, model_opt = checkpoint[1], checkpoint[2]  
    for i = 1, #model do
       model[i]:evaluate()
    end
-   
+   -- for backward compatibility
+   model_opt.brnn = model_opt.brnn or 0
+   model_opt.input_feed = model_opt.input_feed or 1
+   model_opt.attn = model_opt.attn or 1
    
    idx2word_src = idx2key(opt.src_dict)
    word2idx_src = flip_table(idx2word_src)
