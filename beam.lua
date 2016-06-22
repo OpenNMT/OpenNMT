@@ -309,8 +309,8 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
       end
       if model_opt.init_dec == 1 then
 	 for L = 1, model_opt.num_layers do
-	    rnn_state_dec[L*2]:copy(rnn_state_enc[L*2-1][{{1}}])
-	    rnn_state_dec[L*2+1]:copy(rnn_state_enc[L*2][{{1}}])
+	    rnn_state_dec[L*2-1+model_opt.input_feed]:copy(rnn_state_enc[L*2-1][{{1}}])
+	    rnn_state_dec[L*2+model_opt.input_feed]:copy(rnn_state_enc[L*2][{{1}}])
 	 end
       end
       local target_l = gold:size(1) 
@@ -325,7 +325,9 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 	 local out_decoder = model[2]:forward(decoder_input)
 	 local out = model[3]:forward(out_decoder[#out_decoder]) -- K x vocab_size
 	 rnn_state_dec = {} -- to be modified later
-	 table.insert(rnn_state_dec, out_decoder[#out_decoder])
+	 if model_opt.input_feed == 1 then
+	    table.insert(rnn_state_dec, out_decoder[#out_decoder])
+	 end	 
 	 for j = 1, #out_decoder - 1 do
 	    table.insert(rnn_state_dec, out_decoder[j])
 	 end
