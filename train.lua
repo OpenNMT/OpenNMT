@@ -182,12 +182,12 @@ function train(train_data, valid_data)
    if opt.brnn == 1 then --subtract shared params for brnn
       num_params = num_params - word_vec_layers[1].weight:nElement()
       word_vec_layers[3].weight:copy(word_vec_layers[1].weight)
-      if opt.use_chars_enc == 1 then
-	 for i = 1, charcnn_offset do
-	    num_params = num_params - charcnn_layers[i]:nElement()
-	    charcnn_layers[i+charcnn_offset]:copy(charcnn_layers[i])
-	 end	 
-      end            
+      -- if opt.use_chars_enc == 1 then
+      -- 	 for i = 1, charcnn_offset do
+      -- 	    num_params = num_params - charcnn_layers[i]:nElement()
+      -- 	    charcnn_layers[i+charcnn_offset]:copy(charcnn_layers[i])
+      -- 	 end	 
+      -- end            
    end
    print("Number of parameters: " .. num_params)
    
@@ -542,11 +542,11 @@ function train(train_data, valid_data)
 	 grad_norm = grad_norm^0.5	 
 	 if opt.brnn == 1 then
 	    word_vec_layers[1].gradWeight:add(word_vec_layers[3].gradWeight)
-	    if opt.use_chars_enc == 1 then
-	       for j = 1, charcnn_offset do
-		  charcnn_grad_layers[j]:add(charcnn_grad_layers[j+charcnn_offset])
-	       end
-	    end	    
+	    -- if opt.use_chars_enc == 1 then
+	    --    for j = 1, charcnn_offset do
+	    -- 	  charcnn_grad_layers[j]:add(charcnn_grad_layers[j+charcnn_offset])
+	    --    end
+	    -- end	    
 	 end	 
          -- Shrink norm and update params
 	 local param_norm = 0
@@ -572,11 +572,11 @@ function train(train_data, valid_data)
 	 param_norm = param_norm^0.5
 	 if opt.brnn == 1 then
 	    word_vec_layers[3].weight:copy(word_vec_layers[1].weight)
-	    if opt.use_chars_enc == 1 then
-	       for j = 1, charcnn_offset do
-		  charcnn_layers[j+charcnn_offset]:copy(charcnn_layers[j])
-	       end
-	    end	    
+	    -- if opt.use_chars_enc == 1 then
+	    --    for j = 1, charcnn_offset do
+	    -- 	  charcnn_layers[j+charcnn_offset]:copy(charcnn_layers[j])
+	    --    end
+	    -- end	    
 	 end
 	 
 	 -- Bookkeeping
