@@ -321,7 +321,12 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 	 else
 	    decoder_input1 = gold[{{t-1}}]
 	 end
-	 local decoder_input = {decoder_input1, context[{{1}}], table.unpack(rnn_state_dec)}
+	 local decoder_input
+	 if model_opt.attn == 1 then
+	    decoder_input = {decoder_input1, context[{{1}}], table.unpack(rnn_state_dec)}
+	 else
+	    decoder_input = {decoder_input1, context[{{1}, source_l}], table.unpack(rnn_state_dec)}
+	 end      	 
 	 local out_decoder = model[2]:forward(decoder_input)
 	 local out = model[3]:forward(out_decoder[#out_decoder]) -- K x vocab_size
 	 rnn_state_dec = {} -- to be modified later
