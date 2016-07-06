@@ -315,7 +315,7 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 	 table.insert(rnn_state_dec, init_fwd_dec[i][{{1}}]:zero())
       end
       if model_opt.init_dec == 1 then
-	 rnn_state_dec = rnn_state_gold
+	 rnn_state_dec = rnn_state_dec_gold
       end
       local target_l = gold:size(1) 
       for t = 2, target_l do
