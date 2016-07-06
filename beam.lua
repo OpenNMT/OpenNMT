@@ -185,7 +185,14 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 	       rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))	    
 	 end	 
       end      
-   end   
+   end
+   if opt.score_gold == 1 then
+      rnn_state_dec_gold = {}
+      for i = 1, #rnn_state_dec do
+	 table.insert(rnn_state_dec_gold, rnn_state_dec[i][{{1}}]:clone())
+      end      
+   end
+   
    context = context:expand(K, source_l, model_opt.rnn_size)
    
    if opt.gpuid >= 0 and opt.gpuid2 >= 0 then
@@ -308,10 +315,7 @@ function generate_beam(model, initial, K, max_sent_l, source, gold)
 	 table.insert(rnn_state_dec, init_fwd_dec[i][{{1}}]:zero())
       end
       if model_opt.init_dec == 1 then
-	 for L = 1, model_opt.num_layers do
-	    rnn_state_dec[L*2-1+model_opt.input_feed]:copy(rnn_state_enc[L*2-1][{{1}}])
-	    rnn_state_dec[L*2+model_opt.input_feed]:copy(rnn_state_enc[L*2][{{1}}])
-	 end
+	 rnn_state_dec = rnn_state_gold
       end
       local target_l = gold:size(1) 
       for t = 2, target_l do
