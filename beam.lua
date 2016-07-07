@@ -667,6 +667,10 @@ function main()
 	 end	 
       end
       
+      for n = 2, #pred -1 do
+        print(n .. " " .. idx2word_targ[pred[n]] .. "\t" .. attn[n] .. " " .. source_str[attn[n]])
+      end
+      
       print('')
    end
    print(string.format("PRED AVG SCORE: %.4f, PRED PPL: %.4f", pred_score_total / pred_words_total,
