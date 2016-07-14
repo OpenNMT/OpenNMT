@@ -1,3 +1,4 @@
+
 function nn.Module:reuseMem()
    self.reuse = true
    return self
