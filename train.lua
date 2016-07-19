@@ -80,11 +80,11 @@ cmd:option('-epochs', 13, [[Number of training epochs]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support
                                (-param_init, param_init)]])
-cmd:option('-learning_rate', 1, [[Starting learning rate. If AdaGrad is used, then this is the
-                                  global learning rate.]])
-cmd:option('-adagrad', 0, [[Use AdaGrad instead of vanilla SGD.]])
+cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used, 
+                                then this is the global learning rate.]])
+cmd:option('-optim', 'sgd', [[Optimization method. sgd (vanilla SGD), adagrad, adadelta, adam]])
 cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it
-                                to have the norm equal to max_grad_norm]])
+                               to have the norm equal to max_grad_norm]])
 cmd:option('-dropout', 0.3, [[Dropout probability. 
                             Dropout is applied between vertical LSTM stacks.]])
 cmd:option('-lr_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
@@ -383,7 +383,7 @@ function train(train_data, valid_data)
 
 	 local rnn_state_enc_bwd
 	 if opt.brnn == 1  then
-	    rnn_state_enc_bwd = reset_state(init_fwd_enc, batch_l, source_l+1)       	   
+	    rnn_state_enc_bwd = reset_state(init_fwd_enc, batch_l, source_l+1)	   	    
 	    for t = source_l, 1, -1 do
 	       encoder_bwd_clones[t]:training()
 	       local encoder_input = {source[t], table.unpack(rnn_state_enc_bwd[t+1])}
@@ -574,10 +574,14 @@ function train(train_data, valid_data)
 	    if shrinkage < 1 then
 	       grad_params[j]:mul(shrinkage)
 	    end
-	    if opt.adagrad == 1 then
-	       adagradStep(params[j], grad_params[j], layer_etas[j], optStates[j])
+	    if opt.optim == 'adagrad' then
+	       adagrad_step(params[j], grad_params[j], layer_etas[j], optStates[j])
+	    elseif opt.optim == 'adadelta' then
+	       adadelta_step(params[j], grad_params[j], layer_etas[j], optStates[j])
+	    elseif opt.optim == 'adam' then
+	       adam_step(params[j], grad_params[j], layer_etas[j], optStates[j])	       
 	    else
-	       params[j]:add(grad_params[j]:mul(-opt.learning_rate))
+	       params[j]:add(grad_params[j]:mul(-opt.learning_rate))       
 	    end	    
 	    param_norm = param_norm + params[j]:norm()^2
 	 end	 
@@ -638,7 +642,7 @@ function train(train_data, valid_data)
       opt.train_perf[#opt.train_perf + 1] = train_score
       local score = eval(valid_data)
       opt.val_perf[#opt.val_perf + 1] = score
-      if opt.adagrad == 0 then --unncessary with adagrad
+      if opt.optim == 'sgd' then --only decay with SGD
 	 decay_lr(epoch)
       end      
       -- clean and save models
@@ -843,11 +847,11 @@ function main()
       table.insert(layers, encoder_bwd)
    end
 
-   if opt.adagrad == 1 then
+   if opt.optim ~= 'sgd' then
       layer_etas = {}
       optStates = {}
       for i = 1, #layers do
-	 layer_etas[i] = opt.learning_rate
+	 layer_etas[i] = opt.learning_rate -- can have layer-specific lr, if desired
 	 optStates[i] = {}
       end     
    end

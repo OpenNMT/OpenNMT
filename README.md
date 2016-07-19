@@ -154,9 +154,10 @@ Below options only apply if using the character model.
 * `start_epoch`: If loading from a checkpoint, the epoch from which to start.  
 * `param_init`: Parameters of the model are initialized over a uniform distribution with support
 `(-param_init, param_init)`.
-* `adagrad`: If = 1, use AdaGrad. 
-* `learning_rate`: Starting learning rate. If `adagrad` = 1, then this is the global
-adagrad learning rate. For AdaGrad you want this to be much smaller (e.g. 0.1 or 0.01).  
+* `optim`: Optimization method, possible choices are `sgd`, `adagrad`, `adadelta`, `adam`.  
+* `learning_rate`: Starting learning rate. For `adagrad`, `adadelta`, and `adam`, this is the global
+learning rate. Recommended settings vary based `optim`: `sgd` (`learning_rate = 1`), `adagrad`
+(`learning_rate = 0.1`), `adadelta` (`learning_rate = 1`), `adam` (`learning_rate = 0.001`).  
 * `max_grad_norm`: If the norm of the gradient vector exceeds this, renormalize to have its norm equal to `max_grad_norm`.  
 * `dropout`: Dropout probability. Dropout is applied between vertical LSTM stacks.  
 * `lr_decay`: Decay learning rate by this much if (i) perplexity does not decrease on the validation
