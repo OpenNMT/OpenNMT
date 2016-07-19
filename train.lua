@@ -83,8 +83,8 @@ cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distrib
 cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: 
                               sgd (vanilla SGD), adagrad, adadelta, adam]])
 cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used, 
-                                then this is the global learning rate. Recommended settings: sgd = 1,
-                                adagrad = 0.1, adadelta = 1, adam = 0.001]])
+                                then this is the global learning rate. Recommended settings: sgd =1,
+                                adagrad = 0.1, adadelta = 1, adam = 0.1]])
 cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it
                                to have the norm equal to max_grad_norm]])
 cmd:option('-dropout', 0.3, [[Dropout probability. 
