@@ -2,10 +2,9 @@ require 'nn'
 require 'nngraph'
 require 'hdf5'
 
-require 'data'
-require 'util'
-require 'models'
-require 'model_utils'
+dofile 'data.lua'
+dofile 'models.lua'
+dofile 'model_utils.lua'
 
 cmd = torch.CmdLine()
 

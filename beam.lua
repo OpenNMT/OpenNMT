@@ -2,9 +2,8 @@ require 'nn'
 require 'string'
 require 'nngraph'
 
-require 'models'
-require 'data'
-require 'util'
+dofile 'models.lua'
+dofile 'data.lua'
 
 path = require 'pl.path'
 stringx = require 'pl.stringx'
