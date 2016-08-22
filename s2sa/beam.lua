@@ -2,13 +2,15 @@ require 'nn'
 require 'string'
 require 'nngraph'
 
-dofile 'models.lua'
-dofile 'data.lua'
+require 's2sa.models'
+require 's2sa.data'
 
 path = require 'pl.path'
 stringx = require 'pl.stringx'
 
-cmd = torch.CmdLine()
+local sent_id = 0
+local opt = {}
+local cmd = torch.CmdLine()
 
 -- file location
 cmd:option('-model', 'seq2seq_lstm_attn.t7.', [[Path to model .t7 file]])
@@ -480,7 +482,7 @@ function strip(s)
   return s:gsub("^%s+",""):gsub("%s+$","")
 end
 
-function main()
+function init(arg)
   -- parse input params
   opt = cmd:parse(arg)
 
@@ -489,7 +491,7 @@ function main()
   PAD_WORD = '<blank>'; UNK_WORD = '<unk>'; START_WORD = '<s>'; END_WORD = '</s>'
   START_CHAR = '{'; END_CHAR = '}'
   MAX_SENT_L = opt.max_sent_l
-  assert(path.exists(opt.src_file), 'src_file does not exist')
+
   assert(path.exists(opt.model), 'model does not exist')
 
   if opt.gpuid >= 0 then
@@ -615,57 +617,61 @@ function main()
   gold_words_total = 0
 
   State = StateAll
-  local sent_id = 0
-  pred_sents = {}
-  local file = io.open(opt.src_file, "r")
-  local out_file = io.open(opt.output_file,'w')
-  for line in file:lines() do
-    sent_id = sent_id + 1
-    line = clean_sent(line)
-    print('SENT ' .. sent_id .. ': ' ..line)
-    local source, source_str
-    if model_opt.use_chars_enc == 0 then
-      source, source_str = sent2wordidx(line, word2idx_src, model_opt.start_symbol)
-    else
-      source, source_str = sent2charidx(line, char2idx, model_opt.max_word_l, model_opt.start_symbol)
-    end
-    if opt.score_gold == 1 then
-      target, target_str = sent2wordidx(gold[sent_id], word2idx_targ, 1)
-    end
-    state = State.initial(START)
-    pred, pred_score, attn, gold_score, all_sents, all_scores, all_attn = generate_beam(model,
-      state, opt.beam, MAX_SENT_L, source, target)
-    pred_score_total = pred_score_total + pred_score
-    pred_words_total = pred_words_total + #pred - 1
-    pred_sent = wordidx2sent(pred, idx2word_targ, source_str, attn, true)
-    out_file:write(pred_sent .. '\n')
-    print('PRED ' .. sent_id .. ': ' .. pred_sent)
-    if gold ~= nil then
-      print('GOLD ' .. sent_id .. ': ' .. gold[sent_id])
-      if opt.score_gold == 1 then
-        print(string.format("PRED SCORE: %.4f, GOLD SCORE: %.4f", pred_score, gold_score))
-        gold_score_total = gold_score_total + gold_score
-        gold_words_total = gold_words_total + target:size(1) - 1
-      end
-    end
-    if opt.n_best > 1 then
-      for n = 1, opt.n_best do
-        pred_sent_n = wordidx2sent(all_sents[n], idx2word_targ, source_str, all_attn[n], false)
-        local out_n = string.format("%d ||| %s ||| %.4f", n, pred_sent_n, all_scores[n])
-        print(out_n)
-        out_file:write(out_n .. '\n')
-      end
-    end
-
-    print('')
-  end
-  print(string.format("PRED AVG SCORE: %.4f, PRED PPL: %.4f", pred_score_total / pred_words_total,
-      math.exp(-pred_score_total/pred_words_total)))
-  if opt.score_gold == 1 then
-    print(string.format("GOLD AVG SCORE: %.4f, GOLD PPL: %.4f",
-        gold_score_total / gold_words_total,
-        math.exp(-gold_score_total/gold_words_total)))
-  end
-  out_file:close()
+  sent_id = 0
 end
-main()
+
+function search(line)
+  sent_id = sent_id + 1
+  line = clean_sent(line)
+  print('SENT ' .. sent_id .. ': ' ..line)
+  local source, source_str
+  if model_opt.use_chars_enc == 0 then
+    source, source_str = sent2wordidx(line, word2idx_src, model_opt.start_symbol)
+  else
+    source, source_str = sent2charidx(line, char2idx, model_opt.max_word_l, model_opt.start_symbol)
+  end
+  if opt.score_gold == 1 then
+    target, target_str = sent2wordidx(gold[sent_id], word2idx_targ, 1)
+  end
+  state = State.initial(START)
+  pred, pred_score, attn, gold_score, all_sents, all_scores, all_attn = generate_beam(model,
+    state, opt.beam, MAX_SENT_L, source, target)
+  pred_score_total = pred_score_total + pred_score
+  pred_words_total = pred_words_total + #pred - 1
+  pred_sent = wordidx2sent(pred, idx2word_targ, source_str, attn, true)
+
+  print('PRED ' .. sent_id .. ': ' .. pred_sent)
+  if gold ~= nil then
+    print('GOLD ' .. sent_id .. ': ' .. gold[sent_id])
+    if opt.score_gold == 1 then
+      print(string.format("PRED SCORE: %.4f, GOLD SCORE: %.4f", pred_score, gold_score))
+      gold_score_total = gold_score_total + gold_score
+      gold_words_total = gold_words_total + target:size(1) - 1
+    end
+  end
+
+  nbests = {}
+
+  if opt.n_best > 1 then
+    for n = 1, opt.n_best do
+      pred_sent_n = wordidx2sent(all_sents[n], idx2word_targ, source_str, all_attn[n], false)
+      local out_n = string.format("%d ||| %s ||| %.4f", n, pred_sent_n, all_scores[n])
+      print(out_n)
+      nbests[n] = out_n
+    end
+  end
+
+  print('')
+
+  return pred_sent, nbests
+end
+
+function getOptions()
+  return opt
+end
+
+return {
+  init = init,
+  search = search,
+  getOptions = getOptions
+}

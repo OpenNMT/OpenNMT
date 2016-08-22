@@ -1,4 +1,4 @@
-dofile 'util.lua'
+require 's2sa.util'
 
 function nn.Module:reuseMem()
   self.reuse = true
