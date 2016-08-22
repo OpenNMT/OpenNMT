@@ -5,8 +5,8 @@ require 'nngraph'
 require 'cunn'
 require 'cutorch'
 
-dofile 'models.lua'
-dofile 'data.lua'
+require 's2sa.models'
+require 's2sa.data'
 
 cmd = torch.CmdLine()
 
