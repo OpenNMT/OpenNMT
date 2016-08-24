@@ -78,7 +78,7 @@ def get_data(args):
     char_indexer = Indexer(["<blank>","<unk>","{","}"])
     char_indexer.add_w([src_indexer.PAD, src_indexer.UNK, src_indexer.BOS, src_indexer.EOS])
 
-    def make_vocab(srcfile, targetfile, seqlength, max_word_l=0, chars=0):
+    def make_vocab(srcfile, targetfile, seqlength, max_word_l=0, chars=0, train=1):
         num_sents = 0
         for _, (src_orig, targ_orig) in \
                 enumerate(itertools.izip(open(srcfile,'r'), open(targetfile,'r'))):
@@ -93,26 +93,26 @@ def get_data(args):
             if len(targ) > seqlength or len(src) > seqlength or len(targ) < 1 or len(src) < 1:
                 continue
             num_sents += 1
-            for word in targ:
-                if chars == 1:
-                    word = char_indexer.clean(word)
-                    if len(word) == 0:
-                        continue
-                    max_word_l = max(len(word)+2, max_word_l)
-                    for char in list(word):
-                        char_indexer.vocab[char] += 1
-                target_indexer.vocab[word] += 1
+            if train == 1:
+                for word in targ:
+                    if chars == 1:
+                        word = char_indexer.clean(word)
+                        if len(word) == 0:
+                            continue
+                        max_word_l = max(len(word)+2, max_word_l)
+                        for char in list(word):
+                            char_indexer.vocab[char] += 1
+                    target_indexer.vocab[word] += 1
 
-            for word in src:
-                if chars == 1:
-                    word = char_indexer.clean(word)
-                    if len(word) == 0:
-                        continue
-                    max_word_l = max(len(word)+2, max_word_l)
-                    for char in list(word):
-                        char_indexer.vocab[char] += 1
-                src_indexer.vocab[word] += 1
-
+                for word in src:
+                    if chars == 1:
+                        word = char_indexer.clean(word)
+                        if len(word) == 0:
+                            continue
+                        max_word_l = max(len(word)+2, max_word_l)
+                        for char in list(word):
+                            char_indexer.vocab[char] += 1
+                    src_indexer.vocab[word] += 1
         return max_word_l, num_sents
 
     def convert(srcfile, targetfile, batchsize, seqlength, outfile, num_sents,
@@ -278,7 +278,7 @@ def get_data(args):
                                              args.seqlength, 0, args.chars)
     print("Number of sentences in training: {}".format(num_sents_train))
     max_word_l, num_sents_valid = make_vocab(args.srcvalfile, args.targetvalfile,
-                                             args.seqlength, max_word_l, args.chars)
+                                             args.seqlength, max_word_l, args.chars, 0)
     print("Number of sentences in valid: {}".format(num_sents_valid))
     if args.chars == 1:
         print("Max word length (before cutting): {}".format(max_word_l))
