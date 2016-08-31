@@ -212,14 +212,17 @@ function train(train_data, valid_data)
   for i = 1, opt.max_sent_l_src do
     if encoder_clones[i].apply then
       encoder_clones[i]:apply(function(m) m:setReuse() end)
+      encoder_clones[i]:apply(function(m) m:setPrealloc() end)
     end
     if opt.brnn == 1 then
       encoder_bwd_clones[i]:apply(function(m) m:setReuse() end)
+      encoder_bwd_clones[i]:apply(function(m) m:setPrealloc() end)
     end
   end
   for i = 1, opt.max_sent_l_targ do
     if decoder_clones[i].apply then
       decoder_clones[i]:apply(function(m) m:setReuse() end)
+      decoder_clones[i]:apply(function(m) m:setPrealloc() end)
     end
   end
 
@@ -831,6 +834,9 @@ function main()
     end
     _, criterion = make_generator(valid_data, opt)
   end
+
+  -- call memory pre-allocation
+  preallocateMemory(opt)
 
   layers = {encoder, decoder, generator}
   if opt.brnn == 1 then
