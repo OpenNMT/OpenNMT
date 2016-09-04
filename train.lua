@@ -113,6 +113,7 @@ cmd:option('-cudnn', 0, [[Whether to use cudnn or not for convolutions (for the 
 cmd:option('-save_every', 1, [[Save every this many epochs]])
 cmd:option('-print_every', 50, [[Print stats after this many batches]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
+cmd:option('-prealloc', 1, [[Use memory preallocation and sharing between cloned encoder/decoders]])
 
 function zero_table(t)
   for i = 1, #t do
@@ -212,17 +213,17 @@ function train(train_data, valid_data)
   for i = 1, opt.max_sent_l_src do
     if encoder_clones[i].apply then
       encoder_clones[i]:apply(function(m) m:setReuse() end)
-      encoder_clones[i]:apply(function(m) m:setPrealloc() end)
+      if opt.prealloc == 1 then encoder_clones[i]:apply(function(m) m:setPrealloc() end) end
     end
     if opt.brnn == 1 then
       encoder_bwd_clones[i]:apply(function(m) m:setReuse() end)
-      encoder_bwd_clones[i]:apply(function(m) m:setPrealloc() end)
+      if opt.prealloc == 1 then encoder_bwd_clones[i]:apply(function(m) m:setPrealloc() end) end
     end
   end
   for i = 1, opt.max_sent_l_targ do
     if decoder_clones[i].apply then
       decoder_clones[i]:apply(function(m) m:setReuse() end)
-      decoder_clones[i]:apply(function(m) m:setPrealloc() end)
+      if opt.prealloc == 1 then decoder_clones[i]:apply(function(m) m:setPrealloc() end) end
     end
   end
 
@@ -808,6 +809,9 @@ function main()
   print(string.format('Source max sent len: %d, Target max sent len: %d',
       valid_data.source:size(2), valid_data.target:size(2)))
 
+  -- Enable memory preallocation - see memory.lua
+  preallocateMemory(opt.prealloc)
+
   -- Build model
   if opt.train_from:len() == 0 then
     encoder = make_lstm(valid_data, opt, 'enc', opt.use_chars_enc)
@@ -834,9 +838,6 @@ function main()
     end
     _, criterion = make_generator(valid_data, opt)
   end
-
-  -- call memory pre-allocation
-  preallocateMemory(opt)
 
   layers = {encoder, decoder, generator}
   if opt.brnn == 1 then

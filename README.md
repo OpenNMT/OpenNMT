@@ -189,6 +189,10 @@ GPU and the decoder is on the second GPU. This will allow you to train bigger mo
 has much faster convolutions so this is highly recommended if using the character model.
 * `save_every`: Save every this many epochs.
 * `print_every`: Print various stats after this many batches.
+* `seed`: Change the random seed for random numbers in torch - use that option to train alternate models for ensemble
+* `prealloc`: when set to 1 (default), enable memory preallocation and sharing between clones - this reduces by a lot the used memory - there should not be
+any situation where you don't need it. Also - since memory is preallocated, there is not (major)
+memory increase during the training. When set to 0, it rolls back to original memory optimization.
 
 #### Decoding options (`beam.lua`)
 
