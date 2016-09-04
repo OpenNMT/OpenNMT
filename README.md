@@ -117,7 +117,7 @@ then this is the number of shards.
 * `rnn_size`: Size of LSTM hidden states.
 * `word_vec_size`: Word embedding size.
 * `attn`:  If = 1, use attention over the source sequence during decoding. If = 0, then it
-uses the last hidden state of the decoder as the context at each time step.
+uses the last hidden state of the encoder as the context at each time step.
 * `brnn`: If = 1, use a bidirectional LSTM on the encoder side. Input embeddings (or CharCNN
 if using characters)  are shared between the forward/backward LSTM, and hidden states of the
 corresponding forward/backward LSTMs are added to obtain the hidden representation for that
@@ -247,11 +247,22 @@ Here are some benchmark numbers on a GeForce GTX Titan X.
 (assuming batch size of 64, maximum sequence length of 50 on both the source/target sequence,
 vocabulary size of 50000, and word embedding size equal to rnn size):
 
+(`prealloc = 0`)  
 * 1-layer, 100 hidden units: 0.7G, 21.5K tokens/sec
 * 1-layer, 250 hidden units: 1.4G, 14.1K tokens/sec
 * 1-layer, 500 hidden units: 2.6G, 9.4K tokens/sec
 * 2-layers, 500 hidden units: 3.2G, 7.4K tokens/sec
 * 4-layers, 1000 hidden units: 9.4G, 2.5K tokens/sec
+
+Thanks to some fantastic work from folks at [SYSTRAN](www.systransoft.com), turning `prealloc` on
+will lead to much more memory efficient training
+
+(`prealloc = 1`)  
+* 1-layer, 100 hidden units: 0.5G, 22.4K tokens/sec
+* 1-layer, 250 hidden units: 1.1G, 14.5K tokens/sec
+* 1-layer, 500 hidden units: 2.1G, 10.0K tokens/sec
+* 2-layers, 500 hidden units: 2.3G, 8.2K tokens/sec
+* 4-layers, 1000 hidden units: 6.4G, 3.3K tokens/sec
 
 Tokens/sec refers to total (i.e. source + target) tokens processed per second.
 If using different batch sizes/sequence length, you should (linearly) scale
