@@ -254,7 +254,7 @@ vocabulary size of 50000, and word embedding size equal to rnn size):
 * 2-layers, 500 hidden units: 3.2G, 7.4K tokens/sec
 * 4-layers, 1000 hidden units: 9.4G, 2.5K tokens/sec
 
-Thanks to some fantastic work from folks at [SYSTRAN](www.systransoft.com), turning `prealloc` on
+Thanks to some fantastic work from folks at [SYSTRAN](https://www.systransoft.com), turning `prealloc` on
 will lead to much more memory efficient training
 
 (`prealloc = 1`)  
