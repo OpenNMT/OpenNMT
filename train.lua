@@ -83,6 +83,8 @@ cmd:option('-lr_decay', 0.5, [[Decay learning rate by this much if (i) perplexit
 cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
 cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
                              sequence length. Sometimes setting this to 1 will increase convergence speed.]])
+cmd:option('-feature_embeddings_dim_exponent', 0.7, [[If the feature takes N values, then the
+                                                    embbeding dimension will be set to N^exponent]])
 cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings (hdf5 file) on the encoder side.
                                      See README for specific formatting instructions.]])
@@ -125,6 +127,12 @@ function zero_table(t)
       end
     end
     t[i]:zero()
+  end
+end
+
+function append_table(dst, src)
+  for i = 1, #src do
+    table.insert(dst, src[i])
   end
 end
 
@@ -336,6 +344,8 @@ function train(train_data, valid_data)
   end
 
   function train_batch(data, epoch)
+    opt.num_source_features = data.num_source_features
+
     local train_nonzeros = 0
     local train_loss = 0
     local batch_order = torch.randperm(data.length) -- shuffle mini batch order
@@ -353,6 +363,7 @@ function train(train_data, valid_data)
       end
       local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
       local batch_l, target_l, source_l = d[5], d[6], d[7]
+      local source_features = d[9]
 
       local encoder_grads = encoder_grad_proto[{{1, batch_l}, {1, source_l}}]
       local encoder_bwd_grads
@@ -367,7 +378,12 @@ function train(train_data, valid_data)
       -- forward prop encoder
       for t = 1, source_l do
         encoder_clones[t]:training()
-        local encoder_input = {source[t], table.unpack(rnn_state_enc[t-1])}
+        encoder_clones[t]:training()
+        local encoder_input = {source[t]}
+        if data.num_source_features > 0 then
+          append_table(encoder_input, source_features[t])
+        end
+        append_table(encoder_input, rnn_state_enc[t-1])
         local out = encoder_clones[t]:forward(encoder_input)
         rnn_state_enc[t] = out
         context[{{},t}]:copy(out[#out])
@@ -378,7 +394,11 @@ function train(train_data, valid_data)
         rnn_state_enc_bwd = reset_state(init_fwd_enc, batch_l, source_l+1)
         for t = source_l, 1, -1 do
           encoder_bwd_clones[t]:training()
-          local encoder_input = {source[t], table.unpack(rnn_state_enc_bwd[t+1])}
+          local encoder_input = {source[t]}
+          if data.num_source_features > 0 then
+            append_table(encoder_input, source_features[t])
+          end
+          append_table(encoder_input, rnn_state_enc_bwd[t+1])
           local out = encoder_bwd_clones[t]:forward(encoder_input)
           rnn_state_enc_bwd[t] = out
           context[{{},t}]:add(out[#out])
@@ -496,7 +516,11 @@ function train(train_data, valid_data)
       end
 
       for t = source_l, 1, -1 do
-        local encoder_input = {source[t], table.unpack(rnn_state_enc[t-1])}
+        local encoder_input = {source[t]}
+        if data.num_source_features > 0 then
+          append_table(encoder_input, source_features[t])
+        end
+        append_table(encoder_input, rnn_state_enc[t-1])
         if opt.attn == 1 then
           drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
         else
@@ -506,7 +530,7 @@ function train(train_data, valid_data)
         end
         local dlst = encoder_clones[t]:backward(encoder_input, drnn_state_enc)
         for j = 1, #drnn_state_enc do
-          drnn_state_enc[j]:copy(dlst[j+1])
+          drnn_state_enc[j]:copy(dlst[j+1+data.num_source_features])
         end
       end
 
@@ -519,7 +543,11 @@ function train(train_data, valid_data)
           end
         end
         for t = 1, source_l do
-          local encoder_input = {source[t], table.unpack(rnn_state_enc_bwd[t+1])}
+          local encoder_input = {source[t]}
+          if data.num_source_features > 0 then
+            append_table(encoder_input, source_features[t])
+          end
+          append_table(encoder_input, rnn_state_enc_bwd[t+1])
           if opt.attn == 1 then
             drnn_state_enc[#drnn_state_enc]:add(encoder_bwd_grads[{{},t}])
           else
@@ -529,7 +557,7 @@ function train(train_data, valid_data)
           end
           local dlst = encoder_bwd_clones[t]:backward(encoder_input, drnn_state_enc)
           for j = 1, #drnn_state_enc do
-            drnn_state_enc[j]:copy(dlst[j+1])
+            drnn_state_enc[j]:copy(dlst[j+1+data.num_source_features])
           end
         end
       end
@@ -675,6 +703,7 @@ function eval(data)
     local d = data[i]
     local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
     local batch_l, target_l, source_l = d[5], d[6], d[7]
+    local source_features = d[9]
     if opt.gpuid >= 0 and opt.gpuid2 >= 0 then
       cutorch.setDevice(opt.gpuid)
     end
@@ -682,7 +711,11 @@ function eval(data)
     local context = context_proto[{{1, batch_l}, {1, source_l}}]
     -- forward prop encoder
     for t = 1, source_l do
-      local encoder_input = {source[t], table.unpack(rnn_state_enc)}
+      local encoder_input = {source[t]}
+      if data.num_source_features > 0 then
+        append_table(encoder_input, source_features[t])
+      end
+      append_table(encoder_input, rnn_state_enc)
       local out = encoder_clones[1]:forward(encoder_input)
       rnn_state_enc = out
       context[{{},t}]:copy(out[#out])
@@ -706,7 +739,11 @@ function eval(data)
     if opt.brnn == 1 then
       local rnn_state_enc = reset_state(init_fwd_enc, batch_l)
       for t = source_l, 1, -1 do
-        local encoder_input = {source[t], table.unpack(rnn_state_enc)}
+        local encoder_input = {source[t]}
+        if data.num_source_features > 0 then
+          append_table(encoder_input, source_features[t])
+        end
+        append_table(encoder_input, rnn_state_enc)
         local out = encoder_bwd_clones[1]:forward(encoder_input)
         rnn_state_enc = out
         context[{{},t}]:add(out[#out])
@@ -808,6 +845,8 @@ function main()
   end
   print(string.format('Source max sent len: %d, Target max sent len: %d',
       valid_data.source:size(2), valid_data.target:size(2)))
+
+  print(string.format('Number of additional features on source side: %d', valid_data.num_source_features))
 
   -- Enable memory preallocation - see memory.lua
   preallocateMemory(opt.prealloc)

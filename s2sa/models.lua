@@ -25,6 +25,11 @@ function make_lstm(data, opt, model, use_chars)
       table.insert(inputs, nn.Identity()()) -- prev context_attn (batch_size x rnn_size)
       offset = offset + 1
     end
+  else
+    for i = 1, data.num_source_features do
+      table.insert(inputs, nn.Identity()()) -- table of features
+      offset = offset + 1
+    end
   end
   for L = 1,n do
     table.insert(inputs, nn.Identity()()) -- prev_c[L]
@@ -61,6 +66,14 @@ function make_lstm(data, opt, model, use_chars)
           x = mlp(x)
         end
       end
+      if model == 'enc' then
+        for i = 1, data.num_source_features do
+          local feat_vecs = nn.LookupTable(data.source_features_size[i],
+                                           data.source_features_vec_size[i])
+          local feat_x = feat_vecs(inputs[1+i])
+          x = nn.JoinTable(2)({x, feat_x})
+        end
+      end
       input_size_L = input_size
       if model == 'dec' then
         if opt.input_feed == 1 then
@@ -69,6 +82,8 @@ function make_lstm(data, opt, model, use_chars)
                              ({x, inputs[1+offset]}) -- batch_size x (word_vec_size + rnn_size)
           input_size_L = input_size_L + rnn_size
         end
+      else
+        input_size_L = input_size_L + data.total_source_features_size
       end
     else
       x = outputs[(L-1)*2]

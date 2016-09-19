@@ -72,16 +72,62 @@ def pad(ls, length, symbol):
         return ls[:length]
     return ls + [symbol] * (length -len(ls))
 
+def save_features(name, indexers, outputfile):
+    if len(indexers) > 0:
+        print("Number of additional features on {} side: {}".format(name, len(indexers)))
+    for i in range(len(indexers)):
+        indexers[i].write(outputfile + "." + name + "_feature_" + str(i+1) + ".dict", )
+        print(" * {} feature {} of size: {}".format(name, i+1, len(indexers[i].d)))
+
+def load_features(name, indexers, outputfile):
+    for i in range(len(indexers)):
+        indexers[i].load_vocab(outputfile + "." + name + "_feature_" + str(i+1) + ".dict", )
+        print(" * {} feature {} of size: {}".format(name, i+1, len(indexers[i].d)))
+
 def get_data(args):
     src_indexer = Indexer(["<blank>","<unk>","<s>","</s>"])
+    src_feature_indexers = []
     target_indexer = Indexer(["<blank>","<unk>","<s>","</s>"])
     char_indexer = Indexer(["<blank>","<unk>","{","}"])
     char_indexer.add_w([src_indexer.PAD, src_indexer.UNK, src_indexer.BOS, src_indexer.EOS])
+
+    def init_feature_indexers(indexers, count):
+        for i in range(count):
+            indexers.append(Indexer(["<blank>","<unk>","<s>","</s>"]))
+
+    def load_sentence(sent, indexers):
+        sent_seq = sent.strip().split()
+        sent_words = ''
+        sent_features = []
+
+        for entry in sent_seq:
+            fields = entry.split('-|-')
+            word = fields[0]
+            sent_words += (' ' if sent_words else '') + word
+
+            if len(fields) > 1:
+                count = len(fields) - 1
+                if len(sent_features) == 0:
+                    sent_features = [ [] for i in range(count) ]
+                if len(indexers) == 0:
+                    init_feature_indexers(indexers, count)
+                for i in range(1, len(fields)):
+                    sent_features[i-1].append(fields[i])
+
+        return sent_words, sent_features
+
+    def add_features_vocab(orig_features, indexers):
+        if len(indexers) > 0:
+            index = 0
+            for value in orig_features:
+                indexers[index].add_w(value)
+                index += 1
 
     def make_vocab(srcfile, targetfile, seqlength, max_word_l=0, chars=0, train=1):
         num_sents = 0
         for _, (src_orig, targ_orig) in \
                 enumerate(itertools.izip(open(srcfile,'r'), open(targetfile,'r'))):
+            src_orig, src_orig_features = load_sentence(src_orig, src_feature_indexers)
             if chars == 1:
                 src_orig = src_indexer.clean(src_orig.decode("utf-8").strip())
                 targ_orig = target_indexer.clean(targ_orig.decode("utf-8").strip())
@@ -104,6 +150,8 @@ def get_data(args):
                             char_indexer.vocab[char] += 1
                     target_indexer.vocab[word] += 1
 
+                add_features_vocab(src_orig_features, src_feature_indexers)
+
                 for word in src:
                     if chars == 1:
                         word = char_indexer.clean(word)
@@ -118,10 +166,32 @@ def get_data(args):
     def convert(srcfile, targetfile, batchsize, seqlength, outfile, num_sents,
                 max_word_l, max_sent_l=0,chars=0, unkfilter=0, shuffle=0):
 
+        def init_features_tensor(indexers):
+            return [ np.zeros((num_sents, newseqlength), dtype=int)
+                     for i in range(len(indexers)) ]
+
+        def load_features(orig_features, indexers, seqlength):
+            if len(orig_features) == 0:
+                return None
+
+            features = []
+            for i in range(len(orig_features)):
+                features.append([[indexers[i].BOS]]
+                                + orig_features[i]
+                                + [[indexers[i].EOS]])
+
+            for i in range(len(features)):
+                features[i] = pad(features[i], seqlength, [indexers[i].PAD])
+                for j in range(len(features[i])):
+                    features[i][j] = indexers[i].convert_sequence(features[i][j])[0]
+                features[i] = np.array(features[i], dtype=int)
+            return features
+
         newseqlength = seqlength + 2 #add 2 for EOS and BOS
         targets = np.zeros((num_sents, newseqlength), dtype=int)
         target_output = np.zeros((num_sents, newseqlength), dtype=int)
         sources = np.zeros((num_sents, newseqlength), dtype=int)
+        sources_features = init_features_tensor(src_feature_indexers)
         source_lengths = np.zeros((num_sents,), dtype=int)
         target_lengths = np.zeros((num_sents,), dtype=int)
         if chars==1:
@@ -131,6 +201,7 @@ def get_data(args):
         sent_id = 0
         for _, (src_orig, targ_orig) in \
                 enumerate(itertools.izip(open(srcfile,'r'), open(targetfile,'r'))):
+            src_orig, src_orig_features = load_sentence(src_orig, src_feature_indexers)
             if chars == 1:
                 src_orig = src_indexer.clean(src_orig.decode("utf-8").strip())
                 targ_orig = target_indexer.clean(targ_orig.decode("utf-8").strip())
@@ -194,6 +265,10 @@ def get_data(args):
             if chars == 1:
                 sources_char[sent_id] = np.array(src_char, dtype=int)
 
+            source_features = load_features(src_orig_features, src_feature_indexers, newseqlength)
+            for i in range(len(src_feature_indexers)):
+                sources_features[i][sent_id] = np.array(source_features[i], dtype=int)
+
             sent_id += 1
             if sent_id % 100000 == 0:
                 print("{}/{} sentences processed".format(sent_id, num_sents))
@@ -206,6 +281,8 @@ def get_data(args):
             sources = sources[rand_idx]
             source_lengths = source_lengths[rand_idx]
             target_lengths = target_lengths[rand_idx]
+            for i in range(len(sources_features)):
+                sources_features[i] = sources_features[i][rand_idx]
             if chars==1:
                 sources_char = sources_char[rand_idx]
                 targets_char = targets_char[rand_idx]
@@ -219,6 +296,9 @@ def get_data(args):
         target_output = target_output[source_sort]
         target_l = target_lengths[source_sort]
         source_l = source_lengths[source_sort]
+
+        for i in range(len(src_feature_indexers)):
+            sources_features[i] = sources_features[i][source_sort]
 
         curr_l = 0
         l_location = [] #idx where sent length changes
@@ -260,6 +340,10 @@ def get_data(args):
         f["target_nonzeros"] = np.array(nonzeros, dtype=int)
         f["source_size"] = np.array([len(src_indexer.d)])
         f["target_size"] = np.array([len(target_indexer.d)])
+        f["num_source_features"] = np.array([len(src_feature_indexers)])
+        for i in range(len(src_feature_indexers)):
+            f["source_feature_" + str(i+1)] = sources_features[i]
+            f["source_feature_" + str(i+1) + "_size"] = np.array([len(src_feature_indexers[i].d)])
         if chars == 1:
             del sources, targets, target_output
             sources_char = sources_char[source_sort]
@@ -305,6 +389,11 @@ def get_data(args):
             char_indexer.prune_vocab(500)
         char_indexer.write(args.outputfile + ".char.dict", args.chars)
         print("Character vocab size: {}".format(len(char_indexer.vocab)))
+
+    if args.reusefeaturefile != '':
+        load_features('source', src_feature_indexers, args.reusefeaturefile)
+
+    save_features('source', src_feature_indexers, args.outputfile)
 
     print("Source vocab size: Original = {}, Pruned = {}".format(len(src_indexer.vocab),
                                                           len(src_indexer.d)))
@@ -367,6 +456,8 @@ def main(arguments):
                                        "Can be an absolute count limit (if > 1) "
                                        "or a proportional limit (0 < unkfilter < 1).",
                                           type = float, default = 0)
+    parser.add_argument('--reusefeaturefile', help="Use existing feature vocabs",
+                                          type = str, default ='')
     parser.add_argument('--shuffle', help="If = 1, shuffle sentences before sorting (based on  "
                                            "source length).",
                                           type = int, default = 0)

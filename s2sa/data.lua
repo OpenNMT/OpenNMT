@@ -2,6 +2,33 @@
 -- Manages encoder/decoder data matrices.
 --
 
+function features_per_timestep(features)
+  local data = {}
+
+  if #features ~= 0 then
+    local sent_len = features[1]:size(1)
+    for i = 1,sent_len do
+      table.insert(data, {})
+      for j = 1,#features do
+        table.insert(data[i], features[j][i])
+      end
+    end
+  end
+
+  return data
+end
+
+function features_on_gpu(features)
+  local clone = {}
+  for i = 1,#features do
+    table.insert(clone, {})
+    for j = 1,#features[i] do
+      table.insert(clone[i], features[i][j]:cuda())
+    end
+  end
+  return clone
+end
+
 local data = torch.class("data")
 
 function data:__init(opt, data_file)
@@ -15,9 +42,28 @@ function data:__init(opt, data_file)
   self.target_l_all:add(-1)
   self.batch_l = f:read('batch_l'):all()
   self.source_l = f:read('batch_w'):all() --max source length each batch
+
+  self.num_source_features = f:read('num_source_features'):all()[1]
+  self.source_features = {}
+  self.source_features_size = {}
+  self.source_features_vec_size = {}
+  self.total_source_features_size = 0
+
+  for i = 1,self.num_source_features do
+    table.insert(self.source_features, f:read('source_feature_' .. i):all())
+    local feature_size = f:read('source_feature_' .. i .. '_size'):all()[1]
+    table.insert(self.source_features_size, feature_size)
+    feature_size = math.floor(feature_size ^ opt.feature_embeddings_dim_exponent)
+    table.insert(self.source_features_vec_size, feature_size)
+    self.total_source_features_size = self.total_source_features_size + feature_size
+  end
+
   if opt.start_symbol == 0 then
     self.source_l:add(-2)
     self.source = self.source[{{},{2, self.source:size(2)-1}}]
+    for i = 1,self.num_source_features do
+      self.source_features[i] = self.source_features[i][{{},{2, self.source_features[i]:size(2)-1}}]
+    end
   end
   self.batch_idx = f:read('batch_idx'):all()
 
@@ -50,6 +96,7 @@ function data:__init(opt, data_file)
   end
   for i = 1, self.length do
     local source_i, target_i
+    local source_features_i
     local target_output_i = self.target_output:sub(self.batch_idx[i],self.batch_idx[i]
       +self.batch_l[i]-1, 1, self.target_l[i])
     local target_l_i = self.target_l_all:sub(self.batch_idx[i],
@@ -75,6 +122,24 @@ function data:__init(opt, data_file)
       target_i = self.target:sub(self.batch_idx[i], self.batch_idx[i]+self.batch_l[i]-1,
         1, self.target_l[i]):transpose(1,2)
     end
+
+    local source_feats = {}
+    local target_feats = {}
+    local target_feats_output = {}
+
+    for j = 1,self.num_source_features do
+      table.insert(source_feats,
+        self.source_features[j]:sub(self.batch_idx[i],
+                                    self.batch_idx[i]+self.batch_l[i]-1,
+                                    1, self.source_l[i]):transpose(1,2):double())
+      if opt.reverse_src == 1 then
+        source_feats[j] = source_feats[j]:index(1, source_l_rev[{{max_source_l-self.source_l[i]+1, max_source_l}}])
+      end
+    end
+
+    -- convert table of timesteps per feature to a table of features per timestep
+    source_features_i = features_per_timestep(source_feats)
+
     table.insert(self.batches, {target_i,
         target_output_i:transpose(1,2),
         self.target_nonzeros[i],
@@ -82,7 +147,8 @@ function data:__init(opt, data_file)
         self.batch_l[i],
         self.target_l[i],
         self.source_l[i],
-        target_l_i})
+        target_l_i,
+        source_features_i})
   end
 end
 
@@ -102,9 +168,11 @@ function data.__index(self, idx)
     local target_l = self.batches[idx][6]
     local source_l = self.batches[idx][7]
     local target_l_all = self.batches[idx][8]
+    local source_features = self.batches[idx][9]
     if opt.gpuid >= 0 then --if multi-gpu, source lives in gpuid1, rest on gpuid2
       cutorch.setDevice(opt.gpuid)
       source_input = source_input:cuda()
+      source_features = features_on_gpu(source_features)
       if opt.gpuid2 >= 0 then
         cutorch.setDevice(opt.gpuid2)
       end
@@ -113,7 +181,7 @@ function data.__index(self, idx)
       target_l_all = target_l_all:cuda()
     end
     return {target_input, target_output, nonzeros, source_input,
-      batch_l, target_l, source_l, target_l_all}
+      batch_l, target_l, source_l, target_l_all, source_features}
   end
 end
 
