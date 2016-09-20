@@ -165,6 +165,7 @@ learning rate. Recommended settings vary based on `optim`: sgd (`learning_rate =
 set or (ii) epoch has gone past the `start_decay_at` epoch limit.
 * `start_decay_at`: Start decay after this epoch.
 * `curriculum`: For this many epochs, order the minibatches based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).
+* `feature_embeddings_dim_exponent`: If the additional feature takes `N` values, then the embbeding dimension will be set to `N^exponent`.
 * `pre_word_vecs_enc`: If using pretrained word embeddings (on the encoder side), this is the
 path to the *.hdf5 file with the embeddings. The hdf5 should have a single field `word_vecs`,
 which references an array with dimensions vocab size by embedding size. Each row should be a word
@@ -202,6 +203,7 @@ memory increase during the training. When set to 0, it rolls back to original me
 * `output_file`: Path to output the predictions (each line will be the decoded sequence).
 * `src_dict`: Path to source vocabulary (`*.src.dict` file from `preprocess.py`).
 * `targ_dict`: Path to target vocabulary (`*.targ.dict` file from `preprocess.py`).
+* `feature_dict_prefix`: Prefix of the path to the features vocabularies (`*.feature_N.dict` files from `preprocess.py`).
 * `char_dict`: Path to character vocabulary (`*.char.dict` file from `preprocess.py`).
 * `beam`: Beam size (recommend keeping this at 5).
 * `max_sent_l`: Maximum sentence length. If any of the sequences in `srcfile` are longer than this
