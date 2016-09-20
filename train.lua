@@ -378,7 +378,6 @@ function train(train_data, valid_data)
       -- forward prop encoder
       for t = 1, source_l do
         encoder_clones[t]:training()
-        encoder_clones[t]:training()
         local encoder_input = {source[t]}
         if data.num_source_features > 0 then
           append_table(encoder_input, source_features[t])
