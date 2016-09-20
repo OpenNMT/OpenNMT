@@ -412,7 +412,11 @@ local function features2featureidx(features, feature2idx, start_symbol)
   for i = 1, #features do
     table.insert(out, {})
     for j = 1, #feature2idx do
-      table.insert(out[#out], torch.Tensor(1):fill(feature2idx[j][features[i][j]]))
+      local value = feature2idx[j][features[i][j]]
+      if value == nil then
+        value = UNK
+      end
+      table.insert(out[#out], torch.Tensor(1):fill(value))
     end
   end
 
