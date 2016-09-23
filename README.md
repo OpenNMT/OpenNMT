@@ -236,6 +236,19 @@ format.
 * `cudnn`: If the model was trained with `cudnn`, then this should be set to 1 (otherwise the model
 will fail to load).
 
+#### Using additional input features
+[Linguistic Input Features Improve Neural Machine Translation](https://arxiv.org/abs/1606.02892) (Senrich et al. 2016) shows that translation performance can be increased by using additional input features.
+
+Similarly to this work, you can annotate each word in the **source** text by using the `-|-` separator:
+
+```
+word1-|-feat1-|-feat2 word2-|-feat1-|-feat2
+```
+
+It supports an arbitrary number of features with arbitrary labels. However, all input words must have the **same** number of annotations. See for example `data/src-train-case.txt` which annotates each word with the case information.
+
+To evaluate the model, the option `-feature_dict_prefix` is required on `evaluate.lua` which points to the prefix of the features dictionnaries generated during the preprocessing.
+
 #### Switching between GPU/CPU models
 By default, the model will always save the final model as a CPU model, but it will save the
 intermediate models as a CPU/GPU model depending on how you specified `-gpuid`.
