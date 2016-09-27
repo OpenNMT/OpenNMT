@@ -99,6 +99,8 @@ will ignore the `srcvocabsize,targetvocabsize`.
 * `unkfilter`: Ignore sentences with too many UNK tokens. Can be an absolute count limit (if > 1)
 or a proportional limit (0 < unkfilter < 1).
 * `shuffle`: Shuffle sentences.
+* `alignfile`, `alignvalfile`: If provided with filenames that contain 'Pharaoh' format alignment
+on the train and validation data, source-to-target alignments are stored in the dataset.
 
 #### Training options (`train.lua`)
 **Data options**
@@ -147,6 +149,11 @@ Below options only apply if using the character model.
 * `kernel_width`: Size (i.e. width) of the convolutional filter.
 * `num_kernels`: Number of convolutional filters (feature maps). So the representation from characters will have this many dimensions.
 * `num_highway_layers`: Number of highway layers in the character composition model.
+
+To build a model with guided alignment (implemented similarly to [Guided Alignment Training for Topic-Aware Neural Machine Translation](https://arxiv.org/abs/1607.01628) (Chen et al. 2016)):
+* `guided_alignment`: If 1, use external alignments to guide the attention weights
+* `guided_alignment_weight`: weight for guided alignment criterion
+* `guided_alignment_decay`: decay rate per epoch for alignment weight
 
 **Optimization options**
 

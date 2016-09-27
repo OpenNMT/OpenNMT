@@ -163,7 +163,7 @@ def get_data(args):
                     src_indexer.vocab[word] += 1
         return max_word_l, num_sents
 
-    def convert(srcfile, targetfile, batchsize, seqlength, outfile, num_sents,
+    def convert(srcfile, targetfile, alignfile, batchsize, seqlength, outfile, num_sents,
                 max_word_l, max_sent_l=0,chars=0, unkfilter=0, shuffle=0):
 
         def init_features_tensor(indexers):
@@ -188,6 +188,13 @@ def get_data(args):
             return features
 
         newseqlength = seqlength + 2 #add 2 for EOS and BOS
+
+        alignfile_hdl = None
+        alignments = None
+        if not alignfile == '':
+            alignfile_hdl = open(alignfile,'r')
+            alignments = np.zeros((num_sents,newseqlength,newseqlength), dtype=np.uint8)
+
         targets = np.zeros((num_sents, newseqlength), dtype=int)
         target_output = np.zeros((num_sents, newseqlength), dtype=int)
         sources = np.zeros((num_sents, newseqlength), dtype=int)
@@ -211,6 +218,11 @@ def get_data(args):
             targ = [target_indexer.BOS] + targ_orig.strip().split() + [target_indexer.EOS]
             src =  [src_indexer.BOS] + src_orig.strip().split() + [src_indexer.EOS]
             max_sent_l = max(len(targ), len(src), max_sent_l)
+
+            align=[]
+            if alignfile_hdl:
+                align=alignfile_hdl.readline().strip().split(" ")
+
             if len(targ) > newseqlength or len(src) > newseqlength or len(targ) < 3 or len(src) < 3:
                 dropped += 1
                 continue
@@ -269,6 +281,11 @@ def get_data(args):
             for i in range(len(src_feature_indexers)):
                 sources_features[i][sent_id] = np.array(source_features[i], dtype=int)
 
+            if alignfile_hdl:
+                for pair in align:
+                    aFrom, aTo = pair.split('-')
+                    alignments[sent_id][int(aFrom) + 1][int(aTo) + 1] = 1
+
             sent_id += 1
             if sent_id % 100000 == 0:
                 print("{}/{} sentences processed".format(sent_id, num_sents))
@@ -279,6 +296,8 @@ def get_data(args):
             targets = targets[rand_idx]
             target_output = target_output[rand_idx]
             sources = sources[rand_idx]
+            if alignments is not None:
+                alignments = alignments[rand_idx]
             source_lengths = source_lengths[rand_idx]
             target_lengths = target_lengths[rand_idx]
             for i in range(len(sources_features)):
@@ -294,6 +313,8 @@ def get_data(args):
         sources = sources[source_sort]
         targets = targets[source_sort]
         target_output = target_output[source_sort]
+        if alignments is not None:
+            alignments = alignments[source_sort]
         target_l = target_lengths[source_sort]
         source_l = source_lengths[source_sort]
 
@@ -332,6 +353,35 @@ def get_data(args):
         f["source"] = sources
         f["target"] = targets
         f["target_output"] = target_output
+        if alignments is not None:
+            print "build alignment structure"
+            alignment_cc_val = []
+            alignment_cc_colidx = []
+            alignment_cc_sentidx = []
+            S={}
+            for k in range(sent_id-1):
+                alignment_cc_sentidx.append(len(alignment_cc_colidx))
+                for i in xrange(0, source_l[k]):
+                    # for word i, build aligment vector as a string for indexing
+                    a=''
+                    maxnalign=0
+                    # build a string representing the alignment vector
+                    for j in xrange(0, newseqlength):
+                        a=a+chr(ord('0')+int(alignments[k][i][j]))
+                    # check if we have already built such column
+                    if not a in S:
+                        alignment_cc_colidx.append(len(alignment_cc_val))
+                        S[a]=len(alignment_cc_val)
+                        for j in xrange(0, newseqlength):
+                            alignment_cc_val.append(alignments[k][i][j])
+                    else:
+                        alignment_cc_colidx.append(S[a])
+
+            assert(len(alignment_cc_colidx)<4294967296)
+            f["alignment_cc_sentidx"] = np.array(alignment_cc_sentidx, dtype=np.uint32)
+            f["alignment_cc_colidx"] = np.array(alignment_cc_colidx, dtype=np.uint32)
+            f["alignment_cc_val"] = np.array(alignment_cc_val, dtype=np.uint8)
+
         f["target_l"] = np.array(target_l_max, dtype=int)
         f["target_l_all"] = target_l
         f["batch_l"] = np.array(batch_l, dtype=int)
@@ -401,10 +451,10 @@ def get_data(args):
                                                           len(target_indexer.d)))
 
     max_sent_l = 0
-    max_sent_l = convert(args.srcvalfile, args.targetvalfile, args.batchsize, args.seqlength,
+    max_sent_l = convert(args.srcvalfile, args.targetvalfile, args.alignvalfile, args.batchsize, args.seqlength,
                          args.outputfile + "-val.hdf5", num_sents_valid,
                          max_word_l, max_sent_l, args.chars, args.unkfilter, args.shuffle)
-    max_sent_l = convert(args.srcfile, args.targetfile, args.batchsize, args.seqlength,
+    max_sent_l = convert(args.srcfile, args.targetfile, args.alignfile, args.batchsize, args.seqlength,
                          args.outputfile + "-train.hdf5", num_sents_train, max_word_l,
                          max_sent_l, args.chars, args.unkfilter, args.shuffle)
 
@@ -461,7 +511,12 @@ def main(arguments):
     parser.add_argument('--shuffle', help="If = 1, shuffle sentences before sorting (based on  "
                                            "source length).",
                                           type = int, default = 0)
-
+    parser.add_argument('--alignfile', help="Path to source-to-target alignment of training data, "
+                                           "where each line represents a set of alignments "
+                                           "per train instance.",
+                                           type = str, required=False, default='')
+    parser.add_argument('--alignvalfile', help="Path to source-to-target alignment of validation data",
+                                           type = str, required=False, default='')
     args = parser.parse_args(arguments)
     get_data(args)
 
