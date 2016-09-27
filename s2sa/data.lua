@@ -29,6 +29,29 @@ function features_on_gpu(features)
   return clone
 end
 
+-- using the sentences id, build the alignment tensor
+function generate_aligns(batch_sent_idx, alignment_cc_colidx, alignment_cc_val, source_l, target_l, opt_start_symbol)
+  if batch_sent_idx == nil then
+    return nil
+  end
+  local batch_size = batch_sent_idx:size(1)
+
+  local src_offset = 0
+  if opt_start_symbol == 0 then
+    src_offset = 1
+  end
+
+  t = torch.Tensor(batch_size, source_l, target_l)
+  for k = 1, batch_size do
+    local sent_idx=batch_sent_idx[k]
+    for i = 0, source_l-1 do
+      t[k][i+1]:copy(alignment_cc_val:narrow(1, alignment_cc_colidx[sent_idx+1+i+src_offset]+1, target_l))
+    end
+  end
+
+  return t
+end
+
 local data = torch.class("data")
 
 function data:__init(opt, data_file)
@@ -70,6 +93,12 @@ function data:__init(opt, data_file)
   self.target_size = f:read('target_size'):all()[1]
   self.source_size = f:read('source_size'):all()[1]
   self.target_nonzeros = f:read('target_nonzeros'):all()
+
+  if opt.guided_alignment == 1 then
+    self.alignment_cc_sentidx = f:read('alignment_cc_sentidx'):all()
+    self.alignment_cc_colidx = f:read('alignment_cc_colidx'):all()
+    self.alignment_cc_val = f:read('alignment_cc_val'):all()
+  end
 
   if opt.use_chars_enc == 1 then
     self.source_char = f:read('source_char'):all()
@@ -140,6 +169,11 @@ function data:__init(opt, data_file)
     -- convert table of timesteps per feature to a table of features per timestep
     source_features_i = features_per_timestep(source_feats)
 
+    local alignment_i
+    if opt.guided_alignment == 1 then
+      alignment_i = self.alignment_cc_sentidx:sub(self.batch_idx[i], self.batch_idx[i]+self.batch_l[i]-1)
+    end
+
     table.insert(self.batches, {target_i,
         target_output_i:transpose(1,2),
         self.target_nonzeros[i],
@@ -148,7 +182,8 @@ function data:__init(opt, data_file)
         self.target_l[i],
         self.source_l[i],
         target_l_i,
-        source_features_i})
+        source_features_i,
+        alignment_i})
   end
 end
 
@@ -169,6 +204,13 @@ function data.__index(self, idx)
     local source_l = self.batches[idx][7]
     local target_l_all = self.batches[idx][8]
     local source_features = self.batches[idx][9]
+    local alignment = generate_aligns(self.batches[idx][10],
+                                      self.alignment_cc_colidx,
+                                      self.alignment_cc_val,
+                                      source_l,
+                                      target_l,
+                                      opt.start_symbol)
+
     if opt.gpuid >= 0 then --if multi-gpu, source lives in gpuid1, rest on gpuid2
       cutorch.setDevice(opt.gpuid)
       source_input = source_input:cuda()
@@ -179,9 +221,12 @@ function data.__index(self, idx)
       target_input = target_input:cuda()
       target_output = target_output:cuda()
       target_l_all = target_l_all:cuda()
+      if opt.guided_alignment == 1 then
+        alignment = alignment:cuda()
+      end
     end
     return {target_input, target_output, nonzeros, source_input,
-      batch_l, target_l, source_l, target_l_all, source_features}
+      batch_l, target_l, source_l, target_l_all, source_features, alignment}
   end
 end
 
