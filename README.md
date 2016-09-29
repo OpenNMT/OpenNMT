@@ -256,6 +256,22 @@ It supports an arbitrary number of features with arbitrary labels. However, all 
 
 To evaluate the model, the option `-feature_dict_prefix` is required on `evaluate.lua` which points to the prefix of the features dictionnaries generated during the preprocessing.
 
+#### Pruning a model
+
+[Compression of Neural Machine Translation Models via Pruning](http://arxiv.org/pdf/1606.09274v1.pdf) (See et al. 2016) shows that a model can be aggressively pruned while keeping the same performace.
+
+To prune a model - you can use `prune.lua` which implement class-bind, and class-uniform pruning technique from the paper.
+
+* `model`: the model to prune
+* `savefile`: name of the pruned model
+* `gpuid`: Which gpu to use. -1 = use CPU. Depends if the model is serialized for GPU or CPU
+* `ratio`: pruning rate
+* `prune`: pruning technique `blind` or `uniform`, by default `blind`
+
+note that the pruning cut connection with lowest weight in the linear models by using a boolean mask. The size of the file is a little larger since it stores the actual full matrix and the binary mask.
+
+Models can be retrained - typically you can recover full capacity of a model pruned at 60% or even 80% by few epochs of additional trainings.
+
 #### Switching between GPU/CPU models
 By default, the model will always save the final model as a CPU model, but it will save the
 intermediate models as a CPU/GPU model depending on how you specified `-gpuid`.

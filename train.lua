@@ -146,6 +146,7 @@ function train(train_data, valid_data)
 
   local timer = torch.Timer()
   local num_params = 0
+  local num_prunedparams = 0
   local start_decay = 0
   params, grad_params = {}, {}
   opt.train_perf = {}
@@ -166,6 +167,7 @@ function train(train_data, valid_data)
     num_params = num_params + p:size(1)
     params[i] = p
     grad_params[i] = gp
+    layers[i]:apply(function (m) if m.nPruned then num_prunedparams=num_prunedparams+m:nPruned() end end)
   end
 
   if opt.pre_word_vecs_enc:len() > 0 then
@@ -192,7 +194,8 @@ function train(train_data, valid_data)
       end
     end
   end
-  print("Number of parameters: " .. num_params)
+
+  print("Number of parameters: " .. num_params .. " (active: " .. num_params-num_prunedparams .. ")")
 
   if opt.gpuid >= 0 and opt.gpuid2 >= 0 then
     cutorch.setDevice(opt.gpuid)
@@ -1003,11 +1006,11 @@ function main()
     opt.input_feed = model_opt.input_feed
     opt.attn = model_opt.attn
     opt.brnn = model_opt.brnn
-    encoder = model[1]:double()
-    decoder = model[2]:double()
-    generator = model[3]:double()
+    encoder = model[1]
+    decoder = model[2]
+    generator = model[3]
     if model_opt.brnn == 1 then
-      encoder_bwd = model[4]:double()
+      encoder_bwd = model[4]
     end
     _, criterion = make_generator(valid_data, opt)
   end
