@@ -1,5 +1,8 @@
-require 's2sa.util'
 require 's2sa.memory'
+require 's2sa.plinear'
+
+--kept for compatibilty reason with earlier model
+torch.class('nn.LinearNoBias', 'nn.Linear')
 
 function make_lstm(data, opt, model, use_chars)
   assert(model == 'enc' or model == 'dec')
@@ -107,10 +110,10 @@ function make_lstm(data, opt, model, use_chars)
                                                                   {{opt.max_batch_l, input_size_L}},
                                                                   {{opt.max_batch_l, 4 * rnn_size}})
                                                      (x)
-    local h2h = nn.LinearNoBias(rnn_size, 4 * rnn_size):usePrealloc(nameL.."h2h-reuse",
-                                                                    {{opt.max_batch_l, rnn_size}},
-                                                                    {{opt.max_batch_l, 4 * rnn_size}})
-                                                       (prev_h)
+    local h2h = nn.Linear(rnn_size, 4 * rnn_size, false):usePrealloc(nameL.."h2h-reuse",
+                                                                     {{opt.max_batch_l, rnn_size}},
+                                                                     {{opt.max_batch_l, 4 * rnn_size}})
+                                                        (prev_h)
     local all_input_sums = nn.CAddTable():usePrealloc(nameL.."allinput",
                                                       {{opt.max_batch_l, 4*rnn_size},{opt.max_batch_l, 4*rnn_size}},
                                                       {{opt.max_batch_l, 4 * rnn_size}})
@@ -152,7 +155,7 @@ function make_lstm(data, opt, model, use_chars)
       end
     else
       decoder_out = nn.JoinTable(2)({top_h, inputs[2]})
-      decoder_out = nn.Tanh()(nn.LinearNoBias(opt.rnn_size*2, opt.rnn_size)(decoder_out))
+      decoder_out = nn.Tanh()(nn.Linear(opt.rnn_size*2, opt.rnn_size, false)(decoder_out))
     end
     if dropout > 0 then
       decoder_out = nn.Dropout(dropout, nil, false):usePrealloc("dec_dropout",{RnnD})
@@ -173,7 +176,7 @@ function make_decoder_attn(data, opt, simple)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
-  local target_t = nn.LinearNoBias(opt.rnn_size, opt.rnn_size)(inputs[1])
+  local target_t = nn.Linear(opt.rnn_size, opt.rnn_size, false)(inputs[1])
   local context = inputs[2]
   simple = simple or 0
   -- get attention
@@ -206,8 +209,8 @@ function make_decoder_attn(data, opt, simple)
     context_combined = nn.JoinTable(2):usePrealloc("dec_attn_jointable",
                                                    {{opt.max_batch_l,opt.rnn_size},{opt.max_batch_l, opt.rnn_size}})
                                       ({context_combined, inputs[1]}) -- batch_l x rnn_size*2
-    context_output = nn.Tanh():usePrealloc("dec_noattn_tanh",{{opt.max_batch_l,opt.rnn_size}})
-                              (nn.LinearNoBias(opt.rnn_size*2,opt.rnn_size):usePrealloc("dec_noattn_linear",
+    context_output = nn.Tanh():usePrealloc("dec_attn_tanh",{{opt.max_batch_l,opt.rnn_size}})
+                              (nn.Linear(opt.rnn_size*2,opt.rnn_size,false):usePrealloc("dec_attn_linear",
                                                                                         {{opt.max_batch_l,2*opt.rnn_size}})
                                                                            (context_combined))
   else
@@ -277,7 +280,7 @@ function make_highway(input_size, num_layers, output_size, bias, f)
     if input_size==output_size then
       proj = nn.Identity()
     else
-      proj = nn.LinearNoBias(input_size, output_size)
+      proj = nn.Linear(input_size, output_size, false)
     end
     input = nn.CAddTable()({
         nn.CMulTable()({transform_gate, output}),
