@@ -242,6 +242,8 @@ format.
 * `gpuid2`: ID if the second GPU (if specified).
 * `cudnn`: If the model was trained with `cudnn`, then this should be set to 1 (otherwise the model
 will fail to load).
+* `rescore`: when set to scorer name, use scorer to find hypothesis with highest score - available 'bleu', 'gleu'
+* `rescore_param`: parameter to rescorer - for bleu/gleu ngram length
 
 #### Using additional input features
 [Linguistic Input Features Improve Neural Machine Translation](https://arxiv.org/abs/1606.02892) (Senrich et al. 2016) shows that translation performance can be increased by using additional input features.
@@ -269,7 +271,7 @@ Here are some benchmark numbers on a GeForce GTX Titan X.
 (assuming batch size of 64, maximum sequence length of 50 on both the source/target sequence,
 vocabulary size of 50000, and word embedding size equal to rnn size):
 
-(`prealloc = 0`)  
+(`prealloc = 0`)
 * 1-layer, 100 hidden units: 0.7G, 21.5K tokens/sec
 * 1-layer, 250 hidden units: 1.4G, 14.1K tokens/sec
 * 1-layer, 500 hidden units: 2.6G, 9.4K tokens/sec
@@ -279,7 +281,7 @@ vocabulary size of 50000, and word embedding size equal to rnn size):
 Thanks to some fantastic work from folks at [SYSTRAN](http://www.systransoft.com), turning `prealloc` on
 will lead to much more memory efficient training
 
-(`prealloc = 1`)  
+(`prealloc = 1`)
 * 1-layer, 100 hidden units: 0.5G, 22.4K tokens/sec
 * 1-layer, 250 hidden units: 1.1G, 14.5K tokens/sec
 * 1-layer, 500 hidden units: 2.1G, 10.0K tokens/sec

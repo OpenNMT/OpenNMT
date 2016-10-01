@@ -43,7 +43,7 @@ cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU)]])
 cmd:option('-gpuid2', -1, [[Second GPU ID]])
 cmd:option('-cudnn', 0, [[If using character model, this should be = 1 if the character model was trained using cudnn]])
 
-cmd:option('-rescore', '', [[use specified metric to select best translation in the beam, 'bleu']])
+cmd:option('-rescore', '', [[use specified metric to select best translation in the beam, available: bleu, gleu]])
 cmd:option('-rescore_param', 4, [[parameter for the scoring metric, for BLEU is corresponding to n_gram ]])
 
 function copy(orig)
@@ -326,9 +326,8 @@ function generate_beam(model, initial, K, max_sent_l, source, source_features, g
 
   local best_mscore = -1e9
   local mscore_hyp
-  local mscore_score
+  local mscore_scores
   local mscore_attn_argmax
-  local mscore_best_k
   local gold_table
   if opt.rescore ~= '' then
     gold_table = gold[{{2, gold:size(1)-1}}]:totable()
@@ -343,7 +342,6 @@ function generate_beam(model, initial, K, max_sent_l, source, source_features, g
         if score_k > best_mscore then
           mscore_hyp = hyp
           mscore_scores = scores[i][k]
-          mscore_best_k = k
           best_mscore = score_k
           mscore_attn_argmax = attn_argmax[i][k]
         end
