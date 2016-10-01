@@ -4,6 +4,7 @@ require 'nngraph'
 
 require 's2sa.models'
 require 's2sa.data'
+require 's2sa.scorer'
 
 path = require 'pl.path'
 stringx = require 'pl.stringx'
@@ -23,7 +24,7 @@ cmd:option('-feature_dict_prefix', 'data/demo', [[Prefix of the path to features
 cmd:option('-char_dict', 'data/demo.char.dict', [[If using chars, path to character vocabulary (*.char.dict file)]])
 
 -- beam search options
-cmd:option('-beam', 5,[[Beam size]])
+cmd:option('-beam', 5, [[Beam size]])
 cmd:option('-max_sent_l', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
 cmd:option('-simple', 0, [[If = 1, output prediction is simply the first time the top of the beam
                          ends with an end-of-sentence token. If = 0, the model considers all
@@ -36,11 +37,14 @@ cmd:option('-replace_unk', 0, [[Replace the generated UNK tokens with the source
                               does not exist in the table) then it will copy the source token]])
 cmd:option('-srctarg_dict', 'data/en-de.dict', [[Path to source-target dictionary to replace UNK
                                                tokens. See README.md for the format this file should be in]])
-cmd:option('-score_gold', 1, [[If = 1, score the log likelihood of the gold as well]])
+cmd:option('-score_gold', 0, [[If = 1, score the log likelihood of the gold as well]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU)]])
 cmd:option('-gpuid2', -1, [[Second GPU ID]])
 cmd:option('-cudnn', 0, [[If using character model, this should be = 1 if the character model was trained using cudnn]])
+
+cmd:option('-rescore', '', [[use specified metric to select best translation in the beam, available: bleu, gleu]])
+cmd:option('-rescore_param', 4, [[parameter for the scoring metric, for BLEU is corresponding to n_gram ]])
 
 function copy(orig)
   local orig_type = type(orig)
@@ -218,6 +222,7 @@ function generate_beam(model, initial, K, max_sent_l, source, source_features, g
   local done = false
   local max_score = -1e9
   local found_eos = false
+
   while (not done) and (i < n) do
     i = i+1
     states[i] = {}
@@ -318,6 +323,31 @@ function generate_beam(model, initial, K, max_sent_l, source, source_features, g
       end
     end
   end
+
+  local best_mscore = -1e9
+  local mscore_hyp
+  local mscore_scores
+  local mscore_attn_argmax
+  local gold_table
+  if opt.rescore ~= '' then
+    gold_table = gold[{{2, gold:size(1)-1}}]:totable()
+    for k = 1, K do
+        local hyp={}
+        for _,v in pairs(states[i][k]) do
+          if v == END then break; end
+          table.insert(hyp,v)
+        end
+        table.insert(hyp, END)
+        local score_k = scorers[opt.rescore](hyp, gold_table, opt.rescore_param)
+        if score_k > best_mscore then
+          mscore_hyp = hyp
+          mscore_scores = scores[i][k]
+          best_mscore = score_k
+          mscore_attn_argmax = attn_argmax[i][k]
+        end
+    end
+  end
+
   local gold_score = 0
   if opt.score_gold == 1 then
     rnn_state_dec = {}
@@ -359,7 +389,21 @@ function generate_beam(model, initial, K, max_sent_l, source, source_features, g
     max_attn_argmax = end_attn_argmax
   end
 
-  return max_hyp, max_score, max_attn_argmax, gold_score, states[i], scores[i], attn_argmax[i]
+  local best_hyp=states[i]
+  local best_scores=scores[i]
+  local best_attn_argmax=attn_argmax[i]
+  if opt.rescore ~= '' then
+    local max_mscore = scorers[opt.rescore](max_hyp, gold_table, opt.rescore_param)
+    print('RESCORE MAX '..opt.rescore..': '..max_mscore, 'BEST '..opt.rescore..': '..best_mscore)
+    max_hyp=mscore_hyp
+    max_score=best_mscore
+    max_attn_argmax=mscore_attn_argmax
+    best_hyp=mscore_hyp
+    best_scores=mscore_scores
+    best_attn_argmax=mscore_attn_argmax
+  end
+
+  return max_hyp, max_score, max_attn_argmax, gold_score, best_hyp, best_scores, best_attn_argmax
 end
 
 function idx2key(file)
@@ -585,6 +629,13 @@ function init(arg)
     end
   end
 
+  if opt.rescore ~= '' then
+    require 's2sa.scorer'
+    if not scorers[opt.rescore] then
+      error("metric "..opt.rescore.." not defined")
+    end
+  end
+
   -- load model and word2idx/idx2word dictionaries
   model, model_opt = checkpoint[1], checkpoint[2]
   for i = 1, #model do
@@ -631,7 +682,9 @@ function init(arg)
       table.insert(gold, line)
     end
   else
-    opt.score_gold = 0
+    if opt.score_gold == 1 then
+      error('missing targ_file option to calculate gold scores')
+    end
   end
 
   if opt.gpuid >= 0 then
@@ -710,7 +763,7 @@ function search(line)
   else
     source, source_str = sent2charidx(cleaned_line, char2idx, model_opt.max_word_l, model_opt.start_symbol)
   end
-  if opt.score_gold == 1 then
+  if gold then
     target, target_str = sent2wordidx(gold[sent_id], word2idx_targ, 1)
   end
   state = State.initial(START)
