@@ -405,7 +405,7 @@ function generate_beam(model, initial, K, max_sent_l, source, source_features, g
     best_attn_argmax=mscore_attn_argmax
   end
 
-  return max_hyp, max_score, max_attn_argmax, gold_score, states[i], scores[i], attn_argmax[i]
+  return max_hyp, max_score, max_attn_argmax, gold_score, best_hyp, best_scores, best_attn_argmax
 end
 
 function idx2key(file)
