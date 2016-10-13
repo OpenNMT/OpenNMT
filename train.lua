@@ -1003,9 +1003,9 @@ function main()
     local model, model_opt = checkpoint[1], checkpoint[2]
     opt.num_layers = model_opt.num_layers
     opt.rnn_size = model_opt.rnn_size
-    opt.input_feed = model_opt.input_feed
-    opt.attn = model_opt.attn
-    opt.brnn = model_opt.brnn
+    opt.input_feed = model_opt.input_feed or 1
+    opt.attn = model_opt.attn or 1
+    opt.brnn = model_opt.brnn or 0
     encoder = model[1]
     decoder = model[2]
     generator = model[3]
