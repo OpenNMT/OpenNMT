@@ -331,6 +331,18 @@ For translation, evaluation via BLEU can be done by taking the output from `beam
 perl multi-bleu.perl gold.txt < pred.txt
 ```
 
+#### Evaluation of States and Attention
+attention_extraction.lua can be used to extract the attention and the LSTM states. It uses the following (required) options:
+
+* `model`: Path to model .t7 file.
+* `src_file`: Source sequence to decode (one line per sequence).
+* `targ_file`: True target sequence.
+* `src_dict`: Path to source vocabulary (`*.src.dict` file from `preprocess.py`).
+* `targ_dict`: Path to target vocabulary (`*.targ.dict` file from `preprocess.py`).
+
+Output of the script are two files, `encoder.hdf5` and `decoder.hdf5`. The encoder contains the states for every layer of the encoder LSTM and the offsets for the start of each source sentence. The decoder contains the states for the decoder LSTM layers and the offsets for the start of gold sentence. It additionally contains the attention for each time step (if the model uses attention).
+
+
 #### Pre-trained models
 We've uploaded English <-> German models trained on 4 million sentences from
 [Workshop on Machine Translation 2015](http://www.statmt.org/wmt15/translation-task.html).
