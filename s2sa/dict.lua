@@ -11,6 +11,8 @@ function dict:__init(data)
   if data ~= nil then
     if type(data) == "string" then -- File to load.
       self:load_file(data)
+    else
+      self:add_specials(data)
     end
   end
 end
@@ -63,6 +65,12 @@ end
 function dict:add_special(label, idx)
   idx = self:add(label, idx)
   table.insert(self.special, idx)
+end
+
+function dict:add_specials(labels)
+  for i = 1, #labels do
+    self:add_special(labels[i])
+  end
 end
 
 function dict:add(label, idx)
