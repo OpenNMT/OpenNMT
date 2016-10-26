@@ -6,6 +6,7 @@ function dict:__init(data)
   self.idx_to_label = {}
   self.label_to_idx = {}
   self.frequencies = {}
+  self.special = {}
 
   if data ~= nil then
     if type(data) == "string" then -- File to load.
@@ -55,6 +56,15 @@ function dict:lookup(key)
   end
 end
 
+function dict:set_special(special)
+  self.special = special
+end
+
+function dict:add_special(label, idx)
+  idx = self:add(label, idx)
+  table.insert(self.special, idx)
+end
+
 function dict:add(label, idx)
   if idx ~= nil then
     self.idx_to_label[idx] = label
@@ -73,6 +83,8 @@ function dict:add(label, idx)
   else
     self.frequencies[idx] = self.frequencies[idx] + 1
   end
+
+  return idx
 end
 
 function dict:prune(size)
@@ -85,6 +97,9 @@ function dict:prune(size)
 
   local new_dict = dict.new()
 
+  for i = 1, #self.special do
+    new_dict:add_special(self.idx_to_label[self.special[i]])
+  end
   for i = 1, size do
     new_dict:add(self.idx_to_label[idx[i]])
   end
