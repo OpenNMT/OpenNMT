@@ -111,7 +111,7 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length > ' .. opt.seq_length .. ')')
 
-  return {src, targ}
+  return src, targ
 end
 
 local function main()
@@ -124,16 +124,27 @@ local function main()
   print('')
 
   print('Preparing training data...')
-  local train_data = make_data(opt.train_src_file, opt.train_targ_file, src_dict, targ_dict)
+  local train_src, train_targ = make_data(opt.train_src_file, opt.train_targ_file, src_dict, targ_dict)
   print('')
 
   print('Preparing validation data...')
-  local valid_data = make_data(opt.valid_src_file, opt.valid_targ_file, src_dict, targ_dict)
+  local valid_src, valid_targ = make_data(opt.valid_src_file, opt.valid_targ_file, src_dict, targ_dict)
   print('')
 
-  local data = {train_data, valid_data}
+  local data = {}
+  data.train = {
+    ["src"] = train_src,
+    ["targ"] = train_targ
+  }
+  data.valid = {
+    ["src"] = valid_src,
+    ["targ"] = valid_targ
+  }
+  data.src_dict = src_dict
+  data.targ_dict = targ_dict
+
   print('Saving data to ' .. opt.output_file .. '...')
-  torch.save(opt.output_file, {data, src_dict, targ_dict})
+  torch.save(opt.output_file, data)
 end
 
 main()
