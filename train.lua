@@ -2,6 +2,7 @@ require 's2sa.data'
 require 's2sa.models'
 require 's2sa.model_utils'
 local Bookkeeper = require 's2sa.bookkeeper'
+local Learning = require 's2sa.learning'
 
 local cmd = torch.CmdLine()
 
@@ -107,25 +108,6 @@ local function clean_layer(layer)
   end
 end
 
--- decay learning rate if val perf does not improve or we hit the opt.start_decay_at limit
-local function decay_lr(epoch)
-  print(opt.val_perf)
-  if epoch >= opt.start_decay_at then
-    start_decay = 1
-  end
-
-  if opt.val_perf[#opt.val_perf] ~= nil and opt.val_perf[#opt.val_perf-1] ~= nil then
-    local curr_ppl = opt.val_perf[#opt.val_perf]
-    local prev_ppl = opt.val_perf[#opt.val_perf-1]
-    if curr_ppl > prev_ppl then
-      start_decay = 1
-    end
-  end
-  if start_decay == 1 then
-    opt.learning_rate = opt.learning_rate * opt.lr_decay
-  end
-end
-
 local function save_model(path, data, options, double)
   print('saving model to ' .. path)
 
@@ -198,10 +180,8 @@ end
 local function train(train_data, valid_data)
   local num_params = 0
   local num_prunedparams = 0
-  local start_decay = 0
   params, grad_params = {}, {}
   opt.train_perf = {}
-  opt.val_perf = {}
 
   for i = 1, #layers do
     local p, gp = layers[i]:getParameters()
@@ -274,10 +254,10 @@ local function train(train_data, valid_data)
   dec_offset = 3 -- offset depends on input feeding
 
 
-  function train_batch(data, epoch)
+  function train_batch(data, epoch, learning)
     local bookkeeper = Bookkeeper.new({
       print_frequency = opt.print_every,
-      learning_rate = opt.learning_rate,
+      learning_rate = learning:get_rate(),
       data_size = data:size(),
       epoch = epoch
     })
@@ -402,7 +382,7 @@ local function train(train_data, valid_data)
         if shrinkage < 1 then
           grad_params[j]:mul(shrinkage)
         end
-        params[j]:add(grad_params[j]:mul(-opt.learning_rate))
+        params[j]:add(grad_params[j]:mul(-learning:get_rate()))
         param_norm = param_norm + params[j]:norm()^2
       end
       param_norm = param_norm^0.5
@@ -427,16 +407,16 @@ local function train(train_data, valid_data)
     return bookkeeper:get_train_score()
   end
 
-  local batch_loss, batch_nonzeros
+  local learning = Learning.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
   for epoch = opt.start_epoch, opt.epochs do
     generator:training()
-    local train_score = train_batch(train_data, epoch)
+    local train_score = train_batch(train_data, epoch, learning)
 
     print('Train', train_score)
     opt.train_perf[#opt.train_perf + 1] = train_score
     local score = eval(valid_data)
-    opt.val_perf[#opt.val_perf + 1] = score
-    decay_lr(epoch)
+    learning:update_rate(score, epoch)
+
     -- clean and save models
     if epoch % opt.save_every == 0 then
       save_model(string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, epoch, score), {encoder, decoder, generator}, opt, false)
