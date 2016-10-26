@@ -16,10 +16,6 @@ function Bookkeeper:__init(args)
   self.num_words_target = 0
 end
 
-function Bookkeeper:__tostring()
-  return self.print_frequency..':torch '
-end
-
 function Bookkeeper:update(info)
   self.num_words_source = self.num_words_source + info.batch_size * info.source_size
   self.num_words_target = self.num_words_target + info.batch_size *info.target_size
