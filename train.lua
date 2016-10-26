@@ -3,6 +3,7 @@ require 's2sa.models'
 require 's2sa.model_utils'
 local Bookkeeper = require 's2sa.bookkeeper'
 local Learning = require 's2sa.learning'
+local table_utils = require 's2sa.table_utils'
 
 local cmd = torch.CmdLine()
 
@@ -60,34 +61,22 @@ cmd:option('-save_every', 1, [[Save every this many epochs]])
 cmd:option('-print_every', 50, [[Print stats after this many batches]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
-local function zero_table(t)
-  for i = 1, #t do
-    t[i]:zero()
-  end
-end
-
-local function append_table(dst, src)
-  for i = 1, #src do
-    table.insert(dst, src[i])
-  end
-end
 
 local function reset_state(state, batch_l, t)
+  local new_state, table_to_fill
   if t == nil then
-    local u = {}
-    for i = 1, #state do
-      state[i]:zero()
-      table.insert(u, state[i][{{1, batch_l}}])
-    end
-    return u
+    new_state = {}
+    table_to_fill = new_state
   else
-    local u = {[t] = {}}
-    for i = 1, #state do
-      state[i]:zero()
-      table.insert(u[t], state[i][{{1, batch_l}}])
-    end
-    return u
+    new_state = {[t] = {}}
+    table_to_fill = new_state[t]
   end
+
+  for i = 1, #state do
+    state[i]:zero()
+    table.insert(table_to_fill, state[i][{{1, batch_l}}])
+  end
+  return new_state
 end
 
 local function save_model(path, data, options, double)
@@ -116,7 +105,7 @@ local function eval(data)
     -- forward prop encoder
     for t = 1, source_l do
       local encoder_input = {source[t]}
-      append_table(encoder_input, rnn_state_enc)
+      table_utils.append(encoder_input, rnn_state_enc)
       local out = encoder_clones[1]:forward(encoder_input)
       rnn_state_enc = out
       context[{{},t}]:copy(out[#out])
@@ -242,7 +231,7 @@ local function train(train_data, valid_data)
     local batch_order = torch.randperm(data.length) -- shuffle mini batch order
 
     for i = 1, data:size() do
-      zero_table(grad_params, 'zero')
+      table_utils.zero(grad_params, 'zero')
       local d = data[batch_order[i]]
       local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
       local batch_l, target_l, source_l = d[5], d[6], d[7]
@@ -255,7 +244,7 @@ local function train(train_data, valid_data)
       for t = 1, source_l do
         encoder_clones[t]:training()
         local encoder_input = {source[t]}
-        append_table(encoder_input, rnn_state_enc[t-1])
+        table_utils.append(encoder_input, rnn_state_enc[t-1])
         local out = encoder_clones[t]:forward(encoder_input)
         rnn_state_enc[t] = out
         context[{{},t}]:copy(out[#out])
@@ -333,7 +322,7 @@ local function train(train_data, valid_data)
 
       for t = source_l, 1, -1 do
         local encoder_input = {source[t]}
-        append_table(encoder_input, rnn_state_enc[t-1])
+        table_utils.append(encoder_input, rnn_state_enc[t-1])
         drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
         local dlst = encoder_clones[t]:backward(encoder_input, drnn_state_enc)
         for j = 1, #drnn_state_enc do
