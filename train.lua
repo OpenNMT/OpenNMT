@@ -1,8 +1,9 @@
 require 's2sa.data'
 require 's2sa.models'
 require 's2sa.model_utils'
+local Bookkeeper = require 's2sa.bookkeeper'
 
-cmd = torch.CmdLine()
+local cmd = torch.CmdLine()
 
 cmd:text("")
 cmd:text("**Data options**")
@@ -58,21 +59,143 @@ cmd:option('-save_every', 1, [[Save every this many epochs]])
 cmd:option('-print_every', 50, [[Print stats after this many batches]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
-function zero_table(t)
+local function zero_table(t)
   for i = 1, #t do
     t[i]:zero()
   end
 end
 
-function append_table(dst, src)
+local function append_table(dst, src)
   for i = 1, #src do
     table.insert(dst, src[i])
   end
 end
 
-function train(train_data, valid_data)
+local function reset_state(state, batch_l, t)
+  if t == nil then
+    local u = {}
+    for i = 1, #state do
+      state[i]:zero()
+      table.insert(u, state[i][{{1, batch_l}}])
+    end
+    return u
+  else
+    local u = {[t] = {}}
+    for i = 1, #state do
+      state[i]:zero()
+      table.insert(u[t], state[i][{{1, batch_l}}])
+    end
+    return u
+  end
+end
 
-  local timer = torch.Timer()
+-- clean layer before saving to make the model smaller
+local function clean_layer(layer)
+  if opt.gpuid > 0 then
+    layer.output = torch.CudaTensor()
+    layer.gradInput = torch.CudaTensor()
+  else
+    layer.output = torch.DoubleTensor()
+    layer.gradInput = torch.DoubleTensor()
+  end
+  if layer.modules then
+    for i, mod in ipairs(layer.modules) do
+      clean_layer(mod)
+    end
+  elseif torch.type(self) == "nn.gModule" then
+    layer:apply(clean_layer)
+  end
+end
+
+-- decay learning rate if val perf does not improve or we hit the opt.start_decay_at limit
+local function decay_lr(epoch)
+  print(opt.val_perf)
+  if epoch >= opt.start_decay_at then
+    start_decay = 1
+  end
+
+  if opt.val_perf[#opt.val_perf] ~= nil and opt.val_perf[#opt.val_perf-1] ~= nil then
+    local curr_ppl = opt.val_perf[#opt.val_perf]
+    local prev_ppl = opt.val_perf[#opt.val_perf-1]
+    if curr_ppl > prev_ppl then
+      start_decay = 1
+    end
+  end
+  if start_decay == 1 then
+    opt.learning_rate = opt.learning_rate * opt.lr_decay
+  end
+end
+
+local function save_model(path, data, options, double)
+  print('saving model to ' .. path)
+
+  clean_layer(data[3])
+
+  if double then
+    for i = 1, #data do data[i] = data[i]:double() end
+  end
+
+  torch.save(path, {data, options})
+end
+
+
+local function eval(data)
+  encoder_clones[1]:evaluate()
+  decoder_clones[1]:evaluate() -- just need one clone
+  generator:evaluate()
+
+  local nll = 0
+  local total = 0
+  for i = 1, data:size() do
+    local d = data[i]
+    local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
+    local batch_l, target_l, source_l = d[5], d[6], d[7]
+
+    local rnn_state_enc = reset_state(init_fwd_enc, batch_l)
+    local context = context_proto[{{1, batch_l}, {1, source_l}}]
+
+    -- forward prop encoder
+    for t = 1, source_l do
+      local encoder_input = {source[t]}
+      append_table(encoder_input, rnn_state_enc)
+      local out = encoder_clones[1]:forward(encoder_input)
+      rnn_state_enc = out
+      context[{{},t}]:copy(out[#out])
+    end
+
+    local rnn_state_dec = reset_state(init_fwd_dec, batch_l)
+    for L = 1, opt.num_layers do
+      rnn_state_dec[L*2-1]:copy(rnn_state_enc[L*2-1])
+      rnn_state_dec[L*2]:copy(rnn_state_enc[L*2])
+    end
+
+    local loss = 0
+    local attn_outputs = {}
+    for t = 1, target_l do
+      local decoder_input = {target[t], context, table.unpack(rnn_state_dec)}
+      local out = decoder_clones[1]:forward(decoder_input)
+
+      rnn_state_dec = {}
+      for j = 1, #out-1 do
+        table.insert(rnn_state_dec, out[j])
+      end
+      local pred = generator:forward(out[#out])
+
+      local input = pred
+      local output = target_out[t]
+
+      loss = loss + criterion:forward(input, output)
+    end
+    nll = nll + loss
+    total = total + nonzeros
+  end
+  local valid = math.exp(nll / total)
+  print("Valid", valid)
+  collectgarbage()
+  return valid
+end
+
+local function train(train_data, valid_data)
   local num_params = 0
   local num_prunedparams = 0
   local start_decay = 0
@@ -150,68 +273,16 @@ function train(train_data, valid_data)
 
   dec_offset = 3 -- offset depends on input feeding
 
-  function reset_state(state, batch_l, t)
-    if t == nil then
-      local u = {}
-      for i = 1, #state do
-        state[i]:zero()
-        table.insert(u, state[i][{{1, batch_l}}])
-      end
-      return u
-    else
-      local u = {[t] = {}}
-      for i = 1, #state do
-        state[i]:zero()
-        table.insert(u[t], state[i][{{1, batch_l}}])
-      end
-      return u
-    end
-  end
-
-  -- clean layer before saving to make the model smaller
-  function clean_layer(layer)
-    if opt.gpuid > 0 then
-      layer.output = torch.CudaTensor()
-      layer.gradInput = torch.CudaTensor()
-    else
-      layer.output = torch.DoubleTensor()
-      layer.gradInput = torch.DoubleTensor()
-    end
-    if layer.modules then
-      for i, mod in ipairs(layer.modules) do
-        clean_layer(mod)
-      end
-    elseif torch.type(self) == "nn.gModule" then
-      layer:apply(clean_layer)
-    end
-  end
-
-  -- decay learning rate if val perf does not improve or we hit the opt.start_decay_at limit
-  function decay_lr(epoch)
-    print(opt.val_perf)
-    if epoch >= opt.start_decay_at then
-      start_decay = 1
-    end
-
-    if opt.val_perf[#opt.val_perf] ~= nil and opt.val_perf[#opt.val_perf-1] ~= nil then
-      local curr_ppl = opt.val_perf[#opt.val_perf]
-      local prev_ppl = opt.val_perf[#opt.val_perf-1]
-      if curr_ppl > prev_ppl then
-        start_decay = 1
-      end
-    end
-    if start_decay == 1 then
-      opt.learning_rate = opt.learning_rate * opt.lr_decay
-    end
-  end
 
   function train_batch(data, epoch)
-    local train_nonzeros = 0
-    local train_loss = 0
+    local bookkeeper = Bookkeeper.new({
+      print_frequency = opt.print_every,
+      learning_rate = opt.learning_rate,
+      data_size = data:size(),
+      epoch = epoch
+    })
+
     local batch_order = torch.randperm(data.length) -- shuffle mini batch order
-    local start_time = timer:time().real
-    local num_words_target = 0
-    local num_words_source = 0
 
     for i = 1, data:size() do
       zero_table(grad_params, 'zero')
@@ -337,111 +408,45 @@ function train(train_data, valid_data)
       param_norm = param_norm^0.5
 
       -- Bookkeeping
-      num_words_target = num_words_target + batch_l*target_l
-      num_words_source = num_words_source + batch_l*source_l
-      train_nonzeros = train_nonzeros + nonzeros
-      train_loss = train_loss + loss*batch_l
-      local time_taken = timer:time().real - start_time
-      if i % opt.print_every == 0 then
-        local stats = string.format('Epoch: %d, Batch: %d/%d, Batch size: %d, LR: %.4f, ',
-          epoch, i, data:size(), batch_l, opt.learning_rate)
-        stats = stats .. string.format('PPL: %.2f, |Param|: %.2f, |GParam|: %.2f, ',
-          math.exp(train_loss/train_nonzeros), param_norm, grad_norm)
-        stats = stats .. string.format('Training: %d/%d/%d total/source/target tokens/sec',
-          (num_words_target+num_words_source) / time_taken,
-          num_words_source / time_taken,
-          num_words_target / time_taken)
-        print(stats)
-      end
+      bookkeeper:update({
+        source_size = source_l,
+        target_size = target_l,
+        batch_size = batch_l,
+        batch_index = i,
+        nonzeros = nonzeros,
+        loss = loss,
+        param_norm = param_norm,
+        grad_norm = grad_norm
+      })
+
       if i % 200 == 0 then
         collectgarbage()
       end
     end
-    return train_loss, train_nonzeros
+
+    return bookkeeper:get_train_score()
   end
 
-  local total_loss, total_nonzeros, batch_loss, batch_nonzeros
+  local batch_loss, batch_nonzeros
   for epoch = opt.start_epoch, opt.epochs do
     generator:training()
-    total_loss, total_nonzeros = train_batch(train_data, epoch)
-    local train_score = math.exp(total_loss/total_nonzeros)
+    local train_score = train_batch(train_data, epoch)
+
     print('Train', train_score)
     opt.train_perf[#opt.train_perf + 1] = train_score
     local score = eval(valid_data)
     opt.val_perf[#opt.val_perf + 1] = score
     decay_lr(epoch)
     -- clean and save models
-    local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, epoch, score)
     if epoch % opt.save_every == 0 then
-      print('saving checkpoint to ' .. savefile)
-      clean_layer(generator)
-      torch.save(savefile, {{encoder, decoder, generator}, opt})
+      save_model(string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, epoch, score), {encoder, decoder, generator}, opt, false)
     end
   end
   -- save final model
-  local savefile = string.format('%s_final.t7', opt.savefile)
-  clean_layer(generator)
-  print('saving final model to ' .. savefile)
-  torch.save(savefile, {{encoder:double(), decoder:double(), generator:double()}, opt})
+  save_model(string.format('%s_final.t7', opt.savefile), {encoder, decoder, generator}, opt, true)
 end
 
-function eval(data)
-  encoder_clones[1]:evaluate()
-  decoder_clones[1]:evaluate() -- just need one clone
-  generator:evaluate()
-
-  local nll = 0
-  local total = 0
-  for i = 1, data:size() do
-    local d = data[i]
-    local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
-    local batch_l, target_l, source_l = d[5], d[6], d[7]
-
-    local rnn_state_enc = reset_state(init_fwd_enc, batch_l)
-    local context = context_proto[{{1, batch_l}, {1, source_l}}]
-
-    -- forward prop encoder
-    for t = 1, source_l do
-      local encoder_input = {source[t]}
-      append_table(encoder_input, rnn_state_enc)
-      local out = encoder_clones[1]:forward(encoder_input)
-      rnn_state_enc = out
-      context[{{},t}]:copy(out[#out])
-    end
-
-    local rnn_state_dec = reset_state(init_fwd_dec, batch_l)
-    for L = 1, opt.num_layers do
-      rnn_state_dec[L*2-1]:copy(rnn_state_enc[L*2-1])
-      rnn_state_dec[L*2]:copy(rnn_state_enc[L*2])
-    end
-
-    local loss = 0
-    local attn_outputs = {}
-    for t = 1, target_l do
-      local decoder_input = {target[t], context, table.unpack(rnn_state_dec)}
-      local out = decoder_clones[1]:forward(decoder_input)
-
-      rnn_state_dec = {}
-      for j = 1, #out-1 do
-        table.insert(rnn_state_dec, out[j])
-      end
-      local pred = generator:forward(out[#out])
-
-      local input = pred
-      local output = target_out[t]
-
-      loss = loss + criterion:forward(input, output)
-    end
-    nll = nll + loss
-    total = total + nonzeros
-  end
-  local valid = math.exp(nll / total)
-  print("Valid", valid)
-  collectgarbage()
-  return valid
-end
-
-function get_layer(layer)
+local function get_layer(layer)
   if layer.name ~= nil then
     if layer.name == 'word_vecs_dec' then
       table.insert(word_vec_layers, layer)
@@ -451,7 +456,7 @@ function get_layer(layer)
   end
 end
 
-function main()
+local function main()
   -- parse input params
   opt = cmd:parse(arg)
 
