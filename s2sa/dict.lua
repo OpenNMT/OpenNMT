@@ -76,7 +76,7 @@ function dict:add(label, idx)
 end
 
 function dict:prune(size)
-  if size > #self then
+  if size >= #self then
     return self
   end
 
