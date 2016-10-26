@@ -19,7 +19,7 @@ function dict:__len__()
 end
 
 function dict:load_file(filename)
-  local file = io.open(filename, 'r')
+  local file = assert(io.open(filename, 'r'))
 
   for line in file:lines() do
     local fields = {}
@@ -31,6 +31,17 @@ function dict:load_file(filename)
     local idx = tonumber(fields[2])
 
     self:add(label, idx)
+  end
+
+  file:close()
+end
+
+function dict:write_file(filename)
+  local file = assert(io.open(filename, 'w'))
+
+  for i = 1, #self do
+    local label = self.idx_to_label[i]
+    file:write(label .. ' ' .. i .. '\n')
   end
 
   file:close()
