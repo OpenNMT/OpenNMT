@@ -1,7 +1,7 @@
 local dict = require 's2sa.dict'
-
 local file_reader = require 's2sa.file_reader'
 local parallel_file_reader = require 's2sa.parallel_file_reader'
+local table_utils = require 's2sa.table_utils'
 
 cmd = torch.CmdLine()
 
@@ -21,14 +21,6 @@ cmd:option('-shuffle', 1, [[Suffle data]])
 cmd:option('-report_every', 100000, [[Report status every this many sentences]])
 
 local opt = cmd:parse(arg)
-
-local function reorder_table(tab, index)
-  local new_tab = {}
-  for i = 1, #tab do
-    table.insert(new_tab, tab[index[i]])
-  end
-  return new_tab
-end
 
 local function make_vocabulary(filename, size)
   local vocab = dict.new({'<blank>', '<unk>', '<s>', '</s>'})
@@ -99,15 +91,15 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
   if opt.shuffle == 1 then
     print('... shuffling sentences')
     local perm = torch.randperm(#src)
-    src = reorder_table(src, perm)
-    targ = reorder_table(targ, perm)
-    sizes = reorder_table(sizes, perm)
+    src = table_utils.reorder(src, perm)
+    targ = table_utils.reorder(targ, perm)
+    sizes = table_utils.reorder(sizes, perm)
   end
 
   print('... sorting sentences by size')
   local _, perm = torch.sort(torch.Tensor(sizes))
-  src = reorder_table(src, perm)
-  targ = reorder_table(targ, perm)
+  src = table_utils.reorder(src, perm)
+  targ = table_utils.reorder(targ, perm)
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length > ' .. opt.seq_length .. ')')
 
