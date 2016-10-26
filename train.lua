@@ -90,36 +90,13 @@ local function reset_state(state, batch_l, t)
   end
 end
 
--- clean layer before saving to make the model smaller
-local function clean_layer(layer)
-  if opt.gpuid > 0 then
-    layer.output = torch.CudaTensor()
-    layer.gradInput = torch.CudaTensor()
-  else
-    layer.output = torch.DoubleTensor()
-    layer.gradInput = torch.DoubleTensor()
-  end
-  if layer.modules then
-    for i, mod in ipairs(layer.modules) do
-      clean_layer(mod)
-    end
-  elseif torch.type(self) == "nn.gModule" then
-    layer:apply(clean_layer)
-  end
-end
-
 local function save_model(path, data, options, double)
   print('saving model to ' .. path)
-
-  clean_layer(data[3])
-
   if double then
     for i = 1, #data do data[i] = data[i]:double() end
   end
-
   torch.save(path, {data, options})
 end
-
 
 local function eval(data)
   encoder_clones[1]:evaluate()
