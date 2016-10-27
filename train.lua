@@ -199,8 +199,7 @@ local function train(train_data, valid_data)
         word_vecs_dec.gradWeight:zero()
       end
 
-      local grad_norm = 0
-      grad_norm = grad_norm + grad_params[2]:norm()^2 + grad_params[3]:norm()^2
+      local grad_norm = grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 
       local drnn_state_enc = model_utils.reset_state(encoderMngt.init_bwd_enc, batch.size)
       for L = 1, opt.num_layers do
