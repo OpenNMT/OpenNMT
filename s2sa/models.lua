@@ -114,7 +114,7 @@ local function make_generator(vocab_size, opt)
   w[1] = 0
   local criterion = nn.ClassNLLCriterion(w)
   criterion.sizeAverage = false
-  return model, criterion
+  return criterion, model
 end
 
 return {

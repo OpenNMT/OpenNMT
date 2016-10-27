@@ -1,15 +1,24 @@
-require 's2sa.data'
-
+require 's2sa.dict'
+local hdf5 = require 'hdf5'
+local path = require 'pl.path'
 
 local models = require 's2sa.models'
 local model_utils = require 's2sa.model_utils'
 local table_utils = require 's2sa.table_utils'
-local dict = require 's2sa.dict'
+
 local Bookkeeper = require 's2sa.bookkeeper'
+local Data = require 's2sa.data'
 local Evaluator = require 's2sa.evaluator'
 local Learning = require 's2sa.learning'
 
 local cmd = torch.CmdLine()
+local opt = {}
+local layers = {}
+local word_vec_layers = {}
+local encoder
+local decoder
+local generator
+local criterion
 
 cmd:text("")
 cmd:text("**Data options**")
@@ -66,18 +75,18 @@ cmd:option('-print_every', 50, [[Print stats after this many batches]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
 
-local function save_model(path, data, options, double)
-  print('saving model to ' .. path)
+local function save_model(model_path, data, options, double)
+  print('saving model to ' .. model_path)
   if double then
     for i = 1, #data do data[i] = data[i]:double() end
   end
-  torch.save(path, {data, options})
+  torch.save(model_path, {data, options})
 end
 
 local function train(train_data, valid_data)
   local num_params = 0
   local num_prunedparams = 0
-  params, grad_params = {}, {}
+  local params, grad_params = {}, {}
   opt.train_perf = {}
 
   for i = 1, #layers do
@@ -113,44 +122,42 @@ local function train(train_data, valid_data)
   local max_length = math.max(opt.max_source_length, opt.max_target_length)
 
   -- prototypes for gradients so there is no need to clone
-  encoder_grad_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
-  context_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
+  local encoder_grad_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
+  local context_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
 
   -- clone encoder/decoder up to max source/target length
-  decoder_clones = model_utils.clone_many_times(decoder, opt.max_target_length)
-  encoder_clones = model_utils.clone_many_times(encoder, opt.max_source_length)
+  local decoder_clones = model_utils.clone_many_times(decoder, opt.max_target_length)
+  local encoder_clones = model_utils.clone_many_times(encoder, opt.max_source_length)
 
   local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
-  local attn_init = torch.zeros(opt.max_batch_size, max_length)
   if opt.gpuid > 0 then
     h_init = h_init:cuda()
-    attn_init = attn_init:cuda()
     cutorch.setDevice(opt.gpuid)
     context_proto = context_proto:cuda()
     encoder_grad_proto = encoder_grad_proto:cuda()
   end
 
   -- these are initial states of encoder/decoder for fwd/bwd steps
-  init_fwd_enc = {}
-  init_bwd_enc = {}
-  init_fwd_dec = {}
-  init_bwd_dec = {}
+  local init_fwd_enc = {}
+  local init_bwd_enc = {}
+  local init_fwd_dec = {}
+  local init_bwd_dec = {}
 
-  for L = 1, opt.num_layers do
+  for _ = 1, opt.num_layers do
     table.insert(init_fwd_enc, h_init:clone())
     table.insert(init_fwd_enc, h_init:clone())
     table.insert(init_bwd_enc, h_init:clone())
     table.insert(init_bwd_enc, h_init:clone())
   end
   table.insert(init_bwd_dec, h_init:clone())
-  for L = 1, opt.num_layers do
+  for _ = 1, opt.num_layers do
     table.insert(init_fwd_dec, h_init:clone())
     table.insert(init_fwd_dec, h_init:clone())
     table.insert(init_bwd_dec, h_init:clone())
     table.insert(init_bwd_dec, h_init:clone())
   end
 
-  dec_offset = 3 -- offset depends on input feeding
+  local dec_offset = 3 -- offset depends on input feeding
 
 
   function train_batch(data, epoch, learning)
@@ -191,8 +198,6 @@ local function train(train_data, valid_data)
 
       -- forward prop decoder
       local preds = {}
-      local attn_outputs = {}
-      local decoder_input
 
       for t = 1, batch.target_length do
         decoder_clones[t]:training()
@@ -351,7 +356,8 @@ local function main()
 
   torch.manualSeed(opt.seed)
 
-  if opt.gpuid > 0 then
+  local cuda = opt.gpuid > 0
+  if cuda then
     print('using CUDA on GPU ' .. opt.gpuid .. '...')
     require 'cutorch'
     require 'cunn'
@@ -362,8 +368,8 @@ local function main()
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')
   local dataset = torch.load(opt.data)
-  train_data = data.new(dataset.train, opt.max_batch_size)
-  valid_data = data.new(dataset.valid, opt.max_batch_size)
+  local train_data = Data.new(dataset.train, opt.max_batch_size, cuda)
+  local valid_data = Data.new(dataset.valid, opt.max_batch_size, cuda)
   print('... done')
 
   opt.max_source_length = math.max(train_data.max_source_length, valid_data.max_source_length)
@@ -377,7 +383,7 @@ local function main()
   if opt.train_from:len() == 0 then
     encoder = models.make_lstm(#dataset.src_dict, opt, 'enc')
     decoder = models.make_lstm(#dataset.targ_dict, opt, 'dec')
-    generator, criterion = models.make_generator(#dataset.targ_dict, opt)
+    criterion, generator = models.make_generator(#dataset.targ_dict, opt)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('loading ' .. opt.train_from .. '...')
@@ -388,12 +394,12 @@ local function main()
     encoder = model[1]
     decoder = model[2]
     generator = model[3]
-    _, criterion = models.make_generator(valid_data, opt)
+    criterion = models.make_generator(valid_data, opt)
   end
 
   layers = {encoder, decoder, generator}
 
-  if opt.gpuid > 0 then
+  if cuda then
     for i = 1, #layers do
       layers[i]:cuda()
     end
