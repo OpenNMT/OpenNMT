@@ -1,5 +1,4 @@
 require 's2sa.dict'
-local hdf5 = require 'hdf5'
 local path = require 'pl.path'
 
 local models = require 's2sa.models'
@@ -8,6 +7,8 @@ local table_utils = require 's2sa.table_utils'
 
 local Bookkeeper = require 's2sa.bookkeeper'
 local Data = require 's2sa.data'
+local Decoder = require 's2sa.decoder'
+local Encoder = require 's2sa.encoder'
 local Evaluator = require 's2sa.evaluator'
 local Learning = require 's2sa.learning'
 
@@ -88,7 +89,29 @@ local function train(train_data, valid_data)
   local num_params = 0
   local num_prunedparams = 0
   local params, grad_params = {}, {}
+  local max_length = math.max(opt.max_source_length, opt.max_target_length)
   opt.train_perf = {}
+
+  local encoderMngt = Encoder.new({
+    network = encoder,
+    word_vecs_enc = word_vecs_enc,
+    pre_word_vecs_enc = opt.pre_word_vecs_enc,
+    layers_nb = opt.num_layers,
+    rnn_size = opt.rnn_size,
+    max_batch_size = opt.max_batch_size,
+    network_size = opt.max_source_length,
+    cuda = opt.gpuid > 0
+  })
+  local decoderMngt = Decoder.new({
+    network = decoder,
+    word_vecs_dec = word_vecs_dec,
+    pre_word_vecs_dec = opt.pre_word_vecs_dec,
+    layers_nb = opt.num_layers,
+    rnn_size = opt.rnn_size,
+    max_batch_size = opt.max_batch_size,
+    network_size = opt.max_target_length,
+    cuda = opt.gpuid > 0
+  })
 
   for i = 1, #layers do
     local p, gp = layers[i]:getParameters()
@@ -100,62 +123,16 @@ local function train(train_data, valid_data)
     grad_params[i] = gp
   end
 
-  if opt.pre_word_vecs_enc:len() > 0 then
-    local f = hdf5.open(opt.pre_word_vecs_enc)
-    local pre_word_vecs = f:read('word_vecs'):all()
-    for i = 1, pre_word_vecs:size(1) do
-      word_vecs_enc.weight[i]:copy(pre_word_vecs[i])
-    end
-  end
-  if opt.pre_word_vecs_dec:len() > 0 then
-    local f = hdf5.open(opt.pre_word_vecs_dec)
-    local pre_word_vecs = f:read('word_vecs'):all()
-    for i = 1, pre_word_vecs:size(1) do
-      word_vecs_dec.weight[i]:copy(pre_word_vecs[i])
-    end
-  end
-
   print("Number of parameters: " .. num_params .. " (active: " .. num_params-num_prunedparams .. ")")
-
-  word_vecs_enc.weight[1]:zero()
-  word_vecs_dec.weight[1]:zero()
-
-  local max_length = math.max(opt.max_source_length, opt.max_target_length)
 
   -- prototypes for gradients so there is no need to clone
   local encoder_grad_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
   local context_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
 
-  -- clone encoder/decoder up to max source/target length
-  local decoder_clones = model_utils.clone_many_times(decoder, opt.max_target_length)
-  local encoder_clones = model_utils.clone_many_times(encoder, opt.max_source_length)
-
-  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
   if opt.gpuid > 0 then
-    h_init = h_init:cuda()
     cutorch.setDevice(opt.gpuid)
     context_proto = context_proto:cuda()
     encoder_grad_proto = encoder_grad_proto:cuda()
-  end
-
-  -- these are initial states of encoder/decoder for fwd/bwd steps
-  local init_fwd_enc = {}
-  local init_bwd_enc = {}
-  local init_fwd_dec = {}
-  local init_bwd_dec = {}
-
-  for _ = 1, opt.num_layers do
-    table.insert(init_fwd_enc, h_init:clone())
-    table.insert(init_fwd_enc, h_init:clone())
-    table.insert(init_bwd_enc, h_init:clone())
-    table.insert(init_bwd_enc, h_init:clone())
-  end
-  table.insert(init_bwd_dec, h_init:clone())
-  for _ = 1, opt.num_layers do
-    table.insert(init_fwd_dec, h_init:clone())
-    table.insert(init_fwd_dec, h_init:clone())
-    table.insert(init_bwd_dec, h_init:clone())
-    table.insert(init_bwd_dec, h_init:clone())
   end
 
   local dec_offset = 3 -- offset depends on input feeding
@@ -177,45 +154,18 @@ local function train(train_data, valid_data)
       local batch = data:get_batch(batch_order[i])
 
       local encoder_grads = encoder_grad_proto[{{1, batch.size}, {1, batch.source_length}}]
-      local rnn_state_enc = model_utils.reset_state(init_fwd_enc, batch.size, 0)
       local context = context_proto[{{1, batch.size}, {1, batch.source_length}}]
 
       -- forward prop encoder
-      for t = 1, batch.source_length do
-        encoder_clones[t]:training()
-        local encoder_input = {batch.source_input[t]}
-        table_utils.append(encoder_input, rnn_state_enc[t-1])
-        local out = encoder_clones[t]:forward(encoder_input)
-        rnn_state_enc[t] = out
-        context[{{},t}]:copy(out[#out])
-      end
-
-      -- copy encoder last hidden state to decoder initial state
-      local rnn_state_dec = model_utils.reset_state(init_fwd_dec, batch.size, 0)
-      for L = 1, opt.num_layers do
-        rnn_state_dec[0][L*2-1]:copy(rnn_state_enc[batch.source_length][L*2-1])
-        rnn_state_dec[0][L*2]:copy(rnn_state_enc[batch.source_length][L*2])
-      end
+      local rnn_state_enc = encoderMngt:forward(batch, context)
 
       -- forward prop decoder
-      local preds = {}
-
-      for t = 1, batch.target_length do
-        decoder_clones[t]:training()
-        local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec[t-1])}
-        local out = decoder_clones[t]:forward(decoder_input)
-        local next_state = {}
-        table.insert(preds, out[#out])
-        for j = 1, #out-1 do
-          table.insert(next_state, out[j])
-        end
-        rnn_state_dec[t] = next_state
-      end
+      local rnn_state_dec, preds = decoderMngt:forward(batch, context, rnn_state_enc)
 
       -- backward prop decoder
       encoder_grads:zero()
 
-      local drnn_state_dec = model_utils.reset_state(init_bwd_dec, batch.size)
+      local drnn_state_dec = model_utils.reset_state(decoderMngt.init_bwd_dec, batch.size)
       local loss = 0
       for t = batch.target_length, 1, -1 do
         local pred = generator:forward(preds[t])
@@ -234,7 +184,7 @@ local function train(train_data, valid_data)
         drnn_state_dec[rnn_state_dec_pred_idx]:add(dl_dtarget)
 
         local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec[t-1])}
-        local dlst = decoder_clones[t]:backward(decoder_input, drnn_state_dec)
+        local dlst = decoderMngt.decoder_clones[t]:backward(decoder_input, drnn_state_dec)
         -- accumulate encoder/decoder grads
         encoder_grads:add(dlst[2])
 
@@ -252,7 +202,7 @@ local function train(train_data, valid_data)
       local grad_norm = 0
       grad_norm = grad_norm + grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 
-      local drnn_state_enc = model_utils.reset_state(init_bwd_enc, batch.size)
+      local drnn_state_enc = model_utils.reset_state(encoderMngt.init_bwd_enc, batch.size)
       for L = 1, opt.num_layers do
         drnn_state_enc[L*2-1]:copy(drnn_state_dec[L*2-1])
         drnn_state_enc[L*2]:copy(drnn_state_dec[L*2])
@@ -262,7 +212,7 @@ local function train(train_data, valid_data)
         local encoder_input = {batch.source_input[t]}
         table_utils.append(encoder_input, rnn_state_enc[t-1])
         drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
-        local dlst = encoder_clones[t]:backward(encoder_input, drnn_state_enc)
+        local dlst = encoderMngt.encoder_clones[t]:backward(encoder_input, drnn_state_enc)
         for j = 1, #drnn_state_enc do
           drnn_state_enc[j]:copy(dlst[j+1])
         end
@@ -322,11 +272,11 @@ local function train(train_data, valid_data)
     opt.train_perf[#opt.train_perf + 1] = train_score
 
     local score = evaluator:process({
-      encoder = encoder_clones[1],
-      decoder = decoder_clones[1],
+      encoder = encoderMngt.encoder_clones[1],
+      decoder = decoderMngt.decoder_clones[1],
       generator = generator,
-      init_fwd_enc = init_fwd_enc,
-      init_fwd_dec = init_fwd_dec,
+      init_fwd_enc = encoderMngt.init_fwd_enc,
+      init_fwd_dec = decoderMngt.init_fwd_dec,
       context_proto = context_proto,
       criterion = criterion
     }, valid_data)
