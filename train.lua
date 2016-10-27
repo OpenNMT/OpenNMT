@@ -1,12 +1,13 @@
 require 's2sa.data'
-require 's2sa.models'
 
-local evaluator = require 's2sa.evaluator'
+
+local models = require 's2sa.models'
 local model_utils = require 's2sa.model_utils'
-local Bookkeeper = require 's2sa.bookkeeper'
-local Learning = require 's2sa.learning'
 local table_utils = require 's2sa.table_utils'
 local dict = require 's2sa.dict'
+local Bookkeeper = require 's2sa.bookkeeper'
+local Evaluator = require 's2sa.evaluator'
+local Learning = require 's2sa.learning'
 
 local cmd = torch.CmdLine()
 
@@ -374,9 +375,9 @@ local function main()
 
   -- Build model
   if opt.train_from:len() == 0 then
-    encoder = make_lstm(#dataset.src_dict, opt, 'enc')
-    decoder = make_lstm(#dataset.targ_dict, opt, 'dec')
-    generator, criterion = make_generator(#dataset.targ_dict, opt)
+    encoder = models.make_lstm(#dataset.src_dict, opt, 'enc')
+    decoder = models.make_lstm(#dataset.targ_dict, opt, 'dec')
+    generator, criterion = models.make_generator(#dataset.targ_dict, opt)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('loading ' .. opt.train_from .. '...')
@@ -387,7 +388,7 @@ local function main()
     encoder = model[1]
     decoder = model[2]
     generator = model[3]
-    _, criterion = make_generator(valid_data, opt)
+    _, criterion = models.make_generator(valid_data, opt)
   end
 
   layers = {encoder, decoder, generator}

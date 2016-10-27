@@ -3,7 +3,7 @@ local file_reader = require 's2sa.file_reader'
 local parallel_file_reader = require 's2sa.parallel_file_reader'
 local table_utils = require 's2sa.table_utils'
 
-cmd = torch.CmdLine()
+local cmd = torch.CmdLine()
 
 cmd:option('-train_src_file', '', [[Path to the training source data]])
 cmd:option('-train_targ_file', '', [[Path to the training target data]])
@@ -46,23 +46,23 @@ local function make_vocabulary(filename, size)
   return vocab
 end
 
-local function make_sentence(sent, dict, start_symbols)
+local function make_sentence(sent, dictionary, start_symbols)
   local vec = {}
 
   if start_symbols == true then
-    table.insert(vec, dict:lookup('<s>'))
+    table.insert(vec, dictionary:lookup('<s>'))
   end
 
   for i = 1, #sent do
-    local idx = dict:lookup(sent[i])
+    local idx = dictionary:lookup(sent[i])
     if idx == nil then
-      idx = dict:lookup('<unk>')
+      idx = dictionary:lookup('<unk>')
     end
     table.insert(vec, idx)
   end
 
   if start_symbols == true then
-    table.insert(vec, dict:lookup('</s>'))
+    table.insert(vec, dictionary:lookup('</s>'))
   end
 
   return torch.IntTensor(vec)

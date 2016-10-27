@@ -1,8 +1,8 @@
 local data = torch.class("data")
 
-function data:__init(data, max_batch_size)
-  self.src = data.src
-  self.targ = data.targ
+function data:__init(d, max_batch_size)
+  self.src = d.src
+  self.targ = d.targ
 
   self:build_batches(max_batch_size)
 end
