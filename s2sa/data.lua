@@ -82,7 +82,7 @@ function data:get_batch(idx)
     batch.target_output[{{}, batch_idx}]:narrow(1, 1, target_length):copy(target_output_view)
   end
 
-  if cuda then
+  if self.cuda then
     batch.source_input = batch.source_input:cuda()
     batch.target_input = batch.target_input:cuda()
     batch.target_output = batch.target_output:cuda()
