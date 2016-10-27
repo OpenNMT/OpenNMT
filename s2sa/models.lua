@@ -32,9 +32,7 @@ local function make_attention(opt)
   return nn.gModule(inputs, {context_output})
 end
 
-local function make_lstm(vocab_size, opt, model)
-  assert(model == 'enc' or model == 'dec')
-
+local function make_lstm(vocab_size, opt)
   local inputs = {}
   for l = 1, opt.num_layers do
     table.insert(inputs, nn.Identity()()) -- h0: batch_size x rnn_size
@@ -52,7 +50,7 @@ local function make_lstm(vocab_size, opt, model)
     if L == 1 then
       input_size = opt.word_vec_size
       local word_vecs = nn.LookupTable(vocab_size, input_size)
-      word_vecs.name = 'word_vecs' .. '_' .. model
+      word_vecs.name = 'word_vecs'
       x = word_vecs(inputs[opt.num_layers + 1]) -- batch_size x timesteps x word_vec_size
     else
       input_size = opt.rnn_size

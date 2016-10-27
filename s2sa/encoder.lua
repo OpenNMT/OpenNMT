@@ -1,49 +1,31 @@
-require 'torch'
-local hdf5 = require 'hdf5'
 local model_utils = require 's2sa.model_utils'
-local table_utils = require 's2sa.table_utils'
+local Sequencer = require 's2sa.sequencer'
 
-local Encoder = torch.class("Encoder")
+local Encoder, parent = torch.class('Encoder', 'Sequencer')
 
 function Encoder:__init(args)
-  self.word_vecs_enc = args.word_vecs_enc
-  self.fix_word_vecs_enc = args.fix_word_vecs_enc
-  self.network = args.network
-
-  if args.pre_word_vecs_enc:len() > 0 then
-    local f = hdf5.open(args.pre_word_vecs_enc)
-    local pre_word_vecs = f:read('word_vecs'):all()
-    for i = 1, pre_word_vecs:size(1) do
-      self.word_vecs_enc.weight[i]:copy(pre_word_vecs[i])
-    end
-  end
-
-  self.word_vecs_enc.weight[1]:zero()
+  parent:__init(args)
 end
 
-function Encoder:forget()
-  self.network:apply(function (layer)
-      if layer.name == 'lstm' then
-        layer:resetStates()
-      end
-  end)
+function Encoder:forward(batch)
+  self:forget()
+  self.inputs = model_utils.reset_state(self.init_states, batch.size)
+  table.insert(self.inputs, batch.source_input)
+
+  local outputs = self.network:forward(self.inputs)
+
+  local context = outputs[#outputs]
+  table.remove(outputs)
+
+  return outputs, context
 end
 
-function Encoder:forward(inputs)
-  local encoder_outputs = self.network:forward(inputs)
+function Encoder:backward(grad_output)
+  self.network:backward(self.inputs, grad_output)
 
-  local context = encoder_outputs[#encoder_outputs]
-  table.remove(encoder_outputs)
-
-  return encoder_outputs, context
-end
-
-function Encoder:backward(inputs, grad_output, fix_word)
-  self.network:backward(inputs, grad_output)
-
-  self.word_vecs_enc.gradWeight[1]:zero()
-  if self.fix_word_vecs_enc == 1 then
-    self.word_vecs_enc.gradWeight:zero()
+  self.word_vecs.gradWeight[1]:zero()
+  if self.fix_word_vecs == 1 then
+    self.word_vecs.gradWeight:zero()
   end
 end
 

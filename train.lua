@@ -15,8 +15,6 @@ local Learning = require 's2sa.learning'
 local cmd = torch.CmdLine()
 local opt = {}
 local layers = {}
-local word_vecs_enc = {}
-local word_vecs_dec = {}
 local encoder
 local decoder
 local attention
@@ -93,17 +91,24 @@ local function train(train_data, valid_data)
   local max_length = math.max(opt.max_source_length, opt.max_target_length)
   opt.train_perf = {}
 
+  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
+  if opt.gpuid > 0 then
+    h_init = h_init:cuda()
+  end
+
   local encoderMngt = Encoder.new({
     network = encoder,
-    word_vecs_enc = word_vecs_enc,
-    pre_word_vecs_enc = opt.pre_word_vecs_enc,
-    fix_word_vecs_enc = opt.fix_word_vecs_enc,
+    pre_word_vecs = opt.pre_word_vecs_enc,
+    fix_word_vecs = opt.fix_word_vecs_enc,
+    h_init = h_init,
+    num_layers = opt.num_layers
   })
   local decoderMngt = Decoder.new({
     network = decoder,
-    word_vecs_dec = word_vecs_dec,
-    pre_word_vecs_dec = opt.pre_word_vecs_dec,
-    fix_word_vecs_dec = opt.fix_word_vecs_dec,
+    pre_word_vecs = opt.pre_word_vecs_dec,
+    fix_word_vecs = opt.fix_word_vecs_dec,
+    h_init = h_init,
+    num_layers = opt.num_layers
   })
 
   for i = 1, #layers do
@@ -117,19 +122,6 @@ local function train(train_data, valid_data)
   end
 
   print("Number of parameters: " .. num_params .. " (active: " .. num_params-num_prunedparams .. ")")
-
-  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
-  if opt.gpuid > 0 then
-    h_init = h_init:cuda()
-  end
-
-  local init_states_fwd = {}
-  local init_states_bwd = {}
-
-  for _ = 1, opt.num_layers do
-    table.insert(init_states_fwd, h_init:clone())
-    table.insert(init_states_bwd, h_init:clone())
-  end
 
   function train_batch(data, epoch, learning)
     local bookkeeper = Bookkeeper.new({
@@ -146,21 +138,18 @@ local function train(train_data, valid_data)
 
       local batch = data:get_batch(batch_order[i])
 
-      local hidden_states = model_utils.reset_state(init_states_fwd, batch.size)
-
       -- forward encoder
-      local encoder_inputs = hidden_states
-      table.insert(encoder_inputs, batch.source_input)
-      local encoder_states, context = encoderMngt:forward(encoder_inputs)
+      local encoder_states, context = encoderMngt:forward(batch)
 
       -- forward decoder
-      local decoder_inputs = encoder_states
-      table.insert(decoder_inputs, batch.target_input)
-      local decoder_out = decoderMngt:forward(decoder_inputs)
+      local decoder_states, decoder_out = decoderMngt:forward(batch, encoder_states)
 
       -- forward and backward attention and generator
       local grad_context = context:clone():zero()
-      local decoder_grad_output = model_utils.reset_state(init_states_bwd, batch.size)
+      local decoder_grad_output = decoder_states
+      for l = 1, opt.num_layers do
+        decoder_grad_output[l]:zero()
+      end
       table.insert(decoder_grad_output, decoder_out:clone())
 
       local loss = 0
@@ -182,14 +171,14 @@ local function train(train_data, valid_data)
       end
 
       -- backward decoder
-      local decoder_grad_input = decoderMngt:backward(decoder_inputs, decoder_grad_output)
+      local decoder_grad_input = decoderMngt:backward(decoder_grad_output)
 
       local grad_norm = grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 
       -- backward encoder
       local encoder_grad_output = decoder_grad_input
       encoder_grad_output[#encoder_grad_output] = grad_context
-      encoderMngt:backward(encoder_inputs, encoder_grad_output)
+      encoderMngt:backward(encoder_grad_output)
 
       grad_norm = grad_norm + grad_params[1]:norm()^2
       grad_norm = grad_norm^0.5
@@ -261,16 +250,6 @@ local function train(train_data, valid_data)
   save_model(string.format('%s_final.t7', opt.savefile), {encoder, decoder, generator}, opt, true)
 end
 
-local function get_layer(layer)
-  if layer.name ~= nil then
-    if layer.name == 'word_vecs_dec' then
-      word_vecs_dec = layer
-    elseif layer.name == 'word_vecs_enc' then
-       word_vecs_enc = layer
-    end
-  end
-end
-
 local function main()
   -- parse input params
   opt = cmd:parse(arg)
@@ -302,8 +281,8 @@ local function main()
 
   -- Build model
   if opt.train_from:len() == 0 then
-    encoder = models.make_lstm(#dataset.src_dict, opt, 'enc')
-    decoder = models.make_lstm(#dataset.targ_dict, opt, 'dec')
+    encoder = models.make_lstm(#dataset.src_dict, opt)
+    decoder = models.make_lstm(#dataset.targ_dict, opt)
     attention = models.make_attention(opt)
     criterion, generator = models.make_generator(#dataset.targ_dict, opt)
   else
@@ -330,8 +309,6 @@ local function main()
   end
 
   -- these layers will be manipulated during training
-  encoder:apply(get_layer)
-  decoder:apply(get_layer)
   train(train_data, valid_data)
 end
 
