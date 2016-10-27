@@ -14,7 +14,8 @@ local Learning = require 's2sa.learning'
 local cmd = torch.CmdLine()
 local opt = {}
 local layers = {}
-local word_vec_layers = {}
+local word_vecs_enc = {}
+local word_vecs_dec = {}
 local encoder
 local decoder
 local generator
@@ -103,21 +104,21 @@ local function train(train_data, valid_data)
     local f = hdf5.open(opt.pre_word_vecs_enc)
     local pre_word_vecs = f:read('word_vecs'):all()
     for i = 1, pre_word_vecs:size(1) do
-      word_vec_layers[1].weight[i]:copy(pre_word_vecs[i])
+      word_vecs_enc.weight[i]:copy(pre_word_vecs[i])
     end
   end
   if opt.pre_word_vecs_dec:len() > 0 then
     local f = hdf5.open(opt.pre_word_vecs_dec)
     local pre_word_vecs = f:read('word_vecs'):all()
     for i = 1, pre_word_vecs:size(1) do
-      word_vec_layers[2].weight[i]:copy(pre_word_vecs[i])
+      word_vecs_dec.weight[i]:copy(pre_word_vecs[i])
     end
   end
 
   print("Number of parameters: " .. num_params .. " (active: " .. num_params-num_prunedparams .. ")")
 
-  word_vec_layers[1].weight[1]:zero()
-  word_vec_layers[2].weight[1]:zero()
+  word_vecs_enc.weight[1]:zero()
+  word_vecs_dec.weight[1]:zero()
 
   local max_length = math.max(opt.max_source_length, opt.max_target_length)
 
@@ -243,9 +244,9 @@ local function train(train_data, valid_data)
         end
       end
 
-      word_vec_layers[2].gradWeight[1]:zero()
+      word_vecs_dec.gradWeight[1]:zero()
       if opt.fix_word_vecs_dec == 1 then
-        word_vec_layers[2].gradWeight:zero()
+        word_vecs_dec.gradWeight:zero()
       end
 
       local grad_norm = 0
@@ -267,9 +268,9 @@ local function train(train_data, valid_data)
         end
       end
 
-      word_vec_layers[1].gradWeight[1]:zero()
+      word_vecs_enc.gradWeight[1]:zero()
       if opt.fix_word_vecs_enc == 1 then
-        word_vec_layers[1].gradWeight:zero()
+        word_vecs_enc.gradWeight:zero()
       end
 
       grad_norm = grad_norm + grad_params[1]:norm()^2
@@ -343,9 +344,9 @@ end
 local function get_layer(layer)
   if layer.name ~= nil then
     if layer.name == 'word_vecs_dec' then
-      table.insert(word_vec_layers, layer)
+      word_vecs_dec = layer
     elseif layer.name == 'word_vecs_enc' then
-      table.insert(word_vec_layers, layer)
+       word_vecs_enc = layer
     end
   end
 end
@@ -407,7 +408,6 @@ local function main()
   end
 
   -- these layers will be manipulated during training
-  word_vec_layers = {}
   encoder:apply(get_layer)
   decoder:apply(get_layer)
   train(train_data, valid_data)
