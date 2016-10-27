@@ -202,9 +202,7 @@ local function train(train_data, valid_data)
         batch_size = batch.size,
         batch_index = i,
         nonzeros = batch.target_non_zeros,
-        loss = loss,
-        param_norm = param_norm,
-        grad_norm = grad_norm
+        loss = loss
       })
 
       if i % 200 == 0 then

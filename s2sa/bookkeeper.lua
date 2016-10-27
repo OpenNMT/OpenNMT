@@ -25,14 +25,14 @@ function Bookkeeper:update(info)
   if info.batch_index % self.print_frequency == 0 then
     local time_taken = self.timer:time().real - self.start_time
 
-    local stats = string.format('Epoch: %d, Batch: %d/%d, Batch size: %d, LR: %.4f, ',
-      self.epoch, info.batch_index, self.data_size, info.batch_size, self.learning_rate)
-    stats = stats .. string.format('PPL: %.2f, |Param|: %.2f, |GParam|: %.2f, ',
-      math.exp(self.train_loss/self.train_nonzeros), info.param_norm, info.grad_norm)
-    stats = stats .. string.format('Training: %d/%d/%d total/source/target tokens/sec',
+    local stats = string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
+      self.epoch, info.batch_index, self.data_size, self.learning_rate)
+    stats = stats .. string.format('Throughput %d/%d/%d total/source/target tokens/sec ; ',
       (self.num_words_target+self.num_words_source) / time_taken,
       self.num_words_source / time_taken,
       self.num_words_target / time_taken)
+    stats = stats .. string.format('PPL %.2f',
+      math.exp(self.train_loss/self.train_nonzeros))
     print(stats)
   end
 end
