@@ -4,14 +4,14 @@ require 's2sa.model_utils'
 local Bookkeeper = require 's2sa.bookkeeper'
 local Learning = require 's2sa.learning'
 local table_utils = require 's2sa.table_utils'
+local dict = require 's2sa.dict'
 
 local cmd = torch.CmdLine()
 
 cmd:text("")
 cmd:text("**Data options**")
 cmd:text("")
-cmd:option('-data_file','data/demo-train.hdf5', [[Path to the training *.hdf5 file from preprocess.py]])
-cmd:option('-val_data_file','data/demo-val.hdf5', [[Path to validation *.hdf5 file from preprocess.py]])
+cmd:option('-data','data/demo.t7', [[Path to the training *.hdf5 file from preprocess.py]])
 cmd:option('-savefile', 'seq2seq_lstm_attn', [[Savefile name (model will be saved as
                                              savefile_epochX_PPL.t7 where X is the X-th epoch and PPL is
                                              the validation perplexity]])
@@ -29,6 +29,7 @@ cmd:text("")
 cmd:text("**Optimization options**")
 cmd:text("")
 
+cmd:option('-max_batch_size', 64, [[Maximum batch size]])
 cmd:option('-epochs', 13, [[Number of training epochs]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
@@ -94,24 +95,22 @@ local function eval(data)
 
   local nll = 0
   local total = 0
-  for i = 1, data:size() do
-    local d = data[i]
-    local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
-    local batch_l, target_l, source_l = d[5], d[6], d[7]
+  for i = 1, #data do
+    local batch = data:get_batch(i)
 
-    local rnn_state_enc = reset_state(init_fwd_enc, batch_l)
-    local context = context_proto[{{1, batch_l}, {1, source_l}}]
+    local rnn_state_enc = reset_state(init_fwd_enc, batch.size)
+    local context = context_proto[{{1, batch.size}, {1, batch.source_length}}]
 
     -- forward prop encoder
-    for t = 1, source_l do
-      local encoder_input = {source[t]}
+    for t = 1, batch.source_length do
+      local encoder_input = {batch.source_input[t]}
       table_utils.append(encoder_input, rnn_state_enc)
       local out = encoder_clones[1]:forward(encoder_input)
       rnn_state_enc = out
       context[{{},t}]:copy(out[#out])
     end
 
-    local rnn_state_dec = reset_state(init_fwd_dec, batch_l)
+    local rnn_state_dec = reset_state(init_fwd_dec, batch.size)
     for L = 1, opt.num_layers do
       rnn_state_dec[L*2-1]:copy(rnn_state_enc[L*2-1])
       rnn_state_dec[L*2]:copy(rnn_state_enc[L*2])
@@ -119,8 +118,8 @@ local function eval(data)
 
     local loss = 0
     local attn_outputs = {}
-    for t = 1, target_l do
-      local decoder_input = {target[t], context, table.unpack(rnn_state_dec)}
+    for t = 1, batch.target_length do
+      local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec)}
       local out = decoder_clones[1]:forward(decoder_input)
 
       rnn_state_dec = {}
@@ -130,12 +129,12 @@ local function eval(data)
       local pred = generator:forward(out[#out])
 
       local input = pred
-      local output = target_out[t]
+      local output = batch.target_output[t]
 
       loss = loss + criterion:forward(input, output)
     end
     nll = nll + loss
-    total = total + nonzeros
+    total = total + batch.target_non_zeros
   end
   local valid = math.exp(nll / total)
   print("Valid", valid)
@@ -179,16 +178,18 @@ local function train(train_data, valid_data)
   word_vec_layers[1].weight[1]:zero()
   word_vec_layers[2].weight[1]:zero()
 
+  local max_length = math.max(opt.max_source_length, opt.max_target_length)
+
   -- prototypes for gradients so there is no need to clone
-  encoder_grad_proto = torch.zeros(opt.max_batch_l, opt.max_sent_l, opt.rnn_size)
-  context_proto = torch.zeros(opt.max_batch_l, opt.max_sent_l, opt.rnn_size)
+  encoder_grad_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
+  context_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
 
   -- clone encoder/decoder up to max source/target length
-  decoder_clones = clone_many_times(decoder, opt.max_sent_l_targ)
-  encoder_clones = clone_many_times(encoder, opt.max_sent_l_src)
+  decoder_clones = clone_many_times(decoder, opt.max_target_length)
+  encoder_clones = clone_many_times(encoder, opt.max_source_length)
 
-  local h_init = torch.zeros(opt.max_batch_l, opt.rnn_size)
-  local attn_init = torch.zeros(opt.max_batch_l, opt.max_sent_l)
+  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
+  local attn_init = torch.zeros(opt.max_batch_size, max_length)
   if opt.gpuid > 0 then
     h_init = h_init:cuda()
     attn_init = attn_init:cuda()
@@ -224,26 +225,25 @@ local function train(train_data, valid_data)
     local bookkeeper = Bookkeeper.new({
       print_frequency = opt.print_every,
       learning_rate = learning:get_rate(),
-      data_size = data:size(),
+      data_size = #data,
       epoch = epoch
     })
 
-    local batch_order = torch.randperm(data.length) -- shuffle mini batch order
+    local batch_order = torch.randperm(#data) -- shuffle mini batch order
 
-    for i = 1, data:size() do
+    for i = 1, #data do
       table_utils.zero(grad_params, 'zero')
-      local d = data[batch_order[i]]
-      local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
-      local batch_l, target_l, source_l = d[5], d[6], d[7]
 
-      local encoder_grads = encoder_grad_proto[{{1, batch_l}, {1, source_l}}]
-      local rnn_state_enc = reset_state(init_fwd_enc, batch_l, 0)
-      local context = context_proto[{{1, batch_l}, {1, source_l}}]
+      local batch = data:get_batch(batch_order[i])
+
+      local encoder_grads = encoder_grad_proto[{{1, batch.size}, {1, batch.source_length}}]
+      local rnn_state_enc = reset_state(init_fwd_enc, batch.size, 0)
+      local context = context_proto[{{1, batch.size}, {1, batch.source_length}}]
 
       -- forward prop encoder
-      for t = 1, source_l do
+      for t = 1, batch.source_length do
         encoder_clones[t]:training()
-        local encoder_input = {source[t]}
+        local encoder_input = {batch.source_input[t]}
         table_utils.append(encoder_input, rnn_state_enc[t-1])
         local out = encoder_clones[t]:forward(encoder_input)
         rnn_state_enc[t] = out
@@ -251,10 +251,10 @@ local function train(train_data, valid_data)
       end
 
       -- copy encoder last hidden state to decoder initial state
-      local rnn_state_dec = reset_state(init_fwd_dec, batch_l, 0)
+      local rnn_state_dec = reset_state(init_fwd_dec, batch.size, 0)
       for L = 1, opt.num_layers do
-        rnn_state_dec[0][L*2-1]:copy(rnn_state_enc[source_l][L*2-1])
-        rnn_state_dec[0][L*2]:copy(rnn_state_enc[source_l][L*2])
+        rnn_state_dec[0][L*2-1]:copy(rnn_state_enc[batch.source_length][L*2-1])
+        rnn_state_dec[0][L*2]:copy(rnn_state_enc[batch.source_length][L*2])
       end
 
       -- forward prop decoder
@@ -262,9 +262,9 @@ local function train(train_data, valid_data)
       local attn_outputs = {}
       local decoder_input
 
-      for t = 1, target_l do
+      for t = 1, batch.target_length do
         decoder_clones[t]:training()
-        local decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
+        local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec[t-1])}
         local out = decoder_clones[t]:forward(decoder_input)
         local next_state = {}
         table.insert(preds, out[#out])
@@ -277,25 +277,25 @@ local function train(train_data, valid_data)
       -- backward prop decoder
       encoder_grads:zero()
 
-      local drnn_state_dec = reset_state(init_bwd_dec, batch_l)
+      local drnn_state_dec = reset_state(init_bwd_dec, batch.size)
       local loss = 0
-      for t = target_l, 1, -1 do
+      for t = batch.target_length, 1, -1 do
         local pred = generator:forward(preds[t])
 
         local input = pred
-        local output = target_out[t]
+        local output = batch.target_output[t]
 
-        loss = loss + criterion:forward(input, output)/batch_l
+        loss = loss + criterion:forward(input, output)/batch.size
 
         local dl_dpred = criterion:backward(input, output)
 
-        dl_dpred:div(batch_l)
+        dl_dpred:div(batch.size)
         local dl_dtarget = generator:backward(preds[t], dl_dpred)
 
         local rnn_state_dec_pred_idx = #drnn_state_dec
         drnn_state_dec[rnn_state_dec_pred_idx]:add(dl_dtarget)
 
-        local decoder_input = {target[t], context, table.unpack(rnn_state_dec[t-1])}
+        local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec[t-1])}
         local dlst = decoder_clones[t]:backward(decoder_input, drnn_state_dec)
         -- accumulate encoder/decoder grads
         encoder_grads:add(dlst[2])
@@ -314,14 +314,14 @@ local function train(train_data, valid_data)
       local grad_norm = 0
       grad_norm = grad_norm + grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 
-      local drnn_state_enc = reset_state(init_bwd_enc, batch_l)
+      local drnn_state_enc = reset_state(init_bwd_enc, batch.size)
       for L = 1, opt.num_layers do
         drnn_state_enc[L*2-1]:copy(drnn_state_dec[L*2-1])
         drnn_state_enc[L*2]:copy(drnn_state_dec[L*2])
       end
 
-      for t = source_l, 1, -1 do
-        local encoder_input = {source[t]}
+      for t = batch.source_length, 1, -1 do
+        local encoder_input = {batch.source_input[t]}
         table_utils.append(encoder_input, rnn_state_enc[t-1])
         drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
         local dlst = encoder_clones[t]:backward(encoder_input, drnn_state_enc)
@@ -355,11 +355,11 @@ local function train(train_data, valid_data)
 
       -- Bookkeeping
       bookkeeper:update({
-        source_size = source_l,
-        target_size = target_l,
-        batch_size = batch_l,
+        source_size = batch.source_length,
+        target_size = batch.target_length,
+        batch_size = batch.size,
         batch_index = i,
-        nonzeros = nonzeros,
+        nonzeros = batch.target_non_zeros,
         loss = loss,
         param_norm = param_norm,
         grad_norm = grad_norm
@@ -417,26 +417,24 @@ local function main()
   end
 
   -- Create the data loader class.
-  print('loading data...')
-  train_data = data.new(opt, opt.data_file)
-  valid_data = data.new(opt, opt.val_data_file)
-  print('done!')
+  print('Loading data from ' .. opt.data .. '...')
+  local dataset = torch.load(opt.data)
+  train_data = data.new(dataset.train, opt.max_batch_size)
+  valid_data = data.new(dataset.valid, opt.max_batch_size)
+  print('... done')
 
-  print(string.format('Source vocab size: %d, Target vocab size: %d',
-      valid_data.source_size, valid_data.target_size))
+  opt.max_source_length = math.max(train_data.max_source_length, valid_data.max_source_length)
+  opt.max_target_length = math.max(train_data.max_target_length, valid_data.max_target_length)
+
+  print(string.format('Source vocab size: %d, Target vocab size: %d', #dataset.src_dict, #dataset.targ_dict))
   print(string.format('Source max sent len: %d, Target max sent len: %d',
-      valid_data.source:size(2), valid_data.target:size(2)))
-
-  opt.max_sent_l_src = valid_data.source:size(2)
-  opt.max_sent_l_targ = valid_data.target:size(2)
-  opt.max_sent_l = math.max(opt.max_sent_l_src, opt.max_sent_l_targ)
-  opt.max_batch_l = valid_data.batch_l:max()
+                      opt.max_source_length, opt.max_target_length))
 
   -- Build model
   if opt.train_from:len() == 0 then
-    encoder = make_lstm(valid_data, opt, 'enc')
-    decoder = make_lstm(valid_data, opt, 'dec')
-    generator, criterion = make_generator(valid_data, opt)
+    encoder = make_lstm(#dataset.src_dict, opt, 'enc')
+    decoder = make_lstm(#dataset.targ_dict, opt, 'dec')
+    generator, criterion = make_generator(#dataset.targ_dict, opt)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('loading ' .. opt.train_from .. '...')

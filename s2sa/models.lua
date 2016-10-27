@@ -1,7 +1,7 @@
 require 'nn'
 require 'nngraph'
 
-function make_lstm(data, opt, model)
+function make_lstm(vocab_size, opt, model)
   assert(model == 'enc' or model == 'dec')
   local name = '_' .. model
   local n = opt.num_layers
@@ -29,12 +29,7 @@ function make_lstm(data, opt, model)
     local prev_h = inputs[L*2+1+offset]
     -- the input to this layer
     if L == 1 then
-      local word_vecs
-      if model == 'enc' then
-        word_vecs = nn.LookupTable(data.source_size, input_size)
-      else
-        word_vecs = nn.LookupTable(data.target_size, input_size)
-      end
+      local word_vecs = nn.LookupTable(vocab_size, input_size)
       word_vecs.name = 'word_vecs' .. name
       x = word_vecs(inputs[1]) -- batch_size x word_vec_size
       input_size_L = input_size
@@ -72,7 +67,7 @@ function make_lstm(data, opt, model)
 
   if model == 'dec' then
     local top_h = outputs[#outputs]
-    local decoder_attn = make_decoder_attn(data, opt)
+    local decoder_attn = make_decoder_attn(opt)
     decoder_attn.name = 'decoder_attn'
     local decoder_out = decoder_attn({top_h, inputs[2]})
     if opt.dropout > 0 then
@@ -84,7 +79,7 @@ function make_lstm(data, opt, model)
   return nn.gModule(inputs, outputs)
 end
 
-function make_decoder_attn(data, opt)
+function make_decoder_attn(opt)
   -- 2D tensor target_t (batch_l x rnn_size) and
   -- 3D tensor for context (batch_l x source_l x rnn_size)
 
@@ -112,11 +107,11 @@ function make_decoder_attn(data, opt)
   return nn.gModule(inputs, {context_output})
 end
 
-function make_generator(data, opt)
+function make_generator(vocab_size, opt)
   local model = nn.Sequential()
-  model:add(nn.Linear(opt.rnn_size, data.target_size))
+  model:add(nn.Linear(opt.rnn_size, vocab_size))
   model:add(nn.LogSoftMax())
-  local w = torch.ones(data.target_size)
+  local w = torch.ones(vocab_size)
   w[1] = 0
   criterion = nn.ClassNLLCriterion(w)
   criterion.sizeAverage = false

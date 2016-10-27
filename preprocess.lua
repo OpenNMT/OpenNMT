@@ -46,8 +46,12 @@ local function make_vocabulary(filename, size)
   return vocab
 end
 
-local function make_sentence(sent, dict)
+local function make_sentence(sent, dict, start_symbols)
   local vec = {}
+
+  if start_symbols == true then
+    table.insert(vec, dict:lookup('<s>'))
+  end
 
   for i = 1, #sent do
     local idx = dict:lookup(sent[i])
@@ -55,6 +59,10 @@ local function make_sentence(sent, dict)
       idx = dict:lookup('<unk>')
     end
     table.insert(vec, idx)
+  end
+
+  if start_symbols == true then
+    table.insert(vec, dict:lookup('</s>'))
   end
 
   return torch.IntTensor(vec)
@@ -76,8 +84,8 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
       break
     end
     if #src_tokens <= opt.seq_length and #targ_tokens <= opt.seq_length then
-      table.insert(src, make_sentence(src_tokens, src_dict))
-      table.insert(targ, make_sentence(targ_tokens, targ_dict))
+      table.insert(src, make_sentence(src_tokens, src_dict, false))
+      table.insert(targ, make_sentence(targ_tokens, targ_dict, true))
       table.insert(sizes, #src_tokens)
     else
       ignored = ignored + 1

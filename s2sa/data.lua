@@ -1,80 +1,93 @@
---
--- Manages encoder/decoder data matrices.
---
-
-require 'hdf5'
-
 local data = torch.class("data")
 
-function data:__init(opt, data_file)
-  local f = hdf5.open(data_file, 'r')
+function data:__init(data, max_batch_size)
+  self.src = data.src
+  self.targ = data.targ
 
-  self.source = f:read('source'):all()
-  self.target = f:read('target'):all()
-  self.target_output = f:read('target_output'):all()
-  self.target_l = f:read('target_l'):all() --max target length each batch
-  self.target_l_all = f:read('target_l_all'):all()
-  self.target_l_all:add(-1)
-  self.batch_l = f:read('batch_l'):all()
-  self.source_l = f:read('batch_w'):all() --max source length each batch
-
-  self.batch_idx = f:read('batch_idx'):all()
-
-  self.target_size = f:read('target_size'):all()[1]
-  self.source_size = f:read('source_size'):all()[1]
-  self.target_nonzeros = f:read('target_nonzeros'):all()
-
-  self.length = self.batch_l:size(1)
-  self.seq_length = self.target:size(2)
-  self.batches = {}
-
-  for i = 1, self.length do
-    local source_i = self.source:sub(self.batch_idx[i], self.batch_idx[i]+self.batch_l[i]-1,
-        1, self.source_l[i]):transpose(1,2)
-    local target_i = self.target:sub(self.batch_idx[i], self.batch_idx[i]+self.batch_l[i]-1,
-        1, self.target_l[i]):transpose(1,2)
-    local target_output_i = self.target_output:sub(self.batch_idx[i],self.batch_idx[i]
-      +self.batch_l[i]-1, 1, self.target_l[i])
-    local target_l_i = self.target_l_all:sub(self.batch_idx[i],
-      self.batch_idx[i]+self.batch_l[i]-1)
-
-    table.insert(self.batches, {target_i,
-        target_output_i:transpose(1,2),
-        self.target_nonzeros[i],
-        source_i,
-        self.batch_l[i],
-        self.target_l[i],
-        self.source_l[i],
-        target_l_i})
-  end
+  self:build_batches(max_batch_size)
 end
 
-function data:size()
-  return self.length
-end
+function data:build_batches(max_batch_size)
+  self.batch_range = {}
+  self.source_length = {}
+  self.target_length = {}
+  self.target_non_zeros = {}
+  self.max_source_length = 0
+  self.max_target_length = 0
 
-function data.__index(self, idx)
-  if type(idx) == "string" then
-    return data[idx]
-  else
-    local target_input = self.batches[idx][1]
-    local target_output = self.batches[idx][2]
-    local nonzeros = self.batches[idx][3]
-    local source_input = self.batches[idx][4]
-    local batch_l = self.batches[idx][5]
-    local target_l = self.batches[idx][6]
-    local source_l = self.batches[idx][7]
-    local target_l_all = self.batches[idx][8]
+  -- Prepares batches in terms of range within self.src and self.targ
+  local size = 0
+  local offset = 0
+  local batch_size = 1
+  local target_length = 0
+  local target_non_zeros = 0
 
-    if opt.gpuid > 0 then --if multi-gpu, source lives in gpuid1, rest on gpuid2
-      source_input = source_input:cuda()
-      target_input = target_input:cuda()
-      target_output = target_output:cuda()
-      target_l_all = target_l_all:cuda()
+  for i = 1, #self.src do
+    if batch_size == max_batch_size or self.src[i]:size(1) ~= size then
+      if i > 1 then
+        table.insert(self.batch_range, { ["begin"] = offset, ["end"] = i - 1 })
+        table.insert(self.source_length, size)
+        table.insert(self.target_length, target_length)
+        table.insert(self.target_non_zeros, target_non_zeros)
+      end
+
+      size = self.src[i]:size(1)
+      offset = i
+      batch_size = 1
+      target_length = 0
+      target_non_zeros = 0
+    else
+      batch_size = batch_size + 1
     end
-    return {target_input, target_output, nonzeros, source_input,
-            batch_l, target_l, source_l, target_l_all}
+
+    local target_seq_length = self.targ[i]:size(1) - 1 -- targ contains <s> and </s>
+
+    target_length = math.max(target_length, target_seq_length)
+    target_non_zeros = target_non_zeros + target_seq_length
+
+    self.max_source_length = math.max(self.max_source_length, self.src[i]:size(1))
+    self.max_target_length = math.max(self.max_target_length, target_seq_length)
   end
+end
+
+function data:__len__()
+  return #self.batch_range
+end
+
+function data:get_batch(idx)
+  local batch = {}
+
+  local range_start = self.batch_range[idx]["begin"]
+  local range_end = self.batch_range[idx]["end"]
+
+  batch.size = range_end - range_start + 1
+  batch.source_length = self.source_length[idx]
+  batch.target_length = self.target_length[idx]
+  batch.target_non_zeros = self.target_non_zeros[idx]
+
+  batch.source_input = torch.Tensor(batch.source_length, batch.size):fill(1)
+  batch.target_input = torch.Tensor(batch.target_length, batch.size):fill(1)
+  batch.target_output = torch.Tensor(batch.target_length, batch.size):fill(1)
+
+  for i = range_start, range_end do
+    local batch_idx = i - range_start + 1
+
+    local target_length = self.targ[i]:size(1) - 1 -- targ contains <s> and </s>
+    local target_input_view = self.targ[i]:narrow(1, 1, target_length) -- input starts with <s>
+    local target_output_view = self.targ[i]:narrow(1, 2, target_length) -- output ends with </s>
+
+    batch.source_input[{{}, batch_idx}]:copy(self.src[i])
+    batch.target_input[{{}, batch_idx}]:narrow(1, 1, target_length):copy(target_input_view)
+    batch.target_output[{{}, batch_idx}]:narrow(1, 1, target_length):copy(target_output_view)
+  end
+
+  if opt.gpuid > 0 then
+    batch.source_input = batch.source_input:cuda()
+    batch.target_input = batch.target_input:cuda()
+    batch.target_output = batch.target_output:cuda()
+  end
+
+  return batch
 end
 
 return data
