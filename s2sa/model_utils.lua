@@ -1,4 +1,4 @@
-function clone_many_times(net, T)
+local function clone_many_times(net, T)
   local clones = {}
 
   local params, gradParams
@@ -64,3 +64,25 @@ function clone_many_times(net, T)
   mem:close()
   return clones
 end
+
+local function reset_state(state, batch_l, t)
+  local new_state, table_to_fill
+  if t == nil then
+    new_state = {}
+    table_to_fill = new_state
+  else
+    new_state = {[t] = {}}
+    table_to_fill = new_state[t]
+  end
+
+  for i = 1, #state do
+    state[i]:zero()
+    table.insert(table_to_fill, state[i][{{1, batch_l}}])
+  end
+  return new_state
+end
+
+return {
+  clone_many_times = clone_many_times,
+  reset_state = reset_state
+}

@@ -1,6 +1,8 @@
 require 's2sa.data'
 require 's2sa.models'
-require 's2sa.model_utils'
+
+local evaluator = require 's2sa.evaluator'
+local model_utils = require 's2sa.model_utils'
 local Bookkeeper = require 's2sa.bookkeeper'
 local Learning = require 's2sa.learning'
 local table_utils = require 's2sa.table_utils'
@@ -63,83 +65,12 @@ cmd:option('-print_every', 50, [[Print stats after this many batches]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
 
-local function reset_state(state, batch_l, t)
-  local new_state, table_to_fill
-  if t == nil then
-    new_state = {}
-    table_to_fill = new_state
-  else
-    new_state = {[t] = {}}
-    table_to_fill = new_state[t]
-  end
-
-  for i = 1, #state do
-    state[i]:zero()
-    table.insert(table_to_fill, state[i][{{1, batch_l}}])
-  end
-  return new_state
-end
-
 local function save_model(path, data, options, double)
   print('saving model to ' .. path)
   if double then
     for i = 1, #data do data[i] = data[i]:double() end
   end
   torch.save(path, {data, options})
-end
-
-local function eval(data)
-  encoder_clones[1]:evaluate()
-  decoder_clones[1]:evaluate() -- just need one clone
-  generator:evaluate()
-
-  local nll = 0
-  local total = 0
-  for i = 1, #data do
-    local batch = data:get_batch(i)
-
-    local rnn_state_enc = reset_state(init_fwd_enc, batch.size)
-    local context = context_proto[{{1, batch.size}, {1, batch.source_length}}]
-
-    -- forward prop encoder
-    for t = 1, batch.source_length do
-      local encoder_input = {batch.source_input[t]}
-      table_utils.append(encoder_input, rnn_state_enc)
-      local out = encoder_clones[1]:forward(encoder_input)
-      rnn_state_enc = out
-      context[{{},t}]:copy(out[#out])
-    end
-
-    local rnn_state_dec = reset_state(init_fwd_dec, batch.size)
-    for L = 1, opt.num_layers do
-      rnn_state_dec[L*2-1]:copy(rnn_state_enc[L*2-1])
-      rnn_state_dec[L*2]:copy(rnn_state_enc[L*2])
-    end
-
-    local loss = 0
-    local attn_outputs = {}
-    for t = 1, batch.target_length do
-      local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec)}
-      local out = decoder_clones[1]:forward(decoder_input)
-
-      rnn_state_dec = {}
-      for j = 1, #out-1 do
-        table.insert(rnn_state_dec, out[j])
-      end
-      local pred = generator:forward(out[#out])
-
-      local input = pred
-      local output = batch.target_output[t]
-
-      loss = loss + criterion:forward(input, output)
-    end
-    nll = nll + loss
-    total = total + batch.target_non_zeros
-  end
-  local valid = math.exp(nll / total)
-  print("Valid", valid)
-  collectgarbage()
-  return valid
 end
 
 local function train(train_data, valid_data)
@@ -185,8 +116,8 @@ local function train(train_data, valid_data)
   context_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
 
   -- clone encoder/decoder up to max source/target length
-  decoder_clones = clone_many_times(decoder, opt.max_target_length)
-  encoder_clones = clone_many_times(encoder, opt.max_source_length)
+  decoder_clones = model_utils.clone_many_times(decoder, opt.max_target_length)
+  encoder_clones = model_utils.clone_many_times(encoder, opt.max_source_length)
 
   local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
   local attn_init = torch.zeros(opt.max_batch_size, max_length)
@@ -237,7 +168,7 @@ local function train(train_data, valid_data)
       local batch = data:get_batch(batch_order[i])
 
       local encoder_grads = encoder_grad_proto[{{1, batch.size}, {1, batch.source_length}}]
-      local rnn_state_enc = reset_state(init_fwd_enc, batch.size, 0)
+      local rnn_state_enc = model_utils.reset_state(init_fwd_enc, batch.size, 0)
       local context = context_proto[{{1, batch.size}, {1, batch.source_length}}]
 
       -- forward prop encoder
@@ -251,7 +182,7 @@ local function train(train_data, valid_data)
       end
 
       -- copy encoder last hidden state to decoder initial state
-      local rnn_state_dec = reset_state(init_fwd_dec, batch.size, 0)
+      local rnn_state_dec = model_utils.reset_state(init_fwd_dec, batch.size, 0)
       for L = 1, opt.num_layers do
         rnn_state_dec[0][L*2-1]:copy(rnn_state_enc[batch.source_length][L*2-1])
         rnn_state_dec[0][L*2]:copy(rnn_state_enc[batch.source_length][L*2])
@@ -277,7 +208,7 @@ local function train(train_data, valid_data)
       -- backward prop decoder
       encoder_grads:zero()
 
-      local drnn_state_dec = reset_state(init_bwd_dec, batch.size)
+      local drnn_state_dec = model_utils.reset_state(init_bwd_dec, batch.size)
       local loss = 0
       for t = batch.target_length, 1, -1 do
         local pred = generator:forward(preds[t])
@@ -314,7 +245,7 @@ local function train(train_data, valid_data)
       local grad_norm = 0
       grad_norm = grad_norm + grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 
-      local drnn_state_enc = reset_state(init_bwd_enc, batch.size)
+      local drnn_state_enc = model_utils.reset_state(init_bwd_enc, batch.size)
       for L = 1, opt.num_layers do
         drnn_state_enc[L*2-1]:copy(drnn_state_dec[L*2-1])
         drnn_state_enc[L*2]:copy(drnn_state_dec[L*2])
@@ -373,14 +304,25 @@ local function train(train_data, valid_data)
     return bookkeeper:get_train_score()
   end
 
+  local evaluator = Evaluator.new(opt.num_layers)
   local learning = Learning.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
+
   for epoch = opt.start_epoch, opt.epochs do
     generator:training()
     local train_score = train_batch(train_data, epoch, learning)
 
     print('Train', train_score)
     opt.train_perf[#opt.train_perf + 1] = train_score
-    local score = eval(valid_data)
+
+    local score = evaluator:process({
+      encoder = encoder_clones[1],
+      decoder = decoder_clones[1],
+      generator = generator,
+      init_fwd_enc = init_fwd_enc,
+      init_fwd_dec = init_fwd_dec,
+      context_proto = context_proto,
+      criterion = criterion
+    }, valid_data)
     learning:update_rate(score, epoch)
 
     -- clean and save models
