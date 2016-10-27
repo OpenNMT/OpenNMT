@@ -59,7 +59,7 @@ local function make_lstm(vocab_size, opt, model)
       x = nn.Dropout(opt.dropout, nil, false)(hidden_states) -- batch_size x timesteps x rnn_size
     end
 
-    local lstm = nn.LSTM(opt.word_vec_size, opt.rnn_size)
+    local lstm = nn.LSTM(input_size, opt.rnn_size)
     lstm.name = 'lstm'
     hidden_states = lstm({h0, x}) -- batch_size x timesteps x rnn_size
 
