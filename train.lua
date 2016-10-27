@@ -46,7 +46,7 @@ cmd:option('-max_batch_size', 64, [[Maximum batch size]])
 cmd:option('-epochs', 13, [[Number of training epochs]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
-cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
+cmd:option('-learning_rate', 0.1, [[Starting learning rate. If adagrad/adadelta/adam is used,
                                 then this is the global learning rate. Recommended settings: sgd =1,
                                 adagrad = 0.1, adadelta = 1, adam = 0.1]])
 cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm]])
