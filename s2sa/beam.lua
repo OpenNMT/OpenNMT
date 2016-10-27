@@ -199,9 +199,9 @@ local function generate_beam(initial, K, max_sent_l, source, source_features, go
 
   if model_opt.init_dec == 1 then
     for L = 1, model_opt.num_layers do
-      rnn_state_dec[L*2-1+model_opt.input_feed]:copy(
+      rnn_state_dec[L*2-1]:copy(
         rnn_state_enc[L*2-1]:expand(K, model_opt.rnn_size))
-      rnn_state_dec[L*2+model_opt.input_feed]:copy(
+      rnn_state_dec[L*2]:copy(
         rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))
     end
   end
@@ -222,9 +222,9 @@ local function generate_beam(initial, K, max_sent_l, source, source_features, go
     end
     if model_opt.init_dec == 1 then
       for L = 1, model_opt.num_layers do
-        rnn_state_dec[L*2-1+model_opt.input_feed]:add(
+        rnn_state_dec[L*2-1]:add(
           rnn_state_enc[L*2-1]:expand(K, model_opt.rnn_size))
-        rnn_state_dec[L*2+model_opt.input_feed]:add(
+        rnn_state_dec[L*2]:add(
           rnn_state_enc[L*2]:expand(K, model_opt.rnn_size))
       end
     end
@@ -281,9 +281,6 @@ local function generate_beam(initial, K, max_sent_l, source, source_features, go
     local out = model[3]:forward(out_decoder[#out_decoder]) -- K x vocab_size
 
     rnn_state_dec = {} -- to be modified later
-    if model_opt.input_feed == 1 then
-      table.insert(rnn_state_dec, out_decoder[#out_decoder])
-    end
     for j = 1, #out_decoder - 1 do
       table.insert(rnn_state_dec, out_decoder[j])
     end
@@ -385,9 +382,6 @@ local function generate_beam(initial, K, max_sent_l, source, source_features, go
       local out_decoder = model[2]:forward(decoder_input)
       local out = model[3]:forward(out_decoder[#out_decoder]) -- K x vocab_size
       rnn_state_dec = {} -- to be modified later
-      if model_opt.input_feed == 1 then
-        table.insert(rnn_state_dec, out_decoder[#out_decoder])
-      end
       for j = 1, #out_decoder - 1 do
         table.insert(rnn_state_dec, out_decoder[j])
       end
@@ -515,10 +509,6 @@ local function sent2charidx(sent, chars_idx, max_word_l, start_symbol)
   if start_symbol == 1 then
     table.insert(words, END_WORD)
   end
-  print('w<ords =')
-  print(words)
-  print('w<max_word_l =')
-  print(max_word_l)
   local chars = torch.ones(#words, max_word_l)
   for i = 1, #words do
     chars[i] = word2charidx(words[i], chars_idx, max_word_l, chars[i])
@@ -619,7 +609,6 @@ local function init(arg)
   end
   -- for backward compatibility
   model_opt.brnn = model_opt.brnn or 0
-  model_opt.input_feed = model_opt.input_feed or 1
   model_opt.attn = model_opt.attn or 1
   model_opt.num_source_features = model_opt.num_source_features or 0
 
@@ -699,9 +688,6 @@ local function init(arg)
   end
   init_fwd_enc = {}
   init_fwd_dec = {} -- initial context
-  if model_opt.input_feed == 1 then
-    table.insert(init_fwd_dec, h_init_dec:clone())
-  end
 
   for _ = 1, model_opt.num_layers do
     table.insert(init_fwd_enc, h_init_enc:clone())
@@ -721,8 +707,6 @@ local function search(line)
   print('SENT ' .. sent_id .. ': ' ..line)
   local source, source_str
   local source_features = features2featureidx(source_features_str, feature2idx_src, model_opt.start_symbol)
-  print('model opts = ')
-  print(model_opt)
   if model_opt.use_chars_enc == 1 then
     source, source_str = sent2charidx(cleaned_line, char2idx, model_opt.max_word_l, model_opt.start_symbol)
   else
