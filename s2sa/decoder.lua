@@ -6,10 +6,8 @@ local Decoder = torch.class("Decoder")
 
 function Decoder:__init(args)
   self.word_vecs_dec = args.word_vecs_dec
-  self.init_fwd_dec = {}
-  self.init_bwd_dec = {}
+  self.fix_word_vecs_dec = args.fix_word_vecs_dec
   self.network = args.network
-  self.layers_nb = args.layers_nb
 
   if args.pre_word_vecs_dec:len() > 0 then
     local f = hdf5.open(args.pre_word_vecs_dec)
@@ -20,47 +18,30 @@ function Decoder:__init(args)
   end
 
   self.word_vecs_dec.weight[1]:zero()
-
-  self.decoder_clones = model_utils.clone_many_times(self.network, args.network_size)
-
-  local h_init = torch.zeros(args.max_batch_size, args.rnn_size)
-  if args.cuda then
-    h_init = h_init:cuda()
-  end
-
-  table.insert(self.init_bwd_dec, h_init:clone())
-  for _ = 1, args.layers_nb do
-    table.insert(self.init_fwd_dec, h_init:clone())
-    table.insert(self.init_fwd_dec, h_init:clone())
-    table.insert(self.init_bwd_dec, h_init:clone())
-    table.insert(self.init_bwd_dec, h_init:clone())
-  end
 end
 
-function Decoder:forward(batch, context, rnn_state_enc)
-  local rnn_state_dec = model_utils.reset_state(self.init_fwd_dec, batch.size, 0)
+function Decoder:forget()
+  self.network:apply(function (layer)
+      if layer.name == 'lstm' then
+        layer:resetStates()
+      end
+  end)
+end
 
-  -- copy encoder last hidden state to decoder initial state
-  for L = 1, self.layers_nb do
-    rnn_state_dec[0][L*2-1]:copy(rnn_state_enc[batch.source_length][L*2-1])
-    rnn_state_dec[0][L*2]:copy(rnn_state_enc[batch.source_length][L*2])
+function Decoder:forward(inputs)
+  local decoder_outputs = self.network:forward(inputs)
+  return decoder_outputs[#decoder_outputs]
+end
+
+function Decoder:backward(inputs, grad_output, fix_word)
+  local decoder_grad_input = self.network:backward(inputs, grad_output)
+
+  self.word_vecs_dec.gradWeight[1]:zero()
+  if self.fix_word_vecs_dec == 1 then
+    self.word_vecs_dec.gradWeight:zero()
   end
 
-  local preds = {}
-
-  for t = 1, batch.target_length do
-    self.decoder_clones[t]:training()
-    local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec[t-1])}
-    local out = self.decoder_clones[t]:forward(decoder_input)
-    local next_state = {}
-    table.insert(preds, out[#out])
-    for j = 1, #out-1 do
-      table.insert(next_state, out[j])
-    end
-    rnn_state_dec[t] = next_state
-  end
-
-  return rnn_state_dec, preds
+  return decoder_grad_input
 end
 
 return Decoder

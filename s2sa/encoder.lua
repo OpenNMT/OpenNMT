@@ -7,8 +7,7 @@ local Encoder = torch.class("Encoder")
 
 function Encoder:__init(args)
   self.word_vecs_enc = args.word_vecs_enc
-  self.init_fwd_enc = {}
-  self.init_bwd_enc = {}
+  self.fix_word_vecs_enc = args.fix_word_vecs_enc
   self.network = args.network
 
   if args.pre_word_vecs_enc:len() > 0 then
@@ -20,35 +19,32 @@ function Encoder:__init(args)
   end
 
   self.word_vecs_enc.weight[1]:zero()
-
-  self.encoder_clones = model_utils.clone_many_times(self.network, args.network_size)
-
-  local h_init = torch.zeros(args.max_batch_size, args.rnn_size)
-  if args.cuda then
-    h_init = h_init:cuda()
-  end
-
-  for _ = 1, args.layers_nb do
-    table.insert(self.init_fwd_enc, h_init:clone())
-    table.insert(self.init_fwd_enc, h_init:clone())
-    table.insert(self.init_bwd_enc, h_init:clone())
-    table.insert(self.init_bwd_enc, h_init:clone())
-  end
 end
 
-function Encoder:forward(batch, context)
-  local rnn_state_enc = model_utils.reset_state(self.init_fwd_enc, batch.size, 0)
+function Encoder:forget()
+  self.network:apply(function (layer)
+      if layer.name == 'lstm' then
+        layer:resetStates()
+      end
+  end)
+end
 
-  for t = 1, batch.source_length do
-    self.encoder_clones[t]:training()
-    local encoder_input = {batch.source_input[t]}
-    table_utils.append(encoder_input, rnn_state_enc[t-1])
-    local out = self.encoder_clones[t]:forward(encoder_input)
-    rnn_state_enc[t] = out
-    context[{{},t}]:copy(out[#out])
+function Encoder:forward(inputs)
+  local encoder_outputs = self.network:forward(inputs)
+
+  local context = encoder_outputs[#encoder_outputs]
+  table.remove(encoder_outputs)
+
+  return encoder_outputs, context
+end
+
+function Encoder:backward(inputs, grad_output, fix_word)
+  self.network:backward(inputs, grad_output)
+
+  self.word_vecs_enc.gradWeight[1]:zero()
+  if self.fix_word_vecs_enc == 1 then
+    self.word_vecs_enc.gradWeight:zero()
   end
-
-  return rnn_state_enc
 end
 
 return Encoder

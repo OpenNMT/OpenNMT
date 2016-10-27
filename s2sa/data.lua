@@ -66,20 +66,19 @@ function data:get_batch(idx)
   batch.target_length = self.target_length[idx]
   batch.target_non_zeros = self.target_non_zeros[idx]
 
-  batch.source_input = torch.Tensor(batch.source_length, batch.size):fill(1)
-  batch.target_input = torch.Tensor(batch.target_length, batch.size):fill(1)
-  batch.target_output = torch.Tensor(batch.target_length, batch.size):fill(1)
+  batch.source_input = torch.IntTensor(batch.size, batch.source_length):fill(1)
+  batch.target_input = torch.IntTensor(batch.size, batch.target_length):fill(1)
+  batch.target_output = torch.IntTensor(batch.size, batch.target_length):fill(1)
 
   for i = range_start, range_end do
-    local batch_idx = i - range_start + 1
-
     local target_length = self.targ[i]:size(1) - 1 -- targ contains <s> and </s>
     local target_input_view = self.targ[i]:narrow(1, 1, target_length) -- input starts with <s>
     local target_output_view = self.targ[i]:narrow(1, 2, target_length) -- output ends with </s>
 
-    batch.source_input[{{}, batch_idx}]:copy(self.src[i])
-    batch.target_input[{{}, batch_idx}]:narrow(1, 1, target_length):copy(target_input_view)
-    batch.target_output[{{}, batch_idx}]:narrow(1, 1, target_length):copy(target_output_view)
+    local batch_idx = i - range_start + 1
+    batch.source_input[batch_idx]:copy(self.src[i])
+    batch.target_input[batch_idx]:narrow(1, 1, target_length):copy(target_input_view)
+    batch.target_output[batch_idx]:narrow(1, 1, target_length):copy(target_output_view)
   end
 
   if self.cuda then

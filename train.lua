@@ -19,6 +19,7 @@ local word_vecs_enc = {}
 local word_vecs_dec = {}
 local encoder
 local decoder
+local attention
 local generator
 local criterion
 
@@ -96,21 +97,13 @@ local function train(train_data, valid_data)
     network = encoder,
     word_vecs_enc = word_vecs_enc,
     pre_word_vecs_enc = opt.pre_word_vecs_enc,
-    layers_nb = opt.num_layers,
-    rnn_size = opt.rnn_size,
-    max_batch_size = opt.max_batch_size,
-    network_size = opt.max_source_length,
-    cuda = opt.gpuid > 0
+    fix_word_vecs_enc = opt.fix_word_vecs_enc,
   })
   local decoderMngt = Decoder.new({
     network = decoder,
     word_vecs_dec = word_vecs_dec,
     pre_word_vecs_dec = opt.pre_word_vecs_dec,
-    layers_nb = opt.num_layers,
-    rnn_size = opt.rnn_size,
-    max_batch_size = opt.max_batch_size,
-    network_size = opt.max_target_length,
-    cuda = opt.gpuid > 0
+    fix_word_vecs_dec = opt.fix_word_vecs_dec,
   })
 
   for i = 1, #layers do
@@ -125,18 +118,18 @@ local function train(train_data, valid_data)
 
   print("Number of parameters: " .. num_params .. " (active: " .. num_params-num_prunedparams .. ")")
 
-  -- prototypes for gradients so there is no need to clone
-  local encoder_grad_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
-  local context_proto = torch.zeros(opt.max_batch_size, max_length, opt.rnn_size)
-
+  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
   if opt.gpuid > 0 then
-    cutorch.setDevice(opt.gpuid)
-    context_proto = context_proto:cuda()
-    encoder_grad_proto = encoder_grad_proto:cuda()
+    h_init = h_init:cuda()
   end
 
-  local dec_offset = 3 -- offset depends on input feeding
+  local init_states_fwd = {}
+  local init_states_bwd = {}
 
+  for _ = 1, opt.num_layers do
+    table.insert(init_states_fwd, h_init:clone())
+    table.insert(init_states_bwd, h_init:clone())
+  end
 
   function train_batch(data, epoch, learning)
     local bookkeeper = Bookkeeper.new({
@@ -153,79 +146,52 @@ local function train(train_data, valid_data)
 
       local batch = data:get_batch(batch_order[i])
 
-      local encoder_grads = encoder_grad_proto[{{1, batch.size}, {1, batch.source_length}}]
-      local context = context_proto[{{1, batch.size}, {1, batch.source_length}}]
+      local hidden_states = model_utils.reset_state(init_states_fwd, batch.size)
 
-      -- forward prop encoder
-      local rnn_state_enc = encoderMngt:forward(batch, context)
+      -- forward encoder
+      local encoder_inputs = hidden_states
+      table.insert(encoder_inputs, batch.source_input)
+      local encoder_states, context = encoderMngt:forward(encoder_inputs)
 
-      -- forward prop decoder
-      local rnn_state_dec, preds = decoderMngt:forward(batch, context, rnn_state_enc)
+      -- forward decoder
+      local decoder_inputs = encoder_states
+      table.insert(decoder_inputs, batch.target_input)
+      local decoder_out = decoderMngt:forward(decoder_inputs)
 
-      -- backward prop decoder
-      encoder_grads:zero()
+      -- forward and backward attention and generator
+      local grad_context = context:clone():zero()
+      local decoder_grad_output = model_utils.reset_state(init_states_bwd, batch.size)
+      table.insert(decoder_grad_output, decoder_out:clone())
 
-      local drnn_state_dec = model_utils.reset_state(decoderMngt.init_bwd_dec, batch.size)
       local loss = 0
-      for t = batch.target_length, 1, -1 do
-        local pred = generator:forward(preds[t])
 
-        local input = pred
-        local output = batch.target_output[t]
+      for t = 1, batch.target_length do
+        local out = decoder_out:select(2, t)
 
-        loss = loss + criterion:forward(input, output)/batch.size
+        local attention_output = attention:forward({out, context})
+        local generator_output = generator:forward(out)
 
-        local dl_dpred = criterion:backward(input, output)
+        loss = loss + criterion:forward(generator_output, batch.target_output[{{}, t}]) / batch.size
+        local criterion_grad_input = criterion:backward(generator_output, batch.target_output[{{}, t}]) / batch.size
 
-        dl_dpred:div(batch.size)
-        local dl_dtarget = generator:backward(preds[t], dl_dpred)
+        local generator_grad_input = generator:backward(out, criterion_grad_input)
+        local attn_grad_input = attention:backward({out, context}, generator_grad_input)
 
-        local rnn_state_dec_pred_idx = #drnn_state_dec
-        drnn_state_dec[rnn_state_dec_pred_idx]:add(dl_dtarget)
-
-        local decoder_input = {batch.target_input[t], context, table.unpack(rnn_state_dec[t-1])}
-        local dlst = decoderMngt.decoder_clones[t]:backward(decoder_input, drnn_state_dec)
-        -- accumulate encoder/decoder grads
-        encoder_grads:add(dlst[2])
-
-        drnn_state_dec[rnn_state_dec_pred_idx]:zero()
-        for j = dec_offset, #dlst do
-          drnn_state_dec[j-dec_offset+1]:copy(dlst[j])
-        end
+        decoder_grad_output[#decoder_grad_output][{{}, t}]:copy(attn_grad_input[1])
+        grad_context:add(attn_grad_input[2]) -- accumulate gradient of context
       end
 
-      word_vecs_dec.gradWeight[1]:zero()
-      if opt.fix_word_vecs_dec == 1 then
-        word_vecs_dec.gradWeight:zero()
-      end
+      -- backward decoder
+      local decoder_grad_input = decoderMngt:backward(decoder_inputs, decoder_grad_output)
 
       local grad_norm = grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 
-      local drnn_state_enc = model_utils.reset_state(encoderMngt.init_bwd_enc, batch.size)
-      for L = 1, opt.num_layers do
-        drnn_state_enc[L*2-1]:copy(drnn_state_dec[L*2-1])
-        drnn_state_enc[L*2]:copy(drnn_state_dec[L*2])
-      end
-
-      for t = batch.source_length, 1, -1 do
-        local encoder_input = {batch.source_input[t]}
-        table_utils.append(encoder_input, rnn_state_enc[t-1])
-        drnn_state_enc[#drnn_state_enc]:add(encoder_grads[{{},t}])
-        local dlst = encoderMngt.encoder_clones[t]:backward(encoder_input, drnn_state_enc)
-        for j = 1, #drnn_state_enc do
-          drnn_state_enc[j]:copy(dlst[j+1])
-        end
-      end
-
-      word_vecs_enc.gradWeight[1]:zero()
-      if opt.fix_word_vecs_enc == 1 then
-        word_vecs_enc.gradWeight:zero()
-      end
+      -- backward encoder
+      local encoder_grad_output = decoder_grad_input
+      encoder_grad_output[#encoder_grad_output] = grad_context
+      encoderMngt:backward(encoder_inputs, encoder_grad_output)
 
       grad_norm = grad_norm + grad_params[1]:norm()^2
-      if opt.brnn == 1 then
-        grad_norm = grad_norm + grad_params[4]:norm()^2
-      end
       grad_norm = grad_norm^0.5
 
       -- Shrink norm and update params
@@ -264,15 +230,20 @@ local function train(train_data, valid_data)
   local learning = Learning.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
 
   for epoch = opt.start_epoch, opt.epochs do
+    encoder:training()
+    decoder:training()
+    attention:training()
     generator:training()
+
     local train_score = train_batch(train_data, epoch, learning)
 
     print('Train', train_score)
     opt.train_perf[#opt.train_perf + 1] = train_score
 
     local score = evaluator:process({
-      encoder = encoderMngt.encoder_clones[1],
-      decoder = decoderMngt.decoder_clones[1],
+      encoder = encoderMngt,
+      decoder = decoderMngt,
+      attention = attention,
       generator = generator,
       init_fwd_enc = encoderMngt.init_fwd_enc,
       init_fwd_dec = decoderMngt.init_fwd_dec,
@@ -333,6 +304,7 @@ local function main()
   if opt.train_from:len() == 0 then
     encoder = models.make_lstm(#dataset.src_dict, opt, 'enc')
     decoder = models.make_lstm(#dataset.targ_dict, opt, 'dec')
+    attention = models.make_attention(opt)
     criterion, generator = models.make_generator(#dataset.targ_dict, opt)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
@@ -354,6 +326,7 @@ local function main()
       layers[i]:cuda()
     end
     criterion:cuda()
+    attention:cuda()
   end
 
   -- these layers will be manipulated during training
