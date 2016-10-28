@@ -4,28 +4,14 @@ end
 
 local function require_option(opt, name)
   if not is_set(opt, name) then
-    io.stderr:write("Option -" .. name .. " is required.\n")
-    return false
+    error("option -" .. name .. " is required")
   end
-
-  return true
 end
 
-local function require_options(opt, prog_name, names)
-  local all_present = true
-
+local function require_options(opt, names)
   for i = 1, #names do
-    local is_present = require_option(opt, names[i])
-    if not is_present then
-      all_present = false
-    end
+    require_option(opt, names[i])
   end
-
-  if not all_present then
-    io.stderr:write("\nSee 'th " .. prog_name .. " -h' for more information.\n")
-  end
-
-  return all_present
 end
 
 return {

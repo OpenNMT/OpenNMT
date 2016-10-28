@@ -133,9 +133,7 @@ local function main()
     "output_file"
   }
 
-  if not opt_utils.require_options(opt, "preprocess.lua", required_options) then
-    return
-  end
+  opt_utils.require_options(opt, required_options)
 
   print('Building source vocabulary...')
   local src_dict = make_vocabulary(opt.train_src_file, opt.src_vocab_size)
