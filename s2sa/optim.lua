@@ -10,6 +10,24 @@ function Optim:__init(learning_rate, lr_decay, start_decay_at)
   self.start_decay_at = start_decay_at
 end
 
+function Optim:update_params(params, grad_params, max_grad_norm)
+  -- compute gradients norm
+  local grad_norm = 0
+  for j = 1, #grad_params do
+    grad_norm = grad_norm + grad_params[j]:norm()^2
+  end
+  grad_norm = math.sqrt(grad_norm)
+
+  -- normalize gradients and update params
+  local shrinkage = max_grad_norm / grad_norm
+  for j = 1, #grad_params do
+    if shrinkage < 1 then
+      grad_params[j]:mul(shrinkage)
+    end
+    params[j]:add(grad_params[j]:mul(-self:get_rate()))
+  end
+end
+
 -- decay learning rate if val perf does not improve or we hit the start_decay_at limit
 function Optim:update_rate(score, epoch)
   self.val_perf[#self.val_perf + 1] = score

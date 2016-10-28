@@ -85,9 +85,9 @@ end
 
 local function train(train_data, valid_data)
   local num_params = 0
-  local num_prunedparams = 0
-  local params, grad_params = {}, {}
-  local max_length = math.max(opt.max_source_length, opt.max_target_length)
+  local params = {}
+  local grad_params = {}
+
   opt.train_perf = {}
 
   for i = 1, #layers do
@@ -100,7 +100,7 @@ local function train(train_data, valid_data)
     grad_params[i] = gp
   end
 
-  print("Number of parameters: " .. num_params .. " (active: " .. num_params-num_prunedparams .. ")")
+  print("Number of parameters: " .. num_params)
 
   function train_batch(data, epoch, optim)
     local bookkeeper = Bookkeeper.new({
@@ -152,27 +152,13 @@ local function train(train_data, valid_data)
       -- backward decoder
       local decoder_grad_input = decoder:backward(decoder_grad_output)
 
-      local grad_norm = grad_params[2]:norm()^2 + grad_params[3]:norm()^2
-
       -- backward encoder
       local encoder_grad_output = decoder_grad_input
       encoder_grad_output[#encoder_grad_output] = grad_context
       encoder:backward(encoder_grad_output)
 
-      grad_norm = grad_norm + grad_params[1]:norm()^2
-      grad_norm = grad_norm^0.5
-
-      -- Shrink norm and update params
-      local param_norm = 0
-      local shrinkage = opt.max_grad_norm / grad_norm
-      for j = 1, #grad_params do
-        if shrinkage < 1 then
-          grad_params[j]:mul(shrinkage)
-        end
-        params[j]:add(grad_params[j]:mul(-optim:get_rate()))
-        param_norm = param_norm + params[j]:norm()^2
-      end
-      param_norm = param_norm^0.5
+      -- compute gradients norm
+      optim:update_params(params, grad_params, opt.max_grad_norm)
 
       -- Bookkeeping
       bookkeeper:update({
@@ -212,6 +198,7 @@ local function train(train_data, valid_data)
       context_proto = context_proto,
       criterion = criterion
     }, valid_data)
+
     optim:update_rate(score, epoch)
 
     -- clean and save models
