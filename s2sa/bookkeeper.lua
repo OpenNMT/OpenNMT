@@ -3,38 +3,38 @@ require 'torch'
 local Bookkeeper = torch.class("Bookkeeper")
 
 function Bookkeeper:__init(args)
-  self.print_frequency = args.print_frequency or 0
   self.learning_rate = args.learning_rate or 0
   self.data_size = args.data_size or 0
   self.epoch = args.epoch or 0
 
   self.timer = torch.Timer()
-  self.start_time = self.timer:time().real
+
   self.train_nonzeros = 0
   self.train_loss = 0
   self.num_words_source = 0
   self.num_words_target = 0
 end
 
-function Bookkeeper:update(info)
-  self.num_words_source = self.num_words_source + info.batch_size * info.source_size
-  self.num_words_target = self.num_words_target + info.batch_size *info.target_size
-  self.train_nonzeros = self.train_nonzeros + info.nonzeros
-  self.train_loss = self.train_loss + info.loss * info.batch_size
+function Bookkeeper:update(batch, loss)
+  self.num_words_source = self.num_words_source + batch.size * batch.source_length
+  self.num_words_target = self.num_words_target + batch.size * batch.target_length
+  self.train_nonzeros = self.train_nonzeros + batch.target_non_zeros
+  self.train_loss = self.train_loss + loss * batch.size
+end
 
-  if info.batch_index % self.print_frequency == 0 then
-    local time_taken = self.timer:time().real - self.start_time
+function Bookkeeper:log(batch_index)
+  local time_taken = self.timer:time().real
 
-    local stats = string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
-      self.epoch, info.batch_index, self.data_size, self.learning_rate)
-    stats = stats .. string.format('Throughput %d/%d/%d total/source/target tokens/sec ; ',
-      (self.num_words_target+self.num_words_source) / time_taken,
-      self.num_words_source / time_taken,
-      self.num_words_target / time_taken)
-    stats = stats .. string.format('PPL %.2f',
-      math.exp(self.train_loss/self.train_nonzeros))
-    print(stats)
-  end
+  local stats = string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
+                              self.epoch, batch_index, self.data_size, self.learning_rate)
+  stats = stats .. string.format('Throughput %d/%d/%d total/src/targ tokens/sec ; ',
+                                 (self.num_words_target + self.num_words_source) / time_taken,
+                                 self.num_words_source / time_taken,
+                                 self.num_words_target / time_taken)
+  stats = stats .. string.format('PPL %.2f',
+                                 math.exp(self.train_loss/self.train_nonzeros))
+
+  print(stats)
 end
 
 function Bookkeeper:get_train_score()

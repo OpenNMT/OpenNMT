@@ -101,7 +101,6 @@ local function train(train_data, valid_data, encoder, decoder, generator)
 
   local function train_batch(data, epoch, optim)
     local bookkeeper = Bookkeeper.new({
-      print_frequency = opt.print_every,
       learning_rate = optim:get_rate(),
       data_size = #data,
       epoch = epoch
@@ -136,14 +135,11 @@ local function train(train_data, valid_data, encoder, decoder, generator)
       optim:update_params(params, grad_params, opt.max_grad_norm)
 
       -- Bookkeeping
-      bookkeeper:update({
-        source_size = batch.source_length,
-        target_size = batch.target_length,
-        batch_size = batch.size,
-        batch_index = i,
-        nonzeros = batch.target_non_zeros,
-        loss = loss
-      })
+      bookkeeper:update(batch, loss)
+
+      if i % opt.print_every == 0 then
+        bookkeeper:log(i)
+      end
 
       if i % 200 == 0 then
         collectgarbage()
