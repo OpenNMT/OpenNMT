@@ -32,44 +32,6 @@ local function make_attention(opt)
   return nn.gModule(inputs, {context_output})
 end
 
-local function make_lstm(vocab_size, opt)
-  local inputs = {}
-  for l = 1, opt.num_layers do
-    table.insert(inputs, nn.Identity()()) -- h0: batch_size x rnn_size
-  end
-  table.insert(inputs, nn.Identity()()) -- x: batch_size x timesteps
-
-  local hidden_states
-  local outputs = {}
-
-  for L = 1, opt.num_layers do
-    local h0 = inputs[L]
-    local x
-    local input_size
-
-    if L == 1 then
-      input_size = opt.word_vec_size
-      local word_vecs = nn.LookupTable(vocab_size, input_size)
-      word_vecs.name = 'word_vecs'
-      x = word_vecs(inputs[opt.num_layers + 1]) -- batch_size x timesteps x word_vec_size
-    else
-      input_size = opt.rnn_size
-      x = nn.Dropout(opt.dropout, nil, false)(hidden_states) -- batch_size x timesteps x rnn_size
-    end
-
-    local lstm = nn.LSTM(input_size, opt.rnn_size)
-    lstm.name = 'lstm'
-    hidden_states = lstm({h0, x}) -- batch_size x timesteps x rnn_size
-
-    local out = nn.Select(2, -1)(hidden_states) -- last hidden state: batch_size x rnn_size
-    table.insert(outputs, out)
-  end
-
-  table.insert(outputs, hidden_states) -- a.k.a context for the encoder
-
-  return nn.gModule(inputs, outputs)
-end
-
 local function make_generator(vocab_size, opt)
   local model = nn.Sequential()
   model:add(nn.Linear(opt.rnn_size, vocab_size))
@@ -83,6 +45,5 @@ end
 
 return {
   make_attention = make_attention,
-  make_lstm = make_lstm,
   make_generator = make_generator
 }

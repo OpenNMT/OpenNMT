@@ -91,26 +91,6 @@ local function train(train_data, valid_data)
   local max_length = math.max(opt.max_source_length, opt.max_target_length)
   opt.train_perf = {}
 
-  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
-  if opt.gpuid > 0 then
-    h_init = h_init:cuda()
-  end
-
-  local encoderMngt = Encoder.new({
-    network = encoder,
-    pre_word_vecs = opt.pre_word_vecs_enc,
-    fix_word_vecs = opt.fix_word_vecs_enc,
-    h_init = h_init,
-    num_layers = opt.num_layers
-  })
-  local decoderMngt = Decoder.new({
-    network = decoder,
-    pre_word_vecs = opt.pre_word_vecs_dec,
-    fix_word_vecs = opt.fix_word_vecs_dec,
-    h_init = h_init,
-    num_layers = opt.num_layers
-  })
-
   for i = 1, #layers do
     local p, gp = layers[i]:getParameters()
     if opt.train_from:len() == 0 then
@@ -139,10 +119,10 @@ local function train(train_data, valid_data)
       local batch = data:get_batch(batch_order[i])
 
       -- forward encoder
-      local encoder_states, context = encoderMngt:forward(batch)
+      local encoder_states, context = encoder:forward(batch)
 
       -- forward decoder
-      local decoder_states, decoder_out = decoderMngt:forward(batch, encoder_states)
+      local decoder_states, decoder_out = decoder:forward(batch, encoder_states)
 
       -- forward and backward attention and generator
       local grad_context = context:clone():zero()
@@ -171,14 +151,14 @@ local function train(train_data, valid_data)
       end
 
       -- backward decoder
-      local decoder_grad_input = decoderMngt:backward(decoder_grad_output)
+      local decoder_grad_input = decoder:backward(decoder_grad_output)
 
       local grad_norm = grad_params[2]:norm()^2 + grad_params[3]:norm()^2
 
       -- backward encoder
       local encoder_grad_output = decoder_grad_input
       encoder_grad_output[#encoder_grad_output] = grad_context
-      encoderMngt:backward(encoder_grad_output)
+      encoder:backward(encoder_grad_output)
 
       grad_norm = grad_norm + grad_params[1]:norm()^2
       grad_norm = grad_norm^0.5
@@ -228,12 +208,10 @@ local function train(train_data, valid_data)
     opt.train_perf[#opt.train_perf + 1] = train_score
 
     local score = evaluator:process({
-      encoder = encoderMngt,
-      decoder = decoderMngt,
+      encoder = encoder,
+      decoder = decoder,
       attention = attention,
       generator = generator,
-      init_fwd_enc = encoderMngt.init_fwd_enc,
-      init_fwd_dec = decoderMngt.init_fwd_dec,
       context_proto = context_proto,
       criterion = criterion
     }, valid_data)
@@ -277,10 +255,35 @@ local function main()
   print(string.format('Source max sent len: %d, Target max sent len: %d',
                       opt.max_source_length, opt.max_target_length))
 
+  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
+  if opt.gpuid > 0 then
+    h_init = h_init:cuda()
+  end
+
   -- Build model
   if opt.train_from:len() == 0 then
-    encoder = models.make_lstm(#dataset.src_dict, opt)
-    decoder = models.make_lstm(#dataset.targ_dict, opt)
+    encoder = Encoder.new({
+      word_vec_size = opt.word_vec_size,
+      pre_word_vecs = opt.pre_word_vecs_enc,
+      fix_word_vecs = opt.fix_word_vecs_enc,
+      h_init = h_init,
+      num_layers = opt.num_layers,
+      vocab_size = #dataset.src_dict,
+      rnn_size = opt.rnn_size,
+      dropout = opt.dropout
+    })
+
+    decoder = Decoder.new({
+      word_vec_size = opt.word_vec_size,
+      pre_word_vecs = opt.pre_word_vecs_dec,
+      fix_word_vecs = opt.fix_word_vecs_dec,
+      h_init = h_init,
+      num_layers = opt.num_layers,
+      vocab_size = #dataset.targ_dict,
+      rnn_size = opt.rnn_size,
+      dropout = opt.dropout
+    })
+
     attention = models.make_attention(opt)
     criterion, generator = models.make_generator(#dataset.targ_dict, opt)
   else
@@ -296,7 +299,7 @@ local function main()
     criterion = models.make_generator(valid_data, opt)
   end
 
-  layers = {encoder, decoder, generator}
+  layers = {encoder.network, decoder.network, generator}
 
   if cuda then
     for i = 1, #layers do
