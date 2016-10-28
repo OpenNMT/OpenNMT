@@ -1,6 +1,7 @@
 require 'torch'
 
 local hdf5 = require 'hdf5'
+local LSTM = require 's2sa.LSTM'
 
 local Sequencer = torch.class('Sequencer')
 
