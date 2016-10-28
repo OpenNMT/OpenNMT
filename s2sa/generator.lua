@@ -1,4 +1,5 @@
 require 'torch'
+local cuda = require 's2sa.cuda'
 
 local function build_attention(opt)
   local inputs = {}
@@ -11,7 +12,7 @@ local function build_attention(opt)
   -- get attention
   local attn = nn.MM()({context, nn.Replicate(1,3)(target_t)}) -- batch_l x source_l x 1
   attn = nn.Sum(3)(attn)
-  local softmax_attn = nn.SoftMax()
+  local softmax_attn = cuda.nn.SoftMax()
   softmax_attn.name = 'softmax_attn'
   attn = softmax_attn(attn)
   attn = nn.Replicate(1,2)(attn) -- batch_l x 1 x source_l
@@ -33,7 +34,7 @@ local function build_network(vocab_size, opt)
 
   local out = build_attention(opt)({inputs[1], inputs[2]})
   local map = nn.Linear(opt.rnn_size, vocab_size)(out)
-  local loglk = nn.LogSoftMax()(map)
+  local loglk = cuda.nn.LogSoftMax()(map)
 
   return nn.gModule(inputs, {loglk})
 end

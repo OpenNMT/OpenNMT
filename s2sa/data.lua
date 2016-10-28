@@ -1,9 +1,9 @@
 local data = torch.class("data")
+local cuda = require 's2sa.cuda'
 
-function data:__init(d, max_batch_size, cuda)
+function data:__init(d, max_batch_size)
   self.src = d.src
   self.targ = d.targ
-  self.cuda = cuda
 
   self:build_batches(max_batch_size)
 end
@@ -81,11 +81,7 @@ function data:get_batch(idx)
     batch.target_output[batch_idx]:narrow(1, 1, target_length):copy(target_output_view)
   end
 
-  if self.cuda then
-    batch.source_input = batch.source_input:cuda()
-    batch.target_input = batch.target_input:cuda()
-    batch.target_output = batch.target_output:cuda()
-  end
+  cuda.convert({batch.source_input, batch.target_input, batch.target_output})
 
   return batch
 end

@@ -1,9 +1,7 @@
-require 'nn'
-require 'nngraph'
 require 's2sa.dict'
 
 local path = require 'pl.path'
-
+local cuda = require 's2sa.cuda'
 local Bookkeeper = require 's2sa.bookkeeper'
 local Data = require 's2sa.data'
 local Decoder = require 's2sa.decoder'
@@ -62,6 +60,7 @@ cmd:text("")
 
 -- GPU
 cmd:option('-gpuid', -1, [[Which gpu to use. < 1 = use CPU]])
+cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping
 cmd:option('-save_every', 1, [[Save every this many epochs]])
@@ -178,21 +177,14 @@ end
 local function main()
   torch.manualSeed(opt.seed)
 
-  local cuda = opt.gpuid > 0
-  if cuda then
-    print('Using GPU ' .. opt.gpuid .. '.')
-    require 'cutorch'
-    require 'cunn'
-    cutorch.setDevice(opt.gpuid)
-    cutorch.manualSeed(opt.seed)
-  end
+  cuda.init(opt)
 
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')
   local dataset = torch.load(opt.data)
 
-  local train_data = Data.new(dataset.train, opt.max_batch_size, cuda)
-  local valid_data = Data.new(dataset.valid, opt.max_batch_size, cuda)
+  local train_data = Data.new(dataset.train, opt.max_batch_size)
+  local valid_data = Data.new(dataset.valid, opt.max_batch_size)
 
   print(string.format('Source vocab size: %d, Target vocab size: %d',
                       #dataset.src_dict, #dataset.targ_dict))
@@ -234,12 +226,7 @@ local function main()
 
   generator:build_criterion(#dataset.targ_dict)
 
-  if cuda then
-    encoder.network:cuda()
-    decoder.network:cuda()
-    generator.network:cuda()
-    generator.criterion:cuda()
-  end
+  cuda.convert({encoder.network, decoder.network, generator.network, generator.criterion})
 
   train(train_data, valid_data, encoder, decoder, generator)
 end

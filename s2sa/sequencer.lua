@@ -1,5 +1,5 @@
 require 'torch'
-
+local cuda = require 's2sa.cuda'
 local hdf5 = require 'hdf5'
 require 's2sa.LSTM'
 
@@ -20,9 +20,7 @@ function Sequencer:__init(args, opt)
   self.word_vecs.weight[1]:zero()
 
   local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
-  if opt.gpuid > 0 then
-    h_init = h_init:cuda()
-  end
+  cuda.convert({h_init})
 
   self.init_states = {}
   for _ = 1, opt.num_layers do
