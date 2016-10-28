@@ -39,7 +39,7 @@ local function make_vocabulary(filename, size)
   local original_size = #vocab
 
   reader:close()
-  vocab:prune(size)
+  vocab = vocab:prune(size)
 
   print('Created dictionary of size ' .. #vocab .. ' (pruned from ' .. original_size .. ')')
 
