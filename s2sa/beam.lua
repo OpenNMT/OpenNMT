@@ -2,6 +2,7 @@ require 'nn'
 require 'string'
 require 'nngraph'
 
+local table_utils = require 's2sa.table_utils'
 require 's2sa.data'
 
 local path = require 'pl.path'
@@ -71,6 +72,7 @@ cmd:option('-score_gold', 0, [[If = 1, score the log likelihood of the gold as w
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU)]])
 cmd:option('-gpuid2', -1, [[Second GPU ID]])
+cmd:option('-fallback_to_cpu', false, [[If = 1, fallback to CPU if no GPU available]])
 cmd:option('-cudnn', 0, [[If using character model, this should be = 1 if the character model was trained using cudnn]])
 
 
@@ -86,12 +88,6 @@ local function copy(orig)
     t = orig
   end
   return t
-end
-
-local function append_table(dst, src)
-  for i = 1, #src do
-    table.insert(dst, src[i])
-  end
 end
 
 local StateAll = torch.class("StateAll")
@@ -184,9 +180,9 @@ local function generate_beam(initial, K, max_sent_l, source, source_features, go
   for t = 1, source_l do
     local encoder_input = {source_input[t]}
     if model_opt.num_source_features > 0 then
-      append_table(encoder_input, source_features[t])
+      table_utils.append(encoder_input, source_features[t])
     end
-    append_table(encoder_input, rnn_state_enc)
+    table_utils.append(encoder_input, rnn_state_enc)
     local out = model[1]:forward(encoder_input)
     rnn_state_enc = out
     context[{{},t}]:copy(out[#out])
@@ -212,9 +208,9 @@ local function generate_beam(initial, K, max_sent_l, source, source_features, go
     for t = source_l, 1, -1 do
       local encoder_input = {source_input[t]}
       if model_opt.num_source_features > 0 then
-        append_table(encoder_input, source_features[t])
+        table_utils.append(encoder_input, source_features[t])
       end
-      append_table(encoder_input, rnn_state_enc)
+      table_utils.append(encoder_input, rnn_state_enc)
       local out = model[4]:forward(encoder_input)
       rnn_state_enc = out
       context[{{},t}]:add(out[#out])
