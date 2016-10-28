@@ -17,7 +17,6 @@ local opt = {}
 local layers = {}
 local encoder
 local decoder
-local attention
 local generator
 local criterion
 
@@ -134,20 +133,18 @@ local function train(train_data, valid_data)
 
       local loss = 0
 
-      for t = 1, batch.target_length do
+      for t = batch.target_length, 1, -1 do
         local out = decoder_out:select(2, t)
 
-        local attention_output = attention:forward({out, context})
-        local generator_output = generator:forward(out)
+        local generator_output = generator:forward({out, context})
 
         loss = loss + criterion:forward(generator_output, batch.target_output[{{}, t}]) / batch.size
         local criterion_grad_input = criterion:backward(generator_output, batch.target_output[{{}, t}]) / batch.size
 
-        local generator_grad_input = generator:backward(out, criterion_grad_input)
-        local attn_grad_input = attention:backward({out, context}, generator_grad_input)
+        local generator_grad_input = generator:backward({out, context}, criterion_grad_input)
 
-        decoder_grad_output[#decoder_grad_output][{{}, t}]:copy(attn_grad_input[1])
-        grad_context:add(attn_grad_input[2]) -- accumulate gradient of context
+        decoder_grad_output[#decoder_grad_output][{{}, t}]:copy(generator_grad_input[1])
+        grad_context:add(generator_grad_input[2]) -- accumulate gradient of context
       end
 
       -- backward decoder
@@ -199,7 +196,6 @@ local function train(train_data, valid_data)
   for epoch = opt.start_epoch, opt.epochs do
     encoder:training()
     decoder:training()
-    attention:training()
     generator:training()
 
     local train_score = train_batch(train_data, epoch, learning)
@@ -210,7 +206,6 @@ local function train(train_data, valid_data)
     local score = evaluator:process({
       encoder = encoder,
       decoder = decoder,
-      attention = attention,
       generator = generator,
       context_proto = context_proto,
       criterion = criterion
@@ -284,8 +279,8 @@ local function main()
       dropout = opt.dropout
     })
 
-    attention = models.make_attention(opt)
-    criterion, generator = models.make_generator(#dataset.targ_dict, opt)
+    generator = models.make_generator(#dataset.targ_dict, opt)
+    criterion = models.make_criterion(#dataset.targ_dict)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('loading ' .. opt.train_from .. '...')
@@ -306,7 +301,6 @@ local function main()
       layers[i]:cuda()
     end
     criterion:cuda()
-    attention:cuda()
   end
 
   -- these layers will be manipulated during training

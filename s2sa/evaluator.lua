@@ -11,7 +11,6 @@ end
 function Evaluator:process(states, data)
   states.encoder:evaluate()
   states.decoder:evaluate()
-  states.attention:evaluate()
   states.generator:evaluate()
 
   local nll = 0
@@ -26,8 +25,7 @@ function Evaluator:process(states, data)
     for t = 1, batch.target_length do
       local out = decoder_out:select(2, t)
 
-      local attention_output = states.attention:forward({out, context})
-      local generator_output = states.generator:forward(out)
+      local generator_output = states.generator:forward({out, context})
 
       loss = loss + states.criterion:forward(generator_output, batch.target_output[{{}, t}])
     end
