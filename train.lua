@@ -133,7 +133,6 @@ local function train(train_data, valid_data, encoder, decoder, generator)
       encoder_grad_output[#encoder_grad_output] = grad_context
       encoder:backward(encoder_grad_output)
 
-      -- compute gradients norm
       optim:update_params(params, grad_params, opt.max_grad_norm)
 
       -- Bookkeeping
