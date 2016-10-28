@@ -140,10 +140,6 @@ local function train(train_data, valid_data, encoder, decoder, generator)
       if i % opt.print_every == 0 then
         bookkeeper:log(i)
       end
-
-      if i % 200 == 0 then
-        collectgarbage()
-      end
     end
 
     return bookkeeper:get_train_score()
