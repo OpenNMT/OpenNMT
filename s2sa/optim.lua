@@ -1,8 +1,8 @@
 require 'torch'
 
-local Learning = torch.class("Learning")
+local Optim = torch.class("Optim")
 
-function Learning:__init(learning_rate, lr_decay, start_decay_at)
+function Optim:__init(learning_rate, lr_decay, start_decay_at)
   self.val_perf = {}
   self.start_decay = 0
   self.learning_rate = learning_rate
@@ -11,7 +11,7 @@ function Learning:__init(learning_rate, lr_decay, start_decay_at)
 end
 
 -- decay learning rate if val perf does not improve or we hit the start_decay_at limit
-function Learning:update_rate(score, epoch)
+function Optim:update_rate(score, epoch)
   self.val_perf[#self.val_perf + 1] = score
 
   if epoch >= self.start_decay_at then
@@ -30,8 +30,8 @@ function Learning:update_rate(score, epoch)
   end
 end
 
-function Learning:get_rate()
+function Optim:get_rate()
   return self.learning_rate
 end
 
-return Learning
+return Optim

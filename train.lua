@@ -10,7 +10,7 @@ local Data = require 's2sa.data'
 local Decoder = require 's2sa.decoder'
 local Encoder = require 's2sa.encoder'
 local Evaluator = require 's2sa.evaluator'
-local Learning = require 's2sa.learning'
+local Optim = require 's2sa.optim'
 
 local cmd = torch.CmdLine()
 local opt = {}
@@ -102,10 +102,10 @@ local function train(train_data, valid_data)
 
   print("Number of parameters: " .. num_params .. " (active: " .. num_params-num_prunedparams .. ")")
 
-  function train_batch(data, epoch, learning)
+  function train_batch(data, epoch, optim)
     local bookkeeper = Bookkeeper.new({
       print_frequency = opt.print_every,
-      learning_rate = learning:get_rate(),
+      learning_rate = optim:get_rate(),
       data_size = #data,
       epoch = epoch
     })
@@ -169,7 +169,7 @@ local function train(train_data, valid_data)
         if shrinkage < 1 then
           grad_params[j]:mul(shrinkage)
         end
-        params[j]:add(grad_params[j]:mul(-learning:get_rate()))
+        params[j]:add(grad_params[j]:mul(-optim:get_rate()))
         param_norm = param_norm + params[j]:norm()^2
       end
       param_norm = param_norm^0.5
@@ -193,14 +193,14 @@ local function train(train_data, valid_data)
   end
 
   local evaluator = Evaluator.new(opt.num_layers)
-  local learning = Learning.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
+  local optim = Optim.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
 
   for epoch = opt.start_epoch, opt.epochs do
     encoder:training()
     decoder:training()
     generator:training()
 
-    local train_score = train_batch(train_data, epoch, learning)
+    local train_score = train_batch(train_data, epoch, optim)
 
     print('Train', train_score)
     opt.train_perf[#opt.train_perf + 1] = train_score
@@ -212,7 +212,7 @@ local function train(train_data, valid_data)
       context_proto = context_proto,
       criterion = criterion
     }, valid_data)
-    learning:update_rate(score, epoch)
+    optim:update_rate(score, epoch)
 
     -- clean and save models
     if epoch % opt.save_every == 0 then
