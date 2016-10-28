@@ -81,7 +81,9 @@ function data:get_batch(idx)
     batch.target_output[batch_idx]:narrow(1, 1, target_length):copy(target_output_view)
   end
 
-  cuda.convert({batch.source_input, batch.target_input, batch.target_output})
+  batch.source_input = cuda.convert(batch.source_input)
+  batch.target_input = cuda.convert(batch.target_input)
+  batch.target_output = cuda.convert(batch.target_output)
 
   return batch
 end

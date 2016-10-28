@@ -19,8 +19,7 @@ function Sequencer:__init(args, opt)
 
   self.word_vecs.weight[1]:zero()
 
-  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
-  cuda.convert({h_init})
+  local h_init = cuda.convert(torch.zeros(opt.max_batch_size, opt.rnn_size))
 
   self.init_states = {}
   for _ = 1, opt.num_layers do

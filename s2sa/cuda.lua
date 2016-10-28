@@ -23,12 +23,18 @@ function Cuda.init(opt)
   end
 end
 
-function Cuda.convert(networks)
+function Cuda.convert(obj)
   if Cuda.activated then
-    for _, net in networks do
-      net:cuda()
+    if type(obj) == 'table' then
+      for i = 1, #obj do
+        obj[i]:cuda()
+      end
+    else
+      return obj:cuda()
     end
   end
+
+  return obj
 end
 
 return Cuda
