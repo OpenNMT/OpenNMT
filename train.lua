@@ -109,7 +109,7 @@ local function train(train_data, valid_data, encoder, decoder, generator)
     local batch_order = torch.randperm(#data) -- shuffle mini batch order
 
     for i = 1, #data do
-      table_utils.zero(grad_params, 'zero')
+      table_utils.zero(grad_params)
       encoder:forget()
       decoder:forget()
 
