@@ -13,12 +13,6 @@ local Evaluator = require 's2sa.evaluator'
 local Optim = require 's2sa.optim'
 
 local cmd = torch.CmdLine()
-local opt = {}
-local layers = {}
-local encoder
-local decoder
-local generator
-local criterion
 
 cmd:text("")
 cmd:text("**Data options**")
@@ -74,6 +68,7 @@ cmd:option('-save_every', 1, [[Save every this many epochs]])
 cmd:option('-print_every', 50, [[Print stats after this many batches]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
+local opt = cmd:parse(arg)
 
 local function save_model(model_path, data, options, double)
   print('saving model to ' .. model_path)
@@ -83,13 +78,14 @@ local function save_model(model_path, data, options, double)
   torch.save(model_path, {data, options})
 end
 
-local function train(train_data, valid_data)
+local function train(train_data, valid_data, encoder, decoder, generator, criterion)
   local num_params = 0
   local params = {}
   local grad_params = {}
 
-  opt.train_perf = {}
+  local layers = {encoder.network, decoder.network, generator}
 
+  print('Initializing parameters...')
   for i = 1, #layers do
     local p, gp = layers[i]:getParameters()
     if opt.train_from:len() == 0 then
@@ -181,6 +177,8 @@ local function train(train_data, valid_data)
   local evaluator = Evaluator.new(opt.num_layers)
   local optim = Optim.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
 
+  opt.train_perf = {}
+
   for epoch = opt.start_epoch, opt.epochs do
     encoder:training()
     decoder:training()
@@ -195,7 +193,6 @@ local function train(train_data, valid_data)
       encoder = encoder,
       decoder = decoder,
       generator = generator,
-      context_proto = context_proto,
       criterion = criterion
     }, valid_data)
 
@@ -211,14 +208,11 @@ local function train(train_data, valid_data)
 end
 
 local function main()
-  -- parse input params
-  opt = cmd:parse(arg)
-
   torch.manualSeed(opt.seed)
 
   local cuda = opt.gpuid > 0
   if cuda then
-    print('using CUDA on GPU ' .. opt.gpuid .. '...')
+    print('Using GPU ' .. opt.gpuid .. '.')
     require 'cutorch'
     require 'cunn'
     cutorch.setDevice(opt.gpuid)
@@ -228,18 +222,20 @@ local function main()
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')
   local dataset = torch.load(opt.data)
+
   local train_data = Data.new(dataset.train, opt.max_batch_size, cuda)
   local valid_data = Data.new(dataset.valid, opt.max_batch_size, cuda)
-  print('... done')
 
-  opt.max_source_length = math.max(train_data.max_source_length, valid_data.max_source_length)
-  opt.max_target_length = math.max(train_data.max_target_length, valid_data.max_target_length)
-
-  print(string.format('Source vocab size: %d, Target vocab size: %d', #dataset.src_dict, #dataset.targ_dict))
+  print(string.format('Source vocab size: %d, Target vocab size: %d',
+                      #dataset.src_dict, #dataset.targ_dict))
   print(string.format('Source max sent len: %d, Target max sent len: %d',
-                      opt.max_source_length, opt.max_target_length))
+                      train_data.max_source_length, train_data.max_target_length))
 
   -- Build model
+  local encoder
+  local decoder
+  local generator
+
   if opt.train_from:len() == 0 then
     encoder = Encoder.new({
       pre_word_vecs = opt.pre_word_vecs_enc,
@@ -254,7 +250,6 @@ local function main()
     }, opt)
 
     generator = models.make_generator(#dataset.targ_dict, opt)
-    criterion = models.make_criterion(#dataset.targ_dict)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('loading ' .. opt.train_from .. '...')
@@ -265,20 +260,18 @@ local function main()
     encoder = model[1]
     decoder = model[2]
     generator = model[3]
-    criterion = models.make_generator(valid_data, opt)
   end
 
-  layers = {encoder.network, decoder.network, generator}
+  local criterion = models.make_criterion(#dataset.targ_dict)
 
   if cuda then
-    for i = 1, #layers do
-      layers[i]:cuda()
-    end
+    encoder.network:cuda()
+    decoder.network:cuda()
+    generator:cuda()
     criterion:cuda()
   end
 
-  -- these layers will be manipulated during training
-  train(train_data, valid_data)
+  train(train_data, valid_data, encoder, decoder, generator, criterion)
 end
 
 main()
