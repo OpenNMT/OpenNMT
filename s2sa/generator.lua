@@ -27,7 +27,6 @@ local function build_attention(opt)
 end
 
 local function build_network(vocab_size, opt)
-  print('build_network '..vocab_size)
   local inputs = {}
   table.insert(inputs, nn.Identity()()) -- decoder output
   table.insert(inputs, nn.Identity()()) -- context
