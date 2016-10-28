@@ -1,6 +1,5 @@
 local dict = require 's2sa.dict'
 local file_reader = require 's2sa.file_reader'
-local parallel_file_reader = require 's2sa.parallel_file_reader'
 local table_utils = require 's2sa.table_utils'
 local opt_utils = require 's2sa.opt_utils'
 
@@ -77,13 +76,17 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
   local count = 0
   local ignored = 0
 
-  local parallel_reader = parallel_file_reader.new(src_file, targ_file)
+  local src_reader = file_reader.new(src_file)
+  local targ_reader = file_reader.new(targ_file)
 
   while true do
-    local src_tokens, targ_tokens = parallel_reader:next()
+    local src_tokens = src_reader:next()
+    local targ_tokens = targ_reader:next()
+
     if src_tokens == nil or targ_tokens == nil then
       break
     end
+
     if #src_tokens > 0 and #src_tokens <= opt.seq_length
     and #targ_tokens > 0 and #targ_tokens <= opt.seq_length then
       table.insert(src, make_sentence(src_tokens, src_dict, false))
@@ -92,11 +95,16 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
     else
       ignored = ignored + 1
     end
+
     count = count + 1
+
     if count % opt.report_every == 0 then
       print('... ' .. count .. ' sentences prepared')
     end
   end
+
+  src_reader:close()
+  targ_reader:close()
 
   if opt.shuffle == 1 then
     print('... shuffling sentences')
