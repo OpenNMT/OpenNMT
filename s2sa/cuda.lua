@@ -15,11 +15,8 @@ function Cuda.init(opt)
     require 'cutorch'
     require 'cunn'
     if opt.cudnn then
-      print('cudnn activated')
       require 'cudnn'
       Cuda.nn = cudnn
-    else
-      print('no cuddn')
     end
     cutorch.setDevice(opt.gpuid)
     cutorch.manualSeed(opt.seed)
