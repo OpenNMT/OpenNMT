@@ -3,7 +3,6 @@ require 'nngraph'
 require 's2sa.dict'
 
 local path = require 'pl.path'
-local table_utils = require 's2sa.table_utils'
 
 local Bookkeeper = require 's2sa.bookkeeper'
 local Data = require 's2sa.data'
@@ -109,7 +108,6 @@ local function train(train_data, valid_data, encoder, decoder, generator)
     local batch_order = torch.randperm(#data) -- shuffle mini batch order
 
     for i = 1, #data do
-      table_utils.zero(grad_params)
       encoder:forget()
       decoder:forget()
 
