@@ -2,6 +2,7 @@ local dict = require 's2sa.dict'
 local file_reader = require 's2sa.file_reader'
 local parallel_file_reader = require 's2sa.parallel_file_reader'
 local table_utils = require 's2sa.table_utils'
+local opt_utils = require 's2sa.opt_utils'
 
 local cmd = torch.CmdLine()
 
@@ -116,6 +117,18 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
 end
 
 local function main()
+  local required_options = {
+    "train_src_file",
+    "train_targ_file",
+    "valid_src_file",
+    "valid_targ_file",
+    "output_file"
+  }
+
+  if not opt_utils.require_options(opt, "preprocess.lua", required_options) then
+    return
+  end
+
   print('Building source vocabulary...')
   local src_dict = make_vocabulary(opt.train_src_file, opt.src_vocab_size)
   print('')
