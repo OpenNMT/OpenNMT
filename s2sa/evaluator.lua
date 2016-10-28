@@ -25,8 +25,8 @@ function Evaluator:process(states, data)
     local loss = 0
     for t = 1, batch.target_length do
       local out = decoder_out:select(2, t)
-      local generator_output = states.generator:forward({out, context})
-      loss = loss + states.criterion:forward(generator_output, batch.target_output[{{}, t}])
+      local generator_output = states.generator.network:forward({out, context})
+      loss = loss + states.generator.criterion:forward(generator_output, batch.target_output[{{}, t}])
     end
     nll = nll + loss
     total = total + batch.target_non_zeros

@@ -2,7 +2,6 @@ require 'nn'
 require 'string'
 require 'nngraph'
 
-require 's2sa.models'
 require 's2sa.data'
 
 local path = require 'pl.path'

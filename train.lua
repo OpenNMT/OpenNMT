@@ -1,8 +1,8 @@
+require 'nn'
+require 'nngraph'
 require 's2sa.dict'
-local path = require 'pl.path'
 
-local models = require 's2sa.models'
-local model_utils = require 's2sa.model_utils'
+local path = require 'pl.path'
 local table_utils = require 's2sa.table_utils'
 
 local Bookkeeper = require 's2sa.bookkeeper'
@@ -10,6 +10,7 @@ local Data = require 's2sa.data'
 local Decoder = require 's2sa.decoder'
 local Encoder = require 's2sa.encoder'
 local Evaluator = require 's2sa.evaluator'
+local Generator = require 's2sa.generator'
 local Optim = require 's2sa.optim'
 
 local cmd = torch.CmdLine()
@@ -78,12 +79,12 @@ local function save_model(model_path, data, options, double)
   torch.save(model_path, {data, options})
 end
 
-local function train(train_data, valid_data, encoder, decoder, generator, criterion)
+local function train(train_data, valid_data, encoder, decoder, generator)
   local num_params = 0
   local params = {}
   local grad_params = {}
 
-  local layers = {encoder.network, decoder.network, generator}
+  local layers = {encoder.network, decoder.network, generator.network}
 
   print('Initializing parameters...')
   for i = 1, #layers do
@@ -122,28 +123,7 @@ local function train(train_data, valid_data, encoder, decoder, generator, criter
       local decoder_states, decoder_out = decoder:forward(batch, encoder_states)
 
       -- forward and backward attention and generator
-      local grad_context = context:clone():zero()
-      local decoder_grad_output = decoder_states
-      for l = 1, opt.num_layers do
-        decoder_grad_output[l]:zero()
-      end
-      table.insert(decoder_grad_output, decoder_out:clone())
-
-      local loss = 0
-
-      for t = batch.target_length, 1, -1 do
-        local out = decoder_out:select(2, t)
-
-        local generator_output = generator:forward({out, context})
-
-        loss = loss + criterion:forward(generator_output, batch.target_output[{{}, t}]) / batch.size
-        local criterion_grad_input = criterion:backward(generator_output, batch.target_output[{{}, t}]) / batch.size
-
-        local generator_grad_input = generator:backward({out, context}, criterion_grad_input)
-
-        decoder_grad_output[#decoder_grad_output][{{}, t}]:copy(generator_grad_input[1])
-        grad_context:add(generator_grad_input[2]) -- accumulate gradient of context
-      end
+      local decoder_grad_output, grad_context, loss = generator:process(batch, context, decoder_states, decoder_out)
 
       -- backward decoder
       local decoder_grad_input = decoder:backward(decoder_grad_output)
@@ -192,8 +172,7 @@ local function train(train_data, valid_data, encoder, decoder, generator, criter
     local score = evaluator:process({
       encoder = encoder,
       decoder = decoder,
-      generator = generator,
-      criterion = criterion
+      generator = generator
     }, valid_data)
 
     optim:update_rate(score, epoch)
@@ -249,7 +228,9 @@ local function main()
       vocab_size = #dataset.targ_dict
     }, opt)
 
-    generator = models.make_generator(#dataset.targ_dict, opt)
+    generator = Generator.new({
+      vocab_size = #dataset.targ_dict
+    }, opt)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('loading ' .. opt.train_from .. '...')
@@ -262,16 +243,16 @@ local function main()
     generator = model[3]
   end
 
-  local criterion = models.make_criterion(#dataset.targ_dict)
+  generator:build_criterion(#dataset.targ_dict)
 
   if cuda then
     encoder.network:cuda()
     decoder.network:cuda()
-    generator:cuda()
-    criterion:cuda()
+    generator.network:cuda()
+    generator.criterion:cuda()
   end
 
-  train(train_data, valid_data, encoder, decoder, generator, criterion)
+  train(train_data, valid_data, encoder, decoder, generator)
 end
 
 main()
