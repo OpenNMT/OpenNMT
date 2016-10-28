@@ -1,8 +1,6 @@
 require 'nn'
 require 'nngraph'
 
-local LSTM = require 's2sa.LSTM'
-
 local function make_criterion(vocab_size)
   local w = torch.ones(vocab_size)
   w[1] = 0
