@@ -83,7 +83,8 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
     if src_tokens == nil or targ_tokens == nil then
       break
     end
-    if #src_tokens <= opt.seq_length and #targ_tokens <= opt.seq_length then
+    if #src_tokens > 0 and #src_tokens <= opt.seq_length
+    and #targ_tokens > 0 and #targ_tokens <= opt.seq_length then
       table.insert(src, make_sentence(src_tokens, src_dict, false))
       table.insert(targ, make_sentence(targ_tokens, targ_dict, true))
       table.insert(sizes, #src_tokens)
@@ -109,7 +110,7 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
   src = table_utils.reorder(src, perm)
   targ = table_utils.reorder(targ, perm)
 
-  print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length > ' .. opt.seq_length .. ')')
+  print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length == 0 or > ' .. opt.seq_length .. ')')
 
   return src, targ
 end
