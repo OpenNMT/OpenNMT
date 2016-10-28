@@ -114,6 +114,8 @@ local function train(train_data, valid_data)
 
     for i = 1, #data do
       table_utils.zero(grad_params, 'zero')
+      encoder:forget()
+      decoder:forget()
 
       local batch = data:get_batch(batch_order[i])
 
@@ -250,34 +252,19 @@ local function main()
   print(string.format('Source max sent len: %d, Target max sent len: %d',
                       opt.max_source_length, opt.max_target_length))
 
-  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
-  if opt.gpuid > 0 then
-    h_init = h_init:cuda()
-  end
-
   -- Build model
   if opt.train_from:len() == 0 then
     encoder = Encoder.new({
-      word_vec_size = opt.word_vec_size,
       pre_word_vecs = opt.pre_word_vecs_enc,
       fix_word_vecs = opt.fix_word_vecs_enc,
-      h_init = h_init,
-      num_layers = opt.num_layers,
-      vocab_size = #dataset.src_dict,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout
-    })
+      vocab_size = #dataset.src_dict
+    }, opt)
 
     decoder = Decoder.new({
-      word_vec_size = opt.word_vec_size,
       pre_word_vecs = opt.pre_word_vecs_dec,
-      fix_word_vecs = opt.fix_word_vecs_dec,
-      h_init = h_init,
-      num_layers = opt.num_layers,
-      vocab_size = #dataset.targ_dict,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout
-    })
+      fix_word_vecs = opt.fix_word_vec,
+      vocab_size = #dataset.targ_dict
+    }, opt)
 
     generator = models.make_generator(#dataset.targ_dict, opt)
     criterion = models.make_criterion(#dataset.targ_dict)

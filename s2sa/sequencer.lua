@@ -1,13 +1,11 @@
 require 'torch'
 
 local hdf5 = require 'hdf5'
-local model_utils = require 's2sa.model_utils'
-local table_utils = require 's2sa.table_utils'
 
 local Sequencer = torch.class('Sequencer')
 
-function Sequencer:__init(args)
-  self.network = self:build_network(args)
+function Sequencer:__init(args, opt)
+  self.network = self:build_network(args.vocab_size, opt)
   self.fix_word_vecs = args.fix_word_vecs
 
   if args.pre_word_vecs:len() > 0 then
@@ -20,17 +18,22 @@ function Sequencer:__init(args)
 
   self.word_vecs.weight[1]:zero()
 
+  local h_init = torch.zeros(opt.max_batch_size, opt.rnn_size)
+  if opt.gpuid > 0 then
+    h_init = h_init:cuda()
+  end
+
   self.init_states = {}
-  for _ = 1, args.num_layers do
-    table.insert(self.init_states, args.h_init:clone())
+  for _ = 1, opt.num_layers do
+    table.insert(self.init_states, h_init:clone())
   end
 end
 
-function Sequencer:build_network(args)
+function Sequencer:build_network(vocab_size, opt)
   self.sequencers = {}
 
   local inputs = {}
-  for l = 1, args.num_layers do
+  for l = 1, opt.num_layers do
     table.insert(inputs, nn.Identity()()) -- h0: batch_size x rnn_size
   end
   table.insert(inputs, nn.Identity()()) -- x: batch_size x timesteps
@@ -38,21 +41,21 @@ function Sequencer:build_network(args)
   local hidden_states
   local outputs = {}
 
-  for L = 1, args.num_layers do
+  for L = 1, opt.num_layers do
     local h0 = inputs[L]
     local x
     local input_size
 
     if L == 1 then
-      input_size = args.word_vec_size
-      self.word_vecs = nn.LookupTable(args.vocab_size, input_size)
-      x = self.word_vecs(inputs[args.num_layers + 1]) -- batch_size x timesteps x word_vec_size
+      input_size = opt.word_vec_size
+      self.word_vecs = nn.LookupTable(vocab_size, input_size)
+      x = self.word_vecs(inputs[opt.num_layers + 1]) -- batch_size x timesteps x word_vec_size
     else
-      input_size = args.rnn_size
-      x = nn.Dropout(args.dropout, nil, false)(hidden_states) -- batch_size x timesteps x rnn_size
+      input_size = opt.rnn_size
+      x = nn.Dropout(opt.dropout, nil, false)(hidden_states) -- batch_size x timesteps x rnn_size
     end
 
-    local rnn = nn.LSTM(input_size, args.rnn_size)
+    local rnn = nn.LSTM(input_size, opt.rnn_size)
     table.insert(self.sequencers, rnn)
     hidden_states = rnn({h0, x}) -- batch_size x timesteps x rnn_size
 
@@ -77,6 +80,30 @@ end
 
 function Sequencer:evaluate()
   self.network:evaluate()
+end
+
+function Sequencer:forward(previous_states, input)
+  self.inputs = previous_states
+  table.insert(self.inputs, input)
+
+  local outputs = self.network:forward(self.inputs)
+
+  local context = outputs[#outputs]
+  table.remove(outputs)
+  local hidden_states = outputs
+
+  return hidden_states, context
+end
+
+function Sequencer:backward(grad_output)
+  local grad_input = self.network:backward(self.inputs, grad_output)
+
+  self.word_vecs.gradWeight[1]:zero()
+  if self.fix_word_vecs == 1 then
+    self.word_vecs.gradWeight:zero()
+  end
+
+  return grad_input
 end
 
 return Sequencer
