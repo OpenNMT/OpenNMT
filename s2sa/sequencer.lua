@@ -1,7 +1,7 @@
 require 'torch'
 
 local hdf5 = require 'hdf5'
-local LSTM = require 's2sa.LSTM'
+require 's2sa.LSTM'
 
 local Sequencer = torch.class('Sequencer')
 
@@ -34,7 +34,7 @@ function Sequencer:build_network(vocab_size, opt)
   self.sequencers = {}
 
   local inputs = {}
-  for l = 1, opt.num_layers do
+  for _ = 1, opt.num_layers do
     table.insert(inputs, nn.Identity()()) -- h0: batch_size x rnn_size
   end
   table.insert(inputs, nn.Identity()()) -- x: batch_size x timesteps

@@ -1,5 +1,5 @@
 local model_utils = require 's2sa.model_utils'
-local Sequencer = require 's2sa.sequencer'
+require 's2sa.sequencer'
 
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 

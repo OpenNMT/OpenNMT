@@ -99,7 +99,7 @@ local function train(train_data, valid_data, encoder, decoder, generator)
 
   print("Number of parameters: " .. num_params)
 
-  function train_batch(data, epoch, optim)
+  local function train_batch(data, epoch, optim)
     local bookkeeper = Bookkeeper.new({
       print_frequency = opt.print_every,
       learning_rate = optim:get_rate(),

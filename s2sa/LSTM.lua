@@ -211,8 +211,8 @@ function layer:backward(input, gradOutput, scale)
   local grad_next_h = self.buffer1:resizeAs(h0):zero()
   local grad_next_c = self.buffer2:resizeAs(c0):zero()
   for t = T, 1, -1 do
-    local next_h, next_c = h[{{}, t}], c[{{}, t}]
-    local prev_h, prev_c = nil, nil
+    local next_c = c[{{}, t}]
+    local prev_h, prev_c
     if t == 1 then
       prev_h, prev_c = h0, c0
     else
@@ -224,13 +224,13 @@ function layer:backward(input, gradOutput, scale)
     local f = self.gates[{{}, t, {H + 1, 2 * H}}]
     local o = self.gates[{{}, t, {2 * H + 1, 3 * H}}]
     local g = self.gates[{{}, t, {3 * H + 1, 4 * H}}]
-    
+
     local grad_a = self.grad_a_buffer:resize(N, 4 * H):zero()
     local grad_ai = grad_a[{{}, {1, H}}]
     local grad_af = grad_a[{{}, {H + 1, 2 * H}}]
     local grad_ao = grad_a[{{}, {2 * H + 1, 3 * H}}]
     local grad_ag = grad_a[{{}, {3 * H + 1, 4 * H}}]
-    
+
     -- We will use grad_ai, grad_af, and grad_ao as temporary buffers
     -- to to compute grad_next_c. We will need tanh_next_c (stored in grad_ai)
     -- to compute grad_ao; the other values can be overwritten after we compute
@@ -240,7 +240,7 @@ function layer:backward(input, gradOutput, scale)
     local my_grad_next_c = grad_ao
     my_grad_next_c:fill(1):add(-1, tanh_next_c2):cmul(o):cmul(grad_next_h)
     grad_next_c:add(my_grad_next_c)
-    
+
     -- We need tanh_next_c (currently in grad_ai) to compute grad_ao; after
     -- that we can overwrite it.
     grad_ao:fill(1):add(-1, o):cmul(o):cmul(tanh_next_c):cmul(grad_next_h)
@@ -252,7 +252,7 @@ function layer:backward(input, gradOutput, scale)
     -- We don't need any temporary storage for these so do them last
     grad_ai:fill(1):add(-1, i):cmul(i):cmul(g):cmul(grad_next_c)
     grad_af:fill(1):add(-1, f):cmul(f):cmul(prev_c):cmul(grad_next_c)
-    
+
     grad_x[{{}, t}]:mm(grad_a, Wx:t())
     grad_Wx:addmm(scale, x[{{}, t}]:t(), grad_a)
     grad_Wh:addmm(scale, prev_h:t(), grad_a)
