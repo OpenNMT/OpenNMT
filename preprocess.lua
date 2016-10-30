@@ -14,6 +14,8 @@ cmd:option('-output_file', '', [[Output file for the prepared data]])
 
 cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
 cmd:option('-targ_vocab_size', 50000, [[Size of the target vocabulary]])
+cmd:option('-src_vocab_file', '', [[Pre-calculated source vocabulary]])
+cmd:option('-targ_vocab_file', '', [[Pre-calculated target vocabulary]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
 cmd:option('-shuffle', 1, [[Suffle data]])
@@ -135,12 +137,26 @@ local function main()
 
   opt_utils.require_options(opt, required_options)
 
-  print('Building source vocabulary...')
-  local src_dict = make_vocabulary(opt.train_src_file, opt.src_vocab_size)
+  local src_dict
+  if opt.src_vocab_file:len() == 0 then
+    print('Building source vocabulary...')
+    src_dict = make_vocabulary(opt.train_src_file, opt.src_vocab_size)
+  else
+    print('Reading source vocabulary from \'' .. opt.src_vocab_file .. '...')
+    src_dict = dict.new()
+    src_dict:load_file(opt.src_vocab_file)
+  end
   print('')
 
-  print('Building target vocabulary...')
-  local targ_dict = make_vocabulary(opt.train_targ_file, opt.targ_vocab_size)
+  local targ_dict
+  if opt.targ_vocab_file:len() == 0 then
+    print('Building target vocabulary...')
+    targ_dict = make_vocabulary(opt.train_targ_file, opt.targ_vocab_size)
+  else
+    print('Reading target vocabulary from \'' .. opt.targ_vocab_file .. '\'...')
+    targ_dict = dict.new()
+    targ_dict:load_file(opt.targ_vocab_file)
+  end
   print('')
 
   print('Preparing training data...')
@@ -163,8 +179,19 @@ local function main()
   data.src_dict = src_dict
   data.targ_dict = targ_dict
 
-  print('Saving data to ' .. opt.output_file .. '...')
-  torch.save(opt.output_file, data)
+  print('Saving data to ' .. opt.output_file .. '-train.t7 ...')
+  torch.save(opt.output_file .. '-train.t7', data)
+
+  if opt.src_vocab_file:len() == 0 then
+    print('Saving source vocabulary to ' .. opt.output_file .. '.src.dict ...')
+    src_dict:write_file(opt.output_file .. '.src.dict')
+  end
+
+  if opt.targ_vocab_file:len() == 0 then
+    print('Saving target vocabulary to ' .. opt.output_file .. '.targ.dict ...')
+    targ_dict:write_file(opt.output_file .. '.targ.dict')
+  end
+
 end
 
 main()

@@ -15,7 +15,7 @@ local cmd = torch.CmdLine()
 cmd:text("")
 cmd:text("**Data options**")
 cmd:text("")
-cmd:option('-data','data/demo.t7', [[Path to the training *.hdf5 file from preprocess.py]])
+cmd:option('-data','data/demo.t7', [[Path to the training *-train.t7 file from preprocess.lua]])
 cmd:option('-savefile', 'seq2seq_lstm_attn', [[Savefile name (model will be saved as
                                              savefile_epochX_PPL.t7 where X is the X-th epoch and PPL is
                                              the validation perplexity]])

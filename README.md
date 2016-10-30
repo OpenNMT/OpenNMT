@@ -30,16 +30,11 @@ See below for more details on how to use them.
 
 This project is maintained by [Yoon Kim](http://people.fas.harvard.edu/~yoonkim).
 Feel free to post any questions/issues on the issues page.
- 
-### Dependencies
 
-#### Python
-* h5py
-* numpy
+### Dependencies
 
 #### Lua
 You will need the following packages:
-* hdf5
 * nn
 * nngraph
 
@@ -57,24 +52,23 @@ We are going to be working with some example data in `data/` folder.
 First run the data-processing code
 
 ```
-python preprocess.py --srcfile data/src-train.txt --targetfile data/targ-train.txt
---srcvalfile data/src-val.txt --targetvalfile data/targ-val.txt --outputfile data/demo
+th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt
+    -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo
 ```
 
 This will take the source/target train/valid files (`src-train.txt, targ-train.txt,
-src-val.txt, targ-val.txt`) and make some hdf5 files to be consumed by Lua.
+src-val.txt, targ-val.txt`) and build the following files:
 
-`demo.src.dict`: Dictionary of source vocab to index mappings.
-`demo.targ.dict`: Dictionary of target vocab to index mappings.
-`demo-train.hdf5`: hdf5 containing the train data.
-`demo-val.hdf5`: hdf5 file containing the validation data.
+* `demo.src.dict`: Dictionary of source vocab to index mappings.
+* `demo.targ.dict`: Dictionary of target vocab to index mappings.
+* `demo-train.t7`: serialized torch file containing vocabulary, training and validation data
 
-The `*.dict` files will be needed when predicting on new data.
+The `*.dict` files are needed to check vocabulary, or to preprocess data with fixed vocabularies
 
 Now run the model
 
 ```
-th train.lua -data_file data/demo-train.hdf5 -val_data_file data/demo-val.hdf5 -savefile demo-model
+th train.lua -data_file data/demo-train.t7 -savefile demo-model
 ```
 This will run the default model, which consists of a 2-layer LSTM with 500 hidden units
 on both the encoder/decoder.
