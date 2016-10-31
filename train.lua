@@ -59,8 +59,8 @@ cmd:text("**Other options**")
 cmd:text("")
 
 -- GPU
-cmd:option('-gpuid', -1, [[Which gpu to use. < 1 = use CPU]])
-cmd:option('-fallback_to_cpu', false, [[Fallback to CPU if no GPU available]])
+cmd:option('-gpuid', -1, [[Which gpu to use (1-indexed). < 1 = use CPU]])
+cmd:option('-fallback_to_cpu', false, [[Fallback to CPU if no GPU available or can not use cuda/cudnn]])
 cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping

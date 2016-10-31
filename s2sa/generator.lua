@@ -89,5 +89,16 @@ function Generator:process(batch, context, decoder_states, decoder_out)
   return decoder_grad_output, grad_context, loss
 end
 
+function Generator:float()
+  self.network:float()
+end
+
+function Generator:double()
+  self.network:double()
+end
+
+function Generator:cuda()
+  self.network:cuda()
+end
 
 return Generator

@@ -104,4 +104,17 @@ function Sequencer:backward(grad_output)
   return grad_input
 end
 
+function Sequencer:float()
+  self.network:float()
+end
+
+function Sequencer:double()
+  self.network:double()
+end
+
+function Sequencer:cuda()
+  self.network:cuda()
+end
+
+
 return Sequencer
