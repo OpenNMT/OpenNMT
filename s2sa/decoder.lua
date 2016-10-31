@@ -4,7 +4,7 @@ require 's2sa.sequencer'
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 
 function Decoder:__init(args, opt)
-  Sequencer:__init(args, opt)
+  Sequencer.__init(self, args, opt)
 end
 
 function Decoder:forward(batch, encoder_states)
@@ -13,7 +13,7 @@ function Decoder:forward(batch, encoder_states)
     hidden_states[i]:copy(encoder_states[i])
   end
 
-  return Sequencer:forward(hidden_states, batch.target_input)
+  return Sequencer.forward(self, hidden_states, batch.target_input)
 end
 
 return Decoder
