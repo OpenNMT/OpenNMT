@@ -143,7 +143,7 @@ local function train(train_data, valid_data, encoder, decoder, generator)
     return bookkeeper:get_train_score()
   end
 
-  local evaluator = Evaluator.new(opt.num_layers)
+  local evaluator = Evaluator.new()
   local optim = Optim.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
 
   opt.train_perf = {}
