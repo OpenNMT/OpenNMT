@@ -2,6 +2,7 @@ require 'nn'
 require 'string'
 require 'nngraph'
 
+local Dict = require 's2sa.dict'
 local table_utils = require 's2sa.table_utils'
 require 's2sa.data'
 
@@ -27,19 +28,18 @@ local gold_sentences
 local word2charidx_targ
 local init_fwd_enc = {}
 local init_fwd_dec = {}
-local idx2feature_src = {}
-local feature2idx_src = {}
-local idx2word_src
-local word2idx_src
-local idx2word_targ
-local word2idx_targ
+
+local src_dict
+local targ_dict
+local char_dict
+local src_features_dicts = {}
+
 local context_proto
 local context_proto2
 local decoder_softmax
 local decoder_attn
 local phrase_table
 local softmax_layers
-local char2idx
 
 local opt = {}
 local cmd = torch.CmdLine()
@@ -392,27 +392,6 @@ local function generate_beam(initial, K, max_sent_l, source, source_features, go
   return max_hyp, max_score, max_attn_argmax, gold_score, states[i], scores[i], attn_argmax[i]
 end
 
-local function idx2key(file)
-  local f = io.open(file,'r')
-  local t = {}
-  for line in f:lines() do
-    local c = {}
-    for w in line:gmatch'([^%s]+)' do
-      table.insert(c, w)
-    end
-    t[tonumber(c[2])] = c[1]
-  end
-  return t
-end
-
-local function flip_table(u)
-  local t = {}
-  for key, value in pairs(u) do
-    t[value] = key
-  end
-  return t
-end
-
 local function get_layer(layer)
   if layer.name ~= nil then
     if layer.name == 'decoder_attn' then
@@ -425,7 +404,6 @@ end
 
 local function features2featureidx(features, feature2idx, start_symbol)
   local out = {}
-
   if start_symbol == 1 then
     table.insert(out, {})
     for _ = 1, #feature2idx do
@@ -436,7 +414,7 @@ local function features2featureidx(features, feature2idx, start_symbol)
   for i = 1, #features do
     table.insert(out, {})
     for j = 1, #feature2idx do
-      local value = feature2idx[j][features[i][j]]
+      local value = feature2idx[j]:lookup(features[i][j])
       if value == nil then
         value = UNK
       end
@@ -479,7 +457,7 @@ local function word2charidx(word, chars_idx, max_word_l, t)
   local i = 2
   for _, char in utf8.next, word do
     char = utf8.char(char)
-    local char_idx = chars_idx[char] or UNK
+    local char_idx = chars_idx:lookup(char) or UNK
     t[i] = char_idx
     i = i+1
     if i >= max_word_l then
@@ -607,28 +585,23 @@ local function init(arg)
   model_opt.attn = model_opt.attn or 1
   model_opt.num_source_features = model_opt.num_source_features or 0
 
-  idx2word_src = idx2key(opt.src_dict)
-  word2idx_src = flip_table(idx2word_src)
-  idx2word_targ = idx2key(opt.targ_dict)
-  word2idx_targ = flip_table(idx2word_targ)
-
+  src_dict = Dict.new(opt.src_dict)
+  targ_dict = Dict.new(opt.targ_dict)
 
   for i = 1, model_opt.num_source_features do
-    table.insert(idx2feature_src, idx2key(opt.feature_dict_prefix .. '.source_feature_' .. i .. '.dict'))
-    table.insert(feature2idx_src, flip_table(idx2feature_src[i]))
+    table.insert(src_features_dicts, Dict.new(opt.feature_dict_prefix .. '.source_feature_' .. i .. '.dict'))
   end
 
   -- load character dictionaries if needed
   if model_opt.use_chars_enc == 1 or model_opt.use_chars_dec == 1 then
     utf8 = require 'lua-utf8'
-    char2idx = flip_table(idx2key(opt.char_dict))
+    char_dict = Dict.new(opt.char_dict)
     model[1]:apply(get_layer)
   end
   if model_opt.use_chars_dec == 1 then
-    word2charidx_targ = torch.LongTensor(#idx2word_targ, model_opt.max_word_l):fill(PAD)
-    for i = 1, #idx2word_targ do
-      word2charidx_targ[i] = word2charidx(idx2word_targ[i], char2idx,
-        model_opt.max_word_l, word2charidx_targ[i])
+    word2charidx_targ = torch.LongTensor(#targ_dict.idx_to_label, model_opt.max_word_l):fill(PAD)
+    for i = 1, #targ_dict.idx_to_label do
+      word2charidx_targ[i] = word2charidx(targ_dict:lookup(i), char_dict, model_opt.max_word_l, word2charidx_targ[i])
     end
   end
   -- load gold labels if it exists
@@ -701,20 +674,20 @@ local function search(line)
   local cleaned_line = table.concat(cleaned_tokens, ' ')
   print('SENT ' .. sent_id .. ': ' ..line)
   local source, source_str
-  local source_features = features2featureidx(source_features_str, feature2idx_src, model_opt.start_symbol)
+  local source_features = features2featureidx(source_features_str, src_features_dicts, model_opt.start_symbol)
   if model_opt.use_chars_enc == 1 then
-    source, source_str = sent2charidx(cleaned_line, char2idx, model_opt.max_word_l, model_opt.start_symbol)
+    source, source_str = sent2charidx(cleaned_line, char_dict, model_opt.max_word_l, model_opt.start_symbol)
   else
-    source, source_str = sent2wordidx(cleaned_line, word2idx_src, model_opt.start_symbol)
+    source, source_str = sent2wordidx(cleaned_line, src_dict.label_to_idx, model_opt.start_symbol)
   end
 
   local target
   if opt.score_gold == 1 then
-    target = sent2wordidx(gold_sentences[sent_id], word2idx_targ, 1)
+    target = sent2wordidx(gold_sentences[sent_id], targ_dict.label_to_idx, 1)
   end
   local state = State.initial(START)
   local pred, pred_score, attn, gold_score, all_sents, all_scores, all_attn = generate_beam(state, opt.beam, opt.max_sent_l, source, source_features, target)
-  local pred_sent = wordidx2sent(pred, idx2word_targ, source_str, attn, true)
+  local pred_sent = wordidx2sent(pred, targ_dict.idx_to_label, source_str, attn, true)
 
   print('PRED ' .. sent_id .. ': ' .. pred_sent)
   if gold_sentences ~= nil then
@@ -728,7 +701,7 @@ local function search(line)
 
   if opt.n_best > 1 then
     for n = 1, opt.n_best do
-      local pred_sent_n = wordidx2sent(all_sents[n], idx2word_targ, source_str, all_attn[n], false)
+      local pred_sent_n = wordidx2sent(all_sents[n], targ_dict.idx_to_label, source_str, all_attn[n], false)
       local out_n = string.format("%d ||| %s ||| %.4f", n, pred_sent_n, all_scores[n])
       print(out_n)
       nbests[n] = out_n
