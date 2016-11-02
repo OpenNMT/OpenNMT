@@ -5,6 +5,7 @@ require 'nngraph'
 require 's2sa.encoder'
 require 's2sa.decoder'
 require 's2sa.generator'
+local State = require 's2sa.beam_state'
 local cuda = require 's2sa.cuda'
 local Dict = require 's2sa.dict'
 local Gold = require 's2sa.gold'
@@ -26,7 +27,6 @@ local START_WORD = '<s>'
 local END_WORD = '</s>'
 local START_CHAR = '{'
 local END_CHAR = '}'
-local State
 local model
 local model_opt
 local word2charidx_targ
@@ -80,63 +80,6 @@ cmd:option('-gpuid2', -1, [[Second GPU ID]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-cudnn', 0, [[If using character model, this should be = 1 if the character model was trained using cudnn]])
 
-
-local function copy(orig)
-  local orig_type = type(orig)
-  local t
-  if orig_type == 'table' then
-    t = {}
-    for orig_key, orig_value in pairs(orig) do
-      t[orig_key] = orig_value
-    end
-  else
-    t = orig
-  end
-  return t
-end
-
-local StateAll = torch.class("StateAll")
-
-function StateAll.initial(start)
-  return {start}
-end
-
-function StateAll.advance(state, token)
-  local new_state = copy(state)
-  table.insert(new_state, token)
-  return new_state
-end
-
-function StateAll.disallow(out)
-  local bad = {1, 3} -- 1 is PAD, 3 is BOS
-  for j = 1, #bad do
-    out[bad[j]] = -1e9
-  end
-end
-
-function StateAll.same(state1, state2)
-  for i = 2, #state1 do
-    if state1[i] ~= state2[i] then
-      return false
-    end
-  end
-  return true
-end
-
-function StateAll.next(state)
-  return state[#state]
-end
-
-function StateAll.heuristic()
-  return 0
-end
-
-function StateAll.print(state)
-  for i = 1, #state do
-    io.write(state[i] .. " ")
-  end
-  print()
-end
 
 -- Convert a flat index to a row-column tuple.
 local function flat_to_rc(v, flat_index)
@@ -625,7 +568,6 @@ local function init(arg)
     table.insert(init_fwd_dec, h_init_dec:clone()) -- hidden state
   end
 
-  State = StateAll
   sent_id = 0
 end
 
