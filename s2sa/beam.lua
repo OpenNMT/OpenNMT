@@ -5,6 +5,7 @@ require 'nngraph'
 require 's2sa.encoder'
 require 's2sa.decoder'
 require 's2sa.generator'
+local cuda = require 's2sa.cuda'
 local Dict = require 's2sa.dict'
 local Gold = require 's2sa.gold'
 local table_utils = require 's2sa.table_utils'
@@ -523,13 +524,8 @@ local function init(arg)
 
   assert(path.exists(opt.model), 'model does not exist')
 
-  if opt.gpuid >= 0 then
-    require 'cutorch'
-    require 'cunn'
-    if opt.cudnn == 1 then
-      require 'cudnn'
-    end
-  end
+  cuda.init(opt)
+
   print('loading ' .. opt.model .. '...')
   local checkpoint = torch.load(opt.model)
   print('done!')
@@ -583,7 +579,6 @@ local function init(arg)
   })
 
   if opt.gpuid >= 0 then
-    cutorch.setDevice(opt.gpuid)
     for i = 1, #model do
       if opt.gpuid2 >= 0 then
         if i == 1 or i == 4 then
