@@ -22,8 +22,12 @@ function Bookkeeper:update(batch, loss)
   self.train_loss = self.train_loss + loss * batch.size
 end
 
+function Bookkeeper:get_time()
+  return self.timer:time().real
+end
+
 function Bookkeeper:log(batch_index)
-  local time_taken = self.timer:time().real
+  local time_taken = self:get_time()
 
   local stats = string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
                               self.epoch, batch_index, self.data_size, self.learning_rate)
@@ -35,6 +39,15 @@ function Bookkeeper:log(batch_index)
                                  math.exp(self.train_loss/self.train_nonzeros))
 
   print(stats)
+end
+
+function Bookkeeper:get_status()
+  return {
+    train_nonzeros = self.train_nonzeros,
+    train_loss = self.train_loss,
+    num_words_source = self.num_words_source,
+    num_words_target = self.num_words_target,
+  }
 end
 
 function Bookkeeper:get_train_score()

@@ -1,8 +1,10 @@
 require 's2sa.dict'
 
+local lfs = require 'lfs'
 local path = require 'pl.path'
 local cuda = require 's2sa.cuda'
 local Bookkeeper = require 's2sa.bookkeeper'
+local Checkpoint = require 's2sa.checkpoint'
 local Data = require 's2sa.data'
 local Decoder = require 's2sa.decoder'
 local Encoder = require 's2sa.encoder'
@@ -65,29 +67,23 @@ cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping
 cmd:option('-save_every', 1, [[Save every this many epochs]])
+cmd:option('-intermediate_save', 0, [[Save intermediate models every this many iterations within an epoch]])
 cmd:option('-print_every', 50, [[Print stats after this many batches]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
 local opt = cmd:parse(arg)
 
-local function save_model(model_path, data, options, double)
-  print('saving model to ' .. model_path)
-  if double then
-    for i = 1, #data do data[i] = data[i]:double() end
-  end
-  torch.save(model_path, {data, options})
-end
 
 local function train(train_data, valid_data, encoder, decoder, generator)
   local num_params = 0
   local params = {}
   local grad_params = {}
 
-  local layers = {encoder.network, decoder.network, generator.network}
+  local layers = {encoder, decoder, generator}
 
   print('Initializing parameters...')
   for i = 1, #layers do
-    local p, gp = layers[i]:getParameters()
+    local p, gp = layers[i].network:getParameters()
     if opt.train_from:len() == 0 then
       p:uniform(-opt.param_init, opt.param_init)
     end
@@ -98,7 +94,7 @@ local function train(train_data, valid_data, encoder, decoder, generator)
 
   print("Number of parameters: " .. num_params)
 
-  local function train_batch(data, epoch, optim)
+  local function train_batch(data, epoch, optim, checkpoint)
     local bookkeeper = Bookkeeper.new({
       learning_rate = optim:get_rate(),
       data_size = #data,
@@ -138,25 +134,28 @@ local function train(train_data, valid_data, encoder, decoder, generator)
       if i % opt.print_every == 0 then
         bookkeeper:log(i)
       end
+
+      checkpoint:save_iteration(i, bookkeeper)
     end
 
-    return bookkeeper:get_train_score()
+    return bookkeeper
   end
 
   local evaluator = Evaluator.new()
   local optim = Optim.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
-
-  opt.train_perf = {}
+  local checkpoint = Checkpoint.new({
+    layers = layers,
+    options = opt,
+    optim = optim,
+    script_path = lfs.currentdir()
+  })
 
   for epoch = opt.start_epoch, opt.epochs do
     encoder:training()
     decoder:training()
     generator:training()
 
-    local train_score = train_batch(train_data, epoch, optim)
-
-    print('Train', train_score)
-    opt.train_perf[#opt.train_perf + 1] = train_score
+    local bookkeeper = train_batch(train_data, epoch, optim, checkpoint)
 
     local score = evaluator:process({
       encoder = encoder,
@@ -166,13 +165,10 @@ local function train(train_data, valid_data, encoder, decoder, generator)
 
     optim:update_rate(score, epoch)
 
-    -- clean and save models
-    if epoch % opt.save_every == 0 then
-      save_model(string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, epoch, score), {encoder, decoder, generator}, opt, false)
-    end
+    checkpoint:save_epoch(score, bookkeeper)
   end
-  -- save final model
-  save_model(string.format('%s_final.t7', opt.savefile), {encoder, decoder, generator}, opt, true)
+
+  checkpoint:save_final()
 end
 
 local function main()
