@@ -18,8 +18,30 @@ local function reorder(tab, index)
   return new_tab
 end
 
+local function copy(orig)
+  local orig_type = type(orig)
+  local copy_obj
+  if orig_type == 'table' then
+    copy_obj = {}
+    for orig_key, orig_value in pairs(orig) do
+      copy_obj[orig_key] = orig_value
+    end
+  else
+    copy_obj = orig
+  end
+  return copy_obj
+end
+
+-- Convert a flat index to a row-column tuple.
+local function flat_to_rc(v, flat_index)
+  local row = math.floor((flat_index - 1) / v:size(2)) + 1
+  return row, (flat_index - 1) % v:size(2) + 1
+end
+
 return {
   reorder = reorder,
   zero = zero,
-  append = append
+  append = append,
+  copy = copy,
+  flat_to_rc = flat_to_rc
 }

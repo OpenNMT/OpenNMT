@@ -1,4 +1,5 @@
 require 'torch'
+local table_utils = require 's2sa.table_utils'
 
 local BeamState = torch.class("BeamState")
 
@@ -6,22 +7,8 @@ function BeamState.initial(start)
   return {start}
 end
 
-local function copy(orig)
-  local orig_type = type(orig)
-  local t
-  if orig_type == 'table' then
-    t = {}
-    for orig_key, orig_value in pairs(orig) do
-      t[orig_key] = orig_value
-    end
-  else
-    t = orig
-  end
-  return t
-end
-
 function BeamState.advance(state, token)
-  local new_state = copy(state)
+  local new_state = table_utils.copy(state)
   table.insert(new_state, token)
   return new_state
 end
