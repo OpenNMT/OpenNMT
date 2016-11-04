@@ -20,8 +20,6 @@ local model_opt
 local src_dict
 local targ_dict
 local char_dict
-local src_features_dicts = {}
-local targ_features_dicts = {}
 
 local word2charidx_targ
 local init_fwd_enc = {}
@@ -132,6 +130,8 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
   --reset decoder initial states
   local initial = State.initial(constants.START)
 
+  features.reset(batch, K)
+
   local n = max_sent_l
   -- Backpointer table.
   local prev_ks = torch.LongTensor(batch, n, K):fill(constants.PAD)
@@ -140,54 +140,18 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
   -- Current Scores.
   local scores = torch.FloatTensor(batch, n, K):zero()
 
-  local next_ys_features = {}
-  if model_opt.num_target_features > 0 then
-    for i = 1, n do
-      table.insert(next_ys_features, {})
-      for j = 1, model_opt.num_target_features do
-        local t
-        if model_opt.target_features_lookup[j] == true then
-          t = torch.LongTensor(batch, K):fill(constants.PAD)
-        else
-          t = torch.Tensor(batch, K, #targ_features_dicts[j].idx_to_label):zero()
-          t[{{}, {}, constants.PAD}]:fill(1)
-          if opt.float == 1 then
-            t = t:float()
-          end
-        end
-        table.insert(next_ys_features[i], t)
-      end
-    end
-  end
+  local next_ys_features = features.get_next_features(batch, n, K)
 
   local attn_weights = {}
   local states = {}
-
   for b = 1, batch do
     table.insert(attn_weights, {{initial}}) -- store attn weights
     table.insert(states, {{initial}}) -- store predicted word idx
     next_ys[b][1][1] = State.next(initial)
-
-    if model_opt.num_target_features > 0 then
-      for j = 1, model_opt.num_target_features do
-        if model_opt.target_features_lookup[j] == true then
-          next_ys_features[1][j][b][1] = constants.UNK
-        else
-          next_ys_features[1][j][b][1][constants.UNK] = 1
-        end
-      end
-    end
   end
 
   local source_input = beam_utils.get_input(source, source_l, true, model_opt.use_chars_enc == 1)
-  local source_features_input = {}
-
-  if model_opt.num_source_features > 0 then
-    source_features_input = beam_utils.get_features_input(source_features,
-                                               model_opt.source_features_lookup,
-                                               source_l,
-                                               true)
-  end
+  local source_features_input = features.get_source_features_input(source_features, source_l, true)
 
   local rnn_state_enc = {}
 
@@ -320,9 +284,6 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
   local max_k = {}
   local max_attn_weights = {}
 
-  local feats_hyp = {}
-  local max_feats_hyp = {}
-
   local remaining_sents = batch
   local new_context = context:clone()
   local batch_idx = {}
@@ -335,11 +296,6 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
 
     table.insert(max_k, 1)
     table.insert(batch_idx, b)
-    table.insert(max_feats_hyp, {})
-    table.insert(feats_hyp, {})
-    for _ = 1, K do
-      table.insert(feats_hyp[b], {})
-    end
   end
 
   while (remaining_sents > 0) and (i < n) do
@@ -352,19 +308,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
       decoder_input1 = torch.LongTensor(K, remaining_sents):zero()
     end
 
-    local decoder_input1_features = {}
-    for j = 1, model_opt.num_target_features do
-      local t
-      if model_opt.target_features_lookup[j] == true then
-        t = torch.LongTensor(K, remaining_sents)
-      else
-        t = torch.Tensor(K, remaining_sents, #targ_features_dicts[j].idx_to_label)
-        if opt.float == 1 then
-          t = t:float()
-        end
-      end
-      table.insert(decoder_input1_features, t:zero())
-    end
+    local decoder_input1_features = features.get_decoder_input(K, remaining_sents)
 
     local source_sizes = {}
 
@@ -386,7 +330,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
           else
             decoder_input1[{{}, idx}]:copy(prev_out)
           end
-          for j = 1, model_opt.num_target_features do
+          for j = 1, features.num_target_features do
             decoder_input1_features[j][{{}, idx}]:copy(next_ys_features[i-1][j][b])
           end
         end
@@ -399,7 +343,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
       decoder_input1 = decoder_input1:view(K * remaining_sents)
     end
 
-    for j = 1, model_opt.num_target_features do
+    for j = 1, features.num_target_features do
       if model_opt.target_features_lookup[j] == true then
         decoder_input1_features[j] = decoder_input1_features[j]:view(K * remaining_sents)
       else
@@ -487,33 +431,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
           view[{{}, idx}] = view[{{}, idx}]:index(1, prev_ks[b][i])
         end
 
-        if model_opt.num_target_features > 0 then
-          for k = 1, K do
-            table.insert(feats_hyp[b][k], {})
-            for j = 1, model_opt.num_target_features do
-              local lk, indices = torch.sort(out[1+j][idx][k], true)
-              local best = 1
-              local hyp = {}
-              if model_opt.target_features_lookup[j] == true then
-                next_ys_features[i][j][b][k] = indices[best]
-                hyp[1] = indices[best]
-              else
-                next_ys_features[i][j][b]:copy(out[1+j][idx])
-                table.insert(hyp, indices[best])
-                for l = best+1, lk:size(1) do
-                  if lk[best] - lk[l] < 0.05 then
-                    if indices[l] > constants.END then
-                      table.insert(hyp, indices[l])
-                    end
-                  else
-                    break
-                  end
-                end
-              end
-              table.insert(feats_hyp[b][k][i-1], hyp)
-            end
-          end
-        end
+        features.calculate_hypotheses(next_ys_features, out, K, i, b, idx)
 
         end_hyp[b] = states[b][i][1]
         end_score[b] = scores[b][i][1]
@@ -603,25 +521,14 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
     table.insert(states_res, states[b][sent_len])
     table.insert(scores_res, scores[b][sent_len])
 
-    if model_opt.num_target_features > 0 then
-      for _ = 1, sent_len-1 do
-        table.insert(max_feats_hyp[b], {})
-      end
-
-      -- follow beam path to build the features sequence
-      local k = max_k[b]
-      for j = sent_len, 2, -1 do
-        k = prev_ks[b][j][k]
-        max_feats_hyp[b][j-1] = feats_hyp[b][k][j-1]
-      end
-    end
+    features.calculate_max_hypothesis(sent_len, max_k, prev_ks, b)
   end
 
   if gold ~= nil then
     gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, source, max_score)
   end
 
-  return max_hyp, max_feats_hyp, max_score, max_attn_weights, states_res, scores_res, attn_weights_res
+  return max_hyp, features.max_hypothesis, max_score, max_attn_weights, states_res, scores_res, attn_weights_res
 end
 
 local function get_layer(layer)
@@ -683,33 +590,20 @@ local function init(args, resources_dir)
     targ_dict = Dict.new(opt.targ_dict)
   end
 
-  if opt.feature_dict_prefix == "" then
-    src_features_dicts = checkpoint[6]
-    targ_features_dicts = checkpoint[7]
-  else
-    for i = 1, model_opt.num_source_features do
-      table.insert(src_features_dicts, Dict.new(opt.feature_dict_prefix .. '.source_feature_' .. i .. '.dict'))
-    end
-    for i = 1, model_opt.num_target_features do
-      table.insert(targ_features_dicts, Dict.new(opt.feature_dict_prefix .. '.target_feature_' .. i .. '.dict'))
-    end
-  end
+  features.init({
+    src_dict = opt.feature_dict_prefix == "" and checkpoint[6] or nil,
+    targ_dict = opt.feature_dict_prefix == "" and checkpoint[7] or nil,
+    dicts_prefix = opt.feature_dict_prefix,
+    num_source_features = model_opt.num_source_features,
+    num_target_features = model_opt.num_target_features,
+    source_features_lookup = model_opt.source_features_lookup,
+    target_features_lookup = model_opt.target_features_lookup
+  })
 
   if opt.char_dict == "" then
     char_dict = checkpoint[8]
   else
     char_dict = Dict.new(opt.char_dict)
-  end
-
-  if model_opt.source_features_lookup == nil then
-    model_opt.source_features_lookup = {}
-    for _ = 1, model_opt.num_source_features do
-      table.insert(model_opt.source_features_lookup, false)
-    end
-    model_opt.target_features_lookup = {}
-    for _ = 1, model_opt.num_target_features do
-      table.insert(model_opt.target_features_lookup, false)
-    end
   end
 
   -- load character dictionaries if needed
@@ -796,7 +690,7 @@ local function build_target_tokens(sentences)
   for i = 1, #sentences do
     local target_tokens, target_features_str = features.extract(sentences[i])
     local target = tokens.to_words_idx(target_tokens, targ_dict.label_to_idx, 1)
-    local target_features = features.to_features_idx(target_features_str, src_features_dicts, targ_features_dicts, model_opt.target_features_lookup, 1, 1)
+    local target_features = features.to_target_features_idx(target_features_str, 1, 1)
 
     table.insert(target_batch, target)
     table.insert(target_features_batch, target_features)
@@ -829,7 +723,7 @@ end
       tokens = <array of cleaned tokens represents a sentence in batch>
       features = <array of features>
     }
-  @param gold - array of reference tokens for calculating gold scores
+  @param gold - instance of s2sa.beam.gold used to calculate gold scores
   @return result - a key/value table contains:
     {
       cleaned_pred_features_batch - array of predicted feature batch
@@ -839,8 +733,6 @@ end
         {
           pred_score = <prediction score>,
           pred_words = <prediction words count>,
-          gold_score = <gold score>,
-          gold_words = <gold words count>,
           nbests = [
             {
               tokens = <array of tokens>,
@@ -851,11 +743,6 @@ end
     }
 ]]
 local function search(batch, gold)
-  local timer
-  if opt.time > 0 then
-    timer = torch.Timer()
-  end
-
   local source_batch = {}
   local source_str_batch = {}
   local source_features_batch = {}
@@ -870,7 +757,7 @@ local function search(batch, gold)
     end
 
     local source, source_str
-    local source_features = features.to_features_idx(source_features_str, src_features_dicts, model_opt.source_features_lookup, model_opt.start_symbol, 0)
+    local source_features = features.to_source_features_idx(source_features_str, model_opt.start_symbol, 0)
     if model_opt.use_chars_enc == 1 then
       source, source_str = tokens.to_chars_idx(cleaned_tokens, char_dict, model_opt.max_word_l, model_opt.start_symbol)
     else
@@ -891,7 +778,7 @@ local function search(batch, gold)
   local info_batch = {}
 
   for i = 1, #batch do
-    local pred_tokens, cleaned_pred_tokens, cleaned_pred_features = tokens.from_words_idx(pred_batch[i], pred_features_batch[i], targ_dict.idx_to_label, targ_features_dicts, source_str_batch[i], attn_batch[i], model_opt.num_target_features)
+    local pred_tokens, cleaned_pred_tokens, cleaned_pred_features = tokens.from_words_idx(pred_batch[i], pred_features_batch[i], targ_dict.idx_to_label, features.targ_features_dicts, source_str_batch[i], attn_batch[i], features.num_target_features)
 
     local info = {
       nbests = {},
@@ -899,10 +786,10 @@ local function search(batch, gold)
       pred_words = #pred_batch[i] - 1
     }
 
-    if opt.n_best > 1 and model_opt.num_target_features == 0 then
+    if opt.n_best > 1 and features.num_target_features == 0 then
       for n = 1, opt.n_best do
         local pred_tokens_n = tokens.from_words_idx(all_sents_batch[i][n], pred_features_batch[i],
-                                             targ_dict.idx_to_label, targ_features_dicts, source_str_batch[i], attn_batch[i], model_opt.num_target_features)
+                                             targ_dict.idx_to_label, features.targ_features_dicts, source_str_batch[i], attn_batch[i], features.num_target_features)
         table.insert(info.nbests, {
           tokens = pred_tokens_n,
           score = all_scores_batch[i][n]
@@ -916,18 +803,12 @@ local function search(batch, gold)
     table.insert(info_batch, info)
   end
 
-  local result = {
+  return {
     cleaned_pred_features_batch = cleaned_pred_features_batch,
     cleaned_pred_tokens_batch = cleaned_pred_tokens_batch,
     pred_tokens_batch = pred_tokens_batch,
     info_batch = info_batch
   }
-
-  if opt.time > 0 then
-    result['timer'] = timer:time()
-  end
-
-  return result
 end
 
 return {

@@ -45,48 +45,6 @@ function BeamUtils.get_input(data, max_length, pad_left, use_chars)
   return input
 end
 
-function BeamUtils.get_features_input(features, use_lookup, max_len, pad_left)
-  local batch = #features
-  local features_input = {}
-
-  for i = 1, max_len do
-    table.insert(features_input, {})
-    for j = 1, #features[1][1] do
-      local t
-      if use_lookup[j] == true then
-        t = torch.LongTensor(batch):fill(constants.PAD)
-      else
-        t = torch.Tensor(batch, features[1][1][j]:size(2)):zero()
-        t[{{}, constants.PAD}]:fill(1)
-        if BeamUtils.float == 1 then
-          t = t:float()
-        end
-      end
-      table.insert(features_input[i], t)
-    end
-  end
-
-  for b = 1, batch do
-    for i = 1, #features[b] do
-      for j = 1, #features[b][i] do
-        local idx
-        if pad_left then
-          idx = max_len-#features[b]+i
-        else
-          idx = i
-        end
-        if use_lookup[j] == true then
-          features_input[idx][j][b] = features[b][i][j]
-        else
-          features_input[idx][j][b]:copy(features[b][i][j])
-        end
-      end
-    end
-  end
-
-  return features_input
-end
-
 function BeamUtils.get_encoder_input(source_in, features_in, rnn_state)
   local encoder_input = {source_in}
   if BeamUtils.model_options.num_source_features > 0 then

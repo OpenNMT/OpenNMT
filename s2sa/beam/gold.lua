@@ -1,6 +1,7 @@
 require 'torch'
 local beam = require 's2sa.beam.main'
 local beam_utils = require 's2sa.beam.utils'
+local features = require 's2sa.beam.features'
 local tokens = require 's2sa.beam.tokens'
 local path = require 'pl.path'
 
@@ -85,13 +86,8 @@ function Gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, so
   end
   local target_l = beam_utils.get_max_length(gold)
   local gold_input = beam_utils.get_input(gold, target_l, false, false)
-  local gold_features_input = {}
-  if self.model_options.num_target_features > 0 then
-    gold_features_input = beam_utils.get_features_input(gold_features,
-                                             self.model_options.target_features_lookup,
-                                             target_l,
-                                             false)
-  end
+  local gold_features_input = features.get_target_features_input(gold_features, target_l, false)
+
   local source_sizes = {}
   for b = 1, batch do
     table.insert(source_sizes, source[b]:size(1))
