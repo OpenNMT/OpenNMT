@@ -1,16 +1,35 @@
 require 'torch'
 local constants = require 's2sa.beam.constants'
 
-local Tokens = {}
+local Tokens = {
+  replace_unk = false,
+  phrase_table = {}
+}
 local utf8 --loaded when using character models only
 
 
-function Tokens.init(use_utf8, replace_unk)
+function Tokens.init(use_utf8, replace_unk, phrasetable_file)
   if use_utf8 then
     utf8 = require 'lua-utf8'
   end
 
   Tokens.replace_unk = replace_unk
+
+  if Tokens.replace_unk and phrasetable_file then
+    local f = io.open(phrasetable_file,'r')
+    if f == nil then
+      error('Failed to open file ' .. phrasetable_file)
+    end
+
+    local function strip(s)
+      return s:gsub("^%s+",""):gsub("%s+$","")
+    end
+
+    for line in f:lines() do
+      local c = line:split("|||")
+      Tokens.phrase_table[strip(c[1])] = c[2]
+    end
+  end
 end
 
 function Tokens.from_sentence(line)
@@ -69,7 +88,7 @@ function Tokens.words_to_chars_idx(word, chars_idx, max_word_l, t)
   return t
 end
 
-function Tokens.from_words_idx(sent, features, idx2word, idx2feature, source_words, attn, phrase_table, num_target_features)
+function Tokens.from_words_idx(sent, features, idx2word, idx2feature, source_words, attn, num_target_features)
   local cleaned_tokens = {}
   local cleaned_features = {}
   local cleaned_pos = 0
@@ -79,15 +98,15 @@ function Tokens.from_words_idx(sent, features, idx2word, idx2feature, source_wor
   for i = 2, #sent-1 do -- skip constants.START and constants.END
     local fields = {}
     local token_features = {}
-    if sent[i] == constants.UNK and Tokens.replace_unk == 1 then
+    if sent[i] == constants.UNK and Tokens.replace_unk then
       -- retrieve source word with max attention
       local _, max_index = attn[i]:max(1)
       local s = source_words[max_index[1]]
 
-      if phrase_table[s] ~= nil then
-        print('Unknown token "' .. s .. '" replaced by source token "' ..phrase_table[s] .. '"')
+      if Tokens.phrase_table[s] ~= nil then
+        print('Unknown token "' .. s .. '" replaced by source token "' ..Tokens.phrase_table[s] .. '"')
       end
-      local r = phrase_table[s] or s
+      local r = Tokens.phrase_table[s] or s
       table.insert(fields, r)
     else
       table.insert(fields, idx2word[sent[i]])

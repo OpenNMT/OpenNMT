@@ -1,4 +1,5 @@
 require 'torch'
+local lfs = require 'lfs'
 local beam = require 's2sa.beam.main'
 local Gold = require 's2sa.beam.gold'
 local tokens = require 's2sa.beam.tokens'
@@ -24,12 +25,12 @@ cmd:option('-simple', 0, [[If = 1, output prediction is simply the first time th
                          ends with an end-of-sentence token. If = 0, the model considers all
                          hypotheses that have been generated so far that ends with end-of-sentence
                          token and takes the highest scoring of all of them.]])
-cmd:option('-replace_unk', 0, [[Replace the generated UNK tokens with the source token that
+cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the source token that
                               had the highest attention weight. If srctarg_dict is provided,
                               it will lookup the identified source token and give the corresponding
                               target token. If it is not provided (or the identified source token
                               does not exist in the table) then it will copy the source token]])
-cmd:option('-srctarg_dict', 'data/en-de.dict', [[Path to source-target dictionary to replace UNK
+cmd:option('-srctarg_dict', '', [[Path to source-target dictionary to replace UNK
                                                tokens. See README.md for the format this file should be in]])
 cmd:option('-score_gold', false, [[If = true, score the log likelihood of the gold as well]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
@@ -46,7 +47,7 @@ local function main()
   local opt = cmd:parse(arg)
   assert(path.exists(opt.src_file), 'src_file does not exist')
 
-  beam.init(opt)
+  beam.init(opt, lfs.currentdir())
 
   local gold = Gold.new({
     score_gold = opt.score_gold,

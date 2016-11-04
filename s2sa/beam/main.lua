@@ -1,8 +1,6 @@
 require 'nn'
 require 'string'
 require 'nngraph'
-local path = require 'pl.path'
-
 require 's2sa.encoder'
 require 's2sa.decoder'
 require 's2sa.generator'
@@ -33,7 +31,6 @@ local context_proto
 local context_proto2
 local decoder_softmax
 local decoder_attn
-local phrase_table
 local softmax_layers
 local opt = {}
 
@@ -637,73 +634,22 @@ local function get_layer(layer)
   end
 end
 
-local function strip(s)
-  return s:gsub("^%s+",""):gsub("%s+$","")
-end
-
-local function build_absolute_paths(resourcesDir)
-  local function isempty(s)
-    return s == nil or s == ''
-  end
-
-  if(not isempty(resourcesDir)) then
-    if not isempty(opt.model) then
-      opt.model = path.join(resourcesDir, opt.model)
-    end
-    if not isempty(opt.src_file) then
-      opt.src_file = path.join(resourcesDir, opt.src_file)
-    end
-    if not isempty(opt.targ_file) then
-      opt.targ_file = path.join(resourcesDir, opt.targ_file)
-    end
-    if not isempty(opt.output_file) then
-      opt.output_file = path.join(resourcesDir, opt.output_file)
-    end
-    if not isempty(opt.src_dict) then
-      opt.src_dict = path.join(resourcesDir, opt.src_dict)
-    end
-    if not isempty(opt.targ_dict) then
-      opt.targ_dict = path.join(resourcesDir, opt.targ_dict)
-    end
-    if not isempty(opt.srctarg_dict) then
-      opt.srctarg_dict = path.join(resourcesDir, opt.srctarg_dict)
-    end
-    if not isempty(opt.char_dict) then
-      opt.char_dict = path.join(resourcesDir, opt.char_dict)
-    end
-    if not isempty(opt.feature_dict_prefix) then
-      opt.feature_dict_prefix = path.join(resourcesDir, opt.feature_dict_prefix)
-    end
-  end
-end
-
-local function init(args, resourcesDir)
+local function init(args, resources_dir)
   -- parse input params
   opt = args
 
-  build_absolute_paths(resourcesDir)
-  assert(path.exists(opt.model), 'model does not exist')
+  opt.model = beam_utils.absolute_path(opt.model, resources_dir)
+  opt.src_dict = beam_utils.absolute_path(opt.src_dict, resources_dir)
+  opt.targ_dict = beam_utils.absolute_path(opt.targ_dict, resources_dir)
+  opt.srctarg_dict = beam_utils.absolute_path(opt.srctarg_dict, resources_dir)
+  opt.char_dict = beam_utils.absolute_path(opt.char_dict, resources_dir)
+  opt.feature_dict_prefix = beam_utils.absolute_path(opt.feature_dict_prefix, resources_dir)
 
   cuda.init(opt)
 
   print('loading ' .. opt.model .. '...')
   local checkpoint = torch.load(opt.model)
   print('done!')
-
-  if opt.replace_unk == 1 then
-    phrase_table = {}
-    if path.exists(opt.srctarg_dict) then
-      local f = io.open(opt.srctarg_dict,'r')
-      if f == nil then
-        error('Failed to open file ' .. opt.srctarg_dict)
-      end
-
-      for line in f:lines() do
-        local c = line:split("|||")
-        phrase_table[strip(c[1])] = c[2]
-      end
-    end
-  end
 
   -- load model and word2idx/idx2word dictionaries
   model, model_opt = checkpoint[1], checkpoint[2]
@@ -723,7 +669,7 @@ local function init(args, resourcesDir)
 
   beam_utils.init(model_opt, opt.max_sent_l, opt.float)
 
-  tokens.init(model_opt.use_chars_enc == 1 or model_opt.use_chars_dec == 1, opt.replace_unk)
+  tokens.init(model_opt.use_chars_enc == 1 or model_opt.use_chars_dec == 1, opt.replace_unk, opt.srctarg_dict)
 
   if opt.src_dict == "" then
     src_dict = checkpoint[4]
@@ -945,7 +891,7 @@ local function search(batch, gold)
   local info_batch = {}
 
   for i = 1, #batch do
-    local pred_tokens, cleaned_pred_tokens, cleaned_pred_features = tokens.from_words_idx(pred_batch[i], pred_features_batch[i], targ_dict.idx_to_label, targ_features_dicts, source_str_batch[i], attn_batch[i], phrase_table, model_opt.num_target_features)
+    local pred_tokens, cleaned_pred_tokens, cleaned_pred_features = tokens.from_words_idx(pred_batch[i], pred_features_batch[i], targ_dict.idx_to_label, targ_features_dicts, source_str_batch[i], attn_batch[i], model_opt.num_target_features)
 
     local info = {
       nbests = {},
@@ -956,7 +902,7 @@ local function search(batch, gold)
     if opt.n_best > 1 and model_opt.num_target_features == 0 then
       for n = 1, opt.n_best do
         local pred_tokens_n = tokens.from_words_idx(all_sents_batch[i][n], pred_features_batch[i],
-                                             targ_dict.idx_to_label, targ_features_dicts, source_str_batch[i], attn_batch[i], phrase_table, model_opt.num_target_features)
+                                             targ_dict.idx_to_label, targ_features_dicts, source_str_batch[i], attn_batch[i], model_opt.num_target_features)
         table.insert(info.nbests, {
           tokens = pred_tokens_n,
           score = all_scores_batch[i][n]
