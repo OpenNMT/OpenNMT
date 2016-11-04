@@ -113,6 +113,57 @@ local function reset_attn_softmax()
   end)
 end
 
+local function process_bidirectional_rnn(batch_size, context, rnn_state_enc, rnn_state_dec, source_input, source_features_input, source)
+  if model_opt.brnn ~= 1 then
+    return
+  end
+
+  local final_rnn_state_enc = {}
+  for i = 1, #rnn_state_enc do
+    rnn_state_enc[i]:zero()
+    table.insert(final_rnn_state_enc, rnn_state_enc[i]:clone())
+  end
+
+  for t = State.source_length, 1, -1 do
+    local encoder_input = beam_utils.get_encoder_input(source_input[t],
+                                            source_features_input[t],
+                                            rnn_state_enc)
+    local out = model[4]:forward(encoder_input)
+
+    if batch_size > 1 then
+      beam_utils.ignore_padded_output(t, source, out)
+    end
+
+    for b = 1, batch_size do
+      if t == State.source_length - source[b]:size(1) + 1 then
+        for j = 1, #final_rnn_state_enc do
+          final_rnn_state_enc[j][b]:copy(out[j][b])
+        end
+      end
+    end
+
+    rnn_state_enc = out
+    context[{{}, {}, t}]:add(out[#out])
+  end
+
+  if model_opt.init_dec == 1 then
+    for L = 1, model_opt.num_layers do
+      rnn_state_dec[L*2-1+model_opt.input_feed]:add(
+        final_rnn_state_enc[L*2-1]
+          :view(1, batch_size, model_opt.rnn_size)
+          :expand(opt.beam, batch_size, model_opt.rnn_size)
+          :contiguous()
+          :view(opt.beam*batch_size, model_opt.rnn_size))
+      rnn_state_dec[L*2+model_opt.input_feed]:add(
+        final_rnn_state_enc[L*2]
+          :view(1, batch_size, model_opt.rnn_size)
+          :expand(opt.beam, batch_size, model_opt.rnn_size)
+          :contiguous()
+          :view(opt.beam*batch_size, model_opt.rnn_size))
+    end
+  end
+end
+
 local function generate_beam(source, source_features, gold)
   State.source_length = beam_utils.get_max_length(source)
 
@@ -198,52 +249,7 @@ local function generate_beam(source, source_features, gold)
     end
   end
 
-  if model_opt.brnn == 1 then
-    local final_rnn_state_enc = {}
-    for i = 1, #rnn_state_enc do
-      rnn_state_enc[i]:zero()
-      table.insert(final_rnn_state_enc, rnn_state_enc[i]:clone())
-    end
-
-    for t = State.source_length, 1, -1 do
-      local encoder_input = beam_utils.get_encoder_input(source_input[t],
-                                              source_features_input[t],
-                                              rnn_state_enc)
-      local out = model[4]:forward(encoder_input)
-
-      if batch_size > 1 then
-        beam_utils.ignore_padded_output(t, source, out)
-      end
-
-      for b = 1, batch_size do
-        if t == State.source_length - source[b]:size(1) + 1 then
-          for j = 1, #final_rnn_state_enc do
-            final_rnn_state_enc[j][b]:copy(out[j][b])
-          end
-        end
-      end
-
-      rnn_state_enc = out
-      context[{{}, {}, t}]:add(out[#out])
-    end
-
-    if model_opt.init_dec == 1 then
-      for L = 1, model_opt.num_layers do
-        rnn_state_dec[L*2-1+model_opt.input_feed]:add(
-          final_rnn_state_enc[L*2-1]
-            :view(1, batch_size, model_opt.rnn_size)
-            :expand(opt.beam, batch_size, model_opt.rnn_size)
-            :contiguous()
-            :view(opt.beam*batch_size, model_opt.rnn_size))
-        rnn_state_dec[L*2+model_opt.input_feed]:add(
-          final_rnn_state_enc[L*2]
-            :view(1, batch_size, model_opt.rnn_size)
-            :expand(opt.beam, batch_size, model_opt.rnn_size)
-            :contiguous()
-            :view(opt.beam*batch_size, model_opt.rnn_size))
-      end
-    end
-  end
+  process_bidirectional_rnn(batch_size, context, rnn_state_enc, rnn_state_dec, source_input, source_features_input, source)
 
   if gold ~= nil then gold:init(model_opt, rnn_state_dec) end
 
