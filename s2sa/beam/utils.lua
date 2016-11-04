@@ -1,18 +1,18 @@
+local chars = require 's2sa.beam.chars'
 local constants = require 's2sa.beam.constants'
+local features = require 's2sa.beam.features'
 local beam_state = require 's2sa.beam.state'
 local table_utils = require 's2sa.table_utils'
 local path = require 'pl.path'
 
 local BeamUtils = {
   max_length = 0,
-  float = false,
   model_options = {}
 }
 
-function BeamUtils.init(model_options, max_length, float)
+function BeamUtils.init(model_options, max_length)
   BeamUtils.model_options = model_options
   BeamUtils.max_length = max_length
-  BeamUtils.float = float
 end
 
 function BeamUtils.get_max_length(data)
@@ -24,10 +24,10 @@ function BeamUtils.get_max_length(data)
   return math.min(max_length, BeamUtils.max_length)
 end
 
-function BeamUtils.get_input(data, max_length, pad_left, use_chars)
+function BeamUtils.get_input(data, max_length, pad_left)
   local input
-  if use_chars then
-    input = torch.LongTensor(max_length, #data, BeamUtils.model_options.max_word_l):fill(constants.PAD)
+  if chars.use_chars_enc then
+    input = torch.LongTensor(max_length, #data, chars.max_word_length):fill(constants.PAD)
   else
     input = torch.LongTensor(max_length, #data):fill(constants.PAD)
   end
@@ -44,7 +44,7 @@ end
 
 function BeamUtils.get_encoder_input(source_in, features_in, rnn_state)
   local encoder_input = {source_in}
-  if BeamUtils.model_options.num_source_features > 0 then
+  if features.num_source_features > 0 then
     table_utils.append(encoder_input, features_in)
   end
   table_utils.append(encoder_input, rnn_state)
@@ -53,7 +53,7 @@ end
 
 function BeamUtils.get_decoder_input(target_in, features_in, rnn_state, context)
  local decoder_input = {target_in}
-  if BeamUtils.model_options.num_target_features > 0 then
+  if features.num_target_features > 0 then
     table_utils.append(decoder_input, features_in)
   end
   if BeamUtils.model_options.attn == 1 then

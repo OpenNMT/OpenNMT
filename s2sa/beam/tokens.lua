@@ -5,14 +5,8 @@ local Tokens = {
   replace_unk = false,
   phrase_table = {}
 }
-local utf8 --loaded when using character models only
 
-
-function Tokens.init(use_utf8, replace_unk, phrasetable_file)
-  if use_utf8 then
-    utf8 = require 'lua-utf8'
-  end
-
+function Tokens.init(replace_unk, phrasetable_file)
   Tokens.replace_unk = replace_unk
 
   if Tokens.replace_unk and phrasetable_file then
@@ -67,25 +61,6 @@ function Tokens.to_words_idx(tokens, word2idx, start_symbol)
     table.insert(u, constants.END_WORD)
   end
   return torch.LongTensor(t), u
-end
-
-function Tokens.words_to_chars_idx(word, chars_idx, max_word_l, t)
-  t[1] = constants.START
-  local i = 2
-  for _, char in utf8.next, word do
-    char = utf8.char(char)
-    local char_idx = chars_idx:lookup(char) or constants.UNK
-    t[i] = char_idx
-    i = i+1
-    if i >= max_word_l then
-      t[i] = constants.END
-      break
-    end
-  end
-  if i < max_word_l then
-    t[i] = constants.END
-  end
-  return t
 end
 
 function Tokens.from_words_idx(sent, features, idx2word, idx2feature, source_words, attn, num_target_features)
@@ -161,25 +136,5 @@ function Tokens.from_words_idx(sent, features, idx2word, idx2feature, source_wor
 
   return tokens, cleaned_tokens, cleaned_features
 end
-
-function Tokens.to_chars_idx(tokens, chars_idx, max_word_l, start_symbol)
-  local words = {}
-  if start_symbol == 1 then
-    table.insert(words, constants.START_WORD)
-  end
-
-  for _, token in pairs(tokens) do
-    table.insert(words, token.value)
-  end
-  if start_symbol == 1 then
-    table.insert(words, constants.END_WORD)
-  end
-  local chars = torch.ones(#words, max_word_l)
-  for i = 1, #words do
-    chars[i] = Tokens.words_to_chars_idx(words[i], chars_idx, max_word_l, chars[i])
-  end
-  return chars, words
-end
-
 
 return Tokens

@@ -6,6 +6,7 @@ require 's2sa.decoder'
 require 's2sa.generator'
 local constants = require 's2sa.beam.constants'
 local State = require 's2sa.beam.state'
+local chars = require 's2sa.beam.chars'
 local cuda = require 's2sa.cuda'
 local Dict = require 's2sa.dict'
 local features = require 's2sa.beam.features'
@@ -19,17 +20,14 @@ local model_opt
 
 local src_dict
 local targ_dict
-local char_dict
 
-local word2charidx_targ
 local init_fwd_enc = {}
 local init_fwd_dec = {}
-
 local context_proto
 local context_proto2
 local decoder_softmax
 local decoder_attn
-local softmax_layers
+local softmax_layers = {}
 local opt = {}
 
 
@@ -147,7 +145,7 @@ local function generate_beam(source, source_features, gold)
     next_ys[b][1][1] = State.next(initial)
   end
 
-  local source_input = beam_utils.get_input(source, State.source_length, true, model_opt.use_chars_enc == 1)
+  local source_input = beam_utils.get_input(source, State.source_length, true)
   local source_features_input = features.get_source_features_input(source_features, State.source_length, true)
 
   local rnn_state_enc = {}
@@ -299,8 +297,8 @@ local function generate_beam(source, source_features, gold)
     i = i+1
 
     local decoder_input1
-    if model_opt.use_chars_dec == 1 then
-      decoder_input1 = torch.LongTensor(opt.beam, remaining_sents, model_opt.max_word_l):zero()
+    if chars.use_chars_dec then
+      decoder_input1 = torch.LongTensor(opt.beam, remaining_sents, chars.max_word_length):zero()
     else
       decoder_input1 = torch.LongTensor(opt.beam, remaining_sents):zero()
     end
@@ -317,9 +315,8 @@ local function generate_beam(source, source_features, gold)
         states[b][i] = {}
         attn_weights[b][i] = {}
 
-        if model_opt.use_chars_dec == 1 then
-          decoder_input1[{{}, idx}]
-            :copy(word2charidx_targ:index(1, next_ys[b]:narrow(1,i-1,1):squeeze()))
+        if chars.use_chars_dec then
+          decoder_input1[{{}, idx}]:copy(chars.targ_chars_idx:index(1, next_ys[b]:narrow(1,i-1,1):squeeze()))
         else
           local prev_out = next_ys[b]:narrow(1,i-1,1):squeeze()
           if opt.beam == 1 then
@@ -334,8 +331,8 @@ local function generate_beam(source, source_features, gold)
       end
     end
 
-    if model_opt.use_chars_dec == 1 then
-      decoder_input1 = decoder_input1:view(opt.beam * remaining_sents, model_opt.max_word_l)
+    if chars.use_chars_dec then
+      decoder_input1 = decoder_input1:view(opt.beam * remaining_sents, chars.max_word_length)
     else
       decoder_input1 = decoder_input1:view(opt.beam * remaining_sents)
     end
@@ -522,7 +519,7 @@ local function generate_beam(source, source_features, gold)
   end
 
   if gold ~= nil then
-    gold:process(batch_size, model, context, init_fwd_dec, word2charidx_targ, source, max_score)
+    gold:process(batch_size, model, context, init_fwd_dec, chars.targ_chars_idx, source, max_score)
   end
 
   return max_hyp, features.max_hypothesis, max_score, max_attn_weights, states_res, scores_res, attn_weights_res
@@ -562,7 +559,9 @@ local function init(args, resources_dir)
     if opt.float == 1 then
       model[i] = model[i]:float()
     end
+    model[i].network:apply(get_layer)
   end
+
   -- for backward compatibility
   model_opt.brnn = model_opt.brnn or 0
   model_opt.input_feed = model_opt.input_feed or 1
@@ -571,9 +570,9 @@ local function init(args, resources_dir)
   model_opt.num_target_features = model_opt.num_target_features or 0
   model_opt.guided_alignment = model_opt.guided_alignment or 0
 
-  beam_utils.init(model_opt, opt.max_sent_l, opt.float)
+  beam_utils.init(model_opt, opt.max_sent_l)
 
-  tokens.init(model_opt.use_chars_enc == 1 or model_opt.use_chars_dec == 1, opt.replace_unk, opt.srctarg_dict)
+  tokens.init(opt.replace_unk, opt.srctarg_dict)
 
   if opt.src_dict == "" then
     src_dict = checkpoint[4]
@@ -594,26 +593,18 @@ local function init(args, resources_dir)
     num_source_features = model_opt.num_source_features,
     num_target_features = model_opt.num_target_features,
     source_features_lookup = model_opt.source_features_lookup,
-    target_features_lookup = model_opt.target_features_lookup
+    target_features_lookup = model_opt.target_features_lookup,
+    float = opt.float
   })
 
-  if opt.char_dict == "" then
-    char_dict = checkpoint[8]
-  else
-    char_dict = Dict.new(opt.char_dict)
-  end
-
-  -- load character dictionaries if needed
-  if model_opt.use_chars_enc == 1 or model_opt.use_chars_dec == 1 then
-    char_dict = Dict.new(opt.char_dict)
-    model[1]:apply(get_layer)
-
-    if model_opt.use_chars_dec == 1 then
-      word2charidx_targ = torch.LongTensor(#targ_dict.idx_to_label, model_opt.max_word_l):fill(constants.PAD)
-      for i = 1, #targ_dict.idx_to_label do
-        word2charidx_targ[i] = tokens.words_to_chars_idx(targ_dict:lookup(i), char_dict, model_opt.max_word_l, word2charidx_targ[i])
-      end
-    end
+  if model_opt.use_chars_enc or model_opt.use_chars_dec then
+    chars.init({
+      use_chars_enc = model_opt.use_chars_enc,
+      use_chars_dec = model_opt.use_chars_dec,
+      max_word_length = model_opt.max_word_l,
+      chars_dict = opt.char_dict == "" and checkpoint[8] or Dict.new(opt.char_dict),
+      targ_dict = targ_dict
+    })
   end
 
   if opt.gpuid >= 0 then
@@ -630,8 +621,6 @@ local function init(args, resources_dir)
     end
   end
 
-  softmax_layers = {}
-  model[2].network:apply(get_layer)
   local attn_layer
   if model_opt.attn == 1 then
     decoder_attn:apply(get_layer)
@@ -755,8 +744,8 @@ local function search(batch, gold)
 
     local source, source_str
     local source_features = features.to_source_features_idx(source_features_str, model_opt.start_symbol, 0)
-    if model_opt.use_chars_enc == 1 then
-      source, source_str = tokens.to_chars_idx(cleaned_tokens, char_dict, model_opt.max_word_l, model_opt.start_symbol)
+    if chars.use_chars_enc then
+      source, source_str = chars.to_chars_idx(cleaned_tokens, model_opt.start_symbol)
     else
       source, source_str = tokens.to_words_idx(cleaned_tokens, src_dict.label_to_idx, model_opt.start_symbol)
     end

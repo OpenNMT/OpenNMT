@@ -1,7 +1,6 @@
 require 'torch'
 local Dict = require 's2sa.dict'
 local constants = require 's2sa.beam.constants'
-local beam_utils = require 's2sa.beam.utils'
 local table_utils = require 's2sa.table_utils'
 local stringx = require 'pl.stringx'
 
@@ -13,12 +12,14 @@ local Features = {
   source_features_lookup = {},
   target_features_lookup = {},
   hypotheses = {},
-  max_hypothesis = {}
+  max_hypothesis = {},
+  float = false
 }
 
 function Features.init(opt)
   Features.num_source_features = opt.num_source_features
   Features.num_target_features = opt.num_target_features
+  Features.float = opt.float
 
   if opt.src_dict and opt.targ_dict then
     Features.src_features_dicts = opt.src_dict
@@ -179,7 +180,7 @@ function Features.get_next_features(batch, n, K)
         else
           t = torch.Tensor(batch, K, #Features.targ_features_dicts[j].idx_to_label):zero()
           t[{{}, {}, constants.PAD}]:fill(1)
-          if beam_utils.float then
+          if Features.float then
             t = t:float()
           end
         end
@@ -214,7 +215,7 @@ function Features.get_features_input(features, use_lookup, max_len, pad_left)
       else
         t = torch.Tensor(batch, features[1][1][j]:size(2)):zero()
         t[{{}, constants.PAD}]:fill(1)
-        if beam_utils.float then
+        if Features.float then
           t = t:float()
         end
       end
@@ -265,7 +266,7 @@ function Features.get_decoder_input(K, remaining_sents)
       t = torch.LongTensor(K, remaining_sents)
     else
       t = torch.Tensor(K, remaining_sents, #Features.targ_features_dicts[j].idx_to_label)
-      if beam_utils.float then
+      if Features.float then
         t = t:float()
       end
     end
