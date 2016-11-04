@@ -1,12 +1,9 @@
 local constants = require 's2sa.beam.constants'
+local beam_state = require 's2sa.beam.state'
 local table_utils = require 's2sa.table_utils'
 local path = require 'pl.path'
 
 local BeamUtils = {
-
-  nn = nn,
-  activated = false,
-  source_length = 0,
   max_length = 0,
   float = false,
   model_options = {}
@@ -62,7 +59,7 @@ function BeamUtils.get_decoder_input(target_in, features_in, rnn_state, context)
   if BeamUtils.model_options.attn == 1 then
     table_utils.append(decoder_input, {context})
   else
-    table_utils.append(decoder_input, {context[{{}, BeamUtils.source_length}]})
+    table_utils.append(decoder_input, {context[{{}, beam_state.source_length}]})
   end
   table_utils.append(decoder_input, rnn_state)
   return decoder_input
@@ -94,7 +91,7 @@ end
 function BeamUtils.ignore_padded_output(t, src, out)
   for b = 1, #src do
     -- ignore output of the padded part
-    if t <= BeamUtils.source_length - src[b]:size(1) then
+    if t <= beam_state.source_length - src[b]:size(1) then
       for j = 1, #out do
         out[j][b]:zero()
       end

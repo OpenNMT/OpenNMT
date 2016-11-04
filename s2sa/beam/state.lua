@@ -1,7 +1,10 @@
 require 'torch'
+local constants = require 's2sa.beam.constants'
 local table_utils = require 's2sa.table_utils'
 
 local BeamState = torch.class("BeamState")
+
+BeamState.source_length = 0
 
 function BeamState.initial(start)
   return {start}
@@ -14,7 +17,7 @@ function BeamState.advance(state, token)
 end
 
 function BeamState.disallow(out)
-  local bad = {1, 3} -- 1 is PAD, 3 is BOS
+  local bad = {constants.PAD, constants.START}
   for j = 1, #bad do
     out[bad[j]] = -1e9
   end

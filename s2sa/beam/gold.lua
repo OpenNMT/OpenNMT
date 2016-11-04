@@ -56,7 +56,7 @@ function Gold:init(model_options, rnn_state_dec)
   end
 end
 
-function Gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, source, pred_score)
+function Gold:process(batch_size, model, context, init_fwd_dec, word2charidx_targ, source, pred_score)
   if self.score_gold == false then
     return
   end
@@ -70,18 +70,18 @@ function Gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, so
   local sentences = self.sentences[self.batch_id]
   local gold, gold_features = beam.build_target_tokens(sentences)
 
-  for _ = 1, batch do
+  for _ = 1, batch_size do
       table.insert(gold_score, 0)
   end
 
   local rnn_state_dec = {}
 
   for fwd_i = 1, #init_fwd_dec do
-    table.insert(rnn_state_dec, init_fwd_dec[fwd_i]:narrow(1, 1, batch):zero())
+    table.insert(rnn_state_dec, init_fwd_dec[fwd_i]:narrow(1, 1, batch_size):zero())
   end
   if self.model_options.init_dec == 1 then
     for j = 1, #rnn_state_dec do
-      rnn_state_dec[j] = self.rnn_state_dec_gold[j]:narrow(1, 1, batch)
+      rnn_state_dec[j] = self.rnn_state_dec_gold[j]:narrow(1, 1, batch_size)
     end
   end
   local target_l = beam_utils.get_max_length(gold)
@@ -89,7 +89,7 @@ function Gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, so
   local gold_features_input = features.get_target_features_input(gold_features, target_l, false)
 
   local source_sizes = {}
-  for b = 1, batch do
+  for b = 1, batch_size do
     table.insert(source_sizes, source[b]:size(1))
   end
   for t = 2, target_l do
@@ -102,14 +102,14 @@ function Gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, so
     local decoder_input = beam_utils.get_decoder_input(decoder_input1,
                                             gold_features_input[t-1],
                                             rnn_state_dec,
-                                            context:narrow(1, 1, batch))
-    if batch > 1 then
+                                            context:narrow(1, 1, batch_size))
+    if batch_size > 1 then
       beam.replace_attn_softmax(source_sizes, false)
     end
     local out_decoder, out = beam_utils.decoder_forward(model, decoder_input)
     beam_utils.update_rnn_state(rnn_state_dec, out_decoder)
 
-    for b = 1, batch do
+    for b = 1, batch_size do
       if t <= gold[b]:size(1) then
         if type(out) == "table" then
           gold_score[b] = gold_score[b] + out[1][b][gold_input[t][b]]
@@ -120,7 +120,7 @@ function Gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, so
     end
   end
 
-  for b = 1, batch do
+  for b = 1, batch_size do
     self.sent_id = self.sent_id + 1
 
     print('GOLD ' .. self.sent_id .. ': ' .. tokens.to_sentence(gold[b]))

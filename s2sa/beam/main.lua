@@ -39,12 +39,12 @@ local opt = {}
 local function masked_softmax(source_sizes, with_beam)
   local num_sents = #source_sizes
   local input = nn.Identity()()
-  local softmax = nn.SoftMax()(input) -- State.iteration*num_sents x State.source_length
+  local softmax = nn.SoftMax()(input) -- opt.beam*num_sents x State.source_length
 
   -- now we are masking the part of the output we don't need
   local tab
   if with_beam then
-    tab = nn.SplitTable(2)(nn.View(State.iteration, num_sents, State.source_length)(softmax)) -- num_sents x { State.iteration x State.source_length }
+    tab = nn.SplitTable(2)(nn.View(opt.beam, num_sents, State.source_length)(softmax)) -- num_sents x { opt.beam x State.source_length }
   else
     tab = nn.SplitTable(1)(softmax) -- num_sents x { State.source_length }
   end
@@ -63,12 +63,12 @@ local function masked_softmax(source_sizes, with_beam)
     par:add(seq)
   end
 
-  local out_tab = par(tab) -- num_sents x { State.iteration x State.source_length }
-  local output = nn.JoinTable(1)(out_tab) -- num_sents*State.iteration x State.source_length
+  local out_tab = par(tab) -- num_sents x { opt.beam x State.source_length }
+  local output = nn.JoinTable(1)(out_tab) -- num_sents*opt.beam x State.source_length
   if with_beam then
-    output = nn.View(num_sents, State.iteration, State.source_length)(output)
-    output = nn.Transpose({1,2})(output) -- State.iteration x num_sents x State.source_length
-    output = nn.View(State.iteration*num_sents, State.source_length)(output)
+    output = nn.View(num_sents, opt.beam, State.source_length)(output)
+    output = nn.Transpose({1,2})(output) -- opt.beam x num_sents x State.source_length
+    output = nn.View(opt.beam*num_sents, State.source_length)(output)
   else
     output = nn.View(num_sents, State.source_length)(output)
   end
@@ -115,64 +115,61 @@ local function reset_attn_softmax()
   end)
 end
 
-local function generate_beam(K, max_sent_l, source, source_features, gold)
-  local source_l = beam_utils.get_max_length(source)
-
-  beam_utils.source_length = source_l
-  State.iteration = K
+local function generate_beam(source, source_features, gold)
+  State.source_length = beam_utils.get_max_length(source)
 
   if opt.gpuid > 0 and opt.gpuid2 > 0 then
     cutorch.setDevice(opt.gpuid)
   end
 
-  local batch = #source
+  local batch_size = #source
 
   --reset decoder initial states
   local initial = State.initial(constants.START)
 
-  features.reset(batch, K)
+  features.reset(batch_size, opt.beam)
 
-  local n = max_sent_l
+  local n = opt.max_sent_l
   -- Backpointer table.
-  local prev_ks = torch.LongTensor(batch, n, K):fill(constants.PAD)
+  local prev_ks = torch.LongTensor(batch_size, n, opt.beam):fill(constants.PAD)
   -- Current States.
-  local next_ys = torch.LongTensor(batch, n, K):fill(constants.PAD)
+  local next_ys = torch.LongTensor(batch_size, n, opt.beam):fill(constants.PAD)
   -- Current Scores.
-  local scores = torch.FloatTensor(batch, n, K):zero()
+  local scores = torch.FloatTensor(batch_size, n, opt.beam):zero()
 
-  local next_ys_features = features.get_next_features(batch, n, K)
+  local next_ys_features = features.get_next_features(batch_size, n, opt.beam)
 
   local attn_weights = {}
   local states = {}
-  for b = 1, batch do
+  for b = 1, batch_size do
     table.insert(attn_weights, {{initial}}) -- store attn weights
     table.insert(states, {{initial}}) -- store predicted word idx
     next_ys[b][1][1] = State.next(initial)
   end
 
-  local source_input = beam_utils.get_input(source, source_l, true, model_opt.use_chars_enc == 1)
-  local source_features_input = features.get_source_features_input(source_features, source_l, true)
+  local source_input = beam_utils.get_input(source, State.source_length, true, model_opt.use_chars_enc == 1)
+  local source_features_input = features.get_source_features_input(source_features, State.source_length, true)
 
   local rnn_state_enc = {}
 
   for i = 1, #init_fwd_enc do
-    init_fwd_enc[i]:resize(batch, model_opt.rnn_size)
+    init_fwd_enc[i]:resize(batch_size, model_opt.rnn_size)
     table.insert(rnn_state_enc, init_fwd_enc[i]:zero())
   end
 
-  local context = context_proto[{{}, {1,source_l}}]:clone() -- 1 x source_l x rnn_size
+  local context = context_proto[{{}, {1,State.source_length}}]:clone() -- 1 x State.source_length x rnn_size
   context = context
-    :resize(batch, source_l, model_opt.rnn_size)
-    :view(1, batch, source_l, model_opt.rnn_size)
+    :resize(batch_size, State.source_length, model_opt.rnn_size)
+    :view(1, batch_size, State.source_length, model_opt.rnn_size)
     :zero()
 
-  for t = 1, source_l do
+  for t = 1, State.source_length do
     local encoder_input = beam_utils.get_encoder_input(source_input[t],
                                             source_features_input[t],
                                             rnn_state_enc)
     local out = model[1]:forward(encoder_input)
 
-    if batch > 1 then
+    if batch_size > 1 then
       beam_utils.ignore_padded_output(t, source, out)
     end
 
@@ -182,7 +179,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
 
   local rnn_state_dec = {}
   for i = 1, #init_fwd_dec do
-    init_fwd_dec[i]:resize(K * batch, model_opt.rnn_size)
+    init_fwd_dec[i]:resize(opt.beam * batch_size, model_opt.rnn_size)
     table.insert(rnn_state_dec, init_fwd_dec[i]:zero())
   end
 
@@ -190,16 +187,16 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
     for L = 1, model_opt.num_layers do
       rnn_state_dec[L*2-1+model_opt.input_feed]:copy(
         rnn_state_enc[L*2-1]
-          :view(1, batch, model_opt.rnn_size)
-          :expand(K, batch, model_opt.rnn_size)
+          :view(1, batch_size, model_opt.rnn_size)
+          :expand(opt.beam, batch_size, model_opt.rnn_size)
           :contiguous()
-          :view(K*batch, model_opt.rnn_size))
+          :view(opt.beam*batch_size, model_opt.rnn_size))
       rnn_state_dec[L*2+model_opt.input_feed]:copy(
         rnn_state_enc[L*2]
-          :view(1, batch, model_opt.rnn_size)
-          :expand(K, batch, model_opt.rnn_size)
+          :view(1, batch_size, model_opt.rnn_size)
+          :expand(opt.beam, batch_size, model_opt.rnn_size)
           :contiguous()
-          :view(K*batch, model_opt.rnn_size))
+          :view(opt.beam*batch_size, model_opt.rnn_size))
     end
   end
 
@@ -210,18 +207,18 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
       table.insert(final_rnn_state_enc, rnn_state_enc[i]:clone())
     end
 
-    for t = source_l, 1, -1 do
+    for t = State.source_length, 1, -1 do
       local encoder_input = beam_utils.get_encoder_input(source_input[t],
                                               source_features_input[t],
                                               rnn_state_enc)
       local out = model[4]:forward(encoder_input)
 
-      if batch > 1 then
+      if batch_size > 1 then
         beam_utils.ignore_padded_output(t, source, out)
       end
 
-      for b = 1, batch do
-        if t == source_l - source[b]:size(1) + 1 then
+      for b = 1, batch_size do
+        if t == State.source_length - source[b]:size(1) + 1 then
           for j = 1, #final_rnn_state_enc do
             final_rnn_state_enc[j][b]:copy(out[j][b])
           end
@@ -236,16 +233,16 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
       for L = 1, model_opt.num_layers do
         rnn_state_dec[L*2-1+model_opt.input_feed]:add(
           final_rnn_state_enc[L*2-1]
-            :view(1, batch, model_opt.rnn_size)
-            :expand(K, batch, model_opt.rnn_size)
+            :view(1, batch_size, model_opt.rnn_size)
+            :expand(opt.beam, batch_size, model_opt.rnn_size)
             :contiguous()
-            :view(K*batch, model_opt.rnn_size))
+            :view(opt.beam*batch_size, model_opt.rnn_size))
         rnn_state_dec[L*2+model_opt.input_feed]:add(
           final_rnn_state_enc[L*2]
-            :view(1, batch, model_opt.rnn_size)
-            :expand(K, batch, model_opt.rnn_size)
+            :view(1, batch_size, model_opt.rnn_size)
+            :expand(opt.beam, batch_size, model_opt.rnn_size)
             :contiguous()
-            :view(K*batch, model_opt.rnn_size))
+            :view(opt.beam*batch_size, model_opt.rnn_size))
       end
     end
   end
@@ -253,15 +250,15 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
   if gold ~= nil then gold:init(model_opt, rnn_state_dec) end
 
   context = context
-    :expand(K, batch, source_l, model_opt.rnn_size)
+    :expand(opt.beam, batch_size, State.source_length, model_opt.rnn_size)
     :contiguous()
-    :view(K*batch, source_l, model_opt.rnn_size)
+    :view(opt.beam*batch_size, State.source_length, model_opt.rnn_size)
 
   if opt.gpuid > 0 and opt.gpuid2 > 0 then
     cutorch.setDevice(opt.gpuid2)
-    local context2 = context_proto2[{{1, K}, {1, source_l}}]
+    local context2 = context_proto2[{{1, opt.beam}, {1, State.source_length}}]
     context2 = context2
-      :resize(K*batch, source_l, model_opt.rnn_size)
+      :resize(opt.beam*batch_size, State.source_length, model_opt.rnn_size)
       :zero()
     context2:copy(context)
     context = context2
@@ -284,11 +281,11 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
   local max_k = {}
   local max_attn_weights = {}
 
-  local remaining_sents = batch
+  local remaining_sents = batch_size
   local new_context = context:clone()
   local batch_idx = {}
 
-  for b = 1, batch do
+  for b = 1, batch_size do
     done[b] = false
     found_eos[b] = false
     max_score[b] = -1e9
@@ -303,16 +300,16 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
 
     local decoder_input1
     if model_opt.use_chars_dec == 1 then
-      decoder_input1 = torch.LongTensor(K, remaining_sents, model_opt.max_word_l):zero()
+      decoder_input1 = torch.LongTensor(opt.beam, remaining_sents, model_opt.max_word_l):zero()
     else
-      decoder_input1 = torch.LongTensor(K, remaining_sents):zero()
+      decoder_input1 = torch.LongTensor(opt.beam, remaining_sents):zero()
     end
 
-    local decoder_input1_features = features.get_decoder_input(K, remaining_sents)
+    local decoder_input1_features = features.get_decoder_input(opt.beam, remaining_sents)
 
     local source_sizes = {}
 
-    for b = 1, batch do
+    for b = 1, batch_size do
       if not done[b] then
         local idx = batch_idx[b]
         table.insert(source_sizes, source[b]:size(1))
@@ -338,16 +335,16 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
     end
 
     if model_opt.use_chars_dec == 1 then
-      decoder_input1 = decoder_input1:view(K * remaining_sents, model_opt.max_word_l)
+      decoder_input1 = decoder_input1:view(opt.beam * remaining_sents, model_opt.max_word_l)
     else
-      decoder_input1 = decoder_input1:view(K * remaining_sents)
+      decoder_input1 = decoder_input1:view(opt.beam * remaining_sents)
     end
 
     for j = 1, features.num_target_features do
       if model_opt.target_features_lookup[j] == true then
-        decoder_input1_features[j] = decoder_input1_features[j]:view(K * remaining_sents)
+        decoder_input1_features[j] = decoder_input1_features[j]:view(opt.beam * remaining_sents)
       else
-        decoder_input1_features[j] = decoder_input1_features[j]:view(K * remaining_sents, -1)
+        decoder_input1_features[j] = decoder_input1_features[j]:view(opt.beam * remaining_sents, -1)
       end
     end
 
@@ -356,7 +353,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
                                             rnn_state_dec,
                                             new_context)
 
-    if batch > 1 then
+    if batch_size > 1 then
       -- replace the attention softmax with a masked attention softmax
       replace_attn_softmax(source_sizes, true)
     end
@@ -365,11 +362,11 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
 
     if type(out) == "table" then
       for j = 1, #out do
-        out[j] = out[j]:view(K, remaining_sents, out[j]:size(2)):transpose(1, 2)
+        out[j] = out[j]:view(opt.beam, remaining_sents, out[j]:size(2)):transpose(1, 2)
       end
       out_float:resize(out[1]:size()):copy(out[1])
     else
-      out = out:view(K, remaining_sents, out:size(2)):transpose(1, 2)
+      out = out:view(opt.beam, remaining_sents, out:size(2)):transpose(1, 2)
       out_float:resize(out:size()):copy(out)
     end
 
@@ -377,16 +374,16 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
 
     if model_opt.start_symbol == 1 then
       decoder_softmax.output[{{}, 1}]:zero()
-      decoder_softmax.output[{{}, source_l}]:zero()
+      decoder_softmax.output[{{}, State.source_length}]:zero()
     end
 
-    local softmax_out = decoder_softmax.output:view(K, remaining_sents, -1)
+    local softmax_out = decoder_softmax.output:view(opt.beam, remaining_sents, -1)
     local new_remaining_sents = remaining_sents
 
-    for b = 1, batch do
+    for b = 1, batch_size do
       if done[b] == false then
         local idx = batch_idx[b]
-        for k = 1, K do
+        for k = 1, opt.beam do
           State.disallow(out_float[idx]:select(1, k))
           out_float[idx][k]:add(scores[b][i-1][k])
         end
@@ -398,7 +395,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
           flat_out = out_float[idx][1] -- all outputs same for first batch
         end
 
-        for k = 1, K do
+        for k = 1, opt.beam do
           while true do
             local score, index = flat_out:max(1)
             score = score[1]
@@ -427,11 +424,11 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
 
         for j = 1, #rnn_state_dec do
           local view = rnn_state_dec[j]
-            :view(K, remaining_sents, model_opt.rnn_size)
+            :view(opt.beam, remaining_sents, model_opt.rnn_size)
           view[{{}, idx}] = view[{{}, idx}]:index(1, prev_ks[b][i])
         end
 
-        features.calculate_hypotheses(next_ys_features, out, K, i, b, idx)
+        features.calculate_hypotheses(next_ys_features, out, opt.beam, i, b, idx)
 
         end_hyp[b] = states[b][i][1]
         end_score[b] = scores[b][i][1]
@@ -444,7 +441,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
           new_remaining_sents = new_remaining_sents - 1
           batch_idx[b] = 0
         else
-          for k = 1, K do
+          for k = 1, opt.beam do
             local possible_hyp = states[b][i][k]
             if possible_hyp[#possible_hyp] == constants.END then
               found_eos[b] = true
@@ -480,15 +477,15 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
       -- update rnn_state and context
       for j = 1, #rnn_state_dec do
         rnn_state_dec[j] = rnn_state_dec[j]
-          :view(K, remaining_sents, model_opt.rnn_size)
+          :view(opt.beam, remaining_sents, model_opt.rnn_size)
           :index(2, to_keep)
-          :view(K*new_remaining_sents, model_opt.rnn_size)
+          :view(opt.beam*new_remaining_sents, model_opt.rnn_size)
       end
 
       new_context = new_context
-        :view(K, remaining_sents, source_l, model_opt.rnn_size)
+        :view(opt.beam, remaining_sents, State.source_length, model_opt.rnn_size)
         :index(2, to_keep)
-        :view(K*new_remaining_sents, source_l, model_opt.rnn_size)
+        :view(opt.beam*new_remaining_sents, State.source_length, model_opt.rnn_size)
     end
 
     remaining_sents = new_remaining_sents
@@ -500,7 +497,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
   local attn_weights_res = {}
 
 
-  for b = 1, batch do
+  for b = 1, batch_size do
     if opt.simple == 1 or end_score[b] > max_score[b] or not found_eos[b] then
       max_hyp[b] = end_hyp[b]
       max_score[b] = end_score[b]
@@ -511,7 +508,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
     -- remove unnecessary values from the attention vectors
     for j = 2, #max_attn_weights[b] do
       local size = source[b]:size(1)
-      max_attn_weights[b][j] = max_attn_weights[b][j]:narrow(1, source_l-size+1, size)
+      max_attn_weights[b][j] = max_attn_weights[b][j]:narrow(1, State.source_length-size+1, size)
     end
 
     table.insert(attn_weights_res, max_attn_weights[b][#max_attn_weights[b]])
@@ -525,7 +522,7 @@ local function generate_beam(K, max_sent_l, source, source_features, gold)
   end
 
   if gold ~= nil then
-    gold:process(batch, model, context, init_fwd_dec, word2charidx_targ, source, max_score)
+    gold:process(batch_size, model, context, init_fwd_dec, word2charidx_targ, source, max_score)
   end
 
   return max_hyp, features.max_hypothesis, max_score, max_attn_weights, states_res, scores_res, attn_weights_res
@@ -769,8 +766,7 @@ local function search(batch, gold)
     table.insert(source_features_batch, source_features)
   end
 
-  local pred_batch, pred_features_batch, pred_score_batch, attn_batch, all_sents_batch, all_scores_batch = generate_beam(
-    opt.beam, opt.max_sent_l, source_batch, source_features_batch, gold)
+  local pred_batch, pred_features_batch, pred_score_batch, attn_batch, all_sents_batch, all_scores_batch = generate_beam(source_batch, source_features_batch, gold)
 
   local cleaned_pred_features_batch = {}
   local cleaned_pred_tokens_batch = {}
