@@ -104,31 +104,18 @@ local function train(train_data, valid_data, encoder, decoder, generator)
     local batch_order = torch.randperm(#data) -- shuffle mini batch order
 
     for i = 1, #data do
-      encoder:forget()
-      decoder:forget()
-
       local batch = data:get_batch(batch_order[i])
 
-      -- forward encoder
       local encoder_states, context = encoder:forward(batch)
+      local decoder_outputs = decoder:forward(batch, encoder_states, context)
 
-      -- forward decoder
-      local decoder_states, decoder_out = decoder:forward(batch, encoder_states)
+      local decoder_grad_output, loss = generator:forward_backward(batch, decoder_outputs)
 
-      -- forward and backward attention and generator
-      local decoder_grad_output, grad_context, loss = generator:process(batch, context, decoder_states, decoder_out)
-
-      -- backward decoder
-      local decoder_grad_input = decoder:backward(decoder_grad_output)
-
-      -- backward encoder
-      local encoder_grad_output = decoder_grad_input
-      encoder_grad_output[#encoder_grad_output] = grad_context
-      encoder:backward(encoder_grad_output)
+      local decoder_grad_states_input, context_grad = decoder:backward(batch, decoder_grad_output)
+      encoder:backward(batch, decoder_grad_states_input, context_grad)
 
       optim:update_params(params, grad_params, opt.max_grad_norm)
 
-      -- Bookkeeping
       bookkeeper:update(batch, loss)
 
       if i % opt.print_every == 0 then
@@ -195,12 +182,14 @@ local function main()
 
   if opt.train_from:len() == 0 then
     encoder = Encoder.new({
+      max_sent_length = math.max(train_data.max_source_length, valid_data.max_source_length),
       pre_word_vecs = opt.pre_word_vecs_enc,
       fix_word_vecs = opt.fix_word_vecs_enc,
       vocab_size = #dataset.src_dict
     }, opt)
 
     decoder = Decoder.new({
+      max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),
       pre_word_vecs = opt.pre_word_vecs_dec,
       fix_word_vecs = opt.fix_word_vec,
       vocab_size = #dataset.targ_dict
@@ -221,9 +210,7 @@ local function main()
     generator = model[3]
   end
 
-  generator:build_criterion(#dataset.targ_dict)
-
-  cuda.convert({encoder.network, decoder.network, generator.network, generator.criterion})
+  cuda.convert({encoder, decoder, generator})
 
   train(train_data, valid_data, encoder, decoder, generator)
 end

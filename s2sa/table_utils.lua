@@ -38,7 +38,16 @@ local function flat_to_rc(v, flat_index)
   return row, (flat_index - 1) % v:size(2) + 1
 end
 
+local function clone(tab)
+  local new_tab = {}
+  for i = 1, #tab do
+    table.insert(new_tab, tab[i]:clone())
+  end
+  return new_tab
+end
+
 return {
+  clone = clone,
   reorder = reorder,
   zero = zero,
   append = append,

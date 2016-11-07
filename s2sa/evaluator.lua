@@ -14,20 +14,13 @@ function Evaluator:process(states, data)
   local total = 0
 
   for i = 1, #data do
-    states.encoder:forget()
-    states.decoder:forget()
-
     local batch = data:get_batch(i)
 
     local encoder_states, context = states.encoder:forward(batch)
-    local _, decoder_out = states.decoder:forward(batch, encoder_states)
+    local decoder_outputs = states.decoder:forward(batch, encoder_states, context)
 
-    local loss = 0
-    for t = 1, batch.target_length do
-      local out = decoder_out:select(2, t)
-      local generator_output = states.generator.network:forward({out, context})
-      loss = loss + states.generator.criterion:forward(generator_output, batch.target_output[{{}, t}])
-    end
+    local loss = states.generator:compute_loss(batch, decoder_outputs)
+
     nll = nll + loss
     total = total + batch.target_non_zeros
   end
