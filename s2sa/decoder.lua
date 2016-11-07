@@ -14,7 +14,7 @@ function Decoder:__init(args, opt)
 end
 
 function Decoder:forward(batch, encoder_states, context)
-  local states = table_utils.clone(encoder_states)
+  local states = encoder_states
 
   self.inputs = {}
   local outputs = {}
@@ -54,12 +54,12 @@ function Decoder:backward(batch, grad_output)
 
     -- prepare next decoder output gradients
     for i = 1, #grad_states_input do
-      grad_states_input[i]:copy(grad_input[i])
+      grad_states_input[i] = grad_input[i]
     end
 
     -- accumulate encoder output gradients
     if grad_context_input == nil then
-      grad_context_input = grad_input[grad_context_idx]:clone()
+      grad_context_input = grad_input[grad_context_idx]
     else
       grad_context_input:add(grad_input[grad_context_idx])
     end
