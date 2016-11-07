@@ -62,7 +62,6 @@ local function make_attention(opt)
   context_combined = nn.Sum(2)(context_combined) -- batch_l x rnn_size
   context_combined = nn.JoinTable(2)({context_combined, inputs[1]}) -- batch_l x rnn_size*2
   local context_output = nn.Tanh()(nn.Linear(opt.rnn_size*2,opt.rnn_size,false)(context_combined))
-  context_output = nn.Dropout(opt.dropout, nil, false)(context_output)
 
   return nn.gModule(inputs, {context_output})
 end
