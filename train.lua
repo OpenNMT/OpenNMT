@@ -213,8 +213,6 @@ local function main()
     generator = model[3]
   end
 
-  cuda.convert({encoder, decoder, generator})
-
   train(train_data, valid_data, encoder, decoder, generator)
 end
 

@@ -1,11 +1,12 @@
 local model_utils = require 's2sa.model_utils'
 local table_utils = require 's2sa.table_utils'
+local cuda = require 's2sa.cuda'
 require 's2sa.sequencer'
 
 local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
 
 function Encoder:__init(args, opt)
-  self.context_proto = torch.zeros(opt.max_batch_size, args.max_sent_length, opt.rnn_size)
+  self.context_proto = cuda.convert(torch.zeros(opt.max_batch_size, args.max_sent_length, opt.rnn_size))
 
   Sequencer.__init(self, args, opt, 'enc')
 end

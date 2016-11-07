@@ -71,7 +71,7 @@ end
 local Sequencer = torch.class('Sequencer')
 
 function Sequencer:__init(args, opt, model)
-  self.network = self:build_network(args.vocab_size, opt, model)
+  self.network = cuda.convert(self:build_network(args.vocab_size, opt, model))
   self.network_clones = model_utils.clone_many_times(self.network, args.max_sent_length)
 
   if args.pre_word_vecs:len() > 0 then
@@ -200,9 +200,6 @@ end
 
 function Sequencer:cuda()
   self.network:cuda()
-  for i = 1, #self.network_clones do
-    self.network_clones[i]:cuda()
-  end
 end
 
 

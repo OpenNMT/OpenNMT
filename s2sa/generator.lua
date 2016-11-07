@@ -23,8 +23,8 @@ end
 local Generator = torch.class('Generator')
 
 function Generator:__init(args, opt)
-  self.network = build_network(args.vocab_size, opt)
-  self.criterion = build_criterion(args.vocab_size)
+  self.network = cuda.convert(build_network(args.vocab_size, opt))
+  self.criterion = cuda.convert(build_criterion(args.vocab_size))
 end
 
 function Generator:forward_one(decoder_output)

@@ -37,7 +37,7 @@ end
 
 function Cuda.convert(obj)
   if Cuda.activated then
-    if type(obj) == 'table' then
+    if torch.typename(obj) == 'table' then
       for i = 1, #obj do
         obj[i]:cuda()
       end
