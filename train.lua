@@ -91,8 +91,7 @@ local function train(train_data, valid_data, encoder, decoder, generator)
     params[i] = p
     grad_params[i] = gp
   end
-
-  print("Number of parameters: " .. num_params)
+  print(" * number of parameters: " .. num_params)
 
   local function train_batch(data, epoch, optim, checkpoint)
     local bookkeeper = Bookkeeper.new({
@@ -170,10 +169,12 @@ local function main()
   local train_data = Data.new(dataset.train, opt.max_batch_size)
   local valid_data = Data.new(dataset.valid, opt.max_batch_size)
 
-  print(string.format('Source vocab size: %d, Target vocab size: %d',
+  print(string.format(' * vocabluary size: source = %d; target = %d',
                       #dataset.src_dict, #dataset.targ_dict))
-  print(string.format('Source max sent len: %d, Target max sent len: %d',
+  print(string.format(' * maximum sequence length: source = %d; target = %d',
                       train_data.max_source_length, train_data.max_target_length))
+  print(string.format(' * number of training sentences: %d', #train_data.src))
+  print(string.format(' * number of batches: %d', #train_data))
 
   -- Build model
   local encoder
@@ -181,6 +182,7 @@ local function main()
   local generator
 
   if opt.train_from:len() == 0 then
+    print('Building model...')
     encoder = Encoder.new({
       max_sent_length = math.max(train_data.max_source_length, valid_data.max_source_length),
       pre_word_vecs = opt.pre_word_vecs_enc,
@@ -200,7 +202,7 @@ local function main()
     }, opt)
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
-    print('loading ' .. opt.train_from .. '...')
+    print('Loading from model ' .. opt.train_from .. '...')
     local checkpoint = torch.load(opt.train_from)
     local model, model_opt = checkpoint[1], checkpoint[2]
     opt.num_layers = model_opt.num_layers

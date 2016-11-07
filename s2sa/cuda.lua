@@ -30,7 +30,7 @@ function Cuda.init(opt)
         error(err)
       end
     else
-       print('Using GPU ' .. opt.gpuid .. '.')
+       print('Using GPU ' .. opt.gpuid .. '...')
     end
   end
 end

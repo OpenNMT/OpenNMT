@@ -13,6 +13,8 @@ function Bookkeeper:__init(args)
   self.train_loss = 0
   self.num_words_source = 0
   self.num_words_target = 0
+
+  print('')
 end
 
 function Bookkeeper:update(batch, loss)
