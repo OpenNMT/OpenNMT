@@ -1,11 +1,16 @@
 local model_utils = require 's2sa.model_utils'
 local table_utils = require 's2sa.table_utils'
+local cuda = require 's2sa.cuda'
 require 's2sa.sequencer'
 
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 
 function Decoder:__init(args, opt)
   Sequencer.__init(self, args, opt, 'dec')
+  self.input_feed = opt.input_feed
+  if self.input_feed then
+    self.input_feed_proto = cuda.convert(torch.zeros(opt.max_batch_size, opt.rnn_size))
+  end
 end
 
 function Decoder:forward(batch, encoder_states, context)
@@ -19,6 +24,13 @@ function Decoder:forward(batch, encoder_states, context)
     table_utils.append(self.inputs[t], states)
     table_utils.append(self.inputs[t], {batch.target_input[t]})
     table_utils.append(self.inputs[t], {context})
+    if self.input_feed then
+      if #outputs == 0 then
+        table_utils.append(self.inputs[t], {self.input_feed_proto[{{1, batch.size}}]})
+      else
+        table_utils.append(self.inputs[t], {outputs[#outputs]})
+      end
+    end
 
     states = Sequencer.get_clone(self, t):forward(self.inputs[t])
 
@@ -33,6 +45,7 @@ end
 function Decoder:backward(batch, grad_output)
   local grad_states_input = model_utils.reset_state(self.init_states, batch.size)
   local grad_context_input = nil
+  local grad_context_idx = #grad_states_input + 2
 
   for t = batch.target_length, 1, -1 do
     table.insert(grad_states_input, grad_output[t])
@@ -46,9 +59,14 @@ function Decoder:backward(batch, grad_output)
 
     -- accumulate encoder output gradients
     if grad_context_input == nil then
-      grad_context_input = grad_input[#grad_input]:clone()
+      grad_context_input = grad_input[grad_context_idx]:clone()
     else
-      grad_context_input:add(grad_input[#grad_input])
+      grad_context_input:add(grad_input[grad_context_idx])
+    end
+
+    -- accumulate previous output gradients with input feeding gradients
+    if self.input_feed and t > 1 then
+      grad_output[t - 1]:add(grad_input[#grad_input])
     end
   end
 

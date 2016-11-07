@@ -100,6 +100,7 @@ function Sequencer:build_network(vocab_size, opt, model)
 
   local x
   local context
+  local input_feed
 
   for _ = 1, opt.num_layers do
     table.insert(inputs, nn.Identity()()) -- c0: batch_size x rnn_size
@@ -112,6 +113,10 @@ function Sequencer:build_network(vocab_size, opt, model)
   if model == 'dec' then
     table.insert(inputs, nn.Identity()()) -- context: batch_size * source_length * rnn_size
     context = inputs[#inputs]
+    if opt.input_feed then
+      table.insert(inputs, nn.Identity()()) -- context: batch_size x rnn_size
+      input_feed = inputs[#inputs]
+    end
   end
 
   local next_c
@@ -125,6 +130,10 @@ function Sequencer:build_network(vocab_size, opt, model)
       input_size = opt.word_vec_size
       self.word_vecs = nn.LookupTable(vocab_size, input_size)
       input = self.word_vecs(x) -- batch_size x word_vec_size
+      if model == 'dec' and opt.input_feed then
+        input_size = input_size + opt.rnn_size
+        input = nn.JoinTable(2)({input, input_feed})
+      end
     else
       input_size = opt.rnn_size
       input = nn.Dropout(opt.dropout, nil, false)(next_h) -- batch_size x rnn_size
