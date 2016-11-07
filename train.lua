@@ -90,7 +90,7 @@ local function train(train_data, valid_data, encoder, decoder, generator)
     end
     num_params = num_params + p:size(1)
     params[i] = p
-    grad_params[i] = gp
+    grad_params[i] = gp:zero()
   end
   print(" * number of parameters: " .. num_params)
 
