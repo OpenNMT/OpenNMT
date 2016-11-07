@@ -1,11 +1,11 @@
 require 'torch'
 local cuda = require 's2sa.cuda'
 
-local function build_network(vocab_size, opt)
+local function build_network(vocab_size, rnn_size)
   local inputs = {}
   table.insert(inputs, nn.Identity()()) -- decoder output
 
-  local map = nn.Linear(opt.rnn_size, vocab_size)(inputs[1])
+  local map = nn.Linear(rnn_size, vocab_size)(inputs[1])
   local loglk = cuda.nn.LogSoftMax()(map)
 
   return nn.gModule(inputs, {loglk})
@@ -22,8 +22,8 @@ end
 
 local Generator = torch.class('Generator')
 
-function Generator:__init(args, opt)
-  self.network = cuda.convert(build_network(args.vocab_size, opt))
+function Generator:__init(args)
+  self.network = cuda.convert(build_network(args.vocab_size, args.rnn_size))
   self.criterion = cuda.convert(build_criterion(args.vocab_size))
 end
 

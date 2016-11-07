@@ -186,21 +186,33 @@ local function main()
     print('Building model...')
     encoder = Encoder.new({
       max_sent_length = math.max(train_data.max_source_length, valid_data.max_source_length),
+      max_batch_size = opt.max_batch_size,
+      word_vec_size = opt.word_vec_size,
       pre_word_vecs = opt.pre_word_vecs_enc,
       fix_word_vecs = opt.fix_word_vecs_enc,
-      vocab_size = #dataset.src_dict
-    }, opt)
+      vocab_size = #dataset.src_dict,
+      rnn_size = opt.rnn_size,
+      dropout = opt.dropout,
+      num_layers = opt.num_layers,
+    })
 
     decoder = Decoder.new({
       max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),
+      max_batch_size = opt.max_batch_size,
+      word_vec_size = opt.word_vec_size,
       pre_word_vecs = opt.pre_word_vecs_dec,
-      fix_word_vecs = opt.fix_word_vec,
-      vocab_size = #dataset.targ_dict
-    }, opt)
+      fix_word_vecs = opt.fix_word_vecs_dec,
+      vocab_size = #dataset.targ_dict,
+      rnn_size = opt.rnn_size,
+      dropout = opt.dropout,
+      num_layers = opt.num_layers,
+      input_feed = opt.input_feed
+    })
 
     generator = Generator.new({
-      vocab_size = #dataset.targ_dict
-    }, opt)
+      vocab_size = #dataset.targ_dict,
+      rnn_size = opt.rnn_size
+    })
   else
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('Loading from model ' .. opt.train_from .. '...')

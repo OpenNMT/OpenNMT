@@ -5,11 +5,12 @@ require 's2sa.sequencer'
 
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 
-function Decoder:__init(args, opt)
-  Sequencer.__init(self, args, opt, 'dec')
-  self.input_feed = opt.input_feed
+function Decoder:__init(args)
+  Sequencer.__init(self, 'dec', args)
+
+  self.input_feed = args.input_feed
   if self.input_feed then
-    self.input_feed_proto = cuda.convert(torch.zeros(opt.max_batch_size, opt.rnn_size))
+    self.input_feed_proto = cuda.convert(torch.zeros(args.max_batch_size, args.rnn_size))
   end
 end
 

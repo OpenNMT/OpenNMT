@@ -41,12 +41,12 @@ local function make_lstm(input_size, rnn_size)
   return nn.gModule(inputs, {next_c, next_h})
 end
 
-local function make_attention(opt)
+local function make_attention(rnn_size)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local target_t = nn.Linear(opt.rnn_size, opt.rnn_size, false)(inputs[1]) -- batch_l x rnn_size
+  local target_t = nn.Linear(rnn_size, rnn_size, false)(inputs[1]) -- batch_l x rnn_size
   local context = inputs[2] -- batch_l x source_timesteps x rnn_size
 
   -- get attention
@@ -61,7 +61,7 @@ local function make_attention(opt)
   local context_combined = nn.MM()({attn, context}) -- batch_l x 1 x rnn_size
   context_combined = nn.Sum(2)(context_combined) -- batch_l x rnn_size
   context_combined = nn.JoinTable(2)({context_combined, inputs[1]}) -- batch_l x rnn_size*2
-  local context_output = nn.Tanh()(nn.Linear(opt.rnn_size*2,opt.rnn_size,false)(context_combined))
+  local context_output = nn.Tanh()(nn.Linear(rnn_size*2, rnn_size, false)(context_combined))
 
   return nn.gModule(inputs, {context_output})
 end
@@ -69,8 +69,8 @@ end
 
 local Sequencer = torch.class('Sequencer')
 
-function Sequencer:__init(args, opt, model)
-  self.network = cuda.convert(self:build_network(args.vocab_size, opt, model))
+function Sequencer:__init(model, args)
+  self.network = cuda.convert(self:build_network(model, args))
   self.network_clones = model_utils.clone_many_times(self.network, args.max_sent_length)
 
   if args.pre_word_vecs:len() > 0 then
@@ -84,16 +84,16 @@ function Sequencer:__init(args, opt, model)
   self.fix_word_vecs = args.fix_word_vecs
   self.word_vecs.weight[1]:zero()
 
-  local h_init = cuda.convert(torch.zeros(opt.max_batch_size, opt.rnn_size))
+  local h_init = cuda.convert(torch.zeros(args.max_batch_size, args.rnn_size))
 
   self.init_states = {}
-  for _ = 1, opt.num_layers do
+  for _ = 1, args.num_layers do
     table.insert(self.init_states, h_init:clone())
     table.insert(self.init_states, h_init:clone())
   end
 end
 
-function Sequencer:build_network(vocab_size, opt, model)
+function Sequencer:build_network(model, args)
   local inputs = {}
   local outputs = {}
 
@@ -101,7 +101,7 @@ function Sequencer:build_network(vocab_size, opt, model)
   local context
   local input_feed
 
-  for _ = 1, opt.num_layers do
+  for _ = 1, args.num_layers do
     table.insert(inputs, nn.Identity()()) -- c0: batch_size x rnn_size
     table.insert(inputs, nn.Identity()()) -- h0: batch_size x rnn_size
   end
@@ -112,7 +112,7 @@ function Sequencer:build_network(vocab_size, opt, model)
   if model == 'dec' then
     table.insert(inputs, nn.Identity()()) -- context: batch_size * source_length * rnn_size
     context = inputs[#inputs]
-    if opt.input_feed then
+    if args.input_feed then
       table.insert(inputs, nn.Identity()()) -- context: batch_size x rnn_size
       input_feed = inputs[#inputs]
     end
@@ -121,36 +121,36 @@ function Sequencer:build_network(vocab_size, opt, model)
   local next_c
   local next_h
 
-  for L = 1, opt.num_layers do
+  for L = 1, args.num_layers do
     local input_size
     local input
 
     if L == 1 then
-      input_size = opt.word_vec_size
-      self.word_vecs = nn.LookupTable(vocab_size, input_size)
+      input_size = args.word_vec_size
+      self.word_vecs = nn.LookupTable(args.vocab_size, input_size)
       input = self.word_vecs(x) -- batch_size x word_vec_size
-      if model == 'dec' and opt.input_feed then
-        input_size = input_size + opt.rnn_size
+      if model == 'dec' and args.input_feed then
+        input_size = input_size + args.rnn_size
         input = nn.JoinTable(2)({input, input_feed})
       end
     else
-      input_size = opt.rnn_size
-      input = nn.Dropout(opt.dropout, nil, false)(next_h) -- batch_size x rnn_size
+      input_size = args.rnn_size
+      input = nn.Dropout(args.dropout, nil, false)(next_h) -- batch_size x rnn_size
     end
 
     local prev_c = inputs[L*2 - 1]
     local prev_h = inputs[L*2]
 
-    next_c, next_h = make_lstm(input_size, opt.rnn_size)({prev_c, prev_h, input}):split(2)
+    next_c, next_h = make_lstm(input_size, args.rnn_size)({prev_c, prev_h, input}):split(2)
 
     table.insert(outputs, next_c)
     table.insert(outputs, next_h)
   end
 
   if model == 'dec' then
-    local attn_layer = make_attention(opt)
+    local attn_layer = make_attention(args.rnn_size)
     attn_layer.name = 'decoder_attn'
-    local attn_output = nn.Dropout(opt.dropout, nil, false)(attn_layer({next_h, context}))
+    local attn_output = nn.Dropout(args.dropout, nil, false)(attn_layer({next_h, context}))
     table.insert(outputs, attn_output)
   end
 
