@@ -62,8 +62,8 @@ cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this w
 cmd:option('-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the decoder side.
                                      See README for specific formatting instructions.]])
-cmd:option('-fix_word_vecs_enc', 0, [[If = 1, fix word embeddings on the encoder side]])
-cmd:option('-fix_word_vecs_dec', 0, [[If = 1, fix word embeddings on the decoder side]])
+cmd:option('-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]])
+cmd:option('-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]])
 
 cmd:text("")
 cmd:text("**Other options**")

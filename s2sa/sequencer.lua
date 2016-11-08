@@ -155,7 +155,7 @@ end
 
 function Sequencer:backward_word_vecs()
   self.word_vecs.gradWeight[1]:zero()
-  if self.fix_word_vecs == 1 then
+  if self.fix_word_vecs then
     self.word_vecs.gradWeight:zero()
   end
 end
