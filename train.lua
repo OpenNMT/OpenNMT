@@ -8,6 +8,7 @@ local Checkpoint = require 's2sa.checkpoint'
 local Data = require 's2sa.data'
 local Decoder = require 's2sa.decoder'
 local Encoder = require 's2sa.encoder'
+local BiEncoder = require 's2sa.biencoder'
 local Evaluator = require 's2sa.evaluator'
 local Generator = require 's2sa.generator'
 local Optim = require 's2sa.optim'
@@ -31,6 +32,8 @@ cmd:option('-num_layers', 2, [[Number of layers in the LSTM encoder/decoder]])
 cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
 cmd:option('-input_feed', true, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
+cmd:option('-brnn', false, [[Use a bidirectional encoder]])
+cmd:option('-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states: concat or sum]])
 
 cmd:text("")
 cmd:text("**Optimization options**")
@@ -80,7 +83,12 @@ local function train(train_data, valid_data, encoder, decoder, generator)
   local params = {}
   local grad_params = {}
 
-  local layers = {encoder, decoder, generator}
+  local layers
+  if opt.brnn then
+    layers = {encoder.fwd, encoder.bwd, decoder, generator}
+  else
+    layers = {encoder, decoder, generator}
+  end
 
   print('Initializing parameters...')
   for i = 1, #layers do
@@ -184,7 +192,8 @@ local function main()
 
   if opt.train_from:len() == 0 then
     print('Building model...')
-    encoder = Encoder.new({
+
+    local encoder_args = {
       max_sent_length = math.max(train_data.max_source_length, valid_data.max_source_length),
       max_batch_size = opt.max_batch_size,
       word_vec_size = opt.word_vec_size,
@@ -194,7 +203,13 @@ local function main()
       rnn_size = opt.rnn_size,
       dropout = opt.dropout,
       num_layers = opt.num_layers,
-    })
+    }
+
+    if opt.brnn then
+      encoder = BiEncoder.new(encoder_args, opt.brnn_merge)
+    else
+      encoder = Encoder.new(encoder_args)
+    end
 
     decoder = Decoder.new({
       max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),

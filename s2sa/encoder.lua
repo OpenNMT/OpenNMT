@@ -31,7 +31,7 @@ function Encoder:forward(batch)
 end
 
 function Encoder:backward(batch, grad_states_output, grad_context_output)
-  local grad_states_input = grad_states_output
+  local grad_states_input = table_utils.clone(grad_states_output)
 
   for t = batch.source_length, 1, -1 do
     -- add context gradients to last hidden states gradients
