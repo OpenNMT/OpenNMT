@@ -1,8 +1,5 @@
 require 'torch'
 
-local table_utils = require 's2sa.utils.table_utils'
-
-
 local function adagrad_step(x, dfdx, lr, state)
   if not state.var then
     state.var = torch.Tensor():typeAs(x):resizeAs(x):zero()
