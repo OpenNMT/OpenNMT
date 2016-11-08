@@ -51,7 +51,7 @@ end
 local function make_sentence(sent, dictionary, start_symbols)
   local vec = {}
 
-  if start_symbols == true then
+  if start_symbols then
     table.insert(vec, dictionary:lookup('<s>'))
   end
 
@@ -63,7 +63,7 @@ local function make_sentence(sent, dictionary, start_symbols)
     table.insert(vec, idx)
   end
 
-  if start_symbols == true then
+  if start_symbols then
     table.insert(vec, dictionary:lookup('</s>'))
   end
 
