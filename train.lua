@@ -171,12 +171,12 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
   end
 
   local optim = Optim.new({
-      method = opt.optim,
-      num_models = #params,
-      learning_rate = opt.learning_rate,
-      lr_decay = opt.lr_decay,
-      start_decay_at = opt.start_decay_at,
-      model_info = model_info
+    method = opt.optim,
+    num_models = #params,
+    learning_rate = opt.learning_rate,
+    lr_decay = opt.lr_decay,
+    start_decay_at = opt.start_decay_at,
+    model_info = model_info
   })
   local checkpoint = Checkpoint.new({
     layers = layers,
