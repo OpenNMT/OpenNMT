@@ -3,15 +3,17 @@ require 's2sa.dict'
 local lfs = require 'lfs'
 local path = require 'pl.path'
 local cuda = require 's2sa.cuda'
-local Bookkeeper = require 's2sa.bookkeeper'
-local Checkpoint = require 's2sa.checkpoint'
-local Data = require 's2sa.data'
+
 local Decoder = require 's2sa.decoder'
 local Encoder = require 's2sa.encoder'
 local BiEncoder = require 's2sa.biencoder'
-local Evaluator = require 's2sa.evaluator'
 local Generator = require 's2sa.generator'
-local Optim = require 's2sa.optim'
+
+local Evaluator = require 's2sa.train.evaluator'
+local Bookkeeper = require 's2sa.train.bookkeeper'
+local Checkpoint = require 's2sa.train.checkpoint'
+local Data = require 's2sa.train.data'
+local Optim = require 's2sa.train.optim'
 
 local cmd = torch.CmdLine()
 
