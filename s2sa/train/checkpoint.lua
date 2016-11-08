@@ -23,6 +23,7 @@ end
 
 function Checkpoint:save(file_path)
   self.model_info.learning_rate = self.optim:get_rate()
+  self.model_info.optim_states = self.optim:get_states()
 
   print('saving checkpoint to ' .. file_path)
   torch.save(file_path, {self.layers, self.options, self.model_info})

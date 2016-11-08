@@ -45,6 +45,7 @@ cmd:option('-max_batch_size', 64, [[Maximum batch size]])
 cmd:option('-epochs', 13, [[Number of training epochs]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
+cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
 cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
                                 then this is the global learning rate. Recommended settings: sgd =1,
                                 adagrad = 0.1, adadelta = 1, adam = 0.1]])
@@ -82,7 +83,7 @@ cmd:option('-seed', 3435, [[Seed for random initialization]])
 local opt = cmd:parse(arg)
 
 
-local function train(train_data, valid_data, encoder, decoder, generator)
+local function train(train_data, valid_data, encoder, decoder, generator, model_info)
   local num_params = 0
   local params = {}
   local grad_params = {}
@@ -146,7 +147,14 @@ local function train(train_data, valid_data, encoder, decoder, generator)
   end
 
   local evaluator = Evaluator.new()
-  local optim = Optim.new(opt.learning_rate, opt.lr_decay, opt.start_decay_at)
+  local optim = Optim.new({
+      method = opt.optim,
+      num_models = #params,
+      learning_rate = opt.learning_rate,
+      lr_decay = opt.lr_decay,
+      start_decay_at = opt.start_decay_at,
+      model_info = model_info
+  })
   local checkpoint = Checkpoint.new({
     layers = layers,
     options = opt,
@@ -167,7 +175,9 @@ local function train(train_data, valid_data, encoder, decoder, generator)
       generator = generator
     }, valid_data)
 
-    optim:update_rate(score, epoch)
+    if opt.optim == 'sgd' then
+      optim:update_rate(score, epoch)
+    end
 
     checkpoint:save_epoch(score, bookkeeper)
   end
@@ -196,6 +206,8 @@ local function main()
   local encoder
   local decoder
   local generator
+
+  local model_info = {}
 
   if opt.train_from:len() == 0 then
     print('Building model...')
@@ -239,7 +251,9 @@ local function main()
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
     print('Loading from model ' .. opt.train_from .. '...')
     local checkpoint = torch.load(opt.train_from)
-    local model, model_opt = checkpoint[1], checkpoint[2]
+    local model = checkpoint[1]
+    local model_opt = checkpoint[2]
+    model_info = checkpoint[3]
     opt.num_layers = model_opt.num_layers
     opt.rnn_size = model_opt.rnn_size
     encoder = model[1]
@@ -247,7 +261,7 @@ local function main()
     generator = model[3]
   end
 
-  train(train_data, valid_data, encoder, decoder, generator)
+  train(train_data, valid_data, encoder, decoder, generator, model_info)
 end
 
 main()
