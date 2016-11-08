@@ -1,8 +1,8 @@
-require 's2sa.dict'
+require 's2sa.utils.dict'
 
 local lfs = require 'lfs'
 local path = require 'pl.path'
-local cuda = require 's2sa.cuda'
+local cuda = require 's2sa.utils.cuda'
 
 local Decoder = require 's2sa.decoder'
 local Encoder = require 's2sa.encoder'

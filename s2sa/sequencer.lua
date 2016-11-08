@@ -1,6 +1,6 @@
 require 'torch'
-local cuda = require 's2sa.cuda'
-local model_utils = require 's2sa.model_utils'
+local cuda = require 's2sa.utils.cuda'
+local model_utils = require 's2sa.utils.model_utils'
 
 local function make_lstm(input_size, rnn_size)
   local inputs = {}

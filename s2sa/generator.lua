@@ -1,5 +1,5 @@
 require 'torch'
-local cuda = require 's2sa.cuda'
+local cuda = require 's2sa.utils.cuda'
 
 local function build_network(vocab_size, rnn_size)
   local inputs = {}

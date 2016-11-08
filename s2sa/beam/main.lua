@@ -7,12 +7,12 @@ require 's2sa.generator'
 local constants = require 's2sa.beam.constants'
 local State = require 's2sa.beam.state'
 local chars = require 's2sa.beam.chars'
-local cuda = require 's2sa.cuda'
-local Dict = require 's2sa.dict'
+local cuda = require 's2sa.utils.cuda'
+local Dict = require 's2sa.utils.dict'
 local features = require 's2sa.beam.features'
 local tokens = require 's2sa.beam.tokens'
 local beam_utils = require 's2sa.beam.utils'
-local table_utils = require 's2sa.table_utils'
+local table_utils = require 's2sa.utils.table_utils'
 
 -- globals
 local model

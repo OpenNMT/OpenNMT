@@ -1,6 +1,6 @@
-local model_utils = require 's2sa.model_utils'
-local table_utils = require 's2sa.table_utils'
-local cuda = require 's2sa.cuda'
+local model_utils = require 's2sa.utils.model_utils'
+local table_utils = require 's2sa.utils.table_utils'
+local cuda = require 's2sa.utils.cuda'
 require 's2sa.sequencer'
 
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')

@@ -1,5 +1,6 @@
+local cuda = require 's2sa.utils.cuda'
+
 local data = torch.class("data")
-local cuda = require 's2sa.cuda'
 
 function data:__init(d, max_batch_size)
   self.src = d.src

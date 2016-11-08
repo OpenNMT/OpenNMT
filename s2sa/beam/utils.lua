@@ -2,7 +2,7 @@ local chars = require 's2sa.beam.chars'
 local constants = require 's2sa.beam.constants'
 local features = require 's2sa.beam.features'
 local beam_state = require 's2sa.beam.state'
-local table_utils = require 's2sa.table_utils'
+local table_utils = require 's2sa.utils.table_utils'
 local path = require 'pl.path'
 
 local BeamUtils = {

@@ -1,7 +1,7 @@
-local dict = require 's2sa.dict'
-local file_reader = require 's2sa.file_reader'
-local table_utils = require 's2sa.table_utils'
-local opt_utils = require 's2sa.opt_utils'
+local dict = require 's2sa.utils.dict'
+local file_reader = require 's2sa.utils.file_reader'
+local table_utils = require 's2sa.utils.table_utils'
+local opt_utils = require 's2sa.utils.opt_utils'
 
 local cmd = torch.CmdLine()
 

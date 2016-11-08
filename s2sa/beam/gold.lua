@@ -16,7 +16,7 @@ function Gold:__init(opt)
   self.gold_words_total = 0
 
   if self.score_gold and path.exists(opt.gold_file) then
-    print('loading GOLD labels at ' .. opt.gold_file)
+    print('loading GNEW labels at ' .. opt.gold_file)
 
     local gold_file = io.open(opt.gold_file, 'r')
     local targ_sents = {}
@@ -123,8 +123,8 @@ function Gold:process(batch_size, model, context, init_fwd_dec, word2charidx_tar
   for b = 1, batch_size do
     self.sent_id = self.sent_id + 1
 
-    print('GOLD ' .. self.sent_id .. ': ' .. tokens.to_sentence(gold[b]))
-    print(string.format("PRED SCORE: %.4f, GOLD SCORE: %.4f", pred_score[b], gold_score[b]))
+    print('GNEW ' .. self.sent_id .. ': ' .. tokens.to_sentence(gold[b]))
+    print(string.format("PRED SCORE: %.4f, GNEW SCORE: %.4f", pred_score[b], gold_score[b]))
     self.gold_score_total = self.gold_score_total + gold_score[b]
     self.gold_words_total = self.gold_words_total + gold[b]:size(1) - 1
   end
@@ -132,7 +132,7 @@ end
 
 function Gold:log_results()
   if self.score_gold then
-    print(string.format("GOLD AVG SCORE: %.4f, GOLD PPL: %.4f",
+    print(string.format("GNEW AVG SCORE: %.4f, GNEW PPL: %.4f",
       self.gold_score_total / self.gold_words_total,
       math.exp(-self.gold_score_total/self.gold_words_total)))
   end

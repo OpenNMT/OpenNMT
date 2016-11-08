@@ -1,7 +1,7 @@
 require 'torch'
-local Dict = require 's2sa.dict'
+local Dict = require 's2sa.utils.dict'
 local constants = require 's2sa.beam.constants'
-local table_utils = require 's2sa.table_utils'
+local table_utils = require 's2sa.utils.table_utils'
 local stringx = require 'pl.stringx'
 
 local Features = {

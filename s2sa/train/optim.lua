@@ -1,6 +1,6 @@
 require 'torch'
 
-local table_utils = require 's2sa.table_utils'
+local table_utils = require 's2sa.utils.table_utils'
 
 local Optim = torch.class("Optim")
 

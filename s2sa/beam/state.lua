@@ -1,6 +1,6 @@
 require 'torch'
 local constants = require 's2sa.beam.constants'
-local table_utils = require 's2sa.table_utils'
+local table_utils = require 's2sa.utils.table_utils'
 
 local BeamState = torch.class("BeamState")
 
