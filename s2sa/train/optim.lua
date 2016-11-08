@@ -61,8 +61,8 @@ function Optim:__init(args)
     self.start_decay = false
     self.start_decay_at = args.start_decay_at
   else
-    if args.model_info.optim_states ~= nil then
-      self.optim_states = args.model_info.optim_states
+    if args.optim_states ~= nil then
+      self.optim_states = args.optim_states
     else
       self.optim_states = {}
       for j = 1, args.num_models do

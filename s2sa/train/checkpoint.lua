@@ -5,59 +5,50 @@ local Checkpoint = torch.class("Checkpoint")
 function Checkpoint:__init(args)
   self.options = args.options
   self.save_path = self.options.savefile
-  self.save_every = self.options.save_every
-  self.intermediate_save = self.options.intermediate_save
-
+  self.model = args.model
   self.optim = args.optim
-  self.layers = args.layers
+end
 
-  self.model_info = {
-    iteration = 0,
-    epoch = 0,
-    epochs = self.options.epochs,
-    train_script_path = args.script_path,
-    start_decay_at = self.optim.start_decay_at,
-    lr_decay = self.optim.lr_decay
+function Checkpoint:save(file_path, info)
+  info.learning_rate = self.optim:get_learning_rate()
+  info.optim_states = self.optim:get_states()
+
+  local data = {
+    model = self.model,
+    options = self.options,
+    info = info
   }
+
+  torch.save(file_path, data)
 end
 
-function Checkpoint:save(file_path)
-  self.model_info.learning_rate = self.optim:get_learning_rate()
-  self.model_info.optim_states = self.optim:get_states()
+function Checkpoint:save_iteration(iteration, epoch_state, batch_order)
+  local info = {}
+  info.iteration = iteration + 1
+  info.epoch = epoch_state.epoch
+  info.epoch_status = epoch_state:get_status()
+  info.batch_order = batch_order
 
-  print('saving checkpoint to ' .. file_path)
-  torch.save(file_path, {self.layers, self.options, self.model_info})
+  local file_path = string.format('%s_checkpoint.t7', self.save_path)
+
+  print('Saving checkpoint to ' .. file_path .. '...')
+
+  -- succeed serialization before overriding existing file
+  self:save(file_path .. '.tmp', info)
+  os.rename(file_path .. '.tmp', file_path)
 end
 
-function Checkpoint:save_iteration(iteration, bookkeeper)
-  self.model_info.iteration = iteration
+function Checkpoint:save_epoch(valid_ppl, epoch_state)
+  local info = {}
+  info.valid_ppl = valid_ppl
+  info.epoch = epoch_state.epoch + 1
+  info.iteration = 1
+  info.train_time_in_minute = epoch_state:get_time() / 60
 
-  if self.intermediate_save > 0 and iteration % self.intermediate_save == 0 then
-    self.model_info.epoch = bookkeeper.epoch
-    self.model_info.epoch_status = bookkeeper:get_status()
+  local file_path = string.format('%s_epoch%d_%.2f.t7', self.save_path, epoch_state.epoch, valid_ppl)
 
-    local file_path = string.format('%s_checkpoint.t7', self.save_path)
-    if iteration == 0 then
-      self:save(file_path)
-    else
-      self:save(file_path .. '.tmp')
-      os.rename(file_path .. '.tmp', file_path)
-    end
-  end
-end
-
-function Checkpoint:save_epoch(score, bookkeeper)
-  if bookkeeper.epoch % self.save_every == 0 then
-    self.model_info.score = score
-    self.model_info.epoch = bookkeeper.epoch
-    self.model_info.epoch_status = bookkeeper:get_status()
-    self.model_info.train_time_in_minute = bookkeeper:get_time() / 60
-
-    self:save(string.format('%s_epoch%d_%.2f.t7', self.save_path, self.model_info.epoch, score))
-  end
-
-  --reinit epoch data for next epoch save
-  self.model_info.iteration = 0
+  print('Saving checkpoint to ' .. file_path .. '...')
+  self:save(file_path, info)
 end
 
 return Checkpoint

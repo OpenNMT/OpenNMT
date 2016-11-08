@@ -1,6 +1,5 @@
 require 's2sa.utils.dict'
 
-local lfs = require 'lfs'
 local path = require 'pl.path'
 local cuda = require 's2sa.utils.cuda'
 
@@ -9,7 +8,7 @@ local Encoder = require 's2sa.encoder'
 local BiEncoder = require 's2sa.biencoder'
 local Generator = require 's2sa.generator'
 
-local Bookkeeper = require 's2sa.train.bookkeeper'
+local EpochState = require 's2sa.train.epoch_state'
 local Checkpoint = require 's2sa.train.checkpoint'
 local Data = require 's2sa.train.data'
 local Optim = require 's2sa.train.optim'
@@ -24,6 +23,7 @@ cmd:option('-savefile', 'seq2seq_lstm_attn', [[Savefile name (model will be save
                                              savefile_epochX_PPL.t7 where X is the X-th epoch and PPL is
                                              the validation perplexity]])
 cmd:option('-train_from', '', [[If training from a checkpoint then this is the path to the pretrained model.]])
+cmd:option('-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]])
 
 cmd:text("")
 cmd:text("**Model options**")
@@ -43,6 +43,7 @@ cmd:text("")
 cmd:option('-max_batch_size', 64, [[Maximum batch size]])
 cmd:option('-epochs', 13, [[Number of training epochs]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
+cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
 cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
 cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
@@ -82,16 +83,16 @@ cmd:option('-seed', 3435, [[Seed for random initialization]])
 local opt = cmd:parse(arg)
 
 
-local function train(train_data, valid_data, encoder, decoder, generator, model_info)
+local function init_params(model)
   local num_params = 0
   local params = {}
   local grad_params = {}
 
   local layers
   if opt.brnn then
-    layers = {encoder.fwd, encoder.bwd, decoder, generator}
+    layers = {model.encoder.fwd, model.encoder.bwd, model.decoder, model.generator}
   else
-    layers = {encoder, decoder, generator}
+    layers = {model.encoder, model.decoder, model.generator}
   end
 
   print('Initializing parameters...')
@@ -106,69 +107,32 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
   end
   print(" * number of parameters: " .. num_params)
 
-  local function eval(data)
-    local loss = 0
-    local total = 0
+  return params, grad_params
+end
 
-    encoder:evaluate()
-    decoder:evaluate()
-    generator:evaluate()
+local function eval(model, data)
+  local loss = 0
+  local total = 0
 
-    for i = 1, #data do
-      local batch = data:get_batch(i)
+  model.encoder:evaluate()
+  model.decoder:evaluate()
+  model.generator:evaluate()
 
-      local encoder_states, context = encoder:forward(batch)
-      local decoder_outputs = decoder:forward(batch, encoder_states, context)
+  for i = 1, #data do
+    local batch = data:get_batch(i)
 
-      loss = loss + generator:compute_loss(batch, decoder_outputs)
-      total = total + batch.target_non_zeros
-    end
+    local encoder_states, context = model.encoder:forward(batch)
+    local decoder_outputs = model.decoder:forward(batch, encoder_states, context)
 
-    return math.exp(loss / total)
+    loss = loss + model.generator:compute_loss(batch, decoder_outputs)
+    total = total + batch.target_non_zeros
   end
 
-  local function train_batch(data, epoch, optim, checkpoint)
-    local bookkeeper = Bookkeeper.new({
-      learning_rate = optim:get_learning_rate(),
-      data_size = #data,
-      epoch = epoch
-    })
+  return math.exp(loss / total)
+end
 
-    local batch_order = torch.randperm(#data) -- shuffle mini batch order
-
-    encoder:training()
-    decoder:training()
-    generator:training()
-
-    for i = 1, #data do
-      local batch_idx = batch_order[i]
-      if epoch <= opt.curriculum then
-        batch_idx = i
-      end
-
-      local batch = data:get_batch(batch_idx)
-
-      local encoder_states, context = encoder:forward(batch)
-      local decoder_outputs = decoder:forward(batch, encoder_states, context)
-
-      local decoder_grad_output, loss = generator:forward_backward(batch, decoder_outputs)
-
-      local decoder_grad_states_input, context_grad = decoder:backward(batch, decoder_grad_output)
-      encoder:backward(batch, decoder_grad_states_input, context_grad)
-
-      optim:update_params(params, grad_params, opt.max_grad_norm)
-
-      bookkeeper:update(batch, loss)
-
-      if i % opt.print_every == 0 then
-        bookkeeper:log(i)
-      end
-
-      checkpoint:save_iteration(i, bookkeeper)
-    end
-
-    return bookkeeper
-  end
+local function train(model, train_data, valid_data, info)
+  local params, grad_params = init_params(model)
 
   local optim = Optim.new({
     method = opt.optim,
@@ -176,28 +140,82 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
     learning_rate = opt.learning_rate,
     lr_decay = opt.lr_decay,
     start_decay_at = opt.start_decay_at,
-    model_info = model_info
+    optim_states = opt.optim_states
   })
+
   local checkpoint = Checkpoint.new({
-    layers = layers,
     options = opt,
-    optim = optim,
-    script_path = lfs.currentdir()
+    model = model,
+    optim = optim
   })
+
+  local function train_epoch(epoch)
+    local epoch_state
+    local batch_order
+
+    local start_i = opt.start_iteration
+
+    if start_i > 1 and info ~= nil then
+      epoch_state = EpochState.new(epoch, info.epoch_status)
+      batch_order = info.batch_order
+    else
+      epoch_state = EpochState.new(epoch)
+      batch_order = torch.randperm(#train_data) -- shuffle mini batch order
+    end
+
+    opt.start_iteration = 1
+
+    model.encoder:training()
+    model.decoder:training()
+    model.generator:training()
+
+    for i = start_i, #train_data do
+      local batch_idx = batch_order[i]
+      if epoch <= opt.curriculum then
+        batch_idx = i
+      end
+
+      local batch = train_data:get_batch(batch_idx)
+
+      local encoder_states, context = model.encoder:forward(batch)
+      local decoder_outputs = model.decoder:forward(batch, encoder_states, context)
+
+      local decoder_grad_output, loss = model.generator:forward_backward(batch, decoder_outputs)
+
+      local decoder_grad_states_input, context_grad = model.decoder:backward(batch, decoder_grad_output)
+      model.encoder:backward(batch, decoder_grad_states_input, context_grad)
+
+      optim:update_params(params, grad_params, opt.max_grad_norm)
+      epoch_state:update(batch, loss)
+
+      if i % opt.print_every == 0 then
+        epoch_state:log(i, #train_data, optim:get_learning_rate())
+      end
+
+      if opt.intermediate_save > 0 and i % opt.intermediate_save == 0 then
+        checkpoint:save_iteration(i, epoch_state, batch_order)
+      end
+    end
+
+    return epoch_state
+  end
 
   for epoch = opt.start_epoch, opt.epochs do
-    local bookkeeper = train_batch(train_data, epoch, optim, checkpoint)
+    local epoch_state = train_epoch(epoch)
 
-    local valid_ppl = eval(valid_data)
+    local valid_ppl = eval(model, valid_data)
     print('Validation PPL: ' .. valid_ppl)
 
     if opt.optim == 'sgd' then
       optim:update_learning_rate(valid_ppl, epoch)
     end
 
-    checkpoint:save_epoch(valid_ppl, bookkeeper)
+    if epoch % opt.save_every == 0 then
+      checkpoint:save_epoch(valid_ppl, epoch_state)
+    end
   end
 end
+
 
 local function main()
   torch.manualSeed(opt.seed)
@@ -218,14 +236,34 @@ local function main()
   print(string.format(' * number of training sentences: %d', #train_data.src))
   print(string.format(' * number of batches: %d', #train_data))
 
-  -- Build model
-  local encoder
-  local decoder
-  local generator
+  if opt.train_from:len() > 0 then
+    assert(path.exists(opt.train_from), 'checkpoint path invalid')
+    print('Loading model ' .. opt.train_from .. '...')
+    local checkpoint = torch.load(opt.train_from)
 
-  local model_info = {}
+    local info = checkpoint.info
+    local options = checkpoint.options
 
-  if opt.train_from:len() == 0 then
+    -- resume training from checkpoint
+    if opt.train_from:len() > 0 and opt.continue then
+      opt.optim = options.optim
+      opt.lr_decay = options.lr_decay
+      opt.start_decay_at = options.start_decay_at
+      opt.epochs = options.epochs
+      opt.curriculum = options.curriculum
+
+      opt.learning_rate = info.learning_rate
+      opt.optim_states = info.optim_states
+      opt.start_epoch = info.epoch
+      opt.start_iteration = info.iteration
+
+      print('Resuming trainging from ' .. opt.start_epoch
+              .. ' at iteration ' .. opt.start_iteration .. '...')
+    end
+
+
+    train(checkpoint.model, train_data, valid_data, info)
+  else
     print('Building model...')
 
     local encoder_args = {
@@ -237,16 +275,10 @@ local function main()
       vocab_size = #dataset.src_dict,
       rnn_size = opt.rnn_size,
       dropout = opt.dropout,
-      num_layers = opt.num_layers,
+      num_layers = opt.num_layers
     }
 
-    if opt.brnn then
-      encoder = BiEncoder.new(encoder_args, opt.brnn_merge)
-    else
-      encoder = Encoder.new(encoder_args)
-    end
-
-    decoder = Decoder.new({
+    local decoder_args = {
       max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),
       max_batch_size = opt.max_batch_size,
       word_vec_size = opt.word_vec_size,
@@ -257,27 +289,24 @@ local function main()
       dropout = opt.dropout,
       num_layers = opt.num_layers,
       input_feed = opt.input_feed
-    })
+    }
 
-    generator = Generator.new({
+    local model = {}
+
+    if opt.brnn then
+      model.encoder = BiEncoder.new(encoder_args, opt.brnn_merge)
+    else
+      model.encoder = Encoder.new(encoder_args)
+    end
+
+    model.decoder = Decoder.new(decoder_args)
+    model.generator = Generator.new({
       vocab_size = #dataset.targ_dict,
       rnn_size = opt.rnn_size
     })
-  else
-    assert(path.exists(opt.train_from), 'checkpoint path invalid')
-    print('Loading from model ' .. opt.train_from .. '...')
-    local checkpoint = torch.load(opt.train_from)
-    local model = checkpoint[1]
-    local model_opt = checkpoint[2]
-    model_info = checkpoint[3]
-    opt.num_layers = model_opt.num_layers
-    opt.rnn_size = model_opt.rnn_size
-    encoder = model[1]
-    decoder = model[2]
-    generator = model[3]
-  end
 
-  train(train_data, valid_data, encoder, decoder, generator, model_info)
+    train(model, train_data, valid_data)
+  end
 end
 
 main()
