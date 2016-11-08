@@ -101,9 +101,10 @@ function Optim:update_params(params, grad_params, max_grad_norm)
     else
       params[j]:add(grad_params[j]:mul(-self.learning_rate))
     end
-  end
 
-  table_utils.zero(grad_params)
+    -- zero gradients
+    grad_params[j]:zero()
+  end
 end
 
 -- decay learning rate if val perf does not improve or we hit the start_decay_at limit

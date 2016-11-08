@@ -1,9 +1,3 @@
-local function zero(t)
-  for i = 1, #t do
-    t[i]:zero()
-  end
-end
-
 local function append(dst, src)
   for i = 1, #src do
     table.insert(dst, src[i])
@@ -49,7 +43,6 @@ end
 return {
   clone = clone,
   reorder = reorder,
-  zero = zero,
   append = append,
   copy = copy,
   flat_to_rc = flat_to_rc
