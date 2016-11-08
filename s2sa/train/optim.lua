@@ -108,7 +108,7 @@ function Optim:update_params(params, grad_params, max_grad_norm)
 end
 
 -- decay learning rate if val perf does not improve or we hit the start_decay_at limit
-function Optim:update_rate(score, epoch)
+function Optim:update_learning_rate(score, epoch)
   self.val_perf[#self.val_perf + 1] = score
 
   if epoch >= self.start_decay_at then
@@ -128,7 +128,7 @@ function Optim:update_rate(score, epoch)
   end
 end
 
-function Optim:get_rate()
+function Optim:get_learning_rate()
   return self.learning_rate
 end
 

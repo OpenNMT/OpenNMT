@@ -22,7 +22,7 @@ function Checkpoint:__init(args)
 end
 
 function Checkpoint:save(file_path)
-  self.model_info.learning_rate = self.optim:get_rate()
+  self.model_info.learning_rate = self.optim:get_learning_rate()
   self.model_info.optim_states = self.optim:get_states()
 
   print('saving checkpoint to ' .. file_path)

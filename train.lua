@@ -109,7 +109,7 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
 
   local function train_batch(data, epoch, optim, checkpoint)
     local bookkeeper = Bookkeeper.new({
-      learning_rate = optim:get_rate(),
+      learning_rate = optim:get_learning_rate(),
       data_size = #data,
       epoch = epoch
     })
@@ -176,7 +176,7 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
     }, valid_data)
 
     if opt.optim == 'sgd' then
-      optim:update_rate(score, epoch)
+      optim:update_learning_rate(score, epoch)
     end
 
     checkpoint:save_epoch(score, bookkeeper)
