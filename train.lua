@@ -56,10 +56,10 @@ cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
 cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
                              sequence length. Sometimes setting this to 1 will increase convergence speed.]])
 cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
-                                     pretrained word embeddings (hdf5 file) on the encoder side.
+                                     pretrained word embeddings on the encoder side.
                                      See README for specific formatting instructions.]])
 cmd:option('-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
-                                     pretrained word embeddings (hdf5 file) on the decoder side.
+                                     pretrained word embeddings on the decoder side.
                                      See README for specific formatting instructions.]])
 cmd:option('-fix_word_vecs_enc', 0, [[If = 1, fix word embeddings on the encoder side]])
 cmd:option('-fix_word_vecs_dec', 0, [[If = 1, fix word embeddings on the decoder side]])

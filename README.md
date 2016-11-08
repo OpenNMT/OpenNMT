@@ -181,13 +181,11 @@ set or (ii) epoch has gone past the `start_decay_at` epoch limit.
 * `curriculum`: For this many epochs, order the minibatches based on source sequence length. (Sometimes setting this to 1 will increase convergence speed).
 * `feature_embeddings_dim_exponent`: If the additional feature takes `N` values, then the embbeding dimension will be set to `N^exponent`.
 * `pre_word_vecs_enc`: If using pretrained word embeddings (on the encoder side), this is the
-path to the *.hdf5 file with the embeddings. The hdf5 should have a single field `word_vecs`,
-which references an array with dimensions vocab size by embedding size. Each row should be a word
-embedding and follow the same indexing scheme as the *.dict files from running
-`preprocess.py`. In order to be consistent with `beam.lua`, the first 4 indices should
-always be `<blank>`, `<unk>`, `<s>`, `</s>` tokens.
-* `pre_word_vecs_dec`: Path to *.hdf5 for pretrained word embeddings on the decoder side. See above
-for formatting of the *.hdf5 file.
+path to the file with the embeddings. The file should be a serialized Torch tensor with dimensions
+vocab size by embedding size. Each row should be a word embedding and follow the same indexing
+scheme as the *.dict files from running `preprocess.lua`. In order to be consistent with `beam.lua`,
+the first 4 indices should always be `<blank>`, `<unk>`, `<s>`, `</s>` tokens.
+* `pre_word_vecs_dec`: Path to the file for pretrained word embeddings on the decoder side. See above.
 * `fix_word_vecs_enc`: If = 1, fix word embeddings on the encoder side.
 * `fix_word_vecs_dec`: If = 1, fix word embeddings on the decoder side.
 * `max_batch_l`: Batch size used to create the data in `preprocess.py`. If this is left blank

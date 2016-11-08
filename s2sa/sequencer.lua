@@ -1,6 +1,5 @@
 require 'torch'
 local cuda = require 's2sa.cuda'
-local hdf5 = require 'hdf5'
 local model_utils = require 's2sa.model_utils'
 
 local function make_lstm(input_size, rnn_size)
@@ -74,11 +73,8 @@ function Sequencer:__init(model, args)
   self.network_clones = model_utils.clone_many_times(self.network, args.max_sent_length)
 
   if args.pre_word_vecs:len() > 0 then
-    local f = hdf5.open(args.pre_word_vecs)
-    local pre_word_vecs = f:read('word_vecs'):all()
-    for i = 1, pre_word_vecs:size(1) do
-      self.word_vecs.weight[i]:copy(pre_word_vecs[i])
-    end
+    local vecs = torch.load(args.pre_word_vecs)
+    self.word_vecs.weight:copy(vecs)
   end
 
   self.fix_word_vecs = args.fix_word_vecs
