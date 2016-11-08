@@ -195,7 +195,7 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
       optim:update_learning_rate(valid_ppl, epoch)
     end
 
-    checkpoint:save_epoch(score, bookkeeper)
+    checkpoint:save_epoch(valid_ppl, bookkeeper)
   end
 end
 
