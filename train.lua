@@ -51,6 +51,8 @@ cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between ve
 cmd:option('-lr_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
                              on the validation set or (ii) epoch has gone past the start_decay_at_limit]])
 cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
+cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
+                             sequence length. Sometimes setting this to 1 will increase convergence speed.]])
 cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings (hdf5 file) on the encoder side.
                                      See README for specific formatting instructions.]])
@@ -112,7 +114,12 @@ local function train(train_data, valid_data, encoder, decoder, generator)
     local batch_order = torch.randperm(#data) -- shuffle mini batch order
 
     for i = 1, #data do
-      local batch = data:get_batch(batch_order[i])
+      local batch_idx = batch_order[i]
+      if epoch <= opt.curriculum then
+        batch_idx = i
+      end
+
+      local batch = data:get_batch(batch_idx)
 
       local encoder_states, context = encoder:forward(batch)
       local decoder_outputs = decoder:forward(batch, encoder_states, context)
