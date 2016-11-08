@@ -238,6 +238,7 @@ local function main()
 
   if opt.train_from:len() > 0 then
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
+
     print('Loading model ' .. opt.train_from .. '...')
     local checkpoint = torch.load(opt.train_from)
 
@@ -257,10 +258,9 @@ local function main()
       opt.start_epoch = info.epoch
       opt.start_iteration = info.iteration
 
-      print('Resuming trainging from ' .. opt.start_epoch
+      print('Resuming trainging from epoch ' .. opt.start_epoch
               .. ' at iteration ' .. opt.start_iteration .. '...')
     end
-
 
     train(checkpoint.model, train_data, valid_data, info)
   else
