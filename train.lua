@@ -9,7 +9,6 @@ local Encoder = require 's2sa.encoder'
 local BiEncoder = require 's2sa.biencoder'
 local Generator = require 's2sa.generator'
 
-local Evaluator = require 's2sa.train.evaluator'
 local Bookkeeper = require 's2sa.train.bookkeeper'
 local Checkpoint = require 's2sa.train.checkpoint'
 local Data = require 's2sa.train.data'
@@ -107,6 +106,27 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
   end
   print(" * number of parameters: " .. num_params)
 
+  local function eval(data)
+    local loss = 0
+    local total = 0
+
+    encoder:evaluate()
+    decoder:evaluate()
+    generator:evaluate()
+
+    for i = 1, #data do
+      local batch = data:get_batch(i)
+
+      local encoder_states, context = encoder:forward(batch)
+      local decoder_outputs = decoder:forward(batch, encoder_states, context)
+
+      loss = loss + generator:compute_loss(batch, decoder_outputs)
+      total = total + batch.target_non_zeros
+    end
+
+    return math.exp(loss / total)
+  end
+
   local function train_batch(data, epoch, optim, checkpoint)
     local bookkeeper = Bookkeeper.new({
       learning_rate = optim:get_learning_rate(),
@@ -115,6 +135,10 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
     })
 
     local batch_order = torch.randperm(#data) -- shuffle mini batch order
+
+    encoder:training()
+    decoder:training()
+    generator:training()
 
     for i = 1, #data do
       local batch_idx = batch_order[i]
@@ -146,7 +170,6 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
     return bookkeeper
   end
 
-  local evaluator = Evaluator.new()
   local optim = Optim.new({
       method = opt.optim,
       num_models = #params,
@@ -163,20 +186,13 @@ local function train(train_data, valid_data, encoder, decoder, generator, model_
   })
 
   for epoch = opt.start_epoch, opt.epochs do
-    encoder:training()
-    decoder:training()
-    generator:training()
-
     local bookkeeper = train_batch(train_data, epoch, optim, checkpoint)
 
-    local score = evaluator:process({
-      encoder = encoder,
-      decoder = decoder,
-      generator = generator
-    }, valid_data)
+    local valid_ppl = eval(valid_data)
+    print('Validation PPL: ' .. valid_ppl)
 
     if opt.optim == 'sgd' then
-      optim:update_learning_rate(score, epoch)
+      optim:update_learning_rate(valid_ppl, epoch)
     end
 
     checkpoint:save_epoch(score, bookkeeper)
