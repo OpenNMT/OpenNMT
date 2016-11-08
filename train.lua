@@ -169,8 +169,6 @@ local function train(train_data, valid_data, encoder, decoder, generator)
 
     checkpoint:save_epoch(score, bookkeeper)
   end
-
-  checkpoint:save_final()
 end
 
 local function main()

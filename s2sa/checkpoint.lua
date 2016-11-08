@@ -59,9 +59,4 @@ function Checkpoint:save_epoch(score, bookkeeper)
   self.model_info.iteration = 0
 end
 
-function Checkpoint:save_final()
-  self:save(string.format('%s_final.t7', self.save_path))
-end
-
-
 return Checkpoint
