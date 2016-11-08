@@ -59,7 +59,7 @@ function Optim:__init(args)
   self.method = args.method
   self.learning_rate = args.learning_rate
 
-  if method == 'sgd' then
+  if self.method == 'sgd' then
     self.lr_decay = args.lr_decay
     self.start_decay = false
     self.start_decay_at = args.start_decay_at
