@@ -22,8 +22,8 @@ end
 
 local Generator = torch.class('Generator')
 
-function Generator:__init(args)
-  self.network = cuda.convert(build_network(args.vocab_size, args.rnn_size))
+function Generator:__init(args, network)
+  self.network = network or cuda.convert(build_network(args.vocab_size, args.rnn_size))
   self.criterion = cuda.convert(build_criterion(args.vocab_size))
 end
 

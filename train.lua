@@ -83,28 +83,41 @@ cmd:option('-seed', 3435, [[Seed for random initialization]])
 local opt = cmd:parse(arg)
 
 
-local function init_params(model)
+local function get_nets(model)
+  local nets = {}
+
+  if opt.brnn then
+    nets.encoder = model.encoder.fwd.network
+    nets.encoder_bwd = model.encoder.bwd.network
+  else
+    nets.encoder = model.encoder.network
+  end
+
+  nets.decoder = model.decoder.network
+  nets.generator = model.generator.network
+
+  return nets
+end
+
+local function init_params(nets)
   local num_params = 0
   local params = {}
   local grad_params = {}
 
-  local layers
-  if opt.brnn then
-    layers = {model.encoder.fwd, model.encoder.bwd, model.decoder, model.generator}
-  else
-    layers = {model.encoder, model.decoder, model.generator}
-  end
-
   print('Initializing parameters...')
-  for i = 1, #layers do
-    local p, gp = layers[i].network:getParameters()
+
+  for _, net in pairs(nets) do
+    local p, gp = net:getParameters()
+
     if opt.train_from:len() == 0 then
       p:uniform(-opt.param_init, opt.param_init)
     end
+
     num_params = num_params + p:size(1)
-    params[i] = p
-    grad_params[i] = gp:zero()
+    table.insert(params, p)
+    table.insert(grad_params, gp:zero())
   end
+
   print(" * number of parameters: " .. num_params)
 
   return params, grad_params
@@ -132,7 +145,8 @@ local function eval(model, data)
 end
 
 local function train(model, train_data, valid_data, info)
-  local params, grad_params = init_params(model)
+  local nets = get_nets(model)
+  local params, grad_params = init_params(nets)
 
   local optim = Optim.new({
     method = opt.optim,
@@ -145,7 +159,7 @@ local function train(model, train_data, valid_data, info)
 
   local checkpoint = Checkpoint.new({
     options = opt,
-    model = model,
+    nets = nets,
     optim = optim
   })
 
@@ -211,7 +225,7 @@ local function train(model, train_data, valid_data, info)
     end
 
     if epoch % opt.save_every == 0 then
-      checkpoint:save_epoch(valid_ppl, epoch_state)
+      checkpoint:save_epoch(valid_ppl, epoch_state, optim)
     end
   end
 end
@@ -236,77 +250,82 @@ local function main()
   print(string.format(' * number of training sentences: %d', #train_data.src))
   print(string.format(' * number of batches: %d', #train_data))
 
+  local checkpoint = {}
+  checkpoint.nets = {}
+
   if opt.train_from:len() > 0 then
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
 
-    print('Loading model ' .. opt.train_from .. '...')
-    local checkpoint = torch.load(opt.train_from)
+    print('Loading checkpoint ' .. opt.train_from .. '...')
+    checkpoint = torch.load(opt.train_from)
 
-    local info = checkpoint.info
-    local options = checkpoint.options
+    opt.num_layers = checkpoint.options.num_layers
+    opt.rnn_size = checkpoint.options.rnn_size
+    opt.brnn = checkpoint.options.brnn
+    opt.brnn_merge = checkpoint.options.brnn_merge
+    opt.input_feed = checkpoint.options.input_feed
 
     -- resume training from checkpoint
     if opt.train_from:len() > 0 and opt.continue then
-      opt.optim = options.optim
-      opt.lr_decay = options.lr_decay
-      opt.start_decay_at = options.start_decay_at
-      opt.epochs = options.epochs
-      opt.curriculum = options.curriculum
+      opt.optim = checkpoint.options.optim
+      opt.lr_decay = checkpoint.options.lr_decay
+      opt.start_decay_at = checkpoint.options.start_decay_at
+      opt.epochs = checkpoint.options.epochs
+      opt.curriculum = checkpoint.options.curriculum
 
-      opt.learning_rate = info.learning_rate
-      opt.optim_states = info.optim_states
-      opt.start_epoch = info.epoch
-      opt.start_iteration = info.iteration
+      opt.learning_rate = checkpoint.info.learning_rate
+      opt.optim_states = checkpoint.info.optim_states
+      opt.start_epoch = checkpoint.info.epoch
+      opt.start_iteration = checkpoint.info.iteration
 
       print('Resuming trainging from epoch ' .. opt.start_epoch
               .. ' at iteration ' .. opt.start_iteration .. '...')
     end
-
-    train(checkpoint.model, train_data, valid_data, info)
-  else
-    print('Building model...')
-
-    local encoder_args = {
-      max_sent_length = math.max(train_data.max_source_length, valid_data.max_source_length),
-      max_batch_size = opt.max_batch_size,
-      word_vec_size = opt.word_vec_size,
-      pre_word_vecs = opt.pre_word_vecs_enc,
-      fix_word_vecs = opt.fix_word_vecs_enc,
-      vocab_size = #dataset.src_dict,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout,
-      num_layers = opt.num_layers
-    }
-
-    local decoder_args = {
-      max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),
-      max_batch_size = opt.max_batch_size,
-      word_vec_size = opt.word_vec_size,
-      pre_word_vecs = opt.pre_word_vecs_dec,
-      fix_word_vecs = opt.fix_word_vecs_dec,
-      vocab_size = #dataset.targ_dict,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout,
-      num_layers = opt.num_layers,
-      input_feed = opt.input_feed
-    }
-
-    local model = {}
-
-    if opt.brnn then
-      model.encoder = BiEncoder.new(encoder_args, opt.brnn_merge)
-    else
-      model.encoder = Encoder.new(encoder_args)
-    end
-
-    model.decoder = Decoder.new(decoder_args)
-    model.generator = Generator.new({
-      vocab_size = #dataset.targ_dict,
-      rnn_size = opt.rnn_size
-    })
-
-    train(model, train_data, valid_data)
   end
+
+  local encoder_args = {
+    max_sent_length = math.max(train_data.max_source_length, valid_data.max_source_length),
+    max_batch_size = opt.max_batch_size,
+    word_vec_size = opt.word_vec_size,
+    pre_word_vecs = opt.pre_word_vecs_enc,
+    fix_word_vecs = opt.fix_word_vecs_enc,
+    vocab_size = #dataset.src_dict,
+    rnn_size = opt.rnn_size,
+    dropout = opt.dropout,
+    num_layers = opt.num_layers
+  }
+
+  local decoder_args = {
+    max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),
+    max_batch_size = opt.max_batch_size,
+    word_vec_size = opt.word_vec_size,
+    pre_word_vecs = opt.pre_word_vecs_dec,
+    fix_word_vecs = opt.fix_word_vecs_dec,
+    vocab_size = #dataset.targ_dict,
+    rnn_size = opt.rnn_size,
+    dropout = opt.dropout,
+    num_layers = opt.num_layers,
+    input_feed = opt.input_feed
+  }
+
+  local generator_args = {
+    vocab_size = #dataset.targ_dict,
+    rnn_size = opt.rnn_size
+  }
+
+  print('Building model...')
+  local model = {}
+
+  if opt.brnn then
+    model.encoder = BiEncoder.new(encoder_args, opt.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
+  else
+    model.encoder = Encoder.new(encoder_args, checkpoint.nets.encoder)
+  end
+
+  model.decoder = Decoder.new(decoder_args, checkpoint.nets.decoder)
+  model.generator = Generator.new(generator_args, checkpoint.nets.generator)
+
+  train(model, train_data, valid_data, checkpoint.info)
 end
 
 main()

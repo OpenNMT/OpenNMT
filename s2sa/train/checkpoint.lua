@@ -5,7 +5,7 @@ local Checkpoint = torch.class("Checkpoint")
 function Checkpoint:__init(args)
   self.options = args.options
   self.save_path = self.options.savefile
-  self.model = args.model
+  self.nets = args.nets
   self.optim = args.optim
 end
 
@@ -14,7 +14,7 @@ function Checkpoint:save(file_path, info)
   info.optim_states = self.optim:get_states()
 
   local data = {
-    model = self.model,
+    nets = self.nets,
     options = self.options,
     info = info
   }

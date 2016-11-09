@@ -5,8 +5,8 @@ require 's2sa.sequencer'
 
 local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
 
-function Encoder:__init(args)
-  Sequencer.__init(self, 'enc', args)
+function Encoder:__init(args, network)
+  Sequencer.__init(self, 'enc', args, network)
 
   self.context_proto = cuda.convert(torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size))
 end

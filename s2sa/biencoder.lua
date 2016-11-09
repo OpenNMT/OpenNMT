@@ -2,7 +2,7 @@ local Encoder = require 's2sa.encoder'
 
 local BiEncoder = torch.class('BiEncoder')
 
-function BiEncoder:__init(args, merge)
+function BiEncoder:__init(args, merge, net_fwd, net_bwd)
   if merge == 'concat' then
     if args.rnn_size % 2 ~= 0 then
       error('in concat mode, rnn_size must be divisible by 2')
@@ -17,8 +17,8 @@ function BiEncoder:__init(args, merge)
   self.merge = merge
   self.rnn_size = args.rnn_size
 
-  self.fwd = Encoder.new(args)
-  self.bwd = Encoder.new(args)
+  self.fwd = Encoder.new(args, net_fwd)
+  self.bwd = Encoder.new(args, net_bwd)
 end
 
 function BiEncoder:forward(batch)

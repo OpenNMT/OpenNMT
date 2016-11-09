@@ -65,31 +65,7 @@ local function make_attention(rnn_size)
   return nn.gModule(inputs, {context_output})
 end
 
-
-local Sequencer = torch.class('Sequencer')
-
-function Sequencer:__init(model, args)
-  self.network = cuda.convert(self:build_network(model, args))
-  self.network_clones = model_utils.clone_many_times(self.network, args.max_sent_length)
-
-  if args.pre_word_vecs:len() > 0 then
-    local vecs = torch.load(args.pre_word_vecs)
-    self.word_vecs.weight:copy(vecs)
-  end
-
-  self.fix_word_vecs = args.fix_word_vecs
-  self.word_vecs.weight[1]:zero()
-
-  local h_init = cuda.convert(torch.zeros(args.max_batch_size, args.rnn_size))
-
-  self.init_states = {}
-  for _ = 1, args.num_layers do
-    table.insert(self.init_states, h_init:clone())
-    table.insert(self.init_states, h_init:clone())
-  end
-end
-
-function Sequencer:build_network(model, args)
+local function build_network(model, args)
   local inputs = {}
   local outputs = {}
 
@@ -123,8 +99,9 @@ function Sequencer:build_network(model, args)
 
     if L == 1 then
       input_size = args.word_vec_size
-      self.word_vecs = nn.LookupTable(args.vocab_size, input_size)
-      input = self.word_vecs(x) -- batch_size x word_vec_size
+      local word_vecs = nn.LookupTable(args.vocab_size, input_size)
+      word_vecs.name = 'word_vecs'
+      input = word_vecs(x) -- batch_size x word_vec_size
       if model == 'dec' and args.input_feed then
         input_size = input_size + args.rnn_size
         input = nn.JoinTable(2)({input, input_feed})
@@ -151,6 +128,36 @@ function Sequencer:build_network(model, args)
   end
 
   return nn.gModule(inputs, outputs)
+end
+
+
+local Sequencer = torch.class('Sequencer')
+
+function Sequencer:__init(model, args, network)
+  self.network = network or cuda.convert(self:build_network(model, args))
+  self.network:apply(function (layer)
+    if layer.name == 'word_vecs' then
+      self.word_vecs = layer
+    end
+  end)
+
+  self.network_clones = model_utils.clone_many_times(self.network, args.max_sent_length)
+
+  if args.pre_word_vecs:len() > 0 then
+    local vecs = torch.load(args.pre_word_vecs)
+    self.word_vecs.weight:copy(vecs)
+  end
+
+  self.fix_word_vecs = args.fix_word_vecs
+  self.word_vecs.weight[1]:zero()
+
+  local h_init = cuda.convert(torch.zeros(args.max_batch_size, args.rnn_size))
+
+  self.init_states = {}
+  for _ = 1, args.num_layers do
+    table.insert(self.init_states, h_init:clone())
+    table.insert(self.init_states, h_init:clone())
+  end
 end
 
 function Sequencer:backward_word_vecs()

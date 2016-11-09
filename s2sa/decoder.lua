@@ -5,8 +5,8 @@ require 's2sa.sequencer'
 
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 
-function Decoder:__init(args)
-  Sequencer.__init(self, 'dec', args)
+function Decoder:__init(args, network)
+  Sequencer.__init(self, 'dec', args, network)
 
   self.input_feed = args.input_feed
   if self.input_feed then
