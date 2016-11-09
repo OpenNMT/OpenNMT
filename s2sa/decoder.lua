@@ -33,7 +33,7 @@ function Decoder:forward(batch, encoder_states, context)
       end
     end
 
-    states = Sequencer.get_clone(self, t):forward(self.inputs[t])
+    states = Sequencer.net(self, t):forward(self.inputs[t])
 
     -- store attention layer output
     table.insert(outputs, states[#states])
@@ -50,7 +50,7 @@ function Decoder:backward(batch, grad_output)
 
   for t = batch.target_length, 1, -1 do
     table.insert(grad_states_input, grad_output[t])
-    local grad_input = self.network_clones[t]:backward(self.inputs[t], grad_states_input)
+    local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
     table.remove(grad_states_input)
 
     -- prepare next decoder output gradients

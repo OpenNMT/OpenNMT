@@ -8,7 +8,7 @@ local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
 function Encoder:__init(args, network)
   Sequencer.__init(self, 'enc', args, network)
 
-  self.context_proto = cuda.convert(torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size))
+  self.context_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
 end
 
 function Encoder:forward(batch)
@@ -22,7 +22,7 @@ function Encoder:forward(batch)
     table_utils.append(self.inputs[t], states)
     table_utils.append(self.inputs[t], {batch.source_input[t]})
 
-    states = Sequencer.get_clone(self, t):forward(self.inputs[t])
+    states = Sequencer.net(self, t):forward(self.inputs[t])
 
     context[{{}, t}]:copy(states[#states])
   end
@@ -37,7 +37,7 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
     -- add context gradients to last hidden states gradients
     grad_states_input[#grad_states_input]:add(grad_context_output[{{}, t}])
 
-    local grad_input = self.network_clones[t]:backward(self.inputs[t], grad_states_input)
+    local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
 
     -- prepare next encoder output gradients
     for i = 1, #grad_states_input do

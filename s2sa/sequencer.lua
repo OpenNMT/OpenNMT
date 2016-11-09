@@ -134,29 +134,14 @@ end
 local Sequencer = torch.class('Sequencer')
 
 function Sequencer:__init(model, args, network)
-  self.network = network or cuda.convert(build_network(model, args))
-  self.network:apply(function (layer)
-    if layer.name == 'word_vecs' then
-      self.word_vecs = layer
-    end
-  end)
+  self.network = network or build_network(model, args)
+  self.args = args
 
-  self.network_clones = model_utils.clone_many_times(self.network, args.max_sent_length)
-
-  if args.pre_word_vecs:len() > 0 then
-    local vecs = torch.load(args.pre_word_vecs)
-    self.word_vecs.weight:copy(vecs)
-  end
-
-  self.fix_word_vecs = args.fix_word_vecs
-  self.word_vecs.weight[1]:zero()
-
-  local h_init = cuda.convert(torch.zeros(args.max_batch_size, args.rnn_size))
-
+  -- prototype for hidden states
   self.init_states = {}
   for _ = 1, args.num_layers do
-    table.insert(self.init_states, h_init:clone())
-    table.insert(self.init_states, h_init:clone())
+    table.insert(self.init_states, torch.zeros(args.max_batch_size, args.rnn_size))
+    table.insert(self.init_states, torch.zeros(args.max_batch_size, args.rnn_size))
   end
 end
 
@@ -167,41 +152,76 @@ function Sequencer:backward_word_vecs()
   end
 end
 
-function Sequencer:get_clone(t)
-  if self.eval_mode then
-    return self.network_clones[1]
+function Sequencer:net(t)
+  if self.network_clones == nil or t == nil then
+    return self.network
   else
-    return self.network_clones[t]
+    if self.eval_mode then
+      return self.network_clones[1]
+    else
+      return self.network_clones[t]
+    end
   end
 end
 
 function Sequencer:training()
-  if self.eval_mode ~= nil and self.eval_mode then
-    self.network_clones[1]:training()
-  else
+  if self.network_clones == nil then
+    -- clone network up to max_sent_length
+    self.network_clones = model_utils.clone_many_times(self.network, self.args.max_sent_length)
     for i = 1, #self.network_clones do
       self.network_clones[i]:training()
     end
+
+    -- initialize word vectors
+    self.network:apply(function (layer)
+      if layer.name == 'word_vecs' then
+        self.word_vecs = layer
+      end
+    end)
+
+    if self.args.pre_word_vecs:len() > 0 then
+      local vecs = torch.load(self.args.pre_word_vecs)
+      self.word_vecs.weight:copy(vecs)
+    end
+
+    self.fix_word_vecs = self.args.fix_word_vecs
+    self.word_vecs.weight[1]:zero()
+  else
+    self.network_clones[1]:training()
   end
 
   self.eval_mode = false
 end
 
 function Sequencer:evaluate()
-  self.network_clones[1]:evaluate()
+  if self.network_clones == nil then
+    self.network:evaluate()
+  else
+    self.network_clones[1]:evaluate()
+  end
+
   self.eval_mode = true
 end
 
 function Sequencer:float()
   self.network:float()
+  for i = 1, #self.init_states do
+    self.init_states[i] = self.init_states[i]:float()
+  end
 end
 
 function Sequencer:double()
   self.network:double()
+  for i = 1, #self.init_states do
+    self.init_states[i] = self.init_states[i]:double()
+  end
 end
 
 function Sequencer:cuda()
   self.network:cuda()
+  for i = 1, #self.init_states do
+    self.init_states[i] = self.init_states[i]:cuda()
+  end
 end
 
 

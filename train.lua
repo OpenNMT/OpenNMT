@@ -141,6 +141,10 @@ local function eval(model, data)
     total = total + batch.target_non_zeros
   end
 
+  model.encoder:training()
+  model.decoder:training()
+  model.generator:training()
+
   return math.exp(loss / total)
 end
 
@@ -178,10 +182,6 @@ local function train(model, train_data, valid_data, info)
     end
 
     opt.start_iteration = 1
-
-    model.encoder:training()
-    model.decoder:training()
-    model.generator:training()
 
     for i = start_i, #train_data do
       local batch_idx = batch_order[i]
@@ -324,6 +324,11 @@ local function main()
 
   model.decoder = Decoder.new(decoder_args, checkpoint.nets.decoder)
   model.generator = Generator.new(generator_args, checkpoint.nets.generator)
+
+  for _, mod in pairs(model) do
+    cuda.convert(mod)
+    mod:training()
+  end
 
   train(model, train_data, valid_data, checkpoint.info)
 end
