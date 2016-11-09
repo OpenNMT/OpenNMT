@@ -134,7 +134,7 @@ end
 local Sequencer = torch.class('Sequencer')
 
 function Sequencer:__init(model, args, network)
-  self.network = network or cuda.convert(self:build_network(model, args))
+  self.network = network or cuda.convert(build_network(model, args))
   self.network:apply(function (layer)
     if layer.name == 'word_vecs' then
       self.word_vecs = layer
