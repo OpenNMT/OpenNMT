@@ -137,11 +137,11 @@ function Sequencer:__init(model, args, network)
   self.network = network or build_network(model, args)
   self.args = args
 
-  -- prototype for hidden states
-  self.init_states = {}
+  -- preallocate hidden states tensors
+  self.states_proto = {}
   for _ = 1, args.num_layers do
-    table.insert(self.init_states, torch.zeros(args.max_batch_size, args.rnn_size))
-    table.insert(self.init_states, torch.zeros(args.max_batch_size, args.rnn_size))
+    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
   end
 end
 
@@ -205,22 +205,31 @@ end
 
 function Sequencer:float()
   self.network:float()
-  for i = 1, #self.init_states do
-    self.init_states[i] = self.init_states[i]:float()
+  for i = 1, #self.states_proto do
+    self.states_proto[i] = self.states_proto[i]:float()
+  end
+  for i = 1, #self.grad_out_proto do
+    self.grad_out_proto[i] = self.grad_out_proto[i]:float()
   end
 end
 
 function Sequencer:double()
   self.network:double()
-  for i = 1, #self.init_states do
-    self.init_states[i] = self.init_states[i]:double()
+  for i = 1, #self.states_proto do
+    self.states_proto[i] = self.states_proto[i]:double()
+  end
+  for i = 1, #self.grad_out_proto do
+    self.grad_out_proto[i] = self.grad_out_proto[i]:double()
   end
 end
 
 function Sequencer:cuda()
   self.network:cuda()
-  for i = 1, #self.init_states do
-    self.init_states[i] = self.init_states[i]:cuda()
+  for i = 1, #self.states_proto do
+    self.states_proto[i] = self.states_proto[i]:cuda()
+  end
+  for i = 1, #self.grad_out_proto do
+    self.grad_out_proto[i] = self.grad_out_proto[i]:cuda()
   end
 end
 

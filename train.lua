@@ -191,13 +191,11 @@ local function train(model, train_data, valid_data, info)
 
       local batch = train_data:get_batch(batch_idx)
 
-      local encoder_states, context = model.encoder:forward(batch)
-      local decoder_outputs = model.decoder:forward(batch, encoder_states, context)
+      local enc_states, context = model.encoder:forward(batch)
+      local dec_outputs = model.decoder:forward(batch, enc_states, context)
 
-      local decoder_grad_output, loss = model.generator:forward_backward(batch, decoder_outputs)
-
-      local decoder_grad_states_input, context_grad = model.decoder:backward(batch, decoder_grad_output)
-      model.encoder:backward(batch, decoder_grad_states_input, context_grad)
+      local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, model.generator)
+      model.encoder:backward(batch, enc_grad_states_out, grad_context)
 
       optim:update_params(params, grad_params, opt.max_grad_norm)
       epoch_state:update(batch, loss)
@@ -297,6 +295,7 @@ local function main()
 
   local decoder_args = {
     max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),
+    max_source_length = math.max(train_data.max_source_length, valid_data.max_source_length),
     max_batch_size = opt.max_batch_size,
     word_vec_size = opt.word_vec_size,
     pre_word_vecs = opt.pre_word_vecs_dec,

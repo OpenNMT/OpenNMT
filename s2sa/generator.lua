@@ -42,23 +42,6 @@ function Generator:compute_loss(batch, decoder_outputs)
   return loss
 end
 
-function Generator:forward_backward(batch, decoder_outputs)
-  local grad_input = {}
-
-  local loss = 0
-
-  for t = 1, batch.target_length do
-    local output = self:forward_one(decoder_outputs[t])
-
-    loss = loss + self.criterion:forward(output, batch.target_output[t]) / batch.size
-    local criterion_grad_input = self.criterion:backward(output, batch.target_output[t]) / batch.size
-
-    table.insert(grad_input, self.network:backward(decoder_outputs[t], criterion_grad_input))
-  end
-
-  return grad_input, loss
-end
-
 function Generator:training()
   self.network:training()
 end

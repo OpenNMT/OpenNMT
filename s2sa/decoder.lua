@@ -7,15 +7,27 @@ local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 
 function Decoder:__init(args, network)
   Sequencer.__init(self, 'dec', args, network)
-
   self.input_feed = args.input_feed
+
+  -- preallocate output gradients
+  self.grad_out_proto = {}
+  for _ = 1, args.num_layers do
+    table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+    table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+  end
+  table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+
+  -- preallocate context gradient
+  self.grad_context_proto = torch.zeros(args.max_batch_size, args.max_source_length, args.rnn_size)
+
+  -- preallocate default input feeding tensor
   if self.input_feed then
     self.input_feed_proto = torch.zeros(args.max_batch_size, args.rnn_size)
   end
 end
 
 function Decoder:forward(batch, encoder_states, context)
-  local states = encoder_states
+  local states = model_utils.copy_state(self.states_proto, encoder_states, batch.size)
 
   self.inputs = {}
   local outputs = {}
@@ -33,52 +45,77 @@ function Decoder:forward(batch, encoder_states, context)
       end
     end
 
-    states = Sequencer.net(self, t):forward(self.inputs[t])
+    local out = Sequencer.net(self, t):forward(self.inputs[t])
 
     -- store attention layer output
-    table.insert(outputs, states[#states])
-    table.remove(states)
+    table.insert(outputs, out[#out])
+
+    states = {}
+    for i = 1, #out - 1 do
+      table.insert(states, out[i])
+    end
   end
 
   return outputs
 end
 
-function Decoder:backward(batch, grad_output)
-  local grad_states_input = model_utils.reset_state(self.init_states, batch.size)
-  local grad_context_input = nil
-  local grad_context_idx = #grad_states_input + 2
+function Decoder:backward(batch, outputs, generator)
+  local grad_states_input = model_utils.reset_state(self.grad_out_proto, batch.size)
+  local grad_context_input = self.grad_context_proto[{{1, batch.size}, {1, batch.source_length}}]:zero()
+
+  local grad_context_idx = #self.states_proto + 2
+  local grad_input_feed_idx = #self.states_proto + 3
+
+  local loss = 0
 
   for t = batch.target_length, 1, -1 do
-    table.insert(grad_states_input, grad_output[t])
-    local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
-    table.remove(grad_states_input)
+    -- compute decoder output gradients
+    local pred = generator.network:forward(outputs[t])
+    loss = loss + generator.criterion:forward(pred, batch.target_output[t]) / batch.size
+    local gen_grad_out = generator.criterion:backward(pred, batch.target_output[t])
+    gen_grad_out:div(batch.size)
+    local dec_grad_out = generator.network:backward(outputs[t], gen_grad_out)
+    grad_states_input[#grad_states_input]:add(dec_grad_out)
 
-    -- prepare next decoder output gradients
-    for i = 1, #grad_states_input do
-      grad_states_input[i] = grad_input[i]
-    end
+    local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
 
     -- accumulate encoder output gradients
-    if grad_context_input == nil then
-      grad_context_input = grad_input[grad_context_idx]
-    else
-      grad_context_input:add(grad_input[grad_context_idx])
-    end
+    grad_context_input:add(grad_input[grad_context_idx])
+
+    grad_states_input[#grad_states_input]:zero()
 
     -- accumulate previous output gradients with input feeding gradients
     if self.input_feed and t > 1 then
-      grad_output[t - 1]:add(grad_input[#grad_input])
+      grad_states_input[#grad_states_input]:add(grad_input[grad_input_feed_idx])
+    end
+
+    -- prepare next decoder output gradients
+    for i = 1, #self.states_proto do
+      grad_states_input[i]:copy(grad_input[i])
     end
   end
 
   Sequencer.backward_word_vecs(self)
 
-  return grad_states_input, grad_context_input
+  return grad_states_input, grad_context_input, loss
+end
+
+function Decoder:float()
+  Sequencer.float(self)
+  self.input_feed_proto = self.input_feed_proto:float()
+  self.grad_context_proto = self.grad_context_proto:float()
+end
+
+function Decoder:double()
+  Sequencer.double(self)
+  self.input_feed_proto = self.input_feed_proto:double()
+  self.grad_context_proto = self.grad_context_proto:double()
 end
 
 function Decoder:cuda()
   Sequencer.cuda(self)
   self.input_feed_proto = self.input_feed_proto:cuda()
+  self.grad_context_proto = self.grad_context_proto:cuda()
 end
 
 return Decoder

@@ -1,8 +1,19 @@
+local model_utils = require 's2sa.utils.model_utils'
 local Encoder = require 's2sa.encoder'
 
 local BiEncoder = torch.class('BiEncoder')
 
 function BiEncoder:__init(args, merge, net_fwd, net_bwd)
+  -- preallocate full context vector
+  self.context_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
+
+  -- preallocate full hidden states tensors
+  self.states_proto = {}
+  for _ = 1, args.num_layers do
+    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+  end
+
   if merge == 'concat' then
     if args.rnn_size % 2 ~= 0 then
       error('in concat mode, rnn_size must be divisible by 2')
@@ -32,24 +43,24 @@ function BiEncoder:forward(batch)
 
   batch.source_input = tmp
 
-  local states
-  local context
+  local states = model_utils.reset_state(self.states_proto, batch.size)
+  local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]
 
   if self.merge == 'concat' then
-    states = {}
-    context = torch.cat(fwd_context, bwd_context, 3)
+    context:narrow(3, 1, self.rnn_size):copy(fwd_context)
+    context:narrow(3, self.rnn_size + 1, self.rnn_size):copy(bwd_context)
 
     for i = 1, #fwd_states do
-      table.insert(states, torch.cat(fwd_states[i], bwd_states[i]))
+      states[i]:narrow(2, 1, self.rnn_size):copy(fwd_states[i])
+      states[i]:narrow(2, self.rnn_size + 1, self.rnn_size):copy(bwd_states[i])
     end
   elseif self.merge == 'sum' then
-    states = fwd_states
-    context = fwd_context
-
     for i = 1, #states do
+      states[i]:copy(fwd_states[i])
       states[i]:add(bwd_states[i])
     end
     for t = 1, batch.source_length do
+      context[{{}, t}]:copy(fwd_context[{{}, t}])
       context[{{}, t}]:add(bwd_context[{{}, t}])
     end
   end
@@ -59,7 +70,7 @@ end
 
 function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   if self.merge == 'concat' then
-    local grad_context_output_split = grad_context_output:split(self.rnn_size, 3)
+    local grad_context_output_split = grad_context_output:chunk(2, 3)
     local grad_context_output_fwd = grad_context_output_split[1]
     local grad_context_output_bwd = grad_context_output_split[2]
 
@@ -67,7 +78,7 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
     local grad_states_output_bwd = {}
 
     for i = 1, #grad_states_output do
-      local states_split = grad_states_output[i]:split(self.rnn_size, 2)
+      local states_split = grad_states_output[i]:chunk(2, 2)
       table.insert(grad_states_output_fwd, states_split[1])
       table.insert(grad_states_output_bwd, states_split[2])
     end
@@ -93,16 +104,31 @@ end
 function BiEncoder:float()
   self.fwd:float()
   self.bwd:float()
+
+  self.context_proto = self.context_proto:float()
+  for i = 1, #self.states_proto do
+    self.states_proto[i] = self.states_proto[i]:float()
+  end
 end
 
 function BiEncoder:double()
   self.fwd:double()
   self.bwd:double()
+
+  self.context_proto = self.context_proto:double()
+  for i = 1, #self.states_proto do
+    self.states_proto[i] = self.states_proto[i]:double()
+  end
 end
 
 function BiEncoder:cuda()
   self.fwd:cuda()
   self.bwd:cuda()
+
+  self.context_proto = self.context_proto:cuda()
+  for i = 1, #self.states_proto do
+    self.states_proto[i] = self.states_proto[i]:cuda()
+  end
 end
 
 return BiEncoder

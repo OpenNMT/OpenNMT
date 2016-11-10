@@ -64,7 +64,16 @@ local function reset_state(state, batch_l, t)
   return new_state
 end
 
+local function copy_state(proto, state, batch_l)
+  local st = reset_state(proto, batch_l)
+  for i = 1, #proto do
+    st[i]:copy(state[i])
+  end
+  return st
+end
+
 return {
   clone_many_times = clone_many_times,
-  reset_state = reset_state
+  reset_state = reset_state,
+  copy_state = copy_state
 }
