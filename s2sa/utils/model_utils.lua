@@ -14,14 +14,6 @@ local function clone_many_times(net, T)
     paramsNoGrad = net:parametersNoGrad()
   end
 
-  -- look for all masks (pruned linear)
-  local masksWeight = {}
-  local masksBias = {}
-  net:apply(function(m)
-    if (m.negmaskWeight) then table.insert(masksWeight, m.negmaskWeight) end
-    if (m.negmaskBias) then table.insert(masksBias, m.negmaskBias) end
-  end)
-
   local mem = torch.MemoryFile("w"):binary()
   mem:writeObject(net)
 
@@ -45,16 +37,6 @@ local function clone_many_times(net, T)
           cloneParamsNoGrad[i]:set(paramsNoGrad[i])
         end
       end
-    end
-
-    -- if pruned models, use single copy of the boolean masks
-    if #masksWeight>0 then
-      local idxw=1
-      local idxb=1
-      clone:apply(function(m)
-        if (m.negmaskWeight) then m.negmaskWeight=masksWeight[idxw];idxw=idxw+1 end
-        if (m.negmaskBias) then m.negmaskBias=masksBias[idxb];idxb=idxb+1 end
-      end)
     end
 
     clones[t] = clone
