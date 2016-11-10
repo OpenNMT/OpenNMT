@@ -10,7 +10,7 @@ function Decoder:__init(args, network)
 
   self.input_feed = args.input_feed
   if self.input_feed then
-    self.input_feed_proto = cuda.convert(torch.zeros(args.max_batch_size, args.rnn_size))
+    self.input_feed_proto = torch.zeros(args.max_batch_size, args.rnn_size)
   end
 end
 
@@ -74,6 +74,11 @@ function Decoder:backward(batch, grad_output)
   Sequencer.backward_word_vecs(self)
 
   return grad_states_input, grad_context_input
+end
+
+function Decoder:cuda()
+  Sequencer.cuda(self)
+  self.input_feed_proto = self.input_feed_proto:cuda()
 end
 
 return Decoder
