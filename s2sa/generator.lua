@@ -1,5 +1,6 @@
 require 'torch'
 local cuda = require 's2sa.utils.cuda'
+require 's2sa.model'
 
 local function build_network(vocab_size, rnn_size)
   local inputs = {}
@@ -20,9 +21,10 @@ local function build_criterion(vocab_size)
 end
 
 
-local Generator = torch.class('Generator')
+local Generator, Model = torch.class('Generator', 'Model')
 
 function Generator:__init(args, network)
+  Model.__init(self)
   self.network = network or build_network(args.vocab_size, args.rnn_size)
   self.criterion = build_criterion(args.vocab_size)
 end
@@ -50,19 +52,9 @@ function Generator:evaluate()
   self.network:evaluate()
 end
 
-function Generator:float()
-  self.network:float()
-  self.criterion:float()
-end
-
-function Generator:double()
-  self.network:double()
-  self.criterion:double()
-end
-
-function Generator:cuda()
-  self.network:cuda()
-  self.criterion:cuda()
+function Generator:convert(f)
+  f(self.network)
+  f(self.criterion)
 end
 
 return Generator

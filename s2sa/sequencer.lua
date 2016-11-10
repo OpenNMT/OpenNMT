@@ -1,6 +1,7 @@
 require 'torch'
 local cuda = require 's2sa.utils.cuda'
 local model_utils = require 's2sa.utils.model_utils'
+require 's2sa.model'
 
 local function make_lstm(input_size, rnn_size)
   local inputs = {}
@@ -131,9 +132,11 @@ local function build_network(model, args)
 end
 
 
-local Sequencer = torch.class('Sequencer')
+local Sequencer, Model = torch.class('Sequencer', 'Model')
 
 function Sequencer:__init(model, args, network)
+  Model.__init(self)
+
   self.network = network or build_network(model, args)
   self.args = args
 
@@ -203,35 +206,14 @@ function Sequencer:evaluate()
   self.eval_mode = true
 end
 
-function Sequencer:float()
-  self.network:float()
+function Sequencer:convert(f)
+  f(self.network)
   for i = 1, #self.states_proto do
-    self.states_proto[i] = self.states_proto[i]:float()
+    self.states_proto[i] = f(self.states_proto[i])
   end
   for i = 1, #self.grad_out_proto do
-    self.grad_out_proto[i] = self.grad_out_proto[i]:float()
+    self.grad_out_proto[i] = f(self.grad_out_proto[i])
   end
 end
-
-function Sequencer:double()
-  self.network:double()
-  for i = 1, #self.states_proto do
-    self.states_proto[i] = self.states_proto[i]:double()
-  end
-  for i = 1, #self.grad_out_proto do
-    self.grad_out_proto[i] = self.grad_out_proto[i]:double()
-  end
-end
-
-function Sequencer:cuda()
-  self.network:cuda()
-  for i = 1, #self.states_proto do
-    self.states_proto[i] = self.states_proto[i]:cuda()
-  end
-  for i = 1, #self.grad_out_proto do
-    self.grad_out_proto[i] = self.grad_out_proto[i]:cuda()
-  end
-end
-
 
 return Sequencer

@@ -100,22 +100,10 @@ function Decoder:backward(batch, outputs, generator)
   return grad_states_input, grad_context_input, loss
 end
 
-function Decoder:float()
-  Sequencer.float(self)
-  self.input_feed_proto = self.input_feed_proto:float()
-  self.grad_context_proto = self.grad_context_proto:float()
-end
-
-function Decoder:double()
-  Sequencer.double(self)
-  self.input_feed_proto = self.input_feed_proto:double()
-  self.grad_context_proto = self.grad_context_proto:double()
-end
-
-function Decoder:cuda()
-  Sequencer.cuda(self)
-  self.input_feed_proto = self.input_feed_proto:cuda()
-  self.grad_context_proto = self.grad_context_proto:cuda()
+function Decoder:convert(f)
+  Sequencer.convert(self, f)
+  self.input_feed_proto = f(self.input_feed_proto)
+  self.grad_context_proto = f(self.grad_context_proto)
 end
 
 return Decoder

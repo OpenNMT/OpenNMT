@@ -1,9 +1,12 @@
 local model_utils = require 's2sa.utils.model_utils'
 local Encoder = require 's2sa.encoder'
+require 's2sa.model'
 
-local BiEncoder = torch.class('BiEncoder')
+local BiEncoder, Model = torch.class('BiEncoder', 'Model')
 
 function BiEncoder:__init(args, merge, net_fwd, net_bwd)
+  Model.__init(self)
+
   -- preallocate full context vector
   self.context_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
 
@@ -101,33 +104,13 @@ function BiEncoder:evaluate()
   self.bwd:evaluate()
 end
 
-function BiEncoder:float()
-  self.fwd:float()
-  self.bwd:float()
+function BiEncoder:convert(f)
+  self.fwd:convert(f)
+  self.bwd:convert(f)
 
-  self.context_proto = self.context_proto:float()
+  self.context_proto = f(self.context_proto)
   for i = 1, #self.states_proto do
-    self.states_proto[i] = self.states_proto[i]:float()
-  end
-end
-
-function BiEncoder:double()
-  self.fwd:double()
-  self.bwd:double()
-
-  self.context_proto = self.context_proto:double()
-  for i = 1, #self.states_proto do
-    self.states_proto[i] = self.states_proto[i]:double()
-  end
-end
-
-function BiEncoder:cuda()
-  self.fwd:cuda()
-  self.bwd:cuda()
-
-  self.context_proto = self.context_proto:cuda()
-  for i = 1, #self.states_proto do
-    self.states_proto[i] = self.states_proto[i]:cuda()
+    self.states_proto[i] = f(self.states_proto[i])
   end
 end
 

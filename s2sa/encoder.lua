@@ -56,19 +56,9 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
   Sequencer.backward_word_vecs(self)
 end
 
-function Encoder:float()
-  Sequencer.float(self)
-  self.context_proto = self.context_proto:float()
-end
-
-function Encoder:double()
-  Sequencer.double(self)
-  self.context_proto = self.context_proto:double()
-end
-
-function Encoder:cuda()
-  Sequencer.cuda(self)
-  self.context_proto = self.context_proto:cuda()
+function Encoder:convert(f)
+  Sequencer.convert(self, f)
+  self.context_proto = f(self.context_proto)
 end
 
 return Encoder
