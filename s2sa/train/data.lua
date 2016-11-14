@@ -1,4 +1,5 @@
 local cuda = require 's2sa.utils.cuda'
+local constants = require 's2sa.utils.constants'
 
 local data = torch.class("data")
 
@@ -67,9 +68,9 @@ function data:get_batch(idx)
   batch.target_length = self.target_length[idx]
   batch.target_non_zeros = self.target_non_zeros[idx]
 
-  batch.source_input = torch.IntTensor(batch.source_length, batch.size):fill(1)
-  batch.target_input = torch.IntTensor(batch.target_length, batch.size):fill(1)
-  batch.target_output = torch.IntTensor(batch.target_length, batch.size):fill(1)
+  batch.source_input = torch.IntTensor(batch.source_length, batch.size):fill(constants.PAD)
+  batch.target_input = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
+  batch.target_output = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
 
   for i = range_start, range_end do
     local target_length = self.targ[i]:size(1) - 1 -- targ contains <s> and </s>

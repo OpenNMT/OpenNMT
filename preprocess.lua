@@ -1,3 +1,4 @@
+local constants = require 's2sa.utils.constants'
 local dict = require 's2sa.utils.dict'
 local file_reader = require 's2sa.utils.file_reader'
 local table_utils = require 's2sa.utils.table_utils'
@@ -25,7 +26,8 @@ cmd:option('-report_every', 100000, [[Report status every this many sentences]])
 local opt = cmd:parse(arg)
 
 local function make_vocabulary(filename, size)
-  local vocab = dict.new({'<blank>', '<unk>', '<s>', '</s>'})
+  local vocab = dict.new({constants.PAD_WORD, constants.UNK_WORD,
+                          constants.BOS_WORD, constants.EOS_WORD})
   local reader = file_reader.new(filename)
 
   while true do
@@ -52,19 +54,19 @@ local function make_sentence(sent, dictionary, start_symbols)
   local vec = {}
 
   if start_symbols then
-    table.insert(vec, dictionary:lookup('<s>'))
+    table.insert(vec, dictionary:lookup(constants.BOS_WORD))
   end
 
   for i = 1, #sent do
     local idx = dictionary:lookup(sent[i])
     if idx == nil then
-      idx = dictionary:lookup('<unk>')
+      idx = dictionary:lookup(constants.UNK_WORD)
     end
     table.insert(vec, idx)
   end
 
   if start_symbols then
-    table.insert(vec, dictionary:lookup('</s>'))
+    table.insert(vec, dictionary:lookup(constants.EOS_WORD))
   end
 
   return torch.IntTensor(vec)
