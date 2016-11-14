@@ -42,8 +42,6 @@ function Encoder:forward(batch)
 
     states = Sequencer.net(self, t):forward(inputs)
 
-<<<<<<< Updated upstream
-=======
     if self.mask_padding then
       for b = 1, batch.size do
         if t <= batch.source_length - batch.source_size[b] then
@@ -54,7 +52,6 @@ function Encoder:forward(batch)
       end
     end
 
->>>>>>> Stashed changes
     context[{{}, t}]:copy(states[#states])
   end
 
