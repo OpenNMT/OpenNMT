@@ -7,6 +7,7 @@ function Checkpoint:__init(args)
   self.save_path = self.options.savefile
   self.nets = args.nets
   self.optim = args.optim
+  self.dataset = args.dataset
 end
 
 function Checkpoint:save(file_path, info)
@@ -16,7 +17,11 @@ function Checkpoint:save(file_path, info)
   local data = {
     nets = self.nets,
     options = self.options,
-    info = info
+    info = info,
+    dicts = {
+      src = self.dataset.src_dict,
+      targ = self.dataset.targ_dict
+    }
   }
 
   torch.save(file_path, data)

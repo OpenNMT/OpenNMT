@@ -148,7 +148,7 @@ local function eval(model, data)
   return math.exp(loss / total)
 end
 
-local function train(model, train_data, valid_data, info)
+local function train(model, train_data, valid_data, dataset, info)
   local nets = get_nets(model)
   local params, grad_params = init_params(nets)
 
@@ -164,7 +164,8 @@ local function train(model, train_data, valid_data, info)
   local checkpoint = Checkpoint.new({
     options = opt,
     nets = nets,
-    optim = optim
+    optim = optim,
+    datatset = dataset
   })
 
   local function train_epoch(epoch)
@@ -329,7 +330,7 @@ local function main()
     mod:training()
   end
 
-  train(model, train_data, valid_data, checkpoint.info)
+  train(model, train_data, valid_data, dataset, checkpoint.info)
 end
 
 main()
