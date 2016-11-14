@@ -75,9 +75,9 @@ cmd:option('-fallback_to_cpu', false, [[Fallback to CPU if no GPU available or c
 cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping
-cmd:option('-save_every', 1, [[Save every this many epochs]])
-cmd:option('-intermediate_save', 0, [[Save intermediate models every this many iterations within an epoch]])
-cmd:option('-print_every', 50, [[Print stats after this many batches]])
+cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
+                             If = 0, will not save models within an epoch.]])
+cmd:option('-print_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
 local opt = cmd:parse(arg)
@@ -205,7 +205,7 @@ local function train(model, train_data, valid_data, dataset, info)
         epoch_state:log(i, #train_data, optim:get_learning_rate())
       end
 
-      if opt.intermediate_save > 0 and i % opt.intermediate_save == 0 then
+      if opt.save_every > 0 and i % opt.save_every == 0 then
         checkpoint:save_iteration(i, epoch_state, batch_order)
       end
     end
@@ -223,9 +223,7 @@ local function train(model, train_data, valid_data, dataset, info)
       optim:update_learning_rate(valid_ppl, epoch)
     end
 
-    if epoch % opt.save_every == 0 then
-      checkpoint:save_epoch(valid_ppl, epoch_state, optim)
-    end
+    checkpoint:save_epoch(valid_ppl, epoch_state, optim)
   end
 end
 
