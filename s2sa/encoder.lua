@@ -7,15 +7,18 @@ local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
 
 function Encoder:__init(args, network)
   Sequencer.__init(self, 'enc', args, network)
+  self.mask_padding = args.mask_padding or false
 
   -- preallocate context vector
   self.context_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
 
-  -- preallocate output gradients
-  self.grad_out_proto = {}
-  for _ = 1, args.num_layers do
-    table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-    table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+  if args.training then
+    -- preallocate output gradients
+    self.grad_out_proto = {}
+    for _ = 1, args.num_layers do
+      table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+      table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
+    end
   end
 end
 
@@ -23,15 +26,35 @@ function Encoder:forward(batch)
   local states = model_utils.reset_state(self.states_proto, batch.size)
   local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]
 
-  self.inputs = {}
+  if not self.eval_mode then
+    self.inputs = {}
+  end
 
   for t = 1, batch.source_length do
-    self.inputs[t] = {}
-    table_utils.append(self.inputs[t], states)
-    table_utils.append(self.inputs[t], {batch.source_input[t]})
+    local inputs = {}
+    table_utils.append(inputs, states)
+    table.insert(inputs, batch.source_input[t])
 
-    states = Sequencer.net(self, t):forward(self.inputs[t])
+    if not self.eval_mode then
+      -- remember inputs for the backward pass
+      self.inputs[t] = inputs
+    end
 
+    states = Sequencer.net(self, t):forward(inputs)
+
+<<<<<<< Updated upstream
+=======
+    if self.mask_padding then
+      for b = 1, batch.size do
+        if t <= batch.source_length - batch.source_size[b] then
+          for j = 1, #states do
+            states[j][b]:zero()
+          end
+        end
+      end
+    end
+
+>>>>>>> Stashed changes
     context[{{}, t}]:copy(states[#states])
   end
 

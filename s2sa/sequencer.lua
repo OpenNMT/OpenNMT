@@ -208,11 +208,15 @@ end
 
 function Sequencer:convert(f)
   f(self.network)
+
   for i = 1, #self.states_proto do
     self.states_proto[i] = f(self.states_proto[i])
   end
-  for i = 1, #self.grad_out_proto do
-    self.grad_out_proto[i] = f(self.grad_out_proto[i])
+
+  if self.grad_out_proto ~= nil then
+    for i = 1, #self.grad_out_proto do
+      self.grad_out_proto[i] = f(self.grad_out_proto[i])
+    end
   end
 end
 

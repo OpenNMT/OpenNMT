@@ -26,7 +26,10 @@ local Generator, Model = torch.class('Generator', 'Model')
 function Generator:__init(args, network)
   Model.__init(self)
   self.network = network or build_network(args.vocab_size, args.rnn_size)
-  self.criterion = build_criterion(args.vocab_size)
+
+  if args.training then
+    self.criterion = build_criterion(args.vocab_size)
+  end
 end
 
 function Generator:forward_one(decoder_output)

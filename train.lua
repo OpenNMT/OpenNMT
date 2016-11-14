@@ -291,7 +291,8 @@ local function main()
     vocab_size = #dataset.src_dict,
     rnn_size = opt.rnn_size,
     dropout = opt.dropout,
-    num_layers = opt.num_layers
+    num_layers = opt.num_layers,
+    training = true
   }
 
   local decoder_args = {
@@ -305,12 +306,14 @@ local function main()
     rnn_size = opt.rnn_size,
     dropout = opt.dropout,
     num_layers = opt.num_layers,
-    input_feed = opt.input_feed
+    input_feed = opt.input_feed,
+    training = true
   }
 
   local generator_args = {
     vocab_size = #dataset.targ_dict,
-    rnn_size = opt.rnn_size
+    rnn_size = opt.rnn_size,
+    training = true
   }
 
   print('Building model...')
