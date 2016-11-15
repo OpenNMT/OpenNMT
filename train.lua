@@ -152,6 +152,10 @@ local function train(model, train_data, valid_data, dataset, info)
   local nets = get_nets(model)
   local params, grad_params = init_params(nets)
 
+  for _, mod in pairs(model) do
+    mod:training()
+  end
+
   local optim = Optim.new({
     method = opt.optim,
     num_models = #params,
@@ -328,7 +332,6 @@ local function main()
 
   for _, mod in pairs(model) do
     cuda.convert(mod)
-    mod:training()
   end
 
   train(model, train_data, valid_data, dataset, checkpoint.info)
