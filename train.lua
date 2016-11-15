@@ -165,7 +165,7 @@ local function train(model, train_data, valid_data, dataset, info)
     options = opt,
     nets = nets,
     optim = optim,
-    datatset = dataset
+    dataset = dataset
   })
 
   local function train_epoch(epoch)
