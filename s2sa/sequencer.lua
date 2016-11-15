@@ -1,5 +1,6 @@
 require 'torch'
 local cuda = require 's2sa.utils.cuda'
+local constants = require 's2sa.utils.constants'
 local model_utils = require 's2sa.utils.model_utils'
 require 's2sa.model'
 
@@ -149,7 +150,7 @@ function Sequencer:__init(model, args, network)
 end
 
 function Sequencer:backward_word_vecs()
-  self.word_vecs.gradWeight[1]:zero()
+  self.word_vecs.gradWeight[constants.PAD]:zero()
   if self.fix_word_vecs then
     self.word_vecs.gradWeight:zero()
   end
@@ -188,7 +189,7 @@ function Sequencer:training()
     end
 
     self.fix_word_vecs = self.args.fix_word_vecs
-    self.word_vecs.weight[1]:zero()
+    self.word_vecs.weight[constants.PAD]:zero()
   else
     self.network_clones[1]:training()
   end

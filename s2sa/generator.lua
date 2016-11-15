@@ -1,4 +1,5 @@
 require 'torch'
+local constants = require 's2sa.utils.constants'
 local cuda = require 's2sa.utils.cuda'
 require 's2sa.model'
 
@@ -14,7 +15,7 @@ end
 
 local function build_criterion(vocab_size)
   local w = torch.ones(vocab_size)
-  w[1] = 0
+  w[constants.PAD] = 0
   local criterion = nn.ClassNLLCriterion(w)
   criterion.sizeAverage = false
   return criterion
