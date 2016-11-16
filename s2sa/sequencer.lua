@@ -87,7 +87,7 @@ local function build_network(model, args)
     table.insert(inputs, nn.Identity()()) -- context: batch_size * source_length * rnn_size
     context = inputs[#inputs]
     if args.input_feed then
-      table.insert(inputs, nn.Identity()()) -- context: batch_size x rnn_size
+      table.insert(inputs, nn.Identity()()) -- input_feed: batch_size x rnn_size
       input_feed = inputs[#inputs]
     end
   end
