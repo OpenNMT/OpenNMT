@@ -87,7 +87,7 @@ end
 function Decoder:resize_proto(batch_size)
   Sequencer.resize_proto(self, batch_size)
   if self.input_feed then
-    self.input_feed_proto:resize(batch_size, self.input_feed_proto:size(2))
+    self.input_feed_proto:resize(batch_size, self.input_feed_proto:size(2)):zero()
   end
 end
 
