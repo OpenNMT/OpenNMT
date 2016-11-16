@@ -43,7 +43,10 @@ end
 
 function Generator:convert(f)
   f(self.network)
-  f(self.criterion)
+
+  if self.criterion ~= nil then
+    f(self.criterion)
+  end
 end
 
 return Generator
