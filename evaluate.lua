@@ -138,7 +138,9 @@ local function main()
 
       batch_id = batch_id + 1
       src_batch = {}
-      targ_batch = {}
+      if opt.score_gold then
+        targ_batch = {}
+      end
       collectgarbage()
     end
   end
