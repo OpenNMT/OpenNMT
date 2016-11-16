@@ -1,7 +1,7 @@
 require 'nn'
 require 'nngraph'
 
-require 's2sa.models'
+require 's2sa.utils.dict'
 
 local path = require 'pl.path'
 
@@ -38,14 +38,14 @@ local function main()
   print('Loading model ' .. opt.model .. '...')
   local checkpoint = torch.load(opt.model)
   print('... done.')
-  local model, model_opt = checkpoint[1], checkpoint[2]
-  if opt.gpuid > 0 and model_opt.cudnn == 1 then
+  if opt.gpuid > 0 and checkpoint.options.cudnn == 1 then
     require 'cudnn'
   end
 
   print('Converting model...')
-  for i = 1, #model do
-    model[i]:float()
+  for _, net in pairs(checkpoint.nets) do
+    net:float()
+    net:clearState()
   end
   print('... done.')
 
