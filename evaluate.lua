@@ -1,9 +1,7 @@
 require 'torch'
 local lfs = require 'lfs'
+local file_reader = require 's2sa.utils.file_reader'
 local beam = require 's2sa.beam.main'
-local Gold = require 's2sa.beam.gold'
-local tokens = require 's2sa.beam.tokens'
-local path = require 'pl.path'
 
 local cmd = torch.CmdLine()
 
@@ -12,10 +10,6 @@ cmd:option('-model', 'seq2seq_lstm_attn.t7.', [[Path to model .t7 file]])
 cmd:option('-src_file', '', [[Source sequence to decode (one line per sequence)]])
 cmd:option('-targ_file', '', [[True target sequence (optional)]])
 cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
-cmd:option('-src_dict', '', [[Path to source vocabulary (*.src.dict file)]])
-cmd:option('-targ_dict', '', [[Path to target vocabulary (*.targ.dict file)]])
-cmd:option('-feature_dict_prefix', '', [[Prefix of the path to features vocabularies (*.feature_N.dict file)]])
-cmd:option('-char_dict', '', [[If using chars, path to character vocabulary (*.char.dict file)]])
 
 -- beam search options
 cmd:option('-beam', 5,[[Beam size]])
@@ -35,37 +29,42 @@ cmd:option('-srctarg_dict', '', [[Path to source-target dictionary to replace UN
 cmd:option('-score_gold', false, [[If = true, score the log likelihood of the gold as well]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
-cmd:option('-gpuid2', -1, [[Second GPU ID, setting the second GPU ID assumes that the first one is set as well (gpuid > 0)]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-cudnn', 0, [[If using character model, this should be = 1 if the character model was trained using cudnn]])
 cmd:option('-time', 0, [[If = 1, measure batch translation time]])
-cmd:option('-float', 0, [[If = 1, convert the model to use float precision]])
-cmd:option('-need_politeness_tag', 0, [[If = 1, specify that the models needs a special politeness token]])
 
+
+local function report_score(name, score_total, words_total)
+  print(string.format(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
+                      score_total / words_total,
+                      math.exp(-score_total/words_total)))
+end
 
 local function main()
   local opt = cmd:parse(arg)
-  assert(path.exists(opt.src_file), 'src_file does not exist')
+
+  local src_reader = file_reader.new(opt.src_file)
+  local src_batch = {}
+
+  local targ_reader
+  local targ_batch
+
+  if opt.score_gold then
+    targ_reader = file_reader.new(opt.targ_file)
+    targ_batch = {}
+  end
 
   beam.init(opt, lfs.currentdir())
 
-  local gold = Gold.new({
-    score_gold = opt.score_gold,
-    gold_file = opt.targ_file,
-    batch_size = opt.batch
-  })
-
-  local file = io.open(opt.src_file, "r")
-  local out_file = io.open(opt.output_file,'w')
+  local out_file = io.open(opt.output_file, 'w')
 
   local sent_id = 1
   local batch_id = 1
 
   local pred_score_total = 0
   local pred_words_total = 0
-
-  local src_sents = {}
-  local src_tokens = {}
+  local gold_score_total = 0
+  local gold_words_total = 0
 
   local timer
   if opt.time > 0 then
@@ -75,55 +74,73 @@ local function main()
   end
 
   while true do
-    local line = file:read("*line")
+    local src_tokens = src_reader:next()
+    local targ_tokens
+    if opt.score_gold then
+      targ_tokens = targ_reader:next()
+    end
 
-    if line ~= nil then
-      table.insert(src_sents, line)
-      table.insert(src_tokens, tokens.from_sentence(line))
-    elseif #src_sents == 0 then
+    if src_tokens ~= nil then
+      table.insert(src_batch, src_tokens)
+      if opt.score_gold then
+        table.insert(targ_batch, targ_tokens)
+      end
+    elseif #src_batch == 0 then
       break
     end
 
-    if line == nil or #src_sents == opt.batch then
+    if src_tokens == nil or #src_batch == opt.batch then
       if opt.time > 0 then
         timer:resume()
       end
 
-      gold.batch_id = batch_id
-      local result = beam.search(src_tokens, gold)
+      local pred_batch, info = beam.search(src_batch, targ_batch)
+
       if opt.time > 0 then
         timer:stop()
       end
-      local targ_tokens = result['pred_tokens_batch']
-      local info = result['info_batch']
 
-      for i = 1, #targ_tokens do
-        print('SENT ' .. sent_id .. ': ' .. src_sents[i])
-        local targ_sent = tokens.to_sentence(targ_tokens[i])
-        print('PRED ' .. sent_id .. ': ' .. targ_sent)
-        out_file:write(targ_sent .. '\n')
+      for b = 1, #pred_batch do
+        local src_sent = table.concat(src_batch[b], " ")
+        local pred_sent = table.concat(pred_batch[b], " ")
 
-        pred_score_total = pred_score_total + info[i].pred_score
-        pred_words_total = pred_words_total + info[i].pred_words
+        out_file:write(pred_sent .. '\n')
 
-        for n = 1, #info[i].nbests do
-          local nbest = tokens.to_sentence(info[i].nbests[n].tokens)
-          local out_n = string.format("%d ||| %s ||| %.4f", n, nbest, info[i].nbests[n].score)
-          print(out_n)
-          out_file:write(nbest .. '\n')
+        print('SENT ' .. sent_id .. ': ' .. src_sent)
+        print('PRED ' .. sent_id .. ': ' .. pred_sent)
+        print(string.format("PRED SCORE: %.4f", info[b].score))
+
+        pred_score_total = pred_score_total + info[b].score
+        pred_words_total = pred_words_total + #pred_batch[b]
+
+        if opt.score_gold then
+          local targ_sent = table.concat(targ_batch[b], " ")
+
+          print('GOLD ' .. sent_id .. ': ' .. targ_sent)
+          print(string.format("GOLD SCORE: %.4f", info[b].gold_score))
+
+          gold_score_total = gold_score_total + info[b].gold_score
+          gold_words_total = gold_words_total + #targ_batch[b]
+        end
+
+        for n = 1, #info[b].n_best do
+          local n_best = table.concat(info[b].n_best[n].tokens, " ")
+          print(string.format("%d ||| %s ||| %.4f", n, n_best, info[b].n_best[n].score))
         end
 
         print('')
         sent_id = sent_id + 1
       end
 
-      if line == nil then
+      if src_tokens == nil then
         break
       end
 
+      io.read()
+
       batch_id = batch_id + 1
-      src_sents = {}
-      src_tokens = {}
+      src_batch = {}
+      targ_batch = {}
       collectgarbage()
     end
   end
@@ -131,16 +148,17 @@ local function main()
   if opt.time > 0 then
     local time = timer:time()
     local sentence_count = sent_id-1
-    print("Average sentence translation time (in seconds):")
+    io.stderr:write("Average sentence translation time (in seconds):\n")
     io.stderr:write("avg real\t" .. time.real / sentence_count .. "\n")
     io.stderr:write("avg user\t" .. time.user / sentence_count .. "\n")
     io.stderr:write("avg sys\t" .. time.sys / sentence_count .. "\n")
   end
 
-  print(string.format("PRED AVG SCORE: %.4f, PRED PPL: %.4f", pred_score_total / pred_words_total,
-    math.exp(-pred_score_total/pred_words_total)))
+  report_score('PRED', pred_score_total, pred_words_total)
 
-  gold:log_results()
+  if opt.score_gold then
+    report_score('GOLD', gold_score_total, gold_words_total)
+  end
 
   out_file:close()
 end

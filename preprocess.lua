@@ -50,28 +50,6 @@ local function make_vocabulary(filename, size)
   return vocab
 end
 
-local function make_sentence(sent, dictionary, start_symbols)
-  local vec = {}
-
-  if start_symbols then
-    table.insert(vec, dictionary:lookup(constants.BOS_WORD))
-  end
-
-  for i = 1, #sent do
-    local idx = dictionary:lookup(sent[i])
-    if idx == nil then
-      idx = dictionary:lookup(constants.UNK_WORD)
-    end
-    table.insert(vec, idx)
-  end
-
-  if start_symbols then
-    table.insert(vec, dictionary:lookup(constants.EOS_WORD))
-  end
-
-  return torch.IntTensor(vec)
-end
-
 local function make_data(src_file, targ_file, src_dict, targ_dict)
   local src = {}
   local targ = {}
@@ -93,8 +71,8 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
 
     if #src_tokens > 0 and #src_tokens <= opt.seq_length
     and #targ_tokens > 0 and #targ_tokens <= opt.seq_length then
-      table.insert(src, make_sentence(src_tokens, src_dict, false))
-      table.insert(targ, make_sentence(targ_tokens, targ_dict, true))
+      table.insert(src, src_dict:convert_to_idx(src_tokens, false))
+      table.insert(targ, targ_dict:convert_to_idx(targ_tokens, true))
       table.insert(sizes, #src_tokens)
     else
       ignored = ignored + 1

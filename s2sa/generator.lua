@@ -33,6 +33,10 @@ function Generator:__init(args, network)
   end
 end
 
+function Generator:forward_one(input)
+  return self.network:forward(input)
+end
+
 function Generator:training()
   self.network:training()
 end

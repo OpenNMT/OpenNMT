@@ -1,10 +1,8 @@
 require 'torch'
-local constants = require 's2sa.beam.constants'
+local constants = require 's2sa.utils.constants'
 local table_utils = require 's2sa.utils.table_utils'
 
 local BeamState = torch.class("BeamState")
-
-BeamState.source_length = 0
 
 function BeamState.initial(start)
   return {start}

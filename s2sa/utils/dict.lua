@@ -1,5 +1,7 @@
 require 'torch'
 
+local constants = require 's2sa.utils.constants'
+
 local dict = torch.class("dict")
 
 function dict:__init(data)
@@ -113,6 +115,38 @@ function dict:prune(size)
   end
 
   return new_dict
+end
+
+function dict:convert_to_idx(labels, start_symbols)
+  local vec = {}
+
+  if start_symbols then
+    table.insert(vec, self:lookup(constants.BOS_WORD))
+  end
+
+  for i = 1, #labels do
+    local idx = self:lookup(labels[i])
+    if idx == nil then
+      idx = self:lookup(constants.UNK_WORD)
+    end
+    table.insert(vec, idx)
+  end
+
+  if start_symbols then
+    table.insert(vec, self:lookup(constants.EOS_WORD))
+  end
+
+  return torch.IntTensor(vec)
+end
+
+function dict:convert_to_labels(idx)
+  local labels = {}
+
+  for i = 1, #idx do
+    table.insert(labels, self:lookup(idx[i]))
+  end
+
+  return labels
 end
 
 return dict

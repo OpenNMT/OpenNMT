@@ -1,278 +1,248 @@
 require 'nn'
 require 'string'
 require 'nngraph'
-require 's2sa.encoder'
-require 's2sa.decoder'
-require 's2sa.generator'
-local constants = require 's2sa.beam.constants'
-local State = require 's2sa.beam.state'
-local chars = require 's2sa.beam.chars'
-local cuda = require 's2sa.utils.cuda'
-local Dict = require 's2sa.utils.dict'
-local features = require 's2sa.beam.features'
-local tokens = require 's2sa.beam.tokens'
-local beam_utils = require 's2sa.beam.utils'
-local table_utils = require 's2sa.utils.table_utils'
 
--- globals
-local model
-local model_opt
+local Encoder = require 's2sa.encoder'
+local BiEncoder = require 's2sa.biencoder'
+local Decoder = require 's2sa.decoder'
+local Generator = require 's2sa.generator'
+
+local table_utils = require 's2sa.utils.table_utils'
+local constants = require 's2sa.utils.constants'
+local State = require 's2sa.beam.state'
+local cuda = require 's2sa.utils.cuda'
+local path = require 'pl.path'
+
+local checkpoint = nil
+local models = {}
+local opt = {}
 
 local src_dict
 local targ_dict
 
-local init_fwd_enc = {}
-local init_fwd_dec = {}
-local context_proto
-local context_proto2
-local decoder_softmax
-local decoder_attn
-local softmax_layers = {}
-local opt = {}
+local phrase_table = {}
 
 
--- Here is a tricky module: it applies the softmax over the input
--- and zero the part of the output which is padded in the input.
--- It works with or without beam.
-local function masked_softmax(source_sizes, with_beam)
-  local num_sents = #source_sizes
-  local input = nn.Identity()()
-  local softmax = nn.SoftMax()(input) -- opt.beam*num_sents x State.source_length
+local function absolute_path(file_path, resources_dir)
+  local function isempty(s)
+    return s == nil or s == ''
+  end
 
-  -- now we are masking the part of the output we don't need
-  local tab
-  if with_beam then
-    tab = nn.SplitTable(2)(nn.View(opt.beam, num_sents, State.source_length)(softmax)) -- num_sents x { opt.beam x State.source_length }
+  if not isempty(resources_dir) and not isempty(file_path) then
+    file_path = path.join(resources_dir, file_path)
+  end
+
+  if not isempty(file_path) then
+    assert(path.exists(file_path), 'Path does not exist: ' .. file_path)
+  end
+
+  return file_path
+end
+
+local function load_phrase_table(file_path)
+  local f = io.open(file_path, 'r')
+
+  if f == nil then
+    error('Failed to open file ' .. file_path)
+  end
+
+  local function strip(s)
+    return s:gsub("^%s+",""):gsub("%s+$","")
+  end
+
+  local pt = {}
+
+  for line in f:lines() do
+    local c = line:split("|||")
+    pt[strip(c[1])] = c[2]
+  end
+
+  f:close()
+
+  return pt
+end
+
+local function init(args, resources_dir)
+  opt = args
+  cuda.init(opt)
+
+  opt.model = absolute_path(opt.model, resources_dir)
+  print('Loading ' .. opt.model .. '...')
+  checkpoint = torch.load(opt.model)
+
+  if checkpoint.options.brnn then
+    models.encoder = BiEncoder.new({
+      max_batch_size = opt.batch,
+      max_sent_length = opt.max_sent_l,
+      num_layers = checkpoint.options.num_layers,
+      rnn_size = checkpoint.options.rnn_size,
+      mask_padding = true
+    }, checkpoint.options.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
   else
-    tab = nn.SplitTable(1)(softmax) -- num_sents x { State.source_length }
-  end
-  local par = nn.ParallelTable()
-
-  for b = 1, num_sents do
-    local pad_length = State.source_length - source_sizes[b]
-    local dim = 2
-    if not with_beam then
-      dim = 1
-    end
-
-    local seq = nn.Sequential()
-    seq:add(nn.Narrow(dim, pad_length + 1, source_sizes[b]))
-    seq:add(nn.Padding(1, -pad_length, 1, 0))
-    par:add(seq)
+    models.encoder = Encoder.new({
+      max_batch_size = opt.batch,
+      max_sent_length = opt.max_sent_l,
+      num_layers = checkpoint.options.num_layers,
+      rnn_size = checkpoint.options.rnn_size,
+      mask_padding = true
+    }, checkpoint.nets.encoder)
   end
 
-  local out_tab = par(tab) -- num_sents x { opt.beam x State.source_length }
-  local output = nn.JoinTable(1)(out_tab) -- num_sents*opt.beam x State.source_length
-  if with_beam then
-    output = nn.View(num_sents, opt.beam, State.source_length)(output)
-    output = nn.Transpose({1,2})(output) -- opt.beam x num_sents x State.source_length
-    output = nn.View(opt.beam*num_sents, State.source_length)(output)
-  else
-    output = nn.View(num_sents, State.source_length)(output)
+  models.decoder = Decoder.new({
+    max_batch_size = opt.batch,
+    rnn_size = checkpoint.options.rnn_size,
+    num_layers = checkpoint.options.num_layers,
+    input_feed = checkpoint.options.input_feed,
+    mask_padding = true
+  }, checkpoint.nets.decoder)
+
+  models.generator = Generator.new({}, checkpoint.nets.generator)
+
+  models.encoder:evaluate()
+  models.decoder:evaluate()
+  models.generator:evaluate()
+
+  cuda.convert(models.encoder)
+  cuda.convert(models.decoder)
+  cuda.convert(models.generator)
+
+  src_dict = checkpoint.dicts.src
+  targ_dict = checkpoint.dicts.targ
+
+  if opt.srctarg_dict:len() > 0 then
+    opt.srctarg_dict = absolute_path(opt.srctarg_dict, resources_dir)
+    phrase_table = load_phrase_table(opt.srctarg_dict)
   end
-
-  -- make sure the vector sums to 1 (softmax output)
-  output = nn.Normalize(1)(output)
-
-  return nn.gModule({input}, {output})
 end
 
-local function replace_attn_softmax(source_sizes, with_beam)
-  decoder_attn:replace(function(module)
-    if module.name == 'softmax_attn' then
-      local mod = masked_softmax(source_sizes, with_beam)
-      if cuda.activated then
-        mod = mod:cuda()
-      elseif opt.float == 1 then
-        mod = mod:float()
-      end
-      mod.name = 'softmax_attn'
-      decoder_softmax = mod
-      return mod
-    else
-      return module
-    end
-  end)
+
+local function get_max_length(tokens)
+  local max = 0
+  local sizes = {}
+  for i = 1, #tokens do
+    local len = #tokens[i]
+    max = math.max(max, len)
+    table.insert(sizes, len)
+  end
+  return max, sizes
 end
 
-local function reset_attn_softmax()
-  decoder_attn:replace(function(module)
-      if module.name == 'softmax_attn' then
-        local mod = nn.SoftMax()
-        mod.name = 'softmax_attn'
-        if opt.gpuid >= 0 then
-          mod = mod:cuda()
-        elseif opt.float == 1 then
-          mod = mod:float()
+local function build_data(src_batch, gold_batch)
+  local batch = {}
+
+  batch.size = #src_batch
+  batch.source_length, batch.source_size = get_max_length(src_batch)
+
+  assert(batch.source_length <= opt.max_sent_l, 'maximum sentence length reached')
+
+  batch.source_input = torch.IntTensor(batch.source_length, batch.size):fill(constants.PAD)
+
+  if gold_batch ~= nil then
+    batch.target_length = get_max_length(gold_batch) + 1 -- for <s> or </s>
+    batch.target_input = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
+    batch.target_output = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
+  end
+
+  for b = 1, batch.size do
+    local source_input = src_dict:convert_to_idx(src_batch[b], false)
+    local source_offset = batch.source_length - batch.source_size[b] + 1
+
+    -- pad on the left
+    batch.source_input[{{source_offset, batch.source_length}, b}]:copy(source_input)
+
+    if gold_batch ~= nil then
+      local target = targ_dict:convert_to_idx(gold_batch[b], true)
+      local target_input = target:narrow(1, 1, batch.target_length)
+      local target_output = target:narrow(1, 2, batch.target_length)
+
+      batch.target_input[{{1, batch.target_length}, b}]:copy(target_input)
+      batch.target_output[{{1, batch.target_length}, b}]:copy(target_output)
+    end
+  end
+
+  batch.source_input = cuda.convert(batch.source_input)
+
+  if gold_batch ~= nil then
+    batch.target_input = cuda.convert(batch.target_input)
+    batch.target_output = cuda.convert(batch.target_output)
+  end
+
+  return batch
+end
+
+local function build_target_tokens(pred, src, attn)
+  local tokens = targ_dict:convert_to_labels(pred)
+
+  -- ignore <s> and </s>
+  table.remove(tokens)
+  table.remove(tokens, 1)
+
+  if opt.replace_unk then
+    for i = 1, #tokens do
+      if tokens[i] == constants.UNK_WORD then
+        local _, max_index = attn[i]:max(1)
+        local source = src[max_index[1]]
+
+        if phrase_table[source] ~= nil then
+          tokens[i] = phrase_table[source]
+        else
+          tokens[i] = source
         end
-        decoder_softmax = mod
-        return mod
-      else
-        return module
-      end
-  end)
-end
-
-local function process_bidirectional_rnn(batch_size, context, rnn_state_enc, rnn_state_dec, source_input, source_features_input, source)
-  if model_opt.brnn ~= 1 then
-    return
-  end
-
-  local final_rnn_state_enc = {}
-  for i = 1, #rnn_state_enc do
-    rnn_state_enc[i]:zero()
-    table.insert(final_rnn_state_enc, rnn_state_enc[i]:clone())
-  end
-
-  for t = State.source_length, 1, -1 do
-    local encoder_input = beam_utils.get_encoder_input(source_input[t],
-                                            source_features_input[t],
-                                            rnn_state_enc)
-    local out = model[4]:forward(encoder_input)
-
-    if batch_size > 1 then
-      beam_utils.ignore_padded_output(t, source, out)
-    end
-
-    for b = 1, batch_size do
-      if t == State.source_length - source[b]:size(1) + 1 then
-        for j = 1, #final_rnn_state_enc do
-          final_rnn_state_enc[j][b]:copy(out[j][b])
-        end
       end
     end
-
-    rnn_state_enc = out
-    context[{{}, {}, t}]:add(out[#out])
   end
 
-  if model_opt.init_dec == 1 then
-    for L = 1, model_opt.num_layers do
-      rnn_state_dec[L*2-1+model_opt.input_feed]:add(
-        final_rnn_state_enc[L*2-1]
-          :view(1, batch_size, model_opt.rnn_size)
-          :expand(opt.beam, batch_size, model_opt.rnn_size)
-          :contiguous()
-          :view(opt.beam*batch_size, model_opt.rnn_size))
-      rnn_state_dec[L*2+model_opt.input_feed]:add(
-        final_rnn_state_enc[L*2]
-          :view(1, batch_size, model_opt.rnn_size)
-          :expand(opt.beam, batch_size, model_opt.rnn_size)
-          :contiguous()
-          :view(opt.beam*batch_size, model_opt.rnn_size))
-    end
-  end
+  return tokens
 end
 
-local function generate_beam(source, source_features, gold)
-  State.source_length = beam_utils.get_max_length(source)
+local function generate_beam(batch)
+  -- resize preallocated preallocated tensors to handle new batch size
+  models.encoder:resize_proto(batch.size)
+  models.decoder:resize_proto(opt.beam * batch.size)
 
-  if opt.gpuid > 0 and opt.gpuid2 > 0 then
-    cutorch.setDevice(opt.gpuid)
+  -- also forget previous padding module on the decoder
+  models.decoder:reset()
+
+  local enc_states, context = models.encoder:forward(batch)
+
+  local gold_score
+  if batch.target_input ~= nil then
+    gold_score = models.decoder:compute_score(batch, enc_states, context, models.generator)
   end
 
-  local batch_size = #source
+  -- expand tensors for each beam
+  context = context
+    :contiguous()
+    :view(1, batch.size, batch.source_length, checkpoint.options.rnn_size)
+    :expand(opt.beam, batch.size, batch.source_length, checkpoint.options.rnn_size)
+    :contiguous()
+    :view(opt.beam * batch.size, batch.source_length, checkpoint.options.rnn_size)
 
-  --reset decoder initial states
-  local initial = State.initial(constants.START)
+  for j = 1, #enc_states do
+    enc_states[j] = enc_states[j]
+      :view(1, batch.size, checkpoint.options.rnn_size)
+      :expand(opt.beam, batch.size, checkpoint.options.rnn_size)
+      :contiguous()
+      :view(opt.beam * batch.size, checkpoint.options.rnn_size)
+  end
 
-  features.reset(batch_size, opt.beam)
+  -- setup beam search
+  local initial_state = State.initial(constants.BOS)
 
-  local n = opt.max_sent_l
-  -- Backpointer table.
-  local prev_ks = torch.LongTensor(batch_size, n, opt.beam):fill(constants.PAD)
-  -- Current States.
-  local next_ys = torch.LongTensor(batch_size, n, opt.beam):fill(constants.PAD)
-  -- Current Scores.
-  local scores = torch.FloatTensor(batch_size, n, opt.beam):zero()
-
-  local next_ys_features = features.get_next_features(batch_size, n, opt.beam)
+  local prev_ks = torch.LongTensor(batch.size, opt.max_sent_l, opt.beam):fill(constants.PAD)
+  local next_ys = torch.LongTensor(batch.size, opt.max_sent_l, opt.beam):fill(constants.PAD)
+  local scores = torch.FloatTensor(batch.size, opt.max_sent_l, opt.beam):zero()
 
   local attn_weights = {}
   local states = {}
-  for b = 1, batch_size do
-    table.insert(attn_weights, {{initial}}) -- store attn weights
-    table.insert(states, {{initial}}) -- store predicted word idx
-    next_ys[b][1][1] = State.next(initial)
+  for b = 1, batch.size do
+    table.insert(attn_weights, {{initial_state}}) -- store attn weights
+    table.insert(states, {{initial_state}}) -- store predicted word idx
+    next_ys[b][1][1] = State.next(initial_state)
   end
-
-  local source_input = beam_utils.get_input(source, State.source_length, true)
-  local source_features_input = features.get_source_features_input(source_features, State.source_length, true)
-
-  local rnn_state_enc = {}
-
-  for i = 1, #init_fwd_enc do
-    init_fwd_enc[i]:resize(batch_size, model_opt.rnn_size)
-    table.insert(rnn_state_enc, init_fwd_enc[i]:zero())
-  end
-
-  local context = context_proto[{{}, {1,State.source_length}}]:clone() -- 1 x State.source_length x rnn_size
-  context = context
-    :resize(batch_size, State.source_length, model_opt.rnn_size)
-    :view(1, batch_size, State.source_length, model_opt.rnn_size)
-    :zero()
-
-  for t = 1, State.source_length do
-    local encoder_input = beam_utils.get_encoder_input(source_input[t],
-                                            source_features_input[t],
-                                            rnn_state_enc)
-    local out = model[1]:forward(encoder_input)
-
-    if batch_size > 1 then
-      beam_utils.ignore_padded_output(t, source, out)
-    end
-
-    rnn_state_enc = out
-    context[{{}, {}, t}]:copy(out[#out])
-  end
-
-  local rnn_state_dec = {}
-  for i = 1, #init_fwd_dec do
-    init_fwd_dec[i]:resize(opt.beam * batch_size, model_opt.rnn_size)
-    table.insert(rnn_state_dec, init_fwd_dec[i]:zero())
-  end
-
-  if model_opt.init_dec == 1 then
-    for L = 1, model_opt.num_layers do
-      rnn_state_dec[L*2-1+model_opt.input_feed]:copy(
-        rnn_state_enc[L*2-1]
-          :view(1, batch_size, model_opt.rnn_size)
-          :expand(opt.beam, batch_size, model_opt.rnn_size)
-          :contiguous()
-          :view(opt.beam*batch_size, model_opt.rnn_size))
-      rnn_state_dec[L*2+model_opt.input_feed]:copy(
-        rnn_state_enc[L*2]
-          :view(1, batch_size, model_opt.rnn_size)
-          :expand(opt.beam, batch_size, model_opt.rnn_size)
-          :contiguous()
-          :view(opt.beam*batch_size, model_opt.rnn_size))
-    end
-  end
-
-  process_bidirectional_rnn(batch_size, context, rnn_state_enc, rnn_state_dec, source_input, source_features_input, source)
-
-  if gold ~= nil then gold:init(model_opt, rnn_state_dec) end
-
-  context = context
-    :expand(opt.beam, batch_size, State.source_length, model_opt.rnn_size)
-    :contiguous()
-    :view(opt.beam*batch_size, State.source_length, model_opt.rnn_size)
-
-  if opt.gpuid > 0 and opt.gpuid2 > 0 then
-    cutorch.setDevice(opt.gpuid2)
-    local context2 = context_proto2[{{1, opt.beam}, {1, State.source_length}}]
-    context2 = context2
-      :resize(opt.beam*batch_size, State.source_length, model_opt.rnn_size)
-      :zero()
-    context2:copy(context)
-    context = context2
-  end
-
-  reset_attn_softmax()
 
   local out_float = torch.FloatTensor()
 
-  local i = 1
   local done = {}
   local found_eos = {}
 
@@ -285,11 +255,10 @@ local function generate_beam(source, source_features, gold)
   local max_k = {}
   local max_attn_weights = {}
 
-  local remaining_sents = batch_size
-  local new_context = context:clone()
+  local remaining_sents = batch.size
   local batch_idx = {}
 
-  for b = 1, batch_size do
+  for b = 1, batch.size do
     done[b] = false
     found_eos[b] = false
     max_score[b] = -1e9
@@ -299,91 +268,52 @@ local function generate_beam(source, source_features, gold)
     table.insert(batch_idx, b)
   end
 
-  while (remaining_sents > 0) and (i < n) do
-    i = i+1
+  local i = 1
 
-    local decoder_input1
-    if chars.use_chars_dec then
-      decoder_input1 = torch.LongTensor(opt.beam, remaining_sents, chars.max_word_length):zero()
-    else
-      decoder_input1 = torch.LongTensor(opt.beam, remaining_sents):zero()
-    end
+  local dec_out
+  local dec_states = enc_states
 
-    local decoder_input1_features = features.get_decoder_input(opt.beam, remaining_sents)
+  while remaining_sents > 0 and i < opt.max_sent_l do
+    i = i + 1
 
+    -- prepare decoder input
+    local input = torch.IntTensor(opt.beam, remaining_sents)
     local source_sizes = {}
 
-    for b = 1, batch_size do
+    for b = 1, batch.size do
       if not done[b] then
         local idx = batch_idx[b]
-        table.insert(source_sizes, source[b]:size(1))
+        table.insert(source_sizes, batch.source_size[b])
 
         states[b][i] = {}
         attn_weights[b][i] = {}
 
-        if chars.use_chars_dec then
-          decoder_input1[{{}, idx}]:copy(chars.targ_chars_idx:index(1, next_ys[b]:narrow(1,i-1,1):squeeze()))
+        local y = next_ys[b]:narrow(1, i - 1, 1):squeeze()
+        if opt.beam == 1 then
+          input[{{}, idx}]:copy(torch.IntTensor({y}))
         else
-          local prev_out = next_ys[b]:narrow(1,i-1,1):squeeze()
-          if opt.beam == 1 then
-            decoder_input1[{{}, idx}]:copy(torch.LongTensor({prev_out}))
-          else
-            decoder_input1[{{}, idx}]:copy(prev_out)
-          end
-          for j = 1, features.num_target_features do
-            decoder_input1_features[j][{{}, idx}]:copy(next_ys_features[i-1][j][b])
-          end
+          input[{{}, idx}]:copy(y)
         end
       end
     end
 
-    if chars.use_chars_dec then
-      decoder_input1 = decoder_input1:view(opt.beam * remaining_sents, chars.max_word_length)
-    else
-      decoder_input1 = decoder_input1:view(opt.beam * remaining_sents)
+    input = input:view(opt.beam * remaining_sents)
+
+    if batch.size > 1 then
+      models.decoder:reset(source_sizes, batch.source_length, opt.beam)
     end
 
-    for j = 1, features.num_target_features do
-      if model_opt.target_features_lookup[j] == true then
-        decoder_input1_features[j] = decoder_input1_features[j]:view(opt.beam * remaining_sents)
-      else
-        decoder_input1_features[j] = decoder_input1_features[j]:view(opt.beam * remaining_sents, -1)
-      end
-    end
+    dec_out, dec_states = models.decoder:forward_one(input, dec_states, context, dec_out)
 
-    local decoder_input = beam_utils.get_decoder_input(decoder_input1,
-                                            decoder_input1_features,
-                                            rnn_state_dec,
-                                            new_context)
+    local out = models.generator:forward_one(dec_out)
 
-    if batch_size > 1 then
-      -- replace the attention softmax with a masked attention softmax
-      replace_attn_softmax(source_sizes, true)
-    end
+    out = out:view(opt.beam, remaining_sents, out:size(2)):transpose(1, 2)
+    out_float:resize(out:size()):copy(out)
 
-    local out_decoder, out = beam_utils.decoder_forward(model, decoder_input)
-
-    if type(out) == "table" then
-      for j = 1, #out do
-        out[j] = out[j]:view(opt.beam, remaining_sents, out[j]:size(2)):transpose(1, 2)
-      end
-      out_float:resize(out[1]:size()):copy(out[1])
-    else
-      out = out:view(opt.beam, remaining_sents, out:size(2)):transpose(1, 2)
-      out_float:resize(out:size()):copy(out)
-    end
-
-    beam_utils.update_rnn_state(rnn_state_dec, out_decoder)
-
-    if model_opt.start_symbol == 1 then
-      decoder_softmax.output[{{}, 1}]:zero()
-      decoder_softmax.output[{{}, State.source_length}]:zero()
-    end
-
-    local softmax_out = decoder_softmax.output:view(opt.beam, remaining_sents, -1)
+    local softmax_out = models.decoder.softmax_attn.output:view(opt.beam, remaining_sents, -1)
     local new_remaining_sents = remaining_sents
 
-    for b = 1, batch_size do
+    for b = 1, batch.size do
       if done[b] == false then
         local idx = batch_idx[b]
         for k = 1, opt.beam do
@@ -412,9 +342,7 @@ local function generate_beam(source, source_features, gold)
             end
 
             if i < 2 or diff then
-              if model_opt.attn == 1 then
-                attn_weights[b][i][k] = State.advance(attn_weights[b][i-1][prev_k], softmax_out[prev_k][idx]:clone())
-              end
+              attn_weights[b][i][k] = State.advance(attn_weights[b][i-1][prev_k], softmax_out[prev_k][idx]:clone())
               prev_ks[b][i][k] = prev_k
               next_ys[b][i][k] = y_i
               scores[b][i][k] = score
@@ -425,20 +353,16 @@ local function generate_beam(source, source_features, gold)
           end
         end
 
-        for j = 1, #rnn_state_dec do
-          local view = rnn_state_dec[j]
-            :view(opt.beam, remaining_sents, model_opt.rnn_size)
+        for j = 1, #dec_states do
+          local view = dec_states[j]
+            :view(opt.beam, remaining_sents, checkpoint.options.rnn_size)
           view[{{}, idx}] = view[{{}, idx}]:index(1, prev_ks[b][i])
         end
 
-        features.calculate_hypotheses(next_ys_features, out, opt.beam, i, b, idx)
-
         end_hyp[b] = states[b][i][1]
         end_score[b] = scores[b][i][1]
-        if model_opt.attn == 1 then
-          end_attn_weights[b] = attn_weights[b][i][1]
-        end
-        if end_hyp[b][#end_hyp[b]] == constants.END then
+        end_attn_weights[b] = attn_weights[b][i][1]
+        if end_hyp[b][#end_hyp[b]] == constants.EOS then
           done[b] = true
           found_eos[b] = true
           new_remaining_sents = new_remaining_sents - 1
@@ -446,15 +370,13 @@ local function generate_beam(source, source_features, gold)
         else
           for k = 1, opt.beam do
             local possible_hyp = states[b][i][k]
-            if possible_hyp[#possible_hyp] == constants.END then
+            if possible_hyp[#possible_hyp] == constants.EOS then
               found_eos[b] = true
               if scores[b][i][k] > max_score[b] then
                 max_hyp[b] = possible_hyp
                 max_score[b] = scores[b][i][k]
                 max_k[b] = k
-                if model_opt.attn == 1 then
-                  max_attn_weights[b] = attn_weights[b][i][k]
-                end
+                max_attn_weights[b] = attn_weights[b][i][k]
               end
             end
           end
@@ -478,17 +400,22 @@ local function generate_beam(source, source_features, gold)
       to_keep = torch.LongTensor(to_keep)
 
       -- update rnn_state and context
-      for j = 1, #rnn_state_dec do
-        rnn_state_dec[j] = rnn_state_dec[j]
-          :view(opt.beam, remaining_sents, model_opt.rnn_size)
+      for j = 1, #dec_states do
+        dec_states[j] = dec_states[j]
+          :view(opt.beam, remaining_sents, checkpoint.options.rnn_size)
           :index(2, to_keep)
-          :view(opt.beam*new_remaining_sents, model_opt.rnn_size)
+          :view(opt.beam*new_remaining_sents, checkpoint.options.rnn_size)
       end
 
-      new_context = new_context
-        :view(opt.beam, remaining_sents, State.source_length, model_opt.rnn_size)
+      dec_out = dec_out
+        :view(opt.beam, remaining_sents, checkpoint.options.rnn_size)
         :index(2, to_keep)
-        :view(opt.beam*new_remaining_sents, State.source_length, model_opt.rnn_size)
+        :view(opt.beam*new_remaining_sents, checkpoint.options.rnn_size)
+
+      context = context
+        :view(opt.beam, remaining_sents, batch.source_length, checkpoint.options.rnn_size)
+        :index(2, to_keep)
+        :view(opt.beam*new_remaining_sents, batch.source_length, checkpoint.options.rnn_size)
     end
 
     remaining_sents = new_remaining_sents
@@ -497,10 +424,8 @@ local function generate_beam(source, source_features, gold)
 
   local states_res = {}
   local scores_res = {}
-  local attn_weights_res = {}
 
-
-  for b = 1, batch_size do
+  for b = 1, batch.size do
     if opt.simple == 1 or end_score[b] > max_score[b] or not found_eos[b] then
       max_hyp[b] = end_hyp[b]
       max_score[b] = end_score[b]
@@ -510,301 +435,52 @@ local function generate_beam(source, source_features, gold)
 
     -- remove unnecessary values from the attention vectors
     for j = 2, #max_attn_weights[b] do
-      local size = source[b]:size(1)
-      max_attn_weights[b][j] = max_attn_weights[b][j]:narrow(1, State.source_length-size+1, size)
+      local size = batch.source_size[b]
+      max_attn_weights[b][j] = max_attn_weights[b][j]:narrow(1, batch.source_length-size+1, size)
     end
-
-    table.insert(attn_weights_res, max_attn_weights[b][#max_attn_weights[b]])
 
     local sent_len = #max_hyp[b]
 
     table.insert(states_res, states[b][sent_len])
     table.insert(scores_res, scores[b][sent_len])
-
-    features.calculate_max_hypothesis(sent_len, max_k, prev_ks, b)
   end
 
-  if gold ~= nil then
-    gold:process(batch_size, model, context, init_fwd_dec, chars.targ_chars_idx, source, max_score)
-  end
-
-  return max_hyp, features.max_hypothesis, max_score, max_attn_weights, states_res, scores_res, attn_weights_res
+  return max_hyp, max_score, max_attn_weights, states_res, scores_res, gold_score
 end
 
-local function get_layer(layer)
-  if layer.name ~= nil then
-    if layer.name == 'decoder_attn' then
-      decoder_attn = layer
-    elseif layer.name:sub(1,7) == 'softmax' then
-      table.insert(softmax_layers, layer)
-    end
-  end
-end
+local function search(src_batch, gold_batch)
+  local batch = build_data(src_batch, gold_batch)
 
-local function init(args, resources_dir)
-  -- parse input params
-  opt = args
+  local pred, pred_score, attn, all_pred, all_score, gold_score = generate_beam(batch)
 
-  opt.model = beam_utils.absolute_path(opt.model, resources_dir)
-  opt.src_dict = beam_utils.absolute_path(opt.src_dict, resources_dir)
-  opt.targ_dict = beam_utils.absolute_path(opt.targ_dict, resources_dir)
-  opt.srctarg_dict = beam_utils.absolute_path(opt.srctarg_dict, resources_dir)
-  opt.char_dict = beam_utils.absolute_path(opt.char_dict, resources_dir)
-  opt.feature_dict_prefix = beam_utils.absolute_path(opt.feature_dict_prefix, resources_dir)
-
-  cuda.init(opt)
-
-  print('loading ' .. opt.model .. '...')
-  local checkpoint = torch.load(opt.model)
-  print('done!')
-
-  -- load model and word2idx/idx2word dictionaries
-  model, model_opt = checkpoint[1], checkpoint[2]
-  for i = 1, #model do
-    model[i]:evaluate()
-    if opt.float == 1 then
-      model[i] = model[i]:float()
-    end
-    model[i].network:apply(get_layer)
-  end
-
-  -- for backward compatibility
-  model_opt.brnn = model_opt.brnn or 0
-  model_opt.input_feed = model_opt.input_feed or 1
-  model_opt.attn = model_opt.attn or 1
-  model_opt.num_source_features = model_opt.num_source_features or 0
-  model_opt.num_target_features = model_opt.num_target_features or 0
-  model_opt.guided_alignment = model_opt.guided_alignment or 0
-
-  beam_utils.init(model_opt, opt.max_sent_l)
-
-  tokens.init(opt.replace_unk, opt.srctarg_dict)
-
-  if opt.src_dict == "" then
-    src_dict = checkpoint[4]
-  else
-    src_dict = Dict.new(opt.src_dict)
-  end
-
-  if opt.targ_dict == "" then
-    targ_dict = checkpoint[5]
-  else
-    targ_dict = Dict.new(opt.targ_dict)
-  end
-
-  features.init({
-    src_dict = opt.feature_dict_prefix == "" and checkpoint[6] or nil,
-    targ_dict = opt.feature_dict_prefix == "" and checkpoint[7] or nil,
-    dicts_prefix = opt.feature_dict_prefix,
-    num_source_features = model_opt.num_source_features,
-    num_target_features = model_opt.num_target_features,
-    source_features_lookup = model_opt.source_features_lookup,
-    target_features_lookup = model_opt.target_features_lookup,
-    float = opt.float
-  })
-
-  if model_opt.use_chars_enc or model_opt.use_chars_dec then
-    chars.init({
-      use_chars_enc = model_opt.use_chars_enc,
-      use_chars_dec = model_opt.use_chars_dec,
-      max_word_length = model_opt.max_word_l,
-      chars_dict = opt.char_dict == "" and checkpoint[8] or Dict.new(opt.char_dict),
-      targ_dict = targ_dict
-    })
-  end
-
-  if opt.gpuid >= 0 then
-    for i = 1, #model do
-      if opt.gpuid2 > 0 then
-        if i == 1 or i == 4 then
-          cutorch.setDevice(opt.gpuid)
-        else
-          cutorch.setDevice(opt.gpuid2)
-        end
-      end
-      model[i]:double():cuda()
-      model[i]:evaluate()
-    end
-  end
-
-  local attn_layer
-  if model_opt.attn == 1 then
-    decoder_attn:apply(get_layer)
-    decoder_softmax = softmax_layers[1]
-    attn_layer = torch.zeros(opt.beam, opt.max_sent_l)
-  end
-
-  context_proto = torch.zeros(1, opt.max_sent_l, model_opt.rnn_size)
-  local h_init_dec = torch.zeros(opt.beam, model_opt.rnn_size)
-  local h_init_enc = torch.zeros(1, model_opt.rnn_size)
-  if opt.gpuid >= 0 then
-    h_init_enc = h_init_enc:cuda()
-    h_init_dec = h_init_dec:cuda()
-
-    if opt.gpuid2 > 0 then
-      cutorch.setDevice(opt.gpuid)
-      context_proto = context_proto:cuda()
-      cutorch.setDevice(opt.gpuid2)
-      context_proto2 = torch.zeros(opt.beam, opt.max_sent_l, model_opt.rnn_size):cuda()
-    else
-      if opt.gpuid > 0 then
-        cutorch.setDevice(opt.gpuid)
-      end
-      context_proto = context_proto:cuda()
-    end
-    if model_opt.attn == 1 then
-      attn_layer:cuda()
-    end
-  elseif opt.float == 1 then
-    context_proto = context_proto:float()
-    h_init_dec = h_init_dec:float()
-    h_init_enc = h_init_enc:float()
-  end
-
-  init_fwd_enc = {}
-  init_fwd_dec = {}
-  if model_opt.input_feed == 1 then
-    table.insert(init_fwd_dec, h_init_dec:clone())
-  end
-
-  for _ = 1, model_opt.num_layers do
-    table.insert(init_fwd_enc, h_init_enc:clone())
-    table.insert(init_fwd_enc, h_init_enc:clone())
-    table.insert(init_fwd_dec, h_init_dec:clone()) -- memory cell
-    table.insert(init_fwd_dec, h_init_dec:clone()) -- hidden state
-  end
-end
-
-local function build_target_tokens(sentences)
-  local target_batch = {}
-  local target_features_batch = {}
-
-  for i = 1, #sentences do
-    local target_tokens, target_features_str = features.extract(sentences[i])
-    local target = tokens.to_words_idx(target_tokens, targ_dict.label_to_idx, 1)
-    local target_features = features.to_target_features_idx(target_features_str, 1, 1)
-
-    table.insert(target_batch, target)
-    table.insert(target_features_batch, target_features)
-  end
-
-  return target_batch, target_features_batch
-end
-
---[[
-  @table token
-
-  @field value - token value (word)
-  @field [attention] - attention tensor used for predicting the token
-  @field [range] - token range:
-    {
-      begin = <begin char index>,
-      end = <end char index (not including)>
-    }
-]]
-
---[[
-  @function search
-  @brief Performs a beam search.
-
-  @param batch - a batch of sentences to translate.
-  Each batch element can be either an array of tokens (from evaluate.lua)
-  or a key/value table (from extEngineAPI.lua) which contains:
-    {
-      options = <array of translation options>,
-      tokens = <array of cleaned tokens represents a sentence in batch>
-      features = <array of features>
-    }
-  @param gold - instance of s2sa.beam.gold used to calculate gold scores
-  @return result - a key/value table contains:
-    {
-      cleaned_pred_features_batch - array of predicted feature batch
-      cleaned_pred_tokens_batch - array of cleaned predicted batch
-      pred_tokens_batch - array of predicted batch
-      info_batch - table containing various batch info, each element has following info:
-        {
-          pred_score = <prediction score>,
-          pred_words = <prediction words count>,
-          nbests = [
-            {
-              tokens = <array of tokens>,
-              score = <prediction score>
-            }
-          ]
-        }
-    }
-]]
-local function search(batch, gold)
-  local source_batch = {}
-  local source_str_batch = {}
-  local source_features_batch = {}
-
-  for i = 1, #batch do
-    local cleaned_tokens, source_features_str
-    if batch[i].tokens ~= nil then
-      cleaned_tokens = batch[i].tokens
-      source_features_str = batch[i].features
-    else
-      cleaned_tokens, source_features_str = features.extract(batch[i])
-    end
-
-    local source, source_str
-    local source_features = features.to_source_features_idx(source_features_str, model_opt.start_symbol, 0)
-    if chars.use_chars_enc then
-      source, source_str = chars.to_chars_idx(cleaned_tokens, model_opt.start_symbol)
-    else
-      source, source_str = tokens.to_words_idx(cleaned_tokens, src_dict.label_to_idx, model_opt.start_symbol)
-    end
-
-    table.insert(source_batch, source)
-    table.insert(source_str_batch, source_str)
-    table.insert(source_features_batch, source_features)
-  end
-
-  local pred_batch, pred_features_batch, pred_score_batch, attn_batch, all_sents_batch, all_scores_batch = generate_beam(source_batch, source_features_batch, gold)
-
-  local cleaned_pred_features_batch = {}
-  local cleaned_pred_tokens_batch = {}
-  local pred_tokens_batch = {}
+  local pred_batch = {}
   local info_batch = {}
 
-  for i = 1, #batch do
-    local pred_tokens, cleaned_pred_tokens, cleaned_pred_features = tokens.from_words_idx(pred_batch[i], pred_features_batch[i], targ_dict.idx_to_label, features.targ_features_dicts, source_str_batch[i], attn_batch[i], features.num_target_features)
+  for b = 1, batch.size do
+    table.insert(pred_batch, build_target_tokens(pred[b], src_batch[b], attn[b]))
 
-    local info = {
-      nbests = {},
-      pred_score = pred_score_batch[i],
-      pred_words = #pred_batch[i] - 1
-    }
+    local info = {}
+    info.score = pred_score[b]
+    info.n_best = {}
 
-    if opt.n_best > 1 and features.num_target_features == 0 then
+    if gold_score ~= nil then
+      info.gold_score = gold_score[b]
+    end
+
+    if opt.n_best > 1 then
       for n = 1, opt.n_best do
-        local pred_tokens_n = tokens.from_words_idx(all_sents_batch[i][n], pred_features_batch[i],
-                                             targ_dict.idx_to_label, features.targ_features_dicts, source_str_batch[i], attn_batch[i], features.num_target_features)
-        table.insert(info.nbests, {
-          tokens = pred_tokens_n,
-          score = all_scores_batch[i][n]
-        })
+        info.n_best[n].tokens = build_target_tokens(all_pred[b][n], src_batch[b], attn[b])
+        info.n_best[n].score = all_score[b][n]
       end
     end
 
-    table.insert(cleaned_pred_features_batch, cleaned_pred_features)
-    table.insert(cleaned_pred_tokens_batch, cleaned_pred_tokens)
-    table.insert(pred_tokens_batch, pred_tokens)
     table.insert(info_batch, info)
   end
 
-  return {
-    cleaned_pred_features_batch = cleaned_pred_features_batch,
-    cleaned_pred_tokens_batch = cleaned_pred_tokens_batch,
-    pred_tokens_batch = pred_tokens_batch,
-    info_batch = info_batch
-  }
+  return pred_batch, info_batch
 end
 
 return {
   init = init,
-  search = search,
-  replace_attn_softmax = replace_attn_softmax,
-  build_target_tokens = build_target_tokens
+  search = search
 }

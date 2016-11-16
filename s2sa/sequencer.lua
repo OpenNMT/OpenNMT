@@ -149,6 +149,12 @@ function Sequencer:__init(model, args, network)
   end
 end
 
+function Sequencer:resize_proto(batch_size)
+  for i = 1, #self.states_proto do
+    self.states_proto[i]:resize(batch_size, self.states_proto[i]:size(2))
+  end
+end
+
 function Sequencer:backward_word_vecs()
   self.word_vecs.gradWeight[constants.PAD]:zero()
   if self.fix_word_vecs then

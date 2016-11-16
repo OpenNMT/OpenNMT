@@ -19,7 +19,9 @@ function Cuda.init(opt)
         Cuda.nn = cudnn
       end
       cutorch.setDevice(opt.gpuid)
-      cutorch.manualSeed(opt.seed)
+      if opt.seed then
+        cutorch.manualSeed(opt.seed)
+      end
     end)
 
     if err then

@@ -84,6 +84,13 @@ function Decoder:__init(args, network)
   end
 end
 
+function Decoder:resize_proto(batch_size)
+  Sequencer.resize_proto(self, batch_size)
+  if self.input_feed then
+    self.input_feed_proto:resize(batch_size, self.input_feed_proto:size(2))
+  end
+end
+
 function Decoder:reset(source_sizes, source_length, beam_size)
   self.decoder_attn:replace(function(module)
     if module.name == 'softmax_attn' then
@@ -133,35 +140,52 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   return out, states
 end
 
-function Decoder:forward(batch, encoder_states, context)
+function Decoder:forward_and_apply(batch, encoder_states, context, func)
   local states = model_utils.copy_state(self.states_proto, encoder_states, batch.size)
 
+  local prev_out
+
+  for t = 1, batch.target_length do
+    prev_out, states = self:forward_one(batch.target_input[t], states, context, prev_out, t)
+    func(prev_out, t)
+  end
+end
+
+function Decoder:forward(batch, encoder_states, context)
   if not self.eval_mode then
     self.inputs = {}
   end
 
   local outputs = {}
-  local prev_out
 
-  for t = 1, batch.target_length do
-    prev_out, states = self:forward_one(batch.target_input[t], states, context, prev_out, t)
-    table.insert(outputs, prev_out)
-  end
+  self:forward_and_apply(batch, encoder_states, context, function (out)
+    table.insert(outputs, out)
+  end)
 
   return outputs
 end
 
+function Decoder:compute_score(batch, encoder_states, context, generator)
+  local score = {}
+
+  self:forward_and_apply(batch, encoder_states, context, function (out, t)
+    local pred = generator.network:forward(out)
+    for b = 1, batch.size do
+      score[b] = score[b] or 0
+      score[b] = score[b] + pred[b][batch.target_output[t][b]]
+    end
+  end)
+
+  return score
+end
+
 function Decoder:compute_loss(batch, encoder_states, context, generator)
-  local states = model_utils.copy_state(self.states_proto, encoder_states, batch.size)
-
   local loss = 0
-  local prev_out
 
-  for t = 1, batch.target_length do
-    prev_out, states = self:forward_one(batch.target_input[t], states, context, prev_out, t)
-    local pred = generator.network:forward(prev_out)
+  self:forward_and_apply(batch, encoder_states, context, function (out, t)
+    local pred = generator.network:forward(out)
     loss = loss + generator.criterion:forward(pred, batch.target_output[t])
-  end
+  end)
 
   return loss
 end

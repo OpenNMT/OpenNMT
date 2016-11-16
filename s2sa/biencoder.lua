@@ -35,6 +35,13 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
   self.bwd = Encoder.new(args, net_bwd)
 end
 
+function BiEncoder:resize_proto(batch_size)
+  self.context_proto:resize(batch_size, self.context_proto:size(2), self.context_proto:size(3))
+  for i = 1, #self.states_proto do
+    self.states_proto[i]:resize(batch_size, self.states_proto[i]:size(2))
+  end
+end
+
 function BiEncoder:forward(batch)
   local fwd_states, fwd_context = self.fwd:forward(batch)
 

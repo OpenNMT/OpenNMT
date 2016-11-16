@@ -21,6 +21,11 @@ function Encoder:__init(args, network)
   end
 end
 
+function Encoder:resize_proto(batch_size)
+  Sequencer.resize_proto(self, batch_size)
+  self.context_proto:resize(batch_size, self.context_proto:size(2), self.context_proto:size(3))
+end
+
 function Encoder:forward(batch)
   local states = model_utils.reset_state(self.states_proto, batch.size)
   local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]
