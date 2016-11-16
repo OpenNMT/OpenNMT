@@ -50,12 +50,15 @@ function BiEncoder:forward(batch)
   local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]
 
   if self.merge == 'concat' then
-    context:narrow(3, 1, self.rnn_size):copy(fwd_context)
-    context:narrow(3, self.rnn_size + 1, self.rnn_size):copy(bwd_context)
-
     for i = 1, #fwd_states do
       states[i]:narrow(2, 1, self.rnn_size):copy(fwd_states[i])
       states[i]:narrow(2, self.rnn_size + 1, self.rnn_size):copy(bwd_states[i])
+    end
+    for t = 1, batch.source_length do
+      context[{{}, t}]:narrow(2, 1, self.rnn_size)
+        :copy(fwd_context[{{}, t}])
+      context[{{}, t}]:narrow(2, self.rnn_size + 1, self.rnn_size)
+        :copy(bwd_context[{{}, batch.source_length - t + 1}])
     end
   elseif self.merge == 'sum' then
     for i = 1, #states do
@@ -64,7 +67,7 @@ function BiEncoder:forward(batch)
     end
     for t = 1, batch.source_length do
       context[{{}, t}]:copy(fwd_context[{{}, t}])
-      context[{{}, t}]:add(bwd_context[{{}, t}])
+      context[{{}, t}]:add(bwd_context[{{}, batch.source_length - t + 1}])
     end
   end
 
