@@ -136,8 +136,6 @@ local function main()
         break
       end
 
-      io.read()
-
       batch_id = batch_id + 1
       src_batch = {}
       targ_batch = {}
