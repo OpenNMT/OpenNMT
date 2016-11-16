@@ -1,7 +1,7 @@
 require 'torch'
 local lfs = require 'lfs'
 local file_reader = require 's2sa.utils.file_reader'
-local beam = require 's2sa.beam.main'
+local beam = require 's2sa.eval.beam'
 
 local cmd = torch.CmdLine()
 

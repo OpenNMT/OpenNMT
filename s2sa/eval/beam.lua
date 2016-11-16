@@ -9,8 +9,8 @@ local Generator = require 's2sa.generator'
 
 local table_utils = require 's2sa.utils.table_utils'
 local constants = require 's2sa.utils.constants'
-local State = require 's2sa.beam.state'
 local cuda = require 's2sa.utils.cuda'
+local State = require 's2sa.eval.state'
 local path = require 'pl.path'
 
 local checkpoint = nil
