@@ -1,7 +1,7 @@
 require 'nn'
 require 'nngraph'
 
-require 's2sa.utils.dict'
+require 'lib.utils.dict'
 
 local path = require 'pl.path'
 

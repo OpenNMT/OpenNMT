@@ -1,8 +1,8 @@
 require 'torch'
-local cuda = require 's2sa.utils.cuda'
-local constants = require 's2sa.utils.constants'
-local model_utils = require 's2sa.utils.model_utils'
-require 's2sa.model'
+local cuda = require 'lib.utils.cuda'
+local constants = require 'lib.utils.constants'
+local model_utils = require 'lib.utils.model_utils'
+require 'lib.model'
 
 local function make_lstm(input_size, rnn_size)
   local inputs = {}

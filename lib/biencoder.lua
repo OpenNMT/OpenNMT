@@ -1,6 +1,6 @@
-local model_utils = require 's2sa.utils.model_utils'
-local Encoder = require 's2sa.encoder'
-require 's2sa.model'
+local model_utils = require 'lib.utils.model_utils'
+local Encoder = require 'lib.encoder'
+require 'lib.model'
 
 local BiEncoder, Model = torch.class('BiEncoder', 'Model')
 

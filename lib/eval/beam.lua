@@ -2,17 +2,17 @@ require 'nn'
 require 'string'
 require 'nngraph'
 
-require 's2sa.utils.dict'
+require 'lib.utils.dict'
 
-local Encoder = require 's2sa.encoder'
-local BiEncoder = require 's2sa.biencoder'
-local Decoder = require 's2sa.decoder'
-local Generator = require 's2sa.generator'
+local Encoder = require 'lib.encoder'
+local BiEncoder = require 'lib.biencoder'
+local Decoder = require 'lib.decoder'
+local Generator = require 'lib.generator'
 
-local table_utils = require 's2sa.utils.table_utils'
-local constants = require 's2sa.utils.constants'
-local cuda = require 's2sa.utils.cuda'
-local State = require 's2sa.eval.state'
+local table_utils = require 'lib.utils.table_utils'
+local constants = require 'lib.utils.constants'
+local cuda = require 'lib.utils.cuda'
+local State = require 'lib.eval.state'
 local path = require 'pl.path'
 
 local checkpoint = nil

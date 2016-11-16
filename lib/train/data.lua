@@ -1,5 +1,5 @@
-local cuda = require 's2sa.utils.cuda'
-local constants = require 's2sa.utils.constants'
+local cuda = require 'lib.utils.cuda'
+local constants = require 'lib.utils.constants'
 
 local data = torch.class("data")
 

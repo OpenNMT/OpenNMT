@@ -1,7 +1,7 @@
-local model_utils = require 's2sa.utils.model_utils'
-local table_utils = require 's2sa.utils.table_utils'
-local cuda = require 's2sa.utils.cuda'
-require 's2sa.sequencer'
+local model_utils = require 'lib.utils.model_utils'
+local table_utils = require 'lib.utils.table_utils'
+local cuda = require 'lib.utils.cuda'
+require 'lib.sequencer'
 
 local function masked_softmax(source_sizes, source_length, beam_size)
   local num_sents = #source_sizes

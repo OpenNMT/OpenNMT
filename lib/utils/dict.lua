@@ -1,6 +1,6 @@
 require 'torch'
 
-local constants = require 's2sa.utils.constants'
+local constants = require 'lib.utils.constants'
 
 local dict = torch.class("dict")
 

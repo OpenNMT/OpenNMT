@@ -1,6 +1,6 @@
-local model_utils = require 's2sa.utils.model_utils'
-local table_utils = require 's2sa.utils.table_utils'
-require 's2sa.sequencer'
+local model_utils = require 'lib.utils.model_utils'
+local table_utils = require 'lib.utils.table_utils'
+require 'lib.sequencer'
 
 local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
 

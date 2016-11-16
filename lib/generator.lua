@@ -1,7 +1,7 @@
 require 'torch'
-local constants = require 's2sa.utils.constants'
-local cuda = require 's2sa.utils.cuda'
-require 's2sa.model'
+local constants = require 'lib.utils.constants'
+local cuda = require 'lib.utils.cuda'
+require 'lib.model'
 
 local function build_network(vocab_size, rnn_size)
   local inputs = {}

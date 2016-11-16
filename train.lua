@@ -1,17 +1,17 @@
-require 's2sa.utils.dict'
+require 'lib.utils.dict'
 
 local path = require 'pl.path'
-local cuda = require 's2sa.utils.cuda'
+local cuda = require 'lib.utils.cuda'
 
-local Decoder = require 's2sa.decoder'
-local Encoder = require 's2sa.encoder'
-local BiEncoder = require 's2sa.biencoder'
-local Generator = require 's2sa.generator'
+local Decoder = require 'lib.decoder'
+local Encoder = require 'lib.encoder'
+local BiEncoder = require 'lib.biencoder'
+local Generator = require 'lib.generator'
 
-local EpochState = require 's2sa.train.epoch_state'
-local Checkpoint = require 's2sa.train.checkpoint'
-local Data = require 's2sa.train.data'
-local Optim = require 's2sa.train.optim'
+local EpochState = require 'lib.train.epoch_state'
+local Checkpoint = require 'lib.train.checkpoint'
+local Data = require 'lib.train.data'
+local Optim = require 'lib.train.optim'
 
 local cmd = torch.CmdLine()
 

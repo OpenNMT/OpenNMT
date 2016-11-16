@@ -1,8 +1,8 @@
-local constants = require 's2sa.utils.constants'
-local dict = require 's2sa.utils.dict'
-local file_reader = require 's2sa.utils.file_reader'
-local table_utils = require 's2sa.utils.table_utils'
-local opt_utils = require 's2sa.utils.opt_utils'
+local constants = require 'lib.utils.constants'
+local dict = require 'lib.utils.dict'
+local file_reader = require 'lib.utils.file_reader'
+local table_utils = require 'lib.utils.table_utils'
+local opt_utils = require 'lib.utils.opt_utils'
 
 local cmd = torch.CmdLine()
 
