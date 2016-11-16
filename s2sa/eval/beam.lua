@@ -2,6 +2,8 @@ require 'nn'
 require 'string'
 require 'nngraph'
 
+require 's2sa.utils.dict'
+
 local Encoder = require 's2sa.encoder'
 local BiEncoder = require 's2sa.biencoder'
 local Decoder = require 's2sa.decoder'
