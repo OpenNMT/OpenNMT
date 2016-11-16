@@ -151,6 +151,21 @@ function Decoder:forward(batch, encoder_states, context)
   return outputs
 end
 
+function Decoder:compute_loss(batch, encoder_states, context, generator)
+  local states = model_utils.copy_state(self.states_proto, encoder_states, batch.size)
+
+  local loss = 0
+  local prev_out
+
+  for t = 1, batch.target_length do
+    prev_out, states = self:forward_one(batch.target_input[t], states, context, prev_out, t)
+    local pred = generator.network:forward(prev_out)
+    loss = loss + generator.criterion:forward(pred, batch.target_output[t])
+  end
+
+  return loss
+end
+
 function Decoder:backward(batch, outputs, generator)
   local grad_states_input = model_utils.reset_state(self.grad_out_proto, batch.size)
   local grad_context_input = self.grad_context_proto[{{1, batch.size}, {1, batch.source_length}}]:zero()

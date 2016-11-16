@@ -33,21 +33,6 @@ function Generator:__init(args, network)
   end
 end
 
-function Generator:forward_one(decoder_output)
-  return self.network:forward(decoder_output)
-end
-
-function Generator:compute_loss(batch, decoder_outputs)
-  local loss = 0
-
-  for t = 1, batch.target_length do
-    local output = self:forward_one(decoder_outputs[t])
-    loss = loss + self.criterion:forward(output, batch.target_output[t])
-  end
-
-  return loss
-end
-
 function Generator:training()
   self.network:training()
 end

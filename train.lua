@@ -133,11 +133,8 @@ local function eval(model, data)
 
   for i = 1, #data do
     local batch = data:get_batch(i)
-
     local encoder_states, context = model.encoder:forward(batch)
-    local decoder_outputs = model.decoder:forward(batch, encoder_states, context)
-
-    loss = loss + model.generator:compute_loss(batch, decoder_outputs)
+    loss = loss + model.decoder:compute_loss(batch, encoder_states, context, model.generator)
     total = total + batch.target_non_zeros
   end
 
