@@ -28,6 +28,11 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
     error('invalid merge action ' .. merge)
   end
 
+  -- preallocate gradient of the backward context
+  if args.training then
+    self.grad_context_bwd_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
+  end
+
   self.merge = merge
   self.rnn_size = args.rnn_size
 
@@ -82,26 +87,40 @@ function BiEncoder:forward(batch)
 end
 
 function BiEncoder:backward(batch, grad_states_output, grad_context_output)
+  local grad_context_output_fwd
+  local grad_context_output_bwd
+
+  local grad_states_output_fwd = {}
+  local grad_states_output_bwd = {}
+
   if self.merge == 'concat' then
     local grad_context_output_split = grad_context_output:chunk(2, 3)
-    local grad_context_output_fwd = grad_context_output_split[1]
-    local grad_context_output_bwd = grad_context_output_split[2]
-
-    local grad_states_output_fwd = {}
-    local grad_states_output_bwd = {}
+    grad_context_output_fwd = grad_context_output_split[1]
+    grad_context_output_bwd = grad_context_output_split[2]
 
     for i = 1, #grad_states_output do
       local states_split = grad_states_output[i]:chunk(2, 2)
       table.insert(grad_states_output_fwd, states_split[1])
       table.insert(grad_states_output_bwd, states_split[2])
     end
-
-    self.fwd:backward(batch, grad_states_output_fwd, grad_context_output_fwd)
-    self.bwd:backward(batch, grad_states_output_bwd, grad_context_output_bwd)
   elseif self.merge == 'sum' then
-    self.fwd:backward(batch, grad_states_output, grad_context_output)
-    self.bwd:backward(batch, grad_states_output, grad_context_output)
+    grad_context_output_fwd = grad_context_output
+    grad_context_output_bwd = grad_context_output
+
+    grad_states_output_fwd = grad_states_output
+    grad_states_output_bwd = grad_states_output
   end
+
+  self.fwd:backward(batch, grad_states_output_fwd, grad_context_output_fwd)
+
+  -- reverse gradients of the backward context
+  local grad_context_bwd = self.grad_context_bwd_proto[{{1, batch.size}, {1, batch.source_length}}]
+
+  for t = 1, batch.source_length do
+    grad_context_bwd[{{}, t}]:copy(grad_context_output_bwd[{{}, batch.source_length - t + 1}])
+  end
+
+  self.bwd:backward(batch, grad_states_output_bwd, grad_context_bwd)
 end
 
 function BiEncoder:training()
@@ -119,6 +138,11 @@ function BiEncoder:convert(f)
   self.bwd:convert(f)
 
   self.context_proto = f(self.context_proto)
+
+  if self.grad_context_bwd_proto ~= nil then
+    self.grad_context_bwd_proto = f(self.grad_context_bwd_proto)
+  end
+
   for i = 1, #self.states_proto do
     self.states_proto[i] = f(self.states_proto[i])
   end
