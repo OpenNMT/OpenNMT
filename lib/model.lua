@@ -22,3 +22,5 @@ function Model:cuda()
     return obj:cuda()
   end)
 end
+
+return Model
