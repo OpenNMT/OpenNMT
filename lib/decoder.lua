@@ -4,7 +4,7 @@ local cuda = require 'lib.utils.cuda'
 require 'lib.sequencer'
 
 local function masked_softmax(source_sizes, source_length, beam_size)
-  local num_sents = #source_sizes
+  local num_sents = source_sizes:size(1)
   local input = nn.Identity()()
   local softmax = nn.SoftMax()(input) -- beam_size*num_sents x State.source_length
 
@@ -171,8 +171,10 @@ function Decoder:compute_score(batch, encoder_states, context, generator)
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
     local pred = generator.network:forward(out)
     for b = 1, batch.size do
-      score[b] = score[b] or 0
-      score[b] = score[b] + pred[b][batch.target_output[t][b]]
+      if t <= batch.target_size[b] then
+        score[b] = score[b] or 0
+        score[b] = score[b] + pred[b][batch.target_output[t][b]]
+      end
     end
   end)
 

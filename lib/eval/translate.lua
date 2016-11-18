@@ -171,6 +171,9 @@ local function translate_batch(batch)
 
   local gold_score
   if batch.target_input ~= nil then
+    if batch.size > 1 then
+      models.decoder:reset(batch.source_size, batch.source_length)
+    end
     gold_score = models.decoder:compute_score(batch, enc_states, context, models.generator)
   end
 
@@ -210,12 +213,12 @@ local function translate_batch(batch)
 
     -- prepare decoder input
     local input = torch.IntTensor(opt.beam, remaining_sents)
-    local source_sizes = {}
+    local source_sizes = torch.IntTensor(remaining_sents)
 
     for b = 1, batch.size do
       if not beam[b].done then
         local idx = batch_idx[b]
-        table.insert(source_sizes, batch.source_size[b])
+        source_sizes[idx] = batch.source_size[b]
 
         local y = beam[b]:get_current_state()
         if opt.beam == 1 then
