@@ -9,7 +9,7 @@ end
 
 local Beam = torch.class('Beam')
 
-function Beam:__init(size, max_seq_len)
+function Beam:__init(size)
   self.size = size
   self.done = false
   self.found_eos = false
