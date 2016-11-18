@@ -84,12 +84,15 @@ function Data:get_data(src, targ)
   end
 
   for b = 1, batch.size do
-    -- pad source input on the left
     local source_offset = batch.source_length - batch.source_size[b] + 1
     local source_input = src[b]
     local source_input_rev = src[b]:index(1, torch.linspace(batch.source_size[b], 1, batch.source_size[b]):long())
+
     batch.source_input[{{source_offset, batch.source_length}, b}]:copy(source_input)
-    batch.source_input_rev[{{source_offset, batch.source_length}, b}]:copy(source_input_rev)
+    batch.source_input_pad_left = true
+
+    batch.source_input_rev[{{1, batch.source_size[b]}, b}]:copy(source_input_rev)
+    batch.source_input_rev_pad_left = false
 
     if targ ~= nil then
       local target_length = targ[b]:size(1) - 1 -- targ contains <s> and </s>

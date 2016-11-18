@@ -2,6 +2,12 @@ local model_utils = require 'lib.utils.model_utils'
 local Encoder = require 'lib.encoder'
 require 'lib.model'
 
+local function reverse_input(batch)
+  batch.source_input, batch.source_input_rev = batch.source_input_rev, batch.source_input
+  batch.source_input_pad_left, batch.source_input_rev_pad_left = batch.source_input_rev_pad_left, batch.source_input_pad_left
+end
+
+
 local BiEncoder, Model = torch.class('BiEncoder', 'Model')
 
 function BiEncoder:__init(args, merge, net_fwd, net_bwd)
@@ -50,13 +56,9 @@ end
 function BiEncoder:forward(batch)
   local fwd_states, fwd_context = self.fwd:forward(batch)
 
-  -- reverse source input
-  local tmp = batch.source_input
-  batch.source_input = batch.source_input:index(1, torch.linspace(batch.source_length, 1, batch.source_length):long())
-
+  reverse_input(batch)
   local bwd_states, bwd_context = self.bwd:forward(batch)
-
-  batch.source_input = tmp
+  reverse_input(batch)
 
   local states = model_utils.reset_state(self.states_proto, batch.size)
   local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]

@@ -27,8 +27,13 @@ function Encoder:resize_proto(batch_size)
 end
 
 function Encoder:forward(batch)
+  local final_states
   local states = model_utils.reset_state(self.states_proto, batch.size)
   local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]
+
+  if self.mask_padding and not batch.source_input_pad_left then
+    final_states = table_utils.clone(states)
+  end
 
   if not self.eval_mode then
     self.inputs = {}
@@ -48,9 +53,13 @@ function Encoder:forward(batch)
 
     if self.mask_padding then
       for b = 1, batch.size do
-        if t <= batch.source_length - batch.source_size[b] then
+        if batch.source_input_pad_left and t <= batch.source_length - batch.source_size[b] then
           for j = 1, #states do
             states[j][b]:zero()
+          end
+        elseif not batch.source_input_pad_left and t == batch.source_size[b] then
+          for j = 1, #states do
+            final_states[j][b]:copy(states[j][b])
           end
         end
       end
@@ -59,7 +68,11 @@ function Encoder:forward(batch)
     context[{{}, t}]:copy(states[#states])
   end
 
-  return states, context
+  if final_states == nil then
+    final_states = states
+  end
+
+  return final_states, context
 end
 
 function Encoder:backward(batch, grad_states_output, grad_context_output)
