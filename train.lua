@@ -7,10 +7,10 @@ local Decoder = require 'lib.decoder'
 local Encoder = require 'lib.encoder'
 local BiEncoder = require 'lib.biencoder'
 local Generator = require 'lib.generator'
+local Data = require 'lib.data'
 
 local EpochState = require 'lib.train.epoch_state'
 local Checkpoint = require 'lib.train.checkpoint'
-local Data = require 'lib.train.data'
 local Optim = require 'lib.train.optim'
 
 local cmd = torch.CmdLine()
@@ -238,8 +238,11 @@ local function main()
   print('Loading data from ' .. opt.data .. '...')
   local dataset = torch.load(opt.data)
 
-  local train_data = Data.new(dataset.train, opt.max_batch_size)
-  local valid_data = Data.new(dataset.valid, opt.max_batch_size)
+  local train_data = Data.new(dataset.train.src, dataset.train.targ)
+  local valid_data = Data.new(dataset.valid.src, dataset.valid.targ)
+
+  train_data:set_batch_size(opt.max_batch_size)
+  valid_data:set_batch_size(opt.max_batch_size)
 
   print(string.format(' * vocabluary size: source = %d; target = %d',
                       #dataset.src_dict, #dataset.targ_dict))

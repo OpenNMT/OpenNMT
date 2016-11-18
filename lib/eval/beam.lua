@@ -8,6 +8,7 @@ local Encoder = require 'lib.encoder'
 local BiEncoder = require 'lib.biencoder'
 local Decoder = require 'lib.decoder'
 local Generator = require 'lib.generator'
+local Data = require 'lib.data'
 
 local table_utils = require 'lib.utils.table_utils'
 local constants = require 'lib.utils.constants'
@@ -117,59 +118,23 @@ local function init(args, resources_dir)
   end
 end
 
-
-local function get_max_length(tokens)
-  local max = 0
-  local sizes = {}
-  for i = 1, #tokens do
-    local len = #tokens[i]
-    max = math.max(max, len)
-    table.insert(sizes, len)
-  end
-  return max, sizes
-end
-
 local function build_data(src_batch, gold_batch)
-  local batch = {}
-
-  batch.size = #src_batch
-  batch.source_length, batch.source_size = get_max_length(src_batch)
-
-  assert(batch.source_length <= opt.max_sent_l, 'maximum sentence length reached')
-
-  batch.source_input = torch.IntTensor(batch.source_length, batch.size):fill(constants.PAD)
+  local src = {}
+  local targ
 
   if gold_batch ~= nil then
-    batch.target_length = get_max_length(gold_batch) + 1 -- for <s> or </s>
-    batch.target_input = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
-    batch.target_output = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
+    targ = {}
   end
 
-  for b = 1, batch.size do
-    local source_input = src_dict:convert_to_idx(src_batch[b], false)
-    local source_offset = batch.source_length - batch.source_size[b] + 1
+  for b = 1, #src_batch do
+    table.insert(src, src_dict:convert_to_idx(src_batch[b], false))
 
-    -- pad on the left
-    batch.source_input[{{source_offset, batch.source_length}, b}]:copy(source_input)
-
-    if gold_batch ~= nil then
-      local target = targ_dict:convert_to_idx(gold_batch[b], true)
-      local target_input = target:narrow(1, 1, batch.target_length)
-      local target_output = target:narrow(1, 2, batch.target_length)
-
-      batch.target_input[{{1, batch.target_length}, b}]:copy(target_input)
-      batch.target_output[{{1, batch.target_length}, b}]:copy(target_output)
+    if targ ~= nil then
+      table.insert(targ, targ_dict:convert_to_idx(gold_batch[b], true))
     end
   end
 
-  batch.source_input = cuda.convert(batch.source_input)
-
-  if gold_batch ~= nil then
-    batch.target_input = cuda.convert(batch.target_input)
-    batch.target_output = cuda.convert(batch.target_output)
-  end
-
-  return batch
+  return Data.new(src, targ)
 end
 
 local function build_target_tokens(pred, src, attn)
@@ -451,7 +416,8 @@ local function generate_beam(batch)
 end
 
 local function search(src_batch, gold_batch)
-  local batch = build_data(src_batch, gold_batch)
+  local data = build_data(src_batch, gold_batch)
+  local batch = data:get_batch()
 
   local pred, pred_score, attn, all_pred, all_score, gold_score = generate_beam(batch)
 
