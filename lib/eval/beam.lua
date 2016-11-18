@@ -12,7 +12,6 @@ local Beam = torch.class('Beam')
 function Beam:__init(size)
   self.size = size
   self.done = false
-  self.found_eos = false
 
   self.scores = torch.FloatTensor(size):zero()
   self.prev_ks = { torch.LongTensor(size):fill(1) }
@@ -56,14 +55,12 @@ function Beam:advance(out, attn_out)
     prev_k[k] = from_beam
     next_y[k] = best_score_id
     table.insert(attn, attn_out[from_beam]:clone())
-
-    if next_y[k] == constants.EOS then
-      self.found_eos = true
-      if k == 1 then
-        self.done = true
-      end
-    end
   end
+
+  if next_y[1] == constants.EOS then
+    self.done = true
+  end
+
 
   table.insert(self.prev_ks, prev_k)
   table.insert(self.next_ys, next_y)
