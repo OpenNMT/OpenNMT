@@ -12,7 +12,6 @@ local Decoder = require 'lib.decoder'
 local Generator = require 'lib.generator'
 local Data = require 'lib.data'
 
-local table_utils = require 'lib.utils.table_utils'
 local constants = require 'lib.utils.constants'
 local cuda = require 'lib.utils.cuda'
 local path = require 'pl.path'
