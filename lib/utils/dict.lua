@@ -139,10 +139,13 @@ function dict:convert_to_idx(labels, start_symbols)
   return torch.IntTensor(vec)
 end
 
-function dict:convert_to_labels(idx)
+function dict:convert_to_labels(idx, stop)
   local labels = {}
 
   for i = 1, #idx do
+    if idx[i] == stop then
+      break
+    end
     table.insert(labels, self:lookup(idx[i]))
   end
 

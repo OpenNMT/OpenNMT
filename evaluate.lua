@@ -1,7 +1,7 @@
 require 'torch'
 local lfs = require 'lfs'
 local file_reader = require 'lib.utils.file_reader'
-local beam = require 'lib.eval.beam'
+local translate = require 'lib.eval.translate'
 
 local cmd = torch.CmdLine()
 
@@ -15,10 +15,6 @@ cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each li
 cmd:option('-beam', 5,[[Beam size]])
 cmd:option('-batch', 30, [[Batch size]])
 cmd:option('-max_sent_l', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
-cmd:option('-simple', 0, [[If = 1, output prediction is simply the first time the top of the beam
-                         ends with an end-of-sentence token. If = 0, the model considers all
-                         hypotheses that have been generated so far that ends with end-of-sentence
-                         token and takes the highest scoring of all of them.]])
 cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the source token that
                               had the highest attention weight. If srctarg_dict is provided,
                               it will lookup the identified source token and give the corresponding
@@ -54,7 +50,7 @@ local function main()
     targ_batch = {}
   end
 
-  beam.init(opt, lfs.currentdir())
+  translate.init(opt, lfs.currentdir())
 
   local out_file = io.open(opt.output_file, 'w')
 
@@ -94,7 +90,7 @@ local function main()
         timer:resume()
       end
 
-      local pred_batch, info = beam.search(src_batch, targ_batch)
+      local pred_batch, info = translate.translate(src_batch, targ_batch)
 
       if opt.time > 0 then
         timer:stop()
@@ -123,9 +119,12 @@ local function main()
           gold_words_total = gold_words_total + #targ_batch[b]
         end
 
-        for n = 1, #info[b].n_best do
-          local n_best = table.concat(info[b].n_best[n].tokens, " ")
-          print(string.format("%d ||| %s ||| %.4f", n, n_best, info[b].n_best[n].score))
+        if opt.n_best > 1 then
+          print('\nBEST HYP:')
+          for n = 1, #info[b].n_best do
+            local n_best = table.concat(info[b].n_best[n].tokens, " ")
+            print(string.format("[%.4f] %s", info[b].n_best[n].score, n_best))
+          end
         end
 
         print('')

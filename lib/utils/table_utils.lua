@@ -26,12 +26,6 @@ local function copy(orig)
   return copy_obj
 end
 
--- Convert a flat index to a row-column tuple.
-local function flat_to_rc(v, flat_index)
-  local row = math.floor((flat_index - 1) / v:size(2)) + 1
-  return row, (flat_index - 1) % v:size(2) + 1
-end
-
 local function clone(tab)
   local new_tab = {}
   for i = 1, #tab do
@@ -44,6 +38,5 @@ return {
   clone = clone,
   reorder = reorder,
   append = append,
-  copy = copy,
-  flat_to_rc = flat_to_rc
+  copy = copy
 }
