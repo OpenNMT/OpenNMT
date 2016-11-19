@@ -102,6 +102,9 @@ end
 function Data:get_data(src, targ)
 
   local batch = {}
+
+  assert(#src == #targ, "source and target must have the same batch size")
+
   batch.size = #src
 
   batch.source_length, batch.source_size = get_length(src)
