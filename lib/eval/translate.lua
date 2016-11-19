@@ -43,11 +43,7 @@ local function absolute_path(file_path, resources_dir)
 end
 
 local function load_phrase_table(file_path)
-  local f = io.open(file_path, 'r')
-
-  if f == nil then
-    error('Failed to open file ' .. file_path)
-  end
+  local f = assert(io.open(file_path, 'r'))
 
   local function strip(s)
     return s:gsub("^%s+",""):gsub("%s+$","")
