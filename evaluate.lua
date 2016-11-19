@@ -22,7 +22,6 @@ cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the so
                               does not exist in the table) then it will copy the source token]])
 cmd:option('-srctarg_dict', '', [[Path to source-target dictionary to replace UNK
                                                tokens. See README.md for the format this file should be in]])
-cmd:option('-score_gold', false, [[If = true, score the log likelihood of the gold as well]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
@@ -45,7 +44,9 @@ local function main()
   local targ_reader
   local targ_batch
 
-  if opt.score_gold then
+  local with_gold_score = opt.targ_file:len() > 0
+
+  if with_gold_score then
     targ_reader = file_reader.new(opt.targ_file)
     targ_batch = {}
   end
@@ -72,13 +73,13 @@ local function main()
   while true do
     local src_tokens = src_reader:next()
     local targ_tokens
-    if opt.score_gold then
+    if with_gold_score then
       targ_tokens = targ_reader:next()
     end
 
     if src_tokens ~= nil then
       table.insert(src_batch, src_tokens)
-      if opt.score_gold then
+      if with_gold_score then
         table.insert(targ_batch, targ_tokens)
       end
     elseif #src_batch == 0 then
@@ -109,7 +110,7 @@ local function main()
         pred_score_total = pred_score_total + info[b].score
         pred_words_total = pred_words_total + #pred_batch[b]
 
-        if opt.score_gold then
+        if with_gold_score then
           local targ_sent = table.concat(targ_batch[b], " ")
 
           print('GOLD ' .. sent_id .. ': ' .. targ_sent)
@@ -137,7 +138,7 @@ local function main()
 
       batch_id = batch_id + 1
       src_batch = {}
-      if opt.score_gold then
+      if with_gold_score then
         targ_batch = {}
       end
       collectgarbage()
@@ -155,7 +156,7 @@ local function main()
 
   report_score('PRED', pred_score_total, pred_words_total)
 
-  if opt.score_gold then
+  if with_gold_score then
     report_score('GOLD', gold_score_total, gold_words_total)
   end
 
