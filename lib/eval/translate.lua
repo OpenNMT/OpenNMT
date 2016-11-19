@@ -218,13 +218,7 @@ local function translate_batch(batch)
       if not beam[b].done then
         local idx = batch_idx[b]
         source_sizes[idx] = batch.source_size[b]
-
-        local y = beam[b]:get_current_state()
-        if opt.beam == 1 then
-          input[{{}, idx}]:copy(torch.IntTensor({y}))
-        else
-          input[{{}, idx}]:copy(y)
-        end
+        input[{{}, idx}]:copy(beam[b]:get_current_state())
       end
     end
 
