@@ -3,12 +3,30 @@ local table_utils = require 'lib.utils.table_utils'
 local cuda = require 'lib.utils.cuda'
 require 'lib.sequencer'
 
+
+--[[ Decoder is the sequencer for the target words.]]
+local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
+
+--[[Apply a mask to make sure no attention is given to padding.
+
+Parameters:
+  * `source_sizes` -  the true lengths (with left padding).
+  * `source_length` - the max length in the batch `beam_size`.
+  * `beam_size` - beam size ${K}
+
+Returns:
+  * A nngraph that applies a soft max on input that gives no weight to the left padding.
+
+TODO:
+  * better names for these variables.
+--]]
 local function masked_softmax(source_sizes, source_length, beam_size)
+
   local num_sents = source_sizes:size(1)
   local input = nn.Identity()()
   local softmax = nn.SoftMax()(input) -- beam_size*num_sents x State.source_length
 
-  -- now we are masking the part of the output we don't need
+  -- Now we are masking the part of the output we don't need
   local tab
   if beam_size ~= nil then
     tab = nn.SplitTable(2)(nn.View(beam_size, num_sents, source_length)(softmax))
@@ -42,22 +60,28 @@ local function masked_softmax(source_sizes, source_length, beam_size)
     output = nn.View(num_sents, source_length)(output)
   end
 
-  -- make sure the vector sums to 1 (softmax output)
+  -- Make sure the vector sums to 1 (softmax output)
   output = nn.Normalize(1)(output)
 
   return nn.gModule({input}, {output})
 end
 
 
-local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
-
 function Decoder:__init(args, network)
   Sequencer.__init(self, 'dec', args, network)
+  -- Input feeding means the decoder takes an extra
+  -- vector each time representing the attention at the
+  -- previous step.
   self.input_feed = args.input_feed
-  self.mask_padding = args.mask_padding or false
+  if self.input_feed then
+    self.input_feed_proto = torch.zeros(args.max_batch_size, args.rnn_size)
+  end
 
+  -- Mask padding means that the attention-layer is constrained to
+  -- give zero-weight to padding. This is done by storing a reference
+  -- to the softmax attention-layer.
+  self.mask_padding = args.mask_padding or false
   if self.mask_padding then
-    -- get a reference on the attention layer to mask the attention softmax afterward
     self.network:apply(function (layer)
       if layer.name == 'decoder_attn' then
         self.decoder_attn = layer
@@ -65,13 +89,10 @@ function Decoder:__init(args, network)
     end)
   end
 
-  -- preallocate default input feeding tensor
-  if self.input_feed then
-    self.input_feed_proto = torch.zeros(args.max_batch_size, args.rnn_size)
-  end
 
   if args.training then
-    -- preallocate output gradients
+    -- Preallocate output gradients and context gradient.
+    -- TODO: move all this to sequencer.
     self.grad_out_proto = {}
     for _ = 1, args.num_layers do
       table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
@@ -79,11 +100,14 @@ function Decoder:__init(args, network)
     end
     table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
 
-    -- preallocate context gradient
     self.grad_context_proto = torch.zeros(args.max_batch_size, args.max_source_length, args.rnn_size)
   end
 end
 
+--[[ Call to change the `batch_size`.
+
+  TODO: rename.
+]]
 function Decoder:resize_proto(batch_size)
   Sequencer.resize_proto(self, batch_size)
   if self.input_feed then
@@ -91,6 +115,7 @@ function Decoder:resize_proto(batch_size)
   end
 end
 
+--[[ Update internals to prepare for new batch.]]
 function Decoder:reset(source_sizes, source_length, beam_size)
   self.decoder_attn:replace(function(module)
     if module.name == 'softmax_attn' then
@@ -111,8 +136,23 @@ function Decoder:reset(source_sizes, source_length, beam_size)
   end)
 end
 
+--[[ Run one step of the decoder.
+
+Parameters:
+ * `input` - sparse input (1)
+ * `prev_states` - stack of hidden states (batch x layers*model x rnn_size)
+ * `context` - encoder output (batch x n x rnn_size)
+ * `prev_out` - previous distribution (batch x #words)
+ * `t` - current timestep
+
+Returns:
+ 1. `out` - Top-layer Hidden state
+ 2. `states` - All states
+--]]
 function Decoder:forward_one(input, prev_states, context, prev_out, t)
   local inputs = {}
+
+  -- Create RNN input (see sequencer.lua `build_network('dec')`).
   table_utils.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
@@ -124,13 +164,13 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
     end
   end
 
+  -- Remember inputs for the backward pass.
   if not self.eval_mode then
-    -- remember inputs for the backward pass
     self.inputs[t] = inputs
   end
 
+  -- TODO: self:net?
   local outputs = Sequencer.net(self, t):forward(inputs)
-
   local out = outputs[#outputs]
   local states = {}
   for i = 1, #outputs - 1 do
@@ -140,6 +180,14 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   return out, states
 end
 
+--[[Compute all forward steps.
+
+  Parameters:
+  * `batch` - based on data.lua
+  * `encoder_states`
+  * `context`
+  * `func` - Calls `func(out, t)` each timestep.
+--]]
 function Decoder:forward_and_apply(batch, encoder_states, context, func)
   local states = model_utils.copy_state(self.states_proto, encoder_states, batch.size)
 
@@ -151,6 +199,16 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   end
 end
 
+--[[Compute all forward steps.
+
+Parameters:
+  * `batch` - based on data.lua
+  * `encoder_states`
+  * `context`
+
+Returns:
+  1. `outputs` - Top Hidden layer at each time-step.
+--]]
 function Decoder:forward(batch, encoder_states, context)
   if not self.eval_mode then
     self.inputs = {}
@@ -166,6 +224,7 @@ function Decoder:forward(batch, encoder_states, context)
 end
 
 function Decoder:compute_score(batch, encoder_states, context, generator)
+  -- TODO: Why do we need this method?
   local score = {}
 
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
@@ -181,9 +240,10 @@ function Decoder:compute_score(batch, encoder_states, context, generator)
   return score
 end
 
+--[[ Compute the loss on a batch based on final layer `generator`.]]
 function Decoder:compute_loss(batch, encoder_states, context, generator)
-  local loss = 0
 
+  local loss = 0
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
     local pred = generator.network:forward(out)
     loss = loss + generator.criterion:forward(pred, batch.target_output[t])
@@ -192,6 +252,14 @@ function Decoder:compute_loss(batch, encoder_states, context, generator)
   return loss
 end
 
+--[[ Compute the standard backward update.
+  With input `batch`, target `outputs`, and `generator`
+  Note: This code is both the standard backward and criterion forward/backward.
+  It returns both the gradInputs (ret 1 and 2) and the loss.
+
+  TODO: This object should own `generator` and or, generator should
+  control its own backward pass.
+]]
 function Decoder:backward(batch, outputs, generator)
   local grad_states_input = model_utils.reset_state(self.grad_out_proto, batch.size)
   local grad_context_input = self.grad_context_proto[{{1, batch.size}, {1, batch.source_length}}]:zero()
@@ -202,38 +270,44 @@ function Decoder:backward(batch, outputs, generator)
   local loss = 0
 
   for t = batch.target_length, 1, -1 do
-    -- compute decoder output gradients
+    -- Compute decoder output gradients.
+    -- Note: This would typically be in the forward pass.
     local pred = generator.network:forward(outputs[t])
     loss = loss + generator.criterion:forward(pred, batch.target_output[t]) / batch.size
+
+
+    -- Compute the criterion gradient.
     local gen_grad_out = generator.criterion:backward(pred, batch.target_output[t])
     gen_grad_out:div(batch.size)
+
+    -- Compute the final layer gradient.
     local dec_grad_out = generator.network:backward(outputs[t], gen_grad_out)
     grad_states_input[#grad_states_input]:add(dec_grad_out)
 
+    -- Compute the standarad backward.
     local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
 
-    -- accumulate encoder output gradients
+    -- Accumulate encoder output gradients.
     grad_context_input:add(grad_input[grad_context_idx])
-
     grad_states_input[#grad_states_input]:zero()
 
-    -- accumulate previous output gradients with input feeding gradients
+    -- Accumulate previous output gradients with input feeding gradients.
     if self.input_feed and t > 1 then
       grad_states_input[#grad_states_input]:add(grad_input[grad_input_feed_idx])
     end
 
-    -- prepare next decoder output gradients
+    -- Prepare next decoder output gradients.
     for i = 1, #self.states_proto do
       grad_states_input[i]:copy(grad_input[i])
     end
   end
 
   Sequencer.backward_word_vecs(self)
-
   return grad_states_input, grad_context_input, loss
 end
 
 function Decoder:convert(f)
+  -- TODO: move up to sequencer.
   Sequencer.convert(self, f)
   self.input_feed_proto = f(self.input_feed_proto)
 

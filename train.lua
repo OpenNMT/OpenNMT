@@ -76,12 +76,11 @@ cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping
 cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
-                             If = 0, will not save models within an epoch.]])
+                             If = 0, will not save models within an epoch. ]])
 cmd:option('-print_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
 local opt = cmd:parse(arg)
-
 
 local function get_nets(model)
   local nets = {}
@@ -266,7 +265,7 @@ local function main()
     opt.brnn_merge = checkpoint.options.brnn_merge
     opt.input_feed = checkpoint.options.input_feed
 
-    -- resume training from checkpoint
+    -- Resume training from checkpoint
     if opt.train_from:len() > 0 and opt.continue then
       opt.optim = checkpoint.options.optim
       opt.lr_decay = checkpoint.options.lr_decay

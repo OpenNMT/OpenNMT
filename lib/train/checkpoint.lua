@@ -1,8 +1,11 @@
 require 'torch'
 
+-- Class for saving and loading models during training.
+
 local Checkpoint = torch.class("Checkpoint")
 
 function Checkpoint:__init(args)
+  -- TODO: make these `args` explicit
   self.options = args.options
   self.save_path = self.options.savefile
   self.nets = args.nets
@@ -27,6 +30,7 @@ function Checkpoint:save(file_path, info)
   torch.save(file_path, data)
 end
 
+--[[ Save the model and data in the middle of an epoch sorting the iteration. ]]
 function Checkpoint:save_iteration(iteration, epoch_state, batch_order)
   local info = {}
   info.iteration = iteration + 1
@@ -38,7 +42,7 @@ function Checkpoint:save_iteration(iteration, epoch_state, batch_order)
 
   print('Saving checkpoint to ' .. file_path .. '...')
 
-  -- succeed serialization before overriding existing file
+  -- Succeed serialization before overriding existing file
   self:save(file_path .. '.tmp', info)
   os.rename(file_path .. '.tmp', file_path)
 end

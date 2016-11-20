@@ -2,27 +2,33 @@ local model_utils = require 'lib.utils.model_utils'
 local Encoder = require 'lib.encoder'
 require 'lib.model'
 
+
+
 local function reverse_input(batch)
   batch.source_input, batch.source_input_rev = batch.source_input_rev, batch.source_input
   batch.source_input_pad_left, batch.source_input_rev_pad_left = batch.source_input_rev_pad_left, batch.source_input_pad_left
 end
 
-
+--[[ BiEncoder is a bidirectional Sequencer used for the source language. ]]
 local BiEncoder, Model = torch.class('BiEncoder', 'Model')
 
+--[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
+  The two are combined use `merge` operation (concat/sum).
+]]
 function BiEncoder:__init(args, merge, net_fwd, net_bwd)
   Model.__init(self)
 
-  -- preallocate full context vector
+  -- Preallocate full context vector.
   self.context_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
 
-  -- preallocate full hidden states tensors
+  -- Preallocate full hidden states tensors.
   self.states_proto = {}
   for _ = 1, args.num_layers do
     table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
     table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
   end
 
+  -- Comput the merge operation.
   if merge == 'concat' then
     if args.rnn_size % 2 ~= 0 then
       error('in concat mode, rnn_size must be divisible by 2')
@@ -34,7 +40,7 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
     error('invalid merge action ' .. merge)
   end
 
-  -- preallocate gradient of the backward context
+  -- Preallocate gradient of the backward context
   if args.training then
     self.grad_context_bwd_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
   end
@@ -47,6 +53,7 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
 end
 
 function BiEncoder:resize_proto(batch_size)
+  -- Call to change the `batch_size`.
   self.context_proto:resize(batch_size, self.context_proto:size(2), self.context_proto:size(3))
   for i = 1, #self.states_proto do
     self.states_proto[i]:resize(batch_size, self.states_proto[i]:size(2))
