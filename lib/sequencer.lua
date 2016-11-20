@@ -39,7 +39,9 @@ local function make_lstm(input_size, rnn_size)
   -- gated cells form the output
   local next_h = nn.CMulTable()({out_gate, nn.Tanh()(next_c)})
 
-  return nn.gModule(inputs, {next_c, next_h})
+  local gmodule=nn.gModule(inputs, {next_c, next_h})
+  gmodule.name='lstm'
+  return gmodule
 end
 
 local function make_attention(rnn_size)
