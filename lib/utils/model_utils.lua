@@ -9,11 +9,6 @@ local function clone_many_times(net, T)
     end
   end
 
-  local paramsNoGrad
-  if net.parametersNoGrad then
-    paramsNoGrad = net:parametersNoGrad()
-  end
-
   local mem = torch.MemoryFile("w"):binary()
   mem:writeObject(net)
 
@@ -26,16 +21,9 @@ local function clone_many_times(net, T)
 
     if net.parameters then
       local cloneParams, cloneGradParams = clone:parameters()
-      local cloneParamsNoGrad
       for i = 1, #params do
         cloneParams[i]:set(params[i])
         cloneGradParams[i]:set(gradParams[i])
-      end
-      if paramsNoGrad then
-        cloneParamsNoGrad = clone:parametersNoGrad()
-        for i =1,#paramsNoGrad do
-          cloneParamsNoGrad[i]:set(paramsNoGrad[i])
-        end
       end
     end
 
@@ -72,8 +60,21 @@ local function copy_state(proto, state, batch_l)
   return st
 end
 
+local function recursiveClone(out)
+  if torch.isTensor(out) then
+    return out:clone()
+  else
+    local res = {}
+    for k, v in ipairs(out) do
+      res[k] = recursiveClone(v)
+    end
+    return res
+  end
+end
+
 return {
   clone_many_times = clone_many_times,
   reset_state = reset_state,
-  copy_state = copy_state
+  copy_state = copy_state,
+  recursiveClone = recursiveClone
 }

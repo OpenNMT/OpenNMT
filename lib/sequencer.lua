@@ -290,6 +290,7 @@ function Sequencer:training()
     self.fix_word_vecs = self.args.fix_word_vecs
     self.word_vecs.weight[constants.PAD]:zero()
   else
+    -- only first clone can be used for evaluation
     self.network_clones[1]:training()
   end
 
