@@ -5,6 +5,7 @@ local model_utils = require 'lib.utils.model_utils'
 require 'lib.model'
 
 require 'lib.EmbeddingLayer'
+require 'lib.GlobalAttention'
 
 --[[ Sequencer is the base class for our time series LSTM models.
   Acts similarly to an `nn.Module`.
@@ -63,44 +64,6 @@ local function make_lstm(input_size, rnn_size)
   gmodule.name='lstm'
   return gmodule
 end
-
---[[ Create an nngraph attention unit of size `rnn_size`.
-
-Returns: An nngraph unit mapping:
-  ${(H_1 .. H_n, q) => (a)}$
-  Where H is of `batch x n x rnn_size` and q is of `batch x rnn_size`.
-
-  The full function is  ${\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)}$.
-
-TODO:
-  * allow different query and context sizes.
-  * don't use "rnn" (this function is more general)
---]]
-local function make_attention(rnn_size)
-  local inputs = {}
-  table.insert(inputs, nn.Identity()())
-  table.insert(inputs, nn.Identity()())
-
-  local target_t = nn.Linear(rnn_size, rnn_size, false)(inputs[1]) -- batch_l x rnn_size
-  local context = inputs[2] -- batch_l x source_timesteps x rnn_size
-
-  -- Get attention.
-  local attn = nn.MM()({context, nn.Replicate(1,3)(target_t)}) -- batch_l x source_l x 1
-  attn = nn.Sum(3)(attn)
-  local softmax_attn = cuda.nn.SoftMax()
-  softmax_attn.name = 'softmax_attn'
-  attn = softmax_attn(attn)
-  attn = nn.Replicate(1,2)(attn) -- batch_l x 1 x source_l
-
-  -- Apply attention to context.
-  local context_combined = nn.MM()({attn, context}) -- batch_l x 1 x rnn_size
-  context_combined = nn.Sum(2)(context_combined) -- batch_l x rnn_size
-  context_combined = nn.JoinTable(2)({context_combined, inputs[1]}) -- batch_l x rnn_size*2
-  local context_output = nn.Tanh()(nn.Linear(rnn_size*2, rnn_size, false)(context_combined))
-
-  return nn.gModule(inputs, {context_output})
-end
-
 
 --[[ Build one time-step of a stacked LSTM network
 
@@ -185,7 +148,7 @@ local function build_network(model, args)
 
   -- For the decoder, compute the attention here using h^L as query.
   if model == 'dec' then
-    local attn_layer = make_attention(args.rnn_size)
+    local attn_layer = GlobalAttention(args.rnn_size)
     attn_layer.name = 'decoder_attn'
     local attn_output = nn.Dropout(args.dropout, nil, false)(attn_layer({next_h, context}))
     table.insert(outputs, attn_output)
