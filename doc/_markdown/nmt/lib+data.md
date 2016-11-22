@@ -21,7 +21,7 @@ Batch interface [size]:
  TODO: change name of size => maxlen
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L46">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/data.lua#L46">[src]</a>
 <a name="nmt.Data"></a>
 
 
@@ -31,7 +31,7 @@ Batch interface [size]:
   and `targ`.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L53">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/data.lua#L53">[src]</a>
 <a name="nmt.Data:set_batch_size"></a>
 
 
@@ -39,7 +39,7 @@ Batch interface [size]:
 
  Setup up the training data to respect `max_batch_size`. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L103">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/data.lua#L103">[src]</a>
 <a name="nmt.Data:get_data"></a>
 
 
@@ -49,7 +49,7 @@ Batch interface [size]:
   (optional). Data format is shown at the top of the file.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L158">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/data.lua#L158">[src]</a>
 <a name="nmt.Data:get_batch"></a>
 
 

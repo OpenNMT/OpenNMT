@@ -4,7 +4,7 @@
 ## nmt.Optim ##
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/train/optim.lua#L108">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/train/optim.lua#L108">[src]</a>
 <a name="nmt.Optim:update_learning_rate"></a>
 
 

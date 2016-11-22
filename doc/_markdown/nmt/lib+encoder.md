@@ -18,7 +18,7 @@
 Inherits from [Sequencer](lib+sequencer).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L22">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/encoder.lua#L22">[src]</a>
 <a name="nmt.Encoder"></a>
 
 
@@ -26,7 +26,7 @@ Inherits from [Sequencer](lib+sequencer).
 
  Constructor takes global `args` and optional `network`. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L40">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/encoder.lua#L40">[src]</a>
 <a name="nmt.Encoder:resize_proto"></a>
 
 
@@ -34,7 +34,7 @@ Inherits from [Sequencer](lib+sequencer).
 
  Call to change the `batch_size`. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L60">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/encoder.lua#L60">[src]</a>
 <a name="nmt.Encoder:forward"></a>
 
 
@@ -56,7 +56,7 @@ TODO:
   * Change `batch` to `input`.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L132">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/encoder.lua#L132">[src]</a>
 <a name="nmt.Encoder:backward"></a>
 
 

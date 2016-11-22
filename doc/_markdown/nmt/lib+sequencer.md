@@ -12,7 +12,7 @@
   Inherits from [Model](lib+model).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/sequencer.lua#L213">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/sequencer.lua#L213">[src]</a>
 <a name="nmt.Sequencer"></a>
 
 
@@ -31,7 +31,7 @@ TODO: Should initialize all the members in this method.
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/sequencer.lua#L268">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/sequencer.lua#L268">[src]</a>
 <a name="nmt.Sequencer:training"></a>
 
 
@@ -39,7 +39,7 @@ TODO: Should initialize all the members in this method.
 
  Tell the network to prepare for training mode. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/sequencer.lua#L307">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/sequencer.lua#L307">[src]</a>
 <a name="nmt.Sequencer:evaluate"></a>
 
 
