@@ -9,7 +9,35 @@ local function reverse_input(batch)
   batch.source_input_pad_left, batch.source_input_rev_pad_left = batch.source_input_rev_pad_left, batch.source_input_pad_left
 end
 
---[[ BiEncoder is a bidirectional Sequencer used for the source language. ]]
+--[[ BiEncoder is a bidirectional Sequencer used for the source language.
+
+
+* `net_fwd`
+
+    h_1 => h_2 => h_3 => ... => h_n
+     |      |      |             |
+     .      .      .             .
+     |      |      |             |
+    h_1 => h_2 => h_3 => ... => h_n
+     |      |      |             |
+     |      |      |             |
+    x_1    x_2    x_3           x_n
+
+* `net_bwd`
+
+    h_1 <= h_2 <= h_3 <= ... <= h_n
+     |      |      |             |
+     .      .      .             .
+     |      |      |             |
+    h_1 <= h_2 <= h_3 <= ... <= h_n
+     |      |      |             |
+     |      |      |             |
+    x_1    x_2    x_3           x_n
+
+
+Inherits from [Sequencer](lib+sequencer).
+--]]
+
 local BiEncoder, Model = torch.class('BiEncoder', 'Model')
 
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.

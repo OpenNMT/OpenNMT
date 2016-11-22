@@ -3,10 +3,18 @@ local constants = require 'lib.utils.constants'
 local cuda = require 'lib.utils.cuda'
 require 'lib.model'
 
--- Generator manages both the final post-LSTM linear/softmax
--- layer and the criterion. Currently it is just a holder used
--- by the decoder.
+-[[ Generator manages both the final post-LSTM linear/softmax
+ layer and the criterion. Currently it is just a holder used
+ by the decoder.
 
+
+    y_1    y_2    y_3           y_n
+     |      |      |             |
+     .      .      .             .
+
+Inherits from [Model](lib+model).
+--]]
+local Generator, Model = torch.class('Generator', 'Model')
 
 local function build_network(vocab_size, rnn_size)
   -- Builds a layer for predicting words.
@@ -30,9 +38,6 @@ local function build_criterion(vocab_size)
   criterion.sizeAverage = false
   return criterion
 end
-
-
-local Generator, Model = torch.class('Generator', 'Model')
 
 function Generator:__init(args, network)
   Model.__init(self)

@@ -4,23 +4,39 @@ local cuda = require 'lib.utils.cuda'
 require 'lib.sequencer'
 
 
---[[ Decoder is the sequencer for the target words.]]
+--[[ Decoder is the sequencer for the target words.
+
+     .      .      .             .
+     |      |      |             |
+    h_1 => h_2 => h_3 => ... => h_n
+     |      |      |             |
+     .      .      .             .
+     |      |      |             |
+    h_1 => h_2 => h_3 => ... => h_n
+     |      |      |             |
+     |      |      |             |
+    x_1    x_2    x_3           x_n
+
+Inherits from [Sequencer](lib+sequencer).
+
+--]]
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 
 --[[Apply a mask to make sure no attention is given to padding.
 
 Parameters:
+
   * `source_sizes` -  the true lengths (with left padding).
   * `source_length` - the max length in the batch `beam_size`.
   * `beam_size` - beam size ${K}
 
 Returns:
-  * A nngraph that applies a soft max on input that gives no weight to the left padding.
 
-TODO:
-  * better names for these variables.
+  * A nngraph that applies a soft max on input that gives no weight to the left padding.
 --]]
 local function masked_softmax(source_sizes, source_length, beam_size)
+
+  -- TODO: better names for these variables.
 
   local num_sents = source_sizes:size(1)
   local input = nn.Identity()()
@@ -104,11 +120,9 @@ function Decoder:__init(args, network)
   end
 end
 
---[[ Call to change the `batch_size`.
-
-  TODO: rename.
-]]
+--[[ Call to change the `batch_size`. ]]
 function Decoder:resize_proto(batch_size)
+  -- TODO: rename.
   Sequencer.resize_proto(self, batch_size)
   if self.input_feed then
     self.input_feed_proto:resize(batch_size, self.input_feed_proto:size(2)):zero()
@@ -139,6 +153,7 @@ end
 --[[ Run one step of the decoder.
 
 Parameters:
+
  * `input` - sparse input (1)
  * `prev_states` - stack of hidden states (batch x layers*model x rnn_size)
  * `context` - encoder output (batch x n x rnn_size)
@@ -146,6 +161,7 @@ Parameters:
  * `t` - current timestep
 
 Returns:
+
  1. `out` - Top-layer Hidden state
  2. `states` - All states
 --]]
@@ -183,6 +199,7 @@ end
 --[[Compute all forward steps.
 
   Parameters:
+
   * `batch` - based on data.lua
   * `encoder_states`
   * `context`
@@ -202,11 +219,13 @@ end
 --[[Compute all forward steps.
 
 Parameters:
+
   * `batch` - based on data.lua
   * `encoder_states`
   * `context`
 
 Returns:
+
   1. `outputs` - Top Hidden layer at each time-step.
 --]]
 function Decoder:forward(batch, encoder_states, context)
@@ -256,11 +275,11 @@ end
   With input `batch`, target `outputs`, and `generator`
   Note: This code is both the standard backward and criterion forward/backward.
   It returns both the gradInputs (ret 1 and 2) and the loss.
-
-  TODO: This object should own `generator` and or, generator should
-  control its own backward pass.
 ]]
 function Decoder:backward(batch, outputs, generator)
+  --TODO: This object should own `generator` and or, generator should
+  -- control its own backward pass.
+
   local grad_states_input = model_utils.reset_state(self.grad_out_proto, batch.size)
   local grad_context_input = self.grad_context_proto[{{1, batch.size}, {1, batch.source_length}}]:zero()
 

@@ -3,6 +3,7 @@ local constants = require 'lib.utils.constants'
 --[[Helper function convert a `flat_index` to a row-column tuple
 
 Parameters:
+
   * `v` - matrix.
   * `flat_index` - index
 
@@ -19,8 +20,9 @@ local Beam = torch.class('Beam')
 --[[Constructor
 
 Parameters:
+
   * `size` : The beam `K`.
-]]
+--]]
 function Beam:__init(size)
 
   self.size = size
@@ -55,6 +57,7 @@ end
  `attn_out`. Compute and update the beam search.
 
 Parameters:
+
   * `out`- probs at the last step
   * `attn_out`- attention at the last step
 
@@ -118,9 +121,11 @@ end
 --[[ Walk back to construct the full hypothesis `k`.
 
 Parameters:
+
   * `k` - the position in the beam to construct.
 
 Returns:
+
   1. The hypothesis
   2. The attention at each time step.
 --]]

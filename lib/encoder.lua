@@ -2,10 +2,23 @@ local model_utils = require 'lib.utils.model_utils'
 local table_utils = require 'lib.utils.table_utils'
 require 'lib.sequencer'
 
---[[ Encoder is a unidirectional Sequencer used for the source language.]]
+--[[ Encoder is a unidirectional Sequencer used for the source language.
+
+    h_1 => h_2 => h_3 => ... => h_n
+     |      |      |             |
+     .      .      .             .
+     |      |      |             |
+    h_1 => h_2 => h_3 => ... => h_n
+     |      |      |             |
+     |      |      |             |
+    x_1    x_2    x_3           x_n
+
+
+Inherits from [Sequencer](lib+sequencer).
+--]]
 local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
 
---[[ Constructor takes global `args` and optional `network`.]]
+--[[ Constructor takes global `args` and optional `network`. ]]
 function Encoder:__init(args, network)
   Sequencer.__init(self, 'enc', args, network)
   self.mask_padding = args.mask_padding or false
@@ -32,13 +45,16 @@ end
 --[[Compute the context representation of an input.
 
 Parameters:
-  * `batch` - a struct as defined data.lua.
+
+  * `batch` - a [batch struct](lib+data/#opennmtdata) as defined data.lua.
 
 Returns:
+
   1. - last hidden states
   2. - context matrix H
 
 TODO:
+
   * Change `batch` to `input`.
 --]]
 function Encoder:forward(batch)
@@ -104,9 +120,8 @@ end
 
 --[[ Backward pass (only called during training)
 
-
-
 Parameters:
+
   * `batch` - must be same as for forward
   * `grad_states_output`
   * `grad_context_output` - gradient of loss

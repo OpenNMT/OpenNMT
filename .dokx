@@ -21,13 +21,13 @@ return {
     mathematics = true,
 
     -- packageName: string; override the inferred package namespace
-    --packageName = nil,
+    packageName = "nmt",
 
     -- githubURL: string; $githubUser/$githubProject - used for generating links, if present
     githubURL = "opennmt/opennmt",
 
     -- includeLocal: boolean; whether to include local functions
-    includeLocal = true,
+    includeLocal = false,
 
     -- includePrivate: boolean; whether to include private functions (i.e. those that begin with an underscore)
     --includePrivate = false,

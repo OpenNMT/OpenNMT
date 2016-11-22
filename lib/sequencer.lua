@@ -9,12 +9,15 @@ require 'lib.model'
    Main task is to manage `self.network_clones`, the unrolled LSTM
   used during training.
   Classes encoder/decoder/biencoder generalize these definitions.
+
+  Inherits from [Model](lib+model).
 --]]
 local Sequencer, Model = torch.class('Sequencer', 'Model')
 
 --[[Create a nngraph template.
 
 Parameters:
+
   * `rnn_size` - internalsize
   * `input_size` - input size
 
@@ -71,6 +74,7 @@ Returns: An nngraph unit mapping:
   The full function is  ${\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)}$.
 
 TODO:
+
   * allow different query and context sizes.
   * don't use "rnn" (this function is more general)
 --]]
@@ -103,6 +107,7 @@ end
 --[[ Build one time-step of a stacked LSTM network
 
 Parameters:
+
   * `model` - "dec" or "enc"
   * `args` - global args.
 
@@ -196,6 +201,7 @@ end
 --[[ Constructor
 
 Parameters:
+
   * `model` - type of model (enc,dec)
   * `args` - global arguments
   * `network` - optional preconstructed network.

@@ -4,6 +4,7 @@ local constants = require 'lib.utils.constants'
 --[[ Data management and batch creation.
 
 Batch interface [size]:
+
   * size: number of sentences in the batch [1]
   * source_length: max length in source batch [1]
   * source_size:  lengths of each source [batch x 1]
