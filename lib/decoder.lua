@@ -302,7 +302,6 @@ function Decoder:backward(batch, outputs, generator)
     end
   end
 
-  Sequencer.backward_word_vecs(self)
   return grad_states_input, grad_context_input, loss
 end
 

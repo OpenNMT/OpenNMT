@@ -4,6 +4,8 @@ local constants = require 'lib.utils.constants'
 local model_utils = require 'lib.utils.model_utils'
 require 'lib.model'
 
+require 'lib.EmbeddingLayer'
+
 --[[ Sequencer is the base class for our time series LSTM models.
   Acts similarly to an `nn.Module`.
    Main task is to manage `self.network_clones`, the unrolled LSTM
@@ -157,7 +159,7 @@ local function build_network(model, args)
     if L == 1 then
       -- At first layer do word lookup.
       input_size = args.word_vec_size
-      local word_vecs = nn.LookupTable(args.vocab_size, input_size)
+      local word_vecs = EmbeddingLayer(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)
       word_vecs.name = 'word_vecs'
       input = word_vecs(x) -- batch_size x word_vec_size
 
@@ -225,17 +227,6 @@ function Sequencer:resize_proto(batch_size)
   end
 end
 
-function Sequencer:backward_word_vecs()
-
-  -- Padding should not have any value.
-  self.word_vecs.gradWeight[constants.PAD]:zero()
-
-  -- Case where the word vectors are given.
-  if self.fix_word_vecs then
-    self.word_vecs.gradWeight:zero()
-  end
-end
-
 --[[Get a clone for a timestep.
 
 Parameters:
@@ -272,23 +263,6 @@ function Sequencer:training()
     for i = 1, #self.network_clones do
       self.network_clones[i]:training()
     end
-
-    -- Lookup table.
-    -- Get pointer to lookup table.
-    self.network:apply(function (layer)
-      if layer.name == 'word_vecs' then
-        self.word_vecs = layer
-      end
-    end)
-
-    -- If lookup table is given. Initialize it.
-    if self.args.pre_word_vecs:len() > 0 then
-      local vecs = torch.load(self.args.pre_word_vecs)
-      self.word_vecs.weight:copy(vecs)
-    end
-
-    self.fix_word_vecs = self.args.fix_word_vecs
-    self.word_vecs.weight[constants.PAD]:zero()
   else
     -- only first clone can be used for evaluation
     self.network_clones[1]:training()
