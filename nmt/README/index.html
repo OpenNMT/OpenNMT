@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>README - MkLorum</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "README";
+    var mkdocs_page_input_path = "nmt/README.md";
+    var mkdocs_page_url = "/nmt/README/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> MkLorum</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Nmt</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../LICENSE/">LICENSE</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">README</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#highlightjs">Highlight.js</a></li>
+                
+                    <li><a class="toctree-l4" href="#basic-usage">Basic usage</a></li>
+                
+                    <li><a class="toctree-l4" href="#nodejs">node.js</a></li>
+                
+                    <li><a class="toctree-l4" href="#amd">AMD</a></li>
+                
+                    <li><a class="toctree-l4" href="#tab-replacement">Tab replacement</a></li>
+                
+                    <li><a class="toctree-l4" href="#custom-initialization">Custom initialization</a></li>
+                
+                    <li><a class="toctree-l4" href="#heuristics">Heuristics</a></li>
+                
+                    <li><a class="toctree-l4" href="#export">Export</a></li>
+                
+                    <li><a class="toctree-l4" href="#meta">Meta</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../STYLE/">STYLE</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../evaluate/">Evaluate</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../init/">Init</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+biencoder/">Lib+biencoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+data/">Lib+data</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+decoder/">Lib+decoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+encoder/">Lib+encoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+eval+beam/">Lib+eval+beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+eval+translate/">Lib+eval+translate</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+generator/">Lib+generator</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+memory/">Lib+memory</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+model/">Lib+model</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+sequencer/">Lib+sequencer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+train+checkpoint/">Lib+train+checkpoint</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+train+epoch_state/">Lib+train+epoch state</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+train+optim/">Lib+train+optim</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+utils+constants/">Lib+utils+constants</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+utils+cuda/">Lib+utils+cuda</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+utils+dict/">Lib+utils+dict</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+utils+file_reader/">Lib+utils+file reader</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+utils+model_utils/">Lib+utils+model utils</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+utils+opt_utils/">Lib+utils+opt utils</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+utils+table_utils/">Lib+utils+table utils</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../preprocess/">Preprocess</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../release_model/">Release model</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../train/">Train</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">MkLorum</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Nmt &raquo;</li>
+        
+      
+    
+    <li>README</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id="nmt.README.Highlight_js"></a>
+<a id="nmt.README.Highlight_js"></a></p>
+<h1 id="highlightjs">Highlight.js</h1>
+<p>Highlight.js highlights syntax in code examples on blogs, forums and,
+in fact, on any web page. It's very easy to use because it works
+automatically: finds blocks of code, detects a language, highlights it.</p>
+<p>Autodetection can be fine tuned when it fails by itself (see "Heuristics").</p>
+<p><a id="nmt.README.Basic_usage"></a>
+<a id="nmt.README.Basic_usage"></a></p>
+<h2 id="basic-usage">Basic usage</h2>
+<p>Link the library and a stylesheet from your page and hook highlighting to
+the page load event:</p>
+<pre><code class="html">&lt;link rel=&quot;stylesheet&quot; href=&quot;styles/default.css&quot;&gt;
+&lt;script src=&quot;highlight.pack.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;hljs.initHighlightingOnLoad();&lt;/script&gt;
+</code></pre>
+
+<p>This will highlight all code on the page marked up as <code>&lt;pre&gt;&lt;code&gt; .. &lt;/code&gt;&lt;/pre&gt;</code>.
+If you use different markup or need to apply highlighting dynamically, read
+"Custom initialization" below.</p>
+<ul>
+<li>
+<p>You can download your own customized version of "highlight.pack.js" or
+  use the hosted one as described on the download page:
+  <a href="http://highlightjs.org/download/">http://highlightjs.org/download/</a></p>
+</li>
+<li>
+<p>Style themes are available in the download package or as hosted files.
+  To create a custom style for your site see the class reference in the file
+  <a href="http://github.com/isagalaev/highlight.js/blob/master/classref.txt">classref.txt</a> from the downloaded package.</p>
+</li>
+</ul>
+<p><a id="nmt.README.node_js"></a>
+<a id="nmt.README.node_js"></a></p>
+<h2 id="nodejs">node.js</h2>
+<p>Highlight.js can be used under node.js. The package with all supported languages is
+installable from NPM:</p>
+<pre><code>npm install highlight.js
+</code></pre>
+<p>Alternatively, you can build it from the source with only languages you need:</p>
+<pre><code>python3 tools/build.py -tnode lang1 lang2 ..
+</code></pre>
+<p>Using the library:</p>
+<pre><code class="javascript">var hljs = require('highlight.js');
+
+// If you know the language
+hljs.highlight(lang, code).value;
+
+// Automatic language detection
+hljs.highlightAuto(code).value;
+</code></pre>
+
+<p><a id="nmt.README.AMD"></a>
+<a id="nmt.README.AMD"></a></p>
+<h2 id="amd">AMD</h2>
+<p>Highlight.js can be used with an AMD loader.  You will need to build it from
+source in order to do so:</p>
+<pre><code class="bash">$ python3 tools/build.py -tamd lang1 lang2 ..
+</code></pre>
+
+<p>Which will generate a <code>build/highlight.pack.js</code> which will load as an AMD
+module with support for the built languages and can be used like so:</p>
+<pre><code class="javascript">require([&quot;highlight.js/build/highlight.pack&quot;], function(hljs){
+
+  // If you know the language
+  hljs.highlight(lang, code).value;
+
+  // Automatic language detection
+  hljs.highlightAuto(code).value;
+});
+</code></pre>
+
+<p><a id="nmt.README.Tab_replacement"></a>
+<a id="nmt.README.Tab_replacement"></a></p>
+<h2 id="tab-replacement">Tab replacement</h2>
+<p>You can replace TAB ('\x09') characters used for indentation in your code
+with some fixed number of spaces or with a <code>&lt;span&gt;</code> to give them special
+styling:</p>
+<pre><code class="html">&lt;script type=&quot;text/javascript&quot;&gt;
+  hljs.tabReplace = '    '; // 4 spaces
+  // ... or
+  hljs.tabReplace = '&lt;span class=&quot;indent&quot;&gt;\t&lt;/span&gt;';
+
+  hljs.initHighlightingOnLoad();
+&lt;/script&gt;
+</code></pre>
+
+<p><a id="nmt.README.Custom_initialization"></a>
+<a id="nmt.README.Custom_initialization"></a></p>
+<h2 id="custom-initialization">Custom initialization</h2>
+<p>If you use different markup for code blocks you can initialize them manually
+with <code>highlightBlock(code, tabReplace, useBR)</code> function. It takes a DOM element
+containing the code to highlight and optionally a string with which to replace
+TAB characters.</p>
+<p>Initialization using, for example, jQuery might look like this:</p>
+<pre><code class="javascript">$(document).ready(function() {
+  $('pre code').each(function(i, e) {hljs.highlightBlock(e)});
+});
+</code></pre>
+
+<p>You can use <code>highlightBlock</code> to highlight blocks dynamically inserted into
+the page. Just make sure you don't do it twice for already highlighted
+blocks.</p>
+<p>If your code container relies on <code>&lt;br&gt;</code> tags instead of line breaks (i.e. if
+it's not <code>&lt;pre&gt;</code>) pass <code>true</code> into the third parameter of <code>highlightBlock</code>
+to make highlight.js use <code>&lt;br&gt;</code> in the output:</p>
+<pre><code class="javascript">$('div.code').each(function(i, e) {hljs.highlightBlock(e, null, true)});
+</code></pre>
+
+<p><a id="nmt.README.Heuristics"></a>
+<a id="nmt.README.Heuristics"></a></p>
+<h2 id="heuristics">Heuristics</h2>
+<p>Autodetection of a code's language is done using a simple heuristic:
+the program tries to highlight a fragment with all available languages and
+counts all syntactic structures that it finds along the way. The language
+with greatest count wins.</p>
+<p>This means that in short fragments the probability of an error is high
+(and it really happens sometimes). In this cases you can set the fragment's
+language explicitly by assigning a class to the <code>&lt;code&gt;</code> element:</p>
+<pre><code class="html">&lt;pre&gt;&lt;code class=&quot;html&quot;&gt;...&lt;/code&gt;&lt;/pre&gt;
+</code></pre>
+
+<p>You can use class names recommended in HTML5: "language-html",
+"language-php". Classes also can be assigned to the <code>&lt;pre&gt;</code> element.</p>
+<p>To disable highlighting of a fragment altogether use "no-highlight" class:</p>
+<pre><code class="html">&lt;pre&gt;&lt;code class=&quot;no-highlight&quot;&gt;...&lt;/code&gt;&lt;/pre&gt;
+</code></pre>
+
+<p><a id="nmt.README.Export"></a>
+<a id="nmt.README.Export"></a></p>
+<h2 id="export">Export</h2>
+<p>File export.html contains a little program that allows you to paste in a code
+snippet and then copy and paste the resulting HTML code generated by the
+highlighter. This is useful in situations when you can't use the script itself
+on a site.</p>
+<p><a id="nmt.README.Meta"></a>
+<a id="nmt.README.Meta"></a></p>
+<h2 id="meta">Meta</h2>
+<ul>
+<li>Version: 7.5</li>
+<li>URL:     http://highlightjs.org/</li>
+</ul>
+<p>For the license terms see LICENSE files.
+For authors and contributors see AUTHORS.en.txt file.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../STYLE/" class="btn btn-neutral float-right" title="STYLE">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../LICENSE/" class="btn btn-neutral" title="LICENSE"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../LICENSE/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../STYLE/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+</body>
+</html>

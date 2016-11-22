@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    
+    <url>
+     <loc>/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+        
+    <url>
+     <loc>/nmt/LICENSE/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/README/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/STYLE/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/evaluate/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/init/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+biencoder/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+data/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+decoder/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+encoder/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+eval+beam/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+eval+translate/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+generator/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+memory/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+model/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+sequencer/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+train+checkpoint/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+train+epoch_state/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+train+optim/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+utils+constants/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+utils+cuda/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+utils+dict/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+utils+file_reader/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+utils+model_utils/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+utils+opt_utils/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/lib+utils+table_utils/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/preprocess/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/release_model/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/nmt/train/</loc>
+     <lastmod>2016-11-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+</urlset>
