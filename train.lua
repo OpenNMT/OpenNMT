@@ -12,6 +12,7 @@ local Data = require 'lib.data'
 local EpochState = require 'lib.train.epoch_state'
 local Checkpoint = require 'lib.train.checkpoint'
 local Optim = require 'lib.train.optim'
+local Memory = require 'lib.memory'
 
 local cmd = torch.CmdLine()
 
@@ -151,6 +152,9 @@ local function train(model, train_data, valid_data, dataset, info)
   for _, mod in pairs(model) do
     mod:training()
   end
+
+  -- optimize memory of the first clone
+  Memory.optimize(model, train_data:get_batch(1))
 
   local optim = Optim.new({
     method = opt.optim,
