@@ -1,6 +1,4 @@
 require 'torch'
-local cuda = require 'lib.utils.cuda'
-local constants = require 'lib.utils.constants'
 local model_utils = require 'lib.utils.model_utils'
 require 'lib.model'
 
