@@ -317,7 +317,7 @@
               
                 <p><a name="nmt.Encoder.dok"></a></p>
 <h2 id="nmtencoder">nmt.Encoder</h2>
-<p>Encoder is a unidirectional Sequencer used for the source language. </p>
+<p>Encoder is a unidirectional Sequencer used for the source language.</p>
 <pre><code>h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
  |      |      |             |
  .      .      .             .
@@ -328,15 +328,15 @@ h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
 x_1    x_2    x_3           x_n
 </code></pre>
 <p>Inherits from <a href="../lib+sequencer">Sequencer</a>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/encoder.lua#L22">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L22">[src]</a>
 <a name="nmt.Encoder"></a></p>
 <h3 id="nmtencoderargs-network">nmt.Encoder(args, network)</h3>
 <p>Constructor takes global <code>args</code> and optional <code>network</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/encoder.lua#L40">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L40">[src]</a>
 <a name="nmt.Encoder:resize_proto"></a></p>
 <h3 id="nmtencoderresize_protobatch_size">nmt.Encoder:resize_proto(batch_size)</h3>
 <p>Call to change the <code>batch_size</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/encoder.lua#L60">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L60">[src]</a>
 <a name="nmt.Encoder:forward"></a></p>
 <h3 id="nmtencoderforwardbatch">nmt.Encoder:forward(batch)</h3>
 <p>Compute the context representation of an input.</p>
@@ -361,7 +361,7 @@ x_1    x_2    x_3           x_n
 <ul>
 <li>Change <code>batch</code> to <code>input</code>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/encoder.lua#L132">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/encoder.lua#L132">[src]</a>
 <a name="nmt.Encoder:backward"></a></p>
 <h3 id="nmtencoderbackwardbatch-grad_states_output-grad_context_output">nmt.Encoder:backward(batch, grad_states_output, grad_context_output)</h3>
 <p>Backward pass (only called during training)</p>

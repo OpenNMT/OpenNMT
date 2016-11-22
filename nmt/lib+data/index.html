@@ -318,7 +318,7 @@
                 <p><a name="nmt.Data.dok"></a></p>
 <h2 id="nmtdata">nmt.Data</h2>
 <p>Data management and batch creation.</p>
-<p>Batch interface [size]: </p>
+<p>Batch interface [size]:</p>
 <ul>
 <li>size: number of sentences in the batch [1]</li>
 <li>source_length: max length in source batch [1]</li>
@@ -332,21 +332,21 @@
 <li>target_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]</li>
 </ul>
 <p>TODO: change name of size =&gt; maxlen</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/data.lua#L46">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L46">[src]</a>
 <a name="nmt.Data"></a></p>
 <h3 id="nmtdatasrc-targ">nmt.Data(src, targ)</h3>
 <p>Initialize a data object given aligned tables of IntTensors <code>src</code>
   and <code>targ</code>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/data.lua#L53">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L53">[src]</a>
 <a name="nmt.Data:set_batch_size"></a></p>
 <h3 id="nmtdataset_batch_sizemax_batch_size">nmt.Data:set_batch_size(max_batch_size)</h3>
 <p>Setup up the training data to respect <code>max_batch_size</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/data.lua#L103">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L103">[src]</a>
 <a name="nmt.Data:get_data"></a></p>
 <h3 id="nmtdataget_datasrc-targ">nmt.Data:get_data(src, targ)</h3>
 <p>Create a batch object given aligned sent tables <code>src</code> and <code>targ</code>
   (optional). Data format is shown at the top of the file.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f4f15b7194da46fdd1d77a8cd0ec1183c320d562/lib/data.lua#L158">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c0bcf611742747cff93bca11bed1ae0ffc5e078/lib/data.lua#L158">[src]</a>
 <a name="nmt.Data:get_batch"></a></p>
 <h3 id="nmtdataget_batchidx">nmt.Data:get_batch(idx)</h3>
 <p>Get batch <code>idx</code>. If nil make a batch of all the data. </p>
