@@ -20,7 +20,7 @@ Inherits from [Sequencer](lib+sequencer).
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/decoder.lua#L124">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/decoder.lua#L124">[src]</a>
 <a name="nmt.Decoder:resize_proto"></a>
 
 
@@ -28,7 +28,7 @@ Inherits from [Sequencer](lib+sequencer).
 
  Call to change the `batch_size`. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/decoder.lua#L133">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/decoder.lua#L133">[src]</a>
 <a name="nmt.Decoder:reset"></a>
 
 
@@ -36,7 +36,7 @@ Inherits from [Sequencer](lib+sequencer).
 
  Update internals to prepare for new batch.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/decoder.lua#L168">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/decoder.lua#L168">[src]</a>
 <a name="nmt.Decoder:forward_one"></a>
 
 
@@ -58,7 +58,7 @@ Returns:
  2. `states` - All states
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/decoder.lua#L208">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/decoder.lua#L208">[src]</a>
 <a name="nmt.Decoder:forward_and_apply"></a>
 
 
@@ -74,7 +74,7 @@ Compute all forward steps.
   * `func` - Calls `func(out, t)` each timestep.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/decoder.lua#L231">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/decoder.lua#L231">[src]</a>
 <a name="nmt.Decoder:forward"></a>
 
 
@@ -93,7 +93,7 @@ Returns:
   1. `outputs` - Top Hidden layer at each time-step.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/decoder.lua#L263">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/decoder.lua#L263">[src]</a>
 <a name="nmt.Decoder:compute_loss"></a>
 
 
@@ -101,7 +101,7 @@ Returns:
 
  Compute the loss on a batch based on final layer `generator`.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/decoder.lua#L279">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/decoder.lua#L279">[src]</a>
 <a name="nmt.Decoder:backward"></a>
 
 

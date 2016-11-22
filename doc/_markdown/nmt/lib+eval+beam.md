@@ -5,7 +5,7 @@
 
  Class for managing the beam search process. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/eval/beam.lua#L26">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/eval/beam.lua#L26">[src]</a>
 <a name="nmt.Beam"></a>
 
 
@@ -18,7 +18,7 @@ Parameters:
   * `size` : The beam `K`.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/eval/beam.lua#L47">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/eval/beam.lua#L47">[src]</a>
 <a name="nmt.Beam:get_current_state"></a>
 
 
@@ -26,7 +26,7 @@ Parameters:
 
  Get the outputs for the current timestep.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/eval/beam.lua#L52">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/eval/beam.lua#L52">[src]</a>
 <a name="nmt.Beam:get_current_origin"></a>
 
 
@@ -34,7 +34,7 @@ Parameters:
 
  Get the backpointers for the current timestep.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/eval/beam.lua#L66">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/eval/beam.lua#L66">[src]</a>
 <a name="nmt.Beam:advance"></a>
 
 
@@ -51,7 +51,7 @@ Parameters:
 Returns: true if beam search is complete.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/f651283e010895d259d9defa2c8fba8ce80e74f3/lib/eval/beam.lua#L132">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/84822a44954b241391f9198ab595f845feb7a6b0/lib/eval/beam.lua#L132">[src]</a>
 <a name="nmt.Beam:get_hyp"></a>
 
 

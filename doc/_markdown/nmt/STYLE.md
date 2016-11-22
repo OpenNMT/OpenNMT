@@ -1,9 +1,7 @@
 
 <a id="nmt.STYLE.Style_Guide"></a>
-<a id="nmt.STYLE.Style_Guide"></a>
 # Style Guide
 
-<a id="nmt.STYLE.Comments"></a>
 <a id="nmt.STYLE.Comments"></a>
 ## Comments 
 
@@ -22,7 +20,6 @@ sentence with capitalization.
 > google-chrome doc/index.html
 
 
-<a id="nmt.STYLE.Style_"></a>
 <a id="nmt.STYLE.Style_"></a>
 ## Style:
 
