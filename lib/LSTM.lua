@@ -7,9 +7,10 @@ function LSTM:__init(input_size, hidden_size)
   self.net = self:_buildModel(input_size, hidden_size)
 end
 
---[[Create a nngraph template of single-layer LSMT.
+--[[Create a nngraph template of one time-step of a single-layer LSTM.
 
 Parameters:
+
   * `input_size` - input size
   * `hidden_size` - internal size
 
@@ -26,7 +27,7 @@ function LSTM:_buildModel(input_size, hidden_size)
   local prev_h = inputs[2]
   local x = inputs[3]
 
-  -- evaluate the input sums at once for efficiency
+  -- Evaluate the input sums at once for efficiency.
   local i2h = nn.Linear(input_size, 4 * hidden_size)(x)
   local h2h = nn.Linear(hidden_size, 4 * hidden_size, false)(prev_h)
   local all_input_sums = nn.CAddTable()({i2h, h2h})
@@ -34,21 +35,21 @@ function LSTM:_buildModel(input_size, hidden_size)
   local reshaped = nn.Reshape(4, hidden_size)(all_input_sums)
   local n1, n2, n3, n4 = nn.SplitTable(2)(reshaped):split(4)
 
-  -- decode the gates
+  -- Decode the gates.
   local in_gate = nn.Sigmoid()(n1)
   local forget_gate = nn.Sigmoid()(n2)
   local out_gate = nn.Sigmoid()(n3)
 
-  -- decode the write inputs
+  -- Decode the write inputs.
   local in_transform = nn.Tanh()(n4)
 
-  -- perform the LSTM update
+  -- Perform the LSTM update.
   local next_c = nn.CAddTable()({
     nn.CMulTable()({forget_gate, prev_c}),
     nn.CMulTable()({in_gate, in_transform})
   })
 
-  -- gated cells form the output
+  -- Gated cells form the output.
   local next_h = nn.CMulTable()({out_gate, nn.Tanh()(next_c)})
 
   local gmodule = nn.gModule(inputs, {next_c, next_h})

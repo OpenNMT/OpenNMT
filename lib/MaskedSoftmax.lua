@@ -3,6 +3,7 @@ require 'nngraph'
 --[[A module that applies a soft max on input that gives no weight to the left padding.
 
 Parameters:
+
   * `source_sizes` -  the true lengths (with left padding).
   * `source_length` - the max length in the batch `beam_size`.
   * `beam_size` - beam size ${K}
