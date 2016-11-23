@@ -44,7 +44,7 @@ function GlobalAttention:_buildModel(dim)
 end
 
 function GlobalAttention:updateOutput(input)
-  return self.net:forward(input)
+  return self.net:updateOutput(input)
 end
 
 function GlobalAttention:updateGradInput(input, gradOutput)

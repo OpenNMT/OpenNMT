@@ -65,7 +65,7 @@ function MaskedSoftmax:_buildModel(source_sizes, source_length, beam_size)
 end
 
 function MaskedSoftmax:updateOutput(input)
-  return self.net:forward(input)
+  return self.net:updateOutput(input)
 end
 
 function MaskedSoftmax:updateGradInput(input, gradOutput)

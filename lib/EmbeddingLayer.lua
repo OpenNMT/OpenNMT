@@ -20,7 +20,7 @@ function EmbeddingLayer:__init(vocab_size, vec_size, pre_trained, fix)
 end
 
 function EmbeddingLayer:updateOutput(input)
-  return self.net:forward(input)
+  return self.net:updateOutput(input)
 end
 
 function EmbeddingLayer:updateGradInput(input, gradOutput)
