@@ -3,7 +3,7 @@ local constants = require 'lib.utils.constants'
 local cuda = require 'lib.utils.cuda'
 require 'lib.model'
 
--[[ Generator manages both the final post-LSTM linear/softmax
+--[[ Generator manages both the final post-LSTM linear/softmax
  layer and the criterion. Currently it is just a holder used
  by the decoder.
 
