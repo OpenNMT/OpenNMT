@@ -74,9 +74,7 @@ local function build_network(model, args)
     if L == 1 then
       -- At first layer do word lookup.
       input_size = args.word_vec_size
-      local word_vecs = EmbeddingLayer(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)
-      word_vecs.name = 'word_vecs'
-      input = word_vecs(x) -- batch_size x word_vec_size
+      input = EmbeddingLayer(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
 
       -- If input feeding, concat previous to $x$.
       if model == 'dec' and args.input_feed then
@@ -119,7 +117,7 @@ Parameters:
   * `network` - optional preconstructed network.
 
 TODO: Should initialize all the members in this method.
-   i.e. word_vecs, fix_word_vecs, network_clones, eval_mode, etc.
+   i.e. network_clones, eval_mode, etc.
 
 --]]
 function Sequencer:__init(model, args, network)
