@@ -69,8 +69,11 @@ function MaskedSoftmax:updateOutput(input)
 end
 
 function MaskedSoftmax:updateGradInput(input, gradOutput)
-  self.gradInput = self.net:backward(input, gradOutput)
-  return self.gradInput
+  return self.net:updateGradInput(input, gradOutput)
+end
+
+function MaskedSoftmax:accGradParameters(input, gradOutput, scale)
+  return self.net:accGradParameters(input, gradOutput, scale)
 end
 
 function MaskedSoftmax:parameters()

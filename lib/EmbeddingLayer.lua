@@ -24,7 +24,11 @@ function EmbeddingLayer:updateOutput(input)
 end
 
 function EmbeddingLayer:updateGradInput(input, gradOutput)
-  self.gradInput = self.net:backward(input, gradOutput)
+  return self.net:updateGradInput(input, gradOutput)
+end
+
+function EmbeddingLayer:accGradParameters(input, gradOutput, scale)
+  self.net:accGradParameters(input, gradOutput, scale)
 
   if self.fix then
     -- Ignore gradients if embeddings are not to be optimized.
@@ -33,8 +37,6 @@ function EmbeddingLayer:updateGradInput(input, gradOutput)
     -- Padding should not have any value.
     self.net.gradWeight[constants.PAD]:zero()
   end
-
-  return self.gradInput
 end
 
 function EmbeddingLayer:parameters()

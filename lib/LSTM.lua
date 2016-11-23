@@ -61,8 +61,11 @@ function LSTM:updateOutput(input)
 end
 
 function LSTM:updateGradInput(input, gradOutput)
-  self.gradInput = self.net:backward(input, gradOutput)
-  return self.gradInput
+  return self.net:updateGradInput(input, gradOutput)
+end
+
+function LSTM:accGradParameters(input, gradOutput, scale)
+  return self.net:accGradParameters(input, gradOutput, scale)
 end
 
 function LSTM:parameters()
