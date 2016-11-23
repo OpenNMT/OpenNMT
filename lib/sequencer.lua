@@ -1,8 +1,10 @@
 require 'torch'
-local cuda = require 'lib.utils.cuda'
-local constants = require 'lib.utils.constants'
 local model_utils = require 'lib.utils.model_utils'
 require 'lib.model'
+
+require 'lib.EmbeddingLayer'
+require 'lib.GlobalAttention'
+require 'lib.LSTM'
 
 --[[ Sequencer is the base class for our time series LSTM models.
   Acts similarly to an `nn.Module`.
@@ -13,96 +15,6 @@ require 'lib.model'
   Inherits from [Model](lib+model).
 --]]
 local Sequencer, Model = torch.class('Sequencer', 'Model')
-
---[[Create a nngraph template.
-
-Parameters:
-
-  * `rnn_size` - internalsize
-  * `input_size` - input size
-
-Returns: An nngraph unit mapping: ${(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})}$
-
---]]
-local function make_lstm(input_size, rnn_size)
-
-  local inputs = {}
-  table.insert(inputs, nn.Identity()())
-  table.insert(inputs, nn.Identity()())
-  table.insert(inputs, nn.Identity()())
-
-  local prev_c = inputs[1]
-  local prev_h = inputs[2]
-  local x = inputs[3]
-
-  -- Evaluate the input sums at once for efficiency.
-  local i2h = nn.Linear(input_size, 4 * rnn_size)(x)
-  local h2h = nn.Linear(rnn_size, 4 * rnn_size, false)(prev_h)
-  local all_input_sums = nn.CAddTable()({i2h, h2h})
-
-  local reshaped = nn.Reshape(4, rnn_size)(all_input_sums)
-  local n1, n2, n3, n4 = nn.SplitTable(2)(reshaped):split(4)
-
-  -- Decode the gates.
-  local in_gate = nn.Sigmoid()(n1)
-  local forget_gate = nn.Sigmoid()(n2)
-  local out_gate = nn.Sigmoid()(n3)
-
-  -- Decode the write inputs.
-  local in_transform = nn.Tanh()(n4)
-
-  -- Perform the LSTM update.
-  local next_c = nn.CAddTable()({
-    nn.CMulTable()({forget_gate, prev_c}),
-    nn.CMulTable()({in_gate, in_transform})
-  })
-
-  -- Gated cells form the output.
-  local next_h = nn.CMulTable()({out_gate, nn.Tanh()(next_c)})
-
-  local gmodule=nn.gModule(inputs, {next_c, next_h})
-  gmodule.name='lstm'
-  return gmodule
-end
-
---[[ Create an nngraph attention unit of size `rnn_size`.
-
-Returns: An nngraph unit mapping:
-  ${(H_1 .. H_n, q) => (a)}$
-  Where H is of `batch x n x rnn_size` and q is of `batch x rnn_size`.
-
-  The full function is  ${\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)}$.
-
-TODO:
-
-  * allow different query and context sizes.
-  * don't use "rnn" (this function is more general)
---]]
-local function make_attention(rnn_size)
-  local inputs = {}
-  table.insert(inputs, nn.Identity()())
-  table.insert(inputs, nn.Identity()())
-
-  local target_t = nn.Linear(rnn_size, rnn_size, false)(inputs[1]) -- batch_l x rnn_size
-  local context = inputs[2] -- batch_l x source_timesteps x rnn_size
-
-  -- Get attention.
-  local attn = nn.MM()({context, nn.Replicate(1,3)(target_t)}) -- batch_l x source_l x 1
-  attn = nn.Sum(3)(attn)
-  local softmax_attn = cuda.nn.SoftMax()
-  softmax_attn.name = 'softmax_attn'
-  attn = softmax_attn(attn)
-  attn = nn.Replicate(1,2)(attn) -- batch_l x 1 x source_l
-
-  -- Apply attention to context.
-  local context_combined = nn.MM()({attn, context}) -- batch_l x 1 x rnn_size
-  context_combined = nn.Sum(2)(context_combined) -- batch_l x rnn_size
-  context_combined = nn.JoinTable(2)({context_combined, inputs[1]}) -- batch_l x rnn_size*2
-  local context_output = nn.Tanh()(nn.Linear(rnn_size*2, rnn_size, false)(context_combined))
-
-  return nn.gModule(inputs, {context_output})
-end
-
 
 --[[ Build one time-step of a stacked LSTM network
 
@@ -162,7 +74,7 @@ local function build_network(model, args)
     if L == 1 then
       -- At first layer do word lookup.
       input_size = args.word_vec_size
-      local word_vecs = nn.LookupTable(args.vocab_size, input_size)
+      local word_vecs = EmbeddingLayer(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)
       word_vecs.name = 'word_vecs'
       input = word_vecs(x) -- batch_size x word_vec_size
 
@@ -180,7 +92,7 @@ local function build_network(model, args)
     local prev_c = inputs[L*2 - 1]
     local prev_h = inputs[L*2]
 
-    next_c, next_h = make_lstm(input_size, args.rnn_size)({prev_c, prev_h, input}):split(2)
+    next_c, next_h = LSTM(input_size, args.rnn_size)({prev_c, prev_h, input}):split(2)
 
     table.insert(outputs, next_c)
     table.insert(outputs, next_h)
@@ -188,7 +100,7 @@ local function build_network(model, args)
 
   -- For the decoder, compute the attention here using h^L as query.
   if model == 'dec' then
-    local attn_layer = make_attention(args.rnn_size)
+    local attn_layer = GlobalAttention(args.rnn_size)
     attn_layer.name = 'decoder_attn'
     local attn_output = nn.Dropout(args.dropout, nil, false)(attn_layer({next_h, context}))
     table.insert(outputs, attn_output)
@@ -231,17 +143,6 @@ function Sequencer:resize_proto(batch_size)
   end
 end
 
-function Sequencer:backward_word_vecs()
-
-  -- Padding should not have any value.
-  self.word_vecs.gradWeight[constants.PAD]:zero()
-
-  -- Case where the word vectors are given.
-  if self.fix_word_vecs then
-    self.word_vecs.gradWeight:zero()
-  end
-end
-
 --[[Get a clone for a timestep.
 
 Parameters:
@@ -278,23 +179,6 @@ function Sequencer:training()
     for i = 1, #self.network_clones do
       self.network_clones[i]:training()
     end
-
-    -- Lookup table.
-    -- Get pointer to lookup table.
-    self.network:apply(function (layer)
-      if layer.name == 'word_vecs' then
-        self.word_vecs = layer
-      end
-    end)
-
-    -- If lookup table is given. Initialize it.
-    if self.args.pre_word_vecs:len() > 0 then
-      local vecs = torch.load(self.args.pre_word_vecs)
-      self.word_vecs.weight:copy(vecs)
-    end
-
-    self.fix_word_vecs = self.args.fix_word_vecs
-    self.word_vecs.weight[constants.PAD]:zero()
   else
     -- only first clone can be used for evaluation
     self.network_clones[1]:training()

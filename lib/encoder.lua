@@ -144,8 +144,6 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
       grad_states_input[i]:copy(grad_input[i])
     end
   end
-
-  Sequencer.backward_word_vecs(self)
 end
 
 function Encoder:convert(f)
