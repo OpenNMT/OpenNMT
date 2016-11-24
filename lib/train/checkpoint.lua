@@ -10,7 +10,7 @@ function Checkpoint:__init(options, nets, optim, dataset)
   self.optim = optim
   self.dataset = dataset
 
-  self.save_path = self.options.savefile
+  self.save_path = self.options.save_file
 end
 
 function Checkpoint:save(file_path, info)

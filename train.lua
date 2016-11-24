@@ -3,6 +3,7 @@ require 'lib.utils.dict'
 local path = require 'pl.path'
 local cuda = require 'lib.utils.cuda'
 local constants = require 'lib.utils.constants'
+local opt_utils = require 'lib.utils.opt_utils'
 
 local Decoder = require 'lib.Decoder'
 local Encoder = require 'lib.Encoder'
@@ -19,8 +20,8 @@ local cmd = torch.CmdLine()
 cmd:text("")
 cmd:text("**Data options**")
 cmd:text("")
-cmd:option('-data','data/demo.t7', [[Path to the training *-train.t7 file from preprocess.lua]])
-cmd:option('-savefile', 'seq2seq_lstm_attn', [[Savefile name (model will be saved as
+cmd:option('-data', '', [[Path to the training *-train.t7 file from preprocess.lua]])
+cmd:option('-save_file', '', [[Savefile name (model will be saved as
                                              savefile_epochX_PPL.t7 where X is the X-th epoch and PPL is
                                              the validation perplexity]])
 cmd:option('-train_from', '', [[If training from a checkpoint then this is the path to the pretrained model.]])
@@ -237,6 +238,13 @@ end
 
 
 local function main()
+  local required_options = {
+    "data",
+    "save_file"
+  }
+
+  opt_utils.require_options(opt, required_options)
+
   torch.manualSeed(opt.seed)
 
   cuda.init(opt)
