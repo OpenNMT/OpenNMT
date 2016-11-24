@@ -126,19 +126,11 @@ function Sequencer:__init(model, args, network)
   self.network = network or build_network(model, args)
   self.args = args
 
-  -- Preallocate hidden states tensors for cell and hidden.
-  self.states_proto = {}
-  for _ = 1, args.num_layers do
-    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-  end
-end
+  -- Prototype for preallocated hidden and cell states.
+  self.stateProto = torch.Tensor()
 
-function Sequencer:resize_proto(batch_size)
-  -- Call to change the `batch_size`.
-  for i = 1, #self.states_proto do
-    self.states_proto[i]:resize(batch_size, self.states_proto[i]:size(2))
-  end
+  -- Prototype for preallocated output gradients.
+  self.gradOutputProto = torch.Tensor()
 end
 
 --[[Get a clone for a timestep.
@@ -197,18 +189,9 @@ function Sequencer:evaluate()
 end
 
 function Sequencer:convert(f)
-
   f(self.network)
-
-  for i = 1, #self.states_proto do
-    self.states_proto[i] = f(self.states_proto[i])
-  end
-
-  if self.grad_out_proto ~= nil then
-    for i = 1, #self.grad_out_proto do
-      self.grad_out_proto[i] = f(self.grad_out_proto[i])
-    end
-  end
+  self.stateProto = f(self.stateProto)
+  self.gradOutputProto = f(self.gradOutputProto)
 end
 
 return Sequencer

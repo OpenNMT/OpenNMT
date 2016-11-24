@@ -1,4 +1,4 @@
-local model_utils = require 'lib.utils.model_utils'
+local ModelUtils = require 'lib.utils.model_utils'
 local Encoder = require 'lib.encoder'
 require 'lib.model'
 
@@ -46,15 +46,16 @@ local BiEncoder, Model = torch.class('BiEncoder', 'Model')
 function BiEncoder:__init(args, merge, net_fwd, net_bwd)
   Model.__init(self)
 
-  -- Preallocate full context vector.
-  self.context_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
+  -- Prototype for preallocated full context vector.
+  self.contextProto = torch.Tensor()
 
-  -- Preallocate full hidden states tensors.
-  self.states_proto = {}
-  for _ = 1, args.num_layers do
-    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-    table.insert(self.states_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-  end
+  -- Prototype for preallocated full hidden states tensors.
+  self.stateProto = torch.Tensor()
+
+  -- Prototype for preallocated gradient of the backward context
+  self.gradContextBwdProto = torch.Tensor()
+
+  self.rnn_size = args.rnn_size
 
   -- Comput the merge operation.
   if merge == 'concat' then
@@ -68,24 +69,11 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
     error('invalid merge action ' .. merge)
   end
 
-  -- Preallocate gradient of the backward context
-  if args.training then
-    self.grad_context_bwd_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
-  end
-
   self.merge = merge
-  self.rnn_size = args.rnn_size
+  self.args = args
 
   self.fwd = Encoder.new(args, net_fwd)
   self.bwd = Encoder.new(args, net_bwd)
-end
-
-function BiEncoder:resize_proto(batch_size)
-  -- Call to change the `batch_size`.
-  self.context_proto:resize(batch_size, self.context_proto:size(2), self.context_proto:size(3))
-  for i = 1, #self.states_proto do
-    self.states_proto[i]:resize(batch_size, self.states_proto[i]:size(2))
-  end
 end
 
 function BiEncoder:forward(batch)
@@ -95,18 +83,25 @@ function BiEncoder:forward(batch)
   local bwd_states, bwd_context = self.bwd:forward(batch)
   reverse_input(batch)
 
-  local states = model_utils.reset_state(self.states_proto, batch.size)
-  local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]
+  if self.statesProto == nil then
+    self.statesProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
+                                                  self.stateProto,
+                                                  { batch.size, self.rnn_size })
+  end
+
+  local states = ModelUtils.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
+  local context = ModelUtils.reuseTensor(self.contextProto,
+                                         { batch.size, batch.source_length, self.rnn_size })
 
   if self.merge == 'concat' then
     for i = 1, #fwd_states do
-      states[i]:narrow(2, 1, self.rnn_size):copy(fwd_states[i])
-      states[i]:narrow(2, self.rnn_size + 1, self.rnn_size):copy(bwd_states[i])
+      states[i]:narrow(2, 1, self.args.rnn_size):copy(fwd_states[i])
+      states[i]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwd_states[i])
     end
     for t = 1, batch.source_length do
-      context[{{}, t}]:narrow(2, 1, self.rnn_size)
+      context[{{}, t}]:narrow(2, 1, self.args.rnn_size)
         :copy(fwd_context[{{}, t}])
-      context[{{}, t}]:narrow(2, self.rnn_size + 1, self.rnn_size)
+      context[{{}, t}]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size)
         :copy(bwd_context[{{}, batch.source_length - t + 1}])
     end
   elseif self.merge == 'sum' then
@@ -151,7 +146,8 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   self.fwd:backward(batch, grad_states_output_fwd, grad_context_output_fwd)
 
   -- reverse gradients of the backward context
-  local grad_context_bwd = self.grad_context_bwd_proto[{{1, batch.size}, {1, batch.source_length}}]
+  local grad_context_bwd = ModelUtils.reuseTensor(self.gradContextBwdProto,
+                                                  { batch.size, batch.source_length, self.args.rnn_size })
 
   for t = 1, batch.source_length do
     grad_context_bwd[{{}, t}]:copy(grad_context_output_bwd[{{}, batch.source_length - t + 1}])
@@ -173,16 +169,9 @@ end
 function BiEncoder:convert(f)
   self.fwd:convert(f)
   self.bwd:convert(f)
-
-  self.context_proto = f(self.context_proto)
-
-  if self.grad_context_bwd_proto ~= nil then
-    self.grad_context_bwd_proto = f(self.grad_context_bwd_proto)
-  end
-
-  for i = 1, #self.states_proto do
-    self.states_proto[i] = f(self.states_proto[i])
-  end
+  self.contextProto = f(self.contextProto)
+  self.stateProto = f(self.stateProto)
+  self.gradContextBwdProto = f(self.gradContextBwdProto)
 end
 
 return BiEncoder

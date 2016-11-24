@@ -35,31 +35,6 @@ local function clone_many_times(net, T)
   return clones
 end
 
-local function reset_state(state, batch_l, t)
-  local new_state, table_to_fill
-  if t == nil then
-    new_state = {}
-    table_to_fill = new_state
-  else
-    new_state = {[t] = {}}
-    table_to_fill = new_state[t]
-  end
-
-  for i = 1, #state do
-    state[i]:zero()
-    table.insert(table_to_fill, state[i][{{1, batch_l}}])
-  end
-  return new_state
-end
-
-local function copy_state(proto, state, batch_l)
-  local st = reset_state(proto, batch_l)
-  for i = 1, #proto do
-    st[i]:copy(state[i])
-  end
-  return st
-end
-
 local function recursiveClone(out)
   if torch.isTensor(out) then
     return out:clone()
@@ -72,9 +47,125 @@ local function recursiveClone(out)
   end
 end
 
+--[[
+Reuse Tensor storage and avoid new allocation unless any dimension
+has a larger size.
+
+Parameters:
+
+  * `t` - the tensor to be reused
+  * `sizes` - a table or tensor of new sizes
+
+Returns: a view on zero-tensor `t`.
+
+--]]
+local function reuseTensor(t, sizes)
+  assert(t ~= nil, 'tensor must not be nil for it to be reused')
+
+  if torch.type(sizes) == 'table' then
+    sizes = torch.LongStorage(sizes)
+  end
+
+  -- Tensor was uninitialized, just resize it.
+  if t:dim() == 0 then
+    return t:resize(sizes):zero()
+  end
+
+  assert(#sizes == t:dim(), 'reused tensor must have the same dimensions')
+
+  -- Otherwise, prepare new tensor dimensions.
+  local newSizes = t:size()
+
+  for d = 1, t:dim() do
+    -- Change size only if storage needs to expand.
+    if sizes[d] > t:size(d) then
+      newSizes[d] = sizes[d]
+    end
+  end
+
+  -- If one dimension size changed, resize the given tensor.
+  if torch.any(torch.ne(torch.Tensor(torch.totable(newSizes)),
+                        torch.Tensor(torch.totable(t:size())))) then
+    t:resize(newSizes)
+  end
+
+  -- In all cases, extract the given sizes.
+  for d = 1, t:dim() do
+    t = t:narrow(d, 1, sizes[d])
+  end
+
+  return t:zero()
+end
+
+--[[
+Reuse all Tensors within the table with new dimensions.
+
+Parameters:
+
+  * `tab` - the table of tensors
+  * `sizes` - a table of new sizes
+
+Returns: a table of tensors using the same storage as `tab`.
+
+--]]
+local function reuseTensorTable(tab, sizes)
+  for i = 1, #tab do
+    tab[i] = reuseTensor(tab[i], sizes)
+  end
+
+  return tab
+end
+
+--[[
+Initialize a table of tensors with the given dimensions.
+
+Parameters:
+
+  * `tab` - the table of tensors
+  * `proto` - tensor to be clone for each index
+  * `sizes` - a table of new sizes
+
+Returns: an initialized table of tensors.
+
+--]]
+local function initTensorTable(size, proto, sizes)
+  local tab = {}
+
+  local base = reuseTensor(proto, sizes)
+
+  for i = 1, size do
+    table.insert(tab, base:clone())
+  end
+
+  return tab
+end
+
+--[[
+Copy tensors from `src` reusing all tensors from `proto`.
+
+Parameters:
+
+  * `proto` - the table of tensors to be reused
+  * `src` - the source table of tensors
+
+Returns: a copy of `src`.
+
+--]]
+local function copyTensorTable(proto, src)
+  local tab = reuseTensorTable(proto, src[1]:size())
+
+  for i = 1, #tab do
+    tab[i]:copy(src[i])
+  end
+
+  return tab
+end
+
 return {
   clone_many_times = clone_many_times,
-  reset_state = reset_state,
-  copy_state = copy_state,
-  recursiveClone = recursiveClone
+  recursiveClone = recursiveClone,
+  reuseTensor = reuseTensor,
+  reuseTensorTable = reuseTensorTable,
+  initTensorTable = initTensorTable,
+  copyTensorTable = copyTensorTable
 }

@@ -1,4 +1,4 @@
-local model_utils = require 'lib.utils.model_utils'
+local ModelUtils = require 'lib.utils.model_utils'
 local table_utils = require 'lib.utils.table_utils'
 local cuda = require 'lib.utils.cuda'
 require 'lib.sequencer'
@@ -30,7 +30,7 @@ function Decoder:__init(args, network)
   -- previous step.
   self.input_feed = args.input_feed
   if self.input_feed then
-    self.input_feed_proto = torch.zeros(args.max_batch_size, args.rnn_size)
+    self.inputFeedProto = torch.Tensor()
   end
 
   -- Mask padding means that the attention-layer is constrained to
@@ -46,27 +46,8 @@ function Decoder:__init(args, network)
   end
 
 
-  if args.training then
-    -- Preallocate output gradients and context gradient.
-    -- TODO: move all this to sequencer.
-    self.grad_out_proto = {}
-    for _ = 1, args.num_layers do
-      table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-      table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-    end
-    table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-
-    self.grad_context_proto = torch.zeros(args.max_batch_size, args.max_source_length, args.rnn_size)
-  end
-end
-
---[[ Call to change the `batch_size`. ]]
-function Decoder:resize_proto(batch_size)
-  -- TODO: rename.
-  Sequencer.resize_proto(self, batch_size)
-  if self.input_feed then
-    self.input_feed_proto:resize(batch_size, self.input_feed_proto:size(2)):zero()
-  end
+  -- Prototype for preallocated context gradient.
+  self.gradContextProto = torch.Tensor()
 end
 
 --[[ Update internals to prepare for new batch.]]
@@ -114,7 +95,8 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   table.insert(inputs, context)
   if self.input_feed then
     if prev_out == nil then
-      table.insert(inputs, self.input_feed_proto[{{1, input:size(1)}}])
+      table.insert(inputs, ModelUtils.reuseTensor(self.inputFeedProto,
+                                                  { input:size(1), self.args.rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
@@ -146,7 +128,13 @@ end
   * `func` - Calls `func(out, t)` each timestep.
 --]]
 function Decoder:forward_and_apply(batch, encoder_states, context, func)
-  local states = model_utils.copy_state(self.states_proto, encoder_states, batch.size)
+  if self.statesProto == nil then
+    self.statesProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
+                                                  self.stateProto,
+                                                  { batch.size, self.args.rnn_size })
+  end
+
+  local states = ModelUtils.copyTensorTable(self.statesProto, encoder_states)
 
   local prev_out
 
@@ -220,11 +208,19 @@ function Decoder:backward(batch, outputs, generator)
   --TODO: This object should own `generator` and or, generator should
   -- control its own backward pass.
 
-  local grad_states_input = model_utils.reset_state(self.grad_out_proto, batch.size)
-  local grad_context_input = self.grad_context_proto[{{1, batch.size}, {1, batch.source_length}}]:zero()
+  if self.gradOutputsProto == nil then
+    self.gradOutputsProto = ModelUtils.initTensorTable(self.args.num_layers * 2 + 1,
+                                                       self.gradOutputProto,
+                                                       { batch.size, self.args.rnn_size })
+  end
 
-  local grad_context_idx = #self.states_proto + 2
-  local grad_input_feed_idx = #self.states_proto + 3
+  local grad_states_input = ModelUtils.reuseTensorTable(self.gradOutputsProto,
+                                                        { batch.size, self.args.rnn_size })
+  local grad_context_input = ModelUtils.reuseTensor(self.gradContextProto,
+                                                    { batch.size, batch.source_length, self.args.rnn_size })
+
+  local grad_context_idx = #self.statesProto + 2
+  local grad_input_feed_idx = #self.statesProto + 3
 
   local loss = 0
 
@@ -256,7 +252,7 @@ function Decoder:backward(batch, outputs, generator)
     end
 
     -- Prepare next decoder output gradients.
-    for i = 1, #self.states_proto do
+    for i = 1, #self.statesProto do
       grad_states_input[i]:copy(grad_input[i])
     end
   end
@@ -265,13 +261,9 @@ function Decoder:backward(batch, outputs, generator)
 end
 
 function Decoder:convert(f)
-  -- TODO: move up to sequencer.
   Sequencer.convert(self, f)
-  self.input_feed_proto = f(self.input_feed_proto)
-
-  if self.grad_context_proto ~= nil then
-    self.grad_context_proto = f(self.grad_context_proto)
-  end
+  self.inputFeedProto = f(self.inputFeedProto)
+  self.gradContextProto = f(self.gradContextProto)
 end
 
 return Decoder

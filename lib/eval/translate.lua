@@ -155,10 +155,6 @@ local function build_target_tokens(pred, src, attn)
 end
 
 local function translate_batch(batch)
-  -- resize preallocated tensors to handle new batch size
-  models.encoder:resize_proto(batch.size)
-  models.decoder:resize_proto(opt.beam * batch.size)
-
   -- also forget previous padding module on the decoder
   models.decoder:reset()
 

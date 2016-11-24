@@ -1,4 +1,4 @@
-local model_utils = require 'lib.utils.model_utils'
+local ModelUtils = require 'lib.utils.model_utils'
 local table_utils = require 'lib.utils.table_utils'
 require 'lib.sequencer'
 
@@ -23,23 +23,8 @@ function Encoder:__init(args, network)
   Sequencer.__init(self, 'enc', args, network)
   self.mask_padding = args.mask_padding or false
 
-  -- Preallocate context vector.
-  self.context_proto = torch.zeros(args.max_batch_size, args.max_sent_length, args.rnn_size)
-
-  if args.training then
-    -- Preallocate output gradients. (Forward pass allocationed is in base class).
-    self.grad_out_proto = {}
-    for _ = 1, args.num_layers do
-      table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-      table.insert(self.grad_out_proto, torch.zeros(args.max_batch_size, args.rnn_size))
-    end
-  end
-end
-
---[[ Call to change the `batch_size`. ]]
-function Encoder:resize_proto(batch_size)
-  Sequencer.resize_proto(self, batch_size)
-  self.context_proto:resize(batch_size, self.context_proto:size(2), self.context_proto:size(3))
+  -- Prototype for preallocated context vector.
+  self.contextProto = torch.Tensor()
 end
 
 --[[Compute the context representation of an input.
@@ -61,11 +46,18 @@ function Encoder:forward(batch)
 
   local final_states
 
+  if self.statesProto == nil then
+    self.statesProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
+                                                  self.stateProto,
+                                                  { batch.size, self.args.rnn_size })
+  end
+
   -- Make initial states c_0, h_0.
-  local states = model_utils.reset_state(self.states_proto, batch.size)
+  local states = ModelUtils.reuseTensorTable(self.statesProto, { batch.size, self.args.rnn_size })
 
   -- Preallocated output matrix.
-  local context = self.context_proto[{{1, batch.size}, {1, batch.source_length}}]
+  local context = ModelUtils.reuseTensor(self.contextProto,
+                                         { batch.size, batch.source_length, self.args.rnn_size })
 
   if self.mask_padding and not batch.source_input_pad_left then
     final_states = table_utils.clone(states)
@@ -130,8 +122,13 @@ Parameters:
 TODO: change this to (input, gradOutput) as in nngraph.
 --]]
 function Encoder:backward(batch, grad_states_output, grad_context_output)
+  if self.gradOutputsProto == nil then
+    self.gradOutputsProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
+                                                       self.gradOutputProto,
+                                                       { batch.size, self.args.rnn_size })
+  end
 
-  local grad_states_input = model_utils.copy_state(self.grad_out_proto, grad_states_output, batch.size)
+  local grad_states_input = ModelUtils.copyTensorTable(self.gradOutputsProto, grad_states_output)
 
   for t = batch.source_length, 1, -1 do
     -- Add context gradients to last hidden states gradients.
@@ -148,7 +145,7 @@ end
 
 function Encoder:convert(f)
   Sequencer.convert(self, f)
-  self.context_proto = f(self.context_proto)
+  self.contextProto = f(self.contextProto)
 end
 
 return Encoder
