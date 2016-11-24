@@ -157,16 +157,16 @@ local function main()
   data.src_dict = src_dict
   data.targ_dict = targ_dict
 
-  print('Saving data to ' .. opt.output_file .. '-train.t7 ...')
+  print('Saving data to ' .. opt.output_file .. '-train.t7...')
   torch.save(opt.output_file .. '-train.t7', data)
 
   if opt.src_vocab_file:len() == 0 then
-    print('Saving source vocabulary to ' .. opt.output_file .. '.src.dict ...')
+    print('Saving source vocabulary to ' .. opt.output_file .. '.src.dict...')
     src_dict:write_file(opt.output_file .. '.src.dict')
   end
 
   if opt.targ_vocab_file:len() == 0 then
-    print('Saving target vocabulary to ' .. opt.output_file .. '.targ.dict ...')
+    print('Saving target vocabulary to ' .. opt.output_file .. '.targ.dict...')
     targ_dict:write_file(opt.output_file .. '.targ.dict')
   end
 
