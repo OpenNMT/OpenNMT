@@ -57,14 +57,20 @@ local function init_vocabulary(name, data_file, vocab_file, vocab_size)
     print('Building ' .. name  .. ' vocabulary...')
     vocab = make_vocabulary(data_file, vocab_size)
   else
-    print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '...')
+    print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '\'...')
     vocab = dict.new()
     vocab:load_file(vocab_file)
+    print('Loaded ' .. #vocab .. ' ' .. name .. ' words')
   end
 
   print('')
 
   return vocab
+end
+
+local function save_vocabulary(name, vocab, file)
+  print('Saving ' .. name .. ' vocabulary to \'' .. file .. '\'...')
+  vocab:write_file(file)
 end
 
 local function make_data(src_file, targ_file, src_dict, targ_dict)
@@ -160,17 +166,15 @@ local function main()
   data.src_dict = src_dict
   data.targ_dict = targ_dict
 
-  print('Saving data to ' .. opt.output_file .. '-train.t7...')
+  print('Saving data to \'' .. opt.output_file .. '-train.t7\'...')
   torch.save(opt.output_file .. '-train.t7', data)
 
   if opt.src_vocab_file:len() == 0 then
-    print('Saving source vocabulary to ' .. opt.output_file .. '.src.dict...')
-    src_dict:write_file(opt.output_file .. '.src.dict')
+    save_vocabulary('source', src_dict, opt.output_file .. '.src.dict')
   end
 
   if opt.targ_vocab_file:len() == 0 then
-    print('Saving target vocabulary to ' .. opt.output_file .. '.targ.dict...')
-    targ_dict:write_file(opt.output_file .. '.targ.dict')
+    save_vocabulary('target', targ_dict, opt.output_file .. '.targ.dict')
   end
 
 end
