@@ -133,7 +133,7 @@ local function initTensorTable(size, proto, sizes)
 
   local base = reuseTensor(proto, sizes)
 
-  for i = 1, size do
+  for _ = 1, size do
     table.insert(tab, base:clone())
   end
 
