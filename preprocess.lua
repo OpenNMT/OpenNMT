@@ -20,6 +20,7 @@ cmd:option('-targ_vocab_file', '', [[Pre-calculated target vocabulary]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
 cmd:option('-shuffle', true, [[Suffle data]])
+cmd:option('-seed', 3435, [[Random seed]])
 
 cmd:option('-report_every', 100000, [[Report status every this many sentences]])
 
@@ -142,6 +143,8 @@ local function main()
   }
 
   opt_utils.require_options(opt, required_options)
+
+  torch.manualSeed(opt.seed)
 
   local src_dict = init_vocabulary('source', opt.train_src_file, opt.src_vocab_file, opt.src_vocab_size)
   local targ_dict = init_vocabulary('target', opt.train_targ_file, opt.targ_vocab_file, opt.targ_vocab_size)
