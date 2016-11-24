@@ -83,6 +83,9 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
     local targ_tokens = targ_reader:next()
 
     if src_tokens == nil or targ_tokens == nil then
+      if src_tokens == nil and targ_tokens ~= nil or src_tokens ~= nil and targ_tokens == nil then
+        print('WARNING: source and target do not have the same number of sentences')
+      end
       break
     end
 
