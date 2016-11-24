@@ -68,31 +68,26 @@ local function init(args, resources_dir)
   print('Loading ' .. opt.model .. '...')
   checkpoint = torch.load(opt.model)
 
-  if checkpoint.options.brnn then
-    models.encoder = BiEncoder.new({
-      max_batch_size = opt.batch,
-      max_sent_length = opt.max_sent_l,
-      num_layers = checkpoint.options.num_layers,
-      rnn_size = checkpoint.options.rnn_size,
-      mask_padding = true
-    }, checkpoint.options.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
-  else
-    models.encoder = Encoder.new({
-      max_batch_size = opt.batch,
-      max_sent_length = opt.max_sent_l,
-      num_layers = checkpoint.options.num_layers,
-      rnn_size = checkpoint.options.rnn_size,
-      mask_padding = true
-    }, checkpoint.nets.encoder)
-  end
+  local encoder_args = {
+    num_layers = checkpoint.options.num_layers,
+    rnn_size = checkpoint.options.rnn_size,
+    mask_padding = true
+  }
 
-  models.decoder = Decoder.new({
-    max_batch_size = opt.batch,
+  local decoder_args = {
     rnn_size = checkpoint.options.rnn_size,
     num_layers = checkpoint.options.num_layers,
     input_feed = checkpoint.options.input_feed,
     mask_padding = true
-  }, checkpoint.nets.decoder, checkpoint.nets.generator)
+  }
+
+  if checkpoint.options.brnn then
+    models.encoder = BiEncoder.new(encoder_args, checkpoint.options.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
+  else
+    models.encoder = Encoder.new(encoder_args, checkpoint.nets.encoder)
+  end
+
+  models.decoder = Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
 
   models.encoder:evaluate()
   models.decoder:evaluate()
