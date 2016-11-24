@@ -256,7 +256,7 @@ local function main()
   train_data:set_batch_size(opt.max_batch_size)
   valid_data:set_batch_size(opt.max_batch_size)
 
-  print(string.format(' * vocabluary size: source = %d; target = %d',
+  print(string.format(' * vocabulary size: source = %d; target = %d',
                       #dataset.src_dict, #dataset.targ_dict))
   print(string.format(' * maximum sequence length: source = %d; target = %d',
                       train_data.max_source_length, train_data.max_target_length))
