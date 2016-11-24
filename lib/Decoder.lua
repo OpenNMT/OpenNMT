@@ -33,16 +33,14 @@ function Decoder:__init(args, network, generator)
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
-  self.input_feed = args.input_feed
-  if self.input_feed then
+  if self.args.input_feed then
     self.inputFeedProto = torch.Tensor()
   end
 
   -- Mask padding means that the attention-layer is constrained to
   -- give zero-weight to padding. This is done by storing a reference
   -- to the softmax attention-layer.
-  self.mask_padding = args.mask_padding or false
-  if self.mask_padding then
+  if self.args.mask_padding then
     self.network:apply(function (layer)
       if layer.name == 'decoder_attn' then
         self.decoder_attn = layer
@@ -111,7 +109,7 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   table_utils.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
-  if self.input_feed then
+  if self.args.input_feed then
     if prev_out == nil then
       table.insert(inputs, ModelUtils.reuseTensor(self.inputFeedProto,
                                                   { input:size(1), self.args.rnn_size }))
@@ -262,7 +260,7 @@ function Decoder:backward(batch, outputs, criterion)
     grad_states_input[#grad_states_input]:zero()
 
     -- Accumulate previous output gradients with input feeding gradients.
-    if self.input_feed and t > 1 then
+    if self.args.input_feed and t > 1 then
       grad_states_input[#grad_states_input]:add(grad_input[grad_input_feed_idx])
     end
 

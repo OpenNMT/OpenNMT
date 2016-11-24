@@ -21,7 +21,6 @@ local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
 --[[ Constructor takes global `args` and optional `network`. ]]
 function Encoder:__init(args, network)
   Sequencer.__init(self, 'enc', args, network)
-  self.mask_padding = args.mask_padding or false
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
@@ -59,7 +58,7 @@ function Encoder:forward(batch)
   local context = ModelUtils.reuseTensor(self.contextProto,
                                          { batch.size, batch.source_length, self.args.rnn_size })
 
-  if self.mask_padding and not batch.source_input_pad_left then
+  if self.args.mask_padding and not batch.source_input_pad_left then
     final_states = table_utils.clone(states)
   end
   if self.train then
@@ -85,7 +84,7 @@ function Encoder:forward(batch)
 
 
     -- Special case padding.
-    if self.mask_padding then
+    if self.args.mask_padding then
       for b = 1, batch.size do
         if batch.source_input_pad_left and t <= batch.source_length - batch.source_size[b] then
           for j = 1, #states do
