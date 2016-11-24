@@ -6,9 +6,9 @@ require 'lib.utils.dict'
 
 local Beam = require 'lib.eval.beam'
 
-local Encoder = require 'lib.encoder'
-local BiEncoder = require 'lib.biencoder'
-local Decoder = require 'lib.decoder'
+local Encoder = require 'lib.Encoder'
+local BiEncoder = require 'lib.BiEncoder'
+local Decoder = require 'lib.Decoder'
 local Data = require 'lib.data'
 
 local constants = require 'lib.utils.constants'

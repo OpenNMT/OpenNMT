@@ -4,9 +4,9 @@ local path = require 'pl.path'
 local cuda = require 'lib.utils.cuda'
 local constants = require 'lib.utils.constants'
 
-local Decoder = require 'lib.decoder'
-local Encoder = require 'lib.encoder'
-local BiEncoder = require 'lib.biencoder'
+local Decoder = require 'lib.Decoder'
+local Encoder = require 'lib.Encoder'
+local BiEncoder = require 'lib.BiEncoder'
 local Data = require 'lib.data'
 
 local EpochState = require 'lib.train.epoch_state'

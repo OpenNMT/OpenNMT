@@ -1,5 +1,5 @@
 local ModelUtils = require 'lib.utils.model_utils'
-local Encoder = require 'lib.encoder'
+local Encoder = require 'lib.Encoder'
 
 local function reverse_input(batch)
   batch.source_input, batch.source_input_rev = batch.source_input_rev, batch.source_input

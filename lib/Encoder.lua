@@ -1,6 +1,6 @@
 local ModelUtils = require 'lib.utils.model_utils'
 local table_utils = require 'lib.utils.table_utils'
-require 'lib.sequencer'
+require 'lib.Sequencer'
 
 --[[ Encoder is a unidirectional Sequencer used for the source language.
 

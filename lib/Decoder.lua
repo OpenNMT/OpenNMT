@@ -1,7 +1,7 @@
 local ModelUtils = require 'lib.utils.model_utils'
 local table_utils = require 'lib.utils.table_utils'
 local cuda = require 'lib.utils.cuda'
-require 'lib.sequencer'
+require 'lib.Sequencer'
 
 require 'lib.MaskedSoftmax'
 
