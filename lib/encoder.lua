@@ -62,7 +62,7 @@ function Encoder:forward(batch)
   if self.mask_padding and not batch.source_input_pad_left then
     final_states = table_utils.clone(states)
   end
-  if not self.eval_mode then
+  if self.train then
     self.inputs = {}
   end
 
@@ -75,7 +75,7 @@ function Encoder:forward(batch)
     table_utils.append(inputs, states)
     table.insert(inputs, batch.source_input[t])
 
-    if not self.eval_mode then
+    if self.train then
       -- Remember inputs for the backward pass.
       self.inputs[t] = inputs
     end

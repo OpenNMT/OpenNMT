@@ -103,7 +103,7 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   end
 
   -- Remember inputs for the backward pass.
-  if not self.eval_mode then
+  if self.train then
     self.inputs[t] = inputs
   end
 
@@ -157,7 +157,7 @@ Returns:
   1. `outputs` - Top Hidden layer at each time-step.
 --]]
 function Decoder:forward(batch, encoder_states, context)
-  if not self.eval_mode then
+  if self.train then
     self.inputs = {}
   end
 
