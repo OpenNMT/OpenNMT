@@ -104,7 +104,9 @@ function Data:get_data(src, targ)
 
   local batch = {}
 
-  assert(#src == #targ, "source and target must have the same batch size")
+  if targ ~= nil then
+    assert(#src == #targ, "source and target must have the same batch size")
+  end
 
   batch.size = #src
 
