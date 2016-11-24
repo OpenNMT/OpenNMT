@@ -25,8 +25,8 @@ cmd:option('-srctarg_dict', '', [[Path to source-target dictionary to replace UN
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
-cmd:option('-cudnn', 0, [[If using character model, this should be = 1 if the character model was trained using cudnn]])
-cmd:option('-time', 0, [[If = 1, measure batch translation time]])
+cmd:option('-cudnn', false, [[If using character model, this should be true if the character model was trained using cudnn]])
+cmd:option('-time', false, [[Measure batch translation time]])
 
 
 local function report_score(name, score_total, words_total)
@@ -64,7 +64,7 @@ local function main()
   local gold_words_total = 0
 
   local timer
-  if opt.time > 0 then
+  if opt.time then
     timer = torch.Timer()
     timer:stop()
     timer:reset()
@@ -87,13 +87,13 @@ local function main()
     end
 
     if src_tokens == nil or #src_batch == opt.batch then
-      if opt.time > 0 then
+      if opt.time then
         timer:resume()
       end
 
       local pred_batch, info = translate.translate(src_batch, targ_batch)
 
-      if opt.time > 0 then
+      if opt.time then
         timer:stop()
       end
 
@@ -145,7 +145,7 @@ local function main()
     end
   end
 
-  if opt.time > 0 then
+  if opt.time then
     local time = timer:time()
     local sentence_count = sent_id-1
     io.stderr:write("Average sentence translation time (in seconds):\n")
