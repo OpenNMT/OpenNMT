@@ -79,9 +79,7 @@ function Encoder:forward(batch)
       self.inputs[t] = inputs
     end
 
-    -- TODO: Shouldn't this just be self:net?
-    states = Sequencer.net(self, t):forward(inputs)
-
+    states = self:net(t):forward(inputs)
 
     -- Special case padding.
     if self.args.mask_padding then

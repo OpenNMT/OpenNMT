@@ -123,8 +123,7 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
     self.inputs[t] = inputs
   end
 
-  -- TODO: self:net?
-  local outputs = Sequencer.net(self, t):forward(inputs)
+  local outputs = self:net(t):forward(inputs)
   local out = outputs[#outputs]
   local states = {}
   for i = 1, #outputs - 1 do
