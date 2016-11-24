@@ -9,7 +9,7 @@ local cmd = torch.CmdLine()
 cmd:option('-model', '', 'trained model file')
 cmd:option('-output_model', '', 'released model file')
 cmd:option('-gpuid', 0, 'which gpuid to use')
-cmd:option('-force', 0, 'force output model creation')
+cmd:option('-force', false, 'force output model creation')
 local opt = cmd:parse(arg)
 
 local function main()
@@ -24,9 +24,9 @@ local function main()
     opt.output_model = opt.output_model .. '_release.t7'
   end
 
-  if opt.force == 0 then
+  if not opt.force then
     assert(not path.exists(opt.output_model),
-           'output model already exists; use -force 1 to overwrite.')
+           'output model already exists; use -force to overwrite.')
   end
 
   if opt.gpuid > 0 then
