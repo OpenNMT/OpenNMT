@@ -50,6 +50,23 @@ local function make_vocabulary(filename, size)
   return vocab
 end
 
+local function init_vocabulary(name, data_file, vocab_file, vocab_size)
+  local vocab
+
+  if vocab_file:len() == 0 then
+    print('Building ' .. name  .. ' vocabulary...')
+    vocab = make_vocabulary(data_file, vocab_size)
+  else
+    print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '...')
+    vocab = dict.new()
+    vocab:load_file(vocab_file)
+  end
+
+  print('')
+
+  return vocab
+end
+
 local function make_data(src_file, targ_file, src_dict, targ_dict)
   local src = {}
   local targ = {}
@@ -117,27 +134,8 @@ local function main()
 
   opt_utils.require_options(opt, required_options)
 
-  local src_dict
-  if opt.src_vocab_file:len() == 0 then
-    print('Building source vocabulary...')
-    src_dict = make_vocabulary(opt.train_src_file, opt.src_vocab_size)
-  else
-    print('Reading source vocabulary from \'' .. opt.src_vocab_file .. '...')
-    src_dict = dict.new()
-    src_dict:load_file(opt.src_vocab_file)
-  end
-  print('')
-
-  local targ_dict
-  if opt.targ_vocab_file:len() == 0 then
-    print('Building target vocabulary...')
-    targ_dict = make_vocabulary(opt.train_targ_file, opt.targ_vocab_size)
-  else
-    print('Reading target vocabulary from \'' .. opt.targ_vocab_file .. '\'...')
-    targ_dict = dict.new()
-    targ_dict:load_file(opt.targ_vocab_file)
-  end
-  print('')
+  local src_dict = init_vocabulary('source', opt.train_src_file, opt.src_vocab_file, opt.src_vocab_size)
+  local targ_dict = init_vocabulary('target', opt.train_targ_file, opt.targ_vocab_file, opt.targ_vocab_size)
 
   print('Preparing training data...')
   local train_src, train_targ = make_data(opt.train_src_file, opt.train_targ_file, src_dict, targ_dict)
