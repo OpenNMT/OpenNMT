@@ -4,13 +4,13 @@ require 'torch'
 
 local Checkpoint = torch.class("Checkpoint")
 
-function Checkpoint:__init(args)
-  -- TODO: make these `args` explicit
-  self.options = args.options
+function Checkpoint:__init(options, nets, optim, dataset)
+  self.options = options
+  self.nets = nets
+  self.optim = optim
+  self.dataset = dataset
+
   self.save_path = self.options.savefile
-  self.nets = args.nets
-  self.optim = args.optim
-  self.dataset = args.dataset
 end
 
 function Checkpoint:save(file_path, info)

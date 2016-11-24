@@ -172,12 +172,7 @@ local function train(model, train_data, valid_data, dataset, info)
     optim_states = opt.optim_states
   })
 
-  local checkpoint = Checkpoint.new({
-    options = opt,
-    nets = nets,
-    optim = optim,
-    dataset = dataset
-  })
+  local checkpoint = Checkpoint.new(opt, nets, optim, dataset)
 
   local criterion = cuda.convert(build_criterion(#dataset.targ_dict))
 
