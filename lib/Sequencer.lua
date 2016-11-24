@@ -112,14 +112,13 @@ Parameters:
   * `args` - global arguments
   * `network` - optional preconstructed network.
 
-TODO: Should initialize all the members in this method.
-   i.e. network_clones, etc.
-
 --]]
 function Sequencer:__init(model, args, network)
   parent.__init(self)
 
   self.network = network or build_network(model, args)
+  self.network_clones = {}
+
   self.args = args
 
   -- Prototype for preallocated hidden and cell states.
@@ -127,6 +126,37 @@ function Sequencer:__init(model, args, network)
 
   -- Prototype for preallocated output gradients.
   self.gradOutputProto = torch.Tensor()
+end
+
+function Sequencer:_sharedClone()
+  local params, gradParams
+  if self.network.parameters then
+    params, gradParams = self.network:parameters()
+    if params == nil then
+      params = {}
+    end
+  end
+
+  local mem = torch.MemoryFile("w"):binary()
+  mem:writeObject(self.network)
+
+  -- We need to use a new reader for each clone.
+  -- We don't want to use the pointers to already read objects.
+  local reader = torch.MemoryFile(mem:storage(), "r"):binary()
+  local clone = reader:readObject()
+  reader:close()
+
+  if self.network.parameters then
+    local cloneParams, cloneGradParams = clone:parameters()
+    for i = 1, #params do
+      cloneParams[i]:set(params[i])
+      cloneGradParams[i]:set(gradParams[i])
+    end
+  end
+
+  mem:close()
+
+  return clone
 end
 
 --[[Get a clone for a timestep.
@@ -137,15 +167,21 @@ Parameters:
 Returns: The raw network clone at timestep t.
   When `evaluate()` has been called, cheat and return t=1.
 ]]
-
 function Sequencer:net(t)
-  if self.network_clones == nil or t == nil then
-    return self.network
+  if self.train then
+    -- In train mode, the network has to be cloned to remember intermediate
+    -- outputs for each timestep and to allow backpropagation through time.
+    if self.network_clones[t] == nil then
+      local clone = self:_sharedClone()
+      clone:training()
+      self.network_clones[t] = clone
+    end
+    return self.network_clones[t]
   else
-    if self.train then
-      return self.network_clones[t]
-    else
+    if #self.network_clones > 0 then
       return self.network_clones[1]
+    else
+      return self.network
     end
   end
 end
@@ -154,20 +190,8 @@ end
 function Sequencer:training()
   parent.training(self)
 
-  if self.network_clones == nil then
-    -- During training the model will clone itself `self.args.max_sent_length`
-    -- times with shared parameters. This allows training to be done in a
-    -- feed-forward style, with each input simply extending the network,
-    -- and "backprop through time" consisting of `max_sent_length` steps.
-
-
-    -- Clone network up to max_sent_length.
-    self.network_clones = model_utils.clone_many_times(self.network, self.args.max_sent_length)
-    for i = 1, #self.network_clones do
-      self.network_clones[i]:training()
-    end
-  else
-    -- only first clone can be used for evaluation
+  if #self.network_clones > 0 then
+    -- Only first clone can be used for evaluation.
     self.network_clones[1]:training()
   end
 end
@@ -176,10 +200,10 @@ end
 function Sequencer:evaluate()
   parent.evaluate(self)
 
-  if self.network_clones == nil then
-    self.network:evaluate()
-  else
+  if #self.network_clones > 0 then
     self.network_clones[1]:evaluate()
+  else
+    self.network:evaluate()
   end
 end
 

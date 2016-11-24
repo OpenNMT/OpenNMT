@@ -307,7 +307,6 @@ local function main()
   end
 
   local encoder_args = {
-    max_sent_length = math.max(train_data.max_source_length, valid_data.max_source_length),
     word_vec_size = opt.word_vec_size,
     pre_word_vecs = opt.pre_word_vecs_enc,
     fix_word_vecs = opt.fix_word_vecs_enc,
@@ -318,7 +317,6 @@ local function main()
   }
 
   local decoder_args = {
-    max_sent_length = math.max(train_data.max_target_length, valid_data.max_target_length),
     word_vec_size = opt.word_vec_size,
     pre_word_vecs = opt.pre_word_vecs_dec,
     fix_word_vecs = opt.fix_word_vecs_dec,
