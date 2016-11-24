@@ -1,12 +1,12 @@
-require 'torch'
 local lfs = require 'lfs'
 local file_reader = require 'lib.utils.file_reader'
+local opt_utils = require 'lib.utils.opt_utils'
 local translate = require 'lib.eval.translate'
 
 local cmd = torch.CmdLine()
 
 -- file location
-cmd:option('-model', 'seq2seq_lstm_attn.t7.', [[Path to model .t7 file]])
+cmd:option('-model', '', [[Path to model .t7 file]])
 cmd:option('-src_file', '', [[Source sequence to decode (one line per sequence)]])
 cmd:option('-targ_file', '', [[True target sequence (optional)]])
 cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
@@ -37,6 +37,13 @@ end
 
 local function main()
   local opt = cmd:parse(arg)
+
+  local required_options = {
+    "model",
+    "src_file"
+  }
+
+  opt_utils.require_options(opt, required_options)
 
   local src_reader = file_reader.new(opt.src_file)
   local src_batch = {}
