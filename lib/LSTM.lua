@@ -58,7 +58,8 @@ function LSTM:_buildModel(input_size, hidden_size)
 end
 
 function LSTM:updateOutput(input)
-  return self.net:updateOutput(input)
+  self.output = self.net:updateOutput(input)
+  return self.output
 end
 
 function LSTM:updateGradInput(input, gradOutput)
