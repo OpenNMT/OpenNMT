@@ -17,9 +17,12 @@ local Memory = require 'lib.memory'
 
 local cmd = torch.CmdLine()
 
+cmd:option('-config', '', [[Read options from this file]])
+
 cmd:text("")
 cmd:text("**Data options**")
 cmd:text("")
+
 cmd:option('-data', '', [[Path to the training *-train.t7 file from preprocess.lua]])
 cmd:option('-save_file', '', [[Savefile name (model will be saved as
                                              savefile_epochX_PPL.t7 where X is the X-th epoch and PPL is
@@ -238,6 +241,10 @@ end
 
 
 local function main()
+  if opt.config:len() > 0 then
+    opt = opt_utils.load_config(opt.config, opt)
+  end
+
   local required_options = {
     "data",
     "save_file"
