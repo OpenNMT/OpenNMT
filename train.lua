@@ -2,11 +2,11 @@ require 'lib.utils.dict'
 
 local path = require 'pl.path'
 local cuda = require 'lib.utils.cuda'
+local constants = require 'lib.utils.constants'
 
 local Decoder = require 'lib.decoder'
 local Encoder = require 'lib.encoder'
 local BiEncoder = require 'lib.biencoder'
-local Generator = require 'lib.generator'
 local Data = require 'lib.data'
 
 local EpochState = require 'lib.train.epoch_state'
@@ -94,7 +94,7 @@ local function get_nets(model)
   end
 
   nets.decoder = model.decoder.network
-  nets.generator = model.generator.network
+  nets.generator = model.decoder.generator
 
   return nets
 end
@@ -123,24 +123,31 @@ local function init_params(nets)
   return params, grad_params
 end
 
-local function eval(model, data)
+local function build_criterion(vocab_size)
+  -- Build a NLL criterion that ignores padding.
+  local w = torch.ones(vocab_size)
+  w[constants.PAD] = 0
+  local criterion = nn.ClassNLLCriterion(w)
+  criterion.sizeAverage = false
+  return criterion
+end
+
+local function eval(model, criterion, data)
   local loss = 0
   local total = 0
 
   model.encoder:evaluate()
   model.decoder:evaluate()
-  model.generator:evaluate()
 
   for i = 1, #data do
     local batch = data:get_batch(i)
     local encoder_states, context = model.encoder:forward(batch)
-    loss = loss + model.decoder:compute_loss(batch, encoder_states, context, model.generator)
+    loss = loss + model.decoder:compute_loss(batch, encoder_states, context, criterion)
     total = total + batch.target_non_zeros
   end
 
   model.encoder:training()
   model.decoder:training()
-  model.generator:training()
 
   return math.exp(loss / total)
 end
@@ -172,6 +179,8 @@ local function train(model, train_data, valid_data, dataset, info)
     dataset = dataset
   })
 
+  local criterion = cuda.convert(build_criterion(#dataset.targ_dict))
+
   local function train_epoch(epoch)
     local epoch_state
     local batch_order
@@ -199,7 +208,7 @@ local function train(model, train_data, valid_data, dataset, info)
       local enc_states, context = model.encoder:forward(batch)
       local dec_outputs = model.decoder:forward(batch, enc_states, context)
 
-      local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, model.generator)
+      local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, criterion)
       model.encoder:backward(batch, enc_grad_states_out, grad_context)
 
       optim:update_params(params, grad_params, opt.max_grad_norm)
@@ -220,7 +229,7 @@ local function train(model, train_data, valid_data, dataset, info)
   for epoch = opt.start_epoch, opt.epochs do
     local epoch_state = train_epoch(epoch)
 
-    local valid_ppl = eval(model, valid_data)
+    local valid_ppl = eval(model, criterion, valid_data)
     print('Validation PPL: ' .. valid_ppl)
 
     if opt.optim == 'sgd' then
@@ -310,12 +319,6 @@ local function main()
     input_feed = opt.input_feed
   }
 
-  local generator_args = {
-    vocab_size = #dataset.targ_dict,
-    rnn_size = opt.rnn_size,
-    training = true
-  }
-
   print('Building model...')
   local model = {}
 
@@ -325,8 +328,7 @@ local function main()
     model.encoder = Encoder.new(encoder_args, checkpoint.nets.encoder)
   end
 
-  model.decoder = Decoder.new(decoder_args, checkpoint.nets.decoder)
-  model.generator = Generator.new(generator_args, checkpoint.nets.generator)
+  model.decoder = Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
 
   for _, mod in pairs(model) do
     cuda.convert(mod)

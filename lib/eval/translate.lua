@@ -9,7 +9,6 @@ local Beam = require 'lib.eval.beam'
 local Encoder = require 'lib.encoder'
 local BiEncoder = require 'lib.biencoder'
 local Decoder = require 'lib.decoder'
-local Generator = require 'lib.generator'
 local Data = require 'lib.data'
 
 local constants = require 'lib.utils.constants'
@@ -93,17 +92,13 @@ local function init(args, resources_dir)
     num_layers = checkpoint.options.num_layers,
     input_feed = checkpoint.options.input_feed,
     mask_padding = true
-  }, checkpoint.nets.decoder)
-
-  models.generator = Generator.new({}, checkpoint.nets.generator)
+  }, checkpoint.nets.decoder, checkpoint.nets.generator)
 
   models.encoder:evaluate()
   models.decoder:evaluate()
-  models.generator:evaluate()
 
   cuda.convert(models.encoder)
   cuda.convert(models.decoder)
-  cuda.convert(models.generator)
 
   src_dict = checkpoint.dicts.src
   targ_dict = checkpoint.dicts.targ
@@ -165,7 +160,7 @@ local function translate_batch(batch)
     if batch.size > 1 then
       models.decoder:reset(batch.source_size, batch.source_length)
     end
-    gold_score = models.decoder:compute_score(batch, enc_states, context, models.generator)
+    gold_score = models.decoder:compute_score(batch, enc_states, context)
   end
 
   -- expand tensors for each beam
@@ -222,7 +217,7 @@ local function translate_batch(batch)
 
     dec_out, dec_states = models.decoder:forward_one(input, dec_states, context, dec_out)
 
-    local out = models.generator:forward_one(dec_out)
+    local out = models.decoder.generator:forward(dec_out)
 
     out = out:view(opt.beam, remaining_sents, out:size(2)):transpose(1, 2):contiguous()
 

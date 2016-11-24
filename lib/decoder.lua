@@ -23,8 +23,13 @@ Inherits from [Sequencer](lib+sequencer).
 --]]
 local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
 
-function Decoder:__init(args, network)
+function Decoder:__init(args, network, generator)
   Sequencer.__init(self, 'dec', args, network)
+
+  -- The generator use the output of the decoder sequencer to generate the
+  -- likelihoods over the target vocabulary.
+  self.generator = generator or self:_buildGenerator(args.vocab_size, args.rnn_size)
+
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
@@ -45,9 +50,22 @@ function Decoder:__init(args, network)
     end)
   end
 
-
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+end
+
+function Decoder:_buildGenerator(vocab_size, rnn_size)
+  -- Builds a layer for predicting words.
+  -- Layer used maps from (h^L) => (V).
+  local inputs = {}
+  table.insert(inputs, nn.Identity()())
+
+  local map = nn.Linear(rnn_size, vocab_size)(inputs[1])
+
+  -- Use cudnn logsoftmax if available.
+  local loglk = cuda.nn.LogSoftMax()(map)
+
+  return nn.gModule(inputs, {loglk})
 end
 
 --[[ Update internals to prepare for new batch.]]
@@ -170,12 +188,12 @@ function Decoder:forward(batch, encoder_states, context)
   return outputs
 end
 
-function Decoder:compute_score(batch, encoder_states, context, generator)
+function Decoder:compute_score(batch, encoder_states, context)
   -- TODO: Why do we need this method?
   local score = {}
 
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
-    local pred = generator.network:forward(out)
+    local pred = self.generator:forward(out)
     for b = 1, batch.size do
       if t <= batch.target_size[b] then
         score[b] = score[b] or 0
@@ -188,26 +206,23 @@ function Decoder:compute_score(batch, encoder_states, context, generator)
 end
 
 --[[ Compute the loss on a batch based on final layer `generator`.]]
-function Decoder:compute_loss(batch, encoder_states, context, generator)
+function Decoder:compute_loss(batch, encoder_states, context, criterion)
 
   local loss = 0
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
-    local pred = generator.network:forward(out)
-    loss = loss + generator.criterion:forward(pred, batch.target_output[t])
+    local pred = self.generator:forward(out)
+    loss = loss + criterion:forward(pred, batch.target_output[t])
   end)
 
   return loss
 end
 
 --[[ Compute the standard backward update.
-  With input `batch`, target `outputs`, and `generator`
+  With input `batch`, target `outputs`, and `criterion`
   Note: This code is both the standard backward and criterion forward/backward.
   It returns both the gradInputs (ret 1 and 2) and the loss.
 ]]
-function Decoder:backward(batch, outputs, generator)
-  --TODO: This object should own `generator` and or, generator should
-  -- control its own backward pass.
-
+function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
     self.gradOutputsProto = ModelUtils.initTensorTable(self.args.num_layers * 2 + 1,
                                                        self.gradOutputProto,
@@ -227,16 +242,16 @@ function Decoder:backward(batch, outputs, generator)
   for t = batch.target_length, 1, -1 do
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
-    local pred = generator.network:forward(outputs[t])
-    loss = loss + generator.criterion:forward(pred, batch.target_output[t]) / batch.size
+    local pred = self.generator:forward(outputs[t])
+    loss = loss + criterion:forward(pred, batch.target_output[t]) / batch.size
 
 
     -- Compute the criterion gradient.
-    local gen_grad_out = generator.criterion:backward(pred, batch.target_output[t])
+    local gen_grad_out = criterion:backward(pred, batch.target_output[t])
     gen_grad_out:div(batch.size)
 
     -- Compute the final layer gradient.
-    local dec_grad_out = generator.network:backward(outputs[t], gen_grad_out)
+    local dec_grad_out = self.generator:backward(outputs[t], gen_grad_out)
     grad_states_input[#grad_states_input]:add(dec_grad_out)
 
     -- Compute the standarad backward.
@@ -258,6 +273,16 @@ function Decoder:backward(batch, outputs, generator)
   end
 
   return grad_states_input, grad_context_input, loss
+end
+
+function Decoder:training()
+  Sequencer.training(self)
+  self.generator:training()
+end
+
+function Decoder:evaluate()
+  Sequencer.evaluate(self)
+  self.generator:evaluate()
 end
 
 return Decoder
