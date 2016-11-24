@@ -1,8 +1,5 @@
 local ModelUtils = require 'lib.utils.model_utils'
 local Encoder = require 'lib.encoder'
-require 'lib.model'
-
-
 
 local function reverse_input(batch)
   batch.source_input, batch.source_input_rev = batch.source_input_rev, batch.source_input
@@ -34,17 +31,15 @@ end
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-
-Inherits from [Sequencer](lib+sequencer).
 --]]
 
-local BiEncoder, Model = torch.class('BiEncoder', 'Model')
+local BiEncoder, parent = torch.class('BiEncoder', 'nn.Module')
 
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
 ]]
 function BiEncoder:__init(args, merge, net_fwd, net_bwd)
-  Model.__init(self)
+  parent.__init(self)
 
   -- Prototype for preallocated full context vector.
   self.contextProto = torch.Tensor()
@@ -164,14 +159,6 @@ end
 function BiEncoder:evaluate()
   self.fwd:evaluate()
   self.bwd:evaluate()
-end
-
-function BiEncoder:convert(f)
-  self.fwd:convert(f)
-  self.bwd:convert(f)
-  self.contextProto = f(self.contextProto)
-  self.stateProto = f(self.stateProto)
-  self.gradContextBwdProto = f(self.gradContextBwdProto)
 end
 
 return BiEncoder

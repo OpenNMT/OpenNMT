@@ -143,9 +143,4 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
   end
 end
 
-function Encoder:convert(f)
-  Sequencer.convert(self, f)
-  self.contextProto = f(self.contextProto)
-end
-
 return Encoder

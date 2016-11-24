@@ -1,6 +1,4 @@
-require 'torch'
 local model_utils = require 'lib.utils.model_utils'
-require 'lib.model'
 
 require 'lib.EmbeddingLayer'
 require 'lib.GlobalAttention'
@@ -11,10 +9,8 @@ require 'lib.LSTM'
    Main task is to manage `self.network_clones`, the unrolled LSTM
   used during training.
   Classes encoder/decoder/biencoder generalize these definitions.
-
-  Inherits from [Model](lib+model).
 --]]
-local Sequencer, Model = torch.class('Sequencer', 'Model')
+local Sequencer, parent = torch.class('Sequencer', 'nn.Module')
 
 --[[ Build one time-step of a stacked LSTM network
 
@@ -117,11 +113,11 @@ Parameters:
   * `network` - optional preconstructed network.
 
 TODO: Should initialize all the members in this method.
-   i.e. network_clones, eval_mode, etc.
+   i.e. network_clones, etc.
 
 --]]
 function Sequencer:__init(model, args, network)
-  Model.__init(self)
+  parent.__init(self)
 
   self.network = network or build_network(model, args)
   self.args = args
@@ -143,20 +139,21 @@ Returns: The raw network clone at timestep t.
 ]]
 
 function Sequencer:net(t)
-
   if self.network_clones == nil or t == nil then
     return self.network
   else
-    if self.eval_mode then
-      return self.network_clones[1]
-    else
+    if self.train then
       return self.network_clones[t]
+    else
+      return self.network_clones[1]
     end
   end
 end
 
 --[[ Tell the network to prepare for training mode. ]]
 function Sequencer:training()
+  parent.training(self)
+
   if self.network_clones == nil then
     -- During training the model will clone itself `self.args.max_sent_length`
     -- times with shared parameters. This allows training to be done in a
@@ -173,25 +170,17 @@ function Sequencer:training()
     -- only first clone can be used for evaluation
     self.network_clones[1]:training()
   end
-
-  self.eval_mode = false
 end
 
 --[[ Tell the network to prepare for evaluation mode. ]]
 function Sequencer:evaluate()
+  parent.evaluate(self)
+
   if self.network_clones == nil then
     self.network:evaluate()
   else
     self.network_clones[1]:evaluate()
   end
-
-  self.eval_mode = true
-end
-
-function Sequencer:convert(f)
-  f(self.network)
-  self.stateProto = f(self.stateProto)
-  self.gradOutputProto = f(self.gradOutputProto)
 end
 
 return Sequencer

@@ -260,10 +260,4 @@ function Decoder:backward(batch, outputs, generator)
   return grad_states_input, grad_context_input, loss
 end
 
-function Decoder:convert(f)
-  Sequencer.convert(self, f)
-  self.inputFeedProto = f(self.inputFeedProto)
-  self.gradContextProto = f(self.gradContextProto)
-end
-
 return Decoder
