@@ -349,5 +349,3 @@ function Decoder:evaluate()
   Sequencer.evaluate(self)
   self.generator:evaluate()
 end
-
-return Decoder

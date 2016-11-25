@@ -107,5 +107,3 @@ function Sequencer:evaluate()
     self.network:evaluate()
   end
 end
-
-return Sequencer

@@ -157,5 +157,3 @@ function BiEncoder:evaluate()
   self.fwd:evaluate()
   self.bwd:evaluate()
 end
-
-return BiEncoder

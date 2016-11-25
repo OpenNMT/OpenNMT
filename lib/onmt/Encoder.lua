@@ -178,5 +178,3 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
     end
   end
 end
-
-return Encoder
