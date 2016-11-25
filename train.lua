@@ -1,19 +1,13 @@
-require 'lib.utils.dict'
+require('./lib/utils')
+require('./lib/train')
+require('./lib/onmt')
 
-local path = require 'pl.path'
-local cuda = require 'lib.utils.cuda'
-local constants = require 'lib.utils.constants'
-local opt_utils = require 'lib.utils.opt_utils'
+local path = require('pl.path')
 
-local Decoder = require 'lib.Decoder'
-local Encoder = require 'lib.Encoder'
-local BiEncoder = require 'lib.BiEncoder'
-local Data = require 'lib.data'
+local constants = require('lib.constants')
+local Data = require('lib.data')
+local Memory = require('lib.memory')
 
-local EpochState = require 'lib.train.epoch_state'
-local Checkpoint = require 'lib.train.checkpoint'
-local Optim = require 'lib.train.optim'
-local Memory = require 'lib.memory'
 
 local cmd = torch.CmdLine()
 
@@ -156,7 +150,7 @@ local function eval(model, criterion, data)
   return math.exp(loss / total)
 end
 
-local function train(model, train_data, valid_data, dataset, info)
+local function train_model(model, train_data, valid_data, dataset, info)
   local nets = get_nets(model)
   local params, grad_params = init_params(nets)
 
@@ -164,10 +158,7 @@ local function train(model, train_data, valid_data, dataset, info)
     mod:training()
   end
 
-  -- optimize memory of the first clone
-  Memory.optimize(model, train_data:get_batch(1))
-
-  local optim = Optim.new({
+  local optim = train.Optim.new({
     method = opt.optim,
     num_models = #params,
     learning_rate = opt.learning_rate,
@@ -176,9 +167,12 @@ local function train(model, train_data, valid_data, dataset, info)
     optim_states = opt.optim_states
   })
 
-  local checkpoint = Checkpoint.new(opt, nets, optim, dataset)
+  local checkpoint = train.Checkpoint.new(opt, nets, optim, dataset)
 
-  local criterion = cuda.convert(build_criterion(#dataset.targ_dict))
+  local criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
+
+    -- optimize memory of the first clone
+  Memory.optimize(model, criterion, train_data:get_batch(1))
 
   local function train_epoch(epoch)
     local epoch_state
@@ -187,10 +181,10 @@ local function train(model, train_data, valid_data, dataset, info)
     local start_i = opt.start_iteration
 
     if start_i > 1 and info ~= nil then
-      epoch_state = EpochState.new(epoch, info.epoch_status)
+      epoch_state = train.EpochState.new(epoch, info.epoch_status)
       batch_order = info.batch_order
     else
-      epoch_state = EpochState.new(epoch)
+      epoch_state = train.EpochState.new(epoch)
       batch_order = torch.randperm(#train_data) -- shuffle mini batch order
     end
 
@@ -242,7 +236,7 @@ end
 
 local function main()
   if opt.config:len() > 0 then
-    opt = opt_utils.load_config(opt.config, opt)
+    opt = utils.Opt.load_config(opt.config, opt)
   end
 
   local required_options = {
@@ -250,11 +244,11 @@ local function main()
     "save_file"
   }
 
-  opt_utils.require_options(opt, required_options)
+  utils.Opt.require_options(opt, required_options)
 
   torch.manualSeed(opt.seed)
 
-  cuda.init(opt)
+  utils.Cuda.init(opt)
 
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')
@@ -331,18 +325,18 @@ local function main()
   local model = {}
 
   if opt.brnn then
-    model.encoder = BiEncoder.new(encoder_args, opt.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
+    model.encoder = onmt.BiEncoder.new(encoder_args, opt.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
   else
-    model.encoder = Encoder.new(encoder_args, checkpoint.nets.encoder)
+    model.encoder = onmt.Encoder.new(encoder_args, checkpoint.nets.encoder)
   end
 
-  model.decoder = Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
+  model.decoder = onmt.Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
 
   for _, mod in pairs(model) do
-    cuda.convert(mod)
+    utils.Cuda.convert(mod)
   end
 
-  train(model, train_data, valid_data, dataset, checkpoint.info)
+  train_model(model, train_data, valid_data, dataset, checkpoint.info)
 end
 
 main()

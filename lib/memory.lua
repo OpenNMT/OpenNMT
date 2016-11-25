@@ -16,7 +16,7 @@ local function init()
   return Memory
 end
 
-function Memory.optimize(model, batch)
+function Memory.optimize(model, criterion, batch)
   if not Memory.optnet then return end
   -- record actual size of the batch
   local actual_batchsize = { source_length = batch.source_length, target_length = batch.target_length }
@@ -46,7 +46,7 @@ function Memory.optimize(model, batch)
   local enc_states, context = model.encoder:forward(batch)
   local dec_outputs = model.decoder:forward(batch, enc_states, context)
   dec_outputs = model_utils.recursiveClone(dec_outputs)
-  local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, model.generator)
+  local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, criterion)
   model.encoder:backward(batch, enc_grad_states_out, grad_context)
 
   for name, mod in pairs(model_desc) do

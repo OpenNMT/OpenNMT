@@ -1,2 +1,12 @@
-globals = {"torch", "cutorch", "nn", "cudnn"}
+globals = {
+  "torch",
+  "cutorch",
+  "nn",
+  "cudnn",
+  "onmt",
+  "eval",
+  "train",
+  "utils"
+}
+
 self = false

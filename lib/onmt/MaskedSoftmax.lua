@@ -12,7 +12,7 @@ TODO:
   * better names for these variables.
 --]]
 
-local MaskedSoftmax, parent = torch.class('MaskedSoftmax', 'nn.Module')
+local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Module')
 
 function MaskedSoftmax:__init(source_sizes, source_length, beam_size)
   parent.__init(self)

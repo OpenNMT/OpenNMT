@@ -1,6 +1,3 @@
-local ModelUtils = require 'lib.utils.model_utils'
-local Encoder = require 'lib.Encoder'
-
 local function reverse_input(batch)
   batch.source_input, batch.source_input_rev = batch.source_input_rev, batch.source_input
   batch.source_input_pad_left, batch.source_input_rev_pad_left = batch.source_input_rev_pad_left, batch.source_input_pad_left
@@ -33,7 +30,7 @@ end
 
 --]]
 
-local BiEncoder, parent = torch.class('BiEncoder', 'nn.Module')
+local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Module')
 
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
@@ -67,8 +64,8 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
   self.merge = merge
   self.args = args
 
-  self.fwd = Encoder.new(args, net_fwd)
-  self.bwd = Encoder.new(args, net_bwd)
+  self.fwd = onmt.Encoder.new(args, net_fwd)
+  self.bwd = onmt.Encoder.new(args, net_bwd)
 end
 
 function BiEncoder:forward(batch)
@@ -79,14 +76,14 @@ function BiEncoder:forward(batch)
   reverse_input(batch)
 
   if self.statesProto == nil then
-    self.statesProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
-                                                  self.stateProto,
-                                                  { batch.size, self.rnn_size })
+    self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
+                                                   self.stateProto,
+                                                   { batch.size, self.rnn_size })
   end
 
-  local states = ModelUtils.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
-  local context = ModelUtils.reuseTensor(self.contextProto,
-                                         { batch.size, batch.source_length, self.rnn_size })
+  local states = utils.Model.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
+  local context = utils.Model.reuseTensor(self.contextProto,
+                                          { batch.size, batch.source_length, self.rnn_size })
 
   if self.merge == 'concat' then
     for i = 1, #fwd_states do
@@ -141,8 +138,8 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   self.fwd:backward(batch, grad_states_output_fwd, grad_context_output_fwd)
 
   -- reverse gradients of the backward context
-  local grad_context_bwd = ModelUtils.reuseTensor(self.gradContextBwdProto,
-                                                  { batch.size, batch.source_length, self.args.rnn_size })
+  local grad_context_bwd = utils.Model.reuseTensor(self.gradContextBwdProto,
+                                                   { batch.size, batch.source_length, self.args.rnn_size })
 
   for t = 1, batch.source_length do
     grad_context_bwd[{{}, t}]:copy(grad_context_output_bwd[{{}, batch.source_length - t + 1}])

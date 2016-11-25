@@ -1,7 +1,3 @@
-require 'torch'
-
-local constants = require 'lib.utils.constants'
-
 local dict = torch.class("dict")
 
 function dict:__init(data)
@@ -117,23 +113,23 @@ function dict:prune(size)
   return new_dict
 end
 
-function dict:convert_to_idx(labels, start_symbols)
+function dict:convert_to_idx(labels, unk_word, bos_word, eos_word)
   local vec = {}
 
-  if start_symbols then
-    table.insert(vec, self:lookup(constants.BOS_WORD))
+  if bos_word ~= nil then
+    table.insert(vec, self:lookup(bos_word))
   end
 
   for i = 1, #labels do
     local idx = self:lookup(labels[i])
     if idx == nil then
-      idx = self:lookup(constants.UNK_WORD)
+      idx = self:lookup(unk_word)
     end
     table.insert(vec, idx)
   end
 
-  if start_symbols then
-    table.insert(vec, self:lookup(constants.EOS_WORD))
+  if eos_word ~= nil then
+    table.insert(vec, self:lookup(eos_word))
   end
 
   return torch.IntTensor(vec)

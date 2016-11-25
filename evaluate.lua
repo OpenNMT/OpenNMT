@@ -1,7 +1,7 @@
+require('./lib/eval')
+require('./lib/utils')
+
 local lfs = require 'lfs'
-local file_reader = require 'lib.utils.file_reader'
-local opt_utils = require 'lib.utils.opt_utils'
-local translate = require 'lib.eval.translate'
 
 local cmd = torch.CmdLine()
 
@@ -43,9 +43,9 @@ local function main()
     "src_file"
   }
 
-  opt_utils.require_options(opt, required_options)
+  utils.Opt.require_options(opt, required_options)
 
-  local src_reader = file_reader.new(opt.src_file)
+  local src_reader = utils.FileReader.new(opt.src_file)
   local src_batch = {}
 
   local targ_reader
@@ -54,11 +54,11 @@ local function main()
   local with_gold_score = opt.targ_file:len() > 0
 
   if with_gold_score then
-    targ_reader = file_reader.new(opt.targ_file)
+    targ_reader = utils.FileReader.new(opt.targ_file)
     targ_batch = {}
   end
 
-  translate.init(opt, lfs.currentdir())
+  eval.Translate.init(opt, lfs.currentdir())
 
   local out_file = io.open(opt.output_file, 'w')
 
@@ -98,7 +98,7 @@ local function main()
         timer:resume()
       end
 
-      local pred_batch, info = translate.translate(src_batch, targ_batch)
+      local pred_batch, info = eval.Translate.translate(src_batch, targ_batch)
 
       if opt.time then
         timer:stop()

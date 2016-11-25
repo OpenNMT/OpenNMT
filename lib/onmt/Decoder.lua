@@ -1,10 +1,3 @@
-local ModelUtils = require 'lib.utils.model_utils'
-local table_utils = require 'lib.utils.table_utils'
-local cuda = require 'lib.utils.cuda'
-require 'lib.Sequencer'
-
-require 'lib.MaskedSoftmax'
-
 --[[ Decoder is the sequencer for the target words.
 
      .      .      .             .
@@ -21,10 +14,10 @@ require 'lib.MaskedSoftmax'
 Inherits from [Sequencer](lib+sequencer).
 
 --]]
-local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
+local Decoder, Sequencer = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 function Decoder:__init(args, network, generator)
-  Sequencer.__init(self, 'dec', args, network)
+  Sequencer.__init(self, args, network or self:_buildModel(args))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
@@ -52,6 +45,81 @@ function Decoder:__init(args, network, generator)
   self.gradContextProto = torch.Tensor()
 end
 
+--[[ Build one time-step of a decoder
+
+Parameters:
+
+  * `args` - global args.
+
+Returns: An nn-graph mapping
+
+  $${(c^1_{t-1}, h^1_{t-1}, .., c^L_{t-1}, h^L_{t-1}, x_t, con/H, if) =>
+  (c^1_{t}, h^1_{t}, .., c^L_{t}, h^L_{t}, a)}$$
+
+  Where ${c^l}$ and ${h^l}$ are the hidden and cell states at each layer,
+  ${x_t}$ is a sparse word to lookup,
+  ${con/H}$ is the context/source hidden states for attention,
+  ${if}$ is the input feeding, and
+  ${a}$ is the context vector computed at this timestep.
+--]]
+function Decoder:_buildModel(args)
+  local inputs = {}
+  local states = {}
+
+  -- Inputs are previous layers first.
+  for _ = 1, args.num_layers do
+    local c0 = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, c0)
+    table.insert(states, c0)
+
+    local h0 = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, h0)
+    table.insert(states, h0)
+  end
+
+  local x = nn.Identity()() -- batch_size
+  table.insert(inputs, x)
+
+  local context = nn.Identity()() -- batch_size x source_length x rnn_size
+  table.insert(inputs, context)
+
+  local input_feed
+  if args.input_feed then
+    input_feed = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, input_feed)
+  end
+
+  local input_size = args.word_vec_size
+
+  -- Compute word embedding.
+  local input = onmt.WordEmbedding(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+
+  -- If set, concatenate previous decoder output.
+  if args.input_feed then
+    input = nn.JoinTable(2)({input, input_feed})
+    input_size = input_size + args.rnn_size
+  end
+
+  table.insert(states, input)
+
+  -- Forward states and input into the RNN.
+  local outputs = onmt.LSTM(args.num_layers, input_size, args.rnn_size, args.dropout)(states)
+
+  -- The output of a subgraph is a node: split it to access the last RNN output.
+  outputs = { outputs:split(args.num_layers * 2) }
+
+  -- Compute the attention here using h^L as query.
+  local attn_layer = onmt.GlobalAttention(args.rnn_size)
+  attn_layer.name = 'decoder_attn'
+  local attn_output = attn_layer({outputs[#outputs], context})
+  if args.dropout > 0 then
+    attn_output = nn.Dropout(args.dropout)(attn_output)
+  end
+  table.insert(outputs, attn_output)
+
+  return nn.gModule(inputs, outputs)
+end
+
 function Decoder:_buildGenerator(vocab_size, rnn_size)
   -- Builds a layer for predicting words.
   -- Layer used maps from (h^L) => (V).
@@ -61,7 +129,7 @@ function Decoder:_buildGenerator(vocab_size, rnn_size)
   local map = nn.Linear(rnn_size, vocab_size)(inputs[1])
 
   -- Use cudnn logsoftmax if available.
-  local loglk = cuda.nn.LogSoftMax()(map)
+  local loglk = utils.Cuda.nn.LogSoftMax()(map)
 
   return nn.gModule(inputs, {loglk})
 end
@@ -72,13 +140,13 @@ function Decoder:reset(source_sizes, source_length, beam_size)
     if module.name == 'softmax_attn' then
       local mod
       if source_sizes ~= nil then
-        mod = MaskedSoftmax(source_sizes, source_length, beam_size)
+        mod = onmt.MaskedSoftmax(source_sizes, source_length, beam_size)
       else
         mod = nn.SoftMax()
       end
 
       mod.name = 'softmax_attn'
-      mod = cuda.convert(mod)
+      mod = utils.Cuda.convert(mod)
       self.softmax_attn = mod
       return mod
     else
@@ -106,13 +174,13 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `build_network('dec')`).
-  table_utils.append(inputs, prev_states)
+  utils.Table.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
   if self.args.input_feed then
     if prev_out == nil then
-      table.insert(inputs, ModelUtils.reuseTensor(self.inputFeedProto,
-                                                  { input:size(1), self.args.rnn_size }))
+      table.insert(inputs, utils.Model.reuseTensor(self.inputFeedProto,
+                                                   { input:size(1), self.args.rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
@@ -144,12 +212,12 @@ end
 --]]
 function Decoder:forward_and_apply(batch, encoder_states, context, func)
   if self.statesProto == nil then
-    self.statesProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
-                                                  self.stateProto,
-                                                  { batch.size, self.args.rnn_size })
+    self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
+                                                   self.stateProto,
+                                                   { batch.size, self.args.rnn_size })
   end
 
-  local states = ModelUtils.copyTensorTable(self.statesProto, encoder_states)
+  local states = utils.Model.copyTensorTable(self.statesProto, encoder_states)
 
   local prev_out
 
@@ -221,15 +289,15 @@ end
 ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = ModelUtils.initTensorTable(self.args.num_layers * 2 + 1,
-                                                       self.gradOutputProto,
-                                                       { batch.size, self.args.rnn_size })
+    self.gradOutputsProto = utils.Model.initTensorTable(self.args.num_layers * 2 + 1,
+                                                        self.gradOutputProto,
+                                                        { batch.size, self.args.rnn_size })
   end
 
-  local grad_states_input = ModelUtils.reuseTensorTable(self.gradOutputsProto,
-                                                        { batch.size, self.args.rnn_size })
-  local grad_context_input = ModelUtils.reuseTensor(self.gradContextProto,
-                                                    { batch.size, batch.source_length, self.args.rnn_size })
+  local grad_states_input = utils.Model.reuseTensorTable(self.gradOutputsProto,
+                                                         { batch.size, self.args.rnn_size })
+  local grad_context_input = utils.Model.reuseTensor(self.gradContextProto,
+                                                     { batch.size, batch.source_length, self.args.rnn_size })
 
   local grad_context_idx = #self.statesProto + 2
   local grad_input_feed_idx = #self.statesProto + 3
@@ -252,7 +320,7 @@ function Decoder:backward(batch, outputs, criterion)
     grad_states_input[#grad_states_input]:add(dec_grad_out)
 
     -- Compute the standarad backward.
-    local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
+    local grad_input = self:net(t):backward(self.inputs[t], grad_states_input)
 
     -- Accumulate encoder output gradients.
     grad_context_input:add(grad_input[grad_context_idx])
