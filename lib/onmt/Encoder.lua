@@ -170,7 +170,7 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
     -- Add context gradients to last hidden states gradients.
     grad_states_input[#grad_states_input]:add(grad_context_output[{{}, t}])
 
-    local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
+    local grad_input = self:net(t):backward(self.inputs[t], grad_states_input)
 
     -- Prepare next encoder output gradients.
     for i = 1, #grad_states_input do

@@ -320,7 +320,7 @@ function Decoder:backward(batch, outputs, criterion)
     grad_states_input[#grad_states_input]:add(dec_grad_out)
 
     -- Compute the standarad backward.
-    local grad_input = Sequencer.net(self, t):backward(self.inputs[t], grad_states_input)
+    local grad_input = self:net(t):backward(self.inputs[t], grad_states_input)
 
     -- Accumulate encoder output gradients.
     grad_context_input:add(grad_input[grad_context_idx])
