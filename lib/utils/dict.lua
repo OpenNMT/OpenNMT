@@ -4,6 +4,8 @@ function dict:__init(data)
   self.idx_to_label = {}
   self.label_to_idx = {}
   self.frequencies = {}
+
+  -- Special entries will not be pruned.
   self.special = {}
 
   if data ~= nil then
@@ -98,14 +100,17 @@ function dict:prune(size)
     return self
   end
 
+  -- Only keep the `size` most frequent entries.
   local freq = torch.Tensor(self.frequencies)
   local _, idx = torch.sort(freq, 1, true)
 
   local new_dict = dict.new()
 
+  -- Add special entries in all cases.
   for i = 1, #self.special do
     new_dict:add_special(self.idx_to_label[self.special[i]])
   end
+
   for i = 1, size do
     new_dict:add(self.idx_to_label[idx[i]])
   end

@@ -125,8 +125,12 @@ local function build_criterion(vocab_size)
   -- Build a NLL criterion that ignores padding.
   local w = torch.ones(vocab_size)
   w[constants.PAD] = 0
+
   local criterion = nn.ClassNLLCriterion(w)
+
+  -- Let the training code manage loss normalization.
   criterion.sizeAverage = false
+
   return criterion
 end
 

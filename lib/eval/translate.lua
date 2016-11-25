@@ -135,7 +135,7 @@ local function build_target_tokens(pred, src, attn)
 end
 
 local function translate_batch(batch)
-  -- also forget previous padding module on the decoder
+  -- Forget previous padding module on the decoder.
   models.decoder:reset()
 
   local enc_states, context = models.encoder:forward(batch)
@@ -148,7 +148,7 @@ local function translate_batch(batch)
     gold_score = models.decoder:compute_score(batch, enc_states, context)
   end
 
-  -- expand tensors for each beam
+  -- Expand tensors for each beam.
   context = context
     :contiguous()
     :view(1, batch.size, batch.source_length, checkpoint.options.rnn_size)
@@ -165,6 +165,9 @@ local function translate_batch(batch)
   end
 
   local remaining_sents = batch.size
+
+  -- As finished sentences are removed from the batch, this table maps the batches
+  -- to their index within the remaining sentences.
   local batch_idx = {}
 
   local beam = {}
@@ -182,7 +185,7 @@ local function translate_batch(batch)
   while remaining_sents > 0 and i < opt.max_sent_l do
     i = i + 1
 
-    -- prepare decoder input
+    -- Prepare decoder input.
     local input = torch.IntTensor(opt.beam, remaining_sents)
     local source_sizes = torch.IntTensor(remaining_sents)
 
@@ -190,6 +193,8 @@ local function translate_batch(batch)
       if not beam[b].done then
         local idx = batch_idx[b]
         source_sizes[idx] = batch.source_size[b]
+
+        -- Get current state of the beam search.
         input[{{}, idx}]:copy(beam[b]:get_current_state())
       end
     end
@@ -227,7 +232,7 @@ local function translate_batch(batch)
     end
 
     if new_remaining_sents > 0 and new_remaining_sents ~= remaining_sents then
-      -- update sentence indices within the batch and mark sentences to keep
+      -- Update sentence indices within the batch and mark sentences to keep.
       local to_keep = {}
       local new_idx = 1
       for b = 1, #batch_idx do
@@ -241,7 +246,7 @@ local function translate_batch(batch)
 
       to_keep = torch.LongTensor(to_keep)
 
-      -- update rnn_state and context
+      -- Update rnn states and context.
       for j = 1, #dec_states do
         dec_states[j] = dec_states[j]
           :view(opt.beam, remaining_sents, checkpoint.options.rnn_size)
