@@ -264,7 +264,7 @@ local function translate_batch(batch)
         :index(2, to_keep)
         :view(opt.beam*new_remaining_sents, batch.source_length, checkpoint.options.rnn_size)
 
-      -- The `index()` method allocate a new storage so clean the previous ones to
+      -- The `index()` method allocates a new storage so clean the previous ones to
       -- keep a stable memory usage.
       collectgarbage()
     end
