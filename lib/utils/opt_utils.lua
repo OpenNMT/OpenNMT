@@ -18,10 +18,6 @@ end
 
 --[[ Override `opt` with option values set in file `filename`. ]]
 local function load_file(filename)
-  local function strip(s)
-    return s:gsub("^%s+",""):gsub("%s+$","")
-  end
-
   local file = assert(io.open(filename, "r"))
   local opt = {}
 
@@ -30,8 +26,8 @@ local function load_file(filename)
     if line:len() > 0 and string.sub(line, 1, 1) ~= '#' then
       local field = line:split('=')
       assert(#field == 2, 'badly formatted config file')
-      local key = strip(field[1])
-      local val = strip(field[2])
+      local key = utils.String.strip(field[1])
+      local val = utils.String.strip(field[2])
       opt[key] = val
     end
   end

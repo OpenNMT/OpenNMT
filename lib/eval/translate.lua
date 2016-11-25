@@ -16,15 +16,11 @@ local phrase_table = {}
 
 
 local function absolute_path(file_path, resources_dir)
-  local function isempty(s)
-    return s == nil or s == ''
-  end
-
-  if not isempty(resources_dir) and not isempty(file_path) then
+  if not utils.String.is_empty(resources_dir) and not utils.String.is_empty(file_path) then
     file_path = path.join(resources_dir, file_path)
   end
 
-  if not isempty(file_path) then
+  if not utils.String.is_empty(file_path) then
     assert(path.exists(file_path), 'Path does not exist: ' .. file_path)
   end
 
@@ -34,15 +30,11 @@ end
 local function load_phrase_table(file_path)
   local f = assert(io.open(file_path, 'r'))
 
-  local function strip(s)
-    return s:gsub("^%s+",""):gsub("%s+$","")
-  end
-
   local pt = {}
 
   for line in f:lines() do
     local c = line:split("|||")
-    pt[strip(c[1])] = c[2]
+    pt[utils.String.strip(c[1])] = c[2]
   end
 
   f:close()
