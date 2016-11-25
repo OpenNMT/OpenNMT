@@ -1,8 +1,6 @@
-local constants = require 'lib.utils.constants'
-local dict = require 'lib.utils.dict'
-local file_reader = require 'lib.utils.file_reader'
-local table_utils = require 'lib.utils.table_utils'
-local opt_utils = require 'lib.utils.opt_utils'
+require('./lib/utils')
+
+local constants = require('lib.constants')
 
 local cmd = torch.CmdLine()
 
@@ -27,9 +25,9 @@ cmd:option('-report_every', 100000, [[Report status every this many sentences]])
 local opt = cmd:parse(arg)
 
 local function make_vocabulary(filename, size)
-  local vocab = dict.new({constants.PAD_WORD, constants.UNK_WORD,
-                          constants.BOS_WORD, constants.EOS_WORD})
-  local reader = file_reader.new(filename)
+  local vocab = utils.Dict.new({constants.PAD_WORD, constants.UNK_WORD,
+                                constants.BOS_WORD, constants.EOS_WORD})
+  local reader = utils.FileReader.new(filename)
 
   while true do
     local sent = reader:next()
@@ -59,7 +57,7 @@ local function init_vocabulary(name, data_file, vocab_file, vocab_size)
     vocab = make_vocabulary(data_file, vocab_size)
   else
     print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '\'...')
-    vocab = dict.new()
+    vocab = utils.Dict.new()
     vocab:load_file(vocab_file)
     print('Loaded ' .. #vocab .. ' ' .. name .. ' words')
   end
@@ -82,8 +80,8 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
   local count = 0
   local ignored = 0
 
-  local src_reader = file_reader.new(src_file)
-  local targ_reader = file_reader.new(targ_file)
+  local src_reader = utils.FileReader.new(src_file)
+  local targ_reader = utils.FileReader.new(targ_file)
 
   while true do
     local src_tokens = src_reader:next()
@@ -98,8 +96,9 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
 
     if #src_tokens > 0 and #src_tokens <= opt.seq_length
     and #targ_tokens > 0 and #targ_tokens <= opt.seq_length then
-      table.insert(src, src_dict:convert_to_idx(src_tokens, false))
-      table.insert(targ, targ_dict:convert_to_idx(targ_tokens, true))
+      table.insert(src, src_dict:convert_to_idx(src_tokens, constants.UNK_WORD))
+      table.insert(targ, targ_dict:convert_to_idx(targ_tokens, constants.UNK_WORD,
+                                                  constants.BOS_WORD, constants.EOS_WORD))
       table.insert(sizes, #src_tokens)
     else
       ignored = ignored + 1
@@ -118,15 +117,15 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
   if opt.shuffle then
     print('... shuffling sentences')
     local perm = torch.randperm(#src)
-    src = table_utils.reorder(src, perm)
-    targ = table_utils.reorder(targ, perm)
-    sizes = table_utils.reorder(sizes, perm)
+    src = utils.Table.reorder(src, perm)
+    targ = utils.Table.reorder(targ, perm)
+    sizes = utils.Table.reorder(sizes, perm)
   end
 
   print('... sorting sentences by size')
   local _, perm = torch.sort(torch.Tensor(sizes))
-  src = table_utils.reorder(src, perm)
-  targ = table_utils.reorder(targ, perm)
+  src = utils.Table.reorder(src, perm)
+  targ = utils.Table.reorder(targ, perm)
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length == 0 or > ' .. opt.seq_length .. ')')
 
@@ -142,7 +141,7 @@ local function main()
     "output_file"
   }
 
-  opt_utils.require_options(opt, required_options)
+  utils.Opt.require_options(opt, required_options)
 
   torch.manualSeed(opt.seed)
 

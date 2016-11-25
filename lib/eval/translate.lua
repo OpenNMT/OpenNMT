@@ -1,19 +1,9 @@
-require 'nn'
-require 'string'
-require 'nngraph'
+require('../onmt')
+require('../utils')
 
-require 'lib.utils.dict'
-
-local Beam = require 'lib.eval.beam'
-
-local Encoder = require 'lib.Encoder'
-local BiEncoder = require 'lib.BiEncoder'
-local Decoder = require 'lib.Decoder'
-local Data = require 'lib.data'
-
-local constants = require 'lib.utils.constants'
-local cuda = require 'lib.utils.cuda'
-local path = require 'pl.path'
+local path = require('pl.path')
+local Data = require('lib.data')
+local constants = require('lib.constants')
 
 local checkpoint = nil
 local models = {}
@@ -62,7 +52,7 @@ end
 
 local function init(args, resources_dir)
   opt = args
-  cuda.init(opt)
+  utils.Cuda.init(opt)
 
   opt.model = absolute_path(opt.model, resources_dir)
   print('Loading ' .. opt.model .. '...')
@@ -82,18 +72,18 @@ local function init(args, resources_dir)
   }
 
   if checkpoint.options.brnn then
-    models.encoder = BiEncoder.new(encoder_args, checkpoint.options.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
+    models.encoder = onmt.BiEncoder.new(encoder_args, checkpoint.options.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
   else
-    models.encoder = Encoder.new(encoder_args, checkpoint.nets.encoder)
+    models.encoder = onmt.Encoder.new(encoder_args, checkpoint.nets.encoder)
   end
 
-  models.decoder = Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
+  models.decoder = onmt.Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
 
   models.encoder:evaluate()
   models.decoder:evaluate()
 
-  cuda.convert(models.encoder)
-  cuda.convert(models.decoder)
+  utils.Cuda.convert(models.encoder)
+  utils.Cuda.convert(models.decoder)
 
   src_dict = checkpoint.dicts.src
   targ_dict = checkpoint.dicts.targ
@@ -180,7 +170,7 @@ local function translate_batch(batch)
   local beam = {}
 
   for b = 1, batch.size do
-    table.insert(beam, Beam.new(opt.beam, opt.max_sent_l))
+    table.insert(beam, eval.Beam.new(opt.beam, opt.max_sent_l))
     table.insert(batch_idx, b)
   end
 

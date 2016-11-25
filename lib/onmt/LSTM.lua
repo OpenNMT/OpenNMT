@@ -1,6 +1,6 @@
 require 'nngraph'
 
-local LSTM, parent = torch.class('LSTM', 'nn.Module')
+local LSTM, parent = torch.class('onmt.LSTM', 'nn.Module')
 
 function LSTM:__init(input_size, hidden_size)
   parent.__init(self)

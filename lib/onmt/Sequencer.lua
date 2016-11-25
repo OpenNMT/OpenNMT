@@ -1,8 +1,4 @@
-local model_utils = require 'lib.utils.model_utils'
-
-require 'lib.EmbeddingLayer'
-require 'lib.GlobalAttention'
-require 'lib.LSTM'
+require 'nngraph'
 
 --[[ Sequencer is the base class for our time series LSTM models.
   Acts similarly to an `nn.Module`.
@@ -10,7 +6,7 @@ require 'lib.LSTM'
   used during training.
   Classes encoder/decoder/biencoder generalize these definitions.
 --]]
-local Sequencer, parent = torch.class('Sequencer', 'nn.Module')
+local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Module')
 
 --[[ Build one time-step of a stacked LSTM network
 
@@ -70,7 +66,7 @@ local function build_network(model, args)
     if L == 1 then
       -- At first layer do word lookup.
       input_size = args.word_vec_size
-      input = EmbeddingLayer(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+      input = onmt.EmbeddingLayer(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
 
       -- If input feeding, concat previous to $x$.
       if model == 'dec' and args.input_feed then
@@ -86,7 +82,7 @@ local function build_network(model, args)
     local prev_c = inputs[L*2 - 1]
     local prev_h = inputs[L*2]
 
-    next_c, next_h = LSTM(input_size, args.rnn_size)({prev_c, prev_h, input}):split(2)
+    next_c, next_h = onmt.LSTM(input_size, args.rnn_size)({prev_c, prev_h, input}):split(2)
 
     table.insert(outputs, next_c)
     table.insert(outputs, next_h)
@@ -94,7 +90,7 @@ local function build_network(model, args)
 
   -- For the decoder, compute the attention here using h^L as query.
   if model == 'dec' then
-    local attn_layer = GlobalAttention(args.rnn_size)
+    local attn_layer = onmt.GlobalAttention(args.rnn_size)
     attn_layer.name = 'decoder_attn'
     local attn_output = nn.Dropout(args.dropout, nil, false)(attn_layer({next_h, context}))
     table.insert(outputs, attn_output)

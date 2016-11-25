@@ -1,4 +1,4 @@
-local constants = require 'lib.utils.constants'
+local constants = require 'lib.constants'
 
 --[[Helper function convert a `flat_index` to a row-column tuple
 

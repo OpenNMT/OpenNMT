@@ -1,6 +1,6 @@
 require 'nngraph'
 
-local GlobalAttention, parent = torch.class('GlobalAttention', 'nn.Module')
+local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'nn.Module')
 
 function GlobalAttention:__init(dim)
   parent.__init(self)

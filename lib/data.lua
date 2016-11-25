@@ -1,5 +1,6 @@
-local cuda = require 'lib.utils.cuda'
-local constants = require 'lib.utils.constants'
+require('./utils')
+
+local constants = require 'lib.constants'
 
 --[[ Data management and batch creation.
 
@@ -146,12 +147,12 @@ function Data:get_data(src, targ)
     end
   end
 
-  batch.source_input = cuda.convert(batch.source_input)
-  batch.source_input_rev = cuda.convert(batch.source_input_rev)
+  batch.source_input = utils.Cuda.convert(batch.source_input)
+  batch.source_input_rev = utils.Cuda.convert(batch.source_input_rev)
 
   if targ ~= nil then
-    batch.target_input = cuda.convert(batch.target_input)
-    batch.target_output = cuda.convert(batch.target_output)
+    batch.target_input = utils.Cuda.convert(batch.target_input)
+    batch.target_output = utils.Cuda.convert(batch.target_output)
   end
   return batch
 end

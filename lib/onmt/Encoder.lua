@@ -1,7 +1,3 @@
-local ModelUtils = require 'lib.utils.model_utils'
-local table_utils = require 'lib.utils.table_utils'
-require 'lib.Sequencer'
-
 --[[ Encoder is a unidirectional Sequencer used for the source language.
 
     h_1 => h_2 => h_3 => ... => h_n
@@ -16,7 +12,7 @@ require 'lib.Sequencer'
 
 Inherits from [Sequencer](lib+sequencer).
 --]]
-local Encoder, Sequencer = torch.class('Encoder', 'Sequencer')
+local Encoder, Sequencer = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 --[[ Constructor takes global `args` and optional `network`. ]]
 function Encoder:__init(args, network)
@@ -46,20 +42,20 @@ function Encoder:forward(batch)
   local final_states
 
   if self.statesProto == nil then
-    self.statesProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
-                                                  self.stateProto,
-                                                  { batch.size, self.args.rnn_size })
+    self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
+                                                   self.stateProto,
+                                                   { batch.size, self.args.rnn_size })
   end
 
   -- Make initial states c_0, h_0.
-  local states = ModelUtils.reuseTensorTable(self.statesProto, { batch.size, self.args.rnn_size })
+  local states = utils.Model.reuseTensorTable(self.statesProto, { batch.size, self.args.rnn_size })
 
   -- Preallocated output matrix.
-  local context = ModelUtils.reuseTensor(self.contextProto,
-                                         { batch.size, batch.source_length, self.args.rnn_size })
+  local context = utils.Model.reuseTensor(self.contextProto,
+                                          { batch.size, batch.source_length, self.args.rnn_size })
 
   if self.args.mask_padding and not batch.source_input_pad_left then
-    final_states = table_utils.clone(states)
+    final_states = utils.Table.clone(states)
   end
   if self.train then
     self.inputs = {}
@@ -71,7 +67,7 @@ function Encoder:forward(batch)
 
     -- Construct "inputs". Prev states come first then source.
     local inputs = {}
-    table_utils.append(inputs, states)
+    utils.Table.append(inputs, states)
     table.insert(inputs, batch.source_input[t])
 
     if self.train then
@@ -120,12 +116,12 @@ TODO: change this to (input, gradOutput) as in nngraph.
 --]]
 function Encoder:backward(batch, grad_states_output, grad_context_output)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
-                                                       self.gradOutputProto,
-                                                       { batch.size, self.args.rnn_size })
+    self.gradOutputsProto = utils.Model.initTensorTable(self.args.num_layers * 2,
+                                                        self.gradOutputProto,
+                                                        { batch.size, self.args.rnn_size })
   end
 
-  local grad_states_input = ModelUtils.copyTensorTable(self.gradOutputsProto, grad_states_output)
+  local grad_states_input = utils.Model.copyTensorTable(self.gradOutputsProto, grad_states_output)
 
   for t = batch.source_length, 1, -1 do
     -- Add context gradients to last hidden states gradients.

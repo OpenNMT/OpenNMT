@@ -1,6 +1,6 @@
-local constants = require 'lib.utils.constants'
+local constants = require 'lib.constants'
 
-local EmbeddingLayer, parent = torch.class('EmbeddingLayer', 'nn.Module')
+local EmbeddingLayer, parent = torch.class('onmt.EmbeddingLayer', 'nn.Module')
 
 function EmbeddingLayer:__init(vocab_size, vec_size, pre_trained, fix)
   parent.__init(self)

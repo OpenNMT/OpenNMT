@@ -1,10 +1,3 @@
-local ModelUtils = require 'lib.utils.model_utils'
-local table_utils = require 'lib.utils.table_utils'
-local cuda = require 'lib.utils.cuda'
-require 'lib.Sequencer'
-
-require 'lib.MaskedSoftmax'
-
 --[[ Decoder is the sequencer for the target words.
 
      .      .      .             .
@@ -21,7 +14,7 @@ require 'lib.MaskedSoftmax'
 Inherits from [Sequencer](lib+sequencer).
 
 --]]
-local Decoder, Sequencer = torch.class('Decoder', 'Sequencer')
+local Decoder, Sequencer = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 function Decoder:__init(args, network, generator)
   Sequencer.__init(self, 'dec', args, network)
@@ -61,7 +54,7 @@ function Decoder:_buildGenerator(vocab_size, rnn_size)
   local map = nn.Linear(rnn_size, vocab_size)(inputs[1])
 
   -- Use cudnn logsoftmax if available.
-  local loglk = cuda.nn.LogSoftMax()(map)
+  local loglk = utils.Cuda.nn.LogSoftMax()(map)
 
   return nn.gModule(inputs, {loglk})
 end
@@ -72,13 +65,13 @@ function Decoder:reset(source_sizes, source_length, beam_size)
     if module.name == 'softmax_attn' then
       local mod
       if source_sizes ~= nil then
-        mod = MaskedSoftmax(source_sizes, source_length, beam_size)
+        mod = onmt.MaskedSoftmax(source_sizes, source_length, beam_size)
       else
         mod = nn.SoftMax()
       end
 
       mod.name = 'softmax_attn'
-      mod = cuda.convert(mod)
+      mod = utils.Cuda.convert(mod)
       self.softmax_attn = mod
       return mod
     else
@@ -106,13 +99,13 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `build_network('dec')`).
-  table_utils.append(inputs, prev_states)
+  utils.Table.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
   if self.args.input_feed then
     if prev_out == nil then
-      table.insert(inputs, ModelUtils.reuseTensor(self.inputFeedProto,
-                                                  { input:size(1), self.args.rnn_size }))
+      table.insert(inputs, utils.Model.reuseTensor(self.inputFeedProto,
+                                                   { input:size(1), self.args.rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
@@ -144,12 +137,12 @@ end
 --]]
 function Decoder:forward_and_apply(batch, encoder_states, context, func)
   if self.statesProto == nil then
-    self.statesProto = ModelUtils.initTensorTable(self.args.num_layers * 2,
-                                                  self.stateProto,
-                                                  { batch.size, self.args.rnn_size })
+    self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
+                                                   self.stateProto,
+                                                   { batch.size, self.args.rnn_size })
   end
 
-  local states = ModelUtils.copyTensorTable(self.statesProto, encoder_states)
+  local states = utils.Model.copyTensorTable(self.statesProto, encoder_states)
 
   local prev_out
 
@@ -221,15 +214,15 @@ end
 ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = ModelUtils.initTensorTable(self.args.num_layers * 2 + 1,
-                                                       self.gradOutputProto,
-                                                       { batch.size, self.args.rnn_size })
+    self.gradOutputsProto = utils.Model.initTensorTable(self.args.num_layers * 2 + 1,
+                                                        self.gradOutputProto,
+                                                        { batch.size, self.args.rnn_size })
   end
 
-  local grad_states_input = ModelUtils.reuseTensorTable(self.gradOutputsProto,
-                                                        { batch.size, self.args.rnn_size })
-  local grad_context_input = ModelUtils.reuseTensor(self.gradContextProto,
-                                                    { batch.size, batch.source_length, self.args.rnn_size })
+  local grad_states_input = utils.Model.reuseTensorTable(self.gradOutputsProto,
+                                                         { batch.size, self.args.rnn_size })
+  local grad_context_input = utils.Model.reuseTensor(self.gradContextProto,
+                                                     { batch.size, batch.source_length, self.args.rnn_size })
 
   local grad_context_idx = #self.statesProto + 2
   local grad_input_feed_idx = #self.statesProto + 3
