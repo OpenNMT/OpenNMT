@@ -158,9 +158,6 @@ local function train_model(model, train_data, valid_data, dataset, info)
     mod:training()
   end
 
-  -- optimize memory of the first clone
-  Memory.optimize(model, train_data:get_batch(1))
-
   local optim = train.Optim.new({
     method = opt.optim,
     num_models = #params,
@@ -173,6 +170,9 @@ local function train_model(model, train_data, valid_data, dataset, info)
   local checkpoint = train.Checkpoint.new(opt, nets, optim, dataset)
 
   local criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
+
+    -- optimize memory of the first clone
+  Memory.optimize(model, criterion, train_data:get_batch(1))
 
   local function train_epoch(epoch)
     local epoch_state
