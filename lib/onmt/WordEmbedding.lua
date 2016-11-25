@@ -1,8 +1,8 @@
 local constants = require 'lib.constants'
 
-local EmbeddingLayer, parent = torch.class('onmt.EmbeddingLayer', 'nn.Module')
+local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Module')
 
-function EmbeddingLayer:__init(vocab_size, vec_size, pre_trained, fix)
+function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   parent.__init(self)
 
   self.net = nn.LookupTable(vocab_size, vec_size)
@@ -19,16 +19,16 @@ function EmbeddingLayer:__init(vocab_size, vec_size, pre_trained, fix)
   self.net.weight[constants.PAD]:zero()
 end
 
-function EmbeddingLayer:updateOutput(input)
+function WordEmbedding:updateOutput(input)
   self.output = self.net:updateOutput(input)
   return self.output
 end
 
-function EmbeddingLayer:updateGradInput(input, gradOutput)
+function WordEmbedding:updateGradInput(input, gradOutput)
   return self.net:updateGradInput(input, gradOutput)
 end
 
-function EmbeddingLayer:accGradParameters(input, gradOutput, scale)
+function WordEmbedding:accGradParameters(input, gradOutput, scale)
   self.net:accGradParameters(input, gradOutput, scale)
 
   if self.fix then
@@ -40,6 +40,6 @@ function EmbeddingLayer:accGradParameters(input, gradOutput, scale)
   end
 end
 
-function EmbeddingLayer:parameters()
+function WordEmbedding:parameters()
   return self.net:parameters()
 end

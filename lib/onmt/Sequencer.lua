@@ -66,7 +66,7 @@ local function build_network(model, args)
     if L == 1 then
       -- At first layer do word lookup.
       input_size = args.word_vec_size
-      input = onmt.EmbeddingLayer(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+      input = onmt.WordEmbedding(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
 
       -- If input feeding, concat previous to $x$.
       if model == 'dec' and args.input_feed then
