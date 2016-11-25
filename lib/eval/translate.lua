@@ -103,10 +103,10 @@ local function build_data(src_batch, gold_batch)
   end
 
   for b = 1, #src_batch do
-    table.insert(src, src_dict:convert_to_idx(src_batch[b], false))
+    table.insert(src, src_dict:convert_to_idx(src_batch[b], constants.UNK_WORD))
 
     if targ ~= nil then
-      table.insert(targ, targ_dict:convert_to_idx(gold_batch[b], true))
+      table.insert(targ, targ_dict:convert_to_idx(gold_batch[b], constants.UNK_WORD, constants.BOS_WORD, constants.EOS_WORD))
     end
   end
 
