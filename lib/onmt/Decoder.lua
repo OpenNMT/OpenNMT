@@ -253,16 +253,17 @@ function Decoder:forward(batch, encoder_states, context)
   return outputs
 end
 
+--[[ Compute the cumulative score of a target sequence.
+  Used in decoding when gold data are provided.
+]]
 function Decoder:compute_score(batch, encoder_states, context)
-  -- TODO: Why do we need this method?
   local score = {}
 
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
     local pred = self.generator:forward(out)
     for b = 1, batch.size do
       if t <= batch.target_size[b] then
-        score[b] = score[b] or 0
-        score[b] = score[b] + pred[b][batch.target_output[t][b]]
+        score[b] = (score[b] or 0) + pred[b][batch.target_output[t][b]]
       end
     end
   end)
