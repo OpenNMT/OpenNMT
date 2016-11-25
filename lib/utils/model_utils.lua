@@ -34,9 +34,9 @@ local function reuseTensor(t, sizes)
     return t:resize(sizes):zero()
   end
 
-  assert(#sizes == t:dim(), 'reused tensor must have the same dimensions')
+  assert(#sizes == t:dim(), 'reused tensor must have the same number of dimensions')
 
-  -- Otherwise, prepare new tensor dimensions.
+  -- Otherwise, prepare new tensor sizes.
   local newSizes = t:size()
 
   for d = 1, t:dim() do
@@ -61,7 +61,7 @@ local function reuseTensor(t, sizes)
 end
 
 --[[
-Reuse all Tensors within the table with new dimensions.
+Reuse all Tensors within the table with new sizes.
 
 Parameters:
 
@@ -80,7 +80,7 @@ local function reuseTensorTable(tab, sizes)
 end
 
 --[[
-Initialize a table of tensors with the given dimensions.
+Initialize a table of tensors with the given sizes.
 
 Parameters:
 
