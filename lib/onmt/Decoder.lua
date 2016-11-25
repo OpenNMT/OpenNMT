@@ -11,13 +11,13 @@
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-Inherits from [Sequencer](lib+sequencer).
+Inherits from [onmt.Sequencer](lib+onmt+sequencer).
 
 --]]
-local Decoder, Sequencer = torch.class('onmt.Decoder', 'onmt.Sequencer')
+local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 function Decoder:__init(args, network, generator)
-  Sequencer.__init(self, args, network or self:_buildModel(args))
+  parent.__init(self, args, network or self:_buildModel(args))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
@@ -341,11 +341,11 @@ function Decoder:backward(batch, outputs, criterion)
 end
 
 function Decoder:training()
-  Sequencer.training(self)
+  parent.training(self)
   self.generator:training()
 end
 
 function Decoder:evaluate()
-  Sequencer.evaluate(self)
+  parent.evaluate(self)
   self.generator:evaluate()
 end

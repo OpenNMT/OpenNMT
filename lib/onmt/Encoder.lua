@@ -10,13 +10,13 @@
     x_1    x_2    x_3           x_n
 
 
-Inherits from [Sequencer](lib+sequencer).
+Inherits from [onmt.Sequencer](lib+onmt+sequencer).
 --]]
-local Encoder, Sequencer = torch.class('onmt.Encoder', 'onmt.Sequencer')
+local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 --[[ Constructor takes global `args` and optional `network`. ]]
 function Encoder:__init(args, network)
-  Sequencer.__init(self, args, network or self:_buildModel(args))
+  parent.__init(self, args, network or self:_buildModel(args))
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
