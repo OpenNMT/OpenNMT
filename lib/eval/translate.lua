@@ -263,10 +263,13 @@ local function translate_batch(batch)
         :view(opt.beam, remaining_sents, batch.source_length, checkpoint.options.rnn_size)
         :index(2, to_keep)
         :view(opt.beam*new_remaining_sents, batch.source_length, checkpoint.options.rnn_size)
+
+      -- The `index()` method allocate a new storage so clean the previous ones to
+      -- keep a stable memory usage.
+      collectgarbage()
     end
 
     remaining_sents = new_remaining_sents
-    collectgarbage()
   end
 
   local all_hyp = {}
