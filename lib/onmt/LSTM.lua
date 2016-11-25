@@ -118,4 +118,3 @@ end
 function LSTM:parameters()
   return self.net:parameters()
 end
-
