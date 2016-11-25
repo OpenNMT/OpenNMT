@@ -38,17 +38,10 @@ function Cuda.init(opt)
 end
 
 function Cuda.convert(obj)
-  if torch.typename(obj) == 'table' then
-    for i = 1, #obj do
-      if Cuda.activated then
-        obj[i]:cuda()
-      else
-        obj[i]:float()
-      end
-    end
-  elseif Cuda.activated then
+  if Cuda.activated then
     return obj:cuda()
   else
+    -- Defaults to float instead of double.
     return obj:float()
   end
 end
