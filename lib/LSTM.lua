@@ -5,6 +5,8 @@ local LSTM, parent = torch.class('LSTM', 'nn.Module')
 function LSTM:__init(input_size, hidden_size)
   parent.__init(self)
   self.net = self:_buildModel(input_size, hidden_size)
+  -- keep visibility on submodules for apply function
+  self.modules = { self.net }
 end
 
 --[[Create a nngraph template of one time-step of a single-layer LSTM.
@@ -73,3 +75,4 @@ end
 function LSTM:parameters()
   return self.net:parameters()
 end
+
