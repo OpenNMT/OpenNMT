@@ -16,10 +16,53 @@ local Encoder, Sequencer = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 --[[ Constructor takes global `args` and optional `network`. ]]
 function Encoder:__init(args, network)
-  Sequencer.__init(self, 'enc', args, network)
+  Sequencer.__init(self, args, network or self:_buildModel(args))
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
+end
+
+--[[ Build one time-step of an encoder
+
+Parameters:
+
+  * `args` - global args.
+
+Returns: An nn-graph mapping
+
+  $${(c^1_{t-1}, h^1_{t-1}, .., c^L_{t-1}, h^L_{t-1}, x_t) =>
+  (c^1_{t}, h^1_{t}, .., c^L_{t}, h^L_{t})}$$
+
+  Where ${c^l}$ and ${h^l}$ are the hidden and cell states at each layer,
+  ${x_t}$ is a sparse word to lookup.
+--]]
+function Encoder:_buildModel(args)
+  local inputs = {}
+  local states = {}
+
+  -- Inputs are previous layers first.
+  for _ = 1, args.num_layers do
+    local c0 = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, c0)
+    table.insert(states, c0)
+
+    local h0 = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, h0)
+    table.insert(states, h0)
+  end
+
+  local x = nn.Identity()() -- batch_size
+  table.insert(inputs, x)
+
+  -- Compute word embedding.
+  local input = onmt.WordEmbedding(args.vocab_size, args.word_vec_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+
+  table.insert(states, input)
+
+  -- Forward states and input into the RNN.
+  local outputs = onmt.LSTM(args.num_layers, args.word_vec_size, args.rnn_size, args.dropout)(states)
+
+  return nn.gModule(inputs, { outputs })
 end
 
 --[[Compute the context representation of an input.

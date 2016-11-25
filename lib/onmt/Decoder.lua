@@ -17,7 +17,7 @@ Inherits from [Sequencer](lib+sequencer).
 local Decoder, Sequencer = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 function Decoder:__init(args, network, generator)
-  Sequencer.__init(self, 'dec', args, network)
+  Sequencer.__init(self, args, network or self:_buildModel(args))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
@@ -43,6 +43,81 @@ function Decoder:__init(args, network, generator)
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+end
+
+--[[ Build one time-step of a decoder
+
+Parameters:
+
+  * `args` - global args.
+
+Returns: An nn-graph mapping
+
+  $${(c^1_{t-1}, h^1_{t-1}, .., c^L_{t-1}, h^L_{t-1}, x_t, con/H, if) =>
+  (c^1_{t}, h^1_{t}, .., c^L_{t}, h^L_{t}, a)}$$
+
+  Where ${c^l}$ and ${h^l}$ are the hidden and cell states at each layer,
+  ${x_t}$ is a sparse word to lookup,
+  ${con/H}$ is the context/source hidden states for attention,
+  ${if}$ is the input feeding, and
+  ${a}$ is the context vector computed at this timestep.
+--]]
+function Decoder:_buildModel(args)
+  local inputs = {}
+  local states = {}
+
+  -- Inputs are previous layers first.
+  for _ = 1, args.num_layers do
+    local c0 = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, c0)
+    table.insert(states, c0)
+
+    local h0 = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, h0)
+    table.insert(states, h0)
+  end
+
+  local x = nn.Identity()() -- batch_size
+  table.insert(inputs, x)
+
+  local context = nn.Identity()() -- batch_size x source_length x rnn_size
+  table.insert(inputs, context)
+
+  local input_feed
+  if args.input_feed then
+    input_feed = nn.Identity()() -- batch_size x rnn_size
+    table.insert(inputs, input_feed)
+  end
+
+  local input_size = args.word_vec_size
+
+  -- Compute word embedding.
+  local input = onmt.WordEmbedding(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+
+  -- If set, concatenate previous decoder output.
+  if args.input_feed then
+    input = nn.JoinTable(2)({input, input_feed})
+    input_size = input_size + args.rnn_size
+  end
+
+  table.insert(states, input)
+
+  -- Forward states and input into the RNN.
+  local outputs = onmt.LSTM(args.num_layers, input_size, args.rnn_size, args.dropout)(states)
+
+  -- The output of a subgraph is a node: split it to access the last RNN output.
+  outputs = { outputs:split(args.num_layers * 2) }
+
+  -- Compute the attention here using h^L as query.
+  local attn_layer = onmt.GlobalAttention(args.rnn_size)
+  attn_layer.name = 'decoder_attn'
+  local attn_output = attn_layer({outputs[#outputs], context})
+  if args.dropout > 0 then
+    attn_output = nn.Dropout(args.dropout)(attn_output)
+  end
+  table.insert(outputs, attn_output)
+
+  return nn.gModule(inputs, outputs)
 end
 
 function Decoder:_buildGenerator(vocab_size, rnn_size)

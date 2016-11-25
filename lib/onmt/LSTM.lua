@@ -2,9 +2,52 @@ require 'nngraph'
 
 local LSTM, parent = torch.class('onmt.LSTM', 'nn.Module')
 
-function LSTM:__init(input_size, hidden_size)
+function LSTM:__init(num_layers, input_size, hidden_size, dropout)
   parent.__init(self)
-  self.net = self:_buildModel(input_size, hidden_size)
+  dropout = dropout or 0
+  self.net = self:_buildModel(num_layers, input_size, hidden_size, dropout)
+end
+
+function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout)
+  local inputs = {}
+  local outputs = {}
+
+  for _ = 1, num_layers do
+    table.insert(inputs, nn.Identity()()) -- c0: batch_size x hidden_size
+    table.insert(inputs, nn.Identity()()) -- h0: batch_size x hidden_size
+  end
+
+  table.insert(inputs, nn.Identity()()) -- x: batch_size x input_size
+  local x = inputs[#inputs]
+
+  local next_c
+  local next_h
+
+  for L = 1, num_layers do
+    local input
+
+    if L == 1 then
+      -- First layer input is x.
+      input = x
+    else
+      -- Otherwise apply dropout on the previous output.
+      input_size = hidden_size
+      input = next_h
+      if dropout > 0 then
+        input = nn.Dropout(dropout)(input)
+      end
+    end
+
+    local prev_c = inputs[L*2 - 1]
+    local prev_h = inputs[L*2]
+
+    next_c, next_h = self:_buildLayer(input_size, hidden_size)({prev_c, prev_h, input}):split(2)
+
+    table.insert(outputs, next_c)
+    table.insert(outputs, next_h)
+  end
+
+  return nn.gModule(inputs, outputs)
 end
 
 --[[Create a nngraph template of one time-step of a single-layer LSTM.
@@ -17,7 +60,7 @@ Parameters:
 Returns: An nngraph unit mapping: ${(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})}$
 
 --]]
-function LSTM:_buildModel(input_size, hidden_size)
+function LSTM:_buildLayer(input_size, hidden_size)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
