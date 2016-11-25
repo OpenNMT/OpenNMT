@@ -4,6 +4,8 @@ local constants = require('lib.constants')
 
 local cmd = torch.CmdLine()
 
+cmd:option('-config', '', [[Read options from this file]])
+
 cmd:option('-train_src_file', '', [[Path to the training source data]])
 cmd:option('-train_targ_file', '', [[Path to the training target data]])
 cmd:option('-valid_src_file', '', [[Path to the validation source data]])
@@ -133,6 +135,10 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
 end
 
 local function main()
+  if opt.config:len() > 0 then
+    opt = utils.Opt.load_config(opt.config, opt)
+  end
+
   local required_options = {
     "train_src_file",
     "train_targ_file",

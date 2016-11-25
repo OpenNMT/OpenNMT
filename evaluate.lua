@@ -5,6 +5,8 @@ local lfs = require 'lfs'
 
 local cmd = torch.CmdLine()
 
+cmd:option('-config', '', [[Read options from this file]])
+
 -- file location
 cmd:option('-model', '', [[Path to model .t7 file]])
 cmd:option('-src_file', '', [[Source sequence to decode (one line per sequence)]])
@@ -37,6 +39,10 @@ end
 
 local function main()
   local opt = cmd:parse(arg)
+
+  if opt.config:len() > 0 then
+    opt = utils.Opt.load_config(opt.config, opt)
+  end
 
   local required_options = {
     "model",
