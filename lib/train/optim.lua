@@ -72,6 +72,12 @@ function Optim:__init(args)
   end
 end
 
+function Optim:zero_grad(grad_params)
+  for j = 1, #grad_params do
+    grad_params[j]:zero()
+  end
+end
+
 function Optim:update_params(params, grad_params, max_grad_norm)
   -- compute gradients norm
   local grad_norm = 0
@@ -98,9 +104,6 @@ function Optim:update_params(params, grad_params, max_grad_norm)
     else
       params[j]:add(grad_params[j]:mul(-self.learning_rate))
     end
-
-    -- zero gradients
-    grad_params[j]:zero()
   end
 end
 
