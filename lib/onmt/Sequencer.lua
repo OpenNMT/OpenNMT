@@ -30,22 +30,33 @@ function Sequencer:__init(args, network)
 end
 
 function Sequencer:_sharedClone()
+  local net = self.network_clones[1] or self.network
+
   local params, gradParams
   if self.network.parameters then
-    params, gradParams = self.network:parameters()
+    params, gradParams = net:parameters()
     if params == nil then
       params = {}
     end
   end
 
-  local mem = torch.MemoryFile("w"):binary()
-  mem:writeObject(self.network)
+  local sharedTensors = {}
+  net:apply(function(m)
+    if m.gradInputSharedIdx then
+      sharedTensors[m.gradInputSharedIdx] = m.gradInput
+    end
+    if m.outputSharedIdx then
+      sharedTensors[m.outputSharedIdx] = m.output
+    end
+  end)
 
-  -- We need to use a new reader for each clone.
-  -- We don't want to use the pointers to already read objects.
+  local mem = torch.MemoryFile("w"):binary()
+  mem:writeObject(net)
+
   local reader = torch.MemoryFile(mem:storage(), "r"):binary()
   local clone = reader:readObject()
   reader:close()
+  mem:close()
 
   if self.network.parameters then
     local cloneParams, cloneGradParams = clone:parameters()
@@ -55,7 +66,15 @@ function Sequencer:_sharedClone()
     end
   end
 
-  mem:close()
+  local idx
+  clone:apply(function(m)
+    if m.gradInputSharedIdx then
+      m.gradInput = sharedTensors[m.gradInputSharedIdx]
+    end
+    if m.outputSharedIdx then
+      m.output = sharedTensors[m.outputSharedIdx]
+    end
+  end)
 
   return clone
 end
