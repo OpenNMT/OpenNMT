@@ -6,8 +6,6 @@ local path = require('pl.path')
 
 local constants = require('lib.constants')
 local Data = require('lib.data')
-local Memory = require('lib.memory')
-
 
 local cmd = torch.CmdLine()
 
@@ -175,7 +173,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
   local criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
 
     -- optimize memory of the first clone
-  Memory.optimize(model, criterion, train_data:get_batch(1))
+  utils.Memory.optimize(model, criterion, train_data:get_batch(1))
 
   local function train_epoch(epoch)
     local epoch_state

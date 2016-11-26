@@ -9,5 +9,6 @@ utils.Model = require('lib.utils.model_utils')
 utils.Opt = require('lib.utils.opt_utils')
 utils.Table = require('lib.utils.table_utils')
 utils.String = require('lib.utils.string')
+utils.Memory = require('lib.utils.memory')
 
 return utils
