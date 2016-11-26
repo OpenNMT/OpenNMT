@@ -1,10 +1,11 @@
 require 'nngraph'
 
-local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'nn.Module')
+local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'nn.Container')
 
 function GlobalAttention:__init(dim)
   parent.__init(self)
   self.net = self:_buildModel(dim)
+  self:add(self.net)
 end
 
 --[[ Create an nngraph attention unit of size `dim`.
@@ -54,8 +55,4 @@ end
 
 function GlobalAttention:accGradParameters(input, gradOutput, scale)
   return self.net:accGradParameters(input, gradOutput, scale)
-end
-
-function GlobalAttention:parameters()
-  return self.net:parameters()
 end

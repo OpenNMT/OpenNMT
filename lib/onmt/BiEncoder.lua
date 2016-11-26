@@ -30,7 +30,7 @@ end
 
 --]]
 
-local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Module')
+local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
@@ -66,6 +66,9 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
 
   self.fwd = onmt.Encoder.new(args, net_fwd)
   self.bwd = onmt.Encoder.new(args, net_bwd)
+
+  self:add(self.fwd)
+  self:add(self.bwd)
 end
 
 function BiEncoder:forward(batch)
@@ -146,14 +149,4 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   end
 
   self.bwd:backward(batch, grad_states_output_bwd, grad_context_bwd)
-end
-
-function BiEncoder:training()
-  self.fwd:training()
-  self.bwd:training()
-end
-
-function BiEncoder:evaluate()
-  self.fwd:evaluate()
-  self.bwd:evaluate()
 end

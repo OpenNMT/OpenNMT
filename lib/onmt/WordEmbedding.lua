@@ -1,11 +1,12 @@
 local constants = require 'lib.constants'
 
-local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Module')
+local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Container')
 
 function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   parent.__init(self)
 
   self.net = nn.LookupTable(vocab_size, vec_size)
+  self:add(self.net)
 
   -- If embeddings are given. Initialize them.
   if pre_trained:len() > 0 then
@@ -38,8 +39,4 @@ function WordEmbedding:accGradParameters(input, gradOutput, scale)
     -- Padding should not have any value.
     self.net.gradWeight[constants.PAD]:zero()
   end
-end
-
-function WordEmbedding:parameters()
-  return self.net:parameters()
 end

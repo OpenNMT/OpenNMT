@@ -1,13 +1,12 @@
 require 'nngraph'
 
-local LSTM, parent = torch.class('onmt.LSTM', 'nn.Module')
+local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
 
 function LSTM:__init(num_layers, input_size, hidden_size, dropout)
   parent.__init(self)
   dropout = dropout or 0
   self.net = self:_buildModel(num_layers, input_size, hidden_size, dropout)
-  -- keep visibility on submodules for apply function
-  self.modules = { self.net }
+  self:add(self.net)
 end
 
 function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout)
@@ -113,8 +112,4 @@ end
 
 function LSTM:accGradParameters(input, gradOutput, scale)
   return self.net:accGradParameters(input, gradOutput, scale)
-end
-
-function LSTM:parameters()
-  return self.net:parameters()
 end
