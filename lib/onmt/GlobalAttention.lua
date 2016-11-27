@@ -5,6 +5,8 @@ local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'nn.Module')
 function GlobalAttention:__init(dim)
   parent.__init(self)
   self.net = self:_buildModel(dim)
+  -- keep visibility on submodules for apply function
+  self.modules = { self.net }
 end
 
 --[[ Create an nngraph attention unit of size `dim`.

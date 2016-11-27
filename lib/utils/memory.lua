@@ -13,7 +13,7 @@ local function _tensorIncluded(t, l)
   return false
 end
 
--- we cannot share a tensor if it is exposed outside of the net - so cannot be part of output/gradInput
+-- we cannot share a tensor if it is exposed outside of the net or we could generate side-effects
 local function _canShare(t, net, netGradOutput)
   if torch.isTensor(t) and t:storage() then
     if not _tensorIncluded(t, net.gradInput) and not _tensorIncluded(t, netGradOutput) then
@@ -30,13 +30,18 @@ local function _canShare(t, net, netGradOutput)
   return false
 end
 
-local function _size(t)
+local function _size(t, mempool)
   local size=0
   if torch.isTensor(t) then
-    if t:storage() then return t:storage():size()*t:elementSize() end
+    if t:storage() then
+      if not mempool[torch.pointer(t:storage())] then
+        mempool[torch.pointer(t:storage())] = t:storage():size()*t:elementSize()
+        return mempool[torch.pointer(t:storage())]
+      end
+    end
   elseif torch.type(t) == 'table' then
     for _, m in ipairs(t) do
-      size = size + _size(m)
+      size = size + _size(m, mempool)
     end
   end
   return size
@@ -75,16 +80,19 @@ function Memory.optimize(model, criterion, batch)
   local idx = 1
   for name, desc in pairs(model_desc) do
     local net = desc['net']
+    local mempool = {}
     net:apply(function(m)
-      totSize = totSize + _size(m.gradInput)
-      totSize = totSize + _size(m.output)
+      local giSize = _size(m.gradInput, mempool)
+      local oSize = _size(m.output, mempool)
+      totSize = totSize + giSize
+      totSize = totSize + oSize
       if _canShare(m.gradInput,net) then
-        sharedSize = sharedSize + _size(m.gradInput)
+        sharedSize = sharedSize + giSize
         m.gradInputSharedIdx = idx
         idx = idx + 1
       end
       if _canShare(m.output,net) then
-        sharedSize = sharedSize + _size(m.output)
+        sharedSize = sharedSize + oSize
         m.outputSharedIdx = idx
         idx = idx + 1
       end
