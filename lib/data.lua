@@ -1,4 +1,4 @@
-require('./utils')
+require('lib.utils.init')
 
 local constants = require 'lib.constants'
 
@@ -101,7 +101,7 @@ end
 --[[ Create a batch object given aligned sent tables `src` and `targ`
   (optional). Data format is shown at the top of the file.
 --]]
-function Data:get_data(src, targ)
+function Data:get_data(src, targ, nocuda)
 
   local batch = {}
 
@@ -147,18 +147,21 @@ function Data:get_data(src, targ)
     end
   end
 
-  batch.source_input = utils.Cuda.convert(batch.source_input)
-  batch.source_input_rev = utils.Cuda.convert(batch.source_input_rev)
+  if not nocuda then
+    batch.source_input = utils.Cuda.convert(batch.source_input)
+    batch.source_input_rev = utils.Cuda.convert(batch.source_input_rev)
 
-  if targ ~= nil then
-    batch.target_input = utils.Cuda.convert(batch.target_input)
-    batch.target_output = utils.Cuda.convert(batch.target_output)
+    if targ ~= nil then
+      batch.target_input = utils.Cuda.convert(batch.target_input)
+      batch.target_output = utils.Cuda.convert(batch.target_output)
+    end
   end
+
   return batch
 end
 
 --[[ Get batch `idx`. If nil make a batch of all the data. ]]
-function Data:get_batch(idx)
+function Data:get_batch(idx, nocuda)
   if idx == nil or self.batch_range == nil then
     return self:get_data(self.src, self.targ)
   end
@@ -174,7 +177,40 @@ function Data:get_batch(idx)
     table.insert(targ, self.targ[i])
   end
 
-  return self:get_data(src, targ)
+  return self:get_data(src, targ, nocuda)
+end
+
+--[[ Slice nElem into n-th, return n-th slice. ]]
+local function sliceRange(nElem, idx, splits)
+   local eltsPerMod = nElem / splits
+   local rangeStart = math.ceil((idx - 1) * eltsPerMod) + 1
+   if idx == splits then
+      return rangeStart, nElem - rangeStart + 1
+   else
+      return rangeStart, math.ceil(idx * eltsPerMod) - rangeStart + 1
+   end
+end
+
+--[[ Slice batch into several smaller batcher for data parallelism. ]]
+function Data:distribute(batch, count)
+  local batches = {}
+  for idx = 1, count do
+    local index, size = sliceRange(batch.size, idx, count)
+    if size == 0 then
+      table.insert(batches, nil)
+    else
+      local b = {}
+      b.size = size
+      b.source_length = batch.source_length
+      b.target_length = batch.target_length
+      b.target_non_zeros = batch.target_non_zeros
+      b.source_input = batch.source_input:narrow(2, index, size)
+      b.target_input = batch.target_input:narrow(2, index, size)
+      b.target_output = batch.target_output:narrow(2, index, size)
+      table.insert(batches, b)
+    end
+  end
+  return batches
 end
 
 return Data

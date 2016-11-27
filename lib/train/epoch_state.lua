@@ -24,13 +24,15 @@ function EpochState:__init(epoch, status)
   print('')
 end
 
---[[ Update training status. Takes `batch` (described in data.lua) and last loss.]]
-function EpochState:update(batch, loss)
-  self.num_words_source = self.num_words_source + batch.size * batch.source_length
-  self.num_words_target = self.num_words_target + batch.size * batch.target_length
+--[[ Update training status. Takes `batch` (described in data.lua) and last losses.]]
+function EpochState:update(batches, losses)
+  for i = 1,#batches do
+    self.num_words_source = self.num_words_source + batches[i].size * batches[i].source_length
+    self.num_words_target = self.num_words_target + batches[i].size * batches[i].target_length
 
-  self.status.train_nonzeros = self.status.train_nonzeros + batch.target_non_zeros
-  self.status.train_loss = self.status.train_loss + loss * batch.size
+    self.status.train_nonzeros = self.status.train_nonzeros + batch.target_non_zeros
+    self.status.train_loss = self.status.train_loss + losses[i] * batches[i].size
+  end
 end
 
 --[[ Log to status stdout.

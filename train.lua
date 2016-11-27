@@ -68,6 +68,7 @@ cmd:text("")
 
 -- GPU
 cmd:option('-gpuid', -1, [[Which gpu to use (1-indexed). < 1 = use CPU]])
+cmd:option('-nparallel', 1, [[How many parallel process]])
 cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping
@@ -153,11 +154,7 @@ end
 
 local function train_model(model, train_data, valid_data, dataset, info)
   local nets = get_nets(model)
-  local params, grad_params = init_params(nets)
-
-  for _, mod in pairs(model) do
-    mod:training()
-  end
+  local params, grad_params = {}, {}
 
   local optim = train.Optim.new({
     method = opt.optim,
@@ -170,10 +167,23 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
   local checkpoint = train.Checkpoint.new(opt, nets, optim, dataset)
 
-  local criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
+  utils.Parallel.launch('Initializing parameters', function(idx)
+    local nets = get_nets(_G.model)
+    _G.params, _G.grad_params = init_params(nets)
+    for _, mod in pairs(model) do
+      mod:training()
+    end
+    -- define criterion of each GPU
+    _G.criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
 
     -- optimize memory of the first clone
-  utils.Memory.optimize(model, criterion, train_data:get_batch(1))
+    utils.Memory.optimize(model, _G.criterion, train_data:get_batch(1))
+
+    return idx, _G.params, _G.grad_params
+  end, function(idx, theparams, thegrad_params)
+    params[idx] = theparams
+    grad_params[idx] = thegrad_params
+  end)
 
   local function train_epoch(epoch)
     local epoch_state
@@ -186,7 +196,8 @@ local function train_model(model, train_data, valid_data, dataset, info)
       batch_order = info.batch_order
     else
       epoch_state = train.EpochState.new(epoch)
-      batch_order = torch.randperm(#train_data) -- shuffle mini batch order
+      -- shuffle mini batch order
+      batch_order = torch.randperm(#train_data)
     end
 
     opt.start_iteration = 1
@@ -197,18 +208,46 @@ local function train_model(model, train_data, valid_data, dataset, info)
         batch_idx = i
       end
 
-      local batch = train_data:get_batch(batch_idx)
+      local batch = train_data:get_batch(batch_idx, true)
+      -- split the batch on each GPU
+      local batches = train_data:distribute(batch, utils.Parallel.count)
 
-      optim:zero_grad(grad_params)
+      local losses = {}
 
-      local enc_states, context = model.encoder:forward(batch)
-      local dec_outputs = model.decoder:forward(batch, enc_states, context)
+      utils.Parallel.launch(nil, function(idx)
+        _G.batch = batches[idx]
+        if _G.batch == nil then
+          return idx, 0
+        end
+        -- send batch data to GPU
+        utils.Cuda.convert(_G.batch)
 
-      local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, criterion)
-      model.encoder:backward(batch, enc_grad_states_out, grad_context)
+        optim:zero_grad(_G.grad_params)
 
-      optim:update_params(params, grad_params, opt.max_grad_norm)
-      epoch_state:update(batch, loss)
+        local enc_states, context = _G.model.encoder:forward(batch)
+        local dec_outputs = _G.model.decoder:forward(batch, enc_states, context)
+
+        local enc_grad_states_out, grad_context, loss = _G.model.decoder:backward(batch, dec_outputs, _G.criterion)
+        _G.model.encoder:backward(batch, enc_grad_states_out, grad_context)
+        return idx, loss
+      end,
+      function(idx, loss) losses[idx]=loss end)
+
+      for j = 2, utils.Parallel.count do
+        for h = 1, #grad_params[1] do
+          local remote_grad_params=grad_params[j][h]:clone()
+          grad_params[1][h]:add(remote_grad_params)
+        end
+      end
+
+      optim:update_params(params[1], grad_params[1], opt.max_grad_norm)
+      for j = 2, utils.Parallel.count do
+        for h = 1, #params[1] do
+          params[j][h]:copy(params[1][h])
+        end
+      end
+
+      epoch_state:update(batches, losses)
 
       if i % opt.print_every == 0 then
         epoch_state:log(i, #train_data, optim:get_learning_rate())
@@ -252,6 +291,7 @@ local function main()
   torch.manualSeed(opt.seed)
 
   utils.Cuda.init(opt)
+  utils.Parallel.init(opt)
 
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')
@@ -260,8 +300,8 @@ local function main()
   local train_data = Data.new(dataset.train.src, dataset.train.targ)
   local valid_data = Data.new(dataset.valid.src, dataset.valid.targ)
 
-  train_data:set_batch_size(opt.max_batch_size)
-  valid_data:set_batch_size(opt.max_batch_size)
+  train_data:set_batch_size(opt.max_batch_size * opt.nparallel)
+  valid_data:set_batch_size(opt.max_batch_size * opt.nparallel)
 
   print(string.format(' * vocabulary size: source = %d; target = %d',
                       #dataset.src_dict, #dataset.targ_dict))
@@ -325,19 +365,28 @@ local function main()
   }
 
   print('Building model...')
-  local model = {}
 
-  if opt.brnn then
-    model.encoder = onmt.BiEncoder.new(encoder_args, opt.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
-  else
-    model.encoder = onmt.Encoder.new(encoder_args, checkpoint.nets.encoder)
-  end
+  local model
 
-  model.decoder = onmt.Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
+  utils.Parallel.launch("creating model", function(idx)
+    _G.model = {}
+    if opt.brnn then
+      _G.model.encoder = onmt.BiEncoder.new(encoder_args, opt.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
+    else
+      _G.model.encoder = onmt.Encoder.new(encoder_args, checkpoint.nets.encoder)
+    end
 
-  for _, mod in pairs(model) do
-    utils.Cuda.convert(mod)
-  end
+    _G.model.decoder = onmt.Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
+
+    for _, mod in pairs(_G.model) do
+      utils.Cuda.convert(mod)
+    end
+    return idx, _G.model
+  end, function(idx, themodel)
+    if idx == 1 then
+      model = themodel
+    end
+  end)
 
   train_model(model, train_data, valid_data, dataset, checkpoint.info)
 end
