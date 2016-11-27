@@ -28,8 +28,10 @@ function Parallel.init(args)
                require('lib.train.init')
                require('lib.onmt.init')
                Data = require('lib.data')
-               print('starting thread ', threadid, 'on GPU ' .. thegpus[threadid])
+               print('STARTING THREAD ', threadid, 'on GPU ' .. thegpus[threadid])
                utils.Cuda.init(args, thegpus[threadid])
+               local refprint = print
+               print=function(...) refprint('[THREAD'..threadid..']',...) end
             end
          ) -- dedicate threads to GPUs
          Parallel._pool:specific(true)
