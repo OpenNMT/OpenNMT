@@ -170,14 +170,14 @@ local function train_model(model, train_data, valid_data, dataset, info)
   utils.Parallel.launch('Initializing parameters', function(idx)
     local nets = get_nets(_G.model)
     _G.params, _G.grad_params = init_params(nets)
-    for _, mod in pairs(model) do
+    for _, mod in pairs(_G.model) do
       mod:training()
     end
     -- define criterion of each GPU
     _G.criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
 
     -- optimize memory of the first clone
-    utils.Memory.optimize(model, _G.criterion, train_data:get_batch(1))
+    utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1))
 
     return idx, _G.params, _G.grad_params
   end, function(idx, theparams, thegrad_params)
