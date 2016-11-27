@@ -6,7 +6,7 @@
  BiEncoder is a bidirectional Sequencer used for the source language.
 
 
-* `net_fwd`
+ `net_fwd`
 
     h_1 => h_2 => h_3 => ... => h_n
      |      |      |             |
@@ -17,7 +17,7 @@
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-* `net_bwd`
+ `net_bwd`
 
     h_1 <= h_2 <= h_3 <= ... <= h_n
      |      |      |             |
@@ -28,9 +28,11 @@
      |      |      |             |
     x_1    x_2    x_3           x_n
 
+Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/BiEncoder.lua#L37">[src]</a>
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/BiEncoder.lua#L39">[src]</a>
 <a name="onmt.BiEncoder"></a>
 
 

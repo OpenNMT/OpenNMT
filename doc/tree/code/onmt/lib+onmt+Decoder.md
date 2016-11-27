@@ -16,19 +16,39 @@
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-Inherits from [onmt.Sequencer](lib+onmt+sequencer).
+Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Decoder.lua#L139">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Decoder.lua#L28">[src]</a>
+<a name="onmt.Decoder"></a>
+
+
+### onmt.Decoder(args, network, generator) ###
+
+ Construct an encoder layer. 
+
+Parameters:
+
+  * `args` - global options.
+  * `network` - optional, recurrent step template.
+  * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
+
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Decoder.lua#L154">[src]</a>
 <a name="onmt.Decoder:reset"></a>
 
 
 ### onmt.Decoder:reset(source_sizes, source_length, beam_size) ###
 
- Update internals to prepare for new batch.
+ Update internals of model to prepare for new batch.
+  
+  Parameters:
+ 
+  * See  [onmt.MaskedSoftmax](lib+onmt+MaskedSoftmax).
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Decoder.lua#L174">[src]</a>
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Decoder.lua#L190">[src]</a>
 <a name="onmt.Decoder:forward_one"></a>
 
 
@@ -50,23 +70,7 @@ Returns:
  2. `states` - All states
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Decoder.lua#L214">[src]</a>
-<a name="onmt.Decoder:forward_and_apply"></a>
-
-
-### onmt.Decoder:forward_and_apply(batch, encoder_states, context, func) ###
-
-Compute all forward steps.
-
-  Parameters:
-
-  * `batch` - based on data.lua
-  * `encoder_states`
-  * `context`
-  * `func` - Calls `func(out, t)` each timestep.
-
-
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Decoder.lua#L243">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Decoder.lua#L261">[src]</a>
 <a name="onmt.Decoder:forward"></a>
 
 
@@ -77,15 +81,14 @@ Compute all forward steps.
 Parameters:
 
   * `batch` - based on data.lua
-  * `encoder_states`
-  * `context`
+  * `encoder_states` - the final encoder states
+  * `context` - the context to apply attention to.
 
-Returns:
-
-  1. `outputs` - Top Hidden layer at each time-step.
+Returns: Tables of top hidden layer at each timestep.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Decoder.lua#L260">[src]</a>
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Decoder.lua#L278">[src]</a>
 <a name="onmt.Decoder:compute_score"></a>
 
 
@@ -95,7 +98,7 @@ Returns:
   Used in decoding when gold data are provided.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Decoder.lua#L276">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Decoder.lua#L294">[src]</a>
 <a name="onmt.Decoder:compute_loss"></a>
 
 
@@ -103,14 +106,20 @@ Returns:
 
  Compute the loss on a batch based on final layer `generator`.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Decoder.lua#L292">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Decoder.lua#L316">[src]</a>
 <a name="onmt.Decoder:backward"></a>
 
 
 ### onmt.Decoder:backward(batch, outputs, criterion) ###
 
  Compute the standard backward update.
-  With input `batch`, target `outputs`, and `criterion`
+
+Parameters:
+
+  * `batch`
+  * `outputs`
+  * `criterion`
+
   Note: This code is both the standard backward and criterion forward/backward.
   It returns both the gradInputs (ret 1 and 2) and the loss.
 
@@ -118,5 +127,5 @@ Returns:
 
 #### Undocumented methods ####
 
-<a name="onmt.Decoder"></a>
- * `onmt.Decoder(args, network, generator)`
+<a name="onmt.Decoder:forward_and_apply"></a>
+ * `onmt.Decoder:forward_and_apply(batch, encoder_states, context, func)`

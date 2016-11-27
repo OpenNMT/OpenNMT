@@ -15,18 +15,24 @@
     x_1    x_2    x_3           x_n
 
 
-Inherits from [onmt.Sequencer](lib+onmt+sequencer).
+Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Encoder.lua#L18">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Encoder.lua#L24">[src]</a>
 <a name="onmt.Encoder"></a>
 
 
 ### onmt.Encoder(args, network) ###
 
- Constructor takes global `args` and optional `network`. 
+ Construct an encoder layer. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Encoder.lua#L83">[src]</a>
+Parameters:
+
+  * `args` - global options.
+  * `network` - optional recurrent step template.
+
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Encoder.lua#L85">[src]</a>
 <a name="onmt.Encoder:forward"></a>
 
 
@@ -40,15 +46,11 @@ Parameters:
 
 Returns:
 
-  1. - last hidden states
+  1. - final hidden states
   2. - context matrix H
 
-TODO:
 
-  * Change `batch` to `input`.
-
-
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/71aa250c35a20c1cf83f5f0150c1f900dc11d096/lib/onmt/Encoder.lua#L160">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/a87c8c95a3cc254280aa661c2ffa86bca2bd7083/lib/onmt/Encoder.lua#L163">[src]</a>
 <a name="onmt.Encoder:backward"></a>
 
 
@@ -59,9 +61,8 @@ TODO:
 Parameters:
 
   * `batch` - must be same as for forward
-  * `grad_states_output`
-  * `grad_context_output` - gradient of loss
-      wrt last states and context.
+  * `grad_states_output` gradient of loss wrt last state
+  * `grad_context_output` - gradient of loss wrt full context.
 
-TODO: change this to (input, gradOutput) as in nngraph.
+Returns: nil
 

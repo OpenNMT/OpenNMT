@@ -6,7 +6,7 @@ end
 --[[ BiEncoder is a bidirectional Sequencer used for the source language.
 
 
-* `net_fwd`
+ `net_fwd`
 
     h_1 => h_2 => h_3 => ... => h_n
      |      |      |             |
@@ -17,7 +17,7 @@ end
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-* `net_bwd`
+ `net_bwd`
 
     h_1 <= h_2 <= h_3 <= ... <= h_n
      |      |      |             |
@@ -27,6 +27,8 @@ end
      |      |      |             |
      |      |      |             |
     x_1    x_2    x_3           x_n
+
+Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 --]]
 local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')

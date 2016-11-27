@@ -10,11 +10,17 @@
     x_1    x_2    x_3           x_n
 
 
-Inherits from [onmt.Sequencer](lib+onmt+sequencer).
+Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 --]]
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
---[[ Constructor takes global `args` and optional `network`. ]]
+--[[ Construct an encoder layer. 
+
+Parameters:
+
+  * `args` - global options.
+  * `network` - optional recurrent step template.
+]]
 function Encoder:__init(args, network)
   parent.__init(self, args, network or self:_buildModel(args))
 
@@ -73,15 +79,13 @@ Parameters:
 
 Returns:
 
-  1. - last hidden states
+  1. - final hidden states
   2. - context matrix H
-
-TODO:
-
-  * Change `batch` to `input`.
 --]]
 function Encoder:forward(batch)
 
+  -- TODO: Change `batch` to `input`.
+  
   local final_states
 
   if self.statesProto == nil then
@@ -151,13 +155,13 @@ end
 Parameters:
 
   * `batch` - must be same as for forward
-  * `grad_states_output`
-  * `grad_context_output` - gradient of loss
-      wrt last states and context.
+  * `grad_states_output` gradient of loss wrt last state
+  * `grad_context_output` - gradient of loss wrt full context.
 
-TODO: change this to (input, gradOutput) as in nngraph.
+Returns: nil
 --]]
 function Encoder:backward(batch, grad_states_output, grad_context_output)
+  -- TODO: change this to (input, gradOutput) as in nngraph.
   if self.gradOutputsProto == nil then
     self.gradOutputsProto = utils.Model.initTensorTable(self.args.num_layers * 2,
                                                         self.gradOutputProto,

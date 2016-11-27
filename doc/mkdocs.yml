@@ -1,4 +1,4 @@
-site_name: MkLorum
+site_name: OpenNMT
 extra_javascript: 
     - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 docs_dir: tree
