@@ -2,6 +2,18 @@ require 'nngraph'
 
 local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
 
+
+--[[A nn-style module computing one LSTM step.
+
+Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
+
+Parameters:
+
+  * `num_layers` - Number of LSTM layers.  
+  * `input_size` -  Size of input layer x.
+  * `hidden_size` -  Size of the hidden layers (cell and hidden).
+  * `dropout` - Dropout rate to use.
+--]]
 function LSTM:__init(num_layers, input_size, hidden_size, dropout)
   parent.__init(self)
   dropout = dropout or 0

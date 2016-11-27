@@ -3,12 +3,44 @@
 
 ## onmt.GlobalAttention ##
 
+ Global attention takes a matrix and a query vector. It 
+then computes a parameterized convex combination of the matrix 
+based on the input query. 
+
+
+    H_1 H_2 H_3 ... H_n
+     q   q   q       q
+      |  |   |       |   
+       \ |   |      /
+           .....
+         \   |  /
+             a
+
+
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/GlobalAttention.lua#L32">[src]</a>
+<a name="onmt.GlobalAttention"></a>
+
+
+### onmt.GlobalAttention(dim) ###
+
+A nn-style module computing attention.
+
+Constructs a unit mapping:
+  $$(H_1 .. H_n, q) => (a)$$
+  Where H is of `batch x n x dim` and q is of `batch x dim`.
+
+  The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.
+
+  Parameters:
+  
+  * `dim` - dimension of the context vectors.
+
+
 
 
 #### Undocumented methods ####
 
-<a name="onmt.GlobalAttention"></a>
- * `onmt.GlobalAttention(dim)`
 <a name="onmt.GlobalAttention:updateOutput"></a>
  * `onmt.GlobalAttention:updateOutput(input)`
 <a name="onmt.GlobalAttention:updateGradInput"></a>

@@ -1,21 +1,21 @@
 require 'nngraph'
 
---[[A module that applies a soft max on input that gives no weight to the left padding.
+local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Container')
+
+
+--[[A nn-style module that applies a softmax on input that gives no weight to the left padding.
 
 Parameters:
 
   * `source_sizes` -  the true lengths (with left padding).
   * `source_length` - the max length in the batch `beam_size`.
   * `beam_size` - beam size ${K}
-
-TODO:
-  * better names for these variables.
 --]]
-
-local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Container')
-
 function MaskedSoftmax:__init(source_sizes, source_length, beam_size)
   parent.__init(self)
+  --TODO: better names for these variables. Beam size =? batch_size?
+
+
   self.net = self:_buildModel(source_sizes, source_length, beam_size)
   self:add(self.net)
 end
