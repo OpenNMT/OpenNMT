@@ -18,6 +18,12 @@ sentence with capitalization.
 > google-chrome doc/index.html
 
 
+* Use mkdocs to display the pretty version
+
+> pip install mkdocs
+> pip install python-markdown-math
+> cd doc/;bash mkdocs.sh;mkdoc serve
+
 ## Style:
 
 * Please run and correct all warnings from luacheck before sending a pull request. 
@@ -25,3 +31,4 @@ sentence with capitalization.
 > luacheck *
 
 * All indentation should be 2 spaces.
+

@@ -29,7 +29,6 @@ end
     x_1    x_2    x_3           x_n
 
 --]]
-
 local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.

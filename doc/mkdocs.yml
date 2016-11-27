@@ -1,11 +1,12 @@
 site_name: MkLorum
 extra_javascript: 
     - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
-docs_dir: _markdown
+docs_dir: tree
   
 markdown_extensions:
     - math
     - sane_lists
+    - def_list
     
 theme: readthedocs
 
