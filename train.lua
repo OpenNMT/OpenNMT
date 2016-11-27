@@ -155,6 +155,7 @@ end
 local function train_model(model, train_data, valid_data, dataset, info)
   local nets = get_nets(model)
   local params, grad_params = {}, {}
+  local criterion
 
   local optim = train.Optim.new({
     method = opt.optim,
@@ -179,8 +180,9 @@ local function train_model(model, train_data, valid_data, dataset, info)
     -- optimize memory of the first clone
     utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1))
 
-    return idx, _G.params, _G.grad_params
-  end, function(idx, theparams, thegrad_params)
+    return idx, _G.criterion, _G.params, _G.grad_params
+  end, function(idx, thecriterion, theparams, thegrad_params)
+    if idx == 1 then criterion = thecriterion end
     params[idx] = theparams
     grad_params[idx] = thegrad_params
   end)
