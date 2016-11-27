@@ -16,7 +16,7 @@ local function require_options(opt, names)
   end
 end
 
---[[ Override `opt` with option values set in file `filename`. ]]
+--[[ Return options set in the file `filename`. ]]
 local function load_file(filename)
   local file = assert(io.open(filename, "r"))
   local opt = {}

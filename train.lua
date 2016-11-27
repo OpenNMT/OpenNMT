@@ -110,7 +110,7 @@ local function init_params(nets)
 
     num_params = num_params + p:size(1)
     table.insert(params, p)
-    table.insert(grad_params, gp:zero())
+    table.insert(grad_params, gp)
   end
 
   print(" * number of parameters: " .. num_params)
@@ -198,6 +198,8 @@ local function train_model(model, train_data, valid_data, dataset, info)
       end
 
       local batch = train_data:get_batch(batch_idx)
+
+      optim:zero_grad(grad_params)
 
       local enc_states, context = model.encoder:forward(batch)
       local dec_outputs = model.decoder:forward(batch, enc_states, context)

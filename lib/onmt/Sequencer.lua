@@ -4,7 +4,7 @@ require 'nngraph'
   Main task is to manage `self.network_clones`, the unrolled network
   used during training.
 --]]
-local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Module')
+local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Container')
 
 --[[ Constructor
 
@@ -20,6 +20,8 @@ function Sequencer:__init(args, network)
   self.args = args
 
   self.network = network
+  self:add(self.network)
+
   self.network_clones = {}
 
   -- Prototype for preallocated hidden and cell states.
@@ -122,7 +124,5 @@ function Sequencer:evaluate()
 
   if #self.network_clones > 0 then
     self.network_clones[1]:evaluate()
-  else
-    self.network:evaluate()
   end
 end

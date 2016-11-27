@@ -22,6 +22,7 @@ function Decoder:__init(args, network, generator)
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
   self.generator = generator or self:_buildGenerator(args.vocab_size, args.rnn_size)
+  self:add(self.generator)
 
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
@@ -339,14 +340,4 @@ function Decoder:backward(batch, outputs, criterion)
   end
 
   return grad_states_input, grad_context_input, loss
-end
-
-function Decoder:training()
-  parent.training(self)
-  self.generator:training()
-end
-
-function Decoder:evaluate()
-  parent.evaluate(self)
-  self.generator:evaluate()
 end

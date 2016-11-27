@@ -12,11 +12,12 @@ TODO:
   * better names for these variables.
 --]]
 
-local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Module')
+local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Container')
 
 function MaskedSoftmax:__init(source_sizes, source_length, beam_size)
   parent.__init(self)
   self.net = self:_buildModel(source_sizes, source_length, beam_size)
+  self:add(self.net)
 end
 
 function MaskedSoftmax:_buildModel(source_sizes, source_length, beam_size)
@@ -76,8 +77,4 @@ end
 
 function MaskedSoftmax:accGradParameters(input, gradOutput, scale)
   return self.net:accGradParameters(input, gradOutput, scale)
-end
-
-function MaskedSoftmax:parameters()
-  return self.net:parameters()
 end
