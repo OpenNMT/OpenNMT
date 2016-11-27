@@ -95,12 +95,10 @@ local function get_nets(model)
   return nets
 end
 
-local function init_params(nets)
+local function init_params(nets, idx)
   local num_params = 0
   local params = {}
   local grad_params = {}
-
-  print('Initializing parameters...')
 
   for _, net in pairs(nets) do
     local p, gp = net:getParameters()
@@ -114,7 +112,9 @@ local function init_params(nets)
     table.insert(grad_params, gp)
   end
 
-  print(" * number of parameters: " .. num_params)
+  if idx == 1 then
+    print(" * number of parameters: " .. num_params)
+  end
 
   return params, grad_params
 end
@@ -170,7 +170,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
   utils.Parallel.launch('Initializing parameters', function(idx)
     local nets = get_nets(_G.model)
-    _G.params, _G.grad_params = init_params(nets)
+    _G.params, _G.grad_params = init_params(nets, idx)
     for _, mod in pairs(_G.model) do
       mod:training()
     end
@@ -178,7 +178,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
     _G.criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
 
     -- optimize memory of the first clone
-    utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1))
+    utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1), idx==1)
 
     return idx, _G.criterion, _G.params, _G.grad_params
   end, function(idx, thecriterion, theparams, thegrad_params)
@@ -221,33 +221,29 @@ local function train_model(model, train_data, valid_data, dataset, info)
         if _G.batch == nil then
           return idx, 0
         end
+
         -- send batch data to GPU
         utils.Cuda.convert(_G.batch)
 
         optim:zero_grad(_G.grad_params)
 
-        local enc_states, context = _G.model.encoder:forward(batch)
-        local dec_outputs = _G.model.decoder:forward(batch, enc_states, context)
+        local enc_states, context = _G.model.encoder:forward(_G.batch)
+        local dec_outputs = _G.model.decoder:forward(_G.batch, enc_states, context)
 
-        local enc_grad_states_out, grad_context, loss = _G.model.decoder:backward(batch, dec_outputs, _G.criterion)
-        _G.model.encoder:backward(batch, enc_grad_states_out, grad_context)
+        local enc_grad_states_out, grad_context, loss = _G.model.decoder:backward(_G.batch, dec_outputs, _G.criterion)
+        _G.model.encoder:backward(_G.batch, enc_grad_states_out, grad_context)
         return idx, loss
       end,
       function(idx, loss) losses[idx]=loss end)
 
-      for j = 2, utils.Parallel.count do
-        for h = 1, #grad_params[1] do
-          local remote_grad_params=grad_params[j][h]:clone()
-          grad_params[1][h]:add(remote_grad_params)
-        end
-      end
+      -- accumulate the gradients from the different parallel threads
+      utils.Parallel.accGradParams(grad_params)
 
+      -- update the parameters
       optim:update_params(params[1], grad_params[1], opt.max_grad_norm)
-      for j = 2, utils.Parallel.count do
-        for h = 1, #params[1] do
-          params[j][h]:copy(params[1][h])
-        end
-      end
+
+      -- sync the paramaters with the different parallel threads
+      utils.Parallel.syncParams(params)
 
       epoch_state:update(batches, losses)
 

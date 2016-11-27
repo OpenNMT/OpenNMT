@@ -51,6 +51,7 @@ function Parallel.getGPU(i)
    return 0
 end
 
+--[[ Launch function in parallel on different threads. ]]
 function Parallel.launch(label, closure, endcallback)
    endcallback = endcallback or function() end
    if label ~= nil then
@@ -69,6 +70,25 @@ function Parallel.launch(label, closure, endcallback)
    end
    if label ~= nil then
       print("DONE",label)
+   end
+end
+
+--[[ Accumulate the gradient parameters from the different parallel threads. ]]
+function Parallel.accGradParams(grad_params)
+   for j = 2, Parallel.count do
+     for h = 1, #grad_params[1] do
+       local remote_grad_params=grad_params[j][h]:clone()
+       grad_params[1][h]:add(remote_grad_params)
+     end
+   end
+end
+
+--[[ Sync parameters from main model to different parallel threads. ]]
+function Parallel.syncParams(params)
+   for j = 2, Parallel.count do
+     for h = 1, #params[1] do
+       params[j][h]:copy(params[1][h])
+     end
    end
 end
 
