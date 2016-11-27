@@ -77,6 +77,9 @@ end
 function Parallel.accGradParams(grad_params)
    for j = 2, Parallel.count do
      for h = 1, #grad_params[1] do
+       -- TODO - this is memory costly since we need to clone full parameters from one GPU to another
+       -- to avoid out-of-memory, we can copy/add by batch
+       -- also it is possible to optmize using nccl
        local remote_grad_params=grad_params[j][h]:clone()
        grad_params[1][h]:add(remote_grad_params)
      end
