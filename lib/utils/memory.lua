@@ -91,11 +91,12 @@ function Memory.optimize(model, criterion, batch, verbose)
     local mempool = {}
 
     -- some modules are using output when performing updateGradInput - so we cannot share these
+    -- list explicitely the safe modules for later changes
     local protectedOutput = { model_desc[name]['input'] }
     net:apply(function(m)
       if m.output and
-        (torch.typename(m) == 'nn.Tanh' or torch.typename(m) == 'nn.Sigmoid'
-         or torch.typename(m) == 'nn.SoftMax' or torch.typename(m) == 'nn.LogSoftMax') then
+        not(torch.typename(m) == 'nn.Linear' or torch.typename(m) == 'nn.CMulTable'
+         or torch.typename(m) == 'nn.MM' or torch.typename(m) == 'nn.Sum') then
         table.insert(protectedOutput, m.output)
       end
     end)
