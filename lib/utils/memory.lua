@@ -46,6 +46,10 @@ local function _size(t, mempool)
 end
 
 function Memory.optimize(model, criterion, batch, verbose)
+  if verbose then
+    print('Preparing memory optimization...')
+  end
+
   -- record actual size of the batch
   local actual_batchsize = { source_length = batch.source_length, target_length = batch.target_length }
 
@@ -55,24 +59,35 @@ function Memory.optimize(model, criterion, batch, verbose)
 
   local model_desc = {}
 
+  local function registerNet(store, net)
+    store['net'] = net
+    store['forward'] = net.forward
+    net.forward = function(net, input)
+      store['input'] = input
+      return store['forward'](net, input)
+    end
+    store['backward'] = net.backward
+    net.backward = function(net, input, gradOutput)
+      store['gradOutput'] = gradOutput
+      return store['backward'](net, input, gradOutput)
+    end
+  end
+
   for name, mod in pairs(model) do
     model_desc[name] = {}
-    local net
+
     if mod.net then
-      net = mod:net(1)
-    else
-      net = mod.network
-    end
-    model_desc[name]['net'] = net
-    model_desc[name]['forward'] = net.forward
-    net.forward = function(net, input)
-      model_desc[name]['input'] = input
-      return model_desc[name]['forward'](net, input)
-    end
-    model_desc[name]['backward'] = net.backward
-    net.backward = function(net, input, gradOutput)
-      model_desc[name]['gradOutput'] = gradOutput
-      return model_desc[name]['backward'](net, input, gradOutput)
+      -- If the module directly contains a network, take the first clone.
+      model_desc[name][1] = {}
+      registerNet(model_desc[name][1], mod:net(1))
+    elseif mod.modules then
+      -- Otherwise, look in submodules instead.
+      for i = 1, #mod.modules do
+        if mod.modules[i].net then
+          model_desc[name][i] = {}
+          registerNet(model_desc[name][i], mod.modules[i]:net(1))
+        end
+      end
     end
   end
 
@@ -87,43 +102,45 @@ function Memory.optimize(model, criterion, batch, verbose)
   local sharedSize = 0
   local idx = 1
   for name, desc in pairs(model_desc) do
-    local net = desc['net']
-    local mempool = {}
+    for i = 1, #desc do
+      local net = desc[i]['net']
+      local mempool = {}
 
-    -- some modules are using output when performing updateGradInput - so we cannot share these
-    -- list explicitely the safe modules for later changes
-    local protectedOutput = { model_desc[name]['input'] }
-    net:apply(function(m)
-      if m.output and
-        not(torch.typename(m) == 'nn.Linear' or torch.typename(m) == 'nn.CMulTable'
-         or torch.typename(m) == 'nn.MM' or torch.typename(m) == 'nn.Sum') then
-        table.insert(protectedOutput, m.output)
-      end
-    end)
+      -- some modules are using output when performing updateGradInput - so we cannot share these
+      local protectedOutput = { desc[i]['input'] }
+      net:apply(function(m)
+        if m.output and
+          not(torch.typename(m) == 'nn.Linear' or torch.typename(m) == 'nn.CMulTable'
+              or torch.typename(m) == 'nn.MM' or torch.typename(m) == 'nn.Sum') then
+            table.insert(protectedOutput, m.output)
+        end
+      end)
 
-    net:apply(function(m)
-      local giSize = _size(m.gradInput, mempool)
-      local oSize = _size(m.output, mempool)
-      totSize = totSize + giSize
-      totSize = totSize + oSize
-      if _canShare(m.gradInput, net, model_desc[name]['gradOutput']) then
-        sharedSize = sharedSize + giSize
-        m.gradInputSharedIdx = idx
-        idx = idx + 1
-      end
-      if _canShare(m.output, net, protectedOutput) then
-        sharedSize = sharedSize + oSize
-        m.outputSharedIdx = idx
-        idx = idx + 1
-      end
-    end)
-    -- restore function on network backward/forward interception input
-    net.backward = nil
-    net.forward = nil
+      net:apply(function(m)
+        local giSize = _size(m.gradInput, mempool)
+        local oSize = _size(m.output, mempool)
+        totSize = totSize + giSize
+        totSize = totSize + oSize
+        if _canShare(m.gradInput, net, desc[i]['gradOutput']) then
+          sharedSize = sharedSize + giSize
+          m.gradInputSharedIdx = idx
+          idx = idx + 1
+        end
+        if _canShare(m.output, net, protectedOutput) then
+          sharedSize = sharedSize + oSize
+          m.outputSharedIdx = idx
+          idx = idx + 1
+        end
+      end)
+
+      -- restore function on network backward/forward interception input
+      net.backward = nil
+      net.forward = nil
+    end
   end
 
   if verbose then
-    print("Memory Optimization - memory shared between clones: "..sharedSize.."/"..totSize.." bytes")
+    print(string.format(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100))
   end
 
   -- restore batch

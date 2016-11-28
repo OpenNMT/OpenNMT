@@ -73,21 +73,23 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
 end
 
 function BiEncoder:forward(batch)
-  local fwd_states, fwd_context = self.fwd:forward(batch)
-
-  reverse_input(batch)
-  local bwd_states, bwd_context = self.bwd:forward(batch)
-  reverse_input(batch)
-
   if self.statesProto == nil then
     self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
                                                     self.stateProto,
                                                     { batch.size, self.rnn_size })
+    if self.train then
+      self.bwd:shareWordEmb(self.fwd)
+    end
   end
 
   local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
   local context = utils.Tensor.reuseTensor(self.contextProto,
                                            { batch.size, batch.source_length, self.rnn_size })
+
+  local fwd_states, fwd_context = self.fwd:forward(batch)
+  reverse_input(batch)
+  local bwd_states, bwd_context = self.bwd:forward(batch)
+  reverse_input(batch)
 
   if self.merge == 'concat' then
     for i = 1, #fwd_states do

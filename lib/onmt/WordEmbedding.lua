@@ -5,7 +5,7 @@ local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Container')
 function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   parent.__init(self)
 
-  self.net = nn.LookupTable(vocab_size, vec_size)
+  self.net = nn.LookupTable(vocab_size, vec_size, constants.PAD)
   self:add(self.net)
 
   -- If embeddings are given. Initialize them.
@@ -15,9 +15,6 @@ function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   end
 
   self.fix = fix
-
-  -- Padding should not have any value.
-  self.net.weight[constants.PAD]:zero()
 end
 
 function WordEmbedding:updateOutput(input)
@@ -35,8 +32,5 @@ function WordEmbedding:accGradParameters(input, gradOutput, scale)
   if self.fix then
     -- Ignore gradients if embeddings are not to be optimized.
     self.net.gradWeight:zero()
-  else
-    -- Padding should not have any value.
-    self.net.gradWeight[constants.PAD]:zero()
   end
 end

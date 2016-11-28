@@ -61,7 +61,8 @@ function Encoder:_buildModel(args)
   table.insert(inputs, x)
 
   -- Compute word embedding.
-  local input = onmt.WordEmbedding(args.vocab_size, args.word_vec_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+  self.wordEmb = onmt.WordEmbedding(args.vocab_size, args.word_vec_size, args.pre_word_vecs, args.fix_word_vecs)
+  local input = self.wordEmb(x)
 
   table.insert(states, input)
 
@@ -69,6 +70,10 @@ function Encoder:_buildModel(args)
   local outputs = onmt.LSTM(args.num_layers, args.word_vec_size, args.rnn_size, args.dropout)(states)
 
   return nn.gModule(inputs, { outputs })
+end
+
+function Encoder:shareWordEmb(other)
+  self.wordEmb:share(other.wordEmb, 'weight', 'gradWeight')
 end
 
 --[[Compute the context representation of an input.

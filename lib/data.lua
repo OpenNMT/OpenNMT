@@ -205,6 +205,9 @@ function Data:distribute(batch, count)
       b.target_length = batch.target_length
       b.target_non_zeros = batch.target_non_zeros
       b.source_input = batch.source_input:narrow(2, index, size)
+      b.source_input_pad_left = batch.source_input_pad_left
+      b.source_input_rev = batch.source_input_rev:narrow(2, index, size)
+      b.source_input_rev_pad_left = batch.source_input_rev_pad_left
       b.target_input = batch.target_input:narrow(2, index, size)
       b.target_output = batch.target_output:narrow(2, index, size)
       table.insert(batches, b)
