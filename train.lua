@@ -241,7 +241,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
       function(idx, loss) losses[idx]=loss end)
 
       -- accumulate the gradients from the different parallel threads
-      utils.Parallel.accGradParams(grad_params)
+      utils.Parallel.accGradParams(grad_params, batches)
 
       -- update the parameters
       optim:update_params(params[1], grad_params[1], opt.max_grad_norm)
