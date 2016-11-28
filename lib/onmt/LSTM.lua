@@ -9,7 +9,7 @@ Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
 
 Parameters:
 
-  * `num_layers` - Number of LSTM layers.  
+  * `num_layers` - Number of LSTM layers.
   * `input_size` -  Size of input layer x.
   * `hidden_size` -  Size of the hidden layers (cell and hidden).
   * `dropout` - Dropout rate to use.

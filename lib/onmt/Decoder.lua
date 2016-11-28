@@ -17,7 +17,7 @@ Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 
---[[ Construct an encoder layer. 
+--[[ Construct an encoder layer.
 
 Parameters:
 
@@ -146,13 +146,13 @@ function Decoder:_buildGenerator(vocab_size, rnn_size)
 end
 
 --[[ Update internals of model to prepare for new batch.
-  
+
   Parameters:
- 
+
   * See  [onmt.MaskedSoftmax](lib+onmt+MaskedSoftmax).
 --]]
 function Decoder:reset(source_sizes, source_length, beam_size)
- 
+
   self.decoder_attn:replace(function(module)
     if module.name == 'softmax_attn' then
       local mod
@@ -229,8 +229,8 @@ end
 --]]
 
 function Decoder:forward_and_apply(batch, encoder_states, context, func)
-  -- TODO: Make this a private method. 
-  
+  -- TODO: Make this a private method.
+
   if self.statesProto == nil then
     self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
                                                     self.stateProto,

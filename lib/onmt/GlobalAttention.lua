@@ -1,12 +1,12 @@
 require 'nngraph'
---[[ Global attention takes a matrix and a query vector. It 
-then computes a parameterized convex combination of the matrix 
-based on the input query. 
+--[[ Global attention takes a matrix and a query vector. It
+then computes a parameterized convex combination of the matrix
+based on the input query.
 
 
     H_1 H_2 H_3 ... H_n
      q   q   q       q
-      |  |   |       |   
+      |  |   |       |
        \ |   |      /
            .....
          \   |  /
@@ -25,7 +25,7 @@ Constructs a unit mapping:
   The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.
 
   Parameters:
-  
+
   * `dim` - dimension of the context vectors.
 
 --]]

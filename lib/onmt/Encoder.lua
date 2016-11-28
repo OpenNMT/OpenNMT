@@ -14,7 +14,7 @@ Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 --]]
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
---[[ Construct an encoder layer. 
+--[[ Construct an encoder layer.
 
 Parameters:
 
@@ -85,7 +85,7 @@ Returns:
 function Encoder:forward(batch)
 
   -- TODO: Change `batch` to `input`.
-  
+
   local final_states
 
   if self.statesProto == nil then
