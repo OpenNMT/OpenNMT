@@ -35,11 +35,6 @@ function Parallel.init(args)
             end
          ) -- dedicate threads to GPUs
          Parallel._pool:specific(true)
-      else
-         Parallel._G = {}
-         Parallel._G.Decoder = require 's2sa.decoder'
-         Parallel._G.Encoder = require 's2sa.encoder'
-         Parallel._G.Generator = require 's2sa.generator'
       end
    end
 end
