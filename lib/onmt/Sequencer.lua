@@ -1,7 +1,7 @@
 require 'nngraph'
 
 --[[ Sequencer is the base class for encoder and decoder models.
-  Main task is to manage `self.network_clones`, the unrolled network
+  Main task is to manage `self.net(t)`, the unrolled network
   used during training.
 --]]
 local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Container')
@@ -10,9 +10,8 @@ local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Container')
 
 Parameters:
 
-  * `args` - global arguments
-  * `network` - network to unroll.
-
+  * `args` - global options.
+  * `network` - optional recurrent step template.
 --]]
 function Sequencer:__init(args, network)
   parent.__init(self)
@@ -81,7 +80,7 @@ function Sequencer:_sharedClone()
   return clone
 end
 
---[[Get a clone for a timestep.
+--[[Get access to the recurrent unit at a timestep.
 
 Parameters:
   * `t` - timestep.
@@ -108,7 +107,7 @@ function Sequencer:net(t)
   end
 end
 
---[[ Tell the network to prepare for training mode. ]]
+--[[ Move the network to train mode. ]]
 function Sequencer:training()
   parent.training(self)
 
@@ -118,7 +117,7 @@ function Sequencer:training()
   end
 end
 
---[[ Tell the network to prepare for evaluation mode. ]]
+--[[ Move the network to evaluation mode. ]]
 function Sequencer:evaluate()
   parent.evaluate(self)
 

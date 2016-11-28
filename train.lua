@@ -9,6 +9,10 @@ local Data = require('lib.data')
 
 local cmd = torch.CmdLine()
 
+cmd:text("")
+cmd:text("**train.lua**")
+cmd:text("")
+
 cmd:option('-config', '', [[Read options from this file]])
 
 cmd:text("")

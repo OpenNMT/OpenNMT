@@ -4,6 +4,12 @@ local constants = require('lib.constants')
 
 local cmd = torch.CmdLine()
 
+cmd:text("")
+cmd:text("preprocess.lua")
+cmd:text("")
+cmd:text("**Preprocess Options**")
+cmd:text("")
+cmd:text("")
 cmd:option('-config', '', [[Read options from this file]])
 
 cmd:option('-train_src_file', '', [[Path to the training source data]])

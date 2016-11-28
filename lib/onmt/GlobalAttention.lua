@@ -1,24 +1,40 @@
 require 'nngraph'
+--[[ Global attention takes a matrix and a query vector. It 
+then computes a parameterized convex combination of the matrix 
+based on the input query. 
 
+
+    H_1 H_2 H_3 ... H_n
+     q   q   q       q
+      |  |   |       |   
+       \ |   |      /
+           .....
+         \   |  /
+             a
+
+--]]
 local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'nn.Container')
 
+
+--[[A nn-style module computing attention.
+
+Constructs a unit mapping:
+  $$(H_1 .. H_n, q) => (a)$$
+  Where H is of `batch x n x dim` and q is of `batch x dim`.
+
+  The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.
+
+  Parameters:
+  
+  * `dim` - dimension of the context vectors.
+
+--]]
 function GlobalAttention:__init(dim)
   parent.__init(self)
   self.net = self:_buildModel(dim)
   self:add(self.net)
 end
 
---[[ Create an nngraph attention unit of size `dim`.
-
-Returns: An nngraph unit mapping:
-  ${(H_1 .. H_n, q) => (a)}$
-  Where H is of `batch x n x dim` and q is of `batch x dim`.
-
-  The full function is  ${\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)}$.
-
-TODO:
-  * allow different query and context sizes.
---]]
 function GlobalAttention:_buildModel(dim)
   local inputs = {}
   table.insert(inputs, nn.Identity()())

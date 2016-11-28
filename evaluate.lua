@@ -5,15 +5,26 @@ local lfs = require 'lfs'
 
 local cmd = torch.CmdLine()
 
+cmd:text("")
+cmd:text("**evaluate.lua**")
+cmd:text("")
+
+
 cmd:option('-config', '', [[Read options from this file]])
 
--- file location
+cmd:text("")
+cmd:text("**Data options**")
+cmd:text("")
+
 cmd:option('-model', '', [[Path to model .t7 file]])
 cmd:option('-src_file', '', [[Source sequence to decode (one line per sequence)]])
 cmd:option('-targ_file', '', [[True target sequence (optional)]])
 cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
 
 -- beam search options
+cmd:text("")
+cmd:text("**Beam Search options**")
+cmd:text("")
 cmd:option('-beam', 5,[[Beam size]])
 cmd:option('-batch', 30, [[Batch size]])
 cmd:option('-max_sent_l', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
@@ -25,6 +36,10 @@ cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the so
 cmd:option('-srctarg_dict', '', [[Path to source-target dictionary to replace UNK
                                                tokens. See README.md for the format this file should be in]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
+
+cmd:text("")
+cmd:text("**Other options**")
+cmd:text("")
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-cudnn', false, [[If using character model, this should be true if the character model was trained using cudnn]])

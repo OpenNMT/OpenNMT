@@ -11,11 +11,20 @@
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-Inherits from [onmt.Sequencer](lib+onmt+sequencer).
+Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 --]]
 local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
+
+--[[ Construct an encoder layer. 
+
+Parameters:
+
+  * `args` - global options.
+  * `network` - optional, recurrent step template.
+  * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
+--]]
 function Decoder:__init(args, network, generator)
   parent.__init(self, args, network or self:_buildModel(args))
 
@@ -46,11 +55,11 @@ function Decoder:__init(args, network, generator)
   self.gradContextProto = torch.Tensor()
 end
 
---[[ Build one time-step of a decoder
+--[[ Build a default one time-step of the decoder
 
 Parameters:
 
-  * `args` - global args.
+  * `args` - global options.
 
 Returns: An nn-graph mapping
 
@@ -121,6 +130,7 @@ function Decoder:_buildModel(args)
   return nn.gModule(inputs, outputs)
 end
 
+--[[ Build the default generator. --]]
 function Decoder:_buildGenerator(vocab_size, rnn_size)
   -- Builds a layer for predicting words.
   -- Layer used maps from (h^L) => (V).
@@ -135,8 +145,14 @@ function Decoder:_buildGenerator(vocab_size, rnn_size)
   return nn.gModule(inputs, {loglk})
 end
 
---[[ Update internals to prepare for new batch.]]
+--[[ Update internals of model to prepare for new batch.
+  
+  Parameters:
+ 
+  * See  [onmt.MaskedSoftmax](lib+onmt+MaskedSoftmax).
+--]]
 function Decoder:reset(source_sizes, source_length, beam_size)
+ 
   self.decoder_attn:replace(function(module)
     if module.name == 'softmax_attn' then
       local mod
@@ -211,7 +227,10 @@ end
   * `context`
   * `func` - Calls `func(out, t)` each timestep.
 --]]
+
 function Decoder:forward_and_apply(batch, encoder_states, context, func)
+  -- TODO: Make this a private method. 
+  
   if self.statesProto == nil then
     self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
                                                    self.stateProto,
@@ -233,12 +252,11 @@ end
 Parameters:
 
   * `batch` - based on data.lua
-  * `encoder_states`
-  * `context`
+  * `encoder_states` - the final encoder states
+  * `context` - the context to apply attention to.
 
-Returns:
+Returns: Tables of top hidden layer at each timestep.
 
-  1. `outputs` - Top Hidden layer at each time-step.
 --]]
 function Decoder:forward(batch, encoder_states, context)
   if self.train then
@@ -285,10 +303,16 @@ function Decoder:compute_loss(batch, encoder_states, context, criterion)
 end
 
 --[[ Compute the standard backward update.
-  With input `batch`, target `outputs`, and `criterion`
+
+Parameters:
+
+  * `batch`
+  * `outputs`
+  * `criterion`
+
   Note: This code is both the standard backward and criterion forward/backward.
   It returns both the gradInputs (ret 1 and 2) and the loss.
-]]
+-- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
     self.gradOutputsProto = utils.Model.initTensorTable(self.args.num_layers * 2 + 1,

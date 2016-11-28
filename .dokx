@@ -3,7 +3,7 @@ return {
     filter = nil,
 
     -- exclude: pattern or table of patterns; file paths to exclude
-    exclude = { 'test', 'build', 'doc/*', 'LICENSE.md', 'data/*', 'init.md'},
+    exclude = { 'test', 'build', 'doc/*', 'LICENSE.md', '*.txt', 'init.md'},
 
     -- tocLevel: string; level of detail for table of contents for inline docs: 'class', 'function' or 'none'
     tocLevel = 'function',
@@ -21,7 +21,7 @@ return {
     mathematics = true,
 
     -- packageName: string; override the inferred package namespace
-    packageName = "nmt",
+    packageName = "onmt",
 
     -- githubURL: string; $githubUser/$githubProject - used for generating links, if present
     githubURL = "opennmt/opennmt",
