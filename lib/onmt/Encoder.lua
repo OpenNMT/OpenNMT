@@ -102,7 +102,7 @@ function Encoder:forward(batch)
                                            { batch.size, batch.source_length, self.args.rnn_size })
 
   if self.args.mask_padding and not batch.source_input_pad_left then
-    final_states = utils.Table.clone(states)
+    final_states = utils.Tensor.recursiveClone(states)
   end
   if self.train then
     self.inputs = {}

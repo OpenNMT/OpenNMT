@@ -14,17 +14,7 @@ local function reorder(tab, index)
   return new_tab
 end
 
---[[ Clone table `tab` using `clone()` on each element. ]]
-local function clone(tab)
-  local new_tab = {}
-  for i = 1, #tab do
-    table.insert(new_tab, tab[i]:clone())
-  end
-  return new_tab
-end
-
 return {
-  clone = clone,
   reorder = reorder,
   append = append
 }
