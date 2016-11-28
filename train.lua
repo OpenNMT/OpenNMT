@@ -99,10 +99,14 @@ local function get_nets(model)
   return nets
 end
 
-local function init_params(nets, idx)
+local function init_params(nets, verbose)
   local num_params = 0
   local params = {}
   local grad_params = {}
+
+  if verbose then
+    print('Initializing parameters...')
+  end
 
   for _, net in pairs(nets) do
     local p, gp = net:getParameters()
@@ -116,7 +120,7 @@ local function init_params(nets, idx)
     table.insert(grad_params, gp)
   end
 
-  if idx == 1 then
+  if verbose then
     print(" * number of parameters: " .. num_params)
   end
 
@@ -172,17 +176,21 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
   local checkpoint = train.Checkpoint.new(opt, nets, optim, dataset)
 
-  utils.Parallel.launch('Initializing parameters', function(idx)
+  utils.Parallel.launch(nil, function(idx)
+    -- Only logs information of the first thread.
+    local verbose = idx == 1
+
     local nets = get_nets(_G.model)
-    _G.params, _G.grad_params = init_params(nets, idx)
+    _G.params, _G.grad_params = init_params(nets, verbose)
     for _, mod in pairs(_G.model) do
       mod:training()
     end
+
     -- define criterion of each GPU
     _G.criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
 
     -- optimize memory of the first clone
-    utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1), idx==1)
+    utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1), verbose)
 
     return idx, _G.criterion, _G.params, _G.grad_params
   end, function(idx, thecriterion, theparams, thegrad_params)
@@ -370,7 +378,7 @@ local function main()
 
   local model
 
-  utils.Parallel.launch("creating model", function(idx)
+  utils.Parallel.launch(nil, function(idx)
     _G.model = {}
     if opt.brnn then
       _G.model.encoder = onmt.BiEncoder.new(encoder_args, opt.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)

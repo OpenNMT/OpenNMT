@@ -16,6 +16,7 @@ function Parallel.init(args)
     Parallel.count = args.nparallel
     Parallel.gpus = cuda.getGPUs(args.nparallel)
     if Parallel.count > 1 then
+      print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
       local threads = require 'threads'
       threads.Threads.serialization('threads.sharedserialize')
       local thegpus = Parallel.gpus
@@ -28,10 +29,9 @@ function Parallel.init(args)
           require('lib.train.init')
           require('lib.onmt.init')
           Data = require('lib.data')
-          print('STARTING THREAD ', threadid, 'on GPU ' .. thegpus[threadid])
           utils.Cuda.init(args, thegpus[threadid])
           local refprint = print
-          print=function(...) refprint('[THREAD'..threadid..']',...) end
+          print=function(...) refprint('(from thread '..threadid..')',...) end
         end
       ) -- dedicate threads to GPUs
       Parallel._pool:specific(true)

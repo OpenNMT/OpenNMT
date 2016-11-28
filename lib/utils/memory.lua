@@ -46,6 +46,10 @@ local function _size(t, mempool)
 end
 
 function Memory.optimize(model, criterion, batch, verbose)
+  if verbose then
+    print('Preparing memory optimization...')
+  end
+
   -- record actual size of the batch
   local actual_batchsize = { source_length = batch.source_length, target_length = batch.target_length }
 
@@ -136,7 +140,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   end
 
   if verbose then
-    print("Memory Optimization - memory shared between clones: "..sharedSize.."/"..totSize.." bytes")
+    print(string.format(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100))
   end
 
   -- restore batch
