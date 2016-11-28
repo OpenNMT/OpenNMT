@@ -75,8 +75,9 @@ end
 
 --[[ Accumulate the gradient parameters from the different parallel threads. ]]
 function Parallel.accGradParams(grad_params)
-   for j = 2, Parallel.count do
-     for h = 1, #grad_params[1] do
+  -- local freeMemory = cutorch.cutorch.getMemoryUsage(cutorch.getDevice())
+  for h = 1, #grad_params[1] do
+    for j = 2, Parallel.count do
        -- TODO - this is memory costly since we need to clone full parameters from one GPU to another
        -- to avoid out-of-memory, we can copy/add by batch
        -- also it is possible to optmize using nccl
