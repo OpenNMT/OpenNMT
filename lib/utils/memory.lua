@@ -11,15 +11,15 @@ local function _tensorIncluded(t, l)
   return false
 end
 
--- we cannot share a tensor if it is exposed outside of the net otherwise we could generate side-effects
-local function _canShare(t, net)
+-- we cannot share a tensor if it is exposed/coming from outside of the net otherwise we could generate side-effects
+local function _canShare(t, net, protected)
   if torch.isTensor(t) and t:storage() then
-    if not _tensorIncluded(t, net.gradInput) and not _tensorIncluded(t, net.output) then
+    if not _tensorIncluded(t, net.gradInput) and not _tensorIncluded(t, net.output) and not _tensorIncluded(t, protected) then
       return true
     end
   elseif torch.type(t) == 'table' then
     for _, m in ipairs(t) do
-      if not _canShare(m, net) then
+      if not _canShare(m, net, protected) then
         return false
       end
     end
@@ -64,6 +64,16 @@ function Memory.optimize(model, criterion, batch, verbose)
       net = mod.network
     end
     model_desc[name]['net'] = net
+    model_desc[name]['forward'] = net.forward
+    net.forward = function(net, input)
+      model_desc[name]['input'] = input
+      return model_desc[name]['forward'](net, input)
+    end
+    model_desc[name]['backward'] = net.backward
+    net.backward = function(net, input, gradOutput)
+      model_desc[name]['gradOutput'] = gradOutput
+      return model_desc[name]['backward'](net, input, gradOutput)
+    end
   end
 
   -- initialize the network with a first batch
@@ -79,22 +89,36 @@ function Memory.optimize(model, criterion, batch, verbose)
   for name, desc in pairs(model_desc) do
     local net = desc['net']
     local mempool = {}
+
+    -- some modules are using output when performing updateGradInput - so we cannot share these
+    local protectedOutput = { model_desc[name]['input'] }
+    net:apply(function(m)
+      if m.output and
+        (torch.typename(m) == 'nn.Tanh' or torch.typename(m) == 'nn.Sigmoid'
+         or torch.typename(m) == 'nn.SoftMax' or torch.typename(m) == 'nn.LogSoftMax') then
+        table.insert(protectedOutput, m.output)
+      end
+    end)
+
     net:apply(function(m)
       local giSize = _size(m.gradInput, mempool)
       local oSize = _size(m.output, mempool)
       totSize = totSize + giSize
       totSize = totSize + oSize
-      if _canShare(m.gradInput,net) then
+      if _canShare(m.gradInput, net, model_desc[name]['gradOutput']) then
         sharedSize = sharedSize + giSize
         m.gradInputSharedIdx = idx
         idx = idx + 1
       end
-      if _canShare(m.output,net) then
+      if _canShare(m.output, net, protectedOutput) then
         sharedSize = sharedSize + oSize
         m.outputSharedIdx = idx
         idx = idx + 1
       end
     end)
+    -- restore function on network backward/forward interception input
+    net.backward = nil
+    net.forward = nil
   end
 
   if verbose then
