@@ -89,17 +89,17 @@ function Encoder:forward(batch)
   local final_states
 
   if self.statesProto == nil then
-    self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
-                                                   self.stateProto,
-                                                   { batch.size, self.args.rnn_size })
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+                                                    self.stateProto,
+                                                    { batch.size, self.args.rnn_size })
   end
 
   -- Make initial states c_0, h_0.
-  local states = utils.Model.reuseTensorTable(self.statesProto, { batch.size, self.args.rnn_size })
+  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.rnn_size })
 
   -- Preallocated output matrix.
-  local context = utils.Model.reuseTensor(self.contextProto,
-                                          { batch.size, batch.source_length, self.args.rnn_size })
+  local context = utils.Tensor.reuseTensor(self.contextProto,
+                                           { batch.size, batch.source_length, self.args.rnn_size })
 
   if self.args.mask_padding and not batch.source_input_pad_left then
     final_states = utils.Table.clone(states)
@@ -163,12 +163,12 @@ Returns: nil
 function Encoder:backward(batch, grad_states_output, grad_context_output)
   -- TODO: change this to (input, gradOutput) as in nngraph.
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Model.initTensorTable(self.args.num_layers * 2,
-                                                        self.gradOutputProto,
-                                                        { batch.size, self.args.rnn_size })
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+                                                         self.gradOutputProto,
+                                                         { batch.size, self.args.rnn_size })
   end
 
-  local grad_states_input = utils.Model.copyTensorTable(self.gradOutputsProto, grad_states_output)
+  local grad_states_input = utils.Tensor.copyTensorTable(self.gradOutputsProto, grad_states_output)
 
   for t = batch.source_length, 1, -1 do
     -- Add context gradients to last hidden states gradients.

@@ -1,5 +1,3 @@
-local model_utils = require 'lib.utils.model_utils'
-
 local Memory = {}
 
 local function _tensorIncluded(t, l)
@@ -71,7 +69,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   -- initialize the network with a first batch
   local enc_states, context = model.encoder:forward(batch)
   local dec_outputs = model.decoder:forward(batch, enc_states, context)
-  dec_outputs = model_utils.recursiveClone(dec_outputs)
+  dec_outputs = utils.Tensor.recursiveClone(dec_outputs)
   local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, criterion)
   model.encoder:backward(batch, enc_grad_states_out, grad_context)
 

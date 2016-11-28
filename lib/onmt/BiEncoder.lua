@@ -80,14 +80,14 @@ function BiEncoder:forward(batch)
   reverse_input(batch)
 
   if self.statesProto == nil then
-    self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
-                                                   self.stateProto,
-                                                   { batch.size, self.rnn_size })
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+                                                    self.stateProto,
+                                                    { batch.size, self.rnn_size })
   end
 
-  local states = utils.Model.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
-  local context = utils.Model.reuseTensor(self.contextProto,
-                                          { batch.size, batch.source_length, self.rnn_size })
+  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
+  local context = utils.Tensor.reuseTensor(self.contextProto,
+                                           { batch.size, batch.source_length, self.rnn_size })
 
   if self.merge == 'concat' then
     for i = 1, #fwd_states do
@@ -142,8 +142,8 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   self.fwd:backward(batch, grad_states_output_fwd, grad_context_output_fwd)
 
   -- reverse gradients of the backward context
-  local grad_context_bwd = utils.Model.reuseTensor(self.gradContextBwdProto,
-                                                   { batch.size, batch.source_length, self.args.rnn_size })
+  local grad_context_bwd = utils.Tensor.reuseTensor(self.gradContextBwdProto,
+                                                    { batch.size, batch.source_length, self.args.rnn_size })
 
   for t = 1, batch.source_length do
     grad_context_bwd[{{}, t}]:copy(grad_context_output_bwd[{{}, batch.source_length - t + 1}])

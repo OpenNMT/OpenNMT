@@ -196,8 +196,8 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   table.insert(inputs, context)
   if self.args.input_feed then
     if prev_out == nil then
-      table.insert(inputs, utils.Model.reuseTensor(self.inputFeedProto,
-                                                   { input:size(1), self.args.rnn_size }))
+      table.insert(inputs, utils.Tensor.reuseTensor(self.inputFeedProto,
+                                                    { input:size(1), self.args.rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
@@ -232,12 +232,12 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   -- TODO: Make this a private method. 
   
   if self.statesProto == nil then
-    self.statesProto = utils.Model.initTensorTable(self.args.num_layers * 2,
-                                                   self.stateProto,
-                                                   { batch.size, self.args.rnn_size })
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+                                                    self.stateProto,
+                                                    { batch.size, self.args.rnn_size })
   end
 
-  local states = utils.Model.copyTensorTable(self.statesProto, encoder_states)
+  local states = utils.Tensor.copyTensorTable(self.statesProto, encoder_states)
 
   local prev_out
 
@@ -315,15 +315,15 @@ Parameters:
 -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Model.initTensorTable(self.args.num_layers * 2 + 1,
-                                                        self.gradOutputProto,
-                                                        { batch.size, self.args.rnn_size })
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_layers * 2 + 1,
+                                                         self.gradOutputProto,
+                                                         { batch.size, self.args.rnn_size })
   end
 
-  local grad_states_input = utils.Model.reuseTensorTable(self.gradOutputsProto,
-                                                         { batch.size, self.args.rnn_size })
-  local grad_context_input = utils.Model.reuseTensor(self.gradContextProto,
-                                                     { batch.size, batch.source_length, self.args.rnn_size })
+  local grad_states_input = utils.Tensor.reuseTensorTable(self.gradOutputsProto,
+                                                          { batch.size, self.args.rnn_size })
+  local grad_context_input = utils.Tensor.reuseTensor(self.gradContextProto,
+                                                      { batch.size, batch.source_length, self.args.rnn_size })
 
   local grad_context_idx = #self.statesProto + 2
   local grad_input_feed_idx = #self.statesProto + 3
