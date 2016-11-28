@@ -11,15 +11,15 @@ local function _tensorIncluded(t, l)
   return false
 end
 
--- we cannot share a tensor if it is exposed outside of the net or we could generate side-effects
-local function _canShare(t, net, netGradOutput)
+-- we cannot share a tensor if it is exposed outside of the net otherwise we could generate side-effects
+local function _canShare(t, net)
   if torch.isTensor(t) and t:storage() then
-    if not _tensorIncluded(t, net.gradInput) and not _tensorIncluded(t, netGradOutput) then
+    if not _tensorIncluded(t, net.gradInput) and not _tensorIncluded(t, net.output) then
       return true
     end
   elseif torch.type(t) == 'table' then
     for _, m in ipairs(t) do
-      if not _canShare(m, net, netGradOutput) then
+      if not _canShare(m, net) then
         return false
       end
     end
