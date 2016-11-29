@@ -9,7 +9,7 @@ function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   self:add(self.net)
 
   -- If embeddings are given. Initialize them.
-  if pre_trained:len() > 0 then
+  if pre_trained and pre_trained:len() > 0 then
     local vecs = torch.load(pre_trained)
     self.net.weight:copy(vecs)
   end
