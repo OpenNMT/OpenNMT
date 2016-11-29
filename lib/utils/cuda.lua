@@ -76,4 +76,12 @@ function Cuda.getGPUs(ngpu)
   return gpus
 end
 
+function Cuda.freeMemory()
+  if Cuda.activated then
+    local freeMemory = cutorch.getMemoryUsage(cutorch.getDevice())
+    return freeMemory
+  end
+  return "n/a"
+end
+
 return Cuda

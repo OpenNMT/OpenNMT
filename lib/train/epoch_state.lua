@@ -40,13 +40,14 @@ end
 function EpochState:log(batch_index, data_size, learning_rate)
   local time_taken = self:get_time()
   local stats = ''
+  local freeMemory = utils.Cuda.freeMemory()
   stats = stats .. string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
                                  self.epoch, batch_index, data_size, learning_rate)
   stats = stats .. string.format('Throughput %d/%d/%d total/src/targ tokens/sec ; ',
                                  (self.num_words_target + self.num_words_source) / time_taken,
                                  self.num_words_source / time_taken,
                                  self.num_words_target / time_taken)
-  stats = stats .. string.format('PPL %.2f', self:get_train_ppl())
+  stats = stats .. string.format('PPL %.2f ; free mem %d', self:get_train_ppl(), freeMemory)
 
   print(stats)
 end
