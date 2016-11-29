@@ -31,22 +31,35 @@ function Sequencer:__init(args, network)
 end
 
 function Sequencer:_sharedClone()
-  -- Clone base network.
+  local net = self.network_clones[1] or self.network
+
+  local params, gradParams
+  if self.network.parameters then
+    params, gradParams = net:parameters()
+    if params == nil then
+      params = {}
+    end
+  end
+
+  local sharedTensors = {}
+  net:apply(function(m)
+    if m.gradInputSharedIdx then
+      sharedTensors[m.gradInputSharedIdx] = m.gradInput
+    end
+    if m.outputSharedIdx then
+      sharedTensors[m.outputSharedIdx] = m.output
+    end
+  end)
+
   local mem = torch.MemoryFile("w"):binary()
-  mem:writeObject(self.network)
+  mem:writeObject(net)
 
   local reader = torch.MemoryFile(mem:storage(), "r"):binary()
   local clone = reader:readObject()
   reader:close()
   mem:close()
 
-  -- Share parameters.
   if self.network.parameters then
-    local params, gradParams = self.network:parameters()
-    if params == nil then
-      params = {}
-    end
-
     local cloneParams, cloneGradParams = clone:parameters()
     for i = 1, #params do
       cloneParams[i]:set(params[i])
@@ -54,29 +67,15 @@ function Sequencer:_sharedClone()
     end
   end
 
-  if self.network_clones[1] then
-    -- Retrieve tensors from the first clone that are marked as reusable.
-    local sharedTensors = {}
-    self.network_clones[1]:apply(function(m)
-      if m.gradInputSharedIdx then
-         sharedTensors[m.gradInputSharedIdx] = m.gradInput
-       end
-       if m.outputSharedIdx then
-         sharedTensors[m.outputSharedIdx] = m.output
-       end
-    end)
-
-    -- Make the clone reuse these tensors.
-    local idx
-    clone:apply(function(m)
-      if m.gradInputSharedIdx then
-        m.gradInput = sharedTensors[m.gradInputSharedIdx]
-      end
-      if m.outputSharedIdx then
-        m.output = sharedTensors[m.outputSharedIdx]
-      end
-    end)
-  end
+  local idx
+  clone:apply(function(m)
+    if m.gradInputSharedIdx then
+      m.gradInput = sharedTensors[m.gradInputSharedIdx]
+    end
+    if m.outputSharedIdx then
+      m.output = sharedTensors[m.outputSharedIdx]
+    end
+  end)
 
   return clone
 end
