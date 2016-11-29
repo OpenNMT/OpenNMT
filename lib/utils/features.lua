@@ -30,8 +30,7 @@ local function extract(tokens)
       end
     end
   end
-
-  return words, features, num_features
+  return words, features, num_features or 0
 end
 
 --[[ Reverse operation: attach features to tokens. ]]
