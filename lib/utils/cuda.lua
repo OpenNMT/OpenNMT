@@ -40,20 +40,20 @@ function Cuda.init(opt, gpuIdx)
 end
 
 function Cuda.convert(obj)
-  if torch.typename(obj) == nil and type(obj) == 'table' then
-    for i = 1, #obj do
-      obj[i] = Cuda.convert(obj[i])
+  if not torch.typename(obj) and type(obj) == 'table' then
+    for k, v in pairs(obj) do
+      obj[k] = Cuda.convert(v)
     end
-    return obj
-  end
-  if Cuda.activated then
-    if obj.cuda ~= nil then
-        return obj:cuda()
+  elseif torch.typename(obj) then
+    if Cuda.activated and obj.cuda ~= nil then
+      return obj:cuda()
+    elseif obj.float ~= nil then
+      -- Defaults to float instead of double.
+      return obj:float()
     end
-  else
-    -- Defaults to float instead of double.
-    return obj:float()
   end
+
+  return obj
 end
 
 function Cuda.getGPUs(ngpu)
