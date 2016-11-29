@@ -21,7 +21,9 @@ function Cuda.init(opt, gpuIdx)
       if gpuIdx == nil then
         -- allow memory access between devices
         cutorch.getKernelPeerToPeerAccess(true)
-        cutorch.manualSeedAll(opt.seed)
+        if opt.seed then
+          cutorch.manualSeedAll(opt.seed)
+        end
         cutorch.setDevice(opt.gpuid)
       else
         cutorch.setDevice(gpuIdx)
