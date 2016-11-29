@@ -1,5 +1,21 @@
 local Memory = {}
 
+local supportedModules = {
+  'nn.Linear',
+  'nn.CMulTable',
+  'nn.MM',
+  'nn.Sum'
+}
+
+local function _isSupported(m)
+  for i = 1, #supportedModules do
+    if torch.typename(m) == supportedModules[i] then
+      return true
+    end
+  end
+  return false
+end
+
 local function _tensorIncluded(t, l)
   if torch.isTensor(l) then
     return torch.pointer(t:storage()) == torch.pointer(l:storage())
@@ -109,9 +125,7 @@ function Memory.optimize(model, criterion, batch, verbose)
       -- some modules are using output when performing updateGradInput - so we cannot share these
       local protectedOutput = { desc[i]['input'] }
       net:apply(function(m)
-        if m.output and
-          not(torch.typename(m) == 'nn.Linear' or torch.typename(m) == 'nn.CMulTable'
-              or torch.typename(m) == 'nn.MM' or torch.typename(m) == 'nn.Sum') then
+          if m.output and not _isSupported(m) then
             table.insert(protectedOutput, m.output)
         end
       end)
