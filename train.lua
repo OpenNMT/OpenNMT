@@ -174,7 +174,6 @@ local function eval(model, criterion, data)
 end
 
 local function train_model(model, train_data, valid_data, dataset, info)
-  local nets = get_nets(model)
   local params, grad_params = {}, {}
   local criterion
 
@@ -187,7 +186,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
     optim_states = opt.optim_states
   })
 
-  local checkpoint = train.Checkpoint.new(opt, nets, optim, dataset)
+  local checkpoint = train.Checkpoint.new(opt, get_nets(model), optim, dataset)
 
   utils.Parallel.launch(nil, function(idx)
     -- Only logs information of the first thread.

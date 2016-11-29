@@ -156,7 +156,7 @@ function Decoder:_buildGenerator(vocab_size, features, rnn_size)
 
   local softmax = nn.ParallelTable()
   softmax:add(nn.LogSoftMax())
-  for i = 1, #features do
+  for _ = 1, #features do
     softmax:add(nn.LogSoftMax())
   end
 

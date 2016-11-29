@@ -130,7 +130,7 @@ function Data:get_data(src, src_features, targ, targ_features, nocuda)
   batch.source_input_rev_features = {}
 
   if #src_features > 0 then
-    for i = 1, #src_features[1] do
+    for _ = 1, #src_features[1] do
       table.insert(batch.source_input_features, source_seq:clone())
       table.insert(batch.source_input_rev_features, source_seq:clone())
     end
@@ -147,7 +147,7 @@ function Data:get_data(src, src_features, targ, targ_features, nocuda)
     batch.target_output_features = {}
 
     if #targ_features > 0 then
-      for i = 1, #targ_features[1] do
+      for _ = 1, #targ_features[1] do
         table.insert(batch.target_input_features, target_seq:clone())
         table.insert(batch.target_output_features, target_seq:clone())
       end

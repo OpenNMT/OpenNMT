@@ -67,7 +67,6 @@ function Sequencer:_sharedClone()
     end
   end
 
-  local idx
   clone:apply(function(m)
     if m.gradInputSharedIdx then
       m.gradInput = sharedTensors[m.gradInputSharedIdx]
