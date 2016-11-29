@@ -68,15 +68,21 @@ local function main()
 
   local src_reader = utils.FileReader.new(opt.src_file)
   local src_batch = {}
+  local src_words_batch = {}
+  local src_features_batch = {}
 
   local targ_reader
   local targ_batch
+  local targ_words_batch
+  local targ_features_batch
 
   local with_gold_score = opt.targ_file:len() > 0
 
   if with_gold_score then
     targ_reader = utils.FileReader.new(opt.targ_file)
     targ_batch = {}
+    targ_words_batch = {}
+    targ_features_batch = {}
   end
 
   eval.Translate.init(opt, lfs.currentdir())
@@ -106,9 +112,20 @@ local function main()
     end
 
     if src_tokens ~= nil then
+      local src_words, src_feats = utils.Features.extract(src_tokens)
       table.insert(src_batch, src_tokens)
+      table.insert(src_words_batch, src_words)
+      if #src_feats > 0 then
+        table.insert(src_features_batch, src_feats)
+      end
+
       if with_gold_score then
+        local targ_words, targ_feats = utils.Features.extract(targ_tokens)
         table.insert(targ_batch, targ_tokens)
+        table.insert(targ_words_batch, targ_words)
+        if #targ_feats > 0 then
+          table.insert(targ_features_batch, targ_feats)
+        end
       end
     elseif #src_batch == 0 then
       break
@@ -119,7 +136,8 @@ local function main()
         timer:resume()
       end
 
-      local pred_batch, info = eval.Translate.translate(src_batch, targ_batch)
+      local pred_batch, info = eval.Translate.translate(src_words_batch, src_features_batch,
+                                                        targ_words_batch, targ_features_batch)
 
       if opt.time then
         timer:stop()
@@ -166,8 +184,12 @@ local function main()
 
       batch_id = batch_id + 1
       src_batch = {}
+      src_words_batch = {}
+      src_features_batch = {}
       if with_gold_score then
         targ_batch = {}
+        targ_words_batch = {}
+        targ_features_batch = {}
       end
       collectgarbage()
     end

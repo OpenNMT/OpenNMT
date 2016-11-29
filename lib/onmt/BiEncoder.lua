@@ -1,5 +1,6 @@
 local function reverse_input(batch)
   batch.source_input, batch.source_input_rev = batch.source_input_rev, batch.source_input
+  batch.source_input_features, batch.source_input_rev_features = batch.source_input_rev_features, batch.source_input_features
   batch.source_input_pad_left, batch.source_input_rev_pad_left = batch.source_input_rev_pad_left, batch.source_input_pad_left
 end
 

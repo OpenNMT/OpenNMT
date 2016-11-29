@@ -144,10 +144,10 @@ function dict:convert_to_labels(idx, stop)
   local labels = {}
 
   for i = 1, #idx do
+    table.insert(labels, self:lookup(idx[i]))
     if idx[i] == stop then
       break
     end
-    table.insert(labels, self:lookup(idx[i]))
   end
 
   return labels

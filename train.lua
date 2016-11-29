@@ -33,6 +33,8 @@ cmd:text("")
 cmd:option('-num_layers', 2, [[Number of layers in the LSTM encoder/decoder]])
 cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
+cmd:option('-feat_vec_exponent', 0.7, [[If the feature takes N values, then the
+                                      embedding dimension will be set to N^exponent]])
 cmd:option('-input_feed', true, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
 cmd:option('-brnn', false, [[Use a bidirectional encoder]])
 cmd:option('-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states: concat or sum]])
@@ -127,15 +129,26 @@ local function init_params(nets, verbose)
   return params, grad_params
 end
 
-local function build_criterion(vocab_size)
-  -- Build a NLL criterion that ignores padding.
-  local w = torch.ones(vocab_size)
-  w[constants.PAD] = 0
+local function build_criterion(vocab_size, features)
+  local criterion = nn.ParallelCriterion(false)
 
-  local criterion = nn.ClassNLLCriterion(w)
+  local function add_nll_criterion(size)
+    -- Ignores padding value.
+    local w = torch.ones(size)
+    w[constants.PAD] = 0
 
-  -- Let the training code manage loss normalization.
-  criterion.sizeAverage = false
+    local nll = nn.ClassNLLCriterion(w)
+
+    -- Let the training code manage loss normalization.
+    nll.sizeAverage = false
+    criterion:add(nll)
+  end
+
+  add_nll_criterion(vocab_size)
+
+  for j = 1, #features do
+    add_nll_criterion(#features[j])
+  end
 
   return criterion
 end
@@ -187,7 +200,8 @@ local function train_model(model, train_data, valid_data, dataset, info)
     end
 
     -- define criterion of each GPU
-    _G.criterion = utils.Cuda.convert(build_criterion(#dataset.targ_dict))
+    _G.criterion = utils.Cuda.convert(build_criterion(#dataset.dicts.targ.words,
+                                                      dataset.dicts.targ.features))
 
     -- optimize memory of the first clone
     utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1), verbose)
@@ -314,7 +328,9 @@ local function main()
   valid_data:set_batch_size(opt.max_batch_size * opt.nparallel)
 
   print(string.format(' * vocabulary size: source = %d; target = %d',
-                      #dataset.src_dict, #dataset.targ_dict))
+                      #dataset.dicts.src.words, #dataset.dicts.targ.words))
+  print(string.format(' * additional features: source = %d; target = %d',
+                      #dataset.dicts.src.features, #dataset.dicts.targ.features))
   print(string.format(' * maximum sequence length: source = %d; target = %d',
                       train_data.max_source_length, train_data.max_target_length))
   print(string.format(' * number of training sentences: %d', #train_data.src))
@@ -357,7 +373,9 @@ local function main()
     word_vec_size = opt.word_vec_size,
     pre_word_vecs = opt.pre_word_vecs_enc,
     fix_word_vecs = opt.fix_word_vecs_enc,
-    vocab_size = #dataset.src_dict,
+    vocab_size = #dataset.dicts.src.words,
+    features = dataset.dicts.src.features,
+    feat_vec_exponent = opt.feat_vec_exponent,
     rnn_size = opt.rnn_size,
     dropout = opt.dropout,
     num_layers = opt.num_layers
@@ -367,7 +385,9 @@ local function main()
     word_vec_size = opt.word_vec_size,
     pre_word_vecs = opt.pre_word_vecs_dec,
     fix_word_vecs = opt.fix_word_vecs_dec,
-    vocab_size = #dataset.targ_dict,
+    vocab_size = #dataset.dicts.targ.words,
+    features = dataset.dicts.targ.features,
+    feat_vec_exponent = opt.feat_vec_exponent,
     rnn_size = opt.rnn_size,
     dropout = opt.dropout,
     num_layers = opt.num_layers,
