@@ -1,6 +1,7 @@
 require('./lib/utils')
 
 local constants = require('lib.constants')
+local path = require('pl.path')
 
 local cmd = torch.CmdLine()
 
@@ -23,6 +24,7 @@ cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
 cmd:option('-targ_vocab_size', 50000, [[Size of the target vocabulary]])
 cmd:option('-src_vocab_file', '', [[Pre-calculated source vocabulary]])
 cmd:option('-targ_vocab_file', '', [[Pre-calculated target vocabulary]])
+cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
 cmd:option('-shuffle', true, [[Suffle data]])
@@ -32,9 +34,18 @@ cmd:option('-report_every', 100000, [[Report status every this many sentences]])
 
 local opt = cmd:parse(arg)
 
+local function hasFeatures(filename)
+  local reader = utils.FileReader.new(filename)
+  local _, _, num_features = utils.Features.extract(reader:next())
+  reader:close()
+  return num_features > 0
+end
+
 local function make_vocabulary(filename, size)
-  local vocab = utils.Dict.new({constants.PAD_WORD, constants.UNK_WORD,
-                                constants.BOS_WORD, constants.EOS_WORD})
+  local word_vocab = utils.Dict.new({constants.PAD_WORD, constants.UNK_WORD,
+                                     constants.BOS_WORD, constants.EOS_WORD})
+  local features_vocabs = {}
+
   local reader = utils.FileReader.new(filename)
 
   while true do
@@ -42,37 +53,89 @@ local function make_vocabulary(filename, size)
     if sent == nil then
       break
     end
-    for i = 1, #sent do
-      vocab:add(sent[i])
+
+    local words, features, num_features = utils.Features.extract(sent)
+
+    if #features_vocabs == 0 and num_features > 0 then
+      for j = 1, num_features do
+        features_vocabs[j] = utils.Dict.new({constants.PAD_WORD, constants.UNK_WORD,
+                                            constants.BOS_WORD, constants.EOS_WORD})
+      end
+    else
+      assert(#features_vocabs == num_features,
+             'all sentences must have the same numbers of additional features')
+    end
+
+    for i = 1, #words do
+      word_vocab:add(words[i])
+
+      for j = 1, num_features do
+        features_vocabs[j]:add(features[j][i])
+      end
+    end
+
+  end
+
+  reader:close()
+
+  local original_size = #word_vocab
+  word_vocab = word_vocab:prune(size)
+  print('Created dictionary of size ' .. #word_vocab .. ' (pruned from ' .. original_size .. ')')
+
+  return word_vocab, features_vocabs
+end
+
+local function init_vocabulary(name, data_file, vocab_file, vocab_size, features_vocabs_files)
+  local word_vocab
+  local features_vocabs = {}
+
+  if vocab_file:len() > 0 then
+    -- If given, load existing word dictionary.
+    print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '\'...')
+    word_vocab = utils.Dict.new()
+    word_vocab:load_file(vocab_file)
+    print('Loaded ' .. #word_vocab .. ' ' .. name .. ' words')
+  end
+
+  if features_vocabs_files:len() > 0 then
+    -- If given, discover existing features dictionaries.
+    local j = 1
+
+    while true do
+      local file = features_vocabs_files .. '.' .. name .. '_feature_' .. j .. '.dict'
+
+      if not path.exists(file) then
+        break
+      end
+
+      print('Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
+      features_vocabs[j] = utils.Dict.new()
+      features_vocabs[j]:load_file(file)
+      print('Loaded ' .. #features_vocabs[j] .. ' labels')
+
+      j = j + 1
     end
   end
 
-  local original_size = #vocab
-
-  reader:close()
-  vocab = vocab:prune(size)
-
-  print('Created dictionary of size ' .. #vocab .. ' (pruned from ' .. original_size .. ')')
-
-  return vocab
-end
-
-local function init_vocabulary(name, data_file, vocab_file, vocab_size)
-  local vocab
-
-  if vocab_file:len() == 0 then
+  if word_vocab == nil or (#features_vocabs == 0 and hasFeatures(data_file)) then
+    -- If a dictionary is still missing, generate it.
     print('Building ' .. name  .. ' vocabulary...')
-    vocab = make_vocabulary(data_file, vocab_size)
-  else
-    print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '\'...')
-    vocab = utils.Dict.new()
-    vocab:load_file(vocab_file)
-    print('Loaded ' .. #vocab .. ' ' .. name .. ' words')
+    local gen_word_vocab, gen_features_vocabs = make_vocabulary(data_file, vocab_size)
+
+    if word_vocab == nil then
+      word_vocab = gen_word_vocab
+    end
+    if #features_vocabs == 0 then
+      features_vocabs = gen_features_vocabs
+    end
   end
 
   print('')
 
-  return vocab
+  return {
+    words = word_vocab,
+    features = features_vocabs
+  }
 end
 
 local function save_vocabulary(name, vocab, file)
@@ -80,9 +143,21 @@ local function save_vocabulary(name, vocab, file)
   vocab:write_file(file)
 end
 
-local function make_data(src_file, targ_file, src_dict, targ_dict)
+local function save_features_vocabularies(name, vocabs, prefix)
+  for j = 1, #vocabs do
+    local file = prefix .. '.' .. name .. '_feature_' .. j .. '.dict'
+    print('Saving ' .. name .. ' feature ' .. j .. ' vocabulary to \'' .. file .. '\'...')
+    vocabs[j]:write_file(file)
+  end
+end
+
+local function make_data(src_file, targ_file, src_dicts, targ_dicts)
   local src = {}
+  local src_features = {}
+
   local targ = {}
+  local targ_features = {}
+
   local sizes = {}
 
   local count = 0
@@ -104,10 +179,21 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
 
     if #src_tokens > 0 and #src_tokens <= opt.seq_length
     and #targ_tokens > 0 and #targ_tokens <= opt.seq_length then
-      table.insert(src, src_dict:convert_to_idx(src_tokens, constants.UNK_WORD))
-      table.insert(targ, targ_dict:convert_to_idx(targ_tokens, constants.UNK_WORD,
-                                                  constants.BOS_WORD, constants.EOS_WORD))
-      table.insert(sizes, #src_tokens)
+      local src_words, src_feats = utils.Features.extract(src_tokens)
+      local targ_words, targ_feats = utils.Features.extract(targ_tokens)
+
+      table.insert(src, src_dicts.words:convert_to_idx(src_words, constants.UNK_WORD))
+      table.insert(targ, targ_dicts.words:convert_to_idx(targ_words, constants.UNK_WORD,
+                                                         constants.BOS_WORD, constants.EOS_WORD))
+
+      if #src_dicts.features > 0 then
+        table.insert(src_features, utils.Features.generateSource(src_dicts.features, src_feats))
+      end
+      if #targ_dicts.features > 0 then
+        table.insert(targ_features, utils.Features.generateTarget(targ_dicts.features, targ_feats))
+      end
+
+      table.insert(sizes, #src_words)
     else
       ignored = ignored + 1
     end
@@ -128,6 +214,13 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
     src = utils.Table.reorder(src, perm)
     targ = utils.Table.reorder(targ, perm)
     sizes = utils.Table.reorder(sizes, perm)
+
+    if #src_dicts.features > 0 then
+      src_features = utils.Table.reorder(src_features, perm)
+    end
+    if #targ_dicts.features > 0 then
+      targ_features = utils.Table.reorder(targ_features, perm)
+    end
   end
 
   print('... sorting sentences by size')
@@ -135,9 +228,26 @@ local function make_data(src_file, targ_file, src_dict, targ_dict)
   src = utils.Table.reorder(src, perm)
   targ = utils.Table.reorder(targ, perm)
 
+  if #src_dicts.features > 0 then
+    src_features = utils.Table.reorder(src_features, perm)
+  end
+  if #targ_dicts.features > 0 then
+    targ_features = utils.Table.reorder(targ_features, perm)
+  end
+
   print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length == 0 or > ' .. opt.seq_length .. ')')
 
-  return src, targ
+  local src_data = {
+    words = src,
+    features = src_features
+  }
+
+  local targ_data = {
+    words = targ,
+    features = targ_features
+  }
+
+  return src_data, targ_data
 end
 
 local function main()
@@ -157,39 +267,41 @@ local function main()
 
   torch.manualSeed(opt.seed)
 
-  local src_dict = init_vocabulary('source', opt.train_src_file, opt.src_vocab_file, opt.src_vocab_size)
-  local targ_dict = init_vocabulary('target', opt.train_targ_file, opt.targ_vocab_file, opt.targ_vocab_size)
+  local data = {}
+
+  data.dicts = {}
+  data.dicts.src = init_vocabulary('source', opt.train_src_file, opt.src_vocab_file,
+                                   opt.src_vocab_size, opt.features_vocabs_prefix)
+  data.dicts.targ = init_vocabulary('target', opt.train_targ_file, opt.targ_vocab_file,
+                                    opt.targ_vocab_size, opt.features_vocabs_prefix)
 
   print('Preparing training data...')
-  local train_src, train_targ = make_data(opt.train_src_file, opt.train_targ_file, src_dict, targ_dict)
+  data.train = {}
+  data.train.src, data.train.targ = make_data(opt.train_src_file, opt.train_targ_file,
+                                              data.dicts.src, data.dicts.targ)
   print('')
 
   print('Preparing validation data...')
-  local valid_src, valid_targ = make_data(opt.valid_src_file, opt.valid_targ_file, src_dict, targ_dict)
+  data.valid = {}
+  data.valid.src, data.valid.targ = make_data(opt.valid_src_file, opt.valid_targ_file,
+                                              data.dicts.src, data.dicts.targ)
   print('')
 
-  local data = {}
-  data.train = {
-    ["src"] = train_src,
-    ["targ"] = train_targ
-  }
-  data.valid = {
-    ["src"] = valid_src,
-    ["targ"] = valid_targ
-  }
-  data.src_dict = src_dict
-  data.targ_dict = targ_dict
-
-  print('Saving data to \'' .. opt.output_file .. '-train.t7\'...')
-  torch.save(opt.output_file .. '-train.t7', data)
-
   if opt.src_vocab_file:len() == 0 then
-    save_vocabulary('source', src_dict, opt.output_file .. '.src.dict')
+    save_vocabulary('source', data.dicts.src.words, opt.output_file .. '.src.dict')
   end
 
   if opt.targ_vocab_file:len() == 0 then
-    save_vocabulary('target', targ_dict, opt.output_file .. '.targ.dict')
+    save_vocabulary('target', data.dicts.targ.words, opt.output_file .. '.targ.dict')
   end
+
+  if opt.features_vocabs_prefix:len() == 0 then
+    save_features_vocabularies('source', data.dicts.src.features, opt.output_file)
+    save_features_vocabularies('target', data.dicts.targ.features, opt.output_file)
+  end
+
+  print('Saving data to \'' .. opt.output_file .. '-train.t7\'...')
+  torch.save(opt.output_file .. '-train.t7', data)
 
 end
 

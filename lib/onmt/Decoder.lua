@@ -30,7 +30,7 @@ function Decoder:__init(args, network, generator)
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
-  self.generator = generator or self:_buildGenerator(args.vocab_size, args.rnn_size)
+  self.generator = generator or self:_buildGenerator(args.vocab_size, args.features, args.rnn_size)
   self:add(self.generator)
 
   -- Input feeding means the decoder takes an extra
@@ -99,6 +99,13 @@ function Decoder:_buildModel(args)
     table.insert(inputs, input_feed)
   end
 
+  -- Input features.
+  local features = {}
+  for i = 1, #args.features do
+    features[i] = nn.Identity()() -- batch_size
+    table.insert(inputs, features[i])
+  end
+
   local input_size = args.word_vec_size
 
   -- Compute word embedding.
@@ -108,6 +115,13 @@ function Decoder:_buildModel(args)
   if args.input_feed then
     input = nn.JoinTable(2)({input, input_feed})
     input_size = input_size + args.rnn_size
+  end
+
+  -- Compute features embedding if used.
+  if #features > 0 then
+    self.featsEmb = onmt.FeatsEmbedding(args.features, args.feat_vec_exponent)
+    input = nn.JoinTable(2)({input, self.featsEmb(features)})
+    input_size = input_size + self.featsEmb.outputSize
   end
 
   table.insert(states, input)
@@ -131,18 +145,26 @@ function Decoder:_buildModel(args)
 end
 
 --[[ Build the default generator. --]]
-function Decoder:_buildGenerator(vocab_size, rnn_size)
+function Decoder:_buildGenerator(vocab_size, features, rnn_size)
   -- Builds a layer for predicting words.
   -- Layer used maps from (h^L) => (V).
-  local inputs = {}
-  table.insert(inputs, nn.Identity()())
+  local split = nn.ConcatTable()
+  split:add(nn.Linear(rnn_size, vocab_size))
+  for i = 1, #features do
+    split:add(nn.Linear(rnn_size, #features[i]))
+  end
 
-  local map = nn.Linear(rnn_size, vocab_size)(inputs[1])
+  local softmax = nn.ParallelTable()
+  softmax:add(nn.LogSoftMax())
+  for _ = 1, #features do
+    softmax:add(nn.LogSoftMax())
+  end
 
-  -- Use cudnn logsoftmax if available.
-  local loglk = utils.Cuda.nn.LogSoftMax()(map)
+  local generator = nn.Sequential()
+    :add(split)
+    :add(softmax)
 
-  return nn.gModule(inputs, {loglk})
+  return generator
 end
 
 --[[ Update internals of model to prepare for new batch.
@@ -187,7 +209,7 @@ Returns:
  1. `out` - Top-layer Hidden state
  2. `states` - All states
 --]]
-function Decoder:forward_one(input, prev_states, context, prev_out, t)
+function Decoder:forward_one(input, features, prev_states, context, prev_out, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `build_network('dec')`).
@@ -202,6 +224,7 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
       table.insert(inputs, prev_out)
     end
   end
+  utils.Table.append(inputs, features)
 
   -- Remember inputs for the backward pass.
   if self.train then
@@ -242,7 +265,12 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   local prev_out
 
   for t = 1, batch.target_length do
-    prev_out, states = self:forward_one(batch.target_input[t], states, context, prev_out, t)
+    local features = {}
+    for j = 1, #batch.target_input_features do
+      table.insert(features, batch.target_input_features[j][t])
+    end
+
+    prev_out, states = self:forward_one(batch.target_input[t], features, states, context, prev_out, t)
     func(prev_out, t)
   end
 end
@@ -282,7 +310,7 @@ function Decoder:compute_score(batch, encoder_states, context)
     local pred = self.generator:forward(out)
     for b = 1, batch.size do
       if t <= batch.target_size[b] then
-        score[b] = (score[b] or 0) + pred[b][batch.target_output[t][b]]
+        score[b] = (score[b] or 0) + pred[1][b][batch.target_output[t][b]]
       end
     end
   end)
@@ -296,7 +324,13 @@ function Decoder:compute_loss(batch, encoder_states, context, criterion)
   local loss = 0
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
     local pred = self.generator:forward(out)
-    loss = loss + criterion:forward(pred, batch.target_output[t])
+
+    local output = { batch.target_output[t] }
+    for j = 1, #batch.target_output_features do
+      table.insert(output, batch.target_output_features[j][t])
+    end
+
+    loss = loss + criterion:forward(pred, output)
   end)
 
   return loss
@@ -334,12 +368,21 @@ function Decoder:backward(batch, outputs, criterion)
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
     local pred = self.generator:forward(outputs[t])
-    loss = loss + criterion:forward(pred, batch.target_output[t]) / batch.size
+
+    local output = { batch.target_output[t] }
+    for j = 1, #batch.target_output_features do
+      table.insert(output, batch.target_output_features[j][t])
+    end
+
+    loss = loss + criterion:forward(pred, output) / batch.size
 
 
     -- Compute the criterion gradient.
-    local gen_grad_out = criterion:backward(pred, batch.target_output[t])
-    gen_grad_out:div(batch.size)
+    local gen_grad_out = criterion:backward(pred, output)
+
+    for j = 1, #gen_grad_out do
+      gen_grad_out[j]:div(batch.size)
+    end
 
     -- Compute the final layer gradient.
     local dec_grad_out = self.generator:backward(outputs[t], gen_grad_out)

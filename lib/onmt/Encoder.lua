@@ -57,23 +57,42 @@ function Encoder:_buildModel(args)
     table.insert(states, h0)
   end
 
+  -- Input word.
   local x = nn.Identity()() -- batch_size
   table.insert(inputs, x)
 
+  -- Input features.
+  local features = {}
+  for i = 1, #args.features do
+    features[i] = nn.Identity()() -- batch_size
+    table.insert(inputs, features[i])
+  end
+
   -- Compute word embedding.
-  self.wordEmb = onmt.WordEmbedding(args.vocab_size, args.word_vec_size, args.pre_word_vecs, args.fix_word_vecs)
+  local input_size = args.word_vec_size
+  self.wordEmb = onmt.WordEmbedding(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)
   local input = self.wordEmb(x)
+
+  -- Compute features embedding if used.
+  if #features > 0 then
+    self.featsEmb = onmt.FeatsEmbedding(args.features, args.feat_vec_exponent)
+    input = nn.JoinTable(2)({input, self.featsEmb(features)})
+    input_size = input_size + self.featsEmb.outputSize
+  end
 
   table.insert(states, input)
 
   -- Forward states and input into the RNN.
-  local outputs = onmt.LSTM(args.num_layers, args.word_vec_size, args.rnn_size, args.dropout)(states)
+  local outputs = onmt.LSTM(args.num_layers, input_size, args.rnn_size, args.dropout)(states)
 
   return nn.gModule(inputs, { outputs })
 end
 
 function Encoder:shareWordEmb(other)
   self.wordEmb:share(other.wordEmb, 'weight', 'gradWeight')
+  if self.featsEmb then
+    self.featsEmb:share(other.featsEmb, 'weight', 'gradWeight')
+  end
 end
 
 --[[Compute the context representation of an input.
@@ -121,6 +140,9 @@ function Encoder:forward(batch)
     local inputs = {}
     utils.Table.append(inputs, states)
     table.insert(inputs, batch.source_input[t])
+    for j = 1, #batch.source_input_features do
+      table.insert(inputs, batch.source_input_features[j][t])
+    end
 
     if self.train then
       -- Remember inputs for the backward pass.

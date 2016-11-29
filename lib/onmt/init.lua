@@ -15,6 +15,7 @@ require('lib.onmt.LSTM')
 
 require('lib.onmt.MaskedSoftmax')
 require('lib.onmt.WordEmbedding')
+require('lib.onmt.FeatsEmbedding')
 require('lib.onmt.GlobalAttention')
 
 return onmt

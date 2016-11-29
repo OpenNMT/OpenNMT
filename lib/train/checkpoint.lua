@@ -21,10 +21,7 @@ function Checkpoint:save(file_path, info)
     nets = self.nets,
     options = self.options,
     info = info,
-    dicts = {
-      src = self.dataset.src_dict,
-      targ = self.dataset.targ_dict
-    }
+    dicts = self.dataset.dicts
   }
 
   torch.save(file_path, data)

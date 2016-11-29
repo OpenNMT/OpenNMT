@@ -28,10 +28,8 @@ function Parallel.init(args)
           require('lib.utils.init')
           require('lib.train.init')
           require('lib.onmt.init')
-          Data = require('lib.data')
+          require('lib.data')
           utils.Cuda.init(args, thegpus[threadid])
-          local refprint = print
-          print=function(...) refprint('(from thread '..threadid..')',...) end
         end
       ) -- dedicate threads to GPUs
       Parallel._pool:specific(true)
@@ -54,7 +52,6 @@ function Parallel.launch(label, closure, endcallback)
   end
   for j = 1, Parallel.count do
     if Parallel._pool == nil then
-      local _G = Parallel._G
       endcallback(closure(j))
     else
       Parallel._pool:addjob(j, function() return closure(j) end, endcallback)

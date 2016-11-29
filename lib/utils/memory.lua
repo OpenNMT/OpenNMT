@@ -78,14 +78,14 @@ function Memory.optimize(model, criterion, batch, verbose)
   local function registerNet(store, net)
     store['net'] = net
     store['forward'] = net.forward
-    net.forward = function(net, input)
+    net.forward = function(network, input)
       store['input'] = input
-      return store['forward'](net, input)
+      return store['forward'](network, input)
     end
     store['backward'] = net.backward
-    net.backward = function(net, input, gradOutput)
+    net.backward = function(network, input, gradOutput)
       store['gradOutput'] = gradOutput
-      return store['backward'](net, input, gradOutput)
+      return store['backward'](network, input, gradOutput)
     end
   end
 
@@ -111,13 +111,13 @@ function Memory.optimize(model, criterion, batch, verbose)
   local enc_states, context = model.encoder:forward(batch)
   local dec_outputs = model.decoder:forward(batch, enc_states, context)
   dec_outputs = utils.Tensor.recursiveClone(dec_outputs)
-  local enc_grad_states_out, grad_context, loss = model.decoder:backward(batch, dec_outputs, criterion)
+  local enc_grad_states_out, grad_context, _ = model.decoder:backward(batch, dec_outputs, criterion)
   model.encoder:backward(batch, enc_grad_states_out, grad_context)
 
   local totSize = 0
   local sharedSize = 0
   local idx = 1
-  for name, desc in pairs(model_desc) do
+  for _, desc in pairs(model_desc) do
     for i = 1, #desc do
       local net = desc[i]['net']
       local mempool = {}

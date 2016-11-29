@@ -10,12 +10,16 @@ Batch interface [size]:
   * source_length: max length in source batch [1]
   * source_size:  lengths of each source [batch x 1]
   * source_input:  left-padded idx's of source (PPPPPPABCDE) [batch x max]
+  * source_input_features: table of source features sequences
   * source_input_rev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]
+  * source_input_rev_features: table of reversed source features sequences
   * target_length: max length in source batch [1]
   * target_size: lengths of each source [batch x 1]
   * target_non_zeros: number of non-ignored words in batch [1]
   * target_input: input idx's of target (SABCDEPPPPPP) [batch x max]
+  * target_input_features: table of target input features sequences
   * target_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]
+  * target_output_features: table of target output features sequences
 
  TODO: change name of size => maxlen
 --]]
@@ -44,10 +48,15 @@ end
 --[[ Initialize a data object given aligned tables of IntTensors `src`
   and `targ`.
 --]]
-function Data:__init(src, targ)
+function Data:__init(src_data, targ_data)
 
-  self.src = src
-  self.targ = targ
+  self.src = src_data.words
+  self.src_features = src_data.features
+
+  if targ_data ~= nil then
+    self.targ = targ_data.words
+    self.targ_features = targ_data.features
+  end
 end
 
 --[[ Setup up the training data to respect `max_batch_size`. ]]
@@ -101,7 +110,7 @@ end
 --[[ Create a batch object given aligned sent tables `src` and `targ`
   (optional). Data format is shown at the top of the file.
 --]]
-function Data:get_data(src, targ, nocuda)
+function Data:get_data(src, src_features, targ, targ_features, nocuda)
 
   local batch = {}
 
@@ -112,13 +121,37 @@ function Data:get_data(src, targ, nocuda)
   batch.size = #src
 
   batch.source_length, batch.source_size = get_length(src)
-  batch.source_input = torch.IntTensor(batch.source_length, batch.size):fill(constants.PAD)
-  batch.source_input_rev = torch.IntTensor(batch.source_length, batch.size):fill(constants.PAD)
+
+  local source_seq = torch.IntTensor(batch.source_length, batch.size):fill(constants.PAD)
+  batch.source_input = source_seq:clone()
+  batch.source_input_rev = source_seq:clone()
+
+  batch.source_input_features = {}
+  batch.source_input_rev_features = {}
+
+  if #src_features > 0 then
+    for _ = 1, #src_features[1] do
+      table.insert(batch.source_input_features, source_seq:clone())
+      table.insert(batch.source_input_rev_features, source_seq:clone())
+    end
+  end
 
   if targ ~= nil then
     batch.target_length, batch.target_size, batch.target_non_zeros = get_length(targ, 1)
-    batch.target_input = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
-    batch.target_output = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
+
+    local target_seq = torch.IntTensor(batch.target_length, batch.size):fill(constants.PAD)
+    batch.target_input = target_seq:clone()
+    batch.target_output = target_seq:clone()
+
+    batch.target_input_features = {}
+    batch.target_output_features = {}
+
+    if #targ_features > 0 then
+      for _ = 1, #targ_features[1] do
+        table.insert(batch.target_input_features, target_seq:clone())
+        table.insert(batch.target_output_features, target_seq:clone())
+      end
+    end
   end
 
   for b = 1, batch.size do
@@ -134,6 +167,14 @@ function Data:get_data(src, targ, nocuda)
     batch.source_input_rev[{{1, batch.source_size[b]}, b}]:copy(source_input_rev)
     batch.source_input_rev_pad_left = false
 
+    for i = 1, #batch.source_input_features do
+      local source_input_features = src_features[b][i]
+      local source_input_rev_features = src_features[b][i]:index(1, torch.linspace(batch.source_size[b], 1, batch.source_size[b]):long())
+
+      batch.source_input_features[i][{{source_offset, batch.source_length}, b}]:copy(source_input_features)
+      batch.source_input_rev_features[i][{{1, batch.source_size[b]}, b}]:copy(source_input_rev_features)
+    end
+
     if targ ~= nil then
       -- Input: [<s>ABCDE]
       -- Ouput: [ABCDE</s>]
@@ -144,6 +185,14 @@ function Data:get_data(src, targ, nocuda)
       -- Target is right padded [<S>ABCDEPPPPPP] .
       batch.target_input[{{1, target_length}, b}]:copy(target_input)
       batch.target_output[{{1, target_length}, b}]:copy(target_output)
+
+      for i = 1, #batch.target_input_features do
+        local target_input_features = targ_features[b][i]:narrow(1, 1, target_length)
+        local target_output_features = targ_features[b][i]:narrow(1, 2, target_length)
+
+        batch.target_input_features[i][{{1, target_length}, b}]:copy(target_input_features)
+        batch.target_output_features[i][{{1, target_length}, b}]:copy(target_output_features)
+      end
     end
   end
 
@@ -151,9 +200,15 @@ function Data:get_data(src, targ, nocuda)
     batch.source_input = utils.Cuda.convert(batch.source_input)
     batch.source_input_rev = utils.Cuda.convert(batch.source_input_rev)
 
+    utils.Table.map(batch.source_input_features, utils.Cuda.convert)
+    utils.Table.map(batch.source_input_rev_features, utils.Cuda.convert)
+
     if targ ~= nil then
       batch.target_input = utils.Cuda.convert(batch.target_input)
       batch.target_output = utils.Cuda.convert(batch.target_output)
+
+      utils.Table.map(batch.target_input_features, utils.Cuda.convert)
+      utils.Table.map(batch.target_output_features, utils.Cuda.convert)
     end
   end
 
@@ -163,7 +218,7 @@ end
 --[[ Get batch `idx`. If nil make a batch of all the data. ]]
 function Data:get_batch(idx, nocuda)
   if idx == nil or self.batch_range == nil then
-    return self:get_data(self.src, self.targ)
+    return self:get_data(self.src, self.src_features, self.targ, self.targ_features)
   end
 
   local range_start = self.batch_range[idx]["begin"]
@@ -172,12 +227,23 @@ function Data:get_batch(idx, nocuda)
   local src = {}
   local targ = {}
 
+  local src_features = {}
+  local targ_features = {}
+
   for i = range_start, range_end do
     table.insert(src, self.src[i])
     table.insert(targ, self.targ[i])
+
+    if self.src_features[i] then
+      table.insert(src_features, self.src_features[i])
+    end
+
+    if self.targ_features[i] then
+      table.insert(targ_features, self.targ_features[i])
+    end
   end
 
-  return self:get_data(src, targ, nocuda)
+  return self:get_data(src, src_features, targ, targ_features, nocuda)
 end
 
 --[[ Slice nElem into n-th, return n-th slice. ]]
@@ -210,6 +276,21 @@ function Data:distribute(batch, count)
       b.source_input_rev_pad_left = batch.source_input_rev_pad_left
       b.target_input = batch.target_input:narrow(2, index, size)
       b.target_output = batch.target_output:narrow(2, index, size)
+
+      b.source_input_features = {}
+      b.source_input_rev_features = {}
+      for j = 1, #batch.source_input_features do
+        table.insert(b.source_input_features, batch.source_input_features[j]:narrow(2, index, size))
+        table.insert(b.source_input_rev_features, batch.source_input_rev_features[j]:narrow(2, index, size))
+      end
+
+      b.target_input_features = {}
+      b.target_output_features = {}
+      for j = 1, #batch.target_input_features do
+        table.insert(b.target_input_features, batch.target_input_features[j]:narrow(2, index, size))
+        table.insert(b.target_output_features, batch.target_output_features[j]:narrow(2, index, size))
+      end
+
       table.insert(batches, b)
     end
   end
