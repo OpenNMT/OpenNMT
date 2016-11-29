@@ -80,14 +80,12 @@ function Parallel.accGradParams(grad_params, batches)
     for h = 1, #grad_params[1] do
       grad_params[1][h]:mul(batches[1].size / totalBatchSize)
 
-      for j = 2, Parallel.count do
+      for j = 2, #batches do
         -- TODO - this is memory costly since we need to clone full parameters from one GPU to another
         -- to avoid out-of-memory, we can copy/add by batch
         -- also it is possible to optmize using nccl
         local remote_grad_params = grad_params[j][h]:clone()
-        if batches[j] then
-          grad_params[1][h]:add(remote_grad_params:mul(batches[j].size / totalBatchSize))
-        end
+        grad_params[1][h]:add(remote_grad_params:mul(batches[j].size / totalBatchSize))
       end
     end
   end
