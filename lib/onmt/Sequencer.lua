@@ -51,13 +51,7 @@ function Sequencer:_sharedClone()
     end
   end)
 
-  local mem = torch.MemoryFile("w"):binary()
-  mem:writeObject(net)
-
-  local reader = torch.MemoryFile(mem:storage(), "r"):binary()
-  local clone = reader:readObject()
-  reader:close()
-  mem:close()
+  local clone = utils.Tensor.deepClone(net)
 
   if self.network.parameters then
     local cloneParams, cloneGradParams = clone:parameters()

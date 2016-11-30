@@ -10,6 +10,19 @@ local function recursiveClone(out)
   end
 end
 
+local function deepClone(obj)
+  local mem = torch.MemoryFile("w"):binary()
+  mem:writeObject(obj)
+
+  local reader = torch.MemoryFile(mem:storage(), "r"):binary()
+  local clone = reader:readObject()
+
+  reader:close()
+  mem:close()
+
+  return clone
+end
+
 --[[
 Reuse Tensor storage and avoid new allocation unless any dimension
 has a larger size.
@@ -128,6 +141,7 @@ end
 
 return {
   recursiveClone = recursiveClone,
+  deepClone = deepClone,
   reuseTensor = reuseTensor,
   reuseTensorTable = reuseTensorTable,
   initTensorTable = initTensorTable,
