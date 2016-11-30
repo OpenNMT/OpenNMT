@@ -1,13 +1,13 @@
-local FeatsEmbedding, parent = torch.class('onmt.FeatsEmbedding', 'nn.Container')
+local FeaturesEmbedding, parent = torch.class('onmt.FeaturesEmbedding', 'nn.Container')
 
-function FeatsEmbedding:__init(dicts, dimExponent)
+function FeaturesEmbedding:__init(dicts, dimExponent)
   parent.__init(self)
 
   self.net = self:_buildModel(dicts, dimExponent)
   self:add(self.net)
 end
 
-function FeatsEmbedding:_buildModel(dicts, dimExponent)
+function FeaturesEmbedding:_buildModel(dicts, dimExponent)
   local inputs = {}
   local output
 
@@ -36,20 +36,20 @@ function FeatsEmbedding:_buildModel(dicts, dimExponent)
   return nn.gModule(inputs, {output})
 end
 
-function FeatsEmbedding:updateOutput(input)
+function FeaturesEmbedding:updateOutput(input)
   self.output = self.net:updateOutput(input)
   return self.output
 end
 
-function FeatsEmbedding:updateGradInput(input, gradOutput)
+function FeaturesEmbedding:updateGradInput(input, gradOutput)
   return self.net:updateGradInput(input, gradOutput)
 end
 
-function FeatsEmbedding:accGradParameters(input, gradOutput, scale)
+function FeaturesEmbedding:accGradParameters(input, gradOutput, scale)
   self.net:accGradParameters(input, gradOutput, scale)
 end
 
-function FeatsEmbedding:share(other, ...)
+function FeaturesEmbedding:share(other, ...)
   for i = 1, #self.embs do
     self.embs[i]:share(other.embs[i], ...)
   end

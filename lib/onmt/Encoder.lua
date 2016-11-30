@@ -75,7 +75,7 @@ function Encoder:_buildModel(args)
 
   -- Compute features embedding if used.
   if #features > 0 then
-    self.featsEmb = onmt.FeatsEmbedding(args.features, args.feat_vec_exponent)
+    self.featsEmb = onmt.FeaturesEmbedding(args.features, args.feat_vec_exponent)
     input = nn.JoinTable(2)({input, self.featsEmb(features)})
     input_size = input_size + self.featsEmb.outputSize
   end
