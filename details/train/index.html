@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Train - OpenNMT</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Train";
+    var mkdocs_page_input_path = "details/train.md";
+    var mkdocs_page_url = "/details/train/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> OpenNMT</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../Quickstart/">Quickstart</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Code</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Eval</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/eval/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/eval/lib+eval+beam/">Lib+eval+beam</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Onmt</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+BiEncoder/">lib+onmt+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+Decoder/">lib+onmt+Decoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+Encoder/">lib+onmt+Encoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+LSTM/">lib+onmt+LSTM</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+MaskedSoftmax/">lib+onmt+MaskedSoftmax</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+Sequencer/">lib+onmt+Sequencer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/onmt/lib+onmt+WordEmbedding/">lib+onmt+WordEmbedding</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Train</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/lib+data/">Lib+data</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/lib+train+checkpoint/">Lib+train+checkpoint</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/lib+train+epoch_state/">Lib+train+epoch state</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/lib+train+optim/">Lib+train+optim</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Details</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../evaluate/">Evaluate</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../preprocess/">Preprocess</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Train</a>
+        
+            <ul>
+            
+            </ul>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">OpenNMT</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Details &raquo;</li>
+        
+      
+    
+    <li>Train</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><strong>train.lua</strong></p>
+<dl>
+<dt>config</dt>
+<dd>Read options from this file []</dd>
+</dl>
+<p><strong>Data options</strong></p>
+<dl>
+<dt>data</dt>
+<dd>Path to the training *-train.t7 file from preprocess.lua []</dd>
+<dt>save_file</dt>
+<dd>Savefile name (model will be saved assavefile_epochX_PPL.t7 where X is the X-th epoch and PPL isthe validation perplexity []</dd>
+<dt>train_from</dt>
+<dd>If training from a checkpoint then this is the path to the pretrained model. []</dd>
+<dt>continue</dt>
+<dd>If training from a checkpoint, whether to continue the training in the same configuration or not. [false]</dd>
+</dl>
+<p><strong>Model options</strong></p>
+<dl>
+<dt>num_layers</dt>
+<dd>Number of layers in the LSTM encoder/decoder [2]</dd>
+<dt>rnn_size</dt>
+<dd>Size of LSTM hidden states [500]</dd>
+<dt>word_vec_size</dt>
+<dd>Word embedding sizes [500]</dd>
+<dt>feat_vec_exponent</dt>
+<dd>If the feature takes N values, then theembedding dimension will be set to N^exponent [0.7]</dd>
+<dt>input_feed</dt>
+<dd>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [true]</dd>
+<dt>brnn</dt>
+<dd>Use a bidirectional encoder [false]</dd>
+<dt>brnn_merge</dt>
+<dd>Merge action for the bidirectional hidden states: concat or sum [sum]</dd>
+</dl>
+<p><strong>Optimization options</strong></p>
+<dl>
+<dt>max_batch_size</dt>
+<dd>Maximum batch size [64]</dd>
+<dt>epochs</dt>
+<dd>Number of training epochs [13]</dd>
+<dt>start_epoch</dt>
+<dd>If loading from a checkpoint, the epoch from which to start [1]</dd>
+<dt>start_iteration</dt>
+<dd>If loading from a checkpoint, the iteration from which to start [1]</dd>
+<dt>param_init</dt>
+<dd>Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</dd>
+<dt>optim</dt>
+<dd>Optimization method. Possible options are: sgd, adagrad, adadelta, adam [sgd]</dd>
+<dt>learning_rate</dt>
+<dd>Starting learning rate. If adagrad/adadelta/adam is used,then this is the global learning rate. Recommended settings: sgd =1,adagrad = 0.1, adadelta = 1, adam = 0.1 [1]</dd>
+<dt>max_grad_norm</dt>
+<dd>If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]</dd>
+<dt>dropout</dt>
+<dd>Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</dd>
+<dt>lr_decay</dt>
+<dd>Decay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</dd>
+<dt>start_decay_at</dt>
+<dd>Start decay after this epoch [9]</dd>
+<dt>curriculum</dt>
+<dd>For this many epochs, order the minibatches based on sourcesequence length. Sometimes setting this to 1 will increase convergence speed. [0]</dd>
+<dt>pre_word_vecs_enc</dt>
+<dd>If a valid path is specified, then this will loadpretrained word embeddings on the encoder side.See README for specific formatting instructions. []</dd>
+<dt>pre_word_vecs_dec</dt>
+<dd>If a valid path is specified, then this will loadpretrained word embeddings on the decoder side.See README for specific formatting instructions. []</dd>
+<dt>fix_word_vecs_enc</dt>
+<dd>Fix word embeddings on the encoder side [false]</dd>
+<dt>fix_word_vecs_dec</dt>
+<dd>Fix word embeddings on the decoder side [false]</dd>
+</dl>
+<p><strong>Other options</strong></p>
+<dl>
+<dt>gpuid</dt>
+<dd>Which gpu to use (1-indexed). &lt; 1 = use CPU [-1]</dd>
+<dt>nparallel</dt>
+<dd>How many parallel process [1]</dd>
+<dt>disable_mem_optimization</dt>
+<dd>Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]</dd>
+<dt>cudnn</dt>
+<dd>Whether to use cudnn or not [false]</dd>
+<dt>save_every</dt>
+<dd>Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]</dd>
+<dt>print_every</dt>
+<dd>Print stats every this many iterations within an epoch. [50]</dd>
+</dl>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../preprocess/" class="btn btn-neutral" title="Preprocess"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../preprocess/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+</body>
+</html>

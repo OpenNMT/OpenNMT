@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>lib+onmt+Encoder - OpenNMT</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "lib+onmt+Encoder";
+    var mkdocs_page_input_path = "code/onmt/lib+onmt+Encoder.md";
+    var mkdocs_page_url = "/code/onmt/lib+onmt+Encoder/";
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> OpenNMT</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../../Quickstart/">Quickstart</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Code</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Eval</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../eval/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../eval/lib+eval+beam/">Lib+eval+beam</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Onmt</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+BiEncoder/">lib+onmt+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+Decoder/">lib+onmt+Decoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">lib+onmt+Encoder</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtencoder">onmt.Encoder</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtencoderargs-network">onmt.Encoder(args, network)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtencoderforwardbatch">onmt.Encoder:forward(batch)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtencoderbackwardbatch-grad_states_output-grad_context_output">onmt.Encoder:backward(batch, grad_states_output, grad_context_output)</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+LSTM/">lib+onmt+LSTM</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+MaskedSoftmax/">lib+onmt+MaskedSoftmax</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+Sequencer/">lib+onmt+Sequencer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+WordEmbedding/">lib+onmt+WordEmbedding</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Train</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/lib+data/">Lib+data</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/lib+train+checkpoint/">Lib+train+checkpoint</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/lib+train+epoch_state/">Lib+train+epoch state</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/lib+train+optim/">Lib+train+optim</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Details</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../../details/evaluate/">Evaluate</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../../details/preprocess/">Preprocess</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../../details/train/">Train</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">OpenNMT</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Code &raquo;</li>
+        
+      
+        
+          <li>Onmt &raquo;</li>
+        
+      
+    
+    <li>lib+onmt+Encoder</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a name="onmt.Encoder.dok"></a></p>
+<h2 id="onmtencoder">onmt.Encoder</h2>
+<p>Encoder is a unidirectional Sequencer used for the source language.</p>
+<pre><code>h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ .      .      .             .
+ |      |      |             |
+h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ |      |      |             |
+x_1    x_2    x_3           x_n
+</code></pre>
+<p>Inherits from <a href="../lib+onmt+Sequencer">onmt.Sequencer</a>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L24">[src]</a>
+<a name="onmt.Encoder"></a></p>
+<h3 id="onmtencoderargs-network">onmt.Encoder(args, network)</h3>
+<p>Construct an encoder layer. </p>
+<p>Parameters:</p>
+<ul>
+<li><code>args</code> - global options.</li>
+<li><code>network</code> - optional recurrent step template.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L85">[src]</a>
+<a name="onmt.Encoder:forward"></a></p>
+<h3 id="onmtencoderforwardbatch">onmt.Encoder:forward(batch)</h3>
+<p>Compute the context representation of an input.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>batch</code> - a <a href="../lib+data/#opennmtdata">batch struct</a> as defined data.lua.</li>
+</ul>
+<p>Returns:</p>
+<ol>
+<li>
+<ul>
+<li>final hidden states</li>
+</ul>
+</li>
+<li>
+<ul>
+<li>context matrix H</li>
+</ul>
+</li>
+</ol>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L163">[src]</a>
+<a name="onmt.Encoder:backward"></a></p>
+<h3 id="onmtencoderbackwardbatch-grad_states_output-grad_context_output">onmt.Encoder:backward(batch, grad_states_output, grad_context_output)</h3>
+<p>Backward pass (only called during training)</p>
+<p>Parameters:</p>
+<ul>
+<li><code>batch</code> - must be same as for forward</li>
+<li><code>grad_states_output</code> gradient of loss wrt last state</li>
+<li><code>grad_context_output</code> - gradient of loss wrt full context.</li>
+</ul>
+<p>Returns: nil</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../lib+onmt+GlobalAttention/" class="btn btn-neutral float-right" title="lib+onmt+GlobalAttention">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../lib+onmt+Decoder/" class="btn btn-neutral" title="lib+onmt+Decoder"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../lib+onmt+Decoder/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../lib+onmt+GlobalAttention/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../../js/theme.js"></script>
+      <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+</body>
+</html>
