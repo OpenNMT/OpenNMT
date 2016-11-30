@@ -1,3 +1,4 @@
+--[[ Recursively call `clone()` on all tensors within `out`. ]]
 local function recursiveClone(out)
   if torch.isTensor(out) then
     return out:clone()
@@ -10,6 +11,7 @@ local function recursiveClone(out)
   end
 end
 
+--[[ Clone any serializable Torch object. ]]
 local function deepClone(obj)
   local mem = torch.MemoryFile("w"):binary()
   mem:writeObject(obj)
