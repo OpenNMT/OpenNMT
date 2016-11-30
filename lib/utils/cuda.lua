@@ -83,7 +83,7 @@ function Cuda.freeMemory()
     local freeMemory = cutorch.getMemoryUsage(cutorch.getDevice())
     return freeMemory
   end
-  return "n/a"
+  return 0
 end
 
 return Cuda
