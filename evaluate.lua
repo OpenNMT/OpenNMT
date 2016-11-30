@@ -55,16 +55,12 @@ end
 local function main()
   local opt = cmd:parse(arg)
 
-  if opt.config:len() > 0 then
-    opt = utils.Opt.load_config(opt.config, opt)
-  end
-
   local required_options = {
     "model",
     "src_file"
   }
 
-  utils.Opt.require_options(opt, required_options)
+  utils.Opt.init(opt, required_options)
 
   local src_reader = utils.FileReader.new(opt.src_file)
   local src_batch = {}

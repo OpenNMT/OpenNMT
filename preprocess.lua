@@ -251,10 +251,6 @@ local function make_data(src_file, targ_file, src_dicts, targ_dicts)
 end
 
 local function main()
-  if opt.config:len() > 0 then
-    opt = utils.Opt.load_config(opt.config, opt)
-  end
-
   local required_options = {
     "train_src_file",
     "train_targ_file",
@@ -263,9 +259,7 @@ local function main()
     "output_file"
   }
 
-  utils.Opt.require_options(opt, required_options)
-
-  torch.manualSeed(opt.seed)
+  utils.Opt.init(opt, required_options)
 
   local data = {}
 

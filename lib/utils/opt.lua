@@ -48,7 +48,18 @@ local function load_config(filename, opt)
   return opt
 end
 
+local function init(opt, required_options)
+  if opt.config:len() > 0 then
+    opt = load_config(opt.config, opt)
+  end
+
+  require_options(opt, required_options)
+
+  if opt.seed then
+    torch.manualSeed(opt.seed)
+  end
+end
+
 return {
-  require_options = require_options,
-  load_config = load_config
+  init = init
 }
