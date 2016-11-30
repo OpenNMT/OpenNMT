@@ -75,6 +75,8 @@ cmd:text("")
 -- GPU
 cmd:option('-gpuid', -1, [[Which gpu to use (1-indexed). < 1 = use CPU]])
 cmd:option('-nparallel', 1, [[How many parallel process]])
+cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
+                                                except if you want to look inside clones for visualization purpose for instance.]])
 cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping
@@ -203,7 +205,9 @@ local function train_model(model, train_data, valid_data, dataset, info)
                                                       dataset.dicts.targ.features))
 
     -- optimize memory of the first clone
-    utils.Memory.optimize(_G.model, _G.criterion, utils.Cuda.convert(train_data:get_batch(1)), verbose)
+    if not opt.disable_mem_optimization then
+      utils.Memory.optimize(_G.model, _G.criterion, utils.Cuda.convert(train_data:get_batch(1)), verbose)
+    end
 
     return idx, _G.criterion, _G.params, _G.grad_params
   end, function(idx, thecriterion, theparams, thegrad_params)
