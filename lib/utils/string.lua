@@ -1,5 +1,5 @@
 --[[
-  Split `str` on string separator `sep`.
+  Split `str` on string or pattern separator `sep`.
   Compared to the standard Lua split function, this one does not drop empty fragment.
 ]]
 local function split(str, sep)
@@ -27,10 +27,12 @@ local function split(str, sep)
   return res
 end
 
+--[[ Remove whitespaces at the start and end of the string `s`. ]]
 local function strip(s)
   return s:gsub("^%s+",""):gsub("%s+$","")
 end
 
+--[[ Convenience function to test `s` for emptiness. ]]
 local function is_empty(s)
   return s == nil or s == ''
 end

@@ -4,6 +4,7 @@ function FileReader:__init(filename)
   self.file = assert(io.open(filename, "r"))
 end
 
+--[[ Read next line in the file and split it on spaces. If EOF is reached, returns nil. ]]
 function FileReader:next()
   local line = self.file:read()
 

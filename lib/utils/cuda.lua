@@ -39,6 +39,10 @@ function Cuda.init(opt, gpuIdx)
   end
 end
 
+--[[
+  Recursively move all supported objects in `obj` on the GPU.
+  When using CPU only, converts to float instead of the default double.
+]]
 function Cuda.convert(obj)
   if not torch.typename(obj) and type(obj) == 'table' then
     for k, v in pairs(obj) do

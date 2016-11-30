@@ -17,10 +17,12 @@ function Dict:__init(data)
   end
 end
 
+--[[ Return the number of entries in the dictionary. ]]
 function Dict:__len__()
   return #self.idx_to_label
 end
 
+--[[ Load entries from a file. ]]
 function Dict:load_file(filename)
   local file = assert(io.open(filename, 'r'))
 
@@ -39,6 +41,7 @@ function Dict:load_file(filename)
   file:close()
 end
 
+--[[ Write entries to a file. ]]
 function Dict:write_file(filename)
   local file = assert(io.open(filename, 'w'))
 
@@ -50,6 +53,7 @@ function Dict:write_file(filename)
   file:close()
 end
 
+--[[ Lookup `key` in the dictionary: it can be an index or a string. ]]
 function Dict:lookup(key)
   if type(key) == "string" then
     return self.label_to_idx[key]
@@ -58,21 +62,20 @@ function Dict:lookup(key)
   end
 end
 
-function Dict:set_special(special)
-  self.special = special
-end
-
+--[[ Mark this `label` and `idx` as special (i.e. will not be pruned). ]]
 function Dict:add_special(label, idx)
   idx = self:add(label, idx)
   table.insert(self.special, idx)
 end
 
+--[[ Mark all labels in `labels` as specials (i.e. will not be pruned). ]]
 function Dict:add_specials(labels)
   for i = 1, #labels do
     self:add_special(labels[i])
   end
 end
 
+--[[ Add `label` in the dictionary. Use `idx` as its index if given. ]]
 function Dict:add(label, idx)
   if idx ~= nil then
     self.idx_to_label[idx] = label
@@ -95,6 +98,7 @@ function Dict:add(label, idx)
   return idx
 end
 
+--[[ Return a new dictionary with the `size` most frequent entries. ]]
 function Dict:prune(size)
   if size >= #self then
     return self
@@ -118,6 +122,10 @@ function Dict:prune(size)
   return new_dict
 end
 
+--[[
+  Convert `labels` to indices. Use `unk_word` if not found.
+  Optionally insert `bos_word` at the beginning and `eos_word` at the end.
+]]
 function Dict:convert_to_idx(labels, unk_word, bos_word, eos_word)
   local vec = {}
 
@@ -140,6 +148,7 @@ function Dict:convert_to_idx(labels, unk_word, bos_word, eos_word)
   return torch.IntTensor(vec)
 end
 
+--[[ Convert `idx` to labels. If index `stop` is reached, convert it and return. ]]
 function Dict:convert_to_labels(idx, stop)
   local labels = {}
 
