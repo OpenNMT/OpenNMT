@@ -14,15 +14,7 @@ local function reorder(tab, index)
   return new_tab
 end
 
-local function map(tab, fun)
-  for i = 1, #tab do
-    tab[i] = fun(tab[i])
-  end
-  return tab
-end
-
 return {
-  map = map,
   reorder = reorder,
   append = append
 }
