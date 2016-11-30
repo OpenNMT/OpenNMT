@@ -5,7 +5,7 @@ nn.LookupTable to allow fixed and pretrained embeddings.
 --]]
 local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Container')
 
---[[ 
+--[[
 Parameters:
 
   * `vocab_size` - size of the vocabulary

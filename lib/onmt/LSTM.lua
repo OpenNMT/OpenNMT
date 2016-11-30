@@ -1,7 +1,7 @@
 require 'nngraph'
 
 --[[
-Implementation of a single stacked-LSTM step as 
+Implementation of a single stacked-LSTM step as
 an nn unit.
 
       h^L_{t-1} --- h^L_t

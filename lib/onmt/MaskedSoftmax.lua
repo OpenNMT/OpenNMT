@@ -2,10 +2,10 @@ require 'nngraph'
 
 --[[ A batched-softmax wrapper to mask the probabilities of padding.
 
-    AXXXAA  
+    AXXXAA
     AXXAAA
     AXXXXX
- 
+
 --]]
 local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Container')
 
