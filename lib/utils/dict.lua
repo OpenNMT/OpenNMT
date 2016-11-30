@@ -1,6 +1,6 @@
-local dict = torch.class("dict")
+local Dict = torch.class("Dict")
 
-function dict:__init(data)
+function Dict:__init(data)
   self.idx_to_label = {}
   self.label_to_idx = {}
   self.frequencies = {}
@@ -17,11 +17,11 @@ function dict:__init(data)
   end
 end
 
-function dict:__len__()
+function Dict:__len__()
   return #self.idx_to_label
 end
 
-function dict:load_file(filename)
+function Dict:load_file(filename)
   local file = assert(io.open(filename, 'r'))
 
   for line in file:lines() do
@@ -39,7 +39,7 @@ function dict:load_file(filename)
   file:close()
 end
 
-function dict:write_file(filename)
+function Dict:write_file(filename)
   local file = assert(io.open(filename, 'w'))
 
   for i = 1, #self do
@@ -50,7 +50,7 @@ function dict:write_file(filename)
   file:close()
 end
 
-function dict:lookup(key)
+function Dict:lookup(key)
   if type(key) == "string" then
     return self.label_to_idx[key]
   else
@@ -58,22 +58,22 @@ function dict:lookup(key)
   end
 end
 
-function dict:set_special(special)
+function Dict:set_special(special)
   self.special = special
 end
 
-function dict:add_special(label, idx)
+function Dict:add_special(label, idx)
   idx = self:add(label, idx)
   table.insert(self.special, idx)
 end
 
-function dict:add_specials(labels)
+function Dict:add_specials(labels)
   for i = 1, #labels do
     self:add_special(labels[i])
   end
 end
 
-function dict:add(label, idx)
+function Dict:add(label, idx)
   if idx ~= nil then
     self.idx_to_label[idx] = label
     self.label_to_idx[label] = idx
@@ -95,7 +95,7 @@ function dict:add(label, idx)
   return idx
 end
 
-function dict:prune(size)
+function Dict:prune(size)
   if size >= #self then
     return self
   end
@@ -104,7 +104,7 @@ function dict:prune(size)
   local freq = torch.Tensor(self.frequencies)
   local _, idx = torch.sort(freq, 1, true)
 
-  local new_dict = dict.new()
+  local new_dict = Dict.new()
 
   -- Add special entries in all cases.
   for i = 1, #self.special do
@@ -118,7 +118,7 @@ function dict:prune(size)
   return new_dict
 end
 
-function dict:convert_to_idx(labels, unk_word, bos_word, eos_word)
+function Dict:convert_to_idx(labels, unk_word, bos_word, eos_word)
   local vec = {}
 
   if bos_word ~= nil then
@@ -140,7 +140,7 @@ function dict:convert_to_idx(labels, unk_word, bos_word, eos_word)
   return torch.IntTensor(vec)
 end
 
-function dict:convert_to_labels(idx, stop)
+function Dict:convert_to_labels(idx, stop)
   local labels = {}
 
   for i = 1, #idx do
@@ -153,4 +153,4 @@ function dict:convert_to_labels(idx, stop)
   return labels
 end
 
-return dict
+return Dict

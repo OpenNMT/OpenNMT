@@ -1,12 +1,10 @@
-require 'torch'
+local FileReader = torch.class("FileReader")
 
-local file_reader = torch.class("file_reader")
-
-function file_reader:__init(filename)
+function FileReader:__init(filename)
   self.file = assert(io.open(filename, "r"))
 end
 
-function file_reader:next()
+function FileReader:next()
   local line = self.file:read()
 
   if line == nil then
@@ -21,8 +19,8 @@ function file_reader:next()
   return sent
 end
 
-function file_reader:close()
+function FileReader:close()
   self.file:close()
 end
 
-return file_reader
+return FileReader
