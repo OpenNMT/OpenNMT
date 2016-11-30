@@ -122,6 +122,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
         
     </li>
@@ -284,7 +291,12 @@
               
                 <p><a name="onmt.MaskedSoftmax.dok"></a></p>
 <h2 id="onmtmaskedsoftmax">onmt.MaskedSoftmax</h2>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/MaskedSoftmax.lua#L14">[src]</a>
+<p>A batched-softmax wrapper to mask the probabilities of padding.</p>
+<pre><code>AXXXAA
+AXXAAA
+AXXXXX
+</code></pre>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/MaskedSoftmax.lua#L21">[src]</a>
 <a name="onmt.MaskedSoftmax"></a></p>
 <h3 id="onmtmaskedsoftmaxsource_sizes-source_length-beam_size">onmt.MaskedSoftmax(source_sizes, source_length, beam_size)</h3>
 <p>A nn-style module that applies a softmax on input that gives no weight to the left padding.</p>

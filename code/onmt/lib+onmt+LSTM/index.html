@@ -122,6 +122,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
         
     </li>
@@ -284,16 +291,32 @@
               
                 <p><a name="onmt.LSTM.dok"></a></p>
 <h2 id="onmtlstm">onmt.LSTM</h2>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/LSTM.lua#L17">[src]</a>
+<p>Implementation of a single stacked-LSTM step as
+an nn unit.</p>
+<pre><code>  h^L_{t-1} --- h^L_t
+  c^L_{t-1} --- c^L_t
+             |
+
+
+             .
+             |
+         [dropout]
+             |
+  h^1_{t-1} --- h^1_t
+  c^1_{t-1} --- c^1_t
+             |
+             |
+            x_t
+</code></pre>
+<p>Computes <script type="math/tex; mode=display">(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})</script>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/LSTM.lua#L35">[src]</a>
 <a name="onmt.LSTM"></a></p>
 <h3 id="onmtlstmnum_layers-input_size-hidden_size-dropout">onmt.LSTM(num_layers, input_size, hidden_size, dropout)</h3>
-<p>A nn-style module computing one LSTM step.</p>
-<p>Computes <script type="math/tex; mode=display">(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})</script>.</p>
 <p>Parameters:</p>
 <ul>
-<li><code>num_layers</code> - Number of LSTM layers.  </li>
-<li><code>input_size</code> -  Size of input layer x.</li>
-<li><code>hidden_size</code> -  Size of the hidden layers (cell and hidden).</li>
+<li><code>num_layers</code> - Number of LSTM layers, <script type="math/tex; mode=display">L</script>.</li>
+<li><code>input_size</code> - Size of input layer,  <script type="math/tex; mode=display">|x|</script>.</li>
+<li><code>hidden_size</code> - Size of the hidden layers (cell and hidden, <script type="math/tex; mode=display">c, h</script>).</li>
 <li><code>dropout</code> - Dropout rate to use.</li>
 </ul>
 <h4 id="undocumented-methods">Undocumented methods</h4>

@@ -118,7 +118,7 @@
                 
                     <li><a class="toctree-l4" href="#onmtdecoderresetsource_sizes-source_length-beam_size">onmt.Decoder:reset(source_sizes, source_length, beam_size)</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtdecoderforward_oneinput-prev_states-context-prev_out-t">onmt.Decoder:forward_one(input, prev_states, context, prev_out, t)</a></li>
+                    <li><a class="toctree-l4" href="#onmtdecoderforward_oneinput-features-prev_states-context-prev_out-t">onmt.Decoder:forward_one(input, features, prev_states, context, prev_out, t)</a></li>
                 
                     <li><a class="toctree-l4" href="#onmtdecoderforwardbatch-encoder_states-context">onmt.Decoder:forward(batch, encoder_states, context)</a></li>
                 
@@ -137,6 +137,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../lib+onmt+Encoder/">lib+onmt+Encoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
         
     </li>
 
@@ -296,7 +303,7 @@
               
                 <p><a name="onmt.Decoder.dok"></a></p>
 <h2 id="onmtdecoder">onmt.Decoder</h2>
-<p>Decoder is the sequencer for the target words.</p>
+<p>Unit to decode a sequence of output tokens.</p>
 <pre><code> .      .      .             .
  |      |      |             |
 h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
@@ -309,17 +316,17 @@ h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
 x_1    x_2    x_3           x_n
 </code></pre>
 <p>Inherits from <a href="../lib+onmt+Sequencer">onmt.Sequencer</a>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Decoder.lua#L28">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Decoder.lua#L28">[src]</a>
 <a name="onmt.Decoder"></a></p>
 <h3 id="onmtdecoderargs-network-generator">onmt.Decoder(args, network, generator)</h3>
-<p>Construct an encoder layer. </p>
+<p>Construct an encoder layer.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>args</code> - global options.</li>
 <li><code>network</code> - optional, recurrent step template.</li>
 <li><code>generator</code> - optional, a output <a href="../lib+onmt+Generator">onmt.Generator</a>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Decoder.lua#L154">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Decoder.lua#L176">[src]</a>
 <a name="onmt.Decoder:reset"></a></p>
 <h3 id="onmtdecoderresetsource_sizes-source_length-beam_size">onmt.Decoder:reset(source_sizes, source_length, beam_size)</h3>
 <p>Update internals of model to prepare for new batch.</p>
@@ -327,9 +334,9 @@ x_1    x_2    x_3           x_n
 <ul>
 <li>See  <a href="../lib+onmt+MaskedSoftmax">onmt.MaskedSoftmax</a>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Decoder.lua#L190">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Decoder.lua#L212">[src]</a>
 <a name="onmt.Decoder:forward_one"></a></p>
-<h3 id="onmtdecoderforward_oneinput-prev_states-context-prev_out-t">onmt.Decoder:forward_one(input, prev_states, context, prev_out, t)</h3>
+<h3 id="onmtdecoderforward_oneinput-features-prev_states-context-prev_out-t">onmt.Decoder:forward_one(input, features, prev_states, context, prev_out, t)</h3>
 <p>Run one step of the decoder.</p>
 <p>Parameters:</p>
 <ul>
@@ -344,7 +351,7 @@ x_1    x_2    x_3           x_n
 <li><code>out</code> - Top-layer Hidden state</li>
 <li><code>states</code> - All states</li>
 </ol>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Decoder.lua#L261">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Decoder.lua#L289">[src]</a>
 <a name="onmt.Decoder:forward"></a></p>
 <h3 id="onmtdecoderforwardbatch-encoder_states-context">onmt.Decoder:forward(batch, encoder_states, context)</h3>
 <p>Compute all forward steps.</p>
@@ -355,16 +362,16 @@ x_1    x_2    x_3           x_n
 <li><code>context</code> - the context to apply attention to.</li>
 </ul>
 <p>Returns: Tables of top hidden layer at each timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Decoder.lua#L278">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Decoder.lua#L306">[src]</a>
 <a name="onmt.Decoder:compute_score"></a></p>
 <h3 id="onmtdecodercompute_scorebatch-encoder_states-context">onmt.Decoder:compute_score(batch, encoder_states, context)</h3>
 <p>Compute the cumulative score of a target sequence.
   Used in decoding when gold data are provided.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Decoder.lua#L294">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Decoder.lua#L322">[src]</a>
 <a name="onmt.Decoder:compute_loss"></a></p>
 <h3 id="onmtdecodercompute_lossbatch-encoder_states-context-criterion">onmt.Decoder:compute_loss(batch, encoder_states, context, criterion)</h3>
 <p>Compute the loss on a batch based on final layer <code>generator</code>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Decoder.lua#L316">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Decoder.lua#L350">[src]</a>
 <a name="onmt.Decoder:backward"></a></p>
 <h3 id="onmtdecoderbackwardbatch-outputs-criterion">onmt.Decoder:backward(batch, outputs, criterion)</h3>
 <p>Compute the standard backward update.</p>

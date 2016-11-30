@@ -135,6 +135,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
         
     </li>
@@ -299,16 +306,16 @@ h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
 x_1    x_2    x_3           x_n
 </code></pre>
 <p>Inherits from <a href="../lib+onmt+Sequencer">onmt.Sequencer</a>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L24">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Encoder.lua#L24">[src]</a>
 <a name="onmt.Encoder"></a></p>
 <h3 id="onmtencoderargs-network">onmt.Encoder(args, network)</h3>
-<p>Construct an encoder layer. </p>
+<p>Construct an encoder layer.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>args</code> - global options.</li>
 <li><code>network</code> - optional recurrent step template.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L85">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Encoder.lua#L109">[src]</a>
 <a name="onmt.Encoder:forward"></a></p>
 <h3 id="onmtencoderforwardbatch">onmt.Encoder:forward(batch)</h3>
 <p>Compute the context representation of an input.</p>
@@ -329,7 +336,7 @@ x_1    x_2    x_3           x_n
 </ul>
 </li>
 </ol>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L163">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Encoder.lua#L190">[src]</a>
 <a name="onmt.Encoder:backward"></a></p>
 <h3 id="onmtencoderbackwardbatch-grad_states_output-grad_context_output">onmt.Encoder:backward(batch, grad_states_output, grad_context_output)</h3>
 <p>Backward pass (only called during training)</p>
@@ -340,6 +347,9 @@ x_1    x_2    x_3           x_n
 <li><code>grad_context_output</code> - gradient of loss wrt full context.</li>
 </ul>
 <p>Returns: nil</p>
+<h4 id="undocumented-methods">Undocumented methods</h4>
+<p><a name="onmt.Encoder:shareWordEmb"></a>
+ * <code>onmt.Encoder:shareWordEmb(other)</code></p>
               
             </div>
           </div>
@@ -347,7 +357,7 @@ x_1    x_2    x_3           x_n
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../lib+onmt+GlobalAttention/" class="btn btn-neutral float-right" title="lib+onmt+GlobalAttention">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../lib+onmt+FeaturesEmbedding/" class="btn btn-neutral float-right" title="lib+onmt+FeaturesEmbedding">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../lib+onmt+Decoder/" class="btn btn-neutral" title="lib+onmt+Decoder"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -379,7 +389,7 @@ x_1    x_2    x_3           x_n
         <span><a href="../lib+onmt+Decoder/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../lib+onmt+GlobalAttention/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../lib+onmt+FeaturesEmbedding/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

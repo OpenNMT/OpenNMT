@@ -122,6 +122,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
         
     </li>
@@ -156,7 +163,7 @@
             
                 <li class="toctree-l3"><a href="#onmtwordembedding">onmt.WordEmbedding</a></li>
                 
-                    <li><a class="toctree-l4" href="#undocumented-methods">Undocumented methods</a></li>
+                    <li><a class="toctree-l4" href="#onmtwordembeddingvocab_size-vec_size-pre_trained-fix">onmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)</a></li>
                 
             
             </ul>
@@ -284,10 +291,20 @@
               
                 <p><a name="onmt.WordEmbedding.dok"></a></p>
 <h2 id="onmtwordembedding">onmt.WordEmbedding</h2>
+<p>nn unit. Maps from word ids to embeddings. Slim wrapper around
+nn.LookupTable to allow fixed and pretrained embeddings.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/WordEmbedding.lua#L16">[src]</a>
+<a name="onmt.WordEmbedding"></a></p>
+<h3 id="onmtwordembeddingvocab_size-vec_size-pre_trained-fix">onmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)</h3>
+<p>Parameters:</p>
+<ul>
+<li><code>vocab_size</code> - size of the vocabulary</li>
+<li><code>vec_size</code> - size of the embedding</li>
+<li><code>pre_trainined</code> - path to a pretrained vector file</li>
+<li><code>fix</code> - keep the weights of the embeddings fixed.</li>
+</ul>
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.WordEmbedding"></a>
- * <code>onmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)</code>
-<a name="onmt.WordEmbedding:updateOutput"></a>
+<p><a name="onmt.WordEmbedding:updateOutput"></a>
  * <code>onmt.WordEmbedding:updateOutput(input)</code>
 <a name="onmt.WordEmbedding:updateGradInput"></a>
  * <code>onmt.WordEmbedding:updateGradInput(input, gradOutput)</code>

@@ -121,6 +121,13 @@
 
         
             
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
     <li class="toctree-l1 current">
         <a class="current" href="./">lib+onmt+GlobalAttention</a>
         
@@ -284,25 +291,25 @@
               
                 <p><a name="onmt.GlobalAttention.dok"></a></p>
 <h2 id="onmtglobalattention">onmt.GlobalAttention</h2>
-<p>Global attention takes a matrix and a query vector. It 
-then computes a parameterized convex combination of the matrix 
-based on the input query. </p>
+<p>Global attention takes a matrix and a query vector. It
+then computes a parameterized convex combination of the matrix
+based on the input query.</p>
 <pre><code>H_1 H_2 H_3 ... H_n
  q   q   q       q
-  |  |   |       |   
+  |  |   |       |
    \ |   |      /
        .....
      \   |  /
          a
 </code></pre>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/GlobalAttention.lua#L32">[src]</a>
-<a name="onmt.GlobalAttention"></a></p>
-<h3 id="onmtglobalattentiondim">onmt.GlobalAttention(dim)</h3>
-<p>A nn-style module computing attention.</p>
 <p>Constructs a unit mapping:
   <script type="math/tex; mode=display">(H_1 .. H_n, q) => (a)</script>
   Where H is of <code>batch x n x dim</code> and q is of <code>batch x dim</code>.</p>
 <p>The full function is  <script type="math/tex; mode=display">\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)</script>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/GlobalAttention.lua#L30">[src]</a>
+<a name="onmt.GlobalAttention"></a></p>
+<h3 id="onmtglobalattentiondim">onmt.GlobalAttention(dim)</h3>
+<p>A nn-style module computing attention.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>dim</code> - dimension of the context vectors.</li>
@@ -324,7 +331,7 @@ based on the input query. </p>
         <a href="../lib+onmt+LSTM/" class="btn btn-neutral float-right" title="lib+onmt+LSTM">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../lib+onmt+Encoder/" class="btn btn-neutral" title="lib+onmt+Encoder"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../lib+onmt+FeaturesEmbedding/" class="btn btn-neutral" title="lib+onmt+FeaturesEmbedding"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -350,7 +357,7 @@ based on the input query. </p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../lib+onmt+Encoder/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../lib+onmt+FeaturesEmbedding/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../lib+onmt+LSTM/" style="color: #fcfcfc">Next &raquo;</a></span>

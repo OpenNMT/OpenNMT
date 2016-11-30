@@ -122,6 +122,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
         
     </li>
@@ -293,16 +300,17 @@
 <p>Sequencer is the base class for encoder and decoder models.
   Main task is to manage <code>self.net(t)</code>, the unrolled network
   used during training.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Sequencer.lua#L16">[src]</a>
+<pre><code> :net(1) =&gt; :net(2) =&gt; ... =&gt; :net(n-1) =&gt; :net(n)
+</code></pre>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Sequencer.lua#L18">[src]</a>
 <a name="onmt.Sequencer"></a></p>
 <h3 id="onmtsequencerargs-network">onmt.Sequencer(args, network)</h3>
-<p>Constructor</p>
 <p>Parameters:</p>
 <ul>
 <li><code>args</code> - global options.</li>
 <li><code>network</code> - optional recurrent step template.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Sequencer.lua#L91">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Sequencer.lua#L88">[src]</a>
 <a name="onmt.Sequencer:net"></a></p>
 <h3 id="onmtsequencernett">onmt.Sequencer:net(t)</h3>
 <p>Get access to the recurrent unit at a timestep.</p>
@@ -310,11 +318,11 @@
   * <code>t</code> - timestep.</p>
 <p>Returns: The raw network clone at timestep t.
   When <code>evaluate()</code> has been called, cheat and return t=1.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Sequencer.lua#L111">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Sequencer.lua#L108">[src]</a>
 <a name="onmt.Sequencer:training"></a></p>
 <h3 id="onmtsequencertraining">onmt.Sequencer:training()</h3>
 <p>Move the network to train mode. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Sequencer.lua#L121">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/onmt/Sequencer.lua#L118">[src]</a>
 <a name="onmt.Sequencer:evaluate"></a></p>
 <h3 id="onmtsequencerevaluate">onmt.Sequencer:evaluate()</h3>
 <p>Move the network to evaluation mode. </p>

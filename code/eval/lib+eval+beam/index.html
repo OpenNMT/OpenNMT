@@ -85,13 +85,13 @@
             
                 <li class="toctree-l3"><a href="#onmtbeam">onmt.Beam</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamsize">onmt.Beam(size)</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamsize-num_features">onmt.Beam(size, num_features)</a></li>
                 
                     <li><a class="toctree-l4" href="#onmtbeamget_current_state">onmt.Beam:get_current_state()</a></li>
                 
                     <li><a class="toctree-l4" href="#onmtbeamget_current_origin">onmt.Beam:get_current_origin()</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamadvanceout-attn_out">onmt.Beam:advance(out, attn_out)</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamadvanceword_lk-feats_lk-attn_out">onmt.Beam:advance(word_lk, feats_lk, attn_out)</a></li>
                 
                     <li><a class="toctree-l4" href="#onmtbeamget_hypk">onmt.Beam:get_hyp(k)</a></li>
                 
@@ -133,6 +133,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../onmt/lib+onmt+Encoder/">lib+onmt+Encoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../onmt/lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
         
     </li>
 
@@ -293,34 +300,34 @@
                 <p><a name="onmt.Beam.dok"></a></p>
 <h2 id="onmtbeam">onmt.Beam</h2>
 <p>Class for managing the beam search process. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L26">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L26">[src]</a>
 <a name="onmt.Beam"></a></p>
-<h3 id="onmtbeamsize">onmt.Beam(size)</h3>
+<h3 id="onmtbeamsize-num_features">onmt.Beam(size, num_features)</h3>
 <p>Constructor</p>
 <p>Parameters:</p>
 <ul>
 <li><code>size</code> : The beam <code>K</code>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L47">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L56">[src]</a>
 <a name="onmt.Beam:get_current_state"></a></p>
 <h3 id="onmtbeamget_current_state">onmt.Beam:get_current_state()</h3>
 <p>Get the outputs for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L52">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L61">[src]</a>
 <a name="onmt.Beam:get_current_origin"></a></p>
 <h3 id="onmtbeamget_current_origin">onmt.Beam:get_current_origin()</h3>
 <p>Get the backpointers for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L66">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L75">[src]</a>
 <a name="onmt.Beam:advance"></a></p>
-<h3 id="onmtbeamadvanceout-attn_out">onmt.Beam:advance(out, attn_out)</h3>
-<p>Given prob over words for every last beam <code>out</code> and attention
+<h3 id="onmtbeamadvanceword_lk-feats_lk-attn_out">onmt.Beam:advance(word_lk, feats_lk, attn_out)</h3>
+<p>Given prob over words for every last beam <code>word_lk</code> and attention
  <code>attn_out</code>. Compute and update the beam search.</p>
 <p>Parameters:</p>
 <ul>
-<li><code>out</code>- probs at the last step</li>
-<li><code>attn_out</code>- attention at the last step</li>
+<li><code>word_lk</code>- probs at the last step</li>
+<li><code>attn_word_lk</code>- attention at the last step</li>
 </ul>
 <p>Returns: true if beam search is complete.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L132">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L152">[src]</a>
 <a name="onmt.Beam:get_hyp"></a></p>
 <h3 id="onmtbeamget_hypk">onmt.Beam:get_hyp(k)</h3>
 <p>Walk back to construct the full hypothesis <code>k</code>.</p>
