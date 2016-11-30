@@ -1,0 +1,8 @@
+language: generic
+
+before_install:
+  - apt-get update
+  - apt-get install -y luarocks
+  - luarocks install luacheck
+
+script: luacheck *lua lib/
