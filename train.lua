@@ -232,6 +232,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
     end
 
     opt.start_iteration = 1
+    local count = 1
 
     for i = start_i, #train_data, utils.Parallel.count do
       local batches = {}
@@ -277,13 +278,14 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
       epoch_state:update(batches, losses)
 
-      if i % (opt.print_every*utils.Parallel.count)  == 0 then
+      if count % opt.print_every == 0 then
         epoch_state:log(i, #train_data, optim:get_learning_rate())
       end
-
-      if opt.save_every > 0 and i % opt.save_every == 0 then
+      if opt.save_every > 0 and count % opt.save_every == 0 then
         checkpoint:save_iteration(i, epoch_state, batch_order)
       end
+      count = count + 1
+
     end
 
     return epoch_state
