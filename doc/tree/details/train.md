@@ -34,6 +34,9 @@ rnn_size
 word_vec_size
 :   Word embedding sizes [500]
 
+feat_vec_exponent
+:   If the feature takes N values, then theembedding dimension will be set to N^exponent [0.7]
+
 input_feed
 :   Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [true]
 
@@ -104,6 +107,9 @@ gpuid
 
 nparallel
 :   How many parallel process [1]
+
+disable_mem_optimization
+:   Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]
 
 cudnn
 :   Whether to use cudnn or not [false]

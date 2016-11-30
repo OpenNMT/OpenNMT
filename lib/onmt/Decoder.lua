@@ -1,4 +1,4 @@
---[[ Decoder is the sequencer for the target words.
+--[[ Unit to decode a sequence of output tokens.
 
      .      .      .             .
      |      |      |             |

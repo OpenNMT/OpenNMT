@@ -32,6 +32,9 @@ src_vocab_file
 targ_vocab_file
 :   Pre-calculated target vocabulary []
 
+features_vocabs_prefix
+:   Path prefix to existing features vocabularies []
+
 seq_length
 :   Maximum sequence length [50]
 

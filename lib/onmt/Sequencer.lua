@@ -3,11 +3,13 @@ require 'nngraph'
 --[[ Sequencer is the base class for encoder and decoder models.
   Main task is to manage `self.net(t)`, the unrolled network
   used during training.
+
+     :net(1) => :net(2) => ... => :net(n-1) => :net(n)
+
 --]]
 local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Container')
 
---[[ Constructor
-
+--[[
 Parameters:
 
   * `args` - global options.

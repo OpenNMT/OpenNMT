@@ -1,17 +1,35 @@
 require 'nngraph'
 
-local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
+--[[
+Implementation of a single stacked-LSTM step as 
+an nn unit.
+
+      h^L_{t-1} --- h^L_t
+      c^L_{t-1} --- c^L_t
+                 |
 
 
---[[A nn-style module computing one LSTM step.
+                 .
+                 |
+             [dropout]
+                 |
+      h^1_{t-1} --- h^1_t
+      c^1_{t-1} --- c^1_t
+                 |
+                 |
+                x_t
 
 Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
 
+--]]
+local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
+
+--[[
 Parameters:
 
-  * `num_layers` - Number of LSTM layers.
-  * `input_size` -  Size of input layer x.
-  * `hidden_size` -  Size of the hidden layers (cell and hidden).
+  * `num_layers` - Number of LSTM layers, $$L$$.
+  * `input_size` - Size of input layer,  $$|x|$$.
+  * `hidden_size` - Size of the hidden layers (cell and hidden, $$c, h$$).
   * `dropout` - Dropout rate to use.
 --]]
 function LSTM:__init(num_layers, input_size, hidden_size, dropout)
@@ -21,6 +39,7 @@ function LSTM:__init(num_layers, input_size, hidden_size, dropout)
   self:add(self.net)
 end
 
+--[[ Stack the LSTM units. ]]
 function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout)
   local inputs = {}
   local outputs = {}
@@ -63,16 +82,7 @@ function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout)
   return nn.gModule(inputs, outputs)
 end
 
---[[Create a nngraph template of one time-step of a single-layer LSTM.
-
-Parameters:
-
-  * `input_size` - input size
-  * `hidden_size` - internal size
-
-Returns: An nngraph unit mapping: ${(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})}$
-
---]]
+--[[ Build a single LSTM unit layer. ]]
 function LSTM:_buildLayer(input_size, hidden_size)
   local inputs = {}
   table.insert(inputs, nn.Identity()())

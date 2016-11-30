@@ -1,7 +1,18 @@
 local constants = require 'lib.constants'
 
+--[[ nn unit. Maps from word ids to embeddings. Slim wrapper around
+nn.LookupTable to allow fixed and pretrained embeddings.
+--]]
 local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Container')
 
+--[[ 
+Parameters:
+
+  * `vocab_size` - size of the vocabulary
+  * `vec_size` - size of the embedding
+  * `pre_trainined` - path to a pretrained vector file
+  * `fix` - keep the weights of the embeddings fixed.
+--]]
 function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   parent.__init(self)
 
