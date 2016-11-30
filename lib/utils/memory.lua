@@ -1,5 +1,4 @@
-local Memory = {}
-
+-- Allow tensor sharing for these modules.
 local supportedModules = {
   'nn.Linear',
   'nn.CMulTable',
@@ -7,7 +6,7 @@ local supportedModules = {
   'nn.Sum'
 }
 
-local function _isSupported(m)
+local function isSupported(m)
   for i = 1, #supportedModules do
     if torch.typename(m) == supportedModules[i] then
       return true
@@ -16,26 +15,29 @@ local function _isSupported(m)
   return false
 end
 
-local function _tensorIncluded(t, l)
+local function tensorIncluded(t, l)
   if torch.isTensor(l) then
     return torch.pointer(t:storage()) == torch.pointer(l:storage())
   elseif torch.type(l) == 'table' then
     for _, m in ipairs(l) do
-      if _tensorIncluded(t, m) then return true end
+      if tensorIncluded(t, m) then
+        return true
+      end
     end
   end
   return false
 end
 
--- we cannot share a tensor if it is exposed/coming from outside of the net otherwise we could generate side-effects
-local function _canShare(t, net, protected)
+-- We cannot share a tensor if it is exposed or coming from outside of the net
+-- otherwise we could generate side-effects.
+local function canShare(t, net, protected)
   if torch.isTensor(t) and t:storage() then
-    if not _tensorIncluded(t, net.gradInput) and not _tensorIncluded(t, net.output) and not _tensorIncluded(t, protected) then
+    if not tensorIncluded(t, net.gradInput) and not tensorIncluded(t, net.output) and not tensorIncluded(t, protected) then
       return true
     end
   elseif torch.type(t) == 'table' then
     for _, m in ipairs(t) do
-      if not _canShare(m, net, protected) then
+      if not canShare(m, net, protected) then
         return false
       end
     end
@@ -44,7 +46,7 @@ local function _canShare(t, net, protected)
   return false
 end
 
-local function _size(t, mempool)
+local function getSize(t, mempool)
   local size=0
   if torch.isTensor(t) then
     if t:storage() then
@@ -55,26 +57,28 @@ local function _size(t, mempool)
     end
   elseif torch.type(t) == 'table' then
     for _, m in ipairs(t) do
-      size = size + _size(m, mempool)
+      size = size + getSize(m, mempool)
     end
   end
   return size
 end
+
+local Memory = {}
 
 function Memory.optimize(model, criterion, batch, verbose)
   if verbose then
     print('Preparing memory optimization...')
   end
 
-  -- record actual size of the batch
-  local actual_batchsize = { source_length = batch.source_length, target_length = batch.target_length }
+  -- Batch of one single word since we optimize the first clone.
+  local realSizes = { source_length = batch.source_length, target_length = batch.target_length }
 
-  -- batch of one single word since we optimize the first clone
   batch.source_length = 1
   batch.target_length = 1
 
   local model_desc = {}
 
+  -- Convenience function to register a network to optimize.
   local function registerNet(store, net)
     store['net'] = net
     store['forward'] = net.forward
@@ -107,7 +111,7 @@ function Memory.optimize(model, criterion, batch, verbose)
     end
   end
 
-  -- initialize the network with a first batch
+  -- Initialize all intermediate tensors with a first batch.
   local enc_states, context = model.encoder:forward(batch)
   local dec_outputs = model.decoder:forward(batch, enc_states, context)
   dec_outputs = utils.Tensor.recursiveClone(dec_outputs)
@@ -122,32 +126,32 @@ function Memory.optimize(model, criterion, batch, verbose)
       local net = desc[i]['net']
       local mempool = {}
 
-      -- some modules are using output when performing updateGradInput - so we cannot share these
+      -- Some modules are using output when performing updateGradInput so we cannot share these.
       local protectedOutput = { desc[i]['input'] }
       net:apply(function(m)
-          if m.output and not _isSupported(m) then
-            table.insert(protectedOutput, m.output)
+        if m.output and not isSupported(m) then
+          table.insert(protectedOutput, m.output)
         end
       end)
 
       net:apply(function(m)
-        local giSize = _size(m.gradInput, mempool)
-        local oSize = _size(m.output, mempool)
+        local giSize = getSize(m.gradInput, mempool)
+        local oSize = getSize(m.output, mempool)
         totSize = totSize + giSize
         totSize = totSize + oSize
-        if _canShare(m.gradInput, net, desc[i]['gradOutput']) then
+        if canShare(m.gradInput, net, desc[i]['gradOutput']) then
           sharedSize = sharedSize + giSize
           m.gradInputSharedIdx = idx
           idx = idx + 1
         end
-        if _canShare(m.output, net, protectedOutput) then
+        if canShare(m.output, net, protectedOutput) then
           sharedSize = sharedSize + oSize
           m.outputSharedIdx = idx
           idx = idx + 1
         end
       end)
 
-      -- restore function on network backward/forward interception input
+      -- Restore function on network backward/forward interception input.
       net.backward = nil
       net.forward = nil
     end
@@ -157,9 +161,9 @@ function Memory.optimize(model, criterion, batch, verbose)
     print(string.format(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100))
   end
 
-  -- restore batch
-  batch.source_length = actual_batchsize.source_length
-  batch.target_length = actual_batchsize.target_length
+  -- Restore batch to be transparent for the calling code.
+  batch.source_length = realSizes.source_length
+  batch.target_length = realSizes.target_length
 end
 
 return Memory
