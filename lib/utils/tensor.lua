@@ -72,11 +72,13 @@ Returns: a table of tensors using the same storage as `tab`.
 
 --]]
 local function reuseTensorTable(tab, sizes)
+  local newTab = {}
+
   for i = 1, #tab do
-    tab[i] = reuseTensor(tab[i], sizes)
+    table.insert(newTab, reuseTensor(tab[i], sizes))
   end
 
-  return tab
+  return newTab
 end
 
 --[[
