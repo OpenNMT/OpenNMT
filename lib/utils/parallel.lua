@@ -67,7 +67,6 @@ end
 
 --[[ Accumulate the gradient parameters from the different parallel threads. ]]
 function Parallel.accGradParams(grad_params, batches)
-  -- local freeMemory = cutorch.cutorch.getMemoryUsage(cutorch.getDevice())
   if Parallel.count > 1 then
     local totalBatchSize = 0
     for i = 1, #batches do
