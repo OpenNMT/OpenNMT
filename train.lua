@@ -375,36 +375,36 @@ local function main()
     end
   end
 
-  local encoder_args = {
-    word_vec_size = opt.word_vec_size,
-    pre_word_vecs = opt.pre_word_vecs_enc,
-    fix_word_vecs = opt.fix_word_vecs_enc,
-    vocab_size = #dataset.dicts.src.words,
-    features = dataset.dicts.src.features,
-    feat_vec_exponent = opt.feat_vec_exponent,
-    rnn_size = opt.rnn_size,
-    dropout = opt.dropout,
-    num_layers = opt.num_layers
-  }
-
-  local decoder_args = {
-    word_vec_size = opt.word_vec_size,
-    pre_word_vecs = opt.pre_word_vecs_dec,
-    fix_word_vecs = opt.fix_word_vecs_dec,
-    vocab_size = #dataset.dicts.targ.words,
-    features = dataset.dicts.targ.features,
-    feat_vec_exponent = opt.feat_vec_exponent,
-    rnn_size = opt.rnn_size,
-    dropout = opt.dropout,
-    num_layers = opt.num_layers,
-    input_feed = opt.input_feed
-  }
-
   print('Building model...')
 
   local model
 
   utils.Parallel.launch(nil, function(idx)
+    local encoder_args = {
+      word_vec_size = opt.word_vec_size,
+      pre_word_vecs = opt.pre_word_vecs_enc,
+      fix_word_vecs = opt.fix_word_vecs_enc,
+      vocab_size = #dataset.dicts.src.words,
+      features = dataset.dicts.src.features,
+      feat_vec_exponent = opt.feat_vec_exponent,
+      rnn_size = opt.rnn_size,
+      dropout = opt.dropout,
+      num_layers = opt.num_layers
+    }
+
+    local decoder_args = {
+      word_vec_size = opt.word_vec_size,
+      pre_word_vecs = opt.pre_word_vecs_dec,
+      fix_word_vecs = opt.fix_word_vecs_dec,
+      vocab_size = #dataset.dicts.targ.words,
+      features = dataset.dicts.targ.features,
+      feat_vec_exponent = opt.feat_vec_exponent,
+      rnn_size = opt.rnn_size,
+      dropout = opt.dropout,
+      num_layers = opt.num_layers,
+      input_feed = opt.input_feed
+    }
+
     _G.model = {}
     if opt.brnn then
       _G.model.encoder = onmt.BiEncoder.new(encoder_args, opt.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
