@@ -110,7 +110,7 @@ end
 --[[ Create a batch object given aligned sent tables `src` and `targ`
   (optional). Data format is shown at the top of the file.
 --]]
-function Data:get_data(src, src_features, targ, targ_features, nocuda)
+function Data:get_data(src, src_features, targ, targ_features)
 
   local batch = {}
 
@@ -196,27 +196,11 @@ function Data:get_data(src, src_features, targ, targ_features, nocuda)
     end
   end
 
-  if not nocuda then
-    batch.source_input = utils.Cuda.convert(batch.source_input)
-    batch.source_input_rev = utils.Cuda.convert(batch.source_input_rev)
-
-    utils.Table.map(batch.source_input_features, utils.Cuda.convert)
-    utils.Table.map(batch.source_input_rev_features, utils.Cuda.convert)
-
-    if targ ~= nil then
-      batch.target_input = utils.Cuda.convert(batch.target_input)
-      batch.target_output = utils.Cuda.convert(batch.target_output)
-
-      utils.Table.map(batch.target_input_features, utils.Cuda.convert)
-      utils.Table.map(batch.target_output_features, utils.Cuda.convert)
-    end
-  end
-
   return batch
 end
 
 --[[ Get batch `idx`. If nil make a batch of all the data. ]]
-function Data:get_batch(idx, nocuda)
+function Data:get_batch(idx)
   if idx == nil or self.batch_range == nil then
     return self:get_data(self.src, self.src_features, self.targ, self.targ_features)
   end
@@ -243,58 +227,7 @@ function Data:get_batch(idx, nocuda)
     end
   end
 
-  return self:get_data(src, src_features, targ, targ_features, nocuda)
-end
-
---[[ Slice nElem into n-th, return n-th slice. ]]
-local function sliceRange(nElem, idx, splits)
-   local eltsPerMod = nElem / splits
-   local rangeStart = math.ceil((idx - 1) * eltsPerMod) + 1
-   if idx == splits then
-      return rangeStart, nElem - rangeStart + 1
-   else
-      return rangeStart, math.ceil(idx * eltsPerMod) - rangeStart + 1
-   end
-end
-
---[[ Slice batch into several smaller batcher for data parallelism. ]]
-function Data:distribute(batch, count)
-  local batches = {}
-  for idx = 1, count do
-    local index, size = sliceRange(batch.size, idx, count)
-    if size == 0 then
-      table.insert(batches, nil)
-    else
-      local b = {}
-      b.size = size
-      b.source_length = batch.source_length
-      b.target_length = batch.target_length
-      b.target_non_zeros = batch.target_non_zeros
-      b.source_input = batch.source_input:narrow(2, index, size)
-      b.source_input_pad_left = batch.source_input_pad_left
-      b.source_input_rev = batch.source_input_rev:narrow(2, index, size)
-      b.source_input_rev_pad_left = batch.source_input_rev_pad_left
-      b.target_input = batch.target_input:narrow(2, index, size)
-      b.target_output = batch.target_output:narrow(2, index, size)
-
-      b.source_input_features = {}
-      b.source_input_rev_features = {}
-      for j = 1, #batch.source_input_features do
-        table.insert(b.source_input_features, batch.source_input_features[j]:narrow(2, index, size))
-        table.insert(b.source_input_rev_features, batch.source_input_rev_features[j]:narrow(2, index, size))
-      end
-
-      b.target_input_features = {}
-      b.target_output_features = {}
-      for j = 1, #batch.target_input_features do
-        table.insert(b.target_input_features, batch.target_input_features[j]:narrow(2, index, size))
-        table.insert(b.target_output_features, batch.target_output_features[j]:narrow(2, index, size))
-      end
-
-      table.insert(batches, b)
-    end
-  end
-  return batches
+  return self:get_data(src, src_features, targ, targ_features)
 end
 
 return Data

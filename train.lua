@@ -161,7 +161,7 @@ local function eval(model, criterion, data)
   model.decoder:evaluate()
 
   for i = 1, #data do
-    local batch = data:get_batch(i)
+    local batch = utils.Cuda.convert(data:get_batch(i))
     local encoder_states, context = model.encoder:forward(batch)
     loss = loss + model.decoder:compute_loss(batch, encoder_states, context, criterion)
     total = total + batch.target_non_zeros
@@ -203,7 +203,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
                                                       dataset.dicts.targ.features))
 
     -- optimize memory of the first clone
-    utils.Memory.optimize(_G.model, _G.criterion, train_data:get_batch(1), verbose)
+    utils.Memory.optimize(_G.model, _G.criterion, utils.Cuda.convert(train_data:get_batch(1)), verbose)
 
     return idx, _G.criterion, _G.params, _G.grad_params
   end, function(idx, thecriterion, theparams, thegrad_params)
@@ -229,15 +229,16 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
     opt.start_iteration = 1
 
-    for i = start_i, #train_data do
-      local batch_idx = batch_order[i]
-      if epoch <= opt.curriculum then
-        batch_idx = i
-      end
+    for i = start_i, #train_data, utils.Parallel.count do
+      local batches = {}
 
-      local batch = train_data:get_batch(batch_idx, true)
-      -- split the batch on each GPU
-      local batches = train_data:distribute(batch, utils.Parallel.count)
+      for j = 1, math.min(utils.Parallel.count, #train_data-i+1) do
+        local batch_idx = batch_order[i+j-1]
+        if epoch <= opt.curriculum then
+          batch_idx = i+j-1
+        end
+        table.insert(batches, train_data:get_batch(batch_idx))
+      end
 
       local losses = {}
 
@@ -272,7 +273,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
       epoch_state:update(batches, losses)
 
-      if i % opt.print_every == 0 then
+      if i % (opt.print_every*utils.Parallel.count)  == 0 then
         epoch_state:log(i, #train_data, optim:get_learning_rate())
       end
 
@@ -323,8 +324,8 @@ local function main()
   local train_data = Data.new(dataset.train.src, dataset.train.targ)
   local valid_data = Data.new(dataset.valid.src, dataset.valid.targ)
 
-  train_data:set_batch_size(opt.max_batch_size * opt.nparallel)
-  valid_data:set_batch_size(opt.max_batch_size * opt.nparallel)
+  train_data:set_batch_size(opt.max_batch_size)
+  valid_data:set_batch_size(opt.max_batch_size)
 
   print(string.format(' * vocabulary size: source = %d; target = %d',
                       #dataset.dicts.src.words, #dataset.dicts.targ.words))

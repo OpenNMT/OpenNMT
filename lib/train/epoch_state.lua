@@ -30,9 +30,8 @@ function EpochState:update(batches, losses)
     self.num_words_source = self.num_words_source + batches[i].size * batches[i].source_length
     self.num_words_target = self.num_words_target + batches[i].size * batches[i].target_length
     self.status.train_loss = self.status.train_loss + losses[i] * batches[i].size
+    self.status.train_nonzeros = self.status.train_nonzeros + batches[i].target_non_zeros
   end
-  -- each batch is containing the complete number of non zeros target words
-  self.status.train_nonzeros = self.status.train_nonzeros + batches[1].target_non_zeros
 end
 
 --[[ Log to status stdout.
