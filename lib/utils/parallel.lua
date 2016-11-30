@@ -8,13 +8,15 @@ local cuda = require 'lib.utils.cuda'
 local Parallel = {
   gpus = {0},
   _pool = nil,
-  count = 1
+  count = 1,
+  gradBuffer = torch.Tensor()
 }
 
 function Parallel.init(args)
   if cuda.activated then
     Parallel.count = args.nparallel
     Parallel.gpus = cuda.getGPUs(args.nparallel)
+    Parallel.gradBuffer = utils.Cuda.convert(Parallel.gradBuffer)
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
       local threads = require 'threads'
@@ -80,8 +82,9 @@ function Parallel.accGradParams(grad_params, batches)
         -- TODO - this is memory costly since we need to clone full parameters from one GPU to another
         -- to avoid out-of-memory, we can copy/add by batch
         -- also it is possible to optmize using nccl
-        local remote_grad_params = grad_params[j][h]:clone()
-        grad_params[1][h]:add(remote_grad_params:mul(batches[j].size / totalBatchSize))
+        local remoteGrads = utils.Tensor.reuseTensor(Parallel.gradBuffer, grad_params[j][h]:size())
+        remoteGrads:copy(grad_params[j][h])
+        grad_params[1][h]:add(remoteGrads:mul(batches[j].size / totalBatchSize))
       end
     end
   end

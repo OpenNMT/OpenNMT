@@ -76,6 +76,8 @@ function Sequencer:_sharedClone()
     end
   end)
 
+  collectgarbage()
+
   return clone
 end
 
