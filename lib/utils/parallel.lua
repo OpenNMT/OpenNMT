@@ -3,8 +3,6 @@
   in different threads and on different GPU
 ]]--
 
-local cuda = require 'lib.utils.cuda'
-
 local Parallel = {
   gpus = {0},
   _pool = nil,
@@ -13,9 +11,9 @@ local Parallel = {
 }
 
 function Parallel.init(args)
-  if cuda.activated then
+  if utils.Cuda.activated then
     Parallel.count = args.nparallel
-    Parallel.gpus = cuda.getGPUs(args.nparallel)
+    Parallel.gpus = utils.Cuda.getGPUs(args.nparallel)
     Parallel.gradBuffer = utils.Cuda.convert(Parallel.gradBuffer)
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
@@ -40,7 +38,7 @@ function Parallel.init(args)
 end
 
 function Parallel.getGPU(i)
-  if cuda.activated and Parallel.gpus[i] ~= 0 then
+  if utils.Cuda.activated and Parallel.gpus[i] ~= 0 then
     return Parallel.gpus[i]
   end
   return 0
