@@ -26,7 +26,7 @@ Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/LSTM.lua#L35">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/LSTM.lua#L35">[src]</a>
 <a name="onmt.LSTM"></a>
 
 

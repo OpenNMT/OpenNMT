@@ -20,7 +20,7 @@ Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Decoder.lua#L28">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Decoder.lua#L28">[src]</a>
 <a name="onmt.Decoder"></a>
 
 
@@ -35,7 +35,7 @@ Parameters:
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Decoder.lua#L176">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Decoder.lua#L176">[src]</a>
 <a name="onmt.Decoder:reset"></a>
 
 
@@ -48,7 +48,7 @@ Parameters:
   * See  [onmt.MaskedSoftmax](lib+onmt+MaskedSoftmax).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Decoder.lua#L212">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Decoder.lua#L212">[src]</a>
 <a name="onmt.Decoder:forward_one"></a>
 
 
@@ -70,7 +70,7 @@ Returns:
  2. `states` - All states
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Decoder.lua#L289">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Decoder.lua#L289">[src]</a>
 <a name="onmt.Decoder:forward"></a>
 
 
@@ -88,7 +88,7 @@ Returns: Tables of top hidden layer at each timestep.
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Decoder.lua#L306">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Decoder.lua#L306">[src]</a>
 <a name="onmt.Decoder:compute_score"></a>
 
 
@@ -98,7 +98,7 @@ Returns: Tables of top hidden layer at each timestep.
   Used in decoding when gold data are provided.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Decoder.lua#L322">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Decoder.lua#L322">[src]</a>
 <a name="onmt.Decoder:compute_loss"></a>
 
 
@@ -106,7 +106,7 @@ Returns: Tables of top hidden layer at each timestep.
 
  Compute the loss on a batch based on final layer `generator`.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Decoder.lua#L350">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Decoder.lua#L350">[src]</a>
 <a name="onmt.Decoder:backward"></a>
 
 

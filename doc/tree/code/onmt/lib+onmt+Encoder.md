@@ -18,7 +18,7 @@
 Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Encoder.lua#L24">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Encoder.lua#L24">[src]</a>
 <a name="onmt.Encoder"></a>
 
 
@@ -32,7 +32,7 @@ Parameters:
   * `network` - optional recurrent step template.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Encoder.lua#L109">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Encoder.lua#L109">[src]</a>
 <a name="onmt.Encoder:forward"></a>
 
 
@@ -50,7 +50,7 @@ Returns:
   2. - context matrix H
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Encoder.lua#L190">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Encoder.lua#L190">[src]</a>
 <a name="onmt.Encoder:backward"></a>
 
 

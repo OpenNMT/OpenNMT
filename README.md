@@ -40,14 +40,13 @@ OpenNMT consists of three commands:
 
 ```th evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict```
 
-See <a href="doc/Quickstart.md">quickstart</a> for the details.
+See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.
 
 ## Documentation
 
-* <a href="http://opennmt.github.io/docs">Options and Features</a> 
-* <a href="http://opennmt.github.io/opennmt">Code Documentation</a> 
-* <a href="http://opennmt.github.io/advance">Advanced Features</a>
-* <a href="http://opennmt.github.io/examples">Example Models</a>
-* <a href="doc/Quickstart.md">Live Demo</a>
-* <a href="doc/Bibliography.md">Bibliography</a>
+* <a href="http://opennmt.github.io/Guide">Options and Features</a> 
+* <a href="http://opennmt.github.io/OpenNMT">Documentation</a> 
+* <a href="http://opennmt.github.io/Models">Example Models</a>
+* <a href="http://demo-pnmt.systran.net">Live Demo</a>
+* <a href="http://opennmt.github.io/About">Bibliography</a>
 

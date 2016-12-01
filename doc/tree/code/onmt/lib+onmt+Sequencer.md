@@ -11,7 +11,7 @@
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Sequencer.lua#L18">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Sequencer.lua#L18">[src]</a>
 <a name="onmt.Sequencer"></a>
 
 
@@ -24,7 +24,7 @@ Parameters:
   * `network` - recurrent step template.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Sequencer.lua#L88">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Sequencer.lua#L88">[src]</a>
 <a name="onmt.Sequencer:net"></a>
 
 
@@ -39,7 +39,7 @@ Returns: The raw network clone at timestep t.
   When `evaluate()` has been called, cheat and return t=1.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Sequencer.lua#L108">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Sequencer.lua#L108">[src]</a>
 <a name="onmt.Sequencer:training"></a>
 
 
@@ -47,7 +47,7 @@ Returns: The raw network clone at timestep t.
 
  Move the network to train mode. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Sequencer.lua#L118">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/onmt/Sequencer.lua#L118">[src]</a>
 <a name="onmt.Sequencer:evaluate"></a>
 
 
