@@ -54,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -80,6 +73,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../eval/lib+eval+beam/">Lib+eval+beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../eval/lib+eval+phrase_table/">Lib+eval+phrase table</a>
         
     </li>
 
@@ -199,11 +199,11 @@
             
                 <li class="toctree-l3"><a href="#onmtepochstate">onmt.EpochState</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtepochstateepoch-status">onmt.EpochState(epoch, status)</a></li>
+                    <li><a class="toctree-l4" href="#onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</a></li>
                 
                     <li><a class="toctree-l4" href="#onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtepochstatelogbatch_index-data_size-learning_rate">onmt.EpochState:log(batch_index, data_size, learning_rate)</a></li>
+                    <li><a class="toctree-l4" href="#onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</a></li>
                 
             
             </ul>
@@ -297,19 +297,18 @@
 <h2 id="onmtepochstate">onmt.EpochState</h2>
 <p>Class for managing the training process by logging and storing
   the state of the current epoch.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/train/epoch_state.lua#L9">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/train/epoch_state.lua#L9">[src]</a>
 <a name="onmt.EpochState"></a></p>
-<h3 id="onmtepochstateepoch-status">onmt.EpochState(epoch, status)</h3>
+<h3 id="onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</h3>
 <p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/train/epoch_state.lua#L28">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/train/epoch_state.lua#L30">[src]</a>
 <a name="onmt.EpochState:update"></a></p>
 <h3 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h3>
 <p>Update training status. Takes <code>batch</code> (described in data.lua) and last losses.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/train/epoch_state.lua#L39">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/train/epoch_state.lua#L40">[src]</a>
 <a name="onmt.EpochState:log"></a></p>
-<h3 id="onmtepochstatelogbatch_index-data_size-learning_rate">onmt.EpochState:log(batch_index, data_size, learning_rate)</h3>
-<p>Log to status stdout.
-  TODO: these args shouldn't need to be passed in each time. </p>
+<h3 id="onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</h3>
+<p>Log to status stdout. </p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
 <p><a name="onmt.EpochState:get_train_ppl"></a>
  * <code>onmt.EpochState:get_train_ppl()</code>

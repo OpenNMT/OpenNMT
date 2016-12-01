@@ -54,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -80,6 +73,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../eval/lib+eval+beam/">Lib+eval+beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../eval/lib+eval+phrase_table/">Lib+eval+phrase table</a>
         
     </li>
 
@@ -316,21 +316,21 @@
 <li>target_output_features: table of target output features sequences</li>
 </ul>
 <p>TODO: change name of size =&gt; maxlen</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/data.lua#L51">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/data.lua#L51">[src]</a>
 <a name="onmt.Data"></a></p>
 <h3 id="onmtdatasrc_data-targ_data">onmt.Data(src_data, targ_data)</h3>
 <p>Initialize a data object given aligned tables of IntTensors <code>src</code>
   and <code>targ</code>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/data.lua#L63">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/data.lua#L63">[src]</a>
 <a name="onmt.Data:set_batch_size"></a></p>
 <h3 id="onmtdataset_batch_sizemax_batch_size">onmt.Data:set_batch_size(max_batch_size)</h3>
 <p>Setup up the training data to respect <code>max_batch_size</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/data.lua#L113">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/data.lua#L113">[src]</a>
 <a name="onmt.Data:get_data"></a></p>
 <h3 id="onmtdataget_datasrc-src_features-targ-targ_features">onmt.Data:get_data(src, src_features, targ, targ_features)</h3>
 <p>Create a batch object given aligned sent tables <code>src</code> and <code>targ</code>
   (optional). Data format is shown at the top of the file.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/data.lua#L203">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/data.lua#L203">[src]</a>
 <a name="onmt.Data:get_batch"></a></p>
 <h3 id="onmtdataget_batchidx">onmt.Data:get_batch(idx)</h3>
 <p>Get batch <code>idx</code>. If nil make a batch of all the data. </p>

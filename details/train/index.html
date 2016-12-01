@@ -54,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -80,6 +73,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/eval/lib+eval+beam/">Lib+eval+beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/eval/lib+eval+phrase_table/">Lib+eval+phrase table</a>
         
     </li>
 
@@ -307,7 +307,7 @@
 <dt>feat_vec_exponent</dt>
 <dd>If the feature takes N values, then theembedding dimension will be set to N^exponent [0.7]</dd>
 <dt>input_feed</dt>
-<dd>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [true]</dd>
+<dd>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</dd>
 <dt>brnn</dt>
 <dd>Use a bidirectional encoder [false]</dd>
 <dt>brnn_merge</dt>
@@ -353,11 +353,9 @@
 <dt>gpuid</dt>
 <dd>Which gpu to use (1-indexed). &lt; 1 = use CPU [-1]</dd>
 <dt>nparallel</dt>
-<dd>How many parallel process [1]</dd>
+<dd>When using GPUs, how many batches to execute in parallel.Note: this will technically change the final batch size to max_batch_size*nparallel. [1]</dd>
 <dt>disable_mem_optimization</dt>
 <dd>Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]</dd>
-<dt>cudnn</dt>
-<dd>Whether to use cudnn or not [false]</dd>
 <dt>save_every</dt>
 <dd>Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]</dd>
 <dt>print_every</dt>

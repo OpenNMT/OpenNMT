@@ -54,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -97,6 +90,13 @@
                 
             
             </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lib+eval+phrase_table/">Lib+eval+phrase table</a>
         
     </li>
 
@@ -300,7 +300,7 @@
                 <p><a name="onmt.Beam.dok"></a></p>
 <h2 id="onmtbeam">onmt.Beam</h2>
 <p>Class for managing the beam search process. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L26">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/eval/beam.lua#L26">[src]</a>
 <a name="onmt.Beam"></a></p>
 <h3 id="onmtbeamsize-num_features">onmt.Beam(size, num_features)</h3>
 <p>Constructor</p>
@@ -308,15 +308,15 @@
 <ul>
 <li><code>size</code> : The beam <code>K</code>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L56">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/eval/beam.lua#L56">[src]</a>
 <a name="onmt.Beam:get_current_state"></a></p>
 <h3 id="onmtbeamget_current_state">onmt.Beam:get_current_state()</h3>
 <p>Get the outputs for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L61">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/eval/beam.lua#L61">[src]</a>
 <a name="onmt.Beam:get_current_origin"></a></p>
 <h3 id="onmtbeamget_current_origin">onmt.Beam:get_current_origin()</h3>
 <p>Get the backpointers for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L75">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/eval/beam.lua#L75">[src]</a>
 <a name="onmt.Beam:advance"></a></p>
 <h3 id="onmtbeamadvanceword_lk-feats_lk-attn_out">onmt.Beam:advance(word_lk, feats_lk, attn_out)</h3>
 <p>Given prob over words for every last beam <code>word_lk</code> and attention
@@ -327,7 +327,7 @@
 <li><code>attn_word_lk</code>- attention at the last step</li>
 </ul>
 <p>Returns: true if beam search is complete.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/42e17faee09cfbd1e69b2727891ff94be346784c/lib/eval/beam.lua#L152">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8ee79ced285a1b7f5720f7e1473e4955a23e9f1/lib/eval/beam.lua#L152">[src]</a>
 <a name="onmt.Beam:get_hyp"></a></p>
 <h3 id="onmtbeamget_hypk">onmt.Beam:get_hyp(k)</h3>
 <p>Walk back to construct the full hypothesis <code>k</code>.</p>
@@ -352,7 +352,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../onmt/" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../lib+eval+phrase_table/" class="btn btn-neutral float-right" title="Lib+eval+phrase table">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -384,7 +384,7 @@
         <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../onmt/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../lib+eval+phrase_table/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

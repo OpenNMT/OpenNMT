@@ -4,15 +4,7 @@
     
     <url>
      <loc>/</loc>
-     <lastmod>2016-11-30</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>/Quickstart/</loc>
-     <lastmod>2016-11-30</lastmod>
+     <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -43,19 +35,19 @@
         
     <url>
      <loc>/details/evaluate/</loc>
-     <lastmod>2016-11-30</lastmod>
+     <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/details/preprocess/</loc>
-     <lastmod>2016-11-30</lastmod>
+     <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/details/train/</loc>
-     <lastmod>2016-11-30</lastmod>
+     <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
