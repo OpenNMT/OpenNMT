@@ -223,10 +223,10 @@ local function train_model(model, train_data, valid_data, dataset, info)
     local start_i = opt.start_iteration
 
     if start_i > 1 and info ~= nil then
-      epoch_state = train.EpochState.new(epoch, info.epoch_status)
+      epoch_state = train.EpochState.new(epoch, #train_data, optim:get_learning_rate(), info.epoch_status)
       batch_order = info.batch_order
     else
-      epoch_state = train.EpochState.new(epoch)
+      epoch_state = train.EpochState.new(epoch, #train_data, optim:get_learning_rate())
       -- shuffle mini batch order
       batch_order = torch.randperm(#train_data)
     end
@@ -279,7 +279,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
       epoch_state:update(batches, losses)
 
       if count % opt.print_every == 0 then
-        epoch_state:log(i, #train_data, optim:get_learning_rate())
+        epoch_state:log(i)
       end
       if opt.save_every > 0 and count % opt.save_every == 0 then
         checkpoint:save_iteration(i, epoch_state, batch_order)
