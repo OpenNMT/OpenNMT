@@ -5,11 +5,11 @@
 
  Class for managing the beam search process. 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L26">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/eval/beam.lua#L26">[src]</a>
 <a name="onmt.Beam"></a>
 
 
-### onmt.Beam(size) ###
+### onmt.Beam(size, num_features) ###
 
 Constructor
 
@@ -18,7 +18,7 @@ Parameters:
   * `size` : The beam `K`.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L47">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/eval/beam.lua#L56">[src]</a>
 <a name="onmt.Beam:get_current_state"></a>
 
 
@@ -26,7 +26,7 @@ Parameters:
 
  Get the outputs for the current timestep.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L52">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/eval/beam.lua#L61">[src]</a>
 <a name="onmt.Beam:get_current_origin"></a>
 
 
@@ -34,24 +34,24 @@ Parameters:
 
  Get the backpointers for the current timestep.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L66">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/eval/beam.lua#L75">[src]</a>
 <a name="onmt.Beam:advance"></a>
 
 
-### onmt.Beam:advance(out, attn_out) ###
+### onmt.Beam:advance(word_lk, feats_lk, attn_out) ###
 
- Given prob over words for every last beam `out` and attention
+ Given prob over words for every last beam `word_lk` and attention
  `attn_out`. Compute and update the beam search.
 
 Parameters:
 
-  * `out`- probs at the last step
-  * `attn_out`- attention at the last step
+  * `word_lk`- probs at the last step
+  * `attn_word_lk`- attention at the last step
 
 Returns: true if beam search is complete.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/eval/beam.lua#L132">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/eval/beam.lua#L152">[src]</a>
 <a name="onmt.Beam:get_hyp"></a>
 
 

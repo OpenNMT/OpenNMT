@@ -3,14 +3,21 @@
 
 ## onmt.MaskedSoftmax ##
 
+ A batched-softmax wrapper to mask the probabilities of padding.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/MaskedSoftmax.lua#L14">[src]</a>
+    AXXXAA
+    AXXAAA
+    AXXXXX
+
+
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/MaskedSoftmax.lua#L21">[src]</a>
 <a name="onmt.MaskedSoftmax"></a>
 
 
 ### onmt.MaskedSoftmax(source_sizes, source_length, beam_size) ###
 
-A nn-style module that applies a softmax on input that gives no weight to the left padding.
+ A nn-style module that applies a softmax on input that gives no weight to the left padding.
 
 Parameters:
 

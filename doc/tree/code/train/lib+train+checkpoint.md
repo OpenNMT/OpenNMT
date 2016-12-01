@@ -5,7 +5,7 @@
 
 Class for saving and loading models during training.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/train/checkpoint.lua#L34">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/train/checkpoint.lua#L31">[src]</a>
 <a name="onmt.Checkpoint:save_iteration"></a>
 
 

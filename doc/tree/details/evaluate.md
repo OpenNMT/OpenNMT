@@ -53,6 +53,3 @@ gpuid
 fallback_to_cpu
 :   If = true, fallback to CPU if no GPU available [false]
 
-cudnn
-:   If using character model, this should be true if the character model was trained using cudnn [false]
-

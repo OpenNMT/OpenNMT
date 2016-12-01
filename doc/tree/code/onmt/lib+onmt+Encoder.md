@@ -18,13 +18,13 @@
 Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L24">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Encoder.lua#L24">[src]</a>
 <a name="onmt.Encoder"></a>
 
 
 ### onmt.Encoder(args, network) ###
 
- Construct an encoder layer. 
+ Construct an encoder layer.
 
 Parameters:
 
@@ -32,7 +32,7 @@ Parameters:
   * `network` - optional recurrent step template.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L85">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Encoder.lua#L109">[src]</a>
 <a name="onmt.Encoder:forward"></a>
 
 
@@ -50,7 +50,7 @@ Returns:
   2. - context matrix H
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/Encoder.lua#L163">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/Encoder.lua#L190">[src]</a>
 <a name="onmt.Encoder:backward"></a>
 
 
@@ -66,3 +66,9 @@ Parameters:
 
 Returns: nil
 
+
+
+#### Undocumented methods ####
+
+<a name="onmt.Encoder:shareWordEmb"></a>
+ * `onmt.Encoder:shareWordEmb(other)`

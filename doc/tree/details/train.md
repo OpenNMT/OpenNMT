@@ -38,7 +38,7 @@ feat_vec_exponent
 :   If the feature takes N values, then theembedding dimension will be set to N^exponent [0.7]
 
 input_feed
-:   Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [true]
+:   Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]
 
 brnn
 :   Use a bidirectional encoder [false]
@@ -106,13 +106,10 @@ gpuid
 :   Which gpu to use (1-indexed). < 1 = use CPU [-1]
 
 nparallel
-:   How many parallel process [1]
+:   When using GPUs, how many batches to execute in parallel.Note: this will technically change the final batch size to max_batch_size*nparallel. [1]
 
 disable_mem_optimization
 :   Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]
-
-cudnn
-:   Whether to use cudnn or not [false]
 
 save_every
 :   Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]

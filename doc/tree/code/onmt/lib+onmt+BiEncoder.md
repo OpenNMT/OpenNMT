@@ -32,7 +32,7 @@ Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/BiEncoder.lua#L39">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/BiEncoder.lua#L40">[src]</a>
 <a name="onmt.BiEncoder"></a>
 
 

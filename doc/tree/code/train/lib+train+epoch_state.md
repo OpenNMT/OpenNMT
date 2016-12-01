@@ -7,15 +7,15 @@
   the state of the current epoch.
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/train/epoch_state.lua#L9">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/train/epoch_state.lua#L9">[src]</a>
 <a name="onmt.EpochState"></a>
 
 
-### onmt.EpochState(epoch, status) ###
+### onmt.EpochState(epoch, num_iterations, learning_rate, status) ###
 
  Initialize for epoch `epoch` and training `status` (current loss)
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/train/epoch_state.lua#L28">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/train/epoch_state.lua#L30">[src]</a>
 <a name="onmt.EpochState:update"></a>
 
 
@@ -23,14 +23,13 @@
 
  Update training status. Takes `batch` (described in data.lua) and last losses.
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/train/epoch_state.lua#L40">[src]</a>
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/train/epoch_state.lua#L40">[src]</a>
 <a name="onmt.EpochState:log"></a>
 
 
-### onmt.EpochState:log(batch_index, data_size, learning_rate) ###
+### onmt.EpochState:log(batch_index) ###
 
- Log to status stdout.
-  TODO: these args shouldn't need to be passed in each time. 
+ Log to status stdout. 
 
 
 #### Undocumented methods ####

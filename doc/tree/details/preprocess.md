@@ -27,10 +27,10 @@ targ_vocab_size
 :   Size of the target vocabulary [50000]
 
 src_vocab_file
-:   Pre-calculated source vocabulary []
+:   Path to an existing source vocabulary []
 
 targ_vocab_file
-:   Pre-calculated target vocabulary []
+:   Path to an existing target vocabulary []
 
 features_vocabs_prefix
 :   Path prefix to existing features vocabularies []
@@ -39,7 +39,7 @@ seq_length
 :   Maximum sequence length [50]
 
 shuffle
-:   Suffle data [true]
+:   Suffle data [1]
 
 seed
 :   Random seed [3435]

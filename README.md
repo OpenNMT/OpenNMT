@@ -44,10 +44,10 @@ See <a href="doc/Quickstart.md">quickstart</a> for the details.
 
 ## Documentation
 
-* <a href="doc/Documentattion.md">Options and Features</a> 
-* <a href="doc/Documentattion.md">Code Documentation</a> 
-* <a href="doc/Advanced.md">Advanced Features</a>
-* <a href="doc/Examples.md">Example Models</a>
+* <a href="http://opennmt.github.io/docs">Options and Features</a> 
+* <a href="http://opennmt.github.io/opennmt">Code Documentation</a> 
+* <a href="http://opennmt.github.io/advance">Advanced Features</a>
+* <a href="http://opennmt.github.io/examples">Example Models</a>
 * <a href="doc/Quickstart.md">Live Demo</a>
 * <a href="doc/Bibliography.md">Bibliography</a>
 

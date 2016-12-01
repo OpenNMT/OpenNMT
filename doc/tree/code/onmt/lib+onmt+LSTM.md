@@ -4,21 +4,40 @@
 ## onmt.LSTM ##
 
 
-<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/39968aa86f3b4f7a7c93720c38460e10a0f040a4/lib/onmt/LSTM.lua#L17">[src]</a>
+Implementation of a single stacked-LSTM step as
+an nn unit.
+
+      h^L_{t-1} --- h^L_t
+      c^L_{t-1} --- c^L_t
+                 |
+
+
+                 .
+                 |
+             [dropout]
+                 |
+      h^1_{t-1} --- h^1_t
+      c^1_{t-1} --- c^1_t
+                 |
+                 |
+                x_t
+
+Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
+
+
+
+<a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ecd46c8eee34474c91ab3606f3e19a1b9db13b22/lib/onmt/LSTM.lua#L35">[src]</a>
 <a name="onmt.LSTM"></a>
 
 
 ### onmt.LSTM(num_layers, input_size, hidden_size, dropout) ###
 
-A nn-style module computing one LSTM step.
-
-Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
 
 Parameters:
 
-  * `num_layers` - Number of LSTM layers.  
-  * `input_size` -  Size of input layer x.
-  * `hidden_size` -  Size of the hidden layers (cell and hidden).
+  * `num_layers` - Number of LSTM layers, $$L$$.
+  * `input_size` - Size of input layer,  $$|x|$$.
+  * `hidden_size` - Size of the hidden layers (cell and hidden, $$c, h$$).
   * `dropout` - Dropout rate to use.
 
 
