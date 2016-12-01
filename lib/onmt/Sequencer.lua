@@ -13,7 +13,7 @@ local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Container')
 Parameters:
 
   * `args` - global options.
-  * `network` - optional recurrent step template.
+  * `network` - recurrent step template.
 --]]
 function Sequencer:__init(args, network)
   parent.__init(self)
