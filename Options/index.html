@@ -59,6 +59,12 @@
         
             <ul>
             
+                <li class="toctree-l3"><a href="#preprocess">Preprocess</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#train">Train</a></li>
+                
+            
                 <li class="toctree-l3"><a href="#evaluate">Evaluate</a></li>
                 
             
@@ -264,7 +270,124 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="evaluate">Evaluate</h2>
+                <p><a name="preprocess"></a></p>
+<h2 id="preprocess">Preprocess</h2>
+<p><strong>Preprocess Options</strong></p>
+<dl>
+<dt>config</dt>
+<dd>Read options from this file []</dd>
+<dt>train_src_file</dt>
+<dd>Path to the training source data []</dd>
+<dt>train_targ_file</dt>
+<dd>Path to the training target data []</dd>
+<dt>valid_src_file</dt>
+<dd>Path to the validation source data []</dd>
+<dt>valid_targ_file</dt>
+<dd>Path to the validation target data []</dd>
+<dt>output_file</dt>
+<dd>Output file for the prepared data []</dd>
+<dt>src_vocab_size</dt>
+<dd>Size of the source vocabulary [50000]</dd>
+<dt>targ_vocab_size</dt>
+<dd>Size of the target vocabulary [50000]</dd>
+<dt>src_vocab_file</dt>
+<dd>Path to an existing source vocabulary []</dd>
+<dt>targ_vocab_file</dt>
+<dd>Path to an existing target vocabulary []</dd>
+<dt>features_vocabs_prefix</dt>
+<dd>Path prefix to existing features vocabularies []</dd>
+<dt>seq_length</dt>
+<dd>Maximum sequence length [50]</dd>
+<dt>shuffle</dt>
+<dd>Suffle data [1]</dd>
+<dt>seed</dt>
+<dd>Random seed [3435]</dd>
+</dl>
+<p><a name="train"></a></p>
+<h2 id="train">Train</h2>
+<p><strong>train.lua</strong></p>
+<dl>
+<dt>config</dt>
+<dd>Read options from this file []</dd>
+</dl>
+<p><strong>Data options</strong></p>
+<dl>
+<dt>data</dt>
+<dd>Path to the training *-train.t7 file from preprocess.lua []</dd>
+<dt>save_file</dt>
+<dd>Savefile name (model will be saved assavefile_epochX_PPL.t7 where X is the X-th epoch and PPL isthe validation perplexity []</dd>
+<dt>train_from</dt>
+<dd>If training from a checkpoint then this is the path to the pretrained model. []</dd>
+<dt>continue</dt>
+<dd>If training from a checkpoint, whether to continue the training in the same configuration or not. [false]</dd>
+</dl>
+<p><strong>Model options</strong></p>
+<dl>
+<dt>num_layers</dt>
+<dd>Number of layers in the LSTM encoder/decoder [2]</dd>
+<dt>rnn_size</dt>
+<dd>Size of LSTM hidden states [500]</dd>
+<dt>word_vec_size</dt>
+<dd>Word embedding sizes [500]</dd>
+<dt>feat_vec_exponent</dt>
+<dd>If the feature takes N values, then theembedding dimension will be set to N^exponent [0.7]</dd>
+<dt>input_feed</dt>
+<dd>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</dd>
+<dt>brnn</dt>
+<dd>Use a bidirectional encoder [false]</dd>
+<dt>brnn_merge</dt>
+<dd>Merge action for the bidirectional hidden states: concat or sum [sum]</dd>
+</dl>
+<p><strong>Optimization options</strong></p>
+<dl>
+<dt>max_batch_size</dt>
+<dd>Maximum batch size [64]</dd>
+<dt>epochs</dt>
+<dd>Number of training epochs [13]</dd>
+<dt>start_epoch</dt>
+<dd>If loading from a checkpoint, the epoch from which to start [1]</dd>
+<dt>start_iteration</dt>
+<dd>If loading from a checkpoint, the iteration from which to start [1]</dd>
+<dt>param_init</dt>
+<dd>Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</dd>
+<dt>optim</dt>
+<dd>Optimization method. Possible options are: sgd, adagrad, adadelta, adam [sgd]</dd>
+<dt>learning_rate</dt>
+<dd>Starting learning rate. If adagrad/adadelta/adam is used,then this is the global learning rate. Recommended settings: sgd =1,adagrad = 0.1, adadelta = 1, adam = 0.1 [1]</dd>
+<dt>max_grad_norm</dt>
+<dd>If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]</dd>
+<dt>dropout</dt>
+<dd>Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</dd>
+<dt>lr_decay</dt>
+<dd>Decay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</dd>
+<dt>start_decay_at</dt>
+<dd>Start decay after this epoch [9]</dd>
+<dt>curriculum</dt>
+<dd>For this many epochs, order the minibatches based on sourcesequence length. Sometimes setting this to 1 will increase convergence speed. [0]</dd>
+<dt>pre_word_vecs_enc</dt>
+<dd>If a valid path is specified, then this will loadpretrained word embeddings on the encoder side.See README for specific formatting instructions. []</dd>
+<dt>pre_word_vecs_dec</dt>
+<dd>If a valid path is specified, then this will loadpretrained word embeddings on the decoder side.See README for specific formatting instructions. []</dd>
+<dt>fix_word_vecs_enc</dt>
+<dd>Fix word embeddings on the encoder side [false]</dd>
+<dt>fix_word_vecs_dec</dt>
+<dd>Fix word embeddings on the decoder side [false]</dd>
+</dl>
+<p><strong>Other options</strong></p>
+<dl>
+<dt>gpuid</dt>
+<dd>Which gpu to use (1-indexed). &lt; 1 = use CPU [-1]</dd>
+<dt>nparallel</dt>
+<dd>When using GPUs, how many batches to execute in parallel.Note: this will technically change the final batch size to max_batch_size*nparallel. [1]</dd>
+<dt>disable_mem_optimization</dt>
+<dd>Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]</dd>
+<dt>save_every</dt>
+<dd>Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]</dd>
+<dt>print_every</dt>
+<dd>Print stats every this many iterations within an epoch. [50]</dd>
+</dl>
+<p><a name="evaluate"></a></p>
+<h2 id="evaluate">Evaluate</h2>
 <p><strong>evaluate.lua</strong></p>
 <dl>
 <dt>config</dt>
