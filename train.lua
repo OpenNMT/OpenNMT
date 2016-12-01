@@ -74,7 +74,8 @@ cmd:text("")
 
 -- GPU
 cmd:option('-gpuid', -1, [[Which gpu to use (1-indexed). < 1 = use CPU]])
-cmd:option('-nparallel', 1, [[How many parallel process]])
+cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
+                            Note: this will technically change the final batch size to max_batch_size*nparallel.]])
 cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
                                                 except if you want to look inside clones for visualization purpose for instance.]])
 cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
@@ -221,18 +222,19 @@ local function train_model(model, train_data, valid_data, dataset, info)
     local batch_order
 
     local start_i = opt.start_iteration
+    local num_iterations = math.ceil(#train_data / utils.Parallel.count)
 
     if start_i > 1 and info ~= nil then
-      epoch_state = train.EpochState.new(epoch, #train_data, optim:get_learning_rate(), info.epoch_status)
+      epoch_state = train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), info.epoch_status)
       batch_order = info.batch_order
     else
-      epoch_state = train.EpochState.new(epoch, #train_data, optim:get_learning_rate())
+      epoch_state = train.EpochState.new(epoch, num_iterations, optim:get_learning_rate())
       -- shuffle mini batch order
       batch_order = torch.randperm(#train_data)
     end
 
     opt.start_iteration = 1
-    local count = 1
+    local iter = 1
 
     for i = start_i, #train_data, utils.Parallel.count do
       local batches = {}
@@ -278,14 +280,13 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
       epoch_state:update(batches, losses)
 
-      if count % opt.print_every == 0 then
-        epoch_state:log(i)
+      if iter % opt.print_every == 0 then
+        epoch_state:log(iter)
       end
-      if opt.save_every > 0 and count % opt.save_every == 0 then
-        checkpoint:save_iteration(i, epoch_state, batch_order)
+      if opt.save_every > 0 and iter % opt.save_every == 0 then
+        checkpoint:save_iteration(iter, epoch_state, batch_order)
       end
-      count = count + 1
-
+      iter = iter + 1
     end
 
     return epoch_state
@@ -333,7 +334,7 @@ local function main()
   print(string.format(' * maximum sequence length: source = %d; target = %d',
                       train_data.max_source_length, train_data.max_target_length))
   print(string.format(' * number of training sentences: %d', #train_data.src))
-  print(string.format(' * number of batches: %d', #train_data))
+  print(string.format(' * maximum batch size: %d', opt.max_batch_size * utils.Parallel.count))
 
   local checkpoint = {}
 
