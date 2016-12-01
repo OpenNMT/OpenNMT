@@ -1,3 +1,4 @@
+<a id="onmt.README.Sequence_to_Sequence_Learning_with_Attentional_Neural_Networks"></a>
 ## Sequence-to-Sequence Learning with Attentional Neural Networks
 
 [Torch](http://torch.ch) implementation of a standard sequence-to-sequence model with (optional)
@@ -31,8 +32,10 @@ See below for more details on how to use them.
 This project is maintained by [Yoon Kim](http://people.fas.harvard.edu/~yoonkim).
 Feel free to post any questions/issues on the issues page.
 
+<a id="onmt.README.Dependencies"></a>
 ### Dependencies
 
+<a id="onmt.README.Lua"></a>
 #### Lua
 You will need the following packages:
 * nn
@@ -47,6 +50,7 @@ If running the character model, you should also install:
 * luautf8
 
 
+<a id="onmt.README.Quickstart"></a>
 ### Quickstart
 
 We are going to be working with some example data in `data/` folder.
@@ -88,6 +92,7 @@ millions of parallel sentences for [translation](http://www.statmt.org/wmt15/tra
 or [summarization](https://github.com/harvardnlp/sent-summary).
 
 
+<a id="onmt.README.Using_additional_input_features"></a>
 #### Using additional input features
 [Linguistic Input Features Improve Neural Machine Translation](https://arxiv.org/abs/1606.02892) (Senrich et al. 2016) shows that translation performance can be increased by using additional input features.
 
@@ -101,6 +106,7 @@ It supports an arbitrary number of features with arbitrary labels. However, all 
 
 To evaluate the model, the option `-feature_dict_prefix` is required on `evaluate.lua` which points to the prefix of the features dictionnaries generated during the preprocessing.
 
+<a id="onmt.README.Pruning_a_model"></a>
 #### Pruning a model
 
 [Compression of Neural Machine Translation Models via Pruning](http://arxiv.org/pdf/1606.09274v1.pdf) (See et al. 2016) shows that a model can be aggressively pruned while keeping the same performace.
@@ -117,12 +123,14 @@ note that the pruning cut connection with lowest weight in the linear models by 
 
 Models can be retrained - typically you can recover full capacity of a model pruned at 60% or even 80% by few epochs of additional trainings.
 
+<a id="onmt.README.Switching_between_GPU_CPU_models"></a>
 #### Switching between GPU/CPU models
 By default, the model will always save the final model as a CPU model, but it will save the
 intermediate models as a CPU/GPU model depending on how you specified `-gpuid`.
 If you want to run beam search on the CPU with an intermediate model trained on the GPU,
 you can use `convert_to_cpu.lua` to convert the model to CPU and run beam search.
 
+<a id="onmt.README.GPU_memory_requirements_Training_speed"></a>
 #### GPU memory requirements/Training speed
 Training large sequence-to-sequence models can be memory-intensive. Memory requirements will
 dependent on batch size, maximum sequence length, vocabulary size, and (obviously) model size.
@@ -153,6 +161,7 @@ the above numbers accordingly. You can make use of memory on multiple GPUs by us
 `-gpuid2` option in `train.lua`. This will put the encoder on the GPU specified by
 `-gpuid`, and the decoder on the GPU specified by `-gpuid2`.
 
+<a id="onmt.README.Evaluation"></a>
 #### Evaluation
 For translation, evaluation via BLEU can be done by taking the output from `beam.lua` and using the
 `multi-bleu.perl` script from [Moses](https://github.com/moses-smt/mosesdecoder). For example
@@ -161,6 +170,7 @@ For translation, evaluation via BLEU can be done by taking the output from `beam
 perl multi-bleu.perl gold.txt < pred.txt
 ```
 
+<a id="onmt.README.Evaluation_of_States_and_Attention"></a>
 #### Evaluation of States and Attention
 attention_extraction.lua can be used to extract the attention and the LSTM states. It uses the following (required) options:
 
@@ -173,6 +183,7 @@ attention_extraction.lua can be used to extract the attention and the LSTM state
 Output of the script are two files, `encoder.hdf5` and `decoder.hdf5`. The encoder contains the states for every layer of the encoder LSTM and the offsets for the start of each source sentence. The decoder contains the states for the decoder LSTM layers and the offsets for the start of gold sentence. It additionally contains the attention for each time step (if the model uses attention).
 
 
+<a id="onmt.README.Pre_trained_models"></a>
 #### Pre-trained models
 We've uploaded English <-> German models trained on 4 million sentences from
 [Workshop on Machine Translation 2015](http://www.statmt.org/wmt15/translation-task.html).
@@ -185,11 +196,13 @@ These models are 4-layer LSTMs with 1000 hidden units and essentially replicates
 Neural Machine Translation](http://stanford.edu/~lmthang/data/papers/emnlp15_attn.pdf),
 Luong et al. EMNLP 2015.
 
+<a id="onmt.README.Acknowledgments"></a>
 #### Acknowledgments
 Our implementation utilizes code from the following:
 * [Andrej Karpathy's char-rnn repo](https://github.com/karpathy/char-rnn)
 * [Wojciech Zaremba's lstm repo](https://github.com/wojzaremba/lstm)
 * [Element rnn library](https://github.com/Element-Research/rnn)
 
+<a id="onmt.README.Licence"></a>
 #### Licence
 MIT
