@@ -10,6 +10,14 @@
     
 
     
+    <url>
+     <loc>/args/</loc>
+     <lastmod>2016-12-01</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
         
     <url>
      <loc>/code/</loc>
@@ -32,28 +40,6 @@
     <url>
      <loc></loc>
      <lastmod></lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    
-
-    
-        
-    <url>
-     <loc>/details/evaluate/</loc>
-     <lastmod>2016-12-01</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
-     <loc>/details/preprocess/</loc>
-     <lastmod>2016-12-01</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
-     <loc>/details/train/</loc>
-     <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
