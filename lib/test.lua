@@ -1,7 +1,49 @@
 require('lib.onmt.init')
+require('lib.utils.init')
 require('lib.data')
 
-local mytester = torch.Tester()
+local tester = torch.Tester()
+
+
+local stringTest = torch.TestSuite()
+
+function stringTest.noSplit()
+  tester:eq(utils.String.split('foo-foo', '%-|%-'), { 'foo-foo' })
+end
+function stringTest.emptySplit2()
+  tester:eq(utils.String.split('-|-', '%-|%-'), { '', '' })
+end
+function stringTest.emptySplit1Left()
+  tester:eq(utils.String.split('foo-|-', '%-|%-'), { 'foo', '' })
+end
+function stringTest.emptySplit1Middle()
+  tester:eq(utils.String.split('foo-|--|-bar', '%-|%-'), { 'foo', '', 'bar' })
+end
+function stringTest.emptySplit1Right()
+  tester:eq(utils.String.split('-|-foo', '%-|%-'), { '', 'foo' })
+end
+function stringTest.split2()
+  tester:eq(utils.String.split('foo-|-bar', '%-|%-'), { 'foo', 'bar' })
+end
+function stringTest.split3()
+  tester:eq(utils.String.split('foo-|-bar-|-foobar', '%-|%-'), { 'foo', 'bar', 'foobar' })
+end
+
+function stringTest.noStrip()
+  tester:eq(utils.String.strip('foo'), 'foo')
+end
+function stringTest.stripLeft()
+  tester:eq(utils.String.strip('  foo'), 'foo')
+end
+function stringTest.stripRight()
+  tester:eq(utils.String.strip('foo  '), 'foo')
+end
+function stringTest.stripBoth()
+  tester:eq(utils.String.strip('    foo  '), 'foo')
+end
+
+tester:add(stringTest)
+
 
 local nmttest = torch.TestSuite()
 
@@ -11,7 +53,7 @@ local nmttest = torch.TestSuite()
 --          equal(t1[k], t2[k], msg)
 --       end
 --    else
---       mytester:eq(t1, t2, 0.00001, msg)
+--       tester:eq(t1, t2, 0.00001, msg)
 --    end
 -- end
 
@@ -19,19 +61,19 @@ local nmttest = torch.TestSuite()
 function nmttest.Data()
 end
 
-mytester:add(nmttest)
+tester:add(nmttest)
 
 function onmt.test(tests, fixed_seed)
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()
-   torch.setnumthreads(1)
+  torch.setnumthreads(1)
 
    -- Randomize stuff
-   local seed = fixed_seed or (1e5 * torch.tic())
-   print('Seed: ', seed)
-   math.randomseed(seed)
-   torch.manualSeed(seed)
-   mytester:run(tests)
-   torch.setnumthreads(nThreads)
-   return mytester
+  local seed = fixed_seed or (1e5 * torch.tic())
+  print('Seed: ', seed)
+  math.randomseed(seed)
+  torch.manualSeed(seed)
+  tester:run(tests)
+  torch.setnumthreads(nThreads)
+  return tester
 end
