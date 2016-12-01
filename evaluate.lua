@@ -1,8 +1,6 @@
 require('./lib/eval')
 require('./lib/utils')
 
-local lfs = require 'lfs'
-
 local cmd = torch.CmdLine()
 
 cmd:text("")
@@ -81,7 +79,7 @@ local function main()
     targ_features_batch = {}
   end
 
-  eval.Translate.init(opt, lfs.currentdir())
+  eval.Translate.init(opt)
 
   local out_file = io.open(opt.output_file, 'w')
 

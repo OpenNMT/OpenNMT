@@ -1,7 +1,6 @@
 require('../onmt')
 require('../utils')
 
-local path = require('pl.path')
 local Data = require('lib.data')
 local constants = require('lib.constants')
 
@@ -12,23 +11,10 @@ local opt = {}
 
 local phrase_table
 
-local function absolute_path(file_path, resources_dir)
-  if not utils.String.is_empty(resources_dir) and not utils.String.is_empty(file_path) then
-    file_path = path.join(resources_dir, file_path)
-  end
-
-  if not utils.String.is_empty(file_path) then
-    assert(path.exists(file_path), 'Path does not exist: ' .. file_path)
-  end
-
-  return file_path
-end
-
-local function init(args, resources_dir)
+local function init(args)
   opt = args
   utils.Cuda.init(opt)
 
-  opt.model = absolute_path(opt.model, resources_dir)
   print('Loading ' .. opt.model .. '...')
   checkpoint = torch.load(opt.model)
 
@@ -62,7 +48,6 @@ local function init(args, resources_dir)
   dicts = checkpoint.dicts
 
   if opt.srctarg_dict:len() > 0 then
-    opt.srctarg_dict = absolute_path(opt.srctarg_dict, resources_dir)
     phrase_table = eval.PhraseTable.new(opt.srctarg_dict)
   end
 end
