@@ -232,7 +232,7 @@
         },
         {
             "location": "/code/Training/",
-            "text": "onmt.Checkpoint\n\n\nClass for saving and loading models during training.\n\n\n[src]\n\n\n\n\nonmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)\n\n\nSave the model and data in the middle of an epoch sorting the iteration. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Checkpoint(options, nets, optim, dataset)\n\n\n\n * \nonmt.Checkpoint:save(file_path, info)\n\n\n\n * \nonmt.Checkpoint:save_epoch(valid_ppl, epoch_state)\n\n\n\n\nonmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, num_iterations, learning_rate, status)\n\n\nInitialize for epoch \nepoch\n and training \nstatus\n (current loss)\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(batches, losses)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last losses.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(batch_index)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:get_train_ppl()\n\n\n\n * \nonmt.EpochState:get_time()\n\n\n\n * \nonmt.EpochState:get_status()\n\n\n\n\nonmt.Optim\n\n\n[src]\n\n\n\n\nonmt.Optim:update_learning_rate(score, epoch)\n\n\ndecay learning rate if val perf does not improve or we hit the start_decay_at limit\n\n\nUndocumented methods\n\n\n\n * \nonmt.Optim(args)\n\n\n\n * \nonmt.Optim:zero_grad(grad_params)\n\n\n\n * \nonmt.Optim:update_params(params, grad_params, max_grad_norm)\n\n\n\n * \nonmt.Optim:get_learning_rate()\n\n\n\n * \nonmt.Optim:get_states()",
+            "text": "onmt.Checkpoint\n\n\nClass for saving and loading models during training.\n\n\n[src]\n\n\n\n\nonmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)\n\n\nSave the model and data in the middle of an epoch sorting the iteration. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Checkpoint(options, nets, optim, dataset)\n\n\n\n * \nonmt.Checkpoint:save(file_path, info)\n\n\n\n * \nonmt.Checkpoint:save_epoch(valid_ppl, epoch_state)\n\n\n\n\nonmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, num_iterations, learning_rate, status)\n\n\nInitialize for epoch \nepoch\n and training \nstatus\n (current loss)\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(batches, losses)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last losses.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(batch_index)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:get_train_ppl()\n\n\n\n * \nonmt.EpochState:get_time()\n\n\n\n * \nonmt.EpochState:get_status()\n\n\n\n\nonmt.Optim\n\n\n[src]\n\n\n\n\nonmt.Optim:update_learning_rate(score, epoch)\n\n\ndecay learning rate if val perf does not improve or we hit the start_decay_at limit\n\n\nUndocumented methods\n\n\n\n * \nonmt.Optim(args)\n\n\n\n * \nonmt.Optim:zero_grad(grad_params)\n\n\n\n * \nonmt.Optim:update_params(params, grad_params, max_grad_norm)\n\n\n\n * \nonmt.Optim:get_learning_rate()\n\n\n\n * \nonmt.Optim:get_states()\n\n\n\n\nonmt.Data\n\n\nData management and batch creation.\n\n\nBatch interface [size]:\n\n\n\n\nsize: number of sentences in the batch [1]\n\n\nsource_length: max length in source batch [1]\n\n\nsource_size:  lengths of each source [batch x 1]\n\n\nsource_input:  left-padded idx's of source (PPPPPPABCDE) [batch x max]\n\n\nsource_input_features: table of source features sequences\n\n\nsource_input_rev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]\n\n\nsource_input_rev_features: table of reversed source features sequences\n\n\ntarget_length: max length in source batch [1]\n\n\ntarget_size: lengths of each source [batch x 1]\n\n\ntarget_non_zeros: number of non-ignored words in batch [1]\n\n\ntarget_input: input idx's of target (SABCDEPPPPPP) [batch x max]\n\n\ntarget_input_features: table of target input features sequences\n\n\ntarget_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]\n\n\ntarget_output_features: table of target output features sequences\n\n\n\n\nTODO: change name of size =\n maxlen\n\n\n[src]\n\n\n\n\nonmt.Data(src_data, targ_data)\n\n\nInitialize a data object given aligned tables of IntTensors \nsrc\n\n  and \ntarg\n.\n\n\n[src]\n\n\n\n\nonmt.Data:set_batch_size(max_batch_size)\n\n\nSetup up the training data to respect \nmax_batch_size\n. \n\n\n[src]\n\n\n\n\nonmt.Data:get_data(src, src_features, targ, targ_features)\n\n\nCreate a batch object given aligned sent tables \nsrc\n and \ntarg\n\n  (optional). Data format is shown at the top of the file.\n\n\n[src]\n\n\n\n\nonmt.Data:get_batch(idx)\n\n\nGet batch \nidx\n. If nil make a batch of all the data.",
             "title": "Training"
         },
         {
@@ -289,6 +289,31 @@
             "location": "/code/Training/#undocumented-methods_2",
             "text": "*  onmt.Optim(args)  \n *  onmt.Optim:zero_grad(grad_params)  \n *  onmt.Optim:update_params(params, grad_params, max_grad_norm)  \n *  onmt.Optim:get_learning_rate()  \n *  onmt.Optim:get_states()",
             "title": "Undocumented methods"
+        },
+        {
+            "location": "/code/Training/#onmtdata",
+            "text": "Data management and batch creation.  Batch interface [size]:   size: number of sentences in the batch [1]  source_length: max length in source batch [1]  source_size:  lengths of each source [batch x 1]  source_input:  left-padded idx's of source (PPPPPPABCDE) [batch x max]  source_input_features: table of source features sequences  source_input_rev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]  source_input_rev_features: table of reversed source features sequences  target_length: max length in source batch [1]  target_size: lengths of each source [batch x 1]  target_non_zeros: number of non-ignored words in batch [1]  target_input: input idx's of target (SABCDEPPPPPP) [batch x max]  target_input_features: table of target input features sequences  target_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]  target_output_features: table of target output features sequences   TODO: change name of size =  maxlen  [src]",
+            "title": "onmt.Data"
+        },
+        {
+            "location": "/code/Training/#onmtdatasrc_data-targ_data",
+            "text": "Initialize a data object given aligned tables of IntTensors  src \n  and  targ .  [src]",
+            "title": "onmt.Data(src_data, targ_data)"
+        },
+        {
+            "location": "/code/Training/#onmtdataset_batch_sizemax_batch_size",
+            "text": "Setup up the training data to respect  max_batch_size .   [src]",
+            "title": "onmt.Data:set_batch_size(max_batch_size)"
+        },
+        {
+            "location": "/code/Training/#onmtdataget_datasrc-src_features-targ-targ_features",
+            "text": "Create a batch object given aligned sent tables  src  and  targ \n  (optional). Data format is shown at the top of the file.  [src]",
+            "title": "onmt.Data:get_data(src, src_features, targ, targ_features)"
+        },
+        {
+            "location": "/code/Training/#onmtdataget_batchidx",
+            "text": "Get batch  idx . If nil make a batch of all the data.",
+            "title": "onmt.Data:get_batch(idx)"
         },
         {
             "location": "/code/Translation/",

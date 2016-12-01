@@ -98,6 +98,17 @@
                     <li><a class="toctree-l4" href="#onmtoptimupdate_learning_ratescore-epoch">onmt.Optim:update_learning_rate(score, epoch)</a></li>
                 
             
+                <li class="toctree-l3"><a href="#onmtdata">onmt.Data</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdatasrc_data-targ_data">onmt.Data(src_data, targ_data)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdataset_batch_sizemax_batch_size">onmt.Data:set_batch_size(max_batch_size)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdataget_datasrc-src_features-targ-targ_features">onmt.Data:get_data(src, src_features, targ, targ_features)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdataget_batchidx">onmt.Data:get_batch(idx)</a></li>
+                
+            
             </ul>
         
     </li>
@@ -202,7 +213,46 @@
 <a name="onmt.Optim:get_learning_rate"></a>
  * <code>onmt.Optim:get_learning_rate()</code>
 <a name="onmt.Optim:get_states"></a>
- * <code>onmt.Optim:get_states()</code></p>
+ * <code>onmt.Optim:get_states()</code>
+<a name="onmt.Data.dok"></a></p>
+<h2 id="onmtdata">onmt.Data</h2>
+<p>Data management and batch creation.</p>
+<p>Batch interface [size]:</p>
+<ul>
+<li>size: number of sentences in the batch [1]</li>
+<li>source_length: max length in source batch [1]</li>
+<li>source_size:  lengths of each source [batch x 1]</li>
+<li>source_input:  left-padded idx's of source (PPPPPPABCDE) [batch x max]</li>
+<li>source_input_features: table of source features sequences</li>
+<li>source_input_rev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]</li>
+<li>source_input_rev_features: table of reversed source features sequences</li>
+<li>target_length: max length in source batch [1]</li>
+<li>target_size: lengths of each source [batch x 1]</li>
+<li>target_non_zeros: number of non-ignored words in batch [1]</li>
+<li>target_input: input idx's of target (SABCDEPPPPPP) [batch x max]</li>
+<li>target_input_features: table of target input features sequences</li>
+<li>target_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]</li>
+<li>target_output_features: table of target output features sequences</li>
+</ul>
+<p>TODO: change name of size =&gt; maxlen</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/data.lua#L51">[src]</a>
+<a name="onmt.Data"></a></p>
+<h3 id="onmtdatasrc_data-targ_data">onmt.Data(src_data, targ_data)</h3>
+<p>Initialize a data object given aligned tables of IntTensors <code>src</code>
+  and <code>targ</code>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/data.lua#L63">[src]</a>
+<a name="onmt.Data:set_batch_size"></a></p>
+<h3 id="onmtdataset_batch_sizemax_batch_size">onmt.Data:set_batch_size(max_batch_size)</h3>
+<p>Setup up the training data to respect <code>max_batch_size</code>. </p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/data.lua#L113">[src]</a>
+<a name="onmt.Data:get_data"></a></p>
+<h3 id="onmtdataget_datasrc-src_features-targ-targ_features">onmt.Data:get_data(src, src_features, targ, targ_features)</h3>
+<p>Create a batch object given aligned sent tables <code>src</code> and <code>targ</code>
+  (optional). Data format is shown at the top of the file.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/data.lua#L203">[src]</a>
+<a name="onmt.Data:get_batch"></a></p>
+<h3 id="onmtdataget_batchidx">onmt.Data:get_batch(idx)</h3>
+<p>Get batch <code>idx</code>. If nil make a batch of all the data. </p>
               
             </div>
           </div>
