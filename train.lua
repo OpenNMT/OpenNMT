@@ -35,7 +35,7 @@ cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
 cmd:option('-feat_vec_exponent', 0.7, [[If the feature takes N values, then the
                                       embedding dimension will be set to N^exponent]])
-cmd:option('-input_feed', true, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
+cmd:option('-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
 cmd:option('-brnn', false, [[Use a bidirectional encoder]])
 cmd:option('-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states: concat or sum]])
 
@@ -394,7 +394,7 @@ local function main()
       rnn_size = opt.rnn_size,
       dropout = opt.dropout,
       num_layers = opt.num_layers,
-      input_feed = opt.input_feed
+      input_feed = opt.input_feed == 1
     }
 
     local pretrained = {}

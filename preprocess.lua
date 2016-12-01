@@ -27,7 +27,7 @@ cmd:option('-targ_vocab_file', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
-cmd:option('-shuffle', true, [[Suffle data]])
+cmd:option('-shuffle', 1, [[Suffle data]])
 cmd:option('-seed', 3435, [[Random seed]])
 
 cmd:option('-report_every', 100000, [[Report status every this many sentences]])
@@ -208,7 +208,7 @@ local function make_data(src_file, targ_file, src_dicts, targ_dicts)
   src_reader:close()
   targ_reader:close()
 
-  if opt.shuffle then
+  if opt.shuffle == 1 then
     print('... shuffling sentences')
     local perm = torch.randperm(#src)
     src = utils.Table.reorder(src, perm)

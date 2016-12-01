@@ -27,7 +27,7 @@ local function init(args)
   local decoder_args = {
     rnn_size = checkpoint.options.rnn_size,
     num_layers = checkpoint.options.num_layers,
-    input_feed = checkpoint.options.input_feed,
+    input_feed = checkpoint.options.input_feed == 1,
     mask_padding = true
   }
 
