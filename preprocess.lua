@@ -22,8 +22,8 @@ cmd:option('-output_file', '', [[Output file for the prepared data]])
 
 cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
 cmd:option('-targ_vocab_size', 50000, [[Size of the target vocabulary]])
-cmd:option('-src_vocab_file', '', [[Pre-calculated source vocabulary]])
-cmd:option('-targ_vocab_file', '', [[Pre-calculated target vocabulary]])
+cmd:option('-src_vocab_file', '', [[Path to an existing source vocabulary]])
+cmd:option('-targ_vocab_file', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
