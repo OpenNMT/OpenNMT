@@ -8,18 +8,19 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Train - OpenNMT</title>
+  <title>Training - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Train";
-    var mkdocs_page_input_path = "code/train.md";
-    var mkdocs_page_url = "/code/train/";
+    var mkdocs_page_name = "Training";
+    var mkdocs_page_input_path = "code/Training.md";
+    var mkdocs_page_url = "/code/Training/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -67,21 +68,14 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../eval/">Eval</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/">Onmt</a>
+        <a class="" href="../Models/">Models</a>
         
     </li>
 
         
             
     <li class="toctree-l1 current">
-        <a class="current" href="./">Train</a>
+        <a class="current" href="./">Training</a>
         
             <ul>
             
@@ -105,6 +99,13 @@
                 
             
             </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../Translation/">Translation</a>
         
     </li>
 
@@ -138,7 +139,7 @@
         
       
     
-    <li>Train</li>
+    <li>Training</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -153,9 +154,9 @@
 <p>Class for saving and loading models during training.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/checkpoint.lua#L31">[src]</a>
 <a name="onmt.Checkpoint:save_iteration"></a></p>
-<h4 id="onmtcheckpointsave_iterationiteration-epoch_state-batch_order">onmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)</h4>
+<h3 id="onmtcheckpointsave_iterationiteration-epoch_state-batch_order">onmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)</h3>
 <p>Save the model and data in the middle of an epoch sorting the iteration. </p>
-<h5 id="undocumented-methods">Undocumented methods</h5>
+<h4 id="undocumented-methods">Undocumented methods</h4>
 <p><a name="onmt.Checkpoint"></a>
  * <code>onmt.Checkpoint(options, nets, optim, dataset)</code>
 <a name="onmt.Checkpoint:save"></a>
@@ -168,17 +169,17 @@
   the state of the current epoch.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L9">[src]</a>
 <a name="onmt.EpochState"></a></p>
-<h4 id="onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</h4>
+<h3 id="onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</h3>
 <p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L30">[src]</a>
 <a name="onmt.EpochState:update"></a></p>
-<h4 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h4>
+<h3 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h3>
 <p>Update training status. Takes <code>batch</code> (described in data.lua) and last losses.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L40">[src]</a>
 <a name="onmt.EpochState:log"></a></p>
-<h4 id="onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</h4>
+<h3 id="onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</h3>
 <p>Log to status stdout. </p>
-<h5 id="undocumented-methods_1">Undocumented methods</h5>
+<h4 id="undocumented-methods_1">Undocumented methods</h4>
 <p><a name="onmt.EpochState:get_train_ppl"></a>
  * <code>onmt.EpochState:get_train_ppl()</code>
 <a name="onmt.EpochState:get_time"></a>
@@ -189,9 +190,9 @@
 <h2 id="onmtoptim">onmt.Optim</h2>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/optim.lua#L111">[src]</a>
 <a name="onmt.Optim:update_learning_rate"></a></p>
-<h4 id="onmtoptimupdate_learning_ratescore-epoch">onmt.Optim:update_learning_rate(score, epoch)</h4>
+<h3 id="onmtoptimupdate_learning_ratescore-epoch">onmt.Optim:update_learning_rate(score, epoch)</h3>
 <p>decay learning rate if val perf does not improve or we hit the start_decay_at limit</p>
-<h5 id="undocumented-methods_2">Undocumented methods</h5>
+<h4 id="undocumented-methods_2">Undocumented methods</h4>
 <p><a name="onmt.Optim"></a>
  * <code>onmt.Optim(args)</code>
 <a name="onmt.Optim:zero_grad"></a>
@@ -209,8 +210,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="../Translation/" class="btn btn-neutral float-right" title="Translation">Next <span class="icon icon-circle-arrow-right"></span></a>
       
-        <a href="../onmt/" class="btn btn-neutral" title="Onmt"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+        <a href="../Models/" class="btn btn-neutral" title="Models"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -236,8 +239,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../Models/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="../Translation/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

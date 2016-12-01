@@ -20,19 +20,19 @@
     
         
     <url>
-     <loc>/code/eval/</loc>
+     <loc>/code/Models/</loc>
      <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>/code/onmt/</loc>
+     <loc>/code/Training/</loc>
      <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>/code/train/</loc>
+     <loc>/code/Translation/</loc>
      <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
     </url>
