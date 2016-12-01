@@ -35,15 +35,25 @@ end
 function Sequencer:_sharedClone()
   local net = self.network_clones[1] or self.network
 
-  local params, gradParams
+  local clone = utils.Tensor.deepClone(net)
+
+  -- Share parameters.
   if self.network.parameters then
-    params, gradParams = net:parameters()
+    local params, gradParams = net:parameters()
     if params == nil then
       params = {}
     end
+
+    local cloneParams, cloneGradParams = clone:parameters()
+    for i = 1, #params do
+      cloneParams[i]:set(params[i])
+      cloneGradParams[i]:set(gradParams[i])
+    end
   end
 
+  -- Share intermediate tensors if defined.
   local sharedTensors = {}
+
   net:apply(function(m)
     if m.gradInputSharedIdx then
       sharedTensors[m.gradInputSharedIdx] = m.gradInput
@@ -52,16 +62,6 @@ function Sequencer:_sharedClone()
       sharedTensors[m.outputSharedIdx] = m.output
     end
   end)
-
-  local clone = utils.Tensor.deepClone(net)
-
-  if self.network.parameters then
-    local cloneParams, cloneGradParams = clone:parameters()
-    for i = 1, #params do
-      cloneParams[i]:set(params[i])
-      cloneGradParams[i]:set(gradParams[i])
-    end
-  end
 
   clone:apply(function(m)
     if m.gradInputSharedIdx then
