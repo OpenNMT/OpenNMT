@@ -1,16 +1,16 @@
 [![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT)
 
-# OpenNMT
+# OpenNMT: Open-Source Machine Translation
 
 <a href="https://opennmt.github.io/">OpenNMT</a> is a full-featured,
 open-source (MIT) neural machine translation system utilizing the
 [Torch](http://torch.ch) mathematical toolkit.
 
-<center style="padding: 40px"><img src="http://opennmt.github.io/simple-attn.png" /></center>
+<center style="padding: 40px"><img width="200px" src="http://opennmt.github.io/simple-attn.png" /></center>
 
-The system is designed to be simple to use and easy to extend (for
-researchers), while maintaining efficiency and state-of-the-art
-translation accuracy. Features include:
+The system is designed to be simple to use and easy to extend , while
+maintaining efficiency and state-of-the-art translation
+accuracy. Features include:
 
 * Speed and memory optimizations for high-performance GPU training.
 * Simple general-purpose interface, only requires and source/target data files.
@@ -28,21 +28,21 @@ Alternatively there is a (CUDA) Docker container available at <a href="https://h
 
 OpenNMT consists of three commands:
 
-1. Preprocess the data.
+1) Preprocess the data.
 
 > th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo
 
-2. Train the model.
+2) Train the model.
 
 > th train.lua -data data/demo-train.t7 -save_file model
 
-3. Translate sentences.
+3) Translate sentences.
 
 > th evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict
 
 See <a href="doc/Quickstart.md">quickstart</a> for the details.
 
-## Other Documentation
+## Documentation
 
 * <a href="doc/Documentattion.md">Options and Features</a> 
 * <a href="doc/Documentattion.md">Code Documentation</a> 
