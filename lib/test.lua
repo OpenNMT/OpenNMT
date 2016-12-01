@@ -13,13 +13,13 @@ end
 function stringTest.emptySplit2()
   tester:eq(utils.String.split('-|-', '%-|%-'), { '', '' })
 end
-function stringTest.emptySplit1Left()
+function stringTest.emptySplit1Right()
   tester:eq(utils.String.split('foo-|-', '%-|%-'), { 'foo', '' })
 end
 function stringTest.emptySplit1Middle()
   tester:eq(utils.String.split('foo-|--|-bar', '%-|%-'), { 'foo', '', 'bar' })
 end
-function stringTest.emptySplit1Right()
+function stringTest.emptySplit1Left()
   tester:eq(utils.String.split('-|-foo', '%-|%-'), { '', 'foo' })
 end
 function stringTest.split2()
