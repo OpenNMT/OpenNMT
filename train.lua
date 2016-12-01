@@ -78,7 +78,6 @@ cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in pa
                             Note: this will technically change the final batch size to max_batch_size*nparallel.]])
 cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
                                                 except if you want to look inside clones for visualization purpose for instance.]])
-cmd:option('-cudnn', false, [[Whether to use cudnn or not]])
 
 -- bookkeeping
 cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
