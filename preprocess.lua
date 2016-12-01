@@ -59,7 +59,7 @@ local function make_vocabulary(filename, size)
     if #features_vocabs == 0 and num_features > 0 then
       for j = 1, num_features do
         features_vocabs[j] = utils.Dict.new({constants.PAD_WORD, constants.UNK_WORD,
-                                            constants.BOS_WORD, constants.EOS_WORD})
+                                             constants.BOS_WORD, constants.EOS_WORD})
       end
     else
       assert(#features_vocabs == num_features,
