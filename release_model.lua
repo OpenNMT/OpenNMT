@@ -38,9 +38,6 @@ local function main()
   print('Loading model ' .. opt.model .. '...')
   local checkpoint = torch.load(opt.model)
   print('... done.')
-  if opt.gpuid > 0 and checkpoint.options.cudnn == 1 then
-    require 'cudnn'
-  end
 
   print('Converting model...')
   for _, net in pairs(checkpoint.nets) do

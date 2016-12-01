@@ -1,3 +1,5 @@
+[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT)
+
 # OpenNMT
 
 <a href="https://opennmt.github.io/">OpenNMT</a> is a full-featured,
@@ -39,7 +41,6 @@ OpenNMT consists of three commands:
 > th evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict
 
 See <a href="doc/Quickstart.md">quickstart</a> for the details.
-
 
 ## Other Documentation
 

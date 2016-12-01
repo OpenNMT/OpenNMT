@@ -3,7 +3,6 @@ require 'nn'
 require 'nngraph'
 
 local Cuda = {
-  nn = nn,
   activated = false
 }
 
@@ -14,10 +13,6 @@ function Cuda.init(opt, gpuIdx)
     local _, err = pcall(function()
       require 'cutorch'
       require 'cunn'
-      if opt.cudnn then
-        require 'cudnn'
-        Cuda.nn = cudnn
-      end
       if gpuIdx == nil then
         -- allow memory access between devices
         cutorch.getKernelPeerToPeerAccess(true)

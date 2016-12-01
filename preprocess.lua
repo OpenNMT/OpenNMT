@@ -22,12 +22,12 @@ cmd:option('-output_file', '', [[Output file for the prepared data]])
 
 cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
 cmd:option('-targ_vocab_size', 50000, [[Size of the target vocabulary]])
-cmd:option('-src_vocab_file', '', [[Pre-calculated source vocabulary]])
-cmd:option('-targ_vocab_file', '', [[Pre-calculated target vocabulary]])
+cmd:option('-src_vocab_file', '', [[Path to an existing source vocabulary]])
+cmd:option('-targ_vocab_file', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
-cmd:option('-shuffle', true, [[Suffle data]])
+cmd:option('-shuffle', 1, [[Suffle data]])
 cmd:option('-seed', 3435, [[Random seed]])
 
 cmd:option('-report_every', 100000, [[Report status every this many sentences]])
@@ -59,7 +59,7 @@ local function make_vocabulary(filename, size)
     if #features_vocabs == 0 and num_features > 0 then
       for j = 1, num_features do
         features_vocabs[j] = utils.Dict.new({constants.PAD_WORD, constants.UNK_WORD,
-                                            constants.BOS_WORD, constants.EOS_WORD})
+                                             constants.BOS_WORD, constants.EOS_WORD})
       end
     else
       assert(#features_vocabs == num_features,
@@ -208,7 +208,7 @@ local function make_data(src_file, targ_file, src_dicts, targ_dicts)
   src_reader:close()
   targ_reader:close()
 
-  if opt.shuffle then
+  if opt.shuffle == 1 then
     print('... shuffling sentences')
     local perm = torch.randperm(#src)
     src = utils.Table.reorder(src, perm)

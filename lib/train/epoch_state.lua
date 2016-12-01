@@ -6,8 +6,10 @@ require 'torch'
 local EpochState = torch.class("EpochState")
 
 --[[ Initialize for epoch `epoch` and training `status` (current loss)]]
-function EpochState:__init(epoch, status)
+function EpochState:__init(epoch, num_iterations, learning_rate, status)
   self.epoch = epoch
+  self.num_iterations = num_iterations
+  self.learning_rate = learning_rate
 
   if status ~= nil then
     self.status = status
@@ -34,14 +36,13 @@ function EpochState:update(batches, losses)
   end
 end
 
---[[ Log to status stdout.
-  TODO: these args shouldn't need to be passed in each time. ]]
-function EpochState:log(batch_index, data_size, learning_rate)
+--[[ Log to status stdout. ]]
+function EpochState:log(batch_index)
   local time_taken = self:get_time()
   local stats = ''
   local freeMemory = utils.Cuda.freeMemory()
   stats = stats .. string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
-                                 self.epoch, batch_index, data_size, learning_rate)
+                                 self.epoch, batch_index, self.num_iterations, self.learning_rate)
   stats = stats .. string.format('Throughput %d/%d/%d total/src/targ tokens/sec ; ',
                                  (self.num_words_target + self.num_words_source) / time_taken,
                                  self.num_words_source / time_taken,

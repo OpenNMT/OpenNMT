@@ -1,7 +1,6 @@
 require('../onmt')
 require('../utils')
 
-local path = require('pl.path')
 local Data = require('lib.data')
 local constants = require('lib.constants')
 
@@ -10,41 +9,12 @@ local models = {}
 local dicts = {}
 local opt = {}
 
-local phrase_table = {}
+local phrase_table
 
-
-local function absolute_path(file_path, resources_dir)
-  if not utils.String.is_empty(resources_dir) and not utils.String.is_empty(file_path) then
-    file_path = path.join(resources_dir, file_path)
-  end
-
-  if not utils.String.is_empty(file_path) then
-    assert(path.exists(file_path), 'Path does not exist: ' .. file_path)
-  end
-
-  return file_path
-end
-
-local function load_phrase_table(file_path)
-  local f = assert(io.open(file_path, 'r'))
-
-  local pt = {}
-
-  for line in f:lines() do
-    local c = line:split("|||")
-    pt[utils.String.strip(c[1])] = c[2]
-  end
-
-  f:close()
-
-  return pt
-end
-
-local function init(args, resources_dir)
+local function init(args)
   opt = args
   utils.Cuda.init(opt)
 
-  opt.model = absolute_path(opt.model, resources_dir)
   print('Loading ' .. opt.model .. '...')
   checkpoint = torch.load(opt.model)
 
@@ -57,7 +27,7 @@ local function init(args, resources_dir)
   local decoder_args = {
     rnn_size = checkpoint.options.rnn_size,
     num_layers = checkpoint.options.num_layers,
-    input_feed = checkpoint.options.input_feed,
+    input_feed = checkpoint.options.input_feed == 1,
     mask_padding = true
   }
 
@@ -78,8 +48,7 @@ local function init(args, resources_dir)
   dicts = checkpoint.dicts
 
   if opt.srctarg_dict:len() > 0 then
-    opt.srctarg_dict = absolute_path(opt.srctarg_dict, resources_dir)
-    phrase_table = load_phrase_table(opt.srctarg_dict)
+    phrase_table = eval.PhraseTable.new(opt.srctarg_dict)
   end
 end
 
@@ -132,8 +101,8 @@ local function build_target_tokens(pred, pred_feats, src, attn)
         local _, max_index = attn[i]:max(1)
         local source = src[max_index[1]]
 
-        if phrase_table[source] ~= nil then
-          tokens[i] = phrase_table[source]
+        if phrase_table and phrase_table:contains(source) then
+          tokens[i] = phrase_table:lookup(source)
         else
           tokens[i] = source
         end

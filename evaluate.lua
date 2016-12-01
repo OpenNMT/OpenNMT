@@ -1,8 +1,6 @@
 require('./lib/eval')
 require('./lib/utils')
 
-local lfs = require 'lfs'
-
 local cmd = torch.CmdLine()
 
 cmd:text("")
@@ -42,7 +40,6 @@ cmd:text("**Other options**")
 cmd:text("")
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
-cmd:option('-cudnn', false, [[If using character model, this should be true if the character model was trained using cudnn]])
 cmd:option('-time', false, [[Measure batch translation time]])
 
 
@@ -81,7 +78,7 @@ local function main()
     targ_features_batch = {}
   end
 
-  eval.Translate.init(opt, lfs.currentdir())
+  eval.Translate.init(opt)
 
   local out_file = io.open(opt.output_file, 'w')
 
