@@ -26,6 +26,11 @@
             "title": "Documentation"
         },
         {
+            "location": "/code/",
+            "text": "",
+            "title": "Home"
+        },
+        {
             "location": "/code/eval/",
             "text": "",
             "title": "Home"
