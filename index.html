@@ -80,159 +80,30 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="code/eval/">Eval</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="code/">Home</a>
         
     </li>
 
         
             
-    <ul class="subnav">
-    <li><span>Eval</span></li>
-
-        
-            
     <li class="toctree-l1 ">
-        <a class="" href="code/eval/">Home</a>
+        <a class="" href="code/onmt/">Onmt</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="code/eval/lib+eval+beam/">Lib+eval+beam</a>
+        <a class="" href="code/train/">Train</a>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/eval/lib+eval+phrase_table/">Lib+eval+phrase table</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Onmt</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+BiEncoder/">lib+onmt+BiEncoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+Decoder/">lib+onmt+Decoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+Encoder/">lib+onmt+Encoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+LSTM/">lib+onmt+LSTM</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+MaskedSoftmax/">lib+onmt+MaskedSoftmax</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+Sequencer/">lib+onmt+Sequencer</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/onmt/lib+onmt+WordEmbedding/">lib+onmt+WordEmbedding</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Train</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/train/">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/train/lib+data/">Lib+data</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/train/lib+train+checkpoint/">Lib+train+checkpoint</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/train/lib+train+epoch_state/">Lib+train+epoch state</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="code/train/lib+train+optim/">Lib+train+optim</a>
-        
-    </li>
-
-        
-    </ul>
 
         
     </ul>
@@ -299,15 +170,14 @@ accuracy. Features include:</p>
 <p><code>th train.lua -data data/demo-train.t7 -save_file model</code></p>
 <p>3) Translate sentences.</p>
 <p><code>th evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict</code></p>
-<p>See <a href="doc/Quickstart.md">quickstart</a> for the details.</p>
+<p>See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.</p>
 <h2 id="documentation">Documentation</h2>
 <ul>
-<li><a href="http://opennmt.github.io/docs">Options and Features</a> </li>
-<li><a href="http://opennmt.github.io/opennmt">Code Documentation</a> </li>
-<li><a href="http://opennmt.github.io/advance">Advanced Features</a></li>
-<li><a href="http://opennmt.github.io/examples">Example Models</a></li>
-<li><a href="doc/Quickstart.md">Live Demo</a></li>
-<li><a href="doc/Bibliography.md">Bibliography</a></li>
+<li><a href="http://opennmt.github.io/Guide">Options and Features</a> </li>
+<li><a href="http://opennmt.github.io/OpenNMT">Documentation</a> </li>
+<li><a href="http://opennmt.github.io/Models">Example Models</a></li>
+<li><a href="http://demo-pnmt.systran.net">Live Demo</a></li>
+<li><a href="http://opennmt.github.io/About">Bibliography</a></li>
 </ul>
               
             </div>
@@ -356,5 +226,5 @@ accuracy. Features include:</p>
 
 <!--
 MkDocs version : 0.16.0
-Build Date UTC : 2016-12-01 22:49:48
+Build Date UTC : 2016-12-01 22:55:57
 -->

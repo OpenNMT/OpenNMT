@@ -2,7 +2,7 @@
     "docs": [
         {
             "location": "/",
-            "text": "OpenNMT: Open-Source Neural Machine Translation\n\n\nOpenNMT\n is a full-featured,\nopen-source (MIT) neural machine translation system utilizing the\n\nTorch\n mathematical toolkit.\n\n\n\n\nThe system is designed to be simple to use and easy to extend , while\nmaintaining efficiency and state-of-the-art translation\naccuracy. Features include:\n\n\n\n\nSpeed and memory optimizations for high-performance GPU training.\n\n\nSimple general-purpose interface, only requires and source/target data files.\n\n\nC-only decoder implementation for easy deployment.\n\n\nExtensions to allow other sequence generation tasks such as summarization and image captioning.\n\n\n\n\n\n\nInstallation\n\n\nOpenNMT only requires a vanilla torch/cutorch install. It uses \nnn\n, \nnngraph\n, and \ncunn\n.\n\n\nAlternatively there is a (CUDA) Docker container available at \nhere\n.\n\n\n\n\nQuickstart\n\n\nOpenNMT consists of three commands:\n\n\n1) Preprocess the data.\n\n\nth preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo\n\n\n2) Train the model.\n\n\nth train.lua -data data/demo-train.t7 -save_file model\n\n\n3) Translate sentences.\n\n\nth evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict\n\n\nSee \nquickstart\n for the details.\n\n\nDocumentation\n\n\n\n\nOptions and Features\n \n\n\nCode Documentation\n \n\n\nAdvanced Features\n\n\nExample Models\n\n\nLive Demo\n\n\nBibliography",
+            "text": "OpenNMT: Open-Source Neural Machine Translation\n\n\nOpenNMT\n is a full-featured,\nopen-source (MIT) neural machine translation system utilizing the\n\nTorch\n mathematical toolkit.\n\n\n\n\nThe system is designed to be simple to use and easy to extend , while\nmaintaining efficiency and state-of-the-art translation\naccuracy. Features include:\n\n\n\n\nSpeed and memory optimizations for high-performance GPU training.\n\n\nSimple general-purpose interface, only requires and source/target data files.\n\n\nC-only decoder implementation for easy deployment.\n\n\nExtensions to allow other sequence generation tasks such as summarization and image captioning.\n\n\n\n\n\n\nInstallation\n\n\nOpenNMT only requires a vanilla torch/cutorch install. It uses \nnn\n, \nnngraph\n, and \ncunn\n.\n\n\nAlternatively there is a (CUDA) Docker container available at \nhere\n.\n\n\n\n\nQuickstart\n\n\nOpenNMT consists of three commands:\n\n\n1) Preprocess the data.\n\n\nth preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo\n\n\n2) Train the model.\n\n\nth train.lua -data data/demo-train.t7 -save_file model\n\n\n3) Translate sentences.\n\n\nth evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict\n\n\nSee the \nguide\n for more details.\n\n\nDocumentation\n\n\n\n\nOptions and Features\n \n\n\nDocumentation\n \n\n\nExample Models\n\n\nLive Demo\n\n\nBibliography",
             "title": "Home"
         },
         {
@@ -17,12 +17,12 @@
         },
         {
             "location": "/#quickstart",
-            "text": "OpenNMT consists of three commands:  1) Preprocess the data.  th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo  2) Train the model.  th train.lua -data data/demo-train.t7 -save_file model  3) Translate sentences.  th evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict  See  quickstart  for the details.",
+            "text": "OpenNMT consists of three commands:  1) Preprocess the data.  th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo  2) Train the model.  th train.lua -data data/demo-train.t7 -save_file model  3) Translate sentences.  th evaluate.lua -model model_final.t7 -src_file data/src-val.txt -output_file pred.txt -src_dict data/demo.src.dict -targ_dict data/demo.targ.dict  See the  guide  for more details.",
             "title": "Quickstart"
         },
         {
             "location": "/#documentation",
-            "text": "Options and Features    Code Documentation    Advanced Features  Example Models  Live Demo  Bibliography",
+            "text": "Options and Features    Documentation    Example Models  Live Demo  Bibliography",
             "title": "Documentation"
         },
         {
@@ -46,402 +46,302 @@
             "title": "Evaluate"
         },
         {
+            "location": "/code/eval/",
+            "text": "onmt.Beam\n\n\nClass for managing the beam search process. \n\n\n[src]\n\n\n\n\nonmt.Beam(size, num_features)\n\n\nConstructor\n\n\nParameters:\n\n\n\n\nsize\n : The beam \nK\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:get_current_state()\n\n\nGet the outputs for the current timestep.\n\n\n[src]\n\n\n\n\nonmt.Beam:get_current_origin()\n\n\nGet the backpointers for the current timestep.\n\n\n[src]\n\n\n\n\nonmt.Beam:advance(word_lk, feats_lk, attn_out)\n\n\nGiven prob over words for every last beam \nword_lk\n and attention\n \nattn_out\n. Compute and update the beam search.\n\n\nParameters:\n\n\n\n\nword_lk\n- probs at the last step\n\n\nattn_word_lk\n- attention at the last step\n\n\n\n\nReturns: true if beam search is complete.\n\n\n[src]\n\n\n\n\nonmt.Beam:get_hyp(k)\n\n\nWalk back to construct the full hypothesis \nk\n.\n\n\nParameters:\n\n\n\n\nk\n - the position in the beam to construct.\n\n\n\n\nReturns:\n\n\n\n\nThe hypothesis\n\n\nThe attention at each time step.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Beam:sort_best()\n\n\n\n * \nonmt.Beam:get_best()\n\n\n\n\nonmt.PhraseTable\n\n\nUndocumented methods\n\n\n\n * \nonmt.PhraseTable(file_path)\n\n\n\n * \nonmt.PhraseTable:lookup(word)\n\n\n\n * \nonmt.PhraseTable:contains(word)",
+            "title": "Eval"
+        },
+        {
+            "location": "/code/eval/#onmtbeam",
+            "text": "Class for managing the beam search process.   [src]",
+            "title": "onmt.Beam"
+        },
+        {
+            "location": "/code/eval/#onmtbeamsize-num_features",
+            "text": "Constructor  Parameters:   size  : The beam  K .   [src]",
+            "title": "onmt.Beam(size, num_features)"
+        },
+        {
+            "location": "/code/eval/#onmtbeamget_current_state",
+            "text": "Get the outputs for the current timestep.  [src]",
+            "title": "onmt.Beam:get_current_state()"
+        },
+        {
+            "location": "/code/eval/#onmtbeamget_current_origin",
+            "text": "Get the backpointers for the current timestep.  [src]",
+            "title": "onmt.Beam:get_current_origin()"
+        },
+        {
+            "location": "/code/eval/#onmtbeamadvanceword_lk-feats_lk-attn_out",
+            "text": "Given prob over words for every last beam  word_lk  and attention\n  attn_out . Compute and update the beam search.  Parameters:   word_lk - probs at the last step  attn_word_lk - attention at the last step   Returns: true if beam search is complete.  [src]",
+            "title": "onmt.Beam:advance(word_lk, feats_lk, attn_out)"
+        },
+        {
+            "location": "/code/eval/#onmtbeamget_hypk",
+            "text": "Walk back to construct the full hypothesis  k .  Parameters:   k  - the position in the beam to construct.   Returns:   The hypothesis  The attention at each time step.",
+            "title": "onmt.Beam:get_hyp(k)"
+        },
+        {
+            "location": "/code/eval/#undocumented-methods",
+            "text": "*  onmt.Beam:sort_best()  \n *  onmt.Beam:get_best()",
+            "title": "Undocumented methods"
+        },
+        {
+            "location": "/code/eval/#onmtphrasetable",
+            "text": "",
+            "title": "onmt.PhraseTable"
+        },
+        {
+            "location": "/code/eval/#undocumented-methods_1",
+            "text": "*  onmt.PhraseTable(file_path)  \n *  onmt.PhraseTable:lookup(word)  \n *  onmt.PhraseTable:contains(word)",
+            "title": "Undocumented methods"
+        },
+        {
             "location": "/code/",
             "text": "",
             "title": "Home"
         },
         {
-            "location": "/code/eval/",
-            "text": "",
-            "title": "Home"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/",
-            "text": "onmt.Beam\n\n\nClass for managing the beam search process. \n\n\n[src]\n\n\n\n\nonmt.Beam(size, num_features)\n\n\nConstructor\n\n\nParameters:\n\n\n\n\nsize\n : The beam \nK\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:get_current_state()\n\n\nGet the outputs for the current timestep.\n\n\n[src]\n\n\n\n\nonmt.Beam:get_current_origin()\n\n\nGet the backpointers for the current timestep.\n\n\n[src]\n\n\n\n\nonmt.Beam:advance(word_lk, feats_lk, attn_out)\n\n\nGiven prob over words for every last beam \nword_lk\n and attention\n \nattn_out\n. Compute and update the beam search.\n\n\nParameters:\n\n\n\n\nword_lk\n- probs at the last step\n\n\nattn_word_lk\n- attention at the last step\n\n\n\n\nReturns: true if beam search is complete.\n\n\n[src]\n\n\n\n\nonmt.Beam:get_hyp(k)\n\n\nWalk back to construct the full hypothesis \nk\n.\n\n\nParameters:\n\n\n\n\nk\n - the position in the beam to construct.\n\n\n\n\nReturns:\n\n\n\n\nThe hypothesis\n\n\nThe attention at each time step.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Beam:sort_best()\n\n\n\n * \nonmt.Beam:get_best()",
-            "title": "Lib+eval+beam"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/#onmtbeam",
-            "text": "Class for managing the beam search process.   [src]",
-            "title": "onmt.Beam"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/#onmtbeamsize-num_features",
-            "text": "Constructor  Parameters:   size  : The beam  K .   [src]",
-            "title": "onmt.Beam(size, num_features)"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/#onmtbeamget_current_state",
-            "text": "Get the outputs for the current timestep.  [src]",
-            "title": "onmt.Beam:get_current_state()"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/#onmtbeamget_current_origin",
-            "text": "Get the backpointers for the current timestep.  [src]",
-            "title": "onmt.Beam:get_current_origin()"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/#onmtbeamadvanceword_lk-feats_lk-attn_out",
-            "text": "Given prob over words for every last beam  word_lk  and attention\n  attn_out . Compute and update the beam search.  Parameters:   word_lk - probs at the last step  attn_word_lk - attention at the last step   Returns: true if beam search is complete.  [src]",
-            "title": "onmt.Beam:advance(word_lk, feats_lk, attn_out)"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/#onmtbeamget_hypk",
-            "text": "Walk back to construct the full hypothesis  k .  Parameters:   k  - the position in the beam to construct.   Returns:   The hypothesis  The attention at each time step.",
-            "title": "onmt.Beam:get_hyp(k)"
-        },
-        {
-            "location": "/code/eval/lib+eval+beam/#undocumented-methods",
-            "text": "*  onmt.Beam:sort_best()  \n *  onmt.Beam:get_best()",
-            "title": "Undocumented methods"
-        },
-        {
-            "location": "/code/eval/lib+eval+phrase_table/",
-            "text": "onmt.PhraseTable\n\n\nUndocumented methods\n\n\n\n * \nonmt.PhraseTable(file_path)\n\n\n\n * \nonmt.PhraseTable:lookup(word)\n\n\n\n * \nonmt.PhraseTable:contains(word)",
-            "title": "Lib+eval+phrase table"
-        },
-        {
-            "location": "/code/eval/lib+eval+phrase_table/#onmtphrasetable",
-            "text": "",
-            "title": "onmt.PhraseTable"
-        },
-        {
-            "location": "/code/eval/lib+eval+phrase_table/#undocumented-methods",
-            "text": "*  onmt.PhraseTable(file_path)  \n *  onmt.PhraseTable:lookup(word)  \n *  onmt.PhraseTable:contains(word)",
-            "title": "Undocumented methods"
-        },
-        {
             "location": "/code/onmt/",
-            "text": "Package",
-            "title": "Home"
+            "text": "Package\n\n\n\n\nonmt.BiEncoder\n\n\nBiEncoder is a bidirectional Sequencer used for the source language.\n\n\nnet_fwd\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nnet_bwd\n\n\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.BiEncoder(args, merge, net_fwd, net_bwd)\n\n\nCreates two Encoder's (encoder.lua) \nnet_fwd\n and \nnet_bwd\n.\n  The two are combined use \nmerge\n operation (concat/sum).\n\n\nUndocumented methods\n\n\n\n * \nonmt.BiEncoder:forward(batch)\n\n\n\n * \nonmt.BiEncoder:backward(batch, grad_states_output, grad_context_output)\n\n\n\n\nonmt.Decoder\n\n\nUnit to decode a sequence of output tokens.\n\n\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Decoder(args, network, generator)\n\n\nConstruct an encoder layer.\n\n\nParameters:\n\n\n\n\nargs\n - global options.\n\n\nnetwork\n - optional, recurrent step template.\n\n\ngenerator\n - optional, a output \nonmt.Generator\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:reset(source_sizes, source_length, beam_size)\n\n\nUpdate internals of model to prepare for new batch.\n\n\nParameters:\n\n\n\n\nSee  \nonmt.MaskedSoftmax\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forward_one(input, features, prev_states, context, prev_out, t)\n\n\nRun one step of the decoder.\n\n\nParameters:\n\n\n\n\ninput\n - sparse input (1)\n\n\nprev_states\n - stack of hidden states (batch x layers*model x rnn_size)\n\n\ncontext\n - encoder output (batch x n x rnn_size)\n\n\nprev_out\n - previous distribution (batch x #words)\n\n\nt\n - current timestep\n\n\n\n\nReturns:\n\n\n\n\nout\n - Top-layer Hidden state\n\n\nstates\n - All states\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forward(batch, encoder_states, context)\n\n\nCompute all forward steps.\n\n\nParameters:\n\n\n\n\nbatch\n - based on data.lua\n\n\nencoder_states\n - the final encoder states\n\n\ncontext\n - the context to apply attention to.\n\n\n\n\nReturns: Tables of top hidden layer at each timestep.\n\n\n[src]\n\n\n\n\nonmt.Decoder:compute_score(batch, encoder_states, context)\n\n\nCompute the cumulative score of a target sequence.\n  Used in decoding when gold data are provided.\n\n\n[src]\n\n\n\n\nonmt.Decoder:compute_loss(batch, encoder_states, context, criterion)\n\n\nCompute the loss on a batch based on final layer \ngenerator\n.\n\n\n[src]\n\n\n\n\nonmt.Decoder:backward(batch, outputs, criterion)\n\n\nCompute the standard backward update.\n\n\nParameters:\n\n\n\n\nbatch\n\n\noutputs\n\n\ncriterion\n\n\n\n\nNote: This code is both the standard backward and criterion forward/backward.\n  It returns both the gradInputs (ret 1 and 2) and the loss.\n\n\nUndocumented methods\n\n\n\n * \nonmt.Decoder:forward_and_apply(batch, encoder_states, context, func)\n\n\n\n\nonmt.Encoder\n\n\nEncoder is a unidirectional Sequencer used for the source language.\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Encoder(args, network)\n\n\nConstruct an encoder layer.\n\n\nParameters:\n\n\n\n\nargs\n - global options.\n\n\nnetwork\n - optional recurrent step template.\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder:forward(batch)\n\n\nCompute the context representation of an input.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nbatch struct\n as defined data.lua.\n\n\n\n\nReturns:\n\n\n\n\n\n\n\n\nfinal hidden states\n\n\n\n\n\n\n\n\n\n\ncontext matrix H\n\n\n\n\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder:backward(batch, grad_states_output, grad_context_output)\n\n\nBackward pass (only called during training)\n\n\nParameters:\n\n\n\n\nbatch\n - must be same as for forward\n\n\ngrad_states_output\n gradient of loss wrt last state\n\n\ngrad_context_output\n - gradient of loss wrt full context.\n\n\n\n\nReturns: nil\n\n\nUndocumented methods\n\n\n\n * \nonmt.Encoder:shareWordEmb(other)\n\n\n\n\nonmt.FeaturesEmbedding\n\n\nUndocumented methods\n\n\n\n * \nonmt.FeaturesEmbedding(dicts, dimExponent)\n\n\n\n * \nonmt.FeaturesEmbedding:updateOutput(input)\n\n\n\n * \nonmt.FeaturesEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.FeaturesEmbedding:accGradParameters(input, gradOutput, scale)\n\n\n\n * \nonmt.FeaturesEmbedding:share(other, ...)\n\n\n\n\nonmt.GlobalAttention\n\n\nGlobal attention takes a matrix and a query vector. It\nthen computes a parameterized convex combination of the matrix\nbased on the input query.\n\n\nH_1 H_2 H_3 ... H_n\n q   q   q       q\n  |  |   |       |\n   \\ |   |      /\n       .....\n     \\   |  /\n         a\n\n\n\nConstructs a unit mapping:\n  \n(H_1 .. H_n, q) => (a)\n\n  Where H is of \nbatch x n x dim\n and q is of \nbatch x dim\n.\n\n\nThe full function is  \n\\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)\n.\n\n\n[src]\n\n\n\n\nonmt.GlobalAttention(dim)\n\n\nA nn-style module computing attention.\n\n\nParameters:\n\n\n\n\ndim\n - dimension of the context vectors.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.GlobalAttention:updateOutput(input)\n\n\n\n * \nonmt.GlobalAttention:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.GlobalAttention:accGradParameters(input, gradOutput, scale)\n\nPackage\n\n\n\n\nonmt.LSTM\n\n\nImplementation of a single stacked-LSTM step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n  c^L_{t-1} --- c^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n  c^1_{t-1} --- c^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.LSTM(num_layers, input_size, hidden_size, dropout)\n\n\nParameters:\n\n\n\n\nnum_layers\n - Number of LSTM layers, \nL\n.\n\n\ninput_size\n - Size of input layer,  \n|x|\n.\n\n\nhidden_size\n - Size of the hidden layers (cell and hidden, \nc, h\n).\n\n\ndropout\n - Dropout rate to use.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.LSTM:updateOutput(input)\n\n\n\n * \nonmt.LSTM:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.LSTM:accGradParameters(input, gradOutput, scale)\n\n\n\n\nonmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nAXXXAA\nAXXAAA\nAXXXXX\n\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(source_sizes, source_length, beam_size)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsource_sizes\n -  the true lengths (with left padding).\n\n\nsource_length\n - the max length in the batch \nbeam_size\n.\n\n\nbeam_size\n - beam size ${K}\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.MaskedSoftmax:updateOutput(input)\n\n\n\n * \nonmt.MaskedSoftmax:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.MaskedSoftmax:accGradParameters(input, gradOutput, scale)\n\n\n\n\nonmt.Sequencer\n\n\nSequencer is the base class for encoder and decoder models.\n  Main task is to manage \nself.net(t)\n, the unrolled network\n  used during training.\n\n\n :net(1) =\n :net(2) =\n ... =\n :net(n-1) =\n :net(n)\n\n\n\n[src]\n\n\n\n\nonmt.Sequencer(args, network)\n\n\nParameters:\n\n\n\n\nargs\n - global options.\n\n\nnetwork\n - recurrent step template.\n\n\n\n\n[src]\n\n\n\n\nonmt.Sequencer:net(t)\n\n\nGet access to the recurrent unit at a timestep.\n\n\nParameters:\n  * \nt\n - timestep.\n\n\nReturns: The raw network clone at timestep t.\n  When \nevaluate()\n has been called, cheat and return t=1.\n\n\n[src]\n\n\n\n\nonmt.Sequencer:training()\n\n\nMove the network to train mode. \n\n\n[src]\n\n\n\n\nonmt.Sequencer:evaluate()\n\n\nMove the network to evaluation mode. \n\n\n\nonmt.WordEmbedding\n\n\nnn unit. Maps from word ids to embeddings. Slim wrapper around\nnn.LookupTable to allow fixed and pretrained embeddings.\n\n\n[src]\n\n\n\n\nonmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)\n\n\nParameters:\n\n\n\n\nvocab_size\n - size of the vocabulary\n\n\nvec_size\n - size of the embedding\n\n\npre_trainined\n - path to a pretrained vector file\n\n\nfix\n - keep the weights of the embeddings fixed.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.WordEmbedding:updateOutput(input)\n\n\n\n * \nonmt.WordEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.WordEmbedding:accGradParameters(input, gradOutput, scale)",
+            "title": "Onmt"
         },
         {
-            "location": "/code/onmt/lib+onmt+BiEncoder/",
-            "text": "onmt.BiEncoder\n\n\nBiEncoder is a bidirectional Sequencer used for the source language.\n\n\nnet_fwd\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nnet_bwd\n\n\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.BiEncoder(args, merge, net_fwd, net_bwd)\n\n\nCreates two Encoder's (encoder.lua) \nnet_fwd\n and \nnet_bwd\n.\n  The two are combined use \nmerge\n operation (concat/sum).\n\n\nUndocumented methods\n\n\n\n * \nonmt.BiEncoder:forward(batch)\n\n\n\n * \nonmt.BiEncoder:backward(batch, grad_states_output, grad_context_output)",
-            "title": "lib+onmt+BiEncoder"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+BiEncoder/#onmtbiencoder",
+            "location": "/code/onmt/#onmtbiencoder",
             "text": "BiEncoder is a bidirectional Sequencer used for the source language.  net_fwd  h_1 =  h_2 =  h_3 =  ... =  h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =  h_2 =  h_3 =  ... =  h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n  net_bwd  h_1  = h_2  = h_3  = ...  = h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1  = h_2  = h_3  = ...  = h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n  Inherits from  onmt.Sequencer .  [src]",
             "title": "onmt.BiEncoder"
         },
         {
-            "location": "/code/onmt/lib+onmt+BiEncoder/#onmtbiencoderargs-merge-net_fwd-net_bwd",
+            "location": "/code/onmt/#onmtbiencoderargs-merge-net_fwd-net_bwd",
             "text": "Creates two Encoder's (encoder.lua)  net_fwd  and  net_bwd .\n  The two are combined use  merge  operation (concat/sum).",
             "title": "onmt.BiEncoder(args, merge, net_fwd, net_bwd)"
         },
         {
-            "location": "/code/onmt/lib+onmt+BiEncoder/#undocumented-methods",
+            "location": "/code/onmt/#undocumented-methods",
             "text": "*  onmt.BiEncoder:forward(batch)  \n *  onmt.BiEncoder:backward(batch, grad_states_output, grad_context_output)",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/",
-            "text": "onmt.Decoder\n\n\nUnit to decode a sequence of output tokens.\n\n\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Decoder(args, network, generator)\n\n\nConstruct an encoder layer.\n\n\nParameters:\n\n\n\n\nargs\n - global options.\n\n\nnetwork\n - optional, recurrent step template.\n\n\ngenerator\n - optional, a output \nonmt.Generator\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:reset(source_sizes, source_length, beam_size)\n\n\nUpdate internals of model to prepare for new batch.\n\n\nParameters:\n\n\n\n\nSee  \nonmt.MaskedSoftmax\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forward_one(input, features, prev_states, context, prev_out, t)\n\n\nRun one step of the decoder.\n\n\nParameters:\n\n\n\n\ninput\n - sparse input (1)\n\n\nprev_states\n - stack of hidden states (batch x layers*model x rnn_size)\n\n\ncontext\n - encoder output (batch x n x rnn_size)\n\n\nprev_out\n - previous distribution (batch x #words)\n\n\nt\n - current timestep\n\n\n\n\nReturns:\n\n\n\n\nout\n - Top-layer Hidden state\n\n\nstates\n - All states\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forward(batch, encoder_states, context)\n\n\nCompute all forward steps.\n\n\nParameters:\n\n\n\n\nbatch\n - based on data.lua\n\n\nencoder_states\n - the final encoder states\n\n\ncontext\n - the context to apply attention to.\n\n\n\n\nReturns: Tables of top hidden layer at each timestep.\n\n\n[src]\n\n\n\n\nonmt.Decoder:compute_score(batch, encoder_states, context)\n\n\nCompute the cumulative score of a target sequence.\n  Used in decoding when gold data are provided.\n\n\n[src]\n\n\n\n\nonmt.Decoder:compute_loss(batch, encoder_states, context, criterion)\n\n\nCompute the loss on a batch based on final layer \ngenerator\n.\n\n\n[src]\n\n\n\n\nonmt.Decoder:backward(batch, outputs, criterion)\n\n\nCompute the standard backward update.\n\n\nParameters:\n\n\n\n\nbatch\n\n\noutputs\n\n\ncriterion\n\n\n\n\nNote: This code is both the standard backward and criterion forward/backward.\n  It returns both the gradInputs (ret 1 and 2) and the loss.\n\n\nUndocumented methods\n\n\n\n * \nonmt.Decoder:forward_and_apply(batch, encoder_states, context, func)",
-            "title": "lib+onmt+Decoder"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecoder",
+            "location": "/code/onmt/#onmtdecoder",
             "text": "Unit to decode a sequence of output tokens.   .      .      .             .\n |      |      |             |\nh_1 =  h_2 =  h_3 =  ... =  h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =  h_2 =  h_3 =  ... =  h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n  Inherits from  onmt.Sequencer .  [src]",
             "title": "onmt.Decoder"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecoderargs-network-generator",
+            "location": "/code/onmt/#onmtdecoderargs-network-generator",
             "text": "Construct an encoder layer.  Parameters:   args  - global options.  network  - optional, recurrent step template.  generator  - optional, a output  onmt.Generator .   [src]",
             "title": "onmt.Decoder(args, network, generator)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecoderresetsource_sizes-source_length-beam_size",
+            "location": "/code/onmt/#onmtdecoderresetsource_sizes-source_length-beam_size",
             "text": "Update internals of model to prepare for new batch.  Parameters:   See   onmt.MaskedSoftmax .   [src]",
             "title": "onmt.Decoder:reset(source_sizes, source_length, beam_size)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecoderforward_oneinput-features-prev_states-context-prev_out-t",
+            "location": "/code/onmt/#onmtdecoderforward_oneinput-features-prev_states-context-prev_out-t",
             "text": "Run one step of the decoder.  Parameters:   input  - sparse input (1)  prev_states  - stack of hidden states (batch x layers*model x rnn_size)  context  - encoder output (batch x n x rnn_size)  prev_out  - previous distribution (batch x #words)  t  - current timestep   Returns:   out  - Top-layer Hidden state  states  - All states   [src]",
             "title": "onmt.Decoder:forward_one(input, features, prev_states, context, prev_out, t)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecoderforwardbatch-encoder_states-context",
+            "location": "/code/onmt/#onmtdecoderforwardbatch-encoder_states-context",
             "text": "Compute all forward steps.  Parameters:   batch  - based on data.lua  encoder_states  - the final encoder states  context  - the context to apply attention to.   Returns: Tables of top hidden layer at each timestep.  [src]",
             "title": "onmt.Decoder:forward(batch, encoder_states, context)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecodercompute_scorebatch-encoder_states-context",
+            "location": "/code/onmt/#onmtdecodercompute_scorebatch-encoder_states-context",
             "text": "Compute the cumulative score of a target sequence.\n  Used in decoding when gold data are provided.  [src]",
             "title": "onmt.Decoder:compute_score(batch, encoder_states, context)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecodercompute_lossbatch-encoder_states-context-criterion",
+            "location": "/code/onmt/#onmtdecodercompute_lossbatch-encoder_states-context-criterion",
             "text": "Compute the loss on a batch based on final layer  generator .  [src]",
             "title": "onmt.Decoder:compute_loss(batch, encoder_states, context, criterion)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#onmtdecoderbackwardbatch-outputs-criterion",
+            "location": "/code/onmt/#onmtdecoderbackwardbatch-outputs-criterion",
             "text": "Compute the standard backward update.  Parameters:   batch  outputs  criterion   Note: This code is both the standard backward and criterion forward/backward.\n  It returns both the gradInputs (ret 1 and 2) and the loss.",
             "title": "onmt.Decoder:backward(batch, outputs, criterion)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Decoder/#undocumented-methods",
+            "location": "/code/onmt/#undocumented-methods_1",
             "text": "*  onmt.Decoder:forward_and_apply(batch, encoder_states, context, func)",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/onmt/lib+onmt+Encoder/",
-            "text": "onmt.Encoder\n\n\nEncoder is a unidirectional Sequencer used for the source language.\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Encoder(args, network)\n\n\nConstruct an encoder layer.\n\n\nParameters:\n\n\n\n\nargs\n - global options.\n\n\nnetwork\n - optional recurrent step template.\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder:forward(batch)\n\n\nCompute the context representation of an input.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nbatch struct\n as defined data.lua.\n\n\n\n\nReturns:\n\n\n\n\n\n\n\n\nfinal hidden states\n\n\n\n\n\n\n\n\n\n\ncontext matrix H\n\n\n\n\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder:backward(batch, grad_states_output, grad_context_output)\n\n\nBackward pass (only called during training)\n\n\nParameters:\n\n\n\n\nbatch\n - must be same as for forward\n\n\ngrad_states_output\n gradient of loss wrt last state\n\n\ngrad_context_output\n - gradient of loss wrt full context.\n\n\n\n\nReturns: nil\n\n\nUndocumented methods\n\n\n\n * \nonmt.Encoder:shareWordEmb(other)",
-            "title": "lib+onmt+Encoder"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+Encoder/#onmtencoder",
+            "location": "/code/onmt/#onmtencoder",
             "text": "Encoder is a unidirectional Sequencer used for the source language.  h_1 =  h_2 =  h_3 =  ... =  h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =  h_2 =  h_3 =  ... =  h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n  Inherits from  onmt.Sequencer .  [src]",
             "title": "onmt.Encoder"
         },
         {
-            "location": "/code/onmt/lib+onmt+Encoder/#onmtencoderargs-network",
+            "location": "/code/onmt/#onmtencoderargs-network",
             "text": "Construct an encoder layer.  Parameters:   args  - global options.  network  - optional recurrent step template.   [src]",
             "title": "onmt.Encoder(args, network)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Encoder/#onmtencoderforwardbatch",
+            "location": "/code/onmt/#onmtencoderforwardbatch",
             "text": "Compute the context representation of an input.  Parameters:   batch  - a  batch struct  as defined data.lua.   Returns:     final hidden states      context matrix H     [src]",
             "title": "onmt.Encoder:forward(batch)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Encoder/#onmtencoderbackwardbatch-grad_states_output-grad_context_output",
+            "location": "/code/onmt/#onmtencoderbackwardbatch-grad_states_output-grad_context_output",
             "text": "Backward pass (only called during training)  Parameters:   batch  - must be same as for forward  grad_states_output  gradient of loss wrt last state  grad_context_output  - gradient of loss wrt full context.   Returns: nil",
             "title": "onmt.Encoder:backward(batch, grad_states_output, grad_context_output)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Encoder/#undocumented-methods",
+            "location": "/code/onmt/#undocumented-methods_2",
             "text": "*  onmt.Encoder:shareWordEmb(other)",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/onmt/lib+onmt+FeaturesEmbedding/",
-            "text": "onmt.FeaturesEmbedding\n\n\nUndocumented methods\n\n\n\n * \nonmt.FeaturesEmbedding(dicts, dimExponent)\n\n\n\n * \nonmt.FeaturesEmbedding:updateOutput(input)\n\n\n\n * \nonmt.FeaturesEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.FeaturesEmbedding:accGradParameters(input, gradOutput, scale)\n\n\n\n * \nonmt.FeaturesEmbedding:share(other, ...)",
-            "title": "lib+onmt+FeaturesEmbedding"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+FeaturesEmbedding/#onmtfeaturesembedding",
+            "location": "/code/onmt/#onmtfeaturesembedding",
             "text": "",
             "title": "onmt.FeaturesEmbedding"
         },
         {
-            "location": "/code/onmt/lib+onmt+FeaturesEmbedding/#undocumented-methods",
+            "location": "/code/onmt/#undocumented-methods_3",
             "text": "*  onmt.FeaturesEmbedding(dicts, dimExponent)  \n *  onmt.FeaturesEmbedding:updateOutput(input)  \n *  onmt.FeaturesEmbedding:updateGradInput(input, gradOutput)  \n *  onmt.FeaturesEmbedding:accGradParameters(input, gradOutput, scale)  \n *  onmt.FeaturesEmbedding:share(other, ...)",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/onmt/lib+onmt+GlobalAttention/",
-            "text": "onmt.GlobalAttention\n\n\nGlobal attention takes a matrix and a query vector. It\nthen computes a parameterized convex combination of the matrix\nbased on the input query.\n\n\nH_1 H_2 H_3 ... H_n\n q   q   q       q\n  |  |   |       |\n   \\ |   |      /\n       .....\n     \\   |  /\n         a\n\n\n\nConstructs a unit mapping:\n  \n(H_1 .. H_n, q) => (a)\n\n  Where H is of \nbatch x n x dim\n and q is of \nbatch x dim\n.\n\n\nThe full function is  \n\\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)\n.\n\n\n[src]\n\n\n\n\nonmt.GlobalAttention(dim)\n\n\nA nn-style module computing attention.\n\n\nParameters:\n\n\n\n\ndim\n - dimension of the context vectors.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.GlobalAttention:updateOutput(input)\n\n\n\n * \nonmt.GlobalAttention:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.GlobalAttention:accGradParameters(input, gradOutput, scale)",
-            "title": "lib+onmt+GlobalAttention"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+GlobalAttention/#onmtglobalattention",
+            "location": "/code/onmt/#onmtglobalattention",
             "text": "Global attention takes a matrix and a query vector. It\nthen computes a parameterized convex combination of the matrix\nbased on the input query.  H_1 H_2 H_3 ... H_n\n q   q   q       q\n  |  |   |       |\n   \\ |   |      /\n       .....\n     \\   |  /\n         a  Constructs a unit mapping:\n   (H_1 .. H_n, q) => (a) \n  Where H is of  batch x n x dim  and q is of  batch x dim .  The full function is   \\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2) .  [src]",
             "title": "onmt.GlobalAttention"
         },
         {
-            "location": "/code/onmt/lib+onmt+GlobalAttention/#onmtglobalattentiondim",
+            "location": "/code/onmt/#onmtglobalattentiondim",
             "text": "A nn-style module computing attention.  Parameters:   dim  - dimension of the context vectors.",
             "title": "onmt.GlobalAttention(dim)"
         },
         {
-            "location": "/code/onmt/lib+onmt+GlobalAttention/#undocumented-methods",
-            "text": "*  onmt.GlobalAttention:updateOutput(input)  \n *  onmt.GlobalAttention:updateGradInput(input, gradOutput)  \n *  onmt.GlobalAttention:accGradParameters(input, gradOutput, scale)",
+            "location": "/code/onmt/#undocumented-methods_4",
+            "text": "*  onmt.GlobalAttention:updateOutput(input)  \n *  onmt.GlobalAttention:updateGradInput(input, gradOutput)  \n *  onmt.GlobalAttention:accGradParameters(input, gradOutput, scale) \nPackage",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/onmt/lib+onmt+LSTM/",
-            "text": "onmt.LSTM\n\n\nImplementation of a single stacked-LSTM step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n  c^L_{t-1} --- c^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n  c^1_{t-1} --- c^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.LSTM(num_layers, input_size, hidden_size, dropout)\n\n\nParameters:\n\n\n\n\nnum_layers\n - Number of LSTM layers, \nL\n.\n\n\ninput_size\n - Size of input layer,  \n|x|\n.\n\n\nhidden_size\n - Size of the hidden layers (cell and hidden, \nc, h\n).\n\n\ndropout\n - Dropout rate to use.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.LSTM:updateOutput(input)\n\n\n\n * \nonmt.LSTM:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.LSTM:accGradParameters(input, gradOutput, scale)",
-            "title": "lib+onmt+LSTM"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+LSTM/#onmtlstm",
+            "location": "/code/onmt/#onmtlstm",
             "text": "Implementation of a single stacked-LSTM step as\nan nn unit.    h^L_{t-1} --- h^L_t\n  c^L_{t-1} --- c^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n  c^1_{t-1} --- c^1_t\n             |\n             |\n            x_t  Computes  (c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t}) .  [src]",
             "title": "onmt.LSTM"
         },
         {
-            "location": "/code/onmt/lib+onmt+LSTM/#onmtlstmnum_layers-input_size-hidden_size-dropout",
+            "location": "/code/onmt/#onmtlstmnum_layers-input_size-hidden_size-dropout",
             "text": "Parameters:   num_layers  - Number of LSTM layers,  L .  input_size  - Size of input layer,   |x| .  hidden_size  - Size of the hidden layers (cell and hidden,  c, h ).  dropout  - Dropout rate to use.",
             "title": "onmt.LSTM(num_layers, input_size, hidden_size, dropout)"
         },
         {
-            "location": "/code/onmt/lib+onmt+LSTM/#undocumented-methods",
+            "location": "/code/onmt/#undocumented-methods_5",
             "text": "*  onmt.LSTM:updateOutput(input)  \n *  onmt.LSTM:updateGradInput(input, gradOutput)  \n *  onmt.LSTM:accGradParameters(input, gradOutput, scale)",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/onmt/lib+onmt+MaskedSoftmax/",
-            "text": "onmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nAXXXAA\nAXXAAA\nAXXXXX\n\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(source_sizes, source_length, beam_size)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsource_sizes\n -  the true lengths (with left padding).\n\n\nsource_length\n - the max length in the batch \nbeam_size\n.\n\n\nbeam_size\n - beam size ${K}\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.MaskedSoftmax:updateOutput(input)\n\n\n\n * \nonmt.MaskedSoftmax:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.MaskedSoftmax:accGradParameters(input, gradOutput, scale)",
-            "title": "lib+onmt+MaskedSoftmax"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+MaskedSoftmax/#onmtmaskedsoftmax",
+            "location": "/code/onmt/#onmtmaskedsoftmax",
             "text": "A batched-softmax wrapper to mask the probabilities of padding.  AXXXAA\nAXXAAA\nAXXXXX  [src]",
             "title": "onmt.MaskedSoftmax"
         },
         {
-            "location": "/code/onmt/lib+onmt+MaskedSoftmax/#onmtmaskedsoftmaxsource_sizes-source_length-beam_size",
+            "location": "/code/onmt/#onmtmaskedsoftmaxsource_sizes-source_length-beam_size",
             "text": "A nn-style module that applies a softmax on input that gives no weight to the left padding.  Parameters:   source_sizes  -  the true lengths (with left padding).  source_length  - the max length in the batch  beam_size .  beam_size  - beam size ${K}",
             "title": "onmt.MaskedSoftmax(source_sizes, source_length, beam_size)"
         },
         {
-            "location": "/code/onmt/lib+onmt+MaskedSoftmax/#undocumented-methods",
+            "location": "/code/onmt/#undocumented-methods_6",
             "text": "*  onmt.MaskedSoftmax:updateOutput(input)  \n *  onmt.MaskedSoftmax:updateGradInput(input, gradOutput)  \n *  onmt.MaskedSoftmax:accGradParameters(input, gradOutput, scale)",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/onmt/lib+onmt+Sequencer/",
-            "text": "onmt.Sequencer\n\n\nSequencer is the base class for encoder and decoder models.\n  Main task is to manage \nself.net(t)\n, the unrolled network\n  used during training.\n\n\n :net(1) =\n :net(2) =\n ... =\n :net(n-1) =\n :net(n)\n\n\n\n[src]\n\n\n\n\nonmt.Sequencer(args, network)\n\n\nParameters:\n\n\n\n\nargs\n - global options.\n\n\nnetwork\n - recurrent step template.\n\n\n\n\n[src]\n\n\n\n\nonmt.Sequencer:net(t)\n\n\nGet access to the recurrent unit at a timestep.\n\n\nParameters:\n  * \nt\n - timestep.\n\n\nReturns: The raw network clone at timestep t.\n  When \nevaluate()\n has been called, cheat and return t=1.\n\n\n[src]\n\n\n\n\nonmt.Sequencer:training()\n\n\nMove the network to train mode. \n\n\n[src]\n\n\n\n\nonmt.Sequencer:evaluate()\n\n\nMove the network to evaluation mode.",
-            "title": "lib+onmt+Sequencer"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+Sequencer/#onmtsequencer",
+            "location": "/code/onmt/#onmtsequencer",
             "text": "Sequencer is the base class for encoder and decoder models.\n  Main task is to manage  self.net(t) , the unrolled network\n  used during training.   :net(1) =  :net(2) =  ... =  :net(n-1) =  :net(n)  [src]",
             "title": "onmt.Sequencer"
         },
         {
-            "location": "/code/onmt/lib+onmt+Sequencer/#onmtsequencerargs-network",
+            "location": "/code/onmt/#onmtsequencerargs-network",
             "text": "Parameters:   args  - global options.  network  - recurrent step template.   [src]",
             "title": "onmt.Sequencer(args, network)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Sequencer/#onmtsequencernett",
+            "location": "/code/onmt/#onmtsequencernett",
             "text": "Get access to the recurrent unit at a timestep.  Parameters:\n  *  t  - timestep.  Returns: The raw network clone at timestep t.\n  When  evaluate()  has been called, cheat and return t=1.  [src]",
             "title": "onmt.Sequencer:net(t)"
         },
         {
-            "location": "/code/onmt/lib+onmt+Sequencer/#onmtsequencertraining",
+            "location": "/code/onmt/#onmtsequencertraining",
             "text": "Move the network to train mode.   [src]",
             "title": "onmt.Sequencer:training()"
         },
         {
-            "location": "/code/onmt/lib+onmt+Sequencer/#onmtsequencerevaluate",
+            "location": "/code/onmt/#onmtsequencerevaluate",
             "text": "Move the network to evaluation mode.",
             "title": "onmt.Sequencer:evaluate()"
         },
         {
-            "location": "/code/onmt/lib+onmt+WordEmbedding/",
-            "text": "onmt.WordEmbedding\n\n\nnn unit. Maps from word ids to embeddings. Slim wrapper around\nnn.LookupTable to allow fixed and pretrained embeddings.\n\n\n[src]\n\n\n\n\nonmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)\n\n\nParameters:\n\n\n\n\nvocab_size\n - size of the vocabulary\n\n\nvec_size\n - size of the embedding\n\n\npre_trainined\n - path to a pretrained vector file\n\n\nfix\n - keep the weights of the embeddings fixed.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.WordEmbedding:updateOutput(input)\n\n\n\n * \nonmt.WordEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.WordEmbedding:accGradParameters(input, gradOutput, scale)",
-            "title": "lib+onmt+WordEmbedding"
-        },
-        {
-            "location": "/code/onmt/lib+onmt+WordEmbedding/#onmtwordembedding",
+            "location": "/code/onmt/#onmtwordembedding",
             "text": "nn unit. Maps from word ids to embeddings. Slim wrapper around\nnn.LookupTable to allow fixed and pretrained embeddings.  [src]",
             "title": "onmt.WordEmbedding"
         },
         {
-            "location": "/code/onmt/lib+onmt+WordEmbedding/#onmtwordembeddingvocab_size-vec_size-pre_trained-fix",
+            "location": "/code/onmt/#onmtwordembeddingvocab_size-vec_size-pre_trained-fix",
             "text": "Parameters:   vocab_size  - size of the vocabulary  vec_size  - size of the embedding  pre_trainined  - path to a pretrained vector file  fix  - keep the weights of the embeddings fixed.",
             "title": "onmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)"
         },
         {
-            "location": "/code/onmt/lib+onmt+WordEmbedding/#undocumented-methods",
+            "location": "/code/onmt/#undocumented-methods_7",
             "text": "*  onmt.WordEmbedding:updateOutput(input)  \n *  onmt.WordEmbedding:updateGradInput(input, gradOutput)  \n *  onmt.WordEmbedding:accGradParameters(input, gradOutput, scale)",
             "title": "Undocumented methods"
         },
         {
             "location": "/code/train/",
-            "text": "",
-            "title": "Home"
+            "text": "onmt.Checkpoint\n\n\nClass for saving and loading models during training.\n\n\n[src]\n\n\n\n\nonmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)\n\n\nSave the model and data in the middle of an epoch sorting the iteration. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Checkpoint(options, nets, optim, dataset)\n\n\n\n * \nonmt.Checkpoint:save(file_path, info)\n\n\n\n * \nonmt.Checkpoint:save_epoch(valid_ppl, epoch_state)\n\n\n\n\nonmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, num_iterations, learning_rate, status)\n\n\nInitialize for epoch \nepoch\n and training \nstatus\n (current loss)\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(batches, losses)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last losses.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(batch_index)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:get_train_ppl()\n\n\n\n * \nonmt.EpochState:get_time()\n\n\n\n * \nonmt.EpochState:get_status()\n\n\n\n\nonmt.Optim\n\n\n[src]\n\n\n\n\nonmt.Optim:update_learning_rate(score, epoch)\n\n\ndecay learning rate if val perf does not improve or we hit the start_decay_at limit\n\n\nUndocumented methods\n\n\n\n * \nonmt.Optim(args)\n\n\n\n * \nonmt.Optim:zero_grad(grad_params)\n\n\n\n * \nonmt.Optim:update_params(params, grad_params, max_grad_norm)\n\n\n\n * \nonmt.Optim:get_learning_rate()\n\n\n\n * \nonmt.Optim:get_states()",
+            "title": "Train"
         },
         {
-            "location": "/code/train/lib+data/",
-            "text": "onmt.Data\n\n\nData management and batch creation.\n\n\nBatch interface [size]:\n\n\n\n\nsize: number of sentences in the batch [1]\n\n\nsource_length: max length in source batch [1]\n\n\nsource_size:  lengths of each source [batch x 1]\n\n\nsource_input:  left-padded idx's of source (PPPPPPABCDE) [batch x max]\n\n\nsource_input_features: table of source features sequences\n\n\nsource_input_rev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]\n\n\nsource_input_rev_features: table of reversed source features sequences\n\n\ntarget_length: max length in source batch [1]\n\n\ntarget_size: lengths of each source [batch x 1]\n\n\ntarget_non_zeros: number of non-ignored words in batch [1]\n\n\ntarget_input: input idx's of target (SABCDEPPPPPP) [batch x max]\n\n\ntarget_input_features: table of target input features sequences\n\n\ntarget_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]\n\n\ntarget_output_features: table of target output features sequences\n\n\n\n\nTODO: change name of size =\n maxlen\n\n\n[src]\n\n\n\n\nonmt.Data(src_data, targ_data)\n\n\nInitialize a data object given aligned tables of IntTensors \nsrc\n\n  and \ntarg\n.\n\n\n[src]\n\n\n\n\nonmt.Data:set_batch_size(max_batch_size)\n\n\nSetup up the training data to respect \nmax_batch_size\n. \n\n\n[src]\n\n\n\n\nonmt.Data:get_data(src, src_features, targ, targ_features)\n\n\nCreate a batch object given aligned sent tables \nsrc\n and \ntarg\n\n  (optional). Data format is shown at the top of the file.\n\n\n[src]\n\n\n\n\nonmt.Data:get_batch(idx)\n\n\nGet batch \nidx\n. If nil make a batch of all the data.",
-            "title": "Lib+data"
-        },
-        {
-            "location": "/code/train/lib+data/#onmtdata",
-            "text": "Data management and batch creation.  Batch interface [size]:   size: number of sentences in the batch [1]  source_length: max length in source batch [1]  source_size:  lengths of each source [batch x 1]  source_input:  left-padded idx's of source (PPPPPPABCDE) [batch x max]  source_input_features: table of source features sequences  source_input_rev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]  source_input_rev_features: table of reversed source features sequences  target_length: max length in source batch [1]  target_size: lengths of each source [batch x 1]  target_non_zeros: number of non-ignored words in batch [1]  target_input: input idx's of target (SABCDEPPPPPP) [batch x max]  target_input_features: table of target input features sequences  target_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]  target_output_features: table of target output features sequences   TODO: change name of size =  maxlen  [src]",
-            "title": "onmt.Data"
-        },
-        {
-            "location": "/code/train/lib+data/#onmtdatasrc_data-targ_data",
-            "text": "Initialize a data object given aligned tables of IntTensors  src \n  and  targ .  [src]",
-            "title": "onmt.Data(src_data, targ_data)"
-        },
-        {
-            "location": "/code/train/lib+data/#onmtdataset_batch_sizemax_batch_size",
-            "text": "Setup up the training data to respect  max_batch_size .   [src]",
-            "title": "onmt.Data:set_batch_size(max_batch_size)"
-        },
-        {
-            "location": "/code/train/lib+data/#onmtdataget_datasrc-src_features-targ-targ_features",
-            "text": "Create a batch object given aligned sent tables  src  and  targ \n  (optional). Data format is shown at the top of the file.  [src]",
-            "title": "onmt.Data:get_data(src, src_features, targ, targ_features)"
-        },
-        {
-            "location": "/code/train/lib+data/#onmtdataget_batchidx",
-            "text": "Get batch  idx . If nil make a batch of all the data.",
-            "title": "onmt.Data:get_batch(idx)"
-        },
-        {
-            "location": "/code/train/lib+train+checkpoint/",
-            "text": "onmt.Checkpoint\n\n\nClass for saving and loading models during training.\n\n\n[src]\n\n\n\n\nonmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)\n\n\nSave the model and data in the middle of an epoch sorting the iteration. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Checkpoint(options, nets, optim, dataset)\n\n\n\n * \nonmt.Checkpoint:save(file_path, info)\n\n\n\n * \nonmt.Checkpoint:save_epoch(valid_ppl, epoch_state)",
-            "title": "Lib+train+checkpoint"
-        },
-        {
-            "location": "/code/train/lib+train+checkpoint/#onmtcheckpoint",
+            "location": "/code/train/#onmtcheckpoint",
             "text": "Class for saving and loading models during training.  [src]",
             "title": "onmt.Checkpoint"
         },
         {
-            "location": "/code/train/lib+train+checkpoint/#onmtcheckpointsave_iterationiteration-epoch_state-batch_order",
+            "location": "/code/train/#onmtcheckpointsave_iterationiteration-epoch_state-batch_order",
             "text": "Save the model and data in the middle of an epoch sorting the iteration.",
             "title": "onmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)"
         },
         {
-            "location": "/code/train/lib+train+checkpoint/#undocumented-methods",
+            "location": "/code/train/#undocumented-methods",
             "text": "*  onmt.Checkpoint(options, nets, optim, dataset)  \n *  onmt.Checkpoint:save(file_path, info)  \n *  onmt.Checkpoint:save_epoch(valid_ppl, epoch_state)",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/train/lib+train+epoch_state/",
-            "text": "onmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, num_iterations, learning_rate, status)\n\n\nInitialize for epoch \nepoch\n and training \nstatus\n (current loss)\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(batches, losses)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last losses.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(batch_index)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:get_train_ppl()\n\n\n\n * \nonmt.EpochState:get_time()\n\n\n\n * \nonmt.EpochState:get_status()",
-            "title": "Lib+train+epoch state"
-        },
-        {
-            "location": "/code/train/lib+train+epoch_state/#onmtepochstate",
+            "location": "/code/train/#onmtepochstate",
             "text": "Class for managing the training process by logging and storing\n  the state of the current epoch.  [src]",
             "title": "onmt.EpochState"
         },
         {
-            "location": "/code/train/lib+train+epoch_state/#onmtepochstateepoch-num_iterations-learning_rate-status",
+            "location": "/code/train/#onmtepochstateepoch-num_iterations-learning_rate-status",
             "text": "Initialize for epoch  epoch  and training  status  (current loss)  [src]",
             "title": "onmt.EpochState(epoch, num_iterations, learning_rate, status)"
         },
         {
-            "location": "/code/train/lib+train+epoch_state/#onmtepochstateupdatebatches-losses",
+            "location": "/code/train/#onmtepochstateupdatebatches-losses",
             "text": "Update training status. Takes  batch  (described in data.lua) and last losses.  [src]",
             "title": "onmt.EpochState:update(batches, losses)"
         },
         {
-            "location": "/code/train/lib+train+epoch_state/#onmtepochstatelogbatch_index",
+            "location": "/code/train/#onmtepochstatelogbatch_index",
             "text": "Log to status stdout.",
             "title": "onmt.EpochState:log(batch_index)"
         },
         {
-            "location": "/code/train/lib+train+epoch_state/#undocumented-methods",
+            "location": "/code/train/#undocumented-methods_1",
             "text": "*  onmt.EpochState:get_train_ppl()  \n *  onmt.EpochState:get_time()  \n *  onmt.EpochState:get_status()",
             "title": "Undocumented methods"
         },
         {
-            "location": "/code/train/lib+train+optim/",
-            "text": "onmt.Optim\n\n\n[src]\n\n\n\n\nonmt.Optim:update_learning_rate(score, epoch)\n\n\ndecay learning rate if val perf does not improve or we hit the start_decay_at limit\n\n\nUndocumented methods\n\n\n\n * \nonmt.Optim(args)\n\n\n\n * \nonmt.Optim:zero_grad(grad_params)\n\n\n\n * \nonmt.Optim:update_params(params, grad_params, max_grad_norm)\n\n\n\n * \nonmt.Optim:get_learning_rate()\n\n\n\n * \nonmt.Optim:get_states()",
-            "title": "Lib+train+optim"
-        },
-        {
-            "location": "/code/train/lib+train+optim/#onmtoptim",
+            "location": "/code/train/#onmtoptim",
             "text": "[src]",
             "title": "onmt.Optim"
         },
         {
-            "location": "/code/train/lib+train+optim/#onmtoptimupdate_learning_ratescore-epoch",
+            "location": "/code/train/#onmtoptimupdate_learning_ratescore-epoch",
             "text": "decay learning rate if val perf does not improve or we hit the start_decay_at limit",
             "title": "onmt.Optim:update_learning_rate(score, epoch)"
         },
         {
-            "location": "/code/train/lib+train+optim/#undocumented-methods",
+            "location": "/code/train/#undocumented-methods_2",
             "text": "*  onmt.Optim(args)  \n *  onmt.Optim:zero_grad(grad_params)  \n *  onmt.Optim:update_params(params, grad_params, max_grad_norm)  \n *  onmt.Optim:get_learning_rate()  \n *  onmt.Optim:get_states()",
             "title": "Undocumented methods"
         }

@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Home - OpenNMT</title>
+  <title>Onmt - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -17,8 +17,8 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Home";
-    var mkdocs_page_input_path = "code/onmt/index.md";
+    var mkdocs_page_name = "Onmt";
+    var mkdocs_page_input_path = "code/onmt.md";
     var mkdocs_page_url = "/code/onmt/";
   </script>
   
@@ -67,50 +67,90 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../eval/">Eval</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../">Home</a>
         
     </li>
 
         
             
-    <ul class="subnav">
-    <li><span>Eval</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../eval/">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../eval/lib+eval+beam/">Lib+eval+beam</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../eval/lib+eval+phrase_table/">Lib+eval+phrase table</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Onmt</span></li>
-
-        
-            
     <li class="toctree-l1 current">
-        <a class="current" href="./">Home</a>
+        <a class="current" href="./">Onmt</a>
         
             <ul>
+            
+                <li class="toctree-l3"><a href="#onmtbiencoder">onmt.BiEncoder</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbiencoderargs-merge-net_fwd-net_bwd">onmt.BiEncoder(args, merge, net_fwd, net_bwd)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtdecoder">onmt.Decoder</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderargs-network-generator">onmt.Decoder(args, network, generator)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderresetsource_sizes-source_length-beam_size">onmt.Decoder:reset(source_sizes, source_length, beam_size)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderforward_oneinput-features-prev_states-context-prev_out-t">onmt.Decoder:forward_one(input, features, prev_states, context, prev_out, t)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderforwardbatch-encoder_states-context">onmt.Decoder:forward(batch, encoder_states, context)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecodercompute_scorebatch-encoder_states-context">onmt.Decoder:compute_score(batch, encoder_states, context)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecodercompute_lossbatch-encoder_states-context-criterion">onmt.Decoder:compute_loss(batch, encoder_states, context, criterion)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderbackwardbatch-outputs-criterion">onmt.Decoder:backward(batch, outputs, criterion)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtencoder">onmt.Encoder</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtencoderargs-network">onmt.Encoder(args, network)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtencoderforwardbatch">onmt.Encoder:forward(batch)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtencoderbackwardbatch-grad_states_output-grad_context_output">onmt.Encoder:backward(batch, grad_states_output, grad_context_output)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtfeaturesembedding">onmt.FeaturesEmbedding</a></li>
+                
+                    <li><a class="toctree-l4" href="#undocumented-methods_3">Undocumented methods</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtglobalattention">onmt.GlobalAttention</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtglobalattentiondim">onmt.GlobalAttention(dim)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtlstm">onmt.LSTM</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtlstmnum_layers-input_size-hidden_size-dropout">onmt.LSTM(num_layers, input_size, hidden_size, dropout)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtmaskedsoftmax">onmt.MaskedSoftmax</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtmaskedsoftmaxsource_sizes-source_length-beam_size">onmt.MaskedSoftmax(source_sizes, source_length, beam_size)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtsequencer">onmt.Sequencer</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtsequencerargs-network">onmt.Sequencer(args, network)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtsequencernett">onmt.Sequencer:net(t)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtsequencertraining">onmt.Sequencer:training()</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtsequencerevaluate">onmt.Sequencer:evaluate()</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtwordembedding">onmt.WordEmbedding</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtwordembeddingvocab_size-vec_size-pre_trained-fix">onmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)</a></li>
+                
             
             </ul>
         
@@ -119,111 +159,9 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+BiEncoder/">lib+onmt+BiEncoder</a>
+        <a class="" href="../train/">Train</a>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+Decoder/">lib+onmt+Decoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+Encoder/">lib+onmt+Encoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+LSTM/">lib+onmt+LSTM</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+MaskedSoftmax/">lib+onmt+MaskedSoftmax</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+Sequencer/">lib+onmt+Sequencer</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+onmt+WordEmbedding/">lib+onmt+WordEmbedding</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Train</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../train/">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../train/lib+data/">Lib+data</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../train/lib+train+checkpoint/">Lib+train+checkpoint</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../train/lib+train+epoch_state/">Lib+train+epoch state</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../train/lib+train+optim/">Lib+train+optim</a>
-        
-    </li>
-
-        
-    </ul>
 
         
     </ul>
@@ -254,12 +192,8 @@
           <li>Code &raquo;</li>
         
       
-        
-          <li>Onmt &raquo;</li>
-        
-      
     
-    <li>Home</li>
+    <li>Onmt</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -270,6 +204,341 @@
             <div class="section">
               
                 <p>Package</p>
+<p><a name="onmt.BiEncoder.dok"></a></p>
+<h2 id="onmtbiencoder">onmt.BiEncoder</h2>
+<p>BiEncoder is a bidirectional Sequencer used for the source language.</p>
+<p><code>net_fwd</code></p>
+<pre><code>h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ .      .      .             .
+ |      |      |             |
+h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ |      |      |             |
+x_1    x_2    x_3           x_n
+</code></pre>
+<p><code>net_bwd</code></p>
+<pre><code>h_1 &lt;= h_2 &lt;= h_3 &lt;= ... &lt;= h_n
+ |      |      |             |
+ .      .      .             .
+ |      |      |             |
+h_1 &lt;= h_2 &lt;= h_3 &lt;= ... &lt;= h_n
+ |      |      |             |
+ |      |      |             |
+x_1    x_2    x_3           x_n
+</code></pre>
+<p>Inherits from <a href="../lib+onmt+Sequencer">onmt.Sequencer</a>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/BiEncoder.lua#L40">[src]</a>
+<a name="onmt.BiEncoder"></a></p>
+<h3 id="onmtbiencoderargs-merge-net_fwd-net_bwd">onmt.BiEncoder(args, merge, net_fwd, net_bwd)</h3>
+<p>Creates two Encoder's (encoder.lua) <code>net_fwd</code> and <code>net_bwd</code>.
+  The two are combined use <code>merge</code> operation (concat/sum).</p>
+<h4 id="undocumented-methods">Undocumented methods</h4>
+<p><a name="onmt.BiEncoder:forward"></a>
+ * <code>onmt.BiEncoder:forward(batch)</code>
+<a name="onmt.BiEncoder:backward"></a>
+ * <code>onmt.BiEncoder:backward(batch, grad_states_output, grad_context_output)</code>
+<a name="onmt.Decoder.dok"></a></p>
+<h2 id="onmtdecoder">onmt.Decoder</h2>
+<p>Unit to decode a sequence of output tokens.</p>
+<pre><code> .      .      .             .
+ |      |      |             |
+h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ .      .      .             .
+ |      |      |             |
+h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ |      |      |             |
+x_1    x_2    x_3           x_n
+</code></pre>
+<p>Inherits from <a href="../lib+onmt+Sequencer">onmt.Sequencer</a>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Decoder.lua#L28">[src]</a>
+<a name="onmt.Decoder"></a></p>
+<h3 id="onmtdecoderargs-network-generator">onmt.Decoder(args, network, generator)</h3>
+<p>Construct an encoder layer.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>args</code> - global options.</li>
+<li><code>network</code> - optional, recurrent step template.</li>
+<li><code>generator</code> - optional, a output <a href="../lib+onmt+Generator">onmt.Generator</a>.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Decoder.lua#L176">[src]</a>
+<a name="onmt.Decoder:reset"></a></p>
+<h3 id="onmtdecoderresetsource_sizes-source_length-beam_size">onmt.Decoder:reset(source_sizes, source_length, beam_size)</h3>
+<p>Update internals of model to prepare for new batch.</p>
+<p>Parameters:</p>
+<ul>
+<li>See  <a href="../lib+onmt+MaskedSoftmax">onmt.MaskedSoftmax</a>.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Decoder.lua#L212">[src]</a>
+<a name="onmt.Decoder:forward_one"></a></p>
+<h3 id="onmtdecoderforward_oneinput-features-prev_states-context-prev_out-t">onmt.Decoder:forward_one(input, features, prev_states, context, prev_out, t)</h3>
+<p>Run one step of the decoder.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>input</code> - sparse input (1)</li>
+<li><code>prev_states</code> - stack of hidden states (batch x layers*model x rnn_size)</li>
+<li><code>context</code> - encoder output (batch x n x rnn_size)</li>
+<li><code>prev_out</code> - previous distribution (batch x #words)</li>
+<li><code>t</code> - current timestep</li>
+</ul>
+<p>Returns:</p>
+<ol>
+<li><code>out</code> - Top-layer Hidden state</li>
+<li><code>states</code> - All states</li>
+</ol>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Decoder.lua#L289">[src]</a>
+<a name="onmt.Decoder:forward"></a></p>
+<h3 id="onmtdecoderforwardbatch-encoder_states-context">onmt.Decoder:forward(batch, encoder_states, context)</h3>
+<p>Compute all forward steps.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>batch</code> - based on data.lua</li>
+<li><code>encoder_states</code> - the final encoder states</li>
+<li><code>context</code> - the context to apply attention to.</li>
+</ul>
+<p>Returns: Tables of top hidden layer at each timestep.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Decoder.lua#L306">[src]</a>
+<a name="onmt.Decoder:compute_score"></a></p>
+<h3 id="onmtdecodercompute_scorebatch-encoder_states-context">onmt.Decoder:compute_score(batch, encoder_states, context)</h3>
+<p>Compute the cumulative score of a target sequence.
+  Used in decoding when gold data are provided.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Decoder.lua#L322">[src]</a>
+<a name="onmt.Decoder:compute_loss"></a></p>
+<h3 id="onmtdecodercompute_lossbatch-encoder_states-context-criterion">onmt.Decoder:compute_loss(batch, encoder_states, context, criterion)</h3>
+<p>Compute the loss on a batch based on final layer <code>generator</code>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Decoder.lua#L350">[src]</a>
+<a name="onmt.Decoder:backward"></a></p>
+<h3 id="onmtdecoderbackwardbatch-outputs-criterion">onmt.Decoder:backward(batch, outputs, criterion)</h3>
+<p>Compute the standard backward update.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>batch</code></li>
+<li><code>outputs</code></li>
+<li><code>criterion</code></li>
+</ul>
+<p>Note: This code is both the standard backward and criterion forward/backward.
+  It returns both the gradInputs (ret 1 and 2) and the loss.</p>
+<h4 id="undocumented-methods_1">Undocumented methods</h4>
+<p><a name="onmt.Decoder:forward_and_apply"></a>
+ * <code>onmt.Decoder:forward_and_apply(batch, encoder_states, context, func)</code>
+<a name="onmt.Encoder.dok"></a></p>
+<h2 id="onmtencoder">onmt.Encoder</h2>
+<p>Encoder is a unidirectional Sequencer used for the source language.</p>
+<pre><code>h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ .      .      .             .
+ |      |      |             |
+h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ |      |      |             |
+x_1    x_2    x_3           x_n
+</code></pre>
+<p>Inherits from <a href="../lib+onmt+Sequencer">onmt.Sequencer</a>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Encoder.lua#L24">[src]</a>
+<a name="onmt.Encoder"></a></p>
+<h3 id="onmtencoderargs-network">onmt.Encoder(args, network)</h3>
+<p>Construct an encoder layer.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>args</code> - global options.</li>
+<li><code>network</code> - optional recurrent step template.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Encoder.lua#L109">[src]</a>
+<a name="onmt.Encoder:forward"></a></p>
+<h3 id="onmtencoderforwardbatch">onmt.Encoder:forward(batch)</h3>
+<p>Compute the context representation of an input.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>batch</code> - a <a href="../lib+data/#opennmtdata">batch struct</a> as defined data.lua.</li>
+</ul>
+<p>Returns:</p>
+<ol>
+<li>
+<ul>
+<li>final hidden states</li>
+</ul>
+</li>
+<li>
+<ul>
+<li>context matrix H</li>
+</ul>
+</li>
+</ol>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Encoder.lua#L190">[src]</a>
+<a name="onmt.Encoder:backward"></a></p>
+<h3 id="onmtencoderbackwardbatch-grad_states_output-grad_context_output">onmt.Encoder:backward(batch, grad_states_output, grad_context_output)</h3>
+<p>Backward pass (only called during training)</p>
+<p>Parameters:</p>
+<ul>
+<li><code>batch</code> - must be same as for forward</li>
+<li><code>grad_states_output</code> gradient of loss wrt last state</li>
+<li><code>grad_context_output</code> - gradient of loss wrt full context.</li>
+</ul>
+<p>Returns: nil</p>
+<h4 id="undocumented-methods_2">Undocumented methods</h4>
+<p><a name="onmt.Encoder:shareWordEmb"></a>
+ * <code>onmt.Encoder:shareWordEmb(other)</code>
+<a name="onmt.FeaturesEmbedding.dok"></a></p>
+<h2 id="onmtfeaturesembedding">onmt.FeaturesEmbedding</h2>
+<h4 id="undocumented-methods_3">Undocumented methods</h4>
+<p><a name="onmt.FeaturesEmbedding"></a>
+ * <code>onmt.FeaturesEmbedding(dicts, dimExponent)</code>
+<a name="onmt.FeaturesEmbedding:updateOutput"></a>
+ * <code>onmt.FeaturesEmbedding:updateOutput(input)</code>
+<a name="onmt.FeaturesEmbedding:updateGradInput"></a>
+ * <code>onmt.FeaturesEmbedding:updateGradInput(input, gradOutput)</code>
+<a name="onmt.FeaturesEmbedding:accGradParameters"></a>
+ * <code>onmt.FeaturesEmbedding:accGradParameters(input, gradOutput, scale)</code>
+<a name="onmt.FeaturesEmbedding:share"></a>
+ * <code>onmt.FeaturesEmbedding:share(other, ...)</code>
+<a name="onmt.GlobalAttention.dok"></a></p>
+<h2 id="onmtglobalattention">onmt.GlobalAttention</h2>
+<p>Global attention takes a matrix and a query vector. It
+then computes a parameterized convex combination of the matrix
+based on the input query.</p>
+<pre><code>H_1 H_2 H_3 ... H_n
+ q   q   q       q
+  |  |   |       |
+   \ |   |      /
+       .....
+     \   |  /
+         a
+</code></pre>
+<p>Constructs a unit mapping:
+  <script type="math/tex; mode=display">(H_1 .. H_n, q) => (a)</script>
+  Where H is of <code>batch x n x dim</code> and q is of <code>batch x dim</code>.</p>
+<p>The full function is  <script type="math/tex; mode=display">\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)</script>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/GlobalAttention.lua#L30">[src]</a>
+<a name="onmt.GlobalAttention"></a></p>
+<h3 id="onmtglobalattentiondim">onmt.GlobalAttention(dim)</h3>
+<p>A nn-style module computing attention.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>dim</code> - dimension of the context vectors.</li>
+</ul>
+<h4 id="undocumented-methods_4">Undocumented methods</h4>
+<p><a name="onmt.GlobalAttention:updateOutput"></a>
+ * <code>onmt.GlobalAttention:updateOutput(input)</code>
+<a name="onmt.GlobalAttention:updateGradInput"></a>
+ * <code>onmt.GlobalAttention:updateGradInput(input, gradOutput)</code>
+<a name="onmt.GlobalAttention:accGradParameters"></a>
+ * <code>onmt.GlobalAttention:accGradParameters(input, gradOutput, scale)</code>
+Package</p>
+<p><a name="onmt.LSTM.dok"></a></p>
+<h2 id="onmtlstm">onmt.LSTM</h2>
+<p>Implementation of a single stacked-LSTM step as
+an nn unit.</p>
+<pre><code>  h^L_{t-1} --- h^L_t
+  c^L_{t-1} --- c^L_t
+             |
+
+
+             .
+             |
+         [dropout]
+             |
+  h^1_{t-1} --- h^1_t
+  c^1_{t-1} --- c^1_t
+             |
+             |
+            x_t
+</code></pre>
+<p>Computes <script type="math/tex; mode=display">(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})</script>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/LSTM.lua#L35">[src]</a>
+<a name="onmt.LSTM"></a></p>
+<h3 id="onmtlstmnum_layers-input_size-hidden_size-dropout">onmt.LSTM(num_layers, input_size, hidden_size, dropout)</h3>
+<p>Parameters:</p>
+<ul>
+<li><code>num_layers</code> - Number of LSTM layers, <script type="math/tex; mode=display">L</script>.</li>
+<li><code>input_size</code> - Size of input layer,  <script type="math/tex; mode=display">|x|</script>.</li>
+<li><code>hidden_size</code> - Size of the hidden layers (cell and hidden, <script type="math/tex; mode=display">c, h</script>).</li>
+<li><code>dropout</code> - Dropout rate to use.</li>
+</ul>
+<h4 id="undocumented-methods_5">Undocumented methods</h4>
+<p><a name="onmt.LSTM:updateOutput"></a>
+ * <code>onmt.LSTM:updateOutput(input)</code>
+<a name="onmt.LSTM:updateGradInput"></a>
+ * <code>onmt.LSTM:updateGradInput(input, gradOutput)</code>
+<a name="onmt.LSTM:accGradParameters"></a>
+ * <code>onmt.LSTM:accGradParameters(input, gradOutput, scale)</code>
+<a name="onmt.MaskedSoftmax.dok"></a></p>
+<h2 id="onmtmaskedsoftmax">onmt.MaskedSoftmax</h2>
+<p>A batched-softmax wrapper to mask the probabilities of padding.</p>
+<pre><code>AXXXAA
+AXXAAA
+AXXXXX
+</code></pre>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/MaskedSoftmax.lua#L21">[src]</a>
+<a name="onmt.MaskedSoftmax"></a></p>
+<h3 id="onmtmaskedsoftmaxsource_sizes-source_length-beam_size">onmt.MaskedSoftmax(source_sizes, source_length, beam_size)</h3>
+<p>A nn-style module that applies a softmax on input that gives no weight to the left padding.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>source_sizes</code> -  the true lengths (with left padding).</li>
+<li><code>source_length</code> - the max length in the batch <code>beam_size</code>.</li>
+<li><code>beam_size</code> - beam size ${K}</li>
+</ul>
+<h4 id="undocumented-methods_6">Undocumented methods</h4>
+<p><a name="onmt.MaskedSoftmax:updateOutput"></a>
+ * <code>onmt.MaskedSoftmax:updateOutput(input)</code>
+<a name="onmt.MaskedSoftmax:updateGradInput"></a>
+ * <code>onmt.MaskedSoftmax:updateGradInput(input, gradOutput)</code>
+<a name="onmt.MaskedSoftmax:accGradParameters"></a>
+ * <code>onmt.MaskedSoftmax:accGradParameters(input, gradOutput, scale)</code>
+<a name="onmt.Sequencer.dok"></a></p>
+<h2 id="onmtsequencer">onmt.Sequencer</h2>
+<p>Sequencer is the base class for encoder and decoder models.
+  Main task is to manage <code>self.net(t)</code>, the unrolled network
+  used during training.</p>
+<pre><code> :net(1) =&gt; :net(2) =&gt; ... =&gt; :net(n-1) =&gt; :net(n)
+</code></pre>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Sequencer.lua#L18">[src]</a>
+<a name="onmt.Sequencer"></a></p>
+<h3 id="onmtsequencerargs-network">onmt.Sequencer(args, network)</h3>
+<p>Parameters:</p>
+<ul>
+<li><code>args</code> - global options.</li>
+<li><code>network</code> - recurrent step template.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Sequencer.lua#L88">[src]</a>
+<a name="onmt.Sequencer:net"></a></p>
+<h3 id="onmtsequencernett">onmt.Sequencer:net(t)</h3>
+<p>Get access to the recurrent unit at a timestep.</p>
+<p>Parameters:
+  * <code>t</code> - timestep.</p>
+<p>Returns: The raw network clone at timestep t.
+  When <code>evaluate()</code> has been called, cheat and return t=1.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Sequencer.lua#L108">[src]</a>
+<a name="onmt.Sequencer:training"></a></p>
+<h3 id="onmtsequencertraining">onmt.Sequencer:training()</h3>
+<p>Move the network to train mode. </p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/Sequencer.lua#L118">[src]</a>
+<a name="onmt.Sequencer:evaluate"></a></p>
+<h3 id="onmtsequencerevaluate">onmt.Sequencer:evaluate()</h3>
+<p>Move the network to evaluation mode. 
+<a name="onmt.WordEmbedding.dok"></a></p>
+<h2 id="onmtwordembedding">onmt.WordEmbedding</h2>
+<p>nn unit. Maps from word ids to embeddings. Slim wrapper around
+nn.LookupTable to allow fixed and pretrained embeddings.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/onmt/WordEmbedding.lua#L16">[src]</a>
+<a name="onmt.WordEmbedding"></a></p>
+<h3 id="onmtwordembeddingvocab_size-vec_size-pre_trained-fix">onmt.WordEmbedding(vocab_size, vec_size, pre_trained, fix)</h3>
+<p>Parameters:</p>
+<ul>
+<li><code>vocab_size</code> - size of the vocabulary</li>
+<li><code>vec_size</code> - size of the embedding</li>
+<li><code>pre_trainined</code> - path to a pretrained vector file</li>
+<li><code>fix</code> - keep the weights of the embeddings fixed.</li>
+</ul>
+<h4 id="undocumented-methods_7">Undocumented methods</h4>
+<p><a name="onmt.WordEmbedding:updateOutput"></a>
+ * <code>onmt.WordEmbedding:updateOutput(input)</code>
+<a name="onmt.WordEmbedding:updateGradInput"></a>
+ * <code>onmt.WordEmbedding:updateGradInput(input, gradOutput)</code>
+<a name="onmt.WordEmbedding:accGradParameters"></a>
+ * <code>onmt.WordEmbedding:accGradParameters(input, gradOutput, scale)</code></p>
               
             </div>
           </div>
@@ -277,10 +546,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="lib+onmt+BiEncoder/" class="btn btn-neutral float-right" title="lib+onmt+BiEncoder">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../train/" class="btn btn-neutral float-right" title="Train">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../eval/lib+eval+phrase_table/" class="btn btn-neutral" title="Lib+eval+phrase table"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -306,10 +575,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../eval/lib+eval+phrase_table/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="lib+onmt+BiEncoder/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../train/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

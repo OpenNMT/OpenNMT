@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Home - OpenNMT</title>
+  <title>Train - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -17,8 +17,8 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Home";
-    var mkdocs_page_input_path = "code/train/index.md";
+    var mkdocs_page_name = "Train";
+    var mkdocs_page_input_path = "code/train.md";
     var mkdocs_page_url = "/code/train/";
   </script>
   
@@ -67,163 +67,53 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../eval/">Eval</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../">Home</a>
         
     </li>
 
         
             
-    <ul class="subnav">
-    <li><span>Eval</span></li>
-
-        
-            
     <li class="toctree-l1 ">
-        <a class="" href="../eval/">Home</a>
+        <a class="" href="../onmt/">Onmt</a>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../eval/lib+eval+beam/">Lib+eval+beam</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../eval/lib+eval+phrase_table/">Lib+eval+phrase table</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Onmt</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+BiEncoder/">lib+onmt+BiEncoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+Decoder/">lib+onmt+Decoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+Encoder/">lib+onmt+Encoder</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+FeaturesEmbedding/">lib+onmt+FeaturesEmbedding</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+GlobalAttention/">lib+onmt+GlobalAttention</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+LSTM/">lib+onmt+LSTM</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+MaskedSoftmax/">lib+onmt+MaskedSoftmax</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+Sequencer/">lib+onmt+Sequencer</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt/lib+onmt+WordEmbedding/">lib+onmt+WordEmbedding</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
-    <ul class="subnav">
-    <li><span>Train</span></li>
 
         
             
     <li class="toctree-l1 current">
-        <a class="current" href="./">Home</a>
+        <a class="current" href="./">Train</a>
         
             <ul>
+            
+                <li class="toctree-l3"><a href="#onmtcheckpoint">onmt.Checkpoint</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtcheckpointsave_iterationiteration-epoch_state-batch_order">onmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtepochstate">onmt.EpochState</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#onmtoptim">onmt.Optim</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtoptimupdate_learning_ratescore-epoch">onmt.Optim:update_learning_rate(score, epoch)</a></li>
+                
             
             </ul>
         
     </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+data/">Lib+data</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+train+checkpoint/">Lib+train+checkpoint</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+train+epoch_state/">Lib+train+epoch state</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="lib+train+optim/">Lib+train+optim</a>
-        
-    </li>
-
-        
-    </ul>
 
         
     </ul>
@@ -254,12 +144,8 @@
           <li>Code &raquo;</li>
         
       
-        
-          <li>Train &raquo;</li>
-        
-      
     
-    <li>Home</li>
+    <li>Train</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -269,7 +155,60 @@
           <div role="main">
             <div class="section">
               
-                
+                <p><a name="onmt.Checkpoint.dok"></a></p>
+<h2 id="onmtcheckpoint">onmt.Checkpoint</h2>
+<p>Class for saving and loading models during training.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/checkpoint.lua#L31">[src]</a>
+<a name="onmt.Checkpoint:save_iteration"></a></p>
+<h3 id="onmtcheckpointsave_iterationiteration-epoch_state-batch_order">onmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)</h3>
+<p>Save the model and data in the middle of an epoch sorting the iteration. </p>
+<h4 id="undocumented-methods">Undocumented methods</h4>
+<p><a name="onmt.Checkpoint"></a>
+ * <code>onmt.Checkpoint(options, nets, optim, dataset)</code>
+<a name="onmt.Checkpoint:save"></a>
+ * <code>onmt.Checkpoint:save(file_path, info)</code>
+<a name="onmt.Checkpoint:save_epoch"></a>
+ * <code>onmt.Checkpoint:save_epoch(valid_ppl, epoch_state)</code>
+<a name="onmt.EpochState.dok"></a></p>
+<h2 id="onmtepochstate">onmt.EpochState</h2>
+<p>Class for managing the training process by logging and storing
+  the state of the current epoch.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L9">[src]</a>
+<a name="onmt.EpochState"></a></p>
+<h3 id="onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</h3>
+<p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L30">[src]</a>
+<a name="onmt.EpochState:update"></a></p>
+<h3 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h3>
+<p>Update training status. Takes <code>batch</code> (described in data.lua) and last losses.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L40">[src]</a>
+<a name="onmt.EpochState:log"></a></p>
+<h3 id="onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</h3>
+<p>Log to status stdout. </p>
+<h4 id="undocumented-methods_1">Undocumented methods</h4>
+<p><a name="onmt.EpochState:get_train_ppl"></a>
+ * <code>onmt.EpochState:get_train_ppl()</code>
+<a name="onmt.EpochState:get_time"></a>
+ * <code>onmt.EpochState:get_time()</code>
+<a name="onmt.EpochState:get_status"></a>
+ * <code>onmt.EpochState:get_status()</code>
+<a name="onmt.Optim.dok"></a></p>
+<h2 id="onmtoptim">onmt.Optim</h2>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/optim.lua#L111">[src]</a>
+<a name="onmt.Optim:update_learning_rate"></a></p>
+<h3 id="onmtoptimupdate_learning_ratescore-epoch">onmt.Optim:update_learning_rate(score, epoch)</h3>
+<p>decay learning rate if val perf does not improve or we hit the start_decay_at limit</p>
+<h4 id="undocumented-methods_2">Undocumented methods</h4>
+<p><a name="onmt.Optim"></a>
+ * <code>onmt.Optim(args)</code>
+<a name="onmt.Optim:zero_grad"></a>
+ * <code>onmt.Optim:zero_grad(grad_params)</code>
+<a name="onmt.Optim:update_params"></a>
+ * <code>onmt.Optim:update_params(params, grad_params, max_grad_norm)</code>
+<a name="onmt.Optim:get_learning_rate"></a>
+ * <code>onmt.Optim:get_learning_rate()</code>
+<a name="onmt.Optim:get_states"></a>
+ * <code>onmt.Optim:get_states()</code></p>
               
             </div>
           </div>
@@ -277,10 +216,8 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="lib+data/" class="btn btn-neutral float-right" title="Lib+data">Next <span class="icon icon-circle-arrow-right"></span></a>
       
-      
-        <a href="../onmt/lib+onmt+WordEmbedding/" class="btn btn-neutral" title="lib+onmt+WordEmbedding"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt/" class="btn btn-neutral" title="Onmt"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -306,10 +243,8 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt/lib+onmt+WordEmbedding/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
-      
-        <span style="margin-left: 15px"><a href="lib+data/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
