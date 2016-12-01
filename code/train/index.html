@@ -74,13 +74,6 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
         <a class="" href="../onmt/">Onmt</a>
         
     </li>
@@ -160,9 +153,9 @@
 <p>Class for saving and loading models during training.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/checkpoint.lua#L31">[src]</a>
 <a name="onmt.Checkpoint:save_iteration"></a></p>
-<h3 id="onmtcheckpointsave_iterationiteration-epoch_state-batch_order">onmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)</h3>
+<h4 id="onmtcheckpointsave_iterationiteration-epoch_state-batch_order">onmt.Checkpoint:save_iteration(iteration, epoch_state, batch_order)</h4>
 <p>Save the model and data in the middle of an epoch sorting the iteration. </p>
-<h4 id="undocumented-methods">Undocumented methods</h4>
+<h5 id="undocumented-methods">Undocumented methods</h5>
 <p><a name="onmt.Checkpoint"></a>
  * <code>onmt.Checkpoint(options, nets, optim, dataset)</code>
 <a name="onmt.Checkpoint:save"></a>
@@ -175,17 +168,17 @@
   the state of the current epoch.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L9">[src]</a>
 <a name="onmt.EpochState"></a></p>
-<h3 id="onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</h3>
+<h4 id="onmtepochstateepoch-num_iterations-learning_rate-status">onmt.EpochState(epoch, num_iterations, learning_rate, status)</h4>
 <p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L30">[src]</a>
 <a name="onmt.EpochState:update"></a></p>
-<h3 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h3>
+<h4 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h4>
 <p>Update training status. Takes <code>batch</code> (described in data.lua) and last losses.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/epoch_state.lua#L40">[src]</a>
 <a name="onmt.EpochState:log"></a></p>
-<h3 id="onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</h3>
+<h4 id="onmtepochstatelogbatch_index">onmt.EpochState:log(batch_index)</h4>
 <p>Log to status stdout. </p>
-<h4 id="undocumented-methods_1">Undocumented methods</h4>
+<h5 id="undocumented-methods_1">Undocumented methods</h5>
 <p><a name="onmt.EpochState:get_train_ppl"></a>
  * <code>onmt.EpochState:get_train_ppl()</code>
 <a name="onmt.EpochState:get_time"></a>
@@ -196,9 +189,9 @@
 <h2 id="onmtoptim">onmt.Optim</h2>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/train/optim.lua#L111">[src]</a>
 <a name="onmt.Optim:update_learning_rate"></a></p>
-<h3 id="onmtoptimupdate_learning_ratescore-epoch">onmt.Optim:update_learning_rate(score, epoch)</h3>
+<h4 id="onmtoptimupdate_learning_ratescore-epoch">onmt.Optim:update_learning_rate(score, epoch)</h4>
 <p>decay learning rate if val perf does not improve or we hit the start_decay_at limit</p>
-<h4 id="undocumented-methods_2">Undocumented methods</h4>
+<h5 id="undocumented-methods_2">Undocumented methods</h5>
 <p><a name="onmt.Optim"></a>
  * <code>onmt.Optim(args)</code>
 <a name="onmt.Optim:zero_grad"></a>

@@ -96,13 +96,6 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
         <a class="" href="../onmt/">Onmt</a>
         
     </li>
@@ -159,7 +152,7 @@
 <p>Class for managing the beam search process. </p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/eval/beam.lua#L26">[src]</a>
 <a name="onmt.Beam"></a></p>
-<h3 id="onmtbeamsize-num_features">onmt.Beam(size, num_features)</h3>
+<h4 id="onmtbeamsize-num_features">onmt.Beam(size, num_features)</h4>
 <p>Constructor</p>
 <p>Parameters:</p>
 <ul>
@@ -167,15 +160,15 @@
 </ul>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/eval/beam.lua#L56">[src]</a>
 <a name="onmt.Beam:get_current_state"></a></p>
-<h3 id="onmtbeamget_current_state">onmt.Beam:get_current_state()</h3>
+<h4 id="onmtbeamget_current_state">onmt.Beam:get_current_state()</h4>
 <p>Get the outputs for the current timestep.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/eval/beam.lua#L61">[src]</a>
 <a name="onmt.Beam:get_current_origin"></a></p>
-<h3 id="onmtbeamget_current_origin">onmt.Beam:get_current_origin()</h3>
+<h4 id="onmtbeamget_current_origin">onmt.Beam:get_current_origin()</h4>
 <p>Get the backpointers for the current timestep.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/eval/beam.lua#L75">[src]</a>
 <a name="onmt.Beam:advance"></a></p>
-<h3 id="onmtbeamadvanceword_lk-feats_lk-attn_out">onmt.Beam:advance(word_lk, feats_lk, attn_out)</h3>
+<h4 id="onmtbeamadvanceword_lk-feats_lk-attn_out">onmt.Beam:advance(word_lk, feats_lk, attn_out)</h4>
 <p>Given prob over words for every last beam <code>word_lk</code> and attention
  <code>attn_out</code>. Compute and update the beam search.</p>
 <p>Parameters:</p>
@@ -186,7 +179,7 @@
 <p>Returns: true if beam search is complete.</p>
 <p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2452c215eca24940fb8ec150e002b8de56f922d1/lib/eval/beam.lua#L152">[src]</a>
 <a name="onmt.Beam:get_hyp"></a></p>
-<h3 id="onmtbeamget_hypk">onmt.Beam:get_hyp(k)</h3>
+<h4 id="onmtbeamget_hypk">onmt.Beam:get_hyp(k)</h4>
 <p>Walk back to construct the full hypothesis <code>k</code>.</p>
 <p>Parameters:</p>
 <ul>
@@ -197,14 +190,14 @@
 <li>The hypothesis</li>
 <li>The attention at each time step.</li>
 </ol>
-<h4 id="undocumented-methods">Undocumented methods</h4>
+<h5 id="undocumented-methods">Undocumented methods</h5>
 <p><a name="onmt.Beam:sort_best"></a>
  * <code>onmt.Beam:sort_best()</code>
 <a name="onmt.Beam:get_best"></a>
  * <code>onmt.Beam:get_best()</code>
 <a name="onmt.PhraseTable.dok"></a></p>
 <h2 id="onmtphrasetable">onmt.PhraseTable</h2>
-<h4 id="undocumented-methods_1">Undocumented methods</h4>
+<h5 id="undocumented-methods_1">Undocumented methods</h5>
 <p><a name="onmt.PhraseTable"></a>
  * <code>onmt.PhraseTable(file_path)</code>
 <a name="onmt.PhraseTable:lookup"></a>
@@ -218,7 +211,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt/" class="btn btn-neutral float-right" title="Onmt">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../../Options/" class="btn btn-neutral" title="Options"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -250,7 +243,7 @@
         <span><a href="../../Options/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

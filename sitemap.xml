@@ -26,12 +26,6 @@
     </url>
         
     <url>
-     <loc>/code/</loc>
-     <lastmod>2016-12-01</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
      <loc>/code/onmt/</loc>
      <lastmod>2016-12-01</lastmod>
      <changefreq>daily</changefreq>
