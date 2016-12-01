@@ -1,4 +1,6 @@
-## Sequence-to-Sequence Learning with Attentional Neural Networks
+[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT)
+
+# OpenNMT
 
 [Torch](http://torch.ch) implementation of a standard sequence-to-sequence model with (optional)
 attention where the encoder-decoder are LSTMs. Encoder can be a bidirectional LSTM.
