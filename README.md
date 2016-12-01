@@ -6,7 +6,7 @@
 open-source (MIT) neural machine translation system utilizing the
 [Torch](http://torch.ch) mathematical toolkit.
 
-<center style="padding: 40px"><img  src="http://opennmt.github.io/simple-attn.png" /></center>
+<center style="padding: 40px"><img width="70%" src="http://opennmt.github.io/simple-attn.png" /></center>
 
 The system is designed to be simple to use and easy to extend , while
 maintaining efficiency and state-of-the-art translation
