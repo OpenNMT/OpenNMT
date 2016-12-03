@@ -32,7 +32,7 @@ function Decoder:__init(embedding, rnn, feature_embedding,
   self.wordEmb = embedding
   self.featureEmb = feature_embedding
   self._rnn_size = self.rnn.output_size
-  self._num_layers = self.rnn.num_layers
+  self._num_effective_layers = self.rnn.num_effective_layers
   self._input_feed = input_feed
 
   parent.__init(self, args, network or self:_buildModel())
@@ -86,11 +86,7 @@ function Decoder:_buildModel()
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, self._num_layers do
-    local c0 = nn.Identity()() -- batch_size x rnn_size
-    table.insert(inputs, c0)
-    table.insert(states, c0)
-
+  for _ = 1, self._num_effective_layers do
     local h0 = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -136,7 +132,7 @@ function Decoder:_buildModel()
   local outputs = self.rnn(states)
 
   -- The output of a subgraph is a node: split it to access the last RNN output.
-  outputs = { outputs:split(self._num_layers * 2) }
+  outputs = { outputs:split(self._num_effective_layers) }
 
   -- Compute the attention here using h^L as query.
   local attn_layer = onmt.GlobalAttention(self._rnn_size)
@@ -146,7 +142,7 @@ function Decoder:_buildModel()
     attn_output = nn.Dropout(self.rnn.dropout)(attn_output)
   end
   table.insert(outputs, attn_output)
-
+  print(#inputs)
   return nn.gModule(inputs, outputs)
 end
 
@@ -268,7 +264,7 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self._num_layers * 2,
+    self.statesProto = utils.Tensor.initTensorTable(self._num_effective_layers,
                                                     self.stateProto,
                                                     { batch.size, self._rnn_size })
   end
@@ -362,7 +358,7 @@ Parameters:
 -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self._num_layers * 2 + 1,
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self._num_effective_layers + 1,
                                                          self.gradOutputProto,
                                                          { batch.size, self._rnn_size })
   end

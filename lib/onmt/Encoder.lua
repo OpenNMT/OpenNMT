@@ -24,7 +24,6 @@ Parameters:
 function Encoder:__init(embedding, rnn, feature_embedding, mask_padding, network)
   -- Arguments
   self.rnn = rnn
-
   self.wordEmb = embedding
   self.featureEmb = feature_embedding
 
@@ -59,8 +58,8 @@ function Encoder:_buildModel()
   -- Inputs are previous layers first.
   for _ = 1, self._num_effective_layers do
     local h0 = nn.Identity()() -- batch_size x rnn_size
-    table.insert(inputs, c0)
-    table.insert(states, c0)
+    table.insert(inputs, h0)
+    table.insert(states, h0)
   end
 
   -- Input word.
@@ -88,7 +87,7 @@ function Encoder:_buildModel()
 
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
-
+  print(#inputs)
   return nn.gModule(inputs, { outputs })
 end
 
@@ -128,7 +127,7 @@ function Encoder:forward(batch)
 
   -- Preallocated output matrix.
   local context = utils.Tensor.reuseTensor(self.contextProto,
-                                           { batch.size, batch.source_length, output_sizE })
+                                           { batch.size, batch.source_length, output_size })
 
   if self._mask_padding and not batch.source_input_pad_left then
     final_states = utils.Tensor.recursiveClone(states)
