@@ -23,6 +23,8 @@ function EpochState:__init(epoch, num_iterations, learning_rate, status)
   self.num_words_source = 0
   self.num_words_target = 0
 
+  self.minFreeMemory = 100000000
+
   print('')
 end
 
@@ -41,6 +43,9 @@ function EpochState:log(batch_index)
   local time_taken = self:get_time()
   local stats = ''
   local freeMemory = utils.Cuda.freeMemory()
+  if freeMemory < self.minFreeMemory then
+    self.minFreeMemory = freeMemory
+  end
   stats = stats .. string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
                                  self.epoch, batch_index, self.num_iterations, self.learning_rate)
   stats = stats .. string.format('Throughput %d/%d/%d total/src/targ tokens/sec ; ',
@@ -62,6 +67,10 @@ end
 
 function EpochState:get_status()
   return self.status
+end
+
+function EpochState:get_min_freememory()
+  return self.minFreeMemory
 end
 
 return EpochState
