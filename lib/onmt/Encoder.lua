@@ -87,7 +87,6 @@ function Encoder:_buildModel()
 
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
-  print(#inputs)
   return nn.gModule(inputs, { outputs })
 end
 
@@ -171,8 +170,6 @@ function Encoder:forward(batch)
     end
 
     -- Copy output (h^L_t = states[#states]) to context.
-    print(states[#states]:size())
-    print(context:size())
     context[{{}, t}]:copy(states[#states])
   end
 
