@@ -85,6 +85,8 @@ cmd:option('-save_every', 0, [[Save intermediate models every this many iteratio
                              If = 0, will not save models within an epoch. ]])
 cmd:option('-print_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
+cmd:option('-no_log', false, [[By default, a log file save_file.log is created during training giving time, ppl, and free memory at each
+                             epoch. Use this flag to disable.]])
 
 local opt = cmd:parse(arg)
 
@@ -176,7 +178,7 @@ local function eval(model, criterion, data)
   return math.exp(loss / total)
 end
 
-local function train_model(model, train_data, valid_data, dataset, info)
+local function train_model(model, train_data, valid_data, dataset, info, log)
   local params, grad_params = {}, {}
   local criterion
 
@@ -307,6 +309,8 @@ local function train_model(model, train_data, valid_data, dataset, info)
       optim:update_learning_rate(valid_ppl, epoch)
     end
 
+    log:append({epoch, epoch_state:get_time(), epoch_state:get_train_ppl(), valid_ppl, epoch_state:get_min_freememory()})
+
     checkpoint:save_epoch(valid_ppl, epoch_state, optim)
   end
 end
@@ -321,6 +325,7 @@ local function main()
   utils.Opt.init(opt, required_options)
   utils.Cuda.init(opt)
   utils.Parallel.init(opt)
+  log = utils.Log.new(opt.save_file .. ".log", not opt.no_log)
 
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')
@@ -371,6 +376,9 @@ local function main()
       print('Resuming trainging from epoch ' .. opt.start_epoch
               .. ' at iteration ' .. opt.start_iteration .. '...')
     end
+    log:append({'--- restart from checkpoint: ',opt.train_from})
+  else
+    log:clear()
   end
 
   print('Building model...')
@@ -435,7 +443,7 @@ local function main()
     end
   end)
 
-  train_model(model, train_data, valid_data, dataset, checkpoint.info)
+  train_model(model, train_data, valid_data, dataset, checkpoint.info, log)
 end
 
 main()

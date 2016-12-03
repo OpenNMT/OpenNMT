@@ -12,5 +12,6 @@ utils.String = require('lib.utils.string')
 utils.Memory = require('lib.utils.memory')
 utils.Parallel = require('lib.utils.parallel')
 utils.Features = require('lib.utils.features')
+utils.Log = require('lib.utils.log')
 
 return utils
