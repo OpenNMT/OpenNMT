@@ -386,29 +386,43 @@ local function main()
   local model
 
   utils.Parallel.launch(nil, function(idx)
+
+    local src_feature_args = {
+      dataset.dicts.src.features, -- features
+      opt.feat_vec_exponent       -- feat exponent
+    }
+
+    local targ_feature_args = {
+      dataset.dicts.targ.features, -- features
+      opt.feat_vec_exponent        -- feat exponent
+    }
+
+    local src_word_emb_args = {
+      #dataset.dicts.src.words, -- vocab_size
+      opt.word_vec_size,        -- vec_size
+      opt.pre_word_vecs_enc,    -- pretrained
+      opt.fix_word_vecs_enc     -- fixed embeddings
+    }
+
+    local targ_word_emb_args = {
+      #dataset.dicts.targ.words,-- vocab_size
+      opt.word_vec_size,        -- vec_size
+      opt.pre_word_vecs_enc,    -- pretrained
+      opt.fix_word_vecs_enc     -- fixed embeddings
+    }
+    
+    local lstm_args = {
+      opt.num_layers,    -- number of layes
+      opt.word_vec_size, -- input_size
+      opt.rnn_size,      -- rnn_size
+      opt.dropout        -- dropout 
+    }
+    
     local encoder_args = {
-      word_vec_size = opt.word_vec_size,
-      pre_word_vecs = opt.pre_word_vecs_enc,
-      fix_word_vecs = opt.fix_word_vecs_enc,
-      vocab_size = #dataset.dicts.src.words,
-      features = dataset.dicts.src.features,
-      feat_vec_exponent = opt.feat_vec_exponent,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout,
-      num_layers = opt.num_layers
     }
 
     local decoder_args = {
-      word_vec_size = opt.word_vec_size,
-      pre_word_vecs = opt.pre_word_vecs_dec,
-      fix_word_vecs = opt.fix_word_vecs_dec,
-      vocab_size = #dataset.dicts.targ.words,
-      features = dataset.dicts.targ.features,
-      feat_vec_exponent = opt.feat_vec_exponent,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout,
-      num_layers = opt.num_layers,
-      input_feed = opt.input_feed == 1
+      opt.input_feed == 1 -- do input feeding
     }
 
     local pretrained = {}
@@ -426,12 +440,42 @@ local function main()
 
     _G.model = {}
     if opt.brnn then
-      _G.model.encoder = onmt.BiEncoder.new(encoder_args, opt.brnn_merge, pretrained.encoder, pretrained.encoder_bwd)
+      local biencoder_lstm = onmt.LSTM.new(unpack(lstm_args))
+      _G.model.encoder = onmt.BiEncoder.new(encoder_lstm,
+                                            encoder_args,
+                                            opt.brnn_merge,
+                                            pretrained.encoder,
+                                            pretrained.encoder_bwd)
     else
-      _G.model.encoder = onmt.Encoder.new(encoder_args, pretrained.encoder)
+      local src_feat_embedding = nil
+      if src_feature_args.features then
+        src_feat_embedding = onmt.FeaturesEmbedding.new(unpack(src_feature_args))
+        lstm_args.input_size = opt.word_vec_size + src_feat_embedding.outputSize
+      end
+      _G.model.encoder = onmt.Encoder.new(onmt.WordEmbedding.new(unpack(src_word_emb_args)),
+                                          onmt.LSTM.new(unpack(lstm_args)),
+                                          nil,
+                                          src_feat_embedding,
+                                          pretrained.encoder)
     end
-
-    _G.model.decoder = onmt.Decoder.new(decoder_args, pretrained.decoder, pretrained.generator)
+    
+    -- Setup the decoder. 
+    local targ_feat_embedding = nil
+    lstm_args.input_size = opt.word_vec_size
+    if targ_feature_args.features then
+      targ_feat_embedding = onmt.FeaturesEmbedding.new(unpack(targ_feature_args))
+      lstm_args.input_size = opt.word_vec_size + targ_feat_embedding.outputSize
+    end
+    if decoder_args.input_feed then
+      lstm_args.input_size = lstm_args.input_size + lstm_args.rnn_size
+    end
+    _G.model.decoder = onmt.Decoder.new(onmt.WordEmbedding.new(unpack(targ_word_emb_args)),
+                                        onmt.LSTM.new(unpack(lstm_args)),
+                                        targ_feature_embedding,
+                                        decoder_args.input_feed,
+                                        nil,
+                                        pretrained.decoder,
+                                        pretrained.generator)
 
     for _, mod in pairs(_G.model) do
       utils.Cuda.convert(mod)

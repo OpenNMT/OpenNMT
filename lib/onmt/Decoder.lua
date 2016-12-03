@@ -25,25 +25,34 @@ Parameters:
   * `network` - optional, recurrent step template.
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
 --]]
-function Decoder:__init(args, network, generator)
-  parent.__init(self, args, network or self:_buildModel(args))
+function Decoder:__init(embedding, rnn, feature_embedding,
+                        input_feed, mask_padding, 
+                        network, generator)
+  self.rnn = rnn
+  self.wordEmb = embedding
+  self.featureEmb = feature_embedding
+  self._rnn_size = self.rnn.output_size
+  self._num_layers = self.rnn.num_layers
+  self._input_feed = input_feed
+
+  parent.__init(self, args, network or self:_buildModel())
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
-  self.generator = generator or self:_buildGenerator(args.vocab_size, args.features, args.rnn_size)
+  self.generator = generator or self:_buildGenerator(self._rnn_size, self.wordEmb.vocabSize, self.featureEmb)
   self:add(self.generator)
 
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
-  if self.args.input_feed then
+  if input_feed then
     self.inputFeedProto = torch.Tensor()
   end
 
   -- Mask padding means that the attention-layer is constrained to
   -- give zero-weight to padding. This is done by storing a reference
   -- to the softmax attention-layer.
-  if self.args.mask_padding then
+  if mask_padding then
     self.network:apply(function (layer)
       if layer.name == 'decoder_attn' then
         self.decoder_attn = layer
@@ -72,12 +81,12 @@ Returns: An nn-graph mapping
   ${if}$ is the input feeding, and
   ${a}$ is the context vector computed at this timestep.
 --]]
-function Decoder:_buildModel(args)
+function Decoder:_buildModel()
   local inputs = {}
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, args.num_layers do
+  for _ = 1, self._num_layers do
     local c0 = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, c0)
     table.insert(states, c0)
@@ -94,70 +103,74 @@ function Decoder:_buildModel(args)
   table.insert(inputs, context)
 
   local input_feed
-  if args.input_feed then
+  if self._input_feed then
     input_feed = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, input_feed)
   end
 
   -- Input features.
   local features = {}
-  for i = 1, #args.features do
-    features[i] = nn.Identity()() -- batch_size
-    table.insert(inputs, features[i])
+  if self.featureEmb then 
+    for i = 1, #self.featureEmb.features do
+      features[i] = nn.Identity()() -- batch_size
+      table.insert(inputs, features[i])
+    end
   end
 
-  local input_size = args.word_vec_size
-
   -- Compute word embedding.
-  local input = onmt.WordEmbedding(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+  local input = self.wordEmb(x)
 
   -- If set, concatenate previous decoder output.
-  if args.input_feed then
+  if self._input_feed then
     input = nn.JoinTable(2)({input, input_feed})
-    input_size = input_size + args.rnn_size
   end
 
   -- Compute features embedding if used.
-  if #features > 0 then
-    self.featsEmb = onmt.FeaturesEmbedding(args.features, args.feat_vec_exponent)
+  if self.featureEmb then
     input = nn.JoinTable(2)({input, self.featsEmb(features)})
-    input_size = input_size + self.featsEmb.outputSize
   end
 
   table.insert(states, input)
 
   -- Forward states and input into the RNN.
-  local outputs = onmt.LSTM(args.num_layers, input_size, args.rnn_size, args.dropout)(states)
+  local outputs = self.rnn(states)
 
   -- The output of a subgraph is a node: split it to access the last RNN output.
-  outputs = { outputs:split(args.num_layers * 2) }
+  outputs = { outputs:split(self._num_layers * 2) }
 
   -- Compute the attention here using h^L as query.
-  local attn_layer = onmt.GlobalAttention(args.rnn_size)
+  local attn_layer = onmt.GlobalAttention(self._rnn_size)
   attn_layer.name = 'decoder_attn'
   local attn_output = attn_layer({outputs[#outputs], context})
-  if args.dropout > 0 then
-    attn_output = nn.Dropout(args.dropout)(attn_output)
+  if self.rnn.dropout > 0 then
+    attn_output = nn.Dropout(self.rnn.dropout)(attn_output)
   end
   table.insert(outputs, attn_output)
 
   return nn.gModule(inputs, outputs)
 end
 
---[[ Build the default generator. --]]
-function Decoder:_buildGenerator(vocab_size, features, rnn_size)
+--[[ Build the default generator. 
+--]]
+function Decoder:_buildGenerator(rnn_size, output_size, featEmb)
   -- Builds a layer for predicting words.
   -- Layer used maps from (h^L) => (V).
+  
   local split = nn.ConcatTable()
-  split:add(nn.Linear(rnn_size, vocab_size))
-  for i = 1, #features do
-    split:add(nn.Linear(rnn_size, #features[i]))
-  end
+  split:add(nn.Linear(rnn_size, output_size))
 
+  if featEmb then 
+    for i = 1, #featEmb.features do
+      split:add(nn.Linear(rnn_size, #features[i]))
+    end
+  end
   local softmax = nn.ParallelTable()
   softmax:add(nn.LogSoftMax())
-  for _ = 1, #features do
-    softmax:add(nn.LogSoftMax())
+
+  if featEmb then 
+    for _ = 1, #featEmb.features do
+      softmax:add(nn.LogSoftMax())
+    end
   end
 
   local generator = nn.Sequential()
@@ -216,10 +229,10 @@ function Decoder:forward_one(input, features, prev_states, context, prev_out, t)
   utils.Table.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
-  if self.args.input_feed then
+  if self._input_feed then
     if prev_out == nil then
       table.insert(inputs, utils.Tensor.reuseTensor(self.inputFeedProto,
-                                                    { input:size(1), self.args.rnn_size }))
+                                                    { input:size(1), self._rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
@@ -255,9 +268,9 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+    self.statesProto = utils.Tensor.initTensorTable(self._num_layers * 2,
                                                     self.stateProto,
-                                                    { batch.size, self.args.rnn_size })
+                                                    { batch.size, self._rnn_size })
   end
 
   local states = utils.Tensor.copyTensorTable(self.statesProto, encoder_states)
@@ -349,15 +362,15 @@ Parameters:
 -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_layers * 2 + 1,
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self._num_layers * 2 + 1,
                                                          self.gradOutputProto,
-                                                         { batch.size, self.args.rnn_size })
+                                                         { batch.size, self._rnn_size })
   end
 
   local grad_states_input = utils.Tensor.reuseTensorTable(self.gradOutputsProto,
-                                                          { batch.size, self.args.rnn_size })
+                                                          { batch.size, self._rnn_size })
   local grad_context_input = utils.Tensor.reuseTensor(self.gradContextProto,
-                                                      { batch.size, batch.source_length, self.args.rnn_size })
+                                                      { batch.size, batch.source_length, self._rnn_size })
 
   local grad_context_idx = #self.statesProto + 2
   local grad_input_feed_idx = #self.statesProto + 3
@@ -396,7 +409,7 @@ function Decoder:backward(batch, outputs, criterion)
     grad_states_input[#grad_states_input]:zero()
 
     -- Accumulate previous output gradients with input feeding gradients.
-    if self.args.input_feed and t > 1 then
+    if self._input_feed and t > 1 then
       grad_states_input[#grad_states_input]:add(grad_input[grad_input_feed_idx])
     end
 

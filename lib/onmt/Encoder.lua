@@ -21,8 +21,18 @@ Parameters:
   * `args` - global options.
   * `network` - optional recurrent step template.
 ]]
-function Encoder:__init(args, network)
-  parent.__init(self, args, network or self:_buildModel(args))
+function Encoder:__init(embedding, rnn, feature_embedding, mask_padding, network)
+  -- Arguments
+  self.rnn = rnn
+
+  self.wordEmb = embedding
+  self.featureEmb = feature_embedding
+
+  self._rnn_size = self.rnn.output_size
+  self._num_effective_layers = self.rnn.num_effective_layers
+  self._mask_padding = mask_padding
+
+  parent.__init(self, {}, network or self:_buildModel())
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
@@ -39,22 +49,18 @@ Returns: An nn-graph mapping
   $${(c^1_{t-1}, h^1_{t-1}, .., c^L_{t-1}, h^L_{t-1}, x_t) =>
   (c^1_{t}, h^1_{t}, .., c^L_{t}, h^L_{t})}$$
 
-  Where ${c^l}$ and ${h^l}$ are the hidden and cell states at each layer,
-  ${x_t}$ is a sparse word to lookup.
+  Where $$c^l$$ and $$h^l$$ are the hidden and cell states at each layer,
+  $$x_t$$ is a sparse word to lookup.
 --]]
-function Encoder:_buildModel(args)
+function Encoder:_buildModel()
   local inputs = {}
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, args.num_layers do
-    local c0 = nn.Identity()() -- batch_size x rnn_size
+  for _ = 1, self._num_effective_layers do
+    local h0 = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, c0)
     table.insert(states, c0)
-
-    local h0 = nn.Identity()() -- batch_size x rnn_size
-    table.insert(inputs, h0)
-    table.insert(states, h0)
   end
 
   -- Input word.
@@ -63,27 +69,25 @@ function Encoder:_buildModel(args)
 
   -- Input features.
   local features = {}
-  for i = 1, #args.features do
-    features[i] = nn.Identity()() -- batch_size
-    table.insert(inputs, features[i])
+  if self.featureEmb then
+    for i = 1, #self.featureEmb.features do
+      features[i] = nn.Identity()() -- batch_size
+      table.insert(inputs, features[i])
+    end
   end
 
   -- Compute word embedding.
-  local input_size = args.word_vec_size
-  self.wordEmb = onmt.WordEmbedding(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)
   local input = self.wordEmb(x)
 
   -- Compute features embedding if used.
-  if #features > 0 then
-    self.featsEmb = onmt.FeaturesEmbedding(args.features, args.feat_vec_exponent)
-    input = nn.JoinTable(2)({input, self.featsEmb(features)})
-    input_size = input_size + self.featsEmb.outputSize
+  if self.featureEmb then
+    input = nn.JoinTable(2)({input, self.featureEmb(features)})
   end
 
   table.insert(states, input)
 
   -- Forward states and input into the RNN.
-  local outputs = onmt.LSTM(args.num_layers, input_size, args.rnn_size, args.dropout)(states)
+  local outputs = self.rnn(states)
 
   return nn.gModule(inputs, { outputs })
 end
@@ -111,21 +115,22 @@ function Encoder:forward(batch)
   -- TODO: Change `batch` to `input`.
 
   local final_states
-
+  local output_size = self._rnn_size
+  
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+    self.statesProto = utils.Tensor.initTensorTable(self._num_effective_layers,
                                                     self.stateProto,
-                                                    { batch.size, self.args.rnn_size })
+                                                    { batch.size, output_size })
   end
 
   -- Make initial states c_0, h_0.
-  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.rnn_size })
+  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, output_size })
 
   -- Preallocated output matrix.
   local context = utils.Tensor.reuseTensor(self.contextProto,
-                                           { batch.size, batch.source_length, self.args.rnn_size })
+                                           { batch.size, batch.source_length, output_sizE })
 
-  if self.args.mask_padding and not batch.source_input_pad_left then
+  if self._mask_padding and not batch.source_input_pad_left then
     final_states = utils.Tensor.recursiveClone(states)
   end
   if self.train then
@@ -152,7 +157,7 @@ function Encoder:forward(batch)
     states = self:net(t):forward(inputs)
 
     -- Special case padding.
-    if self.args.mask_padding then
+    if self._mask_padding then
       for b = 1, batch.size do
         if batch.source_input_pad_left and t <= batch.source_length - batch.source_size[b] then
           for j = 1, #states do
@@ -167,6 +172,8 @@ function Encoder:forward(batch)
     end
 
     -- Copy output (h^L_t = states[#states]) to context.
+    print(states[#states]:size())
+    print(context:size())
     context[{{}, t}]:copy(states[#states])
   end
 
@@ -189,10 +196,11 @@ Returns: nil
 --]]
 function Encoder:backward(batch, grad_states_output, grad_context_output)
   -- TODO: change this to (input, gradOutput) as in nngraph.
+  local output_size = self._rnn_size
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self._num_effective_layers,
                                                          self.gradOutputProto,
-                                                         { batch.size, self.args.rnn_size })
+                                                         { batch.size, output_size })
   end
 
   local grad_states_input = utils.Tensor.copyTensorTable(self.gradOutputsProto, grad_states_output)

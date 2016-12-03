@@ -15,7 +15,7 @@ Parameters:
 --]]
 function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   parent.__init(self)
-
+  self.vocabSize = vocab_size
   self.net = nn.LookupTable(vocab_size, vec_size, constants.PAD)
   self:add(self.net)
 
