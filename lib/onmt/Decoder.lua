@@ -374,14 +374,14 @@ function Decoder:backward(batch, outputs, criterion)
       table.insert(output, batch.target_output_features[j][t])
     end
 
-    loss = loss + criterion:forward(pred, output) / batch.size
+    loss = loss + criterion:forward(pred, output) / batch.total_size
 
 
     -- Compute the criterion gradient.
     local gen_grad_out = criterion:backward(pred, output)
 
     for j = 1, #gen_grad_out do
-      gen_grad_out[j]:div(batch.size)
+      gen_grad_out[j]:div(batch.total_size)
     end
 
     -- Compute the final layer gradient.

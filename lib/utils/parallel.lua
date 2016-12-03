@@ -10,6 +10,15 @@ local Parallel = {
   gradBuffer = torch.Tensor()
 }
 
+-- Synchronizes the current stream on dst device with src device. This is only
+-- necessary if we are not on the default stream
+local function waitForDevice(dst, src)
+   local stream = cutorch.getStream()
+   if stream ~= 0 then
+      cutorch.streamWaitForMultiDevice(dst, stream, { [src] = {stream} })
+   end
+end
+
 function Parallel.init(args)
   if utils.Cuda.activated then
     Parallel.count = args.nparallel
@@ -33,6 +42,16 @@ function Parallel.init(args)
         end
       ) -- dedicate threads to GPUs
       Parallel._pool:specific(true)
+    end
+    if Parallel.count > 1 and not(args.no_nccl) then
+      -- check if we have nccl installed
+      Parallel.usenccl = pcall(require, 'nccl')
+      if not Parallel.usenccl  then
+        print("WARNING: for improved efficiency in nparallel mode - do install nccl")
+      elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
+        print("WARNING: CUDA_LAUNCH_BLOCKING set - cannot use nccl")
+        Parallel.usenccl = nil
+      end
     end
   end
 end
@@ -68,21 +87,26 @@ end
 --[[ Accumulate the gradient parameters from the different parallel threads. ]]
 function Parallel.accGradParams(grad_params, batches)
   if Parallel.count > 1 then
-    local totalBatchSize = 0
-    for i = 1, #batches do
-      totalBatchSize = totalBatchSize + batches[i].size
-    end
-
     for h = 1, #grad_params[1] do
-      grad_params[1][h]:mul(batches[1].size / totalBatchSize)
-
+      local inputs = { grad_params[1][h] }
       for j = 2, #batches do
-        -- TODO - this is memory costly since we need to clone full parameters from one GPU to another
-        -- to avoid out-of-memory, we can copy/add by batch
-        -- also it is possible to optmize using nccl
-        local remoteGrads = utils.Tensor.reuseTensor(Parallel.gradBuffer, grad_params[j][h]:size())
-        remoteGrads:copy(grad_params[j][h])
-        grad_params[1][h]:add(remoteGrads:mul(batches[j].size / totalBatchSize))
+        if not Parallel.usenccl then
+          -- TODO - this is memory costly since we need to clone full parameters from one GPU to another
+          -- to avoid out-of-memory, we can copy/add by batch
+
+         -- Synchronize before and after copy to ensure that it doesn't overlap
+         -- with this add or previous adds
+          waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
+          local remoteGrads = utils.Tensor.reuseTensor(Parallel.gradBuffer, grad_params[j][h]:size())
+          remoteGrads:copy(grad_params[j][h])
+          waitForDevice(Parallel.gpus[1], Parallel.gpus[j])
+          grad_params[1][h]:add(remoteGrads)
+        else
+          table.insert(inputs, grad_params[j][h])
+        end
+      end
+      if Parallel.usenccl then
+        Parallel.usenccl.reduce(inputs, nil, true)
       end
     end
   end
@@ -90,9 +114,20 @@ end
 
 --[[ Sync parameters from main model to different parallel threads. ]]
 function Parallel.syncParams(params)
-  for j = 2, Parallel.count do
+  if not Parallel.usenccl then
+    for j = 2, Parallel.count do
+      for h = 1, #params[1] do
+          params[j][h]:copy(params[1][h])
+      end
+      waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
+    end
+  else
     for h = 1, #params[1] do
-      params[j][h]:copy(params[1][h])
+      local inputs = { grad_params[1][h] }
+      for j = 2, Parallel.count do
+        table.insert(inputs, grad_params[j][h])
+      end
+      Parallel.usenccl.bcast(inputs, true, 1)
     end
   end
 end

@@ -76,6 +76,7 @@ cmd:text("")
 cmd:option('-gpuid', -1, [[Which gpu to use (1-indexed). < 1 = use CPU]])
 cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
                             Note: this will technically change the final batch size to max_batch_size*nparallel.]])
+cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
                                                 except if you want to look inside clones for visualization purpose for instance.]])
 
@@ -206,7 +207,9 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
     -- optimize memory of the first clone
     if not opt.disable_mem_optimization then
-      utils.Memory.optimize(_G.model, _G.criterion, utils.Cuda.convert(train_data:get_batch(1)), verbose)
+      local batch = utils.Cuda.convert(train_data:get_batch(1))
+      batch.total_size = batch.size
+      utils.Memory.optimize(_G.model, _G.criterion, batch, verbose)
     end
 
     return idx, _G.criterion, _G.params, _G.grad_params
@@ -237,6 +240,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
     for i = start_i, #train_data, utils.Parallel.count do
       local batches = {}
+      local total_size = 0
 
       for j = 1, math.min(utils.Parallel.count, #train_data-i+1) do
         local batch_idx = batch_order[i+j-1]
@@ -244,6 +248,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
           batch_idx = i+j-1
         end
         table.insert(batches, train_data:get_batch(batch_idx))
+        total_size = total_size + batches[#batches].size
       end
 
       local losses = {}
@@ -256,6 +261,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
 
         -- send batch data to GPU
         utils.Cuda.convert(_G.batch)
+        _G.batch.total_size = total_size
 
         optim:zero_grad(_G.grad_params)
 
