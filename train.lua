@@ -432,7 +432,7 @@ local function main()
       opt.feat_vec_exponent        -- feat exponent
     }
 
-    local feature_generator_args = {
+    local feature_gen_args = {
       opt.rnn_size,
       #dataset.dicts.targ.words,
       dataset.dicts.targ.features
@@ -459,10 +459,12 @@ local function main()
     
     -- Feature embedding extension.
     local src_feat_embedding = nil
-    if src_feature_args.features then
+    
+    if src_feature_args[1] then
+      print("Using source features")
       src_feat_embedding = onmt.FeaturesEmbedding.new(unpack(src_feature_args))
-      input_network = nn.ConcatTable():add(input_network):add(src_feat_embedding)
-      lstm_args.input_size = opt.word_vec_size + src_feat_embedding.outputSize
+      input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(src_feat_embedding)):add(nn.JoinTable(2))
+      lstm_args[2] = opt.word_vec_size + src_feat_embedding.outputSize
     end
 
     if opt.brnn then
@@ -481,28 +483,30 @@ local function main()
     end
     
     -- Standard decoder setup.
-    lstm_args.input_size = opt.word_vec_size
+    lstm_args[2] = opt.word_vec_size
     local input_network = onmt.WordEmbedding.new(unpack(targ_word_emb_args))
     local generator = onmt.Generator.new(unpack(generator_args))
 
     -- Decoder with features. 
     local targ_feat_embedding = nil
-    if targ_feature_args.features then
+    if targ_feature_args[1] then
+      print("Using target features")
       targ_feat_embedding = onmt.FeaturesEmbedding.new(unpack(targ_feature_args))
-      input_network = nn.ConcatTable():add(input_network):add(targ_feat_embedding)
+      input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(targ_feat_embedding)):add(nn.JoinTable(2))
       generator = onmt.FeatureGenerator.new(unpack(feature_gen_args))
-      lstm_args.input_size = opt.word_vec_size + targ_feat_embedding.outputSize
+      lstm_args[2] = opt.word_vec_size + targ_feat_embedding.outputSize
     end
 
     -- Input feeding
-    if decoder_args.input_feed then
-      lstm_args.input_size = lstm_args.input_size + lstm_args.rnn_size
+    if decoder_args[1] then
+      print("Using input feeding")
+      lstm_args[2] = lstm_args[3] + lstm_args[2]
     end
 
     _G.model.decoder = onmt.Decoder.new(input_network,
                                         onmt.LSTM.new(unpack(lstm_args)),
                                         pretrained.generator or generator,
-                                        decoder_args.input_feed,
+                                        decoder_args[1],
                                         nil,
                                         pretrained.decoder)
 

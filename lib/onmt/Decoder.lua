@@ -179,10 +179,17 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   utils.Table.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
+  local input_size
+  if torch.type(input) == 'table' then 
+    input_size = input[1]:size(1)
+  else
+    input_size = input:size(1)
+  end
+    
   if self._input_feed then
     if prev_out == nil then
       table.insert(inputs, utils.Tensor.reuseTensor(self.inputFeedProto,
-                                                    { input:size(1), self._rnn_size }))
+                                                    { input_size, self._rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
