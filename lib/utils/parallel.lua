@@ -113,21 +113,23 @@ function Parallel.accGradParams(grad_params, batches)
 end
 
 --[[ Sync parameters from main model to different parallel threads. ]]
-function Parallel.syncParams(params)
-  if not Parallel.usenccl then
-    for j = 2, Parallel.count do
-      for h = 1, #params[1] do
-          params[j][h]:copy(params[1][h])
-      end
-      waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
-    end
-  else
-    for h = 1, #params[1] do
-      local inputs = { grad_params[1][h] }
+function Parallel.syncParams(params, grad_params)
+  if Parallel.count > 1 then
+    if not Parallel.usenccl then
       for j = 2, Parallel.count do
-        table.insert(inputs, grad_params[j][h])
+        for h = 1, #params[1] do
+          params[j][h]:copy(params[1][h])
+        end
+        waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
       end
-      Parallel.usenccl.bcast(inputs, true, 1)
+    else
+      for h = 1, #params[1] do
+        local inputs = { grad_params[1][h] }
+        for j = 2, Parallel.count do
+          table.insert(inputs, grad_params[j][h])
+        end
+        Parallel.usenccl.bcast(inputs, true, 1)
+      end
     end
   end
 end
