@@ -283,7 +283,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
       optim:update_params(params[1], grad_params[1], opt.max_grad_norm)
 
       -- sync the paramaters with the different parallel threads
-      utils.Parallel.syncParams(params)
+      utils.Parallel.syncParams(params, grad_params)
 
       epoch_state:update(batches, losses)
 
@@ -325,7 +325,8 @@ local function main()
   utils.Opt.init(opt, required_options)
   utils.Cuda.init(opt)
   utils.Parallel.init(opt)
-  log = utils.Log.new(opt.save_file .. ".log", not opt.no_log)
+
+  local log = utils.Log.new(opt.save_file .. ".log", not opt.no_log)
 
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')

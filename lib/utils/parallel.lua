@@ -113,7 +113,7 @@ function Parallel.accGradParams(grad_params, batches)
 end
 
 --[[ Sync parameters from main model to different parallel threads. ]]
-function Parallel.syncParams(params)
+function Parallel.syncParams(params, grad_params)
   if not Parallel.usenccl then
     for j = 2, Parallel.count do
       for h = 1, #params[1] do
