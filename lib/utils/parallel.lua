@@ -113,7 +113,7 @@ function Parallel.accGradParams(grad_params, batches)
 end
 
 --[[ Sync parameters from main model to different parallel threads. ]]
-function Parallel.syncParams(params, grad_params)
+function Parallel.syncParams(params)
   if Parallel.count > 1 then
     if not Parallel.usenccl then
       for j = 2, Parallel.count do
@@ -124,9 +124,9 @@ function Parallel.syncParams(params, grad_params)
       end
     else
       for h = 1, #params[1] do
-        local inputs = { grad_params[1][h] }
+        local inputs = { params[1][h] }
         for j = 2, Parallel.count do
-          table.insert(inputs, grad_params[j][h])
+          table.insert(inputs, params[j][h])
         end
         Parallel.usenccl.bcast(inputs, true, 1)
       end
