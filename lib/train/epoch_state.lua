@@ -23,7 +23,7 @@ function EpochState:__init(epoch, num_iterations, learning_rate, status)
   self.num_words_source = 0
   self.num_words_target = 0
 
-  self.minFreeMemory = 100000000
+  self.minFreeMemory = 100000000000
 
   print('')
 end
@@ -46,7 +46,7 @@ function EpochState:log(batch_index)
   if freeMemory < self.minFreeMemory then
     self.minFreeMemory = freeMemory
   end
-  stats = stats .. string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
+  stats = stats .. string.format('Epoch %d ; Batch %d/%d ; Time %.2f ; LR %.4f ; ', self.timer:time().real,
                                  self.epoch, batch_index, self.num_iterations, self.learning_rate)
   stats = stats .. string.format('Throughput %d/%d/%d total/src/targ tokens/sec ; ',
                                  (self.num_words_target + self.num_words_source) / time_taken,
