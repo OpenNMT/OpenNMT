@@ -374,8 +374,7 @@ function Decoder:backward(batch, outputs, criterion)
       table.insert(output, batch.target_output_features[j][t])
     end
 
-    loss = loss + criterion:forward(pred, output) / batch.total_size
-
+    loss = loss + criterion:forward(pred, output)
 
     -- Compute the criterion gradient.
     local gen_grad_out = criterion:backward(pred, output)
