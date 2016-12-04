@@ -45,8 +45,9 @@ function Parallel.init(args)
     end
     if Parallel.count > 1 and not(args.no_nccl) then
       -- check if we have nccl installed
-      Parallel.usenccl = pcall(require, 'nccl')
-      if not Parallel.usenccl  then
+      local ret
+      ret, Parallel.usenccl = pcall(require, 'nccl')
+      if not ret  then
         print("WARNING: for improved efficiency in nparallel mode - do install nccl")
       elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
         print("WARNING: CUDA_LAUNCH_BLOCKING set - cannot use nccl")
