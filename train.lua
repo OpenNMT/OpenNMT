@@ -459,8 +459,8 @@ local function main()
     
     -- Feature embedding extension.
     local src_feat_embedding = nil
-    
-    if src_feature_args[1] then
+
+    if #src_feature_args[1] > 0 then
       print("Using source features")
       src_feat_embedding = onmt.FeaturesEmbedding.new(unpack(src_feature_args))
       input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(src_feat_embedding)):add(nn.JoinTable(2))
@@ -489,7 +489,7 @@ local function main()
 
     -- Decoder with features. 
     local targ_feat_embedding = nil
-    if targ_feature_args[1] then
+    if #targ_feature_args[1] > 0 then
       print("Using target features")
       targ_feat_embedding = onmt.FeaturesEmbedding.new(unpack(targ_feature_args))
       input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(targ_feat_embedding)):add(nn.JoinTable(2))
