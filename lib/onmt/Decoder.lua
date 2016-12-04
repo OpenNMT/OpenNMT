@@ -14,7 +14,7 @@
 Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 --]]
-local Data = require "data"
+-- local Data = require "../data"
 local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 
