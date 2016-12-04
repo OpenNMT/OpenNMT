@@ -198,5 +198,5 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
   -- TODO: make these names clearer.
   -- Useful if input came from another network.
   return gradInput
-  
+
 end
