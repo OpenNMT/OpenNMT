@@ -7,9 +7,7 @@ function Generator:__init(rnn_size, output_size)
 end
 
 function Generator:_buildGenerator(rnn_size, output_size)
-  local input = nn.Identity()()
-  local output = nn.LogSoftMax()(nn.Linear(rnn_size, output_size)(input))
-  return nn.gModule({input}, {output})
+  return nn.Sequential():add(nn.Linear(rnn_size, output_size)):add(nn:LogSoftMax())
 end
 
 function Generator:updateOutput(input)
@@ -17,8 +15,9 @@ function Generator:updateOutput(input)
   return self.output
 end
 
-function Generator:updateGradInput(input, gradOutput) 
-  return self.net:updateGradInput(input, gradOutput[1])
+function Generator:updateGradInput(input, gradOutput)
+  self.gradInput = self.net:updateGradInput(input, gradOutput[1])
+  return self.gradInput
 end
 
 function Generator:accGradParameters(input, gradOutput, scale)

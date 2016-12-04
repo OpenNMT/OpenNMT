@@ -453,24 +453,27 @@ local function main()
     end
 
     _G.model = {}
+
+    -- Standard encoder setup.
+    local input_network = onmt.WordEmbedding.new(unpack(src_word_emb_args))
+    
+    -- Feature embedding extension.
+    local src_feat_embedding = nil
+    if src_feature_args.features then
+      src_feat_embedding = onmt.FeaturesEmbedding.new(unpack(src_feature_args))
+      input_network = nn.ConcatTable():add(input_network):add(src_feat_embedding)
+      lstm_args.input_size = opt.word_vec_size + src_feat_embedding.outputSize
+    end
+
     if opt.brnn then
       local biencoder_lstm = onmt.LSTM.new(unpack(lstm_args))
-      _G.model.encoder = onmt.BiEncoder.new(encoder_lstm,
-                                            encoder_args,
+      _G.model.encoder = onmt.BiEncoder.new(input_network,
+                                            onmt.LSTM.new(unpack(lstm_args)),
+                                            nil,                                            
                                             opt.brnn_merge,
                                             pretrained.encoder,
                                             pretrained.encoder_bwd)
     else
-
-      local input_network = onmt.WordEmbedding.new(unpack(src_word_emb_args))
-
-      -- Feature embedding extension.
-      local src_feat_embedding = nil
-      if src_feature_args.features then
-        src_feat_embedding = onmt.FeaturesEmbedding.new(unpack(src_feature_args))
-        input_network = nn.ConcatTable():add(input_network):add(src_feat_embedding)
-        lstm_args.input_size = opt.word_vec_size + src_feat_embedding.outputSize
-      end
       _G.model.encoder = onmt.Encoder.new(input_network,
                                           onmt.LSTM.new(unpack(lstm_args)),
                                           nil,

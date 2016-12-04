@@ -12,6 +12,7 @@
 
 Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 --]]
+local Data = require "data"
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 --[[ Construct an encoder layer.
@@ -73,9 +74,9 @@ function Encoder:_buildModel()
   return nn.gModule(inputs, { outputs })
 end
 
--- TODO: add this back. 
+-- TODO: add this back.
 -- function Encoder:shareWordEmb(other)
---   
+--
 --   self.wordEmb:share(other.wordEmb, 'weight', 'gradWeight')
 --   if self.featsEmb then
 --     self.featsEmb:share(other.featsEmb, 'weight', 'gradWeight')
@@ -99,7 +100,7 @@ function Encoder:forward(batch)
 
   local final_states
   local output_size = self._rnn_size
-  
+
   if self.statesProto == nil then
     self.statesProto = utils.Tensor.initTensorTable(self._num_effective_layers,
                                                     self.stateProto,

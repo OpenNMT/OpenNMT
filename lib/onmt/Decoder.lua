@@ -14,6 +14,7 @@
 Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 
 --]]
+local Data = require "data"
 local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 
@@ -26,7 +27,7 @@ Parameters:
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
 --]]
 function Decoder:__init(input_network, rnn, generator,
-                        input_feed, mask_padding, 
+                        input_feed, mask_padding,
                         network)
   self.rnn = rnn
   self.inputNet = input_network
@@ -34,11 +35,11 @@ function Decoder:__init(input_network, rnn, generator,
   self._num_effective_layers = self.rnn.num_effective_layers
   self._input_feed = input_feed
 
-  parent.__init(self, args, network or self:_buildModel())
+  parent.__init(self, {}, network or self:_buildModel())
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
-  self.generator = generator 
+  self.generator = generator
   self:add(self.generator)
 
   -- Input feeding means the decoder takes an extra
@@ -288,21 +289,17 @@ function Decoder:backward(batch, outputs, criterion)
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
     local pred = self.generator:forward(outputs[t])
-    print(pred)
-    local output = Data.get_target_output(batch, t) 
+    local output = Data.get_target_output(batch, t)
 
     loss = loss + criterion:forward(pred, output) / batch.total_size
 
     -- Compute the criterion gradient.
     local gen_grad_out = criterion:backward(pred, output)
-
     for j = 1, #gen_grad_out do
       gen_grad_out[j]:div(batch.total_size)
     end
 
     -- Compute the final layer gradient.
-    print(outputs[t]:size(), pred, gen_grad_out)
-    print(torch.typename(outputs[t]))
     local dec_grad_out = self.generator:backward(outputs[t], gen_grad_out)
     grad_states_input[#grad_states_input]:add(dec_grad_out)
 

@@ -232,7 +232,7 @@ end
 
 function Data.get_source_input(batch, t)
   -- If a regular input, return word id, otherwise a table with features.
-  if #batch.source_input_features > 0 then 
+  if #batch.source_input_features > 0 then
     local inputs = {batch.source_input[t]}
     for j = 1, #batch.source_input_features do
       table.insert(inputs, batch.source_input_features[j][t])
@@ -245,7 +245,7 @@ end
 
 function Data.get_target_input(batch, t)
   -- If a regular input, return word id, otherwise a table with features.
-  if #batch.target_input_features > 0 then 
+  if #batch.target_input_features > 0 then
     local inputs = {batch.target_input[t]}
     for j = 1, #batch.target_input_features do
       table.insert(inputs, batch.target_input_features[j][t])
