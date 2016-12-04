@@ -387,15 +387,6 @@ local function main()
 
   utils.Parallel.launch(nil, function(idx)
 
-    local src_feature_args = {
-      dataset.dicts.src.features, -- features
-      opt.feat_vec_exponent       -- feat exponent
-    }
-
-    local targ_feature_args = {
-      dataset.dicts.targ.features, -- features
-      opt.feat_vec_exponent        -- feat exponent
-    }
 
     local src_word_emb_args = {
       #dataset.dicts.src.words, -- vocab_size
@@ -417,6 +408,11 @@ local function main()
       opt.rnn_size,      -- rnn_size
       opt.dropout        -- dropout 
     }
+
+    local generator_args = {
+      opt.rnn_size,
+      #dataset.dicts.targ.words
+    }
     
     local encoder_args = {
     }
@@ -424,6 +420,24 @@ local function main()
     local decoder_args = {
       opt.input_feed == 1 -- do input feeding
     }
+
+    -- Feature Extensions
+    local src_feature_args = {
+      dataset.dicts.src.features, -- features
+      opt.feat_vec_exponent       -- feat exponent
+    }
+
+    local targ_feature_args = {
+      dataset.dicts.targ.features, -- features
+      opt.feat_vec_exponent        -- feat exponent
+    }
+
+    local feature_generator_args = {
+      opt.rnn_size,
+      #dataset.dicts.targ.words,
+      dataset.dicts.targ.features
+    }
+
 
     local pretrained = {}
 
@@ -447,35 +461,47 @@ local function main()
                                             pretrained.encoder,
                                             pretrained.encoder_bwd)
     else
+
+      local input_network = onmt.WordEmbedding.new(unpack(src_word_emb_args))
+
+      -- Feature embedding extension.
       local src_feat_embedding = nil
       if src_feature_args.features then
         src_feat_embedding = onmt.FeaturesEmbedding.new(unpack(src_feature_args))
+        input_network = nn.ConcatTable():add(input_network):add(src_feat_embedding)
         lstm_args.input_size = opt.word_vec_size + src_feat_embedding.outputSize
       end
-      _G.model.encoder = onmt.Encoder.new(onmt.WordEmbedding.new(unpack(src_word_emb_args)),
+      _G.model.encoder = onmt.Encoder.new(input_network,
                                           onmt.LSTM.new(unpack(lstm_args)),
                                           nil,
-                                          src_feat_embedding,
                                           pretrained.encoder)
     end
     
-    -- Setup the decoder. 
-    local targ_feat_embedding = nil
+    -- Standard decoder setup.
     lstm_args.input_size = opt.word_vec_size
+    local input_network = onmt.WordEmbedding.new(unpack(targ_word_emb_args))
+    local generator = onmt.Generator.new(unpack(generator_args))
+
+    -- Decoder with features. 
+    local targ_feat_embedding = nil
     if targ_feature_args.features then
       targ_feat_embedding = onmt.FeaturesEmbedding.new(unpack(targ_feature_args))
+      input_network = nn.ConcatTable():add(input_network):add(targ_feat_embedding)
+      generator = onmt.FeatureGenerator.new(unpack(feature_gen_args))
       lstm_args.input_size = opt.word_vec_size + targ_feat_embedding.outputSize
     end
+
+    -- Input feeding
     if decoder_args.input_feed then
       lstm_args.input_size = lstm_args.input_size + lstm_args.rnn_size
     end
-    _G.model.decoder = onmt.Decoder.new(onmt.WordEmbedding.new(unpack(targ_word_emb_args)),
+
+    _G.model.decoder = onmt.Decoder.new(input_network,
                                         onmt.LSTM.new(unpack(lstm_args)),
-                                        targ_feature_embedding,
+                                        pretrained.generator or generator,
                                         decoder_args.input_feed,
                                         nil,
-                                        pretrained.decoder,
-                                        pretrained.generator)
+                                        pretrained.decoder)
 
     for _, mod in pairs(_G.model) do
       utils.Cuda.convert(mod)

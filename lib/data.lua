@@ -230,4 +230,40 @@ function Data:get_batch(idx)
   return self:get_data(src, src_features, targ, targ_features)
 end
 
+function Data.get_source_input(batch, t)
+  -- If a regular input, return word id, otherwise a table with features.
+  if #batch.source_input_features > 0 then 
+    local inputs = {batch.source_input[t]}
+    for j = 1, #batch.source_input_features do
+      table.insert(inputs, batch.source_input_features[j][t])
+    end
+    return inputs
+  else
+    return batch.source_input[t]
+  end
+end
+
+function Data.get_target_input(batch, t)
+  -- If a regular input, return word id, otherwise a table with features.
+  if #batch.target_input_features > 0 then 
+    local inputs = {batch.target_input[t]}
+    for j = 1, #batch.target_input_features do
+      table.insert(inputs, batch.target_input_features[j][t])
+    end
+    return inputs
+  else
+    return batch.target_input[t]
+  end
+end
+
+function Data.get_target_output(batch, t)
+  -- If a regular input, return word id, otherwise a table with features.
+  local outputs = { batch.target_output[t] }
+  for j = 1, #batch.target_output_features do
+    table.insert(outputs, batch.target_output_features[j][t])
+  end
+  return outputs
+end
+
+
 return Data

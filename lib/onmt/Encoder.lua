@@ -21,12 +21,10 @@ Parameters:
   * `args` - global options.
   * `network` - optional recurrent step template.
 ]]
-function Encoder:__init(embedding, rnn, feature_embedding, mask_padding, network)
+function Encoder:__init(input_network, rnn, mask_padding, network)
   -- Arguments
   self.rnn = rnn
-  self.wordEmb = embedding
-  self.featureEmb = feature_embedding
-
+  self.inputNet = input_network
   self._rnn_size = self.rnn.output_size
   self._num_effective_layers = self.rnn.num_effective_layers
   self._mask_padding = mask_padding
@@ -66,23 +64,8 @@ function Encoder:_buildModel()
   local x = nn.Identity()() -- batch_size
   table.insert(inputs, x)
 
-  -- Input features.
-  local features = {}
-  if self.featureEmb then
-    for i = 1, #self.featureEmb.features do
-      features[i] = nn.Identity()() -- batch_size
-      table.insert(inputs, features[i])
-    end
-  end
-
-  -- Compute word embedding.
-  local input = self.wordEmb(x)
-
-  -- Compute features embedding if used.
-  if self.featureEmb then
-    input = nn.JoinTable(2)({input, self.featureEmb(features)})
-  end
-
+  -- Compute input network.
+  local input = self.inputNet(x)
   table.insert(states, input)
 
   -- Forward states and input into the RNN.
@@ -90,12 +73,14 @@ function Encoder:_buildModel()
   return nn.gModule(inputs, { outputs })
 end
 
-function Encoder:shareWordEmb(other)
-  self.wordEmb:share(other.wordEmb, 'weight', 'gradWeight')
-  if self.featsEmb then
-    self.featsEmb:share(other.featsEmb, 'weight', 'gradWeight')
-  end
-end
+-- TODO: add this back. 
+-- function Encoder:shareWordEmb(other)
+--   
+--   self.wordEmb:share(other.wordEmb, 'weight', 'gradWeight')
+--   if self.featsEmb then
+--     self.featsEmb:share(other.featsEmb, 'weight', 'gradWeight')
+--   end
+-- end
 
 --[[Compute the context representation of an input.
 
@@ -121,7 +106,7 @@ function Encoder:forward(batch)
                                                     { batch.size, output_size })
   end
 
-  -- Make initial states c_0, h_0.
+  -- Make initial states h_0.
   local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, output_size })
 
   -- Preallocated output matrix.
@@ -142,10 +127,7 @@ function Encoder:forward(batch)
     -- Construct "inputs". Prev states come first then source.
     local inputs = {}
     utils.Table.append(inputs, states)
-    table.insert(inputs, batch.source_input[t])
-    for j = 1, #batch.source_input_features do
-      table.insert(inputs, batch.source_input_features[j][t])
-    end
+    table.insert(inputs, Data.get_source_input(batch, t))
 
     if self.train then
       -- Remember inputs for the backward pass.
