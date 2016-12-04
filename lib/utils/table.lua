@@ -15,6 +15,7 @@ local function reorder(tab, index)
 end
 
 return {
+  unpack = unpack or table.unpack,
   reorder = reorder,
   append = append
 }
