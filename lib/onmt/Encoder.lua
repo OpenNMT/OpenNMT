@@ -20,8 +20,10 @@ local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 Parameters:
 
-  * `args` - global options.
-  * `network` - optional recurrent step template.
+  * `input_network` - input module.
+  * `rnn` - recurrent module.
+  * `network` - pre-trained network.
+  * `mask_padding` - enable padding masking.
 ]]
 function Encoder:__init(input_network, rnn, network, mask_padding)
   -- Arguments
@@ -38,10 +40,6 @@ function Encoder:__init(input_network, rnn, network, mask_padding)
 end
 
 --[[ Build one time-step of an encoder
-
-Parameters:
-
-  * `args` - global args.
 
 Returns: An nn-graph mapping
 

@@ -23,9 +23,12 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 Parameters:
 
-  * `args` - global options.
-  * `network` - optional, recurrent step template.
+  * `input_network` - input module.
+  * `rnn` - recurrent module.
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
+  * `input_feed` - enable input feeding.
+  * `network` - optional, recurrent step template.
+  * `mask_padding` - enable padding masking.
 --]]
 function Decoder:__init(input_network,
                         rnn,
@@ -69,10 +72,6 @@ function Decoder:__init(input_network,
 end
 
 --[[ Build a default one time-step of the decoder
-
-Parameters:
-
-  * `args` - global options.
 
 Returns: An nn-graph mapping
 
