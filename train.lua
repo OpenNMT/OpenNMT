@@ -6,6 +6,7 @@ local path = require('pl.path')
 
 local constants = require('lib.constants')
 local Data = require('lib.data')
+local Models = require('lib.models')
 
 local cmd = torch.CmdLine()
 
@@ -388,55 +389,6 @@ local function main()
 
   utils.Parallel.launch(nil, function(idx)
 
-
-    local src_word_emb_args = {
-      #dataset.dicts.src.words, -- vocab_size
-      opt.word_vec_size,        -- vec_size
-      opt.pre_word_vecs_enc,    -- pretrained
-      opt.fix_word_vecs_enc     -- fixed embeddings
-    }
-
-    local targ_word_emb_args = {
-      #dataset.dicts.targ.words,-- vocab_size
-      opt.word_vec_size,        -- vec_size
-      opt.pre_word_vecs_enc,    -- pretrained
-      opt.fix_word_vecs_enc     -- fixed embeddings
-    }
-
-    local lstm_args = {
-      opt.num_layers,    -- number of layes
-      opt.word_vec_size, -- input_size
-      opt.rnn_size,      -- rnn_size
-      opt.dropout        -- dropout
-    }
-
-    local generator_args = {
-      opt.rnn_size,
-      #dataset.dicts.targ.words
-    }
-
-    local decoder_args = {
-      opt.input_feed == 1 -- do input feeding
-    }
-
-    -- Feature Extensions
-    local src_feature_args = {
-      dataset.dicts.src.features, -- features
-      opt.feat_vec_exponent       -- feat exponent
-    }
-
-    local targ_feature_args = {
-      dataset.dicts.targ.features, -- features
-      opt.feat_vec_exponent        -- feat exponent
-    }
-
-    local feature_gen_args = {
-      opt.rnn_size,
-      #dataset.dicts.targ.words,
-      dataset.dicts.targ.features
-    }
-
-
     local pretrained = {}
 
     if checkpoint.nets then
@@ -451,62 +403,13 @@ local function main()
     end
 
     _G.model = {}
-
-    -- Standard encoder setup.
-    local input_network = onmt.WordEmbedding.new(utils.Table.unpack(src_word_emb_args))
-
-    if #src_feature_args[1] > 0 then
-      print("Using source features")
-      -- Feature embedding extension.
-      local src_feat_embedding = onmt.FeaturesEmbedding.new(utils.Table.unpack(src_feature_args))
-      input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(src_feat_embedding)):add(nn.JoinTable(2))
-      lstm_args[2] = opt.word_vec_size + src_feat_embedding.outputSize
-    end
-
-    if opt.brnn then
-      _G.model.encoder = onmt.BiEncoder.new(input_network,
-                                            onmt.LSTM.new(utils.Table.unpack(lstm_args)),
-                                            nil,
-                                            opt.brnn_merge,
-                                            pretrained.encoder,
-                                            pretrained.encoder_bwd)
-    else
-      _G.model.encoder = onmt.Encoder.new(input_network,
-                                          onmt.LSTM.new(utils.Table.unpack(lstm_args)),
-                                          nil,
-                                          pretrained.encoder)
-    end
-
-    -- Standard decoder setup.
-    lstm_args[2] = opt.word_vec_size
-    input_network = onmt.WordEmbedding.new(utils.Table.unpack(targ_word_emb_args))
-    local generator = onmt.Generator.new(utils.Table.unpack(generator_args))
-
-    if #targ_feature_args[1] > 0 then
-      print("Using target features")
-      -- Decoder with features.
-      local targ_feat_embedding = onmt.FeaturesEmbedding.new(utils.Table.unpack(targ_feature_args))
-      input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(targ_feat_embedding)):add(nn.JoinTable(2))
-      generator = onmt.FeatureGenerator.new(utils.Table.unpack(feature_gen_args))
-      lstm_args[2] = opt.word_vec_size + targ_feat_embedding.outputSize
-    end
-
-    -- Input feeding
-    if decoder_args[1] then
-      print("Using input feeding")
-      lstm_args[2] = lstm_args[3] + lstm_args[2]
-    end
-
-    _G.model.decoder = onmt.Decoder.new(input_network,
-                                        onmt.LSTM.new(utils.Table.unpack(lstm_args)),
-                                        pretrained.generator or generator,
-                                        decoder_args[1],
-                                        nil,
-                                        pretrained.decoder)
+    _G.model.encoder = Models.buildEncoder(opt, dataset.dicts.src, pretrained)
+    _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.targ, pretrained)
 
     for _, mod in pairs(_G.model) do
       utils.Cuda.convert(mod)
     end
+
     return idx, _G.model
   end, function(idx, themodel)
     if idx == 1 then

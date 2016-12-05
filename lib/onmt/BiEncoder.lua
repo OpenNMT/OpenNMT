@@ -37,7 +37,7 @@ local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
 ]]
-function BiEncoder:__init(input, rnn, mask_padding, merge, net_fwd, net_bwd)
+function BiEncoder:__init(input, rnn, merge, net_fwd, net_bwd, mask_padding)
   parent.__init(self)
 
   -- Prototype for preallocated full context vector.

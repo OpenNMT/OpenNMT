@@ -28,9 +28,12 @@ Parameters:
   * `network` - optional, recurrent step template.
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
 --]]
-function Decoder:__init(input_network, rnn, generator,
-                        input_feed, mask_padding,
-                        network)
+function Decoder:__init(input_network,
+                        rnn,
+                        generator,
+                        input_feed,
+                        network,
+                        mask_padding)
   self.rnn = rnn
   self.inputNet = input_network
   self._rnn_size = self.rnn.output_size

@@ -24,7 +24,7 @@ Parameters:
   * `args` - global options.
   * `network` - optional recurrent step template.
 ]]
-function Encoder:__init(input_network, rnn, mask_padding, network)
+function Encoder:__init(input_network, rnn, network, mask_padding)
   -- Arguments
   self.rnn = rnn
   self.inputNet = input_network
