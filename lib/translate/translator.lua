@@ -48,7 +48,7 @@ local function init(args)
   dicts = checkpoint.dicts
 
   if opt.srctarg_dict:len() > 0 then
-    phrase_table = eval.PhraseTable.new(opt.srctarg_dict)
+    phrase_table = translate.PhraseTable.new(opt.srctarg_dict)
   end
 end
 
@@ -156,7 +156,7 @@ local function translate_batch(batch)
   local beam = {}
 
   for b = 1, batch.size do
-    table.insert(beam, eval.Beam.new(opt.beam, #dicts.targ.features))
+    table.insert(beam, translate.Beam.new(opt.beam, #dicts.targ.features))
     table.insert(batch_idx, b)
   end
 

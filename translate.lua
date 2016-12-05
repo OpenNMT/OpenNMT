@@ -1,4 +1,4 @@
-require('./lib/eval')
+require('./lib/translate')
 require('./lib/utils')
 
 local cmd = torch.CmdLine()
@@ -78,7 +78,7 @@ local function main()
     targ_features_batch = {}
   end
 
-  eval.Translate.init(opt)
+  translate.Translator.init(opt)
 
   local out_file = io.open(opt.output_file, 'w')
 
@@ -129,8 +129,8 @@ local function main()
         timer:resume()
       end
 
-      local pred_batch, info = eval.Translate.translate(src_words_batch, src_features_batch,
-                                                        targ_words_batch, targ_features_batch)
+      local pred_batch, info = translate.Translator.translate(src_words_batch, src_features_batch,
+                                                              targ_words_batch, targ_features_batch)
 
       if opt.time then
         timer:stop()
