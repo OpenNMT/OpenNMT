@@ -1,3 +1,5 @@
+local Data = require('lib.data')
+
 --[[ Unit to decode a sequence of output tokens.
 
      .      .      .             .

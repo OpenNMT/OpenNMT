@@ -402,20 +402,17 @@ local function main()
       opt.pre_word_vecs_enc,    -- pretrained
       opt.fix_word_vecs_enc     -- fixed embeddings
     }
-    
+
     local lstm_args = {
       opt.num_layers,    -- number of layes
       opt.word_vec_size, -- input_size
       opt.rnn_size,      -- rnn_size
-      opt.dropout        -- dropout 
+      opt.dropout        -- dropout
     }
 
     local generator_args = {
       opt.rnn_size,
       #dataset.dicts.targ.words
-    }
-    
-    local encoder_args = {
     }
 
     local decoder_args = {
@@ -457,22 +454,19 @@ local function main()
 
     -- Standard encoder setup.
     local input_network = onmt.WordEmbedding.new(utils.Table.unpack(src_word_emb_args))
-    
-    -- Feature embedding extension.
-    local src_feat_embedding = nil
 
     if #src_feature_args[1] > 0 then
       print("Using source features")
-      src_feat_embedding = onmt.FeaturesEmbedding.new(utils.Table.unpack(src_feature_args))
+      -- Feature embedding extension.
+      local src_feat_embedding = onmt.FeaturesEmbedding.new(utils.Table.unpack(src_feature_args))
       input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(src_feat_embedding)):add(nn.JoinTable(2))
       lstm_args[2] = opt.word_vec_size + src_feat_embedding.outputSize
     end
 
     if opt.brnn then
-      local biencoder_lstm = onmt.LSTM.new(utils.Table.unpack(lstm_args))
       _G.model.encoder = onmt.BiEncoder.new(input_network,
                                             onmt.LSTM.new(utils.Table.unpack(lstm_args)),
-                                            nil,                                            
+                                            nil,
                                             opt.brnn_merge,
                                             pretrained.encoder,
                                             pretrained.encoder_bwd)
@@ -482,17 +476,16 @@ local function main()
                                           nil,
                                           pretrained.encoder)
     end
-    
+
     -- Standard decoder setup.
     lstm_args[2] = opt.word_vec_size
-    local input_network = onmt.WordEmbedding.new(utils.Table.unpack(targ_word_emb_args))
+    input_network = onmt.WordEmbedding.new(utils.Table.unpack(targ_word_emb_args))
     local generator = onmt.Generator.new(utils.Table.unpack(generator_args))
 
-    -- Decoder with features. 
-    local targ_feat_embedding = nil
     if #targ_feature_args[1] > 0 then
       print("Using target features")
-      targ_feat_embedding = onmt.FeaturesEmbedding.new(utils.Table.unpack(targ_feature_args))
+      -- Decoder with features.
+      local targ_feat_embedding = onmt.FeaturesEmbedding.new(utils.Table.unpack(targ_feature_args))
       input_network = nn.Sequential():add(nn.ParallelTable():add(input_network):add(targ_feat_embedding)):add(nn.JoinTable(2))
       generator = onmt.FeatureGenerator.new(utils.Table.unpack(feature_gen_args))
       lstm_args[2] = opt.word_vec_size + targ_feat_embedding.outputSize

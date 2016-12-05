@@ -1,3 +1,5 @@
+local Data = require('lib.data')
+
 --[[ Encoder is a unidirectional Sequencer used for the source language.
 
     h_1 => h_2 => h_3 => ... => h_n
