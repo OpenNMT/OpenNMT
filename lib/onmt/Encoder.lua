@@ -76,14 +76,9 @@ function Encoder:_buildModel()
   return nn.gModule(inputs, { outputs })
 end
 
--- TODO: add this back.
--- function Encoder:shareWordEmb(other)
---
---   self.wordEmb:share(other.wordEmb, 'weight', 'gradWeight')
---   if self.featsEmb then
---     self.featsEmb:share(other.featsEmb, 'weight', 'gradWeight')
---   end
--- end
+function Encoder:shareInput(other)
+  self.inputNet:share(other.inputNet, 'weight', 'gradWeight')
+end
 
 --[[Compute the context representation of an input.
 

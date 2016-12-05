@@ -19,15 +19,30 @@ local function buildEncoder(opt, dicts, pretrained)
     input_size = input_size + src_feat_embedding.outputSize
   end
 
-  local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout)
-
   if opt.brnn then
+    -- Compute rnn hidden size depending on hidden states merge action.
+    local rnn_size = opt.rnn_size
+    if opt.brnn_merge == 'concat' then
+      if opt.rnn_size % 2 ~= 0 then
+        error('in concat mode, rnn_size must be divisible by 2')
+      end
+      rnn_size = rnn_size / 2
+    elseif opt.brnn_merge == 'sum' then
+      rnn_size = rnn_size
+    else
+      error('invalid merge action ' .. merge)
+    end
+
+    local rnn = onmt.LSTM.new(opt.num_layers, input_size, rnn_size, opt.dropout)
+
     return onmt.BiEncoder.new(input_network,
                               rnn,
                               opt.brnn_merge,
                               pretrained.encoder,
                               pretrained.encoder_bwd)
   else
+    local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout)
+
     return onmt.Encoder.new(input_network, rnn, pretrained.encoder)
   end
 end

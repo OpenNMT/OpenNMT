@@ -49,42 +49,38 @@ function BiEncoder:__init(input, rnn, merge, net_fwd, net_bwd, mask_padding)
   -- Prototype for preallocated gradient of the backward context
   self.gradContextBwdProto = torch.Tensor()
 
-  self.fwd = onmt.Encoder.new(input, rnn, mask_padding, net_fwd)
-  self.bwd = onmt.Encoder.new(input, rnn, mask_padding, net_bwd)
+  self.fwd = onmt.Encoder.new(input, rnn, net_fwd, mask_padding)
+  self.bwd = onmt.Encoder.new(input:clone(), rnn:clone(), net_bwd, mask_padding)
 
   self:add(self.fwd)
   self:add(self.bwd)
 
-  self.rnn_size = net_fwd._rnn_size
-  self.num_effective_layers = net_fwd._num_effective_layers
-
-  -- Comput the merge operation.
-  if merge == 'concat' then
-    if self.rnn_size % 2 ~= 0 then
-      error('in concat mode, rnn_size must be divisible by 2')
-    end
-    self.rnn_size = self.rnn_size / 2
-  elseif merge == 'sum' then
-    self.rnn_size = self.rnn_size
-  else
-    error('invalid merge action ' .. merge)
-  end
   self.merge = merge
+
+  self.rnn_size = rnn.output_size
+  self.num_effective_layers = rnn.num_effective_layers
+
+  if self.merge == 'concat' then
+    self.hidden_size = self.rnn_size * 2
+  else
+    self.hidden_size = self.rnn_size
+  end
 end
 
 function BiEncoder:forward(batch)
   if self.statesProto == nil then
     self.statesProto = utils.Tensor.initTensorTable(self.num_effective_layers,
                                                     self.stateProto,
-                                                    { batch.size, self.rnn_size })
+                                                    { batch.size, self.hidden_size })
+
     if self.train then
-      self.bwd:shareWordEmb(self.fwd)
+      self.bwd:shareInput(self.fwd)
     end
   end
 
-  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
+  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.hidden_size })
   local context = utils.Tensor.reuseTensor(self.contextProto,
-                                           { batch.size, batch.source_length, self.rnn_size })
+                                           { batch.size, batch.source_length, self.hidden_size })
 
   local fwd_states, fwd_context = self.fwd:forward(batch)
   reverse_input(batch)
