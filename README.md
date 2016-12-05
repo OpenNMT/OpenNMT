@@ -38,7 +38,7 @@ OpenNMT consists of three commands:
 
 3) Translate sentences.
 
-```th evaluate.lua -model model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt```
+```th translate.lua -model model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt```
 
 See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.
 

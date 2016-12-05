@@ -4,7 +4,7 @@ require('./lib/utils')
 local cmd = torch.CmdLine()
 
 cmd:text("")
-cmd:text("**evaluate.lua**")
+cmd:text("**translate.lua**")
 cmd:text("")
 
 

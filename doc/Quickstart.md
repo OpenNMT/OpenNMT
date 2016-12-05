@@ -12,7 +12,7 @@ OpenNMT consists of three commands
 
 3. Translate sentences.
 
-> th evaluate.lua -model demo-model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt
+> th translate.lua -model demo-model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt
 
 Let's walk through each of these commands in more detail. 
 
@@ -84,7 +84,7 @@ can also add `-gpuid 1` to use (say) GPU 1.
 
 ## Step 3: Translate
 
-> th evaluate.lua -model demo-model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt
+> th translate.lua -model demo-model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt
 
 Now you have a model which you can use to predict on new data. We do this by running beam search.
 

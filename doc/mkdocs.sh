@@ -26,5 +26,5 @@ mkdir tree/details/
 cd ../
 th preprocess.lua --help | python doc/format.py >> doc/tree/details/preprocess.md
 th train.lua --help | python doc/format.py >> doc/tree/details/train.md
-th evaluate.lua --help | python doc/format.py >> doc/tree/details/evaluate.md
+th translate.lua --help | python doc/format.py >> doc/tree/details/translate.md
 
