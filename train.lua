@@ -392,8 +392,8 @@ local function main()
     _G.model = {}
 
     if checkpoint.models then
-      _G.model.encoder = Models.loadEncoder(checkpoint.models.encoder, false, idx > 1)
-      _G.model.decoder = Models.loadDecoder(checkpoint.models.decoder, false, idx > 1)
+      _G.model.encoder = Models.loadEncoder(checkpoint.models.encoder, idx > 1)
+      _G.model.decoder = Models.loadDecoder(checkpoint.models.decoder, idx > 1)
     else
       _G.model.encoder = Models.buildEncoder(opt, dataset.dicts.src)
       _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.targ)

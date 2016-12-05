@@ -21,13 +21,10 @@ local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 Parameters:
 
   * `pretrained` - pre-trained network graph and data.
-  * `mask_padding` - enable padding masking.
   * `input_network` - input module.
   * `rnn` - recurrent module.
 ]]
-function Encoder:__init(pretrained, mask_padding, input_network, rnn)
-  self._mask_padding = mask_padding
-
+function Encoder:__init(pretrained, input_network, rnn)
   if pretrained then
     self._rnn_size = pretrained._rnn_size
     self._num_effective_layers = pretrained._num_effective_layers
@@ -53,6 +50,10 @@ function Encoder:serialize()
     _rnn_size = self._rnn_size,
     _num_effective_layers = self._num_effective_layers
   }
+end
+
+function Encoder:maskPadding()
+  self._mask_padding = true
 end
 
 --[[ Build one time-step of an encoder

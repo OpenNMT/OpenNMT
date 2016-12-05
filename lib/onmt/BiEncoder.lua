@@ -37,20 +37,20 @@ local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
 ]]
-function BiEncoder:__init(pretrained, mask_padding, input, rnn, merge)
+function BiEncoder:__init(pretrained, input, rnn, merge)
   parent.__init(self)
 
   if pretrained then
-    self.fwd = onmt.Encoder.new(pretrained.modules[1], mask_padding)
-    self.bwd = onmt.Encoder.new(pretrained.modules[2], mask_padding)
+    self.fwd = onmt.Encoder.new(pretrained.modules[1])
+    self.bwd = onmt.Encoder.new(pretrained.modules[2])
 
     self.merge = pretrained.merge
     self.rnn_size = pretrained.rnn_size
     self.hidden_size = pretrained.hidden_size
     self.num_effective_layers = pretrained.num_effective_layers
   else
-    self.fwd = onmt.Encoder.new(nil, mask_padding, input, rnn)
-    self.bwd = onmt.Encoder.new(nil, mask_padding, input:clone(), rnn:clone())
+    self.fwd = onmt.Encoder.new(nil, input, rnn)
+    self.bwd = onmt.Encoder.new(nil, input:clone(), rnn:clone())
 
     self.merge = merge
 
@@ -86,6 +86,11 @@ function BiEncoder:serialize()
     hidden_size = self.hidden_size,
     num_effective_layers = self.num_effective_layers
   }
+end
+
+function BiEncoder:maskPadding()
+  self.fwd:maskPadding()
+  self.bwd:maskPadding()
 end
 
 function BiEncoder:forward(batch)

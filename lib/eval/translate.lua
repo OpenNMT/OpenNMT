@@ -19,8 +19,8 @@ local function init(args)
   print('Loading ' .. opt.model .. '...')
   checkpoint = torch.load(opt.model)
 
-  models.encoder = Models.loadEncoder(checkpoint.models.encoder, true)
-  models.decoder = Models.loadDecoder(checkpoint.models.decoder, true)
+  models.encoder = Models.loadEncoder(checkpoint.models.encoder)
+  models.decoder = Models.loadDecoder(checkpoint.models.decoder)
 
   models.encoder:evaluate()
   models.decoder:evaluate()
@@ -101,15 +101,15 @@ local function build_target_tokens(pred, pred_feats, src, attn)
 end
 
 local function translate_batch(batch)
-  -- Forget previous padding module on the decoder.
-  models.decoder:reset()
+  models.encoder:maskPadding()
+  models.decoder:maskPadding()
 
   local enc_states, context = models.encoder:forward(batch)
 
   local gold_score
   if batch.target_input ~= nil then
     if batch.size > 1 then
-      models.decoder:reset(batch.source_size, batch.source_length)
+      models.decoder:maskPadding(batch.source_size, batch.source_length)
     end
     gold_score = models.decoder:compute_score(batch, enc_states, context)
   end
@@ -184,7 +184,7 @@ local function translate_batch(batch)
     utils.Table.append(inputs, input_features)
 
     if batch.size > 1 then
-      models.decoder:reset(source_sizes, batch.source_length, opt.beam)
+      models.decoder:maskPadding(source_sizes, batch.source_length, opt.beam)
     end
 
     dec_out, dec_states = models.decoder:forward_one(inputs, dec_states, context, dec_out)

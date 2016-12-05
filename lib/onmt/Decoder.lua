@@ -24,13 +24,12 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 Parameters:
 
   * `pretrained` - pre-trained network graph and data.
-  * `mask_padding` - enable padding masking.
   * `input_network` - input module.
   * `rnn` - recurrent module.
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
   * `input_feed` - enable input feeding.
 --]]
-function Decoder:__init(pretrained, mask_padding, input_network, rnn, generator, input_feed)
+function Decoder:__init(pretrained, input_network, rnn, generator, input_feed)
   if pretrained then
     self._rnn_size = pretrained._rnn_size
     self._num_effective_layers = pretrained._num_effective_layers
@@ -58,17 +57,6 @@ function Decoder:__init(pretrained, mask_padding, input_network, rnn, generator,
   -- previous step.
   if self._input_feed then
     self.inputFeedProto = torch.Tensor()
-  end
-
-  -- Mask padding means that the attention-layer is constrained to
-  -- give zero-weight to padding. This is done by storing a reference
-  -- to the softmax attention-layer.
-  if mask_padding then
-    self.network:apply(function (layer)
-      if layer.name == 'decoder_attn' then
-        self.decoder_attn = layer
-      end
-    end)
   end
 
   -- Prototype for preallocated context gradient.
@@ -147,13 +135,22 @@ function Decoder:_buildModel()
   return nn.gModule(inputs, outputs)
 end
 
---[[ Update internals of model to prepare for new batch.
+--[[ Mask padding means that the attention-layer is constrained to
+  give zero-weight to padding. This is done by storing a reference
+  to the softmax attention-layer.
 
   Parameters:
 
   * See  [onmt.MaskedSoftmax](lib+onmt+MaskedSoftmax).
 --]]
-function Decoder:reset(source_sizes, source_length, beam_size)
+function Decoder:maskPadding(source_sizes, source_length, beam_size)
+  if not self.decoder_attn then
+    self.network:apply(function (layer)
+      if layer.name == 'decoder_attn' then
+        self.decoder_attn = layer
+      end
+    end)
+  end
 
   self.decoder_attn:replace(function(module)
     if module.name == 'softmax_attn' then
