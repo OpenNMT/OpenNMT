@@ -374,7 +374,7 @@ local function main()
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration
 
-      print('Resuming trainging from epoch ' .. opt.start_epoch
+      print('Resuming training from epoch ' .. opt.start_epoch
               .. ' at iteration ' .. opt.start_iteration .. '...')
     end
     log:append({'--- restart from checkpoint: ',opt.train_from})
