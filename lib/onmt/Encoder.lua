@@ -32,7 +32,7 @@ function Encoder:__init(input_network, rnn, mask_padding, network)
   self._num_effective_layers = self.rnn.num_effective_layers
   self._mask_padding = mask_padding
 
-  parent.__init(self, {}, network or self:_buildModel())
+  parent.__init(self, network or self:_buildModel())
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()

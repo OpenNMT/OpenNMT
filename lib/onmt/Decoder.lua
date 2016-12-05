@@ -37,7 +37,7 @@ function Decoder:__init(input_network, rnn, generator,
   self._num_effective_layers = self.rnn.num_effective_layers
   self._input_feed = input_feed
 
-  parent.__init(self, {}, network or self:_buildModel())
+  parent.__init(self, network or self:_buildModel())
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.

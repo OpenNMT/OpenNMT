@@ -15,10 +15,8 @@ Parameters:
   * `args` - global options.
   * `network` - recurrent step template.
 --]]
-function Sequencer:__init(args, network)
+function Sequencer:__init(network)
   parent.__init(self)
-
-  self.args = args
 
   self.network = network
   self:add(self.network)
