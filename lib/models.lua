@@ -1,4 +1,4 @@
-local function buildEncoder(opt, dicts, pretrained)
+local function buildEncoder(opt, dicts)
   local input_network = onmt.WordEmbedding.new(#dicts.words, -- vocab size
                                                opt.word_vec_size,
                                                opt.pre_word_vecs_enc,
@@ -35,19 +35,15 @@ local function buildEncoder(opt, dicts, pretrained)
 
     local rnn = onmt.LSTM.new(opt.num_layers, input_size, rnn_size, opt.dropout)
 
-    return onmt.BiEncoder.new(input_network,
-                              rnn,
-                              opt.brnn_merge,
-                              pretrained.encoder,
-                              pretrained.encoder_bwd)
+    return onmt.BiEncoder.new(nil, nil, input_network, rnn, opt.brnn_merge)
   else
     local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout)
 
-    return onmt.Encoder.new(input_network, rnn, pretrained.encoder)
+    return onmt.Encoder.new(nil, nil, input_network, rnn)
   end
 end
 
-local function buildDecoder(opt, dicts, pretrained)
+local function buildDecoder(opt, dicts)
   local input_network = onmt.WordEmbedding.new(#dicts.words, -- vocab size
                                                opt.word_vec_size,
                                                opt.pre_word_vecs_dec,
@@ -81,14 +77,52 @@ local function buildDecoder(opt, dicts, pretrained)
 
   local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout)
 
-  return onmt.Decoder.new(input_network,
-                          rnn,
-                          pretrained.generator or generator,
-                          opt.input_feed == 1,
-                          pretrained.decoder)
+  return onmt.Decoder.new(nil, nil, input_network, rnn, generator, opt.input_feed == 1)
+end
+
+--[[ This is useful when training from a model in parallel mode: each thread must own its model. ]]
+local function clonePretrained(model)
+  local clone = {}
+
+  for k, v in pairs(model) do
+    if k == 'modules' then
+      clone.modules = {}
+      for i = 1, #v do
+        table.insert(clone.modules, utils.Tensor.deepClone(v[i]))
+      end
+    else
+      clone[k] = v
+    end
+  end
+
+  return clone
+end
+
+local function loadEncoder(model, mask_padding, clone)
+  local brnn = #model.modules == 2
+
+  if clone then
+    model = clonePretrained(model)
+  end
+
+  if brnn then
+    return onmt.BiEncoder.new(model, mask_padding)
+  else
+    return onmt.Encoder.new(model, mask_padding)
+  end
+end
+
+local function loadDecoder(model, mask_padding, clone)
+  if clone then
+    model = clonePretrained(model)
+  end
+
+  return onmt.Decoder.new(model, mask_padding)
 end
 
 return {
   buildEncoder = buildEncoder,
-  buildDecoder = buildDecoder
+  buildDecoder = buildDecoder,
+  loadEncoder = loadEncoder,
+  loadDecoder = loadDecoder
 }

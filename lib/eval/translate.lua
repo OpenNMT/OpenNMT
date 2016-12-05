@@ -2,6 +2,7 @@ require('../onmt')
 require('../utils')
 
 local Data = require('lib.data')
+local Models = require('lib.models')
 local constants = require('lib.constants')
 
 local checkpoint = nil
@@ -18,26 +19,8 @@ local function init(args)
   print('Loading ' .. opt.model .. '...')
   checkpoint = torch.load(opt.model)
 
-  local encoder_args = {
-    num_layers = checkpoint.options.num_layers,
-    rnn_size = checkpoint.options.rnn_size,
-    mask_padding = true
-  }
-
-  local decoder_args = {
-    rnn_size = checkpoint.options.rnn_size,
-    num_layers = checkpoint.options.num_layers,
-    input_feed = checkpoint.options.input_feed == 1,
-    mask_padding = true
-  }
-
-  if checkpoint.options.brnn then
-    models.encoder = onmt.BiEncoder.new(encoder_args, checkpoint.options.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
-  else
-    models.encoder = onmt.Encoder.new(encoder_args, checkpoint.nets.encoder)
-  end
-
-  models.decoder = onmt.Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
+  models.encoder = Models.loadEncoder(checkpoint.models.encoder, true)
+  models.decoder = Models.loadDecoder(checkpoint.models.decoder, true)
 
   models.encoder:evaluate()
   models.decoder:evaluate()
@@ -196,11 +179,15 @@ local function translate_batch(batch)
       input_features[j] = input_features[j]:view(opt.beam * remaining_sents)
     end
 
+    local inputs = {}
+    table.insert(inputs, input)
+    utils.Table.append(inputs, input_features)
+
     if batch.size > 1 then
       models.decoder:reset(source_sizes, batch.source_length, opt.beam)
     end
 
-    dec_out, dec_states = models.decoder:forward_one(input, input_features, dec_states, context, dec_out)
+    dec_out, dec_states = models.decoder:forward_one(inputs, dec_states, context, dec_out)
 
     local out = models.decoder.generator:forward(dec_out)
 

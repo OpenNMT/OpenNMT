@@ -192,7 +192,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     optim_states = opt.optim_states
   })
 
-  local checkpoint = train.Checkpoint.new(opt, get_nets(model), optim, dataset)
+  local checkpoint = train.Checkpoint.new(opt, model, optim, dataset)
 
   utils.Parallel.launch(nil, function(idx)
     -- Only logs information of the first thread.
@@ -389,22 +389,15 @@ local function main()
 
   utils.Parallel.launch(nil, function(idx)
 
-    local pretrained = {}
-
-    if checkpoint.nets then
-      for name, mod in pairs(checkpoint.nets) do
-        if idx == 1 then
-          pretrained[name] = mod
-        else
-          -- In parallel mode, each thread must own its own model.
-          pretrained[name] = utils.Tensor.deepClone(mod)
-        end
-      end
-    end
-
     _G.model = {}
-    _G.model.encoder = Models.buildEncoder(opt, dataset.dicts.src, pretrained)
-    _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.targ, pretrained)
+
+    if checkpoint.models then
+      _G.model.encoder = Models.loadEncoder(checkpoint.models.encoder, false, idx > 1)
+      _G.model.decoder = Models.loadDecoder(checkpoint.models.decoder, false, idx > 1)
+    else
+      _G.model.encoder = Models.buildEncoder(opt, dataset.dicts.src)
+      _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.targ)
+    end
 
     for _, mod in pairs(_G.model) do
       utils.Cuda.convert(mod)

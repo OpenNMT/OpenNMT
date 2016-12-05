@@ -23,36 +23,40 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 Parameters:
 
+  * `pretrained` - pre-trained network graph and data.
+  * `mask_padding` - enable padding masking.
   * `input_network` - input module.
   * `rnn` - recurrent module.
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
   * `input_feed` - enable input feeding.
-  * `network` - optional, recurrent step template.
-  * `mask_padding` - enable padding masking.
 --]]
-function Decoder:__init(input_network,
-                        rnn,
-                        generator,
-                        input_feed,
-                        network,
-                        mask_padding)
-  self.rnn = rnn
-  self.inputNet = input_network
-  self._rnn_size = self.rnn.output_size
-  self._num_effective_layers = self.rnn.num_effective_layers
-  self._input_feed = input_feed
+function Decoder:__init(pretrained, mask_padding, input_network, rnn, generator, input_feed)
+  if pretrained then
+    self._rnn_size = pretrained._rnn_size
+    self._num_effective_layers = pretrained._num_effective_layers
+    self._input_feed = pretrained._input_feed
 
-  parent.__init(self, network or self:_buildModel())
+    parent.__init(self, pretrained.modules[1])
+    self.generator = pretrained.modules[2]
+  else
+    self.rnn = rnn
+    self.inputNet = input_network
+    self._rnn_size = self.rnn.output_size
+    self._num_effective_layers = self.rnn.num_effective_layers
+    self._input_feed = input_feed
+
+    parent.__init(self, self:_buildModel())
+    self.generator = generator
+  end
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
-  self.generator = generator
   self:add(self.generator)
 
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
-  if input_feed then
+  if self._input_feed then
     self.inputFeedProto = torch.Tensor()
   end
 
@@ -69,6 +73,16 @@ function Decoder:__init(input_network,
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+end
+
+--[[ Return data to serialize. ]]
+function Decoder:serialize()
+  return {
+    modules = self.modules,
+    _rnn_size = self._rnn_size,
+    _num_effective_layers = self._num_effective_layers,
+    _input_feed = self._input_feed
+  }
 end
 
 --[[ Build a default one time-step of the decoder

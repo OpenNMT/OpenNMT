@@ -4,9 +4,9 @@ require 'torch'
 
 local Checkpoint = torch.class("Checkpoint")
 
-function Checkpoint:__init(options, nets, optim, dataset)
+function Checkpoint:__init(options, model, optim, dataset)
   self.options = options
-  self.nets = nets
+  self.model = model
   self.optim = optim
   self.dataset = dataset
 
@@ -18,11 +18,15 @@ function Checkpoint:save(file_path, info)
   info.optim_states = self.optim:get_states()
 
   local data = {
-    nets = self.nets,
+    models = {},
     options = self.options,
     info = info,
     dicts = self.dataset.dicts
   }
+
+  for k, v in pairs(self.model) do
+    data.models[k] = v:serialize()
+  end
 
   torch.save(file_path, data)
 end

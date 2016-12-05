@@ -37,8 +37,35 @@ local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
 ]]
-function BiEncoder:__init(input, rnn, merge, net_fwd, net_bwd, mask_padding)
+function BiEncoder:__init(pretrained, mask_padding, input, rnn, merge)
   parent.__init(self)
+
+  if pretrained then
+    self.fwd = onmt.Encoder.new(pretrained.modules[1], mask_padding)
+    self.bwd = onmt.Encoder.new(pretrained.modules[2], mask_padding)
+
+    self.merge = pretrained.merge
+    self.rnn_size = pretrained.rnn_size
+    self.hidden_size = pretrained.hidden_size
+    self.num_effective_layers = pretrained.num_effective_layers
+  else
+    self.fwd = onmt.Encoder.new(nil, mask_padding, input, rnn)
+    self.bwd = onmt.Encoder.new(nil, mask_padding, input:clone(), rnn:clone())
+
+    self.merge = merge
+
+    self.rnn_size = rnn.output_size
+    self.num_effective_layers = rnn.num_effective_layers
+
+    if self.merge == 'concat' then
+      self.hidden_size = self.rnn_size * 2
+    else
+      self.hidden_size = self.rnn_size
+    end
+  end
+
+  self:add(self.fwd)
+  self:add(self.bwd)
 
   -- Prototype for preallocated full context vector.
   self.contextProto = torch.Tensor()
@@ -48,23 +75,17 @@ function BiEncoder:__init(input, rnn, merge, net_fwd, net_bwd, mask_padding)
 
   -- Prototype for preallocated gradient of the backward context
   self.gradContextBwdProto = torch.Tensor()
+end
 
-  self.fwd = onmt.Encoder.new(input, rnn, net_fwd, mask_padding)
-  self.bwd = onmt.Encoder.new(input:clone(), rnn:clone(), net_bwd, mask_padding)
-
-  self:add(self.fwd)
-  self:add(self.bwd)
-
-  self.merge = merge
-
-  self.rnn_size = rnn.output_size
-  self.num_effective_layers = rnn.num_effective_layers
-
-  if self.merge == 'concat' then
-    self.hidden_size = self.rnn_size * 2
-  else
-    self.hidden_size = self.rnn_size
-  end
+--[[ Return data to serialize. ]]
+function BiEncoder:serialize()
+  return {
+    modules = self.modules,
+    merge = self.merge,
+    rnn_size = self.rnn_size,
+    hidden_size = self.hidden_size,
+    num_effective_layers = self.num_effective_layers
+  }
 end
 
 function BiEncoder:forward(batch)

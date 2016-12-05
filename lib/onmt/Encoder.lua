@@ -20,23 +20,39 @@ local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 Parameters:
 
+  * `pretrained` - pre-trained network graph and data.
+  * `mask_padding` - enable padding masking.
   * `input_network` - input module.
   * `rnn` - recurrent module.
-  * `network` - pre-trained network.
-  * `mask_padding` - enable padding masking.
 ]]
-function Encoder:__init(input_network, rnn, network, mask_padding)
-  -- Arguments
-  self.rnn = rnn
-  self.inputNet = input_network
-  self._rnn_size = self.rnn.output_size
-  self._num_effective_layers = self.rnn.num_effective_layers
+function Encoder:__init(pretrained, mask_padding, input_network, rnn)
   self._mask_padding = mask_padding
 
-  parent.__init(self, network or self:_buildModel())
+  if pretrained then
+    self._rnn_size = pretrained._rnn_size
+    self._num_effective_layers = pretrained._num_effective_layers
+
+    parent.__init(self, pretrained.modules[1])
+  else
+    self.rnn = rnn
+    self.inputNet = input_network
+    self._rnn_size = self.rnn.output_size
+    self._num_effective_layers = self.rnn.num_effective_layers
+
+    parent.__init(self, self:_buildModel())
+  end
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
+end
+
+--[[ Return data to serialize. ]]
+function Encoder:serialize()
+  return {
+    modules = self.modules,
+    _rnn_size = self._rnn_size,
+    _num_effective_layers = self._num_effective_layers
+  }
 end
 
 --[[ Build one time-step of an encoder
