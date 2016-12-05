@@ -1,12 +1,12 @@
-local FeatureGenerator, parent = torch.class('onmt.FeatureGenerator', 'nn.Container')
+local FeaturesGenerator, parent = torch.class('onmt.FeaturesGenerator', 'nn.Container')
 
-function FeatureGenerator:__init(rnn_size, output_size, features)
+function FeaturesGenerator:__init(rnn_size, output_size, features)
   parent.__init(self)
   self.net = self:_buildGenerator(rnn_size, output_size, features)
   self:add(self.net)
 end
 
-function FeatureGenerator:_buildGenerator(rnn_size, output_size, features)
+function FeaturesGenerator:_buildGenerator(rnn_size, output_size, features)
   local generator = nn.ConcatTable()
 
   -- Add default generator.
@@ -24,16 +24,16 @@ function FeatureGenerator:_buildGenerator(rnn_size, output_size, features)
   return generator
 end
 
-function FeatureGenerator:updateOutput(input)
+function FeaturesGenerator:updateOutput(input)
   self.output = self.net:updateOutput(input)
   return self.output
 end
 
-function FeatureGenerator:updateGradInput(input, gradOutput)
+function FeaturesGenerator:updateGradInput(input, gradOutput)
   self.gradInput = self.net:updateGradInput(input, gradOutput)
   return self.gradInput
 end
 
-function FeatureGenerator:accGradParameters(input, gradOutput, scale)
+function FeaturesGenerator:accGradParameters(input, gradOutput, scale)
   self.net:accGradParameters(input, gradOutput, scale)
 end

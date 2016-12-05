@@ -19,6 +19,6 @@ require('lib.onmt.FeaturesEmbedding')
 require('lib.onmt.GlobalAttention')
 
 require('lib.onmt.Generator')
-require('lib.onmt.FeatureGenerator')
+require('lib.onmt.FeaturesGenerator')
 
 return onmt

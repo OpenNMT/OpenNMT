@@ -65,7 +65,7 @@ local function buildDecoder(opt, dicts)
 
     input_size = input_size + targ_feat_embedding.outputSize
 
-    generator = onmt.FeatureGenerator.new(opt.rnn_size, #dicts.words, dicts.features)
+    generator = onmt.FeaturesGenerator.new(opt.rnn_size, #dicts.words, dicts.features)
   else
     generator = onmt.Generator.new(opt.rnn_size, #dicts.words)
   end
