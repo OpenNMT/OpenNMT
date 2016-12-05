@@ -14,7 +14,6 @@ local Data = require('lib.data')
 
 Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
 --]]
--- local Data = require "../data"
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 --[[ Construct an encoder layer.
