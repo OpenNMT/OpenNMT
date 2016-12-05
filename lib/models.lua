@@ -30,7 +30,7 @@ local function buildEncoder(opt, dicts, pretrained)
     elseif opt.brnn_merge == 'sum' then
       rnn_size = rnn_size
     else
-      error('invalid merge action ' .. merge)
+      error('invalid merge action ' .. opt.brnn_merge)
     end
 
     local rnn = onmt.LSTM.new(opt.num_layers, input_size, rnn_size, opt.dropout)
