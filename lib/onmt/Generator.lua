@@ -1,5 +1,5 @@
 local Generator, parent = torch.class('onmt.Generator', 'nn.Container')
-require 'nngraph'
+
 function Generator:__init(rnn_size, output_size)
   parent.__init(self)
   self.net = self:_buildGenerator(rnn_size, output_size)
@@ -7,7 +7,9 @@ function Generator:__init(rnn_size, output_size)
 end
 
 function Generator:_buildGenerator(rnn_size, output_size)
-  return nn.Sequential():add(nn.Linear(rnn_size, output_size)):add(nn:LogSoftMax())
+  return nn.Sequential()
+    :add(nn.Linear(rnn_size, output_size))
+    :add(nn:LogSoftMax())
 end
 
 function Generator:updateOutput(input)
@@ -23,4 +25,3 @@ end
 function Generator:accGradParameters(input, gradOutput, scale)
   self.net:accGradParameters(input, gradOutput[1], scale)
 end
-return Generator
