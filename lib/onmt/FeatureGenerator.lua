@@ -6,25 +6,20 @@ function FeatureGenerator:__init(rnn_size, output_size, features)
   self:add(self.net)
 end
 
---[[ Build the default generator. --]]
 function FeatureGenerator:_buildGenerator(rnn_size, output_size, features)
-  local split = nn.ConcatTable()
-  split:add(nn.Linear(rnn_size, output_size))
+  local generator = nn.ConcatTable()
 
+  -- Add default generator.
+  generator:add(nn.Sequential()
+                  :add(onmt.Generator(rnn_size, output_size))
+                  :add(nn.SelectTable(1)))
+
+  -- Add a generator for each target feature.
   for i = 1, #features do
-    split:add(nn.Linear(rnn_size, #features[i]))
+    generator:add(nn.Sequential()
+                    :add(nn.Linear(rnn_size, #features[i]))
+                    :add(nn.LogSoftMax()))
   end
-
-  local softmax = nn.ParallelTable()
-  softmax:add(nn.LogSoftMax())
-
-  for _ = 1, #features do
-    softmax:add(nn.LogSoftMax())
-  end
-
-  local generator = nn.Sequential()
-    :add(split)
-    :add(softmax)
 
   return generator
 end
