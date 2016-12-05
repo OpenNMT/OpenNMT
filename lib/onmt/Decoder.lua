@@ -298,7 +298,7 @@ function Decoder:backward(batch, outputs, criterion)
     local pred = self.generator:forward(outputs[t])
     local output = Data.get_target_output(batch, t)
 
-    loss = loss + criterion:forward(pred, output) / batch.total_size
+    loss = loss + criterion:forward(pred, output)
 
     -- Compute the criterion gradient.
     local gen_grad_out = criterion:backward(pred, output)

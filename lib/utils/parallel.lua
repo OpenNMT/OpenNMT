@@ -45,13 +45,14 @@ function Parallel.init(args)
     end
     if Parallel.count > 1 and not(args.no_nccl) then
       -- check if we have nccl installed
-      Parallel.usenccl = pcall(require, 'nccl')
-      if not Parallel.usenccl  then
+      local ret
+      ret, Parallel.usenccl = pcall(require, 'nccl')
+      if not ret  then
         print("WARNING: for improved efficiency in nparallel mode - do install nccl")
       elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
         print("WARNING: CUDA_LAUNCH_BLOCKING set - cannot use nccl")
-        Parallel.usenccl = nil
       end
+      Parallel.usenccl = nil
     end
   end
 end
@@ -113,7 +114,7 @@ function Parallel.accGradParams(grad_params, batches)
 end
 
 --[[ Sync parameters from main model to different parallel threads. ]]
-function Parallel.syncParams(params, grad_params)
+function Parallel.syncParams(params)
   if Parallel.count > 1 then
     if not Parallel.usenccl then
       for j = 2, Parallel.count do
@@ -124,9 +125,9 @@ function Parallel.syncParams(params, grad_params)
       end
     else
       for h = 1, #params[1] do
-        local inputs = { grad_params[1][h] }
+        local inputs = { params[1][h] }
         for j = 2, Parallel.count do
-          table.insert(inputs, grad_params[j][h])
+          table.insert(inputs, params[j][h])
         end
         Parallel.usenccl.bcast(inputs, true, 1)
       end

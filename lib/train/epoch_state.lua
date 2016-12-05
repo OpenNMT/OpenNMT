@@ -23,7 +23,7 @@ function EpochState:__init(epoch, num_iterations, learning_rate, status)
   self.num_words_source = 0
   self.num_words_target = 0
 
-  self.minFreeMemory = 100000000
+  self.minFreeMemory = 100000000000
 
   print('')
 end
@@ -33,7 +33,7 @@ function EpochState:update(batches, losses)
   for i = 1,#batches do
     self.num_words_source = self.num_words_source + batches[i].size * batches[i].source_length
     self.num_words_target = self.num_words_target + batches[i].size * batches[i].target_length
-    self.status.train_loss = self.status.train_loss + losses[i] * batches[i].size
+    self.status.train_loss = self.status.train_loss + losses[i]
     self.status.train_nonzeros = self.status.train_nonzeros + batches[i].target_non_zeros
   end
 end
