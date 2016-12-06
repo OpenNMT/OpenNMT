@@ -33,13 +33,11 @@ function Sequencer:__init(args, network)
 end
 
 function Sequencer:_sharedClone()
-  local net = self.network_clones[1] or self.network
-
-  local clone = utils.Tensor.deepClone(net)
+  local clone = utils.Tensor.deepClone(self.network)
 
   -- Share parameters.
   if self.network.parameters then
-    local params, gradParams = net:parameters()
+    local params, gradParams = self.network:parameters()
     if params == nil then
       params = {}
     end
@@ -52,25 +50,27 @@ function Sequencer:_sharedClone()
   end
 
   -- Share intermediate tensors if defined.
-  local sharedTensors = {}
+  if self.network_clones[1] then
+    local sharedTensors = {}
 
-  net:apply(function(m)
-    if m.gradInputSharedIdx then
-      sharedTensors[m.gradInputSharedIdx] = m.gradInput
-    end
-    if m.outputSharedIdx then
-      sharedTensors[m.outputSharedIdx] = m.output
-    end
-  end)
+    self.network_clones[1]:apply(function(m)
+      if m.gradInputSharedIdx then
+        sharedTensors[m.gradInputSharedIdx] = m.gradInput
+      end
+      if m.outputSharedIdx then
+        sharedTensors[m.outputSharedIdx] = m.output
+      end
+    end)
 
-  clone:apply(function(m)
-    if m.gradInputSharedIdx then
-      utils.Tensor.recursiveSet(m.gradInput, sharedTensors[m.gradInputSharedIdx])
-    end
-    if m.outputSharedIdx then
-      utils.Tensor.recursiveSet(m.output, sharedTensors[m.outputSharedIdx])
-    end
-  end)
+    clone:apply(function(m)
+      if m.gradInputSharedIdx then
+        m.gradInput = sharedTensors[m.gradInputSharedIdx]
+      end
+      if m.outputSharedIdx then
+        m.output = sharedTensors[m.outputSharedIdx]
+      end
+    end)
+  end
 
   collectgarbage()
 
