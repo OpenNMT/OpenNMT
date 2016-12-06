@@ -11,6 +11,16 @@ local function recursiveClone(out)
   end
 end
 
+local function recursiveSet(dst, src)
+  if torch.isTensor(dst) then
+    dst:set(src)
+  else
+    for k, _ in ipairs(dst) do
+      recursiveSet(dst[k], src[k])
+    end
+  end
+end
+
 --[[ Clone any serializable Torch object. ]]
 local function deepClone(obj)
   local mem = torch.MemoryFile("w"):binary()
@@ -143,6 +153,7 @@ end
 
 return {
   recursiveClone = recursiveClone,
+  recursiveSet = recursiveSet,
   deepClone = deepClone,
   reuseTensor = reuseTensor,
   reuseTensorTable = reuseTensorTable,

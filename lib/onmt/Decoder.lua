@@ -31,18 +31,18 @@ Parameters:
 --]]
 function Decoder:__init(pretrained, input_network, rnn, generator, input_feed)
   if pretrained then
-    self._rnn_size = pretrained._rnn_size
-    self._num_effective_layers = pretrained._num_effective_layers
-    self._input_feed = pretrained._input_feed
+    self.args = pretrained.args
 
     parent.__init(self, pretrained.modules[1])
     self.generator = pretrained.modules[2]
   else
     self.rnn = rnn
     self.inputNet = input_network
-    self._rnn_size = self.rnn.output_size
-    self._num_effective_layers = self.rnn.num_effective_layers
-    self._input_feed = input_feed
+
+    self.args = {}
+    self.args.rnn_size = self.rnn.output_size
+    self.args.num_effective_layers = self.rnn.num_effective_layers
+    self.args.input_feed = input_feed
 
     parent.__init(self, self:_buildModel())
     self.generator = generator
@@ -55,7 +55,7 @@ function Decoder:__init(pretrained, input_network, rnn, generator, input_feed)
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
-  if self._input_feed then
+  if self.args.input_feed then
     self.inputFeedProto = torch.Tensor()
   end
 
@@ -67,9 +67,7 @@ end
 function Decoder:serialize()
   return {
     modules = self.modules,
-    _rnn_size = self._rnn_size,
-    _num_effective_layers = self._num_effective_layers,
-    _input_feed = self._input_feed
+    args = self.args
   }
 end
 
@@ -91,7 +89,7 @@ function Decoder:_buildModel()
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, self._num_effective_layers do
+  for _ = 1, self.args.num_effective_layers do
     local h0 = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -104,7 +102,7 @@ function Decoder:_buildModel()
   table.insert(inputs, context)
 
   local input_feed
-  if self._input_feed then
+  if self.args.input_feed then
     input_feed = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, input_feed)
   end
@@ -113,7 +111,7 @@ function Decoder:_buildModel()
   local input = self.inputNet(x)
 
   -- If set, concatenate previous decoder output.
-  if self._input_feed then
+  if self.args.input_feed then
     input = nn.JoinTable(2)({input, input_feed})
   end
   table.insert(states, input)
@@ -122,10 +120,10 @@ function Decoder:_buildModel()
   local outputs = self.rnn(states)
 
   -- The output of a subgraph is a node: split it to access the last RNN output.
-  outputs = { outputs:split(self._num_effective_layers) }
+  outputs = { outputs:split(self.args.num_effective_layers) }
 
   -- Compute the attention here using h^L as query.
-  local attn_layer = onmt.GlobalAttention(self._rnn_size)
+  local attn_layer = onmt.GlobalAttention(self.args.rnn_size)
   attn_layer.name = 'decoder_attn'
   local attn_output = attn_layer({outputs[#outputs], context})
   if self.rnn.dropout > 0 then
@@ -200,10 +198,10 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
     input_size = input:size(1)
   end
 
-  if self._input_feed then
+  if self.args.input_feed then
     if prev_out == nil then
       table.insert(inputs, utils.Tensor.reuseTensor(self.inputFeedProto,
-                                                    { input_size, self._rnn_size }))
+                                                    { input_size, self.args.rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
@@ -238,9 +236,9 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self._num_effective_layers,
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
                                                     self.stateProto,
-                                                    { batch.size, self._rnn_size })
+                                                    { batch.size, self.args.rnn_size })
   end
 
   local states = utils.Tensor.copyTensorTable(self.statesProto, encoder_states)
@@ -291,15 +289,15 @@ Parameters:
 -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self._num_effective_layers + 1,
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_effective_layers + 1,
                                                          self.gradOutputProto,
-                                                         { batch.size, self._rnn_size })
+                                                         { batch.size, self.args.rnn_size })
   end
 
   local grad_states_input = utils.Tensor.reuseTensorTable(self.gradOutputsProto,
-                                                          { batch.size, self._rnn_size })
+                                                          { batch.size, self.args.rnn_size })
   local grad_context_input = utils.Tensor.reuseTensor(self.gradContextProto,
-                                                      { batch.size, batch.source_length, self._rnn_size })
+                                                      { batch.size, batch.source_length, self.args.rnn_size })
 
   local grad_context_idx = #self.statesProto + 2
   local grad_input_feed_idx = #self.statesProto + 3
@@ -332,7 +330,7 @@ function Decoder:backward(batch, outputs, criterion)
     grad_states_input[#grad_states_input]:zero()
 
     -- Accumulate previous output gradients with input feeding gradients.
-    if self._input_feed and t > 1 then
+    if self.args.input_feed and t > 1 then
       grad_states_input[#grad_states_input]:add(grad_input[grad_input_feed_idx])
     end
 

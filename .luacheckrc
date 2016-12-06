@@ -4,7 +4,7 @@ globals = {
   "nn",
   "cudnn",
   "onmt",
-  "eval",
+  "translate",
   "train",
   "utils"
 }

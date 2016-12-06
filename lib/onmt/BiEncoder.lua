@@ -43,24 +43,21 @@ function BiEncoder:__init(pretrained, input, rnn, merge)
   if pretrained then
     self.fwd = onmt.Encoder.new(pretrained.modules[1])
     self.bwd = onmt.Encoder.new(pretrained.modules[2])
-
-    self.merge = pretrained.merge
-    self.rnn_size = pretrained.rnn_size
-    self.hidden_size = pretrained.hidden_size
-    self.num_effective_layers = pretrained.num_effective_layers
+    self.args = pretrained.args
   else
     self.fwd = onmt.Encoder.new(nil, input, rnn)
     self.bwd = onmt.Encoder.new(nil, input:clone(), rnn:clone())
 
-    self.merge = merge
+    self.args = {}
+    self.args.merge = merge
 
-    self.rnn_size = rnn.output_size
-    self.num_effective_layers = rnn.num_effective_layers
+    self.args.rnn_size = rnn.output_size
+    self.args.num_effective_layers = rnn.num_effective_layers
 
-    if self.merge == 'concat' then
-      self.hidden_size = self.rnn_size * 2
+    if self.args.merge == 'concat' then
+      self.args.hidden_size = self.args.rnn_size * 2
     else
-      self.hidden_size = self.rnn_size
+      self.args.hidden_size = self.args.rnn_size
     end
   end
 
@@ -81,10 +78,7 @@ end
 function BiEncoder:serialize()
   return {
     modules = self.modules,
-    merge = self.merge,
-    rnn_size = self.rnn_size,
-    hidden_size = self.hidden_size,
-    num_effective_layers = self.num_effective_layers
+    args = self.args
   }
 end
 
@@ -95,36 +89,36 @@ end
 
 function BiEncoder:forward(batch)
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.num_effective_layers,
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
                                                     self.stateProto,
-                                                    { batch.size, self.hidden_size })
+                                                    { batch.size, self.args.hidden_size })
 
     if self.train then
       self.bwd:shareInput(self.fwd)
     end
   end
 
-  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.hidden_size })
+  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.hidden_size })
   local context = utils.Tensor.reuseTensor(self.contextProto,
-                                           { batch.size, batch.source_length, self.hidden_size })
+                                           { batch.size, batch.source_length, self.args.hidden_size })
 
   local fwd_states, fwd_context = self.fwd:forward(batch)
   reverse_input(batch)
   local bwd_states, bwd_context = self.bwd:forward(batch)
   reverse_input(batch)
 
-  if self.merge == 'concat' then
+  if self.args.merge == 'concat' then
     for i = 1, #fwd_states do
-      states[i]:narrow(2, 1, self.rnn_size):copy(fwd_states[i])
-      states[i]:narrow(2, self.rnn_size + 1, self.rnn_size):copy(bwd_states[i])
+      states[i]:narrow(2, 1, self.args.rnn_size):copy(fwd_states[i])
+      states[i]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwd_states[i])
     end
     for t = 1, batch.source_length do
-      context[{{}, t}]:narrow(2, 1, self.rnn_size)
+      context[{{}, t}]:narrow(2, 1, self.args.rnn_size)
         :copy(fwd_context[{{}, t}])
-      context[{{}, t}]:narrow(2, self.rnn_size + 1, self.rnn_size)
+      context[{{}, t}]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size)
         :copy(bwd_context[{{}, batch.source_length - t + 1}])
     end
-  elseif self.merge == 'sum' then
+  elseif self.args.merge == 'sum' then
     for i = 1, #states do
       states[i]:copy(fwd_states[i])
       states[i]:add(bwd_states[i])
@@ -145,7 +139,7 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   local grad_states_output_fwd = {}
   local grad_states_output_bwd = {}
 
-  if self.merge == 'concat' then
+  if self.args.merge == 'concat' then
     local grad_context_output_split = grad_context_output:chunk(2, 3)
     grad_context_output_fwd = grad_context_output_split[1]
     grad_context_output_bwd = grad_context_output_split[2]
@@ -155,7 +149,7 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
       table.insert(grad_states_output_fwd, states_split[1])
       table.insert(grad_states_output_bwd, states_split[2])
     end
-  elseif self.merge == 'sum' then
+  elseif self.args.merge == 'sum' then
     grad_context_output_fwd = grad_context_output
     grad_context_output_bwd = grad_context_output
 
@@ -167,7 +161,7 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
 
   -- reverse gradients of the backward context
   local grad_context_bwd = utils.Tensor.reuseTensor(self.gradContextBwdProto,
-                                                    { batch.size, batch.source_length, self.rnn_size })
+                                                    { batch.size, batch.source_length, self.args.rnn_size })
 
   for t = 1, batch.source_length do
     grad_context_bwd[{{}, t}]:copy(grad_context_output_bwd[{{}, batch.source_length - t + 1}])

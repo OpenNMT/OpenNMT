@@ -26,15 +26,16 @@ Parameters:
 ]]
 function Encoder:__init(pretrained, input_network, rnn)
   if pretrained then
-    self._rnn_size = pretrained._rnn_size
-    self._num_effective_layers = pretrained._num_effective_layers
+    self.args = pretrained.args
 
     parent.__init(self, pretrained.modules[1])
   else
     self.rnn = rnn
     self.inputNet = input_network
-    self._rnn_size = self.rnn.output_size
-    self._num_effective_layers = self.rnn.num_effective_layers
+
+    self.args = {}
+    self.args.rnn_size = self.rnn.output_size
+    self.args.num_effective_layers = self.rnn.num_effective_layers
 
     parent.__init(self, self:_buildModel())
   end
@@ -47,13 +48,12 @@ end
 function Encoder:serialize()
   return {
     modules = self.modules,
-    _rnn_size = self._rnn_size,
-    _num_effective_layers = self._num_effective_layers
+    args = self.args
   }
 end
 
 function Encoder:maskPadding()
-  self._mask_padding = true
+  self.mask_padding = true
 end
 
 --[[ Build one time-step of an encoder
@@ -71,7 +71,7 @@ function Encoder:_buildModel()
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, self._num_effective_layers do
+  for _ = 1, self.args.num_effective_layers do
     local h0 = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -110,10 +110,10 @@ function Encoder:forward(batch)
   -- TODO: Change `batch` to `input`.
 
   local final_states
-  local output_size = self._rnn_size
+  local output_size = self.args.rnn_size
 
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self._num_effective_layers,
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
                                                     self.stateProto,
                                                     { batch.size, output_size })
   end
@@ -125,7 +125,7 @@ function Encoder:forward(batch)
   local context = utils.Tensor.reuseTensor(self.contextProto,
                                            { batch.size, batch.source_length, output_size })
 
-  if self._mask_padding and not batch.source_input_pad_left then
+  if self.mask_padding and not batch.source_input_pad_left then
     final_states = utils.Tensor.recursiveClone(states)
   end
   if self.train then
@@ -148,7 +148,7 @@ function Encoder:forward(batch)
     states = self:net(t):forward(inputs)
 
     -- Special case padding.
-    if self._mask_padding then
+    if self.mask_padding then
       for b = 1, batch.size do
         if batch.source_input_pad_left and t <= batch.source_length - batch.source_size[b] then
           for j = 1, #states do
@@ -185,9 +185,9 @@ Returns: nil
 --]]
 function Encoder:backward(batch, grad_states_output, grad_context_output)
   -- TODO: change this to (input, gradOutput) as in nngraph.
-  local output_size = self._rnn_size
+  local output_size = self.args.rnn_size
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self._num_effective_layers,
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
                                                          self.gradOutputProto,
                                                          { batch.size, output_size })
   end
