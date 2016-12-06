@@ -120,7 +120,6 @@ function Memory.optimize(model, criterion, batch, verbose)
 
   local totSize = 0
   local sharedSize = 0
-  local idx = 1
   for _, desc in pairs(model_desc) do
     for i = 1, #desc do
       local net = desc[i]['net']
@@ -133,6 +132,8 @@ function Memory.optimize(model, criterion, batch, verbose)
           table.insert(protectedOutput, m.output)
         end
       end)
+
+      local idx = 1
 
       net:apply(function(m)
         local giSize = getSize(m.gradInput, mempool)
