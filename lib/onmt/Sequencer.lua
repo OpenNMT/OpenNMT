@@ -65,10 +65,10 @@ function Sequencer:_sharedClone()
 
   clone:apply(function(m)
     if m.gradInputSharedIdx then
-      m.gradInput = sharedTensors[m.gradInputSharedIdx]
+      utils.Tensor.recursiveSet(m.gradInput, sharedTensors[m.gradInputSharedIdx])
     end
     if m.outputSharedIdx then
-      m.output = sharedTensors[m.outputSharedIdx]
+      utils.Tensor.recursiveSet(m.output, sharedTensors[m.outputSharedIdx])
     end
   end)
 
