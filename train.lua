@@ -183,17 +183,6 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
   local params, grad_params = {}, {}
   local criterion
 
-  local optim = train.Optim.new({
-    method = opt.optim,
-    num_models = #params,
-    learning_rate = opt.learning_rate,
-    lr_decay = opt.lr_decay,
-    start_decay_at = opt.start_decay_at,
-    optim_states = opt.optim_states
-  })
-
-  local checkpoint = train.Checkpoint.new(opt, model, optim, dataset)
-
   utils.Parallel.launch(nil, function(idx)
     -- Only logs information of the first thread.
     local verbose = idx == 1
@@ -221,6 +210,17 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     params[idx] = theparams
     grad_params[idx] = thegrad_params
   end)
+
+  local optim = train.Optim.new({
+    method = opt.optim,
+    num_models = #params[1],
+    learning_rate = opt.learning_rate,
+    lr_decay = opt.lr_decay,
+    start_decay_at = opt.start_decay_at,
+    optim_states = opt.optim_states
+  })
+
+  local checkpoint = train.Checkpoint.new(opt, model, optim, dataset)
 
   local function train_epoch(epoch)
     local epoch_state
