@@ -179,9 +179,14 @@ local function translate_batch(batch)
       input_features[j] = input_features[j]:view(opt.beam * remaining_sents)
     end
 
-    local inputs = {}
-    table.insert(inputs, input)
-    utils.Table.append(inputs, input_features)
+    local inputs
+    if #input_features == 0 then
+      inputs = input
+    else
+      inputs = {}
+      table.insert(inputs, input)
+      utils.Table.append(inputs, input_features)
+    end
 
     if batch.size > 1 then
       models.decoder:maskPadding(source_sizes, batch.source_length, opt.beam)
