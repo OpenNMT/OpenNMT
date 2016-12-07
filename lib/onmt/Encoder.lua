@@ -35,6 +35,7 @@ function Encoder:__init(input_network, rnn)
   self:resetPreallocation()
 end
 
+--[[ Return a new Encoder using the serialized data `pretrained`. ]]
 function Encoder.load(pretrained)
   local self = torch.factory('onmt.Encoder')()
 
@@ -117,7 +118,7 @@ end
 
 Parameters:
 
-  * `batch` - a [batch struct](lib+data/#opennmtdata) as defined data.lua.
+  * `batch` - as defined in batch.lua.
 
 Returns:
 

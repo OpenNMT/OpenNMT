@@ -61,6 +61,7 @@ function BiEncoder:__init(input, rnn, merge)
   self:resetPreallocation()
 end
 
+--[[ Return a new BiEncoder using the serialized data `pretrained`. ]]
 function BiEncoder.load(pretrained)
   local self = torch.factory('onmt.BiEncoder')()
 

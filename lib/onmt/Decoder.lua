@@ -33,6 +33,10 @@ function Decoder:__init(input_network, rnn, generator, input_feed)
   self.args = {}
   self.args.rnn_size = self.rnn.output_size
   self.args.num_effective_layers = self.rnn.num_effective_layers
+
+  -- Input feeding means the decoder takes an extra
+  -- vector each time representing the attention at the
+  -- previous step.
   self.args.input_feed = input_feed
 
   parent.__init(self, self:_buildModel())
@@ -45,6 +49,7 @@ function Decoder:__init(input_network, rnn, generator, input_feed)
   self:resetPreallocation()
 end
 
+--[[ Return a new Decoder using the serialized data `pretrained`. ]]
 function Decoder.load(pretrained)
   local self = torch.factory('onmt.Decoder')()
 
@@ -68,9 +73,6 @@ function Decoder:serialize()
 end
 
 function Decoder:resetPreallocation()
-  -- Input feeding means the decoder takes an extra
-  -- vector each time representing the attention at the
-  -- previous step.
   if self.args.input_feed then
     self.inputFeedProto = torch.Tensor()
   end
@@ -240,7 +242,7 @@ end
 
   Parameters:
 
-  * `batch` - based on data.lua
+  * `batch` - as defined in batch.lua
   * `encoder_states`
   * `context`
   * `func` - Calls `func(out, t)` each timestep.
@@ -269,7 +271,7 @@ end
 
 Parameters:
 
-  * `batch` - based on data.lua
+  * `batch` - as defined in batch.lua
   * `encoder_states` - the final encoder states
   * `context` - the context to apply attention to.
 
