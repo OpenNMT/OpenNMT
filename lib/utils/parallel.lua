@@ -49,10 +49,11 @@ function Parallel.init(args)
       ret, Parallel.usenccl = pcall(require, 'nccl')
       if not ret  then
         print("WARNING: for improved efficiency in nparallel mode - do install nccl")
+        Parallel.usenccl = nil
       elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
         print("WARNING: CUDA_LAUNCH_BLOCKING set - cannot use nccl")
+        Parallel.usenccl = nil
       end
-      Parallel.usenccl = nil
     end
   end
 end
