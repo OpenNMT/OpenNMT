@@ -21,12 +21,6 @@ function Sequencer:__init(network)
   self:add(self.network)
 
   self.network_clones = {}
-
-  -- Prototype for preallocated hidden and cell states.
-  self.stateProto = torch.Tensor()
-
-  -- Prototype for preallocated output gradients.
-  self.gradOutputProto = torch.Tensor()
 end
 
 function Sequencer:_sharedClone()

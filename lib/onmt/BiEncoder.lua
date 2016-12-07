@@ -37,33 +37,31 @@ local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
 ]]
-function BiEncoder:__init(pretrained, input, rnn, merge)
+function BiEncoder:__init(input, rnn, merge)
   parent.__init(self)
 
-  if pretrained then
-    self.fwd = onmt.Encoder.new(pretrained.modules[1])
-    self.bwd = onmt.Encoder.new(pretrained.modules[2])
-    self.args = pretrained.args
+  self.fwd = onmt.Encoder.new(nil, input, rnn)
+  self.bwd = onmt.Encoder.new(nil, input:clone(), rnn:clone())
+
+  self.args = {}
+  self.args.merge = merge
+
+  self.args.rnn_size = rnn.output_size
+  self.args.num_effective_layers = rnn.num_effective_layers
+
+  if self.args.merge == 'concat' then
+    self.args.hidden_size = self.args.rnn_size * 2
   else
-    self.fwd = onmt.Encoder.new(nil, input, rnn)
-    self.bwd = onmt.Encoder.new(nil, input:clone(), rnn:clone())
-
-    self.args = {}
-    self.args.merge = merge
-
-    self.args.rnn_size = rnn.output_size
-    self.args.num_effective_layers = rnn.num_effective_layers
-
-    if self.args.merge == 'concat' then
-      self.args.hidden_size = self.args.rnn_size * 2
-    else
-      self.args.hidden_size = self.args.rnn_size
-    end
+    self.args.hidden_size = self.args.rnn_size
   end
 
   self:add(self.fwd)
   self:add(self.bwd)
 
+  self:resetPreallocation()
+end
+
+function BiEncoder:resetPreallocation()
   -- Prototype for preallocated full context vector.
   self.contextProto = torch.Tensor()
 
@@ -72,6 +70,23 @@ function BiEncoder:__init(pretrained, input, rnn, merge)
 
   -- Prototype for preallocated gradient of the backward context
   self.gradContextBwdProto = torch.Tensor()
+end
+
+function BiEncoder.load(pretrained)
+  local self = torch.factory('onmt.BiEncoder')()
+
+  parent.__init(self)
+
+  self.fwd = onmt.Encoder.new(pretrained.modules[1])
+  self.bwd = onmt.Encoder.new(pretrained.modules[2])
+  self.args = pretrained.args
+
+  self:add(self.fwd)
+  self:add(self.bwd)
+
+  self:resetPreallocation()
+
+  return self
 end
 
 --[[ Return data to serialize. ]]

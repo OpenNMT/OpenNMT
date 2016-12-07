@@ -20,28 +20,42 @@ local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 Parameters:
 
-  * `pretrained` - pre-trained network graph and data.
   * `input_network` - input module.
   * `rnn` - recurrent module.
 ]]
-function Encoder:__init(pretrained, input_network, rnn)
-  if pretrained then
-    self.args = pretrained.args
+function Encoder:__init(input_network, rnn)
+  self.rnn = rnn
+  self.inputNet = input_network
 
-    parent.__init(self, pretrained.modules[1])
-  else
-    self.rnn = rnn
-    self.inputNet = input_network
+  self.args = {}
+  self.args.rnn_size = self.rnn.output_size
+  self.args.num_effective_layers = self.rnn.num_effective_layers
 
-    self.args = {}
-    self.args.rnn_size = self.rnn.output_size
-    self.args.num_effective_layers = self.rnn.num_effective_layers
+  parent.__init(self, self:_buildModel())
 
-    parent.__init(self, self:_buildModel())
-  end
+  self:resetPreallocation()
+end
+
+function Encoder:resetPreallocation()
+  -- Prototype for preallocated hidden and cell states.
+  self.stateProto = torch.Tensor()
+
+  -- Prototype for preallocated output gradients.
+  self.gradOutputProto = torch.Tensor()
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
+end
+
+function Encoder.load(pretrained)
+  local self = torch.factory('onmt.Encoder')()
+
+  self.args = pretrained.args
+  parent.__init(self, pretrained.modules[1])
+
+  self:resetPreallocation()
+
+  return self
 end
 
 --[[ Return data to serialize. ]]

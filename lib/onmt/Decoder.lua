@@ -23,35 +23,31 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 Parameters:
 
-  * `pretrained` - pre-trained network graph and data.
   * `input_network` - input module.
   * `rnn` - recurrent module.
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
   * `input_feed` - enable input feeding.
 --]]
-function Decoder:__init(pretrained, input_network, rnn, generator, input_feed)
-  if pretrained then
-    self.args = pretrained.args
+function Decoder:__init(input_network, rnn, generator, input_feed)
+  self.rnn = rnn
+  self.inputNet = input_network
 
-    parent.__init(self, pretrained.modules[1])
-    self.generator = pretrained.modules[2]
-  else
-    self.rnn = rnn
-    self.inputNet = input_network
+  self.args = {}
+  self.args.rnn_size = self.rnn.output_size
+  self.args.num_effective_layers = self.rnn.num_effective_layers
+  self.args.input_feed = input_feed
 
-    self.args = {}
-    self.args.rnn_size = self.rnn.output_size
-    self.args.num_effective_layers = self.rnn.num_effective_layers
-    self.args.input_feed = input_feed
-
-    parent.__init(self, self:_buildModel())
-    self.generator = generator
-  end
+  parent.__init(self, self:_buildModel())
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
+  self.generator = generator
   self:add(self.generator)
 
+  self:resetPreallocation()
+end
+
+function Decoder:resetPreallocation()
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
@@ -59,8 +55,28 @@ function Decoder:__init(pretrained, input_network, rnn, generator, input_feed)
     self.inputFeedProto = torch.Tensor()
   end
 
+  -- Prototype for preallocated hidden and cell states.
+  self.stateProto = torch.Tensor()
+
+  -- Prototype for preallocated output gradients.
+  self.gradOutputProto = torch.Tensor()
+
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+end
+
+function Decoder.load(pretrained)
+  local self = torch.factory('onmt.Decoder')()
+
+  self.args = pretrained.args
+
+  parent.__init(self, pretrained.modules[1])
+  self.generator = pretrained.modules[2]
+  self:add(self.generator)
+
+  self:resetPreallocation()
+
+  return self
 end
 
 --[[ Return data to serialize. ]]

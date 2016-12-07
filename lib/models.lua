@@ -35,11 +35,11 @@ local function buildEncoder(opt, dicts)
 
     local rnn = onmt.LSTM.new(opt.num_layers, input_size, rnn_size, opt.dropout)
 
-    return onmt.BiEncoder.new(nil, input_network, rnn, opt.brnn_merge)
+    return onmt.BiEncoder.new(input_network, rnn, opt.brnn_merge)
   else
     local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout)
 
-    return onmt.Encoder.new(nil, input_network, rnn)
+    return onmt.Encoder.new(input_network, rnn)
   end
 end
 
@@ -77,7 +77,7 @@ local function buildDecoder(opt, dicts)
 
   local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout)
 
-  return onmt.Decoder.new(nil, input_network, rnn, generator, opt.input_feed == 1)
+  return onmt.Decoder.new(input_network, rnn, generator, opt.input_feed == 1)
 end
 
 --[[ This is useful when training from a model in parallel mode: each thread must own its model. ]]
@@ -98,26 +98,26 @@ local function clonePretrained(model)
   return clone
 end
 
-local function loadEncoder(model, clone)
-  local brnn = #model.modules == 2
+local function loadEncoder(pretrained, clone)
+  local brnn = #pretrained.modules == 2
 
   if clone then
-    model = clonePretrained(model)
+    pretrained = clonePretrained(pretrained)
   end
 
   if brnn then
-    return onmt.BiEncoder.new(model)
+    return onmt.BiEncoder.load(pretrained)
   else
-    return onmt.Encoder.new(model)
+    return onmt.Encoder.load(pretrained)
   end
 end
 
-local function loadDecoder(model, clone)
+local function loadDecoder(pretrained, clone)
   if clone then
-    model = clonePretrained(model)
+    pretrained = clonePretrained(pretrained)
   end
 
-  return onmt.Decoder.new(model)
+  return onmt.Decoder.load(pretrained)
 end
 
 return {
