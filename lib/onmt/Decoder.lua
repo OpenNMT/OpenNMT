@@ -45,24 +45,6 @@ function Decoder:__init(input_network, rnn, generator, input_feed)
   self:resetPreallocation()
 end
 
-function Decoder:resetPreallocation()
-  -- Input feeding means the decoder takes an extra
-  -- vector each time representing the attention at the
-  -- previous step.
-  if self.args.input_feed then
-    self.inputFeedProto = torch.Tensor()
-  end
-
-  -- Prototype for preallocated hidden and cell states.
-  self.stateProto = torch.Tensor()
-
-  -- Prototype for preallocated output gradients.
-  self.gradOutputProto = torch.Tensor()
-
-  -- Prototype for preallocated context gradient.
-  self.gradContextProto = torch.Tensor()
-end
-
 function Decoder.load(pretrained)
   local self = torch.factory('onmt.Decoder')()
 
@@ -83,6 +65,24 @@ function Decoder:serialize()
     modules = self.modules,
     args = self.args
   }
+end
+
+function Decoder:resetPreallocation()
+  -- Input feeding means the decoder takes an extra
+  -- vector each time representing the attention at the
+  -- previous step.
+  if self.args.input_feed then
+    self.inputFeedProto = torch.Tensor()
+  end
+
+  -- Prototype for preallocated hidden and cell states.
+  self.stateProto = torch.Tensor()
+
+  -- Prototype for preallocated output gradients.
+  self.gradOutputProto = torch.Tensor()
+
+  -- Prototype for preallocated context gradient.
+  self.gradContextProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder

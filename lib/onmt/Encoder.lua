@@ -34,17 +34,6 @@ function Encoder:__init(input_network, rnn)
   self:resetPreallocation()
 end
 
-function Encoder:resetPreallocation()
-  -- Prototype for preallocated hidden and cell states.
-  self.stateProto = torch.Tensor()
-
-  -- Prototype for preallocated output gradients.
-  self.gradOutputProto = torch.Tensor()
-
-  -- Prototype for preallocated context vector.
-  self.contextProto = torch.Tensor()
-end
-
 function Encoder.load(pretrained)
   local self = torch.factory('onmt.Encoder')()
 
@@ -62,6 +51,17 @@ function Encoder:serialize()
     modules = self.modules,
     args = self.args
   }
+end
+
+function Encoder:resetPreallocation()
+  -- Prototype for preallocated hidden and cell states.
+  self.stateProto = torch.Tensor()
+
+  -- Prototype for preallocated output gradients.
+  self.gradOutputProto = torch.Tensor()
+
+  -- Prototype for preallocated context vector.
+  self.contextProto = torch.Tensor()
 end
 
 function Encoder:maskPadding()

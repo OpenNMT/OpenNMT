@@ -61,17 +61,6 @@ function BiEncoder:__init(input, rnn, merge)
   self:resetPreallocation()
 end
 
-function BiEncoder:resetPreallocation()
-  -- Prototype for preallocated full context vector.
-  self.contextProto = torch.Tensor()
-
-  -- Prototype for preallocated full hidden states tensors.
-  self.stateProto = torch.Tensor()
-
-  -- Prototype for preallocated gradient of the backward context
-  self.gradContextBwdProto = torch.Tensor()
-end
-
 function BiEncoder.load(pretrained)
   local self = torch.factory('onmt.BiEncoder')()
 
@@ -95,6 +84,17 @@ function BiEncoder:serialize()
     modules = self.modules,
     args = self.args
   }
+end
+
+function BiEncoder:resetPreallocation()
+  -- Prototype for preallocated full context vector.
+  self.contextProto = torch.Tensor()
+
+  -- Prototype for preallocated full hidden states tensors.
+  self.stateProto = torch.Tensor()
+
+  -- Prototype for preallocated gradient of the backward context
+  self.gradContextBwdProto = torch.Tensor()
 end
 
 function BiEncoder:maskPadding()
