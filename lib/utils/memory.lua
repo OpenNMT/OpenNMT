@@ -79,8 +79,9 @@ function Memory.optimize(model, criterion, batch, verbose)
   local model_desc = {}
 
   -- Convenience function to register a network to optimize.
-  local function registerNet(store, net)
+  local function registerNet(store, net, base)
     store['net'] = net
+    store['base'] = base
     store['forward'] = net.forward
     net.forward = function(network, input)
       store['input'] = input
@@ -99,13 +100,13 @@ function Memory.optimize(model, criterion, batch, verbose)
     if mod.net then
       -- If the module directly contains a network, take the first clone.
       model_desc[name][1] = {}
-      registerNet(model_desc[name][1], mod:net(1))
+      registerNet(model_desc[name][1], mod:net(1), mod.network)
     elseif mod.modules then
       -- Otherwise, look in submodules instead.
       for i = 1, #mod.modules do
         if mod.modules[i].net then
           model_desc[name][i] = {}
-          registerNet(model_desc[name][i], mod.modules[i]:net(1))
+          registerNet(model_desc[name][i], mod.modules[i]:net(1), mod.modules[i].network)
         end
       end
     end
@@ -123,6 +124,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   for _, desc in pairs(model_desc) do
     for i = 1, #desc do
       local net = desc[i]['net']
+      local base = desc[i]['base']
       local mempool = {}
 
       -- Some modules are using output when performing updateGradInput so we cannot share these.
@@ -133,8 +135,13 @@ function Memory.optimize(model, criterion, batch, verbose)
         end
       end)
 
+      local globalIdx = 1
       local idx = 1
 
+      local gradInputMap = {}
+      local outputMap = {}
+
+      -- Go over the network to determine which tensors can be shared.
       net:apply(function(m)
         local giSize = getSize(m.gradInput, mempool)
         local oSize = getSize(m.output, mempool)
@@ -143,13 +150,29 @@ function Memory.optimize(model, criterion, batch, verbose)
         if canShare(m.gradInput, net, desc[i]['gradOutput']) then
           sharedSize = sharedSize + giSize
           m.gradInputSharedIdx = idx
+          gradInputMap[globalIdx] = idx
           idx = idx + 1
         end
         if canShare(m.output, net, protectedOutput) then
           sharedSize = sharedSize + oSize
           m.outputSharedIdx = idx
+          outputMap[globalIdx] = idx
           idx = idx + 1
         end
+        globalIdx = globalIdx + 1
+      end)
+
+      globalIdx = 1
+
+      -- Mark shareable tensors in the base network.
+      base:apply(function (m)
+        if gradInputMap[globalIdx] then
+          m.gradInputSharedIdx = gradInputMap[globalIdx]
+        end
+        if outputMap[globalIdx] then
+          m.outputSharedIdx = outputMap[globalIdx]
+        end
+        globalIdx = globalIdx + 1
       end)
 
       -- Restore function on network backward/forward interception input.
