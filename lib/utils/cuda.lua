@@ -39,16 +39,18 @@ end
   When using CPU only, converts to float instead of the default double.
 ]]
 function Cuda.convert(obj)
-  if not torch.typename(obj) and type(obj) == 'table' then
-    for k, v in pairs(obj) do
-      obj[k] = Cuda.convert(v)
-    end
-  elseif torch.typename(obj) then
+  if torch.typename(obj) then
     if Cuda.activated and obj.cuda ~= nil then
       return obj:cuda()
-    elseif obj.float ~= nil then
+    elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
       return obj:float()
+    end
+  end
+
+  if torch.typename(obj) or type(obj) == 'table' then
+    for k, v in pairs(obj) do
+      obj[k] = Cuda.convert(v)
     end
   end
 

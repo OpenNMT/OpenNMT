@@ -1,5 +1,3 @@
-local Data = require('lib.data')
-
 --[[ Encoder is a unidirectional Sequencer used for the source language.
 
     h_1 => h_2 => h_3 => ... => h_n
@@ -153,7 +151,7 @@ function Encoder:forward(batch)
     -- Construct "inputs". Prev states come first then source.
     local inputs = {}
     utils.Table.append(inputs, states)
-    table.insert(inputs, Data.get_source_input(batch, t))
+    table.insert(inputs, batch:get_source_input(t))
 
     if self.train then
       -- Remember inputs for the backward pass.

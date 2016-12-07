@@ -1,5 +1,3 @@
-local Data = require('lib.data')
-
 --[[ Unit to decode a sequence of output tokens.
 
      .      .      .             .
@@ -262,7 +260,7 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   local prev_out
 
   for t = 1, batch.target_length do
-    prev_out, states = self:forward_one(Data.get_target_input(batch, t), states, context, prev_out, t)
+    prev_out, states = self:forward_one(batch:get_target_input(t), states, context, prev_out, t)
     func(prev_out, t)
   end
 end
@@ -324,7 +322,7 @@ function Decoder:backward(batch, outputs, criterion)
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
     local pred = self.generator:forward(outputs[t])
-    local output = Data.get_target_output(batch, t)
+    local output = batch:get_target_output(t)
 
     loss = loss + criterion:forward(pred, output)
 
@@ -364,7 +362,7 @@ function Decoder:compute_loss(batch, encoder_states, context, criterion)
   local loss = 0
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
     local pred = self.generator:forward(out)
-    local output = Data.get_target_output(batch, t)
+    local output = batch:get_target_output(t)
     loss = loss + criterion:forward(pred, output)
   end)
 
