@@ -40,8 +40,8 @@ local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 function BiEncoder:__init(input, rnn, merge)
   parent.__init(self)
 
-  self.fwd = onmt.Encoder.new(nil, input, rnn)
-  self.bwd = onmt.Encoder.new(nil, input:clone(), rnn:clone())
+  self.fwd = onmt.Encoder.new(input, rnn)
+  self.bwd = onmt.Encoder.new(input:clone(), rnn:clone())
 
   self.args = {}
   self.args.merge = merge
@@ -66,8 +66,8 @@ function BiEncoder.load(pretrained)
 
   parent.__init(self)
 
-  self.fwd = onmt.Encoder.new(pretrained.modules[1])
-  self.bwd = onmt.Encoder.new(pretrained.modules[2])
+  self.fwd = onmt.Encoder.load(pretrained.modules[1])
+  self.bwd = onmt.Encoder.load(pretrained.modules[2])
   self.args = pretrained.args
 
   self:add(self.fwd)
