@@ -24,6 +24,7 @@ Parameters:
 function Encoder:__init(input_network, rnn)
   self.rnn = rnn
   self.inputNet = input_network
+  self.inputNet.name = 'input_network'
 
   self.args = {}
   self.args.rnn_size = self.rnn.output_size
@@ -39,6 +40,12 @@ function Encoder.load(pretrained)
 
   self.args = pretrained.args
   parent.__init(self, pretrained.modules[1])
+
+  self.network:apply(function (m)
+    if m.name == 'input_network' then
+      self.inputNet = m
+    end
+  end)
 
   self:resetPreallocation()
 
