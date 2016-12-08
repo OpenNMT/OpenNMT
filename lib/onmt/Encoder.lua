@@ -214,6 +214,7 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
 
   local grad_states_input = utils.Tensor.copyTensorTable(self.gradOutputsProto, grad_states_output)
   local gradInput = {}
+
   for t = batch.source_length, 1, -1 do
     -- Add context gradients to last hidden states gradients.
     grad_states_input[#grad_states_input]:add(grad_context_output[{{}, t}])
@@ -224,7 +225,16 @@ function Encoder:backward(batch, grad_states_output, grad_context_output)
     for i = 1, #grad_states_input do
       grad_states_input[i]:copy(grad_input[i])
     end
-    gradInput[t] = grad_states_input[#grad_states_input]:clone()
+
+    -- Gather gradients of all user inputs.
+    gradInput[t] = {}
+    for i = #grad_states_input + 1, #grad_input do
+      table.insert(gradInput[t], grad_input[i])
+    end
+
+    if #gradInput[t] == 1 then
+      gradInput[t] = gradInput[t][1]
+    end
   end
   -- TODO: make these names clearer.
   -- Useful if input came from another network.
