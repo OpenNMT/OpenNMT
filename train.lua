@@ -6,6 +6,7 @@ local path = require('pl.path')
 
 local constants = require('lib.constants')
 local Data = require('lib.data')
+local Models = require('lib.models')
 
 local cmd = torch.CmdLine()
 
@@ -219,7 +220,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     optim_states = opt.optim_states
   })
 
-  local checkpoint = train.Checkpoint.new(opt, get_nets(model), optim, dataset)
+  local checkpoint = train.Checkpoint.new(opt, model, optim, dataset)
 
   local function train_epoch(epoch)
     local epoch_state
@@ -387,56 +388,21 @@ local function main()
   local model
 
   utils.Parallel.launch(nil, function(idx)
-    local encoder_args = {
-      word_vec_size = opt.word_vec_size,
-      pre_word_vecs = opt.pre_word_vecs_enc,
-      fix_word_vecs = opt.fix_word_vecs_enc,
-      vocab_size = #dataset.dicts.src.words,
-      features = dataset.dicts.src.features,
-      feat_vec_exponent = opt.feat_vec_exponent,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout,
-      num_layers = opt.num_layers
-    }
-
-    local decoder_args = {
-      word_vec_size = opt.word_vec_size,
-      pre_word_vecs = opt.pre_word_vecs_dec,
-      fix_word_vecs = opt.fix_word_vecs_dec,
-      vocab_size = #dataset.dicts.targ.words,
-      features = dataset.dicts.targ.features,
-      feat_vec_exponent = opt.feat_vec_exponent,
-      rnn_size = opt.rnn_size,
-      dropout = opt.dropout,
-      num_layers = opt.num_layers,
-      input_feed = opt.input_feed == 1
-    }
-
-    local pretrained = {}
-
-    if checkpoint.nets then
-      for name, mod in pairs(checkpoint.nets) do
-        if idx == 1 then
-          pretrained[name] = mod
-        else
-          -- In parallel mode, each thread must own its own model.
-          pretrained[name] = utils.Tensor.deepClone(mod)
-        end
-      end
-    end
 
     _G.model = {}
-    if opt.brnn then
-      _G.model.encoder = onmt.BiEncoder.new(encoder_args, opt.brnn_merge, pretrained.encoder, pretrained.encoder_bwd)
-    else
-      _G.model.encoder = onmt.Encoder.new(encoder_args, pretrained.encoder)
-    end
 
-    _G.model.decoder = onmt.Decoder.new(decoder_args, pretrained.decoder, pretrained.generator)
+    if checkpoint.models then
+      _G.model.encoder = Models.loadEncoder(checkpoint.models.encoder, idx > 1)
+      _G.model.decoder = Models.loadDecoder(checkpoint.models.decoder, idx > 1)
+    else
+      _G.model.encoder = Models.buildEncoder(opt, dataset.dicts.src)
+      _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.targ)
+    end
 
     for _, mod in pairs(_G.model) do
       utils.Cuda.convert(mod)
     end
+
     return idx, _G.model
   end, function(idx, themodel)
     if idx == 1 then

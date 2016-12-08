@@ -2,6 +2,7 @@ require('../onmt')
 require('../utils')
 
 local Data = require('lib.data')
+local Models = require('lib.models')
 local constants = require('lib.constants')
 
 local checkpoint = nil
@@ -18,26 +19,8 @@ local function init(args)
   print('Loading ' .. opt.model .. '...')
   checkpoint = torch.load(opt.model)
 
-  local encoder_args = {
-    num_layers = checkpoint.options.num_layers,
-    rnn_size = checkpoint.options.rnn_size,
-    mask_padding = true
-  }
-
-  local decoder_args = {
-    rnn_size = checkpoint.options.rnn_size,
-    num_layers = checkpoint.options.num_layers,
-    input_feed = checkpoint.options.input_feed == 1,
-    mask_padding = true
-  }
-
-  if checkpoint.options.brnn then
-    models.encoder = onmt.BiEncoder.new(encoder_args, checkpoint.options.brnn_merge, checkpoint.nets.encoder, checkpoint.nets.encoder_bwd)
-  else
-    models.encoder = onmt.Encoder.new(encoder_args, checkpoint.nets.encoder)
-  end
-
-  models.decoder = onmt.Decoder.new(decoder_args, checkpoint.nets.decoder, checkpoint.nets.generator)
+  models.encoder = Models.loadEncoder(checkpoint.models.encoder)
+  models.decoder = Models.loadDecoder(checkpoint.models.decoder)
 
   models.encoder:evaluate()
   models.decoder:evaluate()
@@ -118,15 +101,15 @@ local function build_target_tokens(pred, pred_feats, src, attn)
 end
 
 local function translate_batch(batch)
-  -- Forget previous padding module on the decoder.
-  models.decoder:reset()
+  models.encoder:maskPadding()
+  models.decoder:maskPadding()
 
   local enc_states, context = models.encoder:forward(batch)
 
   local gold_score
   if batch.target_input ~= nil then
     if batch.size > 1 then
-      models.decoder:reset(batch.source_size, batch.source_length)
+      models.decoder:maskPadding(batch.source_size, batch.source_length)
     end
     gold_score = models.decoder:compute_score(batch, enc_states, context)
   end
@@ -196,11 +179,20 @@ local function translate_batch(batch)
       input_features[j] = input_features[j]:view(opt.beam * remaining_sents)
     end
 
-    if batch.size > 1 then
-      models.decoder:reset(source_sizes, batch.source_length, opt.beam)
+    local inputs
+    if #input_features == 0 then
+      inputs = input
+    else
+      inputs = {}
+      table.insert(inputs, input)
+      utils.Table.append(inputs, input_features)
     end
 
-    dec_out, dec_states = models.decoder:forward_one(input, input_features, dec_states, context, dec_out)
+    if batch.size > 1 then
+      models.decoder:maskPadding(source_sizes, batch.source_length, opt.beam)
+    end
+
+    dec_out, dec_states = models.decoder:forward_one(inputs, dec_states, context, dec_out)
 
     local out = models.decoder.generator:forward(dec_out)
 

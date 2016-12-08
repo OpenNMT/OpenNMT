@@ -21,45 +21,73 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 Parameters:
 
-  * `args` - global options.
-  * `network` - optional, recurrent step template.
+  * `input_network` - input module.
+  * `rnn` - recurrent module.
   * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
+  * `input_feed` - enable input feeding.
 --]]
-function Decoder:__init(args, network, generator)
-  parent.__init(self, args, network or self:_buildModel(args))
+function Decoder:__init(input_network, rnn, generator, input_feed)
+  self.rnn = rnn
+  self.inputNet = input_network
 
-  -- The generator use the output of the decoder sequencer to generate the
-  -- likelihoods over the target vocabulary.
-  self.generator = generator or self:_buildGenerator(args.vocab_size, args.features, args.rnn_size)
-  self:add(self.generator)
+  self.args = {}
+  self.args.rnn_size = self.rnn.output_size
+  self.args.num_effective_layers = self.rnn.num_effective_layers
 
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
+  self.args.input_feed = input_feed
+
+  parent.__init(self, self:_buildModel())
+
+  -- The generator use the output of the decoder sequencer to generate the
+  -- likelihoods over the target vocabulary.
+  self.generator = generator
+  self:add(self.generator)
+
+  self:resetPreallocation()
+end
+
+--[[ Return a new Decoder using the serialized data `pretrained`. ]]
+function Decoder.load(pretrained)
+  local self = torch.factory('onmt.Decoder')()
+
+  self.args = pretrained.args
+
+  parent.__init(self, pretrained.modules[1])
+  self.generator = pretrained.modules[2]
+  self:add(self.generator)
+
+  self:resetPreallocation()
+
+  return self
+end
+
+--[[ Return data to serialize. ]]
+function Decoder:serialize()
+  return {
+    modules = self.modules,
+    args = self.args
+  }
+end
+
+function Decoder:resetPreallocation()
   if self.args.input_feed then
     self.inputFeedProto = torch.Tensor()
   end
 
-  -- Mask padding means that the attention-layer is constrained to
-  -- give zero-weight to padding. This is done by storing a reference
-  -- to the softmax attention-layer.
-  if self.args.mask_padding then
-    self.network:apply(function (layer)
-      if layer.name == 'decoder_attn' then
-        self.decoder_attn = layer
-      end
-    end)
-  end
+  -- Prototype for preallocated hidden and cell states.
+  self.stateProto = torch.Tensor()
+
+  -- Prototype for preallocated output gradients.
+  self.gradOutputProto = torch.Tensor()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
-
-Parameters:
-
-  * `args` - global options.
 
 Returns: An nn-graph mapping
 
@@ -72,16 +100,12 @@ Returns: An nn-graph mapping
   ${if}$ is the input feeding, and
   ${a}$ is the context vector computed at this timestep.
 --]]
-function Decoder:_buildModel(args)
+function Decoder:_buildModel()
   local inputs = {}
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, args.num_layers do
-    local c0 = nn.Identity()() -- batch_size x rnn_size
-    table.insert(inputs, c0)
-    table.insert(states, c0)
-
+  for _ = 1, self.args.num_effective_layers do
     local h0 = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -94,86 +118,53 @@ function Decoder:_buildModel(args)
   table.insert(inputs, context)
 
   local input_feed
-  if args.input_feed then
+  if self.args.input_feed then
     input_feed = nn.Identity()() -- batch_size x rnn_size
     table.insert(inputs, input_feed)
   end
 
-  -- Input features.
-  local features = {}
-  for i = 1, #args.features do
-    features[i] = nn.Identity()() -- batch_size
-    table.insert(inputs, features[i])
-  end
-
-  local input_size = args.word_vec_size
-
-  -- Compute word embedding.
-  local input = onmt.WordEmbedding(args.vocab_size, input_size, args.pre_word_vecs, args.fix_word_vecs)(x)
+  -- Compute the input network.
+  local input = self.inputNet(x)
 
   -- If set, concatenate previous decoder output.
-  if args.input_feed then
+  if self.args.input_feed then
     input = nn.JoinTable(2)({input, input_feed})
-    input_size = input_size + args.rnn_size
   end
-
-  -- Compute features embedding if used.
-  if #features > 0 then
-    self.featsEmb = onmt.FeaturesEmbedding(args.features, args.feat_vec_exponent)
-    input = nn.JoinTable(2)({input, self.featsEmb(features)})
-    input_size = input_size + self.featsEmb.outputSize
-  end
-
   table.insert(states, input)
 
   -- Forward states and input into the RNN.
-  local outputs = onmt.LSTM(args.num_layers, input_size, args.rnn_size, args.dropout)(states)
+  local outputs = self.rnn(states)
 
   -- The output of a subgraph is a node: split it to access the last RNN output.
-  outputs = { outputs:split(args.num_layers * 2) }
+  outputs = { outputs:split(self.args.num_effective_layers) }
 
   -- Compute the attention here using h^L as query.
-  local attn_layer = onmt.GlobalAttention(args.rnn_size)
+  local attn_layer = onmt.GlobalAttention(self.args.rnn_size)
   attn_layer.name = 'decoder_attn'
   local attn_output = attn_layer({outputs[#outputs], context})
-  if args.dropout > 0 then
-    attn_output = nn.Dropout(args.dropout)(attn_output)
+  if self.rnn.dropout > 0 then
+    attn_output = nn.Dropout(self.rnn.dropout)(attn_output)
   end
   table.insert(outputs, attn_output)
-
   return nn.gModule(inputs, outputs)
 end
 
---[[ Build the default generator. --]]
-function Decoder:_buildGenerator(vocab_size, features, rnn_size)
-  -- Builds a layer for predicting words.
-  -- Layer used maps from (h^L) => (V).
-  local split = nn.ConcatTable()
-  split:add(nn.Linear(rnn_size, vocab_size))
-  for i = 1, #features do
-    split:add(nn.Linear(rnn_size, #features[i]))
-  end
-
-  local softmax = nn.ParallelTable()
-  softmax:add(nn.LogSoftMax())
-  for _ = 1, #features do
-    softmax:add(nn.LogSoftMax())
-  end
-
-  local generator = nn.Sequential()
-    :add(split)
-    :add(softmax)
-
-  return generator
-end
-
---[[ Update internals of model to prepare for new batch.
+--[[ Mask padding means that the attention-layer is constrained to
+  give zero-weight to padding. This is done by storing a reference
+  to the softmax attention-layer.
 
   Parameters:
 
   * See  [onmt.MaskedSoftmax](lib+onmt+MaskedSoftmax).
 --]]
-function Decoder:reset(source_sizes, source_length, beam_size)
+function Decoder:maskPadding(source_sizes, source_length, beam_size)
+  if not self.decoder_attn then
+    self.network:apply(function (layer)
+      if layer.name == 'decoder_attn' then
+        self.decoder_attn = layer
+      end
+    end)
+  end
 
   self.decoder_attn:replace(function(module)
     if module.name == 'softmax_attn' then
@@ -209,22 +200,28 @@ Returns:
  1. `out` - Top-layer Hidden state
  2. `states` - All states
 --]]
-function Decoder:forward_one(input, features, prev_states, context, prev_out, t)
+function Decoder:forward_one(input, prev_states, context, prev_out, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `build_network('dec')`).
   utils.Table.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
+  local input_size
+  if torch.type(input) == 'table' then
+    input_size = input[1]:size(1)
+  else
+    input_size = input:size(1)
+  end
+
   if self.args.input_feed then
     if prev_out == nil then
       table.insert(inputs, utils.Tensor.reuseTensor(self.inputFeedProto,
-                                                    { input:size(1), self.args.rnn_size }))
+                                                    { input_size, self.args.rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
   end
-  utils.Table.append(inputs, features)
 
   -- Remember inputs for the backward pass.
   if self.train then
@@ -245,7 +242,7 @@ end
 
   Parameters:
 
-  * `batch` - based on data.lua
+  * `batch` - as defined in batch.lua
   * `encoder_states`
   * `context`
   * `func` - Calls `func(out, t)` each timestep.
@@ -255,7 +252,7 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
                                                     self.stateProto,
                                                     { batch.size, self.args.rnn_size })
   end
@@ -265,12 +262,7 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   local prev_out
 
   for t = 1, batch.target_length do
-    local features = {}
-    for j = 1, #batch.target_input_features do
-      table.insert(features, batch.target_input_features[j][t])
-    end
-
-    prev_out, states = self:forward_one(batch.target_input[t], features, states, context, prev_out, t)
+    prev_out, states = self:forward_one(batch:get_target_input(t), states, context, prev_out, t)
     func(prev_out, t)
   end
 end
@@ -279,7 +271,7 @@ end
 
 Parameters:
 
-  * `batch` - based on data.lua
+  * `batch` - as defined in batch.lua
   * `encoder_states` - the final encoder states
   * `context` - the context to apply attention to.
 
@@ -300,42 +292,6 @@ function Decoder:forward(batch, encoder_states, context)
   return outputs
 end
 
---[[ Compute the cumulative score of a target sequence.
-  Used in decoding when gold data are provided.
-]]
-function Decoder:compute_score(batch, encoder_states, context)
-  local score = {}
-
-  self:forward_and_apply(batch, encoder_states, context, function (out, t)
-    local pred = self.generator:forward(out)
-    for b = 1, batch.size do
-      if t <= batch.target_size[b] then
-        score[b] = (score[b] or 0) + pred[1][b][batch.target_output[t][b]]
-      end
-    end
-  end)
-
-  return score
-end
-
---[[ Compute the loss on a batch based on final layer `generator`.]]
-function Decoder:compute_loss(batch, encoder_states, context, criterion)
-
-  local loss = 0
-  self:forward_and_apply(batch, encoder_states, context, function (out, t)
-    local pred = self.generator:forward(out)
-
-    local output = { batch.target_output[t] }
-    for j = 1, #batch.target_output_features do
-      table.insert(output, batch.target_output_features[j][t])
-    end
-
-    loss = loss + criterion:forward(pred, output)
-  end)
-
-  return loss
-end
-
 --[[ Compute the standard backward update.
 
 Parameters:
@@ -349,7 +305,7 @@ Parameters:
 -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_layers * 2 + 1,
+    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_effective_layers + 1,
                                                          self.gradOutputProto,
                                                          { batch.size, self.args.rnn_size })
   end
@@ -368,17 +324,12 @@ function Decoder:backward(batch, outputs, criterion)
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
     local pred = self.generator:forward(outputs[t])
-
-    local output = { batch.target_output[t] }
-    for j = 1, #batch.target_output_features do
-      table.insert(output, batch.target_output_features[j][t])
-    end
+    local output = batch:get_target_output(t)
 
     loss = loss + criterion:forward(pred, output)
 
     -- Compute the criterion gradient.
     local gen_grad_out = criterion:backward(pred, output)
-
     for j = 1, #gen_grad_out do
       gen_grad_out[j]:div(batch.total_size)
     end
@@ -406,4 +357,33 @@ function Decoder:backward(batch, outputs, criterion)
   end
 
   return grad_states_input, grad_context_input, loss
+end
+
+--[[ Compute the loss on a batch based on final layer `generator`.]]
+function Decoder:compute_loss(batch, encoder_states, context, criterion)
+  local loss = 0
+  self:forward_and_apply(batch, encoder_states, context, function (out, t)
+    local pred = self.generator:forward(out)
+    local output = batch:get_target_output(t)
+    loss = loss + criterion:forward(pred, output)
+  end)
+
+  return loss
+end
+
+--[[ Compute the cumulative score of a target sequence.
+  Used in decoding when gold data are provided.
+]]
+function Decoder:compute_score(batch, encoder_states, context)
+  local score = {}
+
+  self:forward_and_apply(batch, encoder_states, context, function (out, t)
+    local pred = self.generator:forward(out)
+    for b = 1, batch.size do
+      if t <= batch.target_size[b] then
+        score[b] = (score[b] or 0) + pred[1][b][batch.target_output[t][b]]
+      end
+    end
+  end)
+  return score
 end

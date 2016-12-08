@@ -37,9 +37,57 @@ local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 --[[ Creates two Encoder's (encoder.lua) `net_fwd` and `net_bwd`.
   The two are combined use `merge` operation (concat/sum).
 ]]
-function BiEncoder:__init(args, merge, net_fwd, net_bwd)
+function BiEncoder:__init(input, rnn, merge)
   parent.__init(self)
 
+  self.fwd = onmt.Encoder.new(input, rnn)
+  self.bwd = onmt.Encoder.new(input:clone(), rnn:clone())
+
+  self.args = {}
+  self.args.merge = merge
+
+  self.args.rnn_size = rnn.output_size
+  self.args.num_effective_layers = rnn.num_effective_layers
+
+  if self.args.merge == 'concat' then
+    self.args.hidden_size = self.args.rnn_size * 2
+  else
+    self.args.hidden_size = self.args.rnn_size
+  end
+
+  self:add(self.fwd)
+  self:add(self.bwd)
+
+  self:resetPreallocation()
+end
+
+--[[ Return a new BiEncoder using the serialized data `pretrained`. ]]
+function BiEncoder.load(pretrained)
+  local self = torch.factory('onmt.BiEncoder')()
+
+  parent.__init(self)
+
+  self.fwd = onmt.Encoder.load(pretrained.modules[1])
+  self.bwd = onmt.Encoder.load(pretrained.modules[2])
+  self.args = pretrained.args
+
+  self:add(self.fwd)
+  self:add(self.bwd)
+
+  self:resetPreallocation()
+
+  return self
+end
+
+--[[ Return data to serialize. ]]
+function BiEncoder:serialize()
+  return {
+    modules = self.modules,
+    args = self.args
+  }
+end
+
+function BiEncoder:resetPreallocation()
   -- Prototype for preallocated full context vector.
   self.contextProto = torch.Tensor()
 
@@ -48,51 +96,34 @@ function BiEncoder:__init(args, merge, net_fwd, net_bwd)
 
   -- Prototype for preallocated gradient of the backward context
   self.gradContextBwdProto = torch.Tensor()
+end
 
-  self.rnn_size = args.rnn_size
-
-  -- Comput the merge operation.
-  if merge == 'concat' then
-    if args.rnn_size % 2 ~= 0 then
-      error('in concat mode, rnn_size must be divisible by 2')
-    end
-    args.rnn_size = args.rnn_size / 2
-  elseif merge == 'sum' then
-    args.rnn_size = args.rnn_size
-  else
-    error('invalid merge action ' .. merge)
-  end
-
-  self.merge = merge
-  self.args = args
-
-  self.fwd = onmt.Encoder.new(args, net_fwd)
-  self.bwd = onmt.Encoder.new(args, net_bwd)
-
-  self:add(self.fwd)
-  self:add(self.bwd)
+function BiEncoder:maskPadding()
+  self.fwd:maskPadding()
+  self.bwd:maskPadding()
 end
 
 function BiEncoder:forward(batch)
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.args.num_layers * 2,
+    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
                                                     self.stateProto,
-                                                    { batch.size, self.rnn_size })
+                                                    { batch.size, self.args.hidden_size })
+
     if self.train then
-      self.bwd:shareWordEmb(self.fwd)
+      self.bwd:shareInput(self.fwd)
     end
   end
 
-  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.rnn_size })
+  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.hidden_size })
   local context = utils.Tensor.reuseTensor(self.contextProto,
-                                           { batch.size, batch.source_length, self.rnn_size })
+                                           { batch.size, batch.source_length, self.args.hidden_size })
 
   local fwd_states, fwd_context = self.fwd:forward(batch)
   reverse_input(batch)
   local bwd_states, bwd_context = self.bwd:forward(batch)
   reverse_input(batch)
 
-  if self.merge == 'concat' then
+  if self.args.merge == 'concat' then
     for i = 1, #fwd_states do
       states[i]:narrow(2, 1, self.args.rnn_size):copy(fwd_states[i])
       states[i]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwd_states[i])
@@ -103,7 +134,7 @@ function BiEncoder:forward(batch)
       context[{{}, t}]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size)
         :copy(bwd_context[{{}, batch.source_length - t + 1}])
     end
-  elseif self.merge == 'sum' then
+  elseif self.args.merge == 'sum' then
     for i = 1, #states do
       states[i]:copy(fwd_states[i])
       states[i]:add(bwd_states[i])
@@ -124,7 +155,7 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   local grad_states_output_fwd = {}
   local grad_states_output_bwd = {}
 
-  if self.merge == 'concat' then
+  if self.args.merge == 'concat' then
     local grad_context_output_split = grad_context_output:chunk(2, 3)
     grad_context_output_fwd = grad_context_output_split[1]
     grad_context_output_bwd = grad_context_output_split[2]
@@ -134,7 +165,7 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
       table.insert(grad_states_output_fwd, states_split[1])
       table.insert(grad_states_output_bwd, states_split[2])
     end
-  elseif self.merge == 'sum' then
+  elseif self.args.merge == 'sum' then
     grad_context_output_fwd = grad_context_output
     grad_context_output_bwd = grad_context_output
 

@@ -64,7 +64,8 @@ function GlobalAttention:updateOutput(input)
 end
 
 function GlobalAttention:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
+  self.gradInput = self.net:updateGradInput(input, gradOutput)
+  return self.gradInput
 end
 
 function GlobalAttention:accGradParameters(input, gradOutput, scale)
