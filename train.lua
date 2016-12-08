@@ -1,11 +1,11 @@
 require('./lib/utils')
+require('./lib/data')
 require('./lib/train')
 require('./lib/onmt')
 
 local path = require('pl.path')
 
 local constants = require('lib.constants')
-local Data = require('lib.data')
 local Models = require('lib.models')
 
 local cmd = torch.CmdLine()
@@ -334,8 +334,8 @@ local function main()
   print('Loading data from ' .. opt.data .. '...')
   local dataset = torch.load(opt.data)
 
-  local train_data = Data.new(dataset.train.src, dataset.train.targ)
-  local valid_data = Data.new(dataset.valid.src, dataset.valid.targ)
+  local train_data = data.Dataset.new(dataset.train.src, dataset.train.targ)
+  local valid_data = data.Dataset.new(dataset.valid.src, dataset.valid.targ)
 
   train_data:set_batch_size(opt.max_batch_size)
   valid_data:set_batch_size(opt.max_batch_size)

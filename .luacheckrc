@@ -4,6 +4,7 @@ globals = {
   "nn",
   "cudnn",
   "onmt",
+  "data",
   "translate",
   "train",
   "utils"

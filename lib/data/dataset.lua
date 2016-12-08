@@ -1,14 +1,10 @@
-require('lib.utils.init')
-
-local Batch = require('lib.batch')
-
 --[[ Data management and batch creation. ]]
-local Data = torch.class("Data")
+local Dataset = torch.class("Dataset")
 
 --[[ Initialize a data object given aligned tables of IntTensors `src`
   and `targ`.
 --]]
-function Data:__init(src_data, targ_data)
+function Dataset:__init(src_data, targ_data)
 
   self.src = src_data.words
   self.src_features = src_data.features
@@ -20,7 +16,7 @@ function Data:__init(src_data, targ_data)
 end
 
 --[[ Setup up the training data to respect `max_batch_size`. ]]
-function Data:set_batch_size(max_batch_size)
+function Dataset:set_batch_size(max_batch_size)
 
   self.batch_range = {}
   self.max_source_length = 0
@@ -58,7 +54,7 @@ function Data:set_batch_size(max_batch_size)
 end
 
 --[[ Return number of batches. ]]
-function Data:__len__()
+function Dataset:__len__()
 
   if self.batch_range == nil then
     return 1
@@ -68,9 +64,9 @@ function Data:__len__()
 end
 
 --[[ Get batch `idx`. If nil make a batch of all the data. ]]
-function Data:get_batch(idx)
+function Dataset:get_batch(idx)
   if idx == nil or self.batch_range == nil then
-    return Batch.new(self.src, self.src_features, self.targ, self.targ_features)
+    return data.Batch.new(self.src, self.src_features, self.targ, self.targ_features)
   end
 
   local range_start = self.batch_range[idx]["begin"]
@@ -95,7 +91,7 @@ function Data:get_batch(idx)
     end
   end
 
-  return Batch.new(src, src_features, targ, targ_features)
+  return data.Batch.new(src, src_features, targ, targ_features)
 end
 
-return Data
+return Dataset

@@ -1,7 +1,7 @@
 require('../onmt')
 require('../utils')
+require('../data')
 
-local Data = require('lib.data')
 local Models = require('lib.models')
 local constants = require('lib.constants')
 
@@ -69,7 +69,7 @@ local function build_data(src_batch, src_features_batch, gold_batch, gold_featur
     end
   end
 
-  return Data.new(src_data, targ_data)
+  return data.Dataset.new(src_data, targ_data)
 end
 
 local function build_target_tokens(pred, pred_feats, src, attn)
