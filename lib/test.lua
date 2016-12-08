@@ -1,6 +1,6 @@
 require('lib.onmt.init')
 require('lib.utils.init')
-require('lib.data')
+require('lib.data.init')
 
 local tester = torch.Tester()
 
