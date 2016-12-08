@@ -32,19 +32,19 @@ Parameters:
   * `hidden_size` - Size of the hidden layers (cell and hidden, $$c, h$$).
   * `dropout` - Dropout rate to use.
 --]]
-function LSTM:__init(num_layers, input_size, hidden_size, dropout)
+function LSTM:__init(num_layers, input_size, hidden_size, dropout, residual)
   parent.__init(self)
   dropout = dropout or 0
   self.dropout = dropout
   -- self.num_layers = num_layers
   self.num_effective_layers = 2 * num_layers
   self.output_size = hidden_size
-  self.net = self:_buildModel(num_layers, input_size, hidden_size, dropout)
+  self.net = self:_buildModel(num_layers, input_size, hidden_size, dropout, residual)
   self:add(self.net)
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout)
+function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout, residual)
   local inputs = {}
   local outputs = {}
 
@@ -56,19 +56,24 @@ function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout)
   table.insert(inputs, nn.Identity()()) -- x: batch_size x input_size
   local x = inputs[#inputs]
 
+  local prev_input
   local next_c
   local next_h
 
   for L = 1, num_layers do
     local input
+    local input_dim
 
     if L == 1 then
       -- First layer input is x.
       input = x
+      input_dim = input_size
     else
-      -- Otherwise apply dropout on the previous output.
-      input_size = hidden_size
+      input_dim = hidden_size
       input = next_h
+      if residual and (L > 2 or input_size == hidden_size) then
+        input = nn.CAddTable()({input, prev_input})
+      end
       if dropout > 0 then
         input = nn.Dropout(dropout)(input)
       end
@@ -77,7 +82,8 @@ function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout)
     local prev_c = inputs[L*2 - 1]
     local prev_h = inputs[L*2]
 
-    next_c, next_h = self:_buildLayer(input_size, hidden_size)({prev_c, prev_h, input}):split(2)
+    next_c, next_h = self:_buildLayer(input_dim, hidden_size)({prev_c, prev_h, input}):split(2)
+    prev_input = input
 
     table.insert(outputs, next_c)
     table.insert(outputs, next_h)
