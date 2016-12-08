@@ -282,7 +282,8 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
       utils.Parallel.accGradParams(grad_params, batches)
 
       -- update the parameters
-      optim:update_params(params[1], grad_params[1], opt.max_grad_norm)
+      optim:prepare_grad(grad_params[1], opt.max_grad_norm)
+      optim:update_params(params[1], grad_params[1])
 
       -- sync the paramaters with the different parallel threads
       utils.Parallel.syncParams(params)

@@ -1,25 +1,25 @@
 require 'torch'
 
-local function adagrad_step(x, dfdx, lr, state)
+local function adagrad_step(dfdx, lr, state)
   if not state.var then
-    state.var = torch.Tensor():typeAs(x):resizeAs(x):zero()
-    state.std = torch.Tensor():typeAs(x):resizeAs(x)
+    state.var = torch.Tensor():typeAs(dfdx):resizeAs(dfdx):zero()
+    state.std = torch.Tensor():typeAs(dfdx):resizeAs(dfdx)
   end
 
   state.var:addcmul(1, dfdx, dfdx)
   state.std:sqrt(state.var)
-  x:addcdiv(-lr, dfdx, state.std:add(1e-10))
+  dfdx:cdiv(state.std:add(1e-10)):mul(-lr)
 end
 
-local function adam_step(x, dfdx, lr, state)
+local function adam_step(dfdx, lr, state)
   local beta1 = state.beta1 or 0.9
   local beta2 = state.beta2 or 0.999
   local eps = state.eps or 1e-8
 
   state.t = state.t or 0
-  state.m = state.m or x.new(dfdx:size()):zero()
-  state.v = state.v or x.new(dfdx:size()):zero()
-  state.denom = state.denom or x.new(dfdx:size()):zero()
+  state.m = state.m or dfdx.new(dfdx:size()):zero()
+  state.v = state.v or dfdx.new(dfdx:size()):zero()
+  state.denom = state.denom or dfdx.new(dfdx:size()):zero()
 
   state.t = state.t + 1
   state.m:mul(beta1):add(1-beta1, dfdx)
@@ -29,21 +29,21 @@ local function adam_step(x, dfdx, lr, state)
   local bias1 = 1-beta1^state.t
   local bias2 = 1-beta2^state.t
   local stepSize = lr * math.sqrt(bias2)/bias1
-  x:addcdiv(-stepSize, state.m, state.denom)
 
+  dfdx:copy(state.m):cdiv(state.denom):mul(-stepSize)
 end
 
-local function adadelta_step(x, dfdx, lr, state)
+local function adadelta_step(dfdx, lr, state)
   local rho = state.rho or 0.9
   local eps = state.eps or 1e-6
-  state.var = state.var or x.new(dfdx:size()):zero()
-  state.std = state.std or x.new(dfdx:size()):zero()
-  state.delta = state.delta or x.new(dfdx:size()):zero()
-  state.accDelta = state.accDelta or x.new(dfdx:size()):zero()
+  state.var = state.var or dfdx.new(dfdx:size()):zero()
+  state.std = state.std or dfdx.new(dfdx:size()):zero()
+  state.delta = state.delta or dfdx.new(dfdx:size()):zero()
+  state.accDelta = state.accDelta or dfdx.new(dfdx:size()):zero()
   state.var:mul(rho):addcmul(1-rho, dfdx, dfdx)
   state.std:copy(state.var):add(eps):sqrt()
   state.delta:copy(state.accDelta):add(eps):sqrt():cdiv(state.std):cmul(dfdx)
-  x:add(-lr, state.delta)
+  dfdx:copy(state.delta):mul(-lr)
   state.accDelta:mul(rho):addcmul(1-rho, state.delta, state.delta)
 end
 
@@ -78,8 +78,8 @@ function Optim:zero_grad(grad_params)
   end
 end
 
-function Optim:update_params(params, grad_params, max_grad_norm)
-  -- compute gradients norm
+function Optim:prepare_grad(grad_params, max_grad_norm)
+  -- Compute gradients norm.
   local grad_norm = 0
   for j = 1, #grad_params do
     grad_norm = grad_norm + grad_params[j]:norm()^2
@@ -89,21 +89,27 @@ function Optim:update_params(params, grad_params, max_grad_norm)
   local shrinkage = max_grad_norm / grad_norm
 
   for j = 1, #grad_params do
-    -- normalize gradients
+    -- Shrink gradients if needed.
     if shrinkage < 1 then
       grad_params[j]:mul(shrinkage)
     end
 
-    -- update params according to the optimization method
+    -- Prepare gradients params according to the optimization method.
     if self.method == 'adagrad' then
-      adagrad_step(params[j], grad_params[j], self.learning_rate, self.optim_states[j])
+      adagrad_step(grad_params[j], self.learning_rate, self.optim_states[j])
     elseif self.method == 'adadelta' then
-      adadelta_step(params[j], grad_params[j], self.learning_rate, self.optim_states[j])
+      adadelta_step(grad_params[j], self.learning_rate, self.optim_states[j])
     elseif self.method == 'adam' then
-      adam_step(params[j], grad_params[j], self.learning_rate, self.optim_states[j])
+      adam_step(grad_params[j], self.learning_rate, self.optim_states[j])
     else
-      params[j]:add(grad_params[j]:mul(-self.learning_rate))
+      grad_params[j]:mul(-self.learning_rate)
     end
+  end
+end
+
+function Optim:update_params(params, grad_params)
+  for j = 1, #params do
+    params[j]:add(grad_params[j])
   end
 end
 
