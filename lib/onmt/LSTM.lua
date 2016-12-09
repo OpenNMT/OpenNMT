@@ -35,11 +35,13 @@ Parameters:
 --]]
 function LSTM:__init(num_layers, input_size, hidden_size, dropout, residual)
   parent.__init(self)
+
   dropout = dropout or 0
+
   self.dropout = dropout
-  -- self.num_layers = num_layers
   self.num_effective_layers = 2 * num_layers
   self.output_size = hidden_size
+
   self.net = self:_buildModel(num_layers, input_size, hidden_size, dropout, residual)
   self:add(self.net)
 end
