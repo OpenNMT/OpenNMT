@@ -176,7 +176,7 @@ function Decoder:maskPadding(source_sizes, source_length, beam_size)
       end
 
       mod.name = 'softmax_attn'
-      mod = utils.Cuda.convert(mod)
+      mod:type(module._type)
       self.softmax_attn = mod
       return mod
     else
