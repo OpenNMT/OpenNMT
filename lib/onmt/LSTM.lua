@@ -31,6 +31,7 @@ Parameters:
   * `input_size` - Size of input layer,  $$|x|$$.
   * `hidden_size` - Size of the hidden layers (cell and hidden, $$c, h$$).
   * `dropout` - Dropout rate to use.
+  * `residual` - Residual connections between layers.
 --]]
 function LSTM:__init(num_layers, input_size, hidden_size, dropout, residual)
   parent.__init(self)
