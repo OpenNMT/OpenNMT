@@ -31,7 +31,7 @@ cmd:text("")
 cmd:text("**Model options**")
 cmd:text("")
 
-cmd:option('-num_layers', 2, [[Number of layers in the LSTM encoder/decoder]])
+cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
 cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
 cmd:option('-feat_vec_exponent', 0.7, [[If the feature takes N values, then the
@@ -56,8 +56,8 @@ cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/ad
                                 adagrad = 0.1, adadelta = 1, adam = 0.1]])
 cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm]])
 cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]])
-cmd:option('-lr_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
-                             on the validation set or (ii) epoch has gone past the start_decay_at_limit]])
+cmd:option('-learning_rate_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
+                                        on the validation set or (ii) epoch has gone past the start_decay_at_limit]])
 cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
 cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
                              sequence length. Sometimes setting this to 1 will increase convergence speed.]])
@@ -85,7 +85,7 @@ cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of int
 -- bookkeeping
 cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
                              If = 0, will not save models within an epoch. ]])
-cmd:option('-print_every', 50, [[Print stats every this many iterations within an epoch.]])
+cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 cmd:option('-no_log', false, [[By default, a log file save_file.log is created during training giving time, ppl, and free memory at each
                              epoch. Use this flag to disable.]])
@@ -216,7 +216,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     method = opt.optim,
     num_models = #params[1],
     learning_rate = opt.learning_rate,
-    lr_decay = opt.lr_decay,
+    learning_rate_decay = opt.learning_rate_decay,
     start_decay_at = opt.start_decay_at,
     optim_states = opt.optim_states
   })
@@ -290,7 +290,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
 
       epoch_state:update(batches, losses)
 
-      if iter % opt.print_every == 0 then
+      if iter % opt.report_every == 0 then
         epoch_state:log(iter)
       end
       if opt.save_every > 0 and iter % opt.save_every == 0 then
@@ -358,7 +358,7 @@ local function main()
     print('Loading checkpoint ' .. opt.train_from .. '...')
     checkpoint = torch.load(opt.train_from)
 
-    opt.num_layers = checkpoint.options.num_layers
+    opt.layers = checkpoint.options.layers
     opt.rnn_size = checkpoint.options.rnn_size
     opt.brnn = checkpoint.options.brnn
     opt.brnn_merge = checkpoint.options.brnn_merge
@@ -367,7 +367,7 @@ local function main()
     -- Resume training from checkpoint
     if opt.train_from:len() > 0 and opt.continue then
       opt.optim = checkpoint.options.optim
-      opt.lr_decay = checkpoint.options.lr_decay
+      opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
       opt.epochs = checkpoint.options.epochs
       opt.curriculum = checkpoint.options.curriculum

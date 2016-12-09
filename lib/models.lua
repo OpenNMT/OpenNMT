@@ -33,11 +33,11 @@ local function buildEncoder(opt, dicts)
       error('invalid merge action ' .. opt.brnn_merge)
     end
 
-    local rnn = onmt.LSTM.new(opt.num_layers, input_size, rnn_size, opt.dropout, opt.residual)
+    local rnn = onmt.LSTM.new(opt.layers, input_size, rnn_size, opt.dropout, opt.residual)
 
     return onmt.BiEncoder.new(input_network, rnn, opt.brnn_merge)
   else
-    local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout, opt.residual)
+    local rnn = onmt.LSTM.new(opt.layers, input_size, opt.rnn_size, opt.dropout, opt.residual)
 
     return onmt.Encoder.new(input_network, rnn)
   end
@@ -75,7 +75,7 @@ local function buildDecoder(opt, dicts)
     input_size = input_size + opt.rnn_size
   end
 
-  local rnn = onmt.LSTM.new(opt.num_layers, input_size, opt.rnn_size, opt.dropout, opt.residual)
+  local rnn = onmt.LSTM.new(opt.layers, input_size, opt.rnn_size, opt.dropout, opt.residual)
 
   return onmt.Decoder.new(input_network, rnn, generator, opt.input_feed == 1)
 end

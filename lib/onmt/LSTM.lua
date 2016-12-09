@@ -27,31 +27,31 @@ local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
 --[[
 Parameters:
 
-  * `num_layers` - Number of LSTM layers, $$L$$.
+  * `layers` - Number of LSTM layers, $$L$$.
   * `input_size` - Size of input layer,  $$|x|$$.
   * `hidden_size` - Size of the hidden layers (cell and hidden, $$c, h$$).
   * `dropout` - Dropout rate to use.
   * `residual` - Residual connections between layers.
 --]]
-function LSTM:__init(num_layers, input_size, hidden_size, dropout, residual)
+function LSTM:__init(layers, input_size, hidden_size, dropout, residual)
   parent.__init(self)
 
   dropout = dropout or 0
 
   self.dropout = dropout
-  self.num_effective_layers = 2 * num_layers
+  self.num_effective_layers = 2 * layers
   self.output_size = hidden_size
 
-  self.net = self:_buildModel(num_layers, input_size, hidden_size, dropout, residual)
+  self.net = self:_buildModel(layers, input_size, hidden_size, dropout, residual)
   self:add(self.net)
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout, residual)
+function LSTM:_buildModel(layers, input_size, hidden_size, dropout, residual)
   local inputs = {}
   local outputs = {}
 
-  for _ = 1, num_layers do
+  for _ = 1, layers do
     table.insert(inputs, nn.Identity()()) -- c0: batch_size x hidden_size
     table.insert(inputs, nn.Identity()()) -- h0: batch_size x hidden_size
   end
@@ -63,7 +63,7 @@ function LSTM:_buildModel(num_layers, input_size, hidden_size, dropout, residual
   local next_c
   local next_h
 
-  for L = 1, num_layers do
+  for L = 1, layers do
     local input
     local input_dim
 

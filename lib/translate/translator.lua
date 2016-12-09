@@ -30,8 +30,8 @@ local function init(args)
 
   dicts = checkpoint.dicts
 
-  if opt.srctarg_dict:len() > 0 then
-    phrase_table = translate.PhraseTable.new(opt.srctarg_dict)
+  if opt.phrase_table_file:len() > 0 then
+    phrase_table = translate.PhraseTable.new(opt.phrase_table_file)
   end
 end
 
@@ -118,16 +118,16 @@ local function translate_batch(batch)
   context = context
     :contiguous()
     :view(1, batch.size, batch.source_length, checkpoint.options.rnn_size)
-    :expand(opt.beam, batch.size, batch.source_length, checkpoint.options.rnn_size)
+    :expand(opt.beam_size, batch.size, batch.source_length, checkpoint.options.rnn_size)
     :contiguous()
-    :view(opt.beam * batch.size, batch.source_length, checkpoint.options.rnn_size)
+    :view(opt.beam_size * batch.size, batch.source_length, checkpoint.options.rnn_size)
 
   for j = 1, #enc_states do
     enc_states[j] = enc_states[j]
       :view(1, batch.size, checkpoint.options.rnn_size)
-      :expand(opt.beam, batch.size, checkpoint.options.rnn_size)
+      :expand(opt.beam_size, batch.size, checkpoint.options.rnn_size)
       :contiguous()
-      :view(opt.beam * batch.size, checkpoint.options.rnn_size)
+      :view(opt.beam_size * batch.size, checkpoint.options.rnn_size)
   end
 
   local remaining_sents = batch.size
@@ -139,7 +139,7 @@ local function translate_batch(batch)
   local beam = {}
 
   for b = 1, batch.size do
-    table.insert(beam, translate.Beam.new(opt.beam, #dicts.targ.features))
+    table.insert(beam, translate.Beam.new(opt.beam_size, #dicts.targ.features))
     table.insert(batch_idx, b)
   end
 
@@ -148,11 +148,11 @@ local function translate_batch(batch)
   local dec_out
   local dec_states = enc_states
 
-  while remaining_sents > 0 and i < opt.max_sent_l do
+  while remaining_sents > 0 and i < opt.max_sent_length do
     i = i + 1
 
     -- Prepare decoder input.
-    local input = torch.IntTensor(opt.beam, remaining_sents)
+    local input = torch.IntTensor(opt.beam_size, remaining_sents)
     local input_features = {}
     local source_sizes = torch.IntTensor(remaining_sents)
 
@@ -167,16 +167,16 @@ local function translate_batch(batch)
 
         for j = 1, #dicts.targ.features do
           if input_features[j] == nil then
-            input_features[j] = torch.IntTensor(opt.beam, remaining_sents)
+            input_features[j] = torch.IntTensor(opt.beam_size, remaining_sents)
           end
           input_features[j][{{}, idx}]:copy(features_state[j])
         end
       end
     end
 
-    input = input:view(opt.beam * remaining_sents)
+    input = input:view(opt.beam_size * remaining_sents)
     for j = 1, #dicts.targ.features do
-      input_features[j] = input_features[j]:view(opt.beam * remaining_sents)
+      input_features[j] = input_features[j]:view(opt.beam_size * remaining_sents)
     end
 
     local inputs
@@ -189,7 +189,7 @@ local function translate_batch(batch)
     end
 
     if batch.size > 1 then
-      models.decoder:maskPadding(source_sizes, batch.source_length, opt.beam)
+      models.decoder:maskPadding(source_sizes, batch.source_length, opt.beam_size)
     end
 
     dec_out, dec_states = models.decoder:forward_one(inputs, dec_states, context, dec_out)
@@ -197,11 +197,11 @@ local function translate_batch(batch)
     local out = models.decoder.generator:forward(dec_out)
 
     for j = 1, #out do
-      out[j] = out[j]:view(opt.beam, remaining_sents, out[j]:size(2)):transpose(1, 2):contiguous()
+      out[j] = out[j]:view(opt.beam_size, remaining_sents, out[j]:size(2)):transpose(1, 2):contiguous()
     end
     local word_lk = out[1]
 
-    local softmax_out = models.decoder.softmax_attn.output:view(opt.beam, remaining_sents, -1)
+    local softmax_out = models.decoder.softmax_attn.output:view(opt.beam_size, remaining_sents, -1)
     local new_remaining_sents = remaining_sents
 
     for b = 1, batch.size do
@@ -220,7 +220,7 @@ local function translate_batch(batch)
 
         for j = 1, #dec_states do
           local view = dec_states[j]
-            :view(opt.beam, remaining_sents, checkpoint.options.rnn_size)
+            :view(opt.beam_size, remaining_sents, checkpoint.options.rnn_size)
           view[{{}, idx}] = view[{{}, idx}]:index(1, beam[b]:get_current_origin())
         end
       end
@@ -244,20 +244,20 @@ local function translate_batch(batch)
       -- Update rnn states and context.
       for j = 1, #dec_states do
         dec_states[j] = dec_states[j]
-          :view(opt.beam, remaining_sents, checkpoint.options.rnn_size)
+          :view(opt.beam_size, remaining_sents, checkpoint.options.rnn_size)
           :index(2, to_keep)
-          :view(opt.beam*new_remaining_sents, checkpoint.options.rnn_size)
+          :view(opt.beam_size*new_remaining_sents, checkpoint.options.rnn_size)
       end
 
       dec_out = dec_out
-        :view(opt.beam, remaining_sents, checkpoint.options.rnn_size)
+        :view(opt.beam_size, remaining_sents, checkpoint.options.rnn_size)
         :index(2, to_keep)
-        :view(opt.beam*new_remaining_sents, checkpoint.options.rnn_size)
+        :view(opt.beam_size*new_remaining_sents, checkpoint.options.rnn_size)
 
       context = context
-        :view(opt.beam, remaining_sents, batch.source_length, checkpoint.options.rnn_size)
+        :view(opt.beam_size, remaining_sents, batch.source_length, checkpoint.options.rnn_size)
         :index(2, to_keep)
-        :view(opt.beam*new_remaining_sents, batch.source_length, checkpoint.options.rnn_size)
+        :view(opt.beam_size*new_remaining_sents, batch.source_length, checkpoint.options.rnn_size)
 
       -- The `index()` method allocates a new storage so clean the previous ones to
       -- keep a stable memory usage.

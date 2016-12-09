@@ -23,16 +23,16 @@ cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each li
 cmd:text("")
 cmd:text("**Beam Search options**")
 cmd:text("")
-cmd:option('-beam', 5,[[Beam size]])
-cmd:option('-batch', 30, [[Batch size]])
-cmd:option('-max_sent_l', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
+cmd:option('-beam_size', 5,[[Beam size]])
+cmd:option('-batch_size', 30, [[Batch size]])
+cmd:option('-max_sent_length', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
 cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the source token that
-                              had the highest attention weight. If srctarg_dict is provided,
+                              had the highest attention weight. If phrase_table_file is provided,
                               it will lookup the identified source token and give the corresponding
                               target token. If it is not provided (or the identified source token
                               does not exist in the table) then it will copy the source token]])
-cmd:option('-srctarg_dict', '', [[Path to source-target dictionary to replace UNK
-                                               tokens. See README.md for the format this file should be in]])
+cmd:option('-phrase_table_file', '', [[Path to source-target dictionary to replace UNK
+                                     tokens. See README.md for the format this file should be in]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
 
 cmd:text("")
@@ -124,7 +124,7 @@ local function main()
       break
     end
 
-    if src_tokens == nil or #src_batch == opt.batch then
+    if src_tokens == nil or #src_batch == opt.batch_size then
       if opt.time then
         timer:resume()
       end

@@ -57,7 +57,7 @@ function Optim:__init(args)
   self.learning_rate = args.learning_rate
 
   if self.method == 'sgd' then
-    self.lr_decay = args.lr_decay
+    self.learning_rate_decay = args.learning_rate_decay
     self.start_decay = false
     self.start_decay_at = args.start_decay_at
   else
@@ -130,7 +130,7 @@ function Optim:update_learning_rate(score, epoch)
   end
 
   if self.start_decay then
-    self.learning_rate = self.learning_rate * self.lr_decay
+    self.learning_rate = self.learning_rate * self.learning_rate_decay
   end
 end
 

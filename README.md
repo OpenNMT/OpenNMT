@@ -30,7 +30,7 @@ OpenNMT consists of three commands:
 
 1) Preprocess the data.
 
-```th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo```
+```th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -save_file data/demo```
 
 2) Train the model.
 

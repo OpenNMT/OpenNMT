@@ -18,7 +18,7 @@ cmd:option('-train_targ_file', '', [[Path to the training target data]])
 cmd:option('-valid_src_file', '', [[Path to the validation source data]])
 cmd:option('-valid_targ_file', '', [[Path to the validation target data]])
 
-cmd:option('-output_file', '', [[Output file for the prepared data]])
+cmd:option('-save_file', '', [[Output file for the prepared data]])
 
 cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
 cmd:option('-targ_vocab_size', 50000, [[Size of the target vocabulary]])
@@ -256,7 +256,7 @@ local function main()
     "train_targ_file",
     "valid_src_file",
     "valid_targ_file",
-    "output_file"
+    "save_file"
   }
 
   utils.Opt.init(opt, required_options)
@@ -282,20 +282,20 @@ local function main()
   print('')
 
   if opt.src_vocab_file:len() == 0 then
-    save_vocabulary('source', data.dicts.src.words, opt.output_file .. '.src.dict')
+    save_vocabulary('source', data.dicts.src.words, opt.save_file .. '.src.dict')
   end
 
   if opt.targ_vocab_file:len() == 0 then
-    save_vocabulary('target', data.dicts.targ.words, opt.output_file .. '.targ.dict')
+    save_vocabulary('target', data.dicts.targ.words, opt.save_file .. '.targ.dict')
   end
 
   if opt.features_vocabs_prefix:len() == 0 then
-    save_features_vocabularies('source', data.dicts.src.features, opt.output_file)
-    save_features_vocabularies('target', data.dicts.targ.features, opt.output_file)
+    save_features_vocabularies('source', data.dicts.src.features, opt.save_file)
+    save_features_vocabularies('target', data.dicts.targ.features, opt.save_file)
   end
 
-  print('Saving data to \'' .. opt.output_file .. '-train.t7\'...')
-  torch.save(opt.output_file .. '-train.t7', data)
+  print('Saving data to \'' .. opt.save_file .. '-train.t7\'...')
+  torch.save(opt.save_file .. '-train.t7', data)
 
 end
 

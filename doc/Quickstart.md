@@ -4,7 +4,7 @@ OpenNMT consists of three commands
 
 1. Preprocess the data.
 
-> th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo
+> th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -save_file data/demo
 
 2. Train the model.
 
@@ -21,7 +21,7 @@ Let's walk through each of these commands in more detail.
 
 ```
 th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt
-    -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -output_file data/demo
+    -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -save_file data/demo
 ```
 
 
@@ -75,7 +75,7 @@ Internally the system never touches the words themselves, but uses these indices
 
 ## Step 2: Train the model
 
-> th train.lua -data_file data/demo-train.t7 -savefile demo-model
+> th train.lua -data data/demo-train.t7 -save_file demo-model
 
 The main train command is quite simple. Minimally it takes a data file
 and a save file.  This will run the default model, which consists of a
