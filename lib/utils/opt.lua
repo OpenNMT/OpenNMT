@@ -16,6 +16,17 @@ local function require_options(opt, names)
   end
 end
 
+--[[ Convert `val` string to its actual type (boolean, number or string). ]]
+local function convert(val)
+  if val == 'true' then
+    return true
+  elseif val == 'false' then
+    return false
+  else
+    return tonumber(val) or val
+  end
+end
+
 --[[ Return options set in the file `filename`. ]]
 local function load_file(filename)
   local file = assert(io.open(filename, "r"))
@@ -28,7 +39,7 @@ local function load_file(filename)
       assert(#field == 2, 'badly formatted config file')
       local key = utils.String.strip(field[1])
       local val = utils.String.strip(field[2])
-      opt[key] = val
+      opt[key] = convert(val)
     end
   end
 
