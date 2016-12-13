@@ -59,6 +59,16 @@ local function load_config(filename, opt)
   return opt
 end
 
+local function dump(opt, filename)
+  local file = assert(io.open(filename, 'w'))
+
+  for key, val in pairs(opt) do
+    file:write(key .. ' = ' .. tostring(val) .. '\n')
+  end
+
+  file:close()
+end
+
 local function init(opt, required_options)
   if opt.config:len() > 0 then
     opt = load_config(opt.config, opt)
@@ -72,5 +82,6 @@ local function init(opt, required_options)
 end
 
 return {
+  dump = dump,
   init = init
 }
