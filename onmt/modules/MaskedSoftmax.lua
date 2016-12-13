@@ -1,4 +1,4 @@
-require 'nngraph'
+require('nngraph')
 
 --[[ A batched-softmax wrapper to mask the probabilities of padding.
 

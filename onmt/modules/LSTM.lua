@@ -1,4 +1,4 @@
-require 'nngraph'
+require('nngraph')
 
 --[[
 Implementation of a single stacked-LSTM step as

@@ -1,4 +1,4 @@
-require 'nngraph'
+require('nngraph')
 
 --[[ Sequencer is the base class for encoder and decoder models.
   Main task is to manage `self.net(t)`, the unrolled network

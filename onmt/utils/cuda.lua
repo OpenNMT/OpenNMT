@@ -1,6 +1,6 @@
-require 'torch'
-require 'nn'
-require 'nngraph'
+require('torch')
+require('nn')
+require('nngraph')
 
 local Cuda = {
   activated = false
@@ -11,8 +11,8 @@ function Cuda.init(opt, gpuIdx)
 
   if Cuda.activated then
     local _, err = pcall(function()
-      require 'cutorch'
-      require 'cunn'
+      require('cutorch')
+      require('cunn')
       if gpuIdx == nil then
         -- allow memory access between devices
         cutorch.getKernelPeerToPeerAccess(true)

@@ -26,14 +26,14 @@ function Parallel.init(args)
     Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
-      local threads = require 'threads'
+      local threads = require('threads')
       threads.Threads.serialization('threads.sharedserialize')
       local thegpus = Parallel.gpus
       Parallel._pool = threads.Threads(
         Parallel.count,
         function(threadid)
-          require 'cunn'
-          require 'nngraph'
+          require('cunn')
+          require('nngraph')
           require('onmt.init')
           onmt.utils.Cuda.init(args, thegpus[threadid])
         end

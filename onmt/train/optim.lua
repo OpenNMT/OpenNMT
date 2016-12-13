@@ -1,4 +1,4 @@
-require 'torch'
+require('torch')
 
 local function adagrad_step(dfdx, lr, state)
   if not state.var then
