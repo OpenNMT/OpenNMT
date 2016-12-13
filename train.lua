@@ -34,8 +34,10 @@ cmd:text("")
 cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
 cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
-cmd:option('-feat_vec_exponent', 0.7, [[If the feature takes N values, then the
-                                      embedding dimension will be set to N^exponent]])
+cmd:option('-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]])
+cmd:option('-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
+                                      then the embedding dimension will be set to N^exponent]])
+cmd:option('-feat_vec_size', 20, [[When using sum, the common embedding size of the features]])
 cmd:option('-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
 cmd:option('-residual', false, [[Add residual connections between RNN layers.]])
 cmd:option('-brnn', false, [[Use a bidirectional encoder]])

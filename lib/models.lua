@@ -8,7 +8,10 @@ local function buildEncoder(opt, dicts)
 
   -- Sequences with features.
   if #dicts.features > 0 then
-    local src_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features, opt.feat_vec_exponent)
+    local src_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features,
+                                                          opt.feat_vec_exponent,
+                                                          opt.feat_vec_size,
+                                                          opt.feat_merge)
 
     input_network = nn.Sequential()
       :add(nn.ParallelTable()
@@ -55,7 +58,10 @@ local function buildDecoder(opt, dicts)
 
   -- Sequences with features.
   if #dicts.features > 0 then
-    local tgt_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features, opt.feat_vec_exponent)
+    local tgt_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features,
+                                                          opt.feat_vec_exponent,
+                                                          opt.feat_vec_size,
+                                                          opt.feat_merge)
 
     input_network = nn.Sequential()
       :add(nn.ParallelTable()

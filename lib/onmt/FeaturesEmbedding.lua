@@ -1,17 +1,26 @@
+--[[
+  A nngraph unit that maps features ids to embeddings. When using multiple
+  features this can be the concatenation or the sum of each individual embedding.
+]]
 local FeaturesEmbedding, parent = torch.class('onmt.FeaturesEmbedding', 'nn.Container')
 
-function FeaturesEmbedding:__init(dicts, dimExponent)
+function FeaturesEmbedding:__init(dicts, dimExponent, dim, merge)
   parent.__init(self)
 
-  self.net = self:_buildModel(dicts, dimExponent)
+  self.net = self:_buildModel(dicts, dimExponent, dim, merge)
   self:add(self.net)
 end
 
-function FeaturesEmbedding:_buildModel(dicts, dimExponent)
+function FeaturesEmbedding:_buildModel(dicts, dimExponent, dim, merge)
   local inputs = {}
   local output
 
-  self.outputSize = 0
+  if merge == 'sum' then
+    self.outputSize = dim
+  else
+    self.outputSize = 0
+  end
+
   self.embs = {}
 
   for i = 1, #dicts do
@@ -19,15 +28,22 @@ function FeaturesEmbedding:_buildModel(dicts, dimExponent)
     table.insert(inputs, feat)
 
     local vocabSize = #dicts[i]
-    local embSize = math.floor(vocabSize ^ dimExponent)
+    local embSize
+
+    if merge == 'sum' then
+      embSize = self.outputSize
+    else
+      embSize = math.floor(vocabSize ^ dimExponent)
+      self.outputSize = self.outputSize + embSize
+    end
 
     self.embs[i] = onmt.WordEmbedding(vocabSize, embSize)
     local emb = self.embs[i](feat)
 
-    self.outputSize = self.outputSize + embSize
-
     if not output then
       output = emb
+    elseif merge == 'sum' then
+      output = nn.CAddTable()({output, emb})
     else
       output = nn.JoinTable(2)({output, emb})
     end
