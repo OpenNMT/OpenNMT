@@ -1,12 +1,6 @@
-require('./lib/utils')
-require('./lib/data')
-require('./lib/train')
-require('./lib/onmt')
+require('onmt.init')
 
 local path = require('pl.path')
-
-local constants = require('lib.constants')
-local Models = require('lib.models')
 
 local cmd = torch.CmdLine()
 
@@ -144,7 +138,7 @@ local function build_criterion(vocab_size, features)
   local function add_nll_criterion(size)
     -- Ignores padding value.
     local w = torch.ones(size)
-    w[constants.PAD] = 0
+    w[onmt.Constants.PAD] = 0
 
     local nll = nn.ClassNLLCriterion(w)
 
@@ -170,7 +164,7 @@ local function eval(model, criterion, data)
   model.decoder:evaluate()
 
   for i = 1, #data do
-    local batch = utils.Cuda.convert(data:get_batch(i))
+    local batch = onmt.utils.Cuda.convert(data:get_batch(i))
     local encoder_states, context = model.encoder:forward(batch)
     loss = loss + model.decoder:compute_loss(batch, encoder_states, context, criterion)
     total = total + batch.target_non_zeros
@@ -186,7 +180,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
   local params, grad_params = {}, {}
   local criterion
 
-  utils.Parallel.launch(nil, function(idx)
+  onmt.utils.Parallel.launch(nil, function(idx)
     -- Only logs information of the first thread.
     local verbose = idx == 1
 
@@ -197,14 +191,14 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     end
 
     -- define criterion of each GPU
-    _G.criterion = utils.Cuda.convert(build_criterion(#dataset.dicts.tgt.words,
-                                                      dataset.dicts.tgt.features))
+    _G.criterion = onmt.utils.Cuda.convert(build_criterion(#dataset.dicts.tgt.words,
+                                                           dataset.dicts.tgt.features))
 
     -- optimize memory of the first clone
     if not opt.disable_mem_optimization then
-      local batch = utils.Cuda.convert(train_data:get_batch(1))
+      local batch = onmt.utils.Cuda.convert(train_data:get_batch(1))
       batch.total_size = batch.size
-      utils.Memory.optimize(_G.model, _G.criterion, batch, verbose)
+      onmt.utils.Memory.optimize(_G.model, _G.criterion, batch, verbose)
     end
 
     return idx, _G.criterion, _G.params, _G.grad_params
@@ -214,7 +208,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     grad_params[idx] = thegrad_params
   end)
 
-  local optim = train.Optim.new({
+  local optim = onmt.train.Optim.new({
     method = opt.optim,
     num_models = #params[1],
     learning_rate = opt.learning_rate,
@@ -223,20 +217,20 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     optim_states = opt.optim_states
   })
 
-  local checkpoint = train.Checkpoint.new(opt, model, optim, dataset)
+  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
 
   local function train_epoch(epoch)
     local epoch_state
     local batch_order
 
     local start_i = opt.start_iteration
-    local num_iterations = math.ceil(#train_data / utils.Parallel.count)
+    local num_iterations = math.ceil(#train_data / onmt.utils.Parallel.count)
 
     if start_i > 1 and info ~= nil then
-      epoch_state = train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), info.epoch_status)
+      epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), info.epoch_status)
       batch_order = info.batch_order
     else
-      epoch_state = train.EpochState.new(epoch, num_iterations, optim:get_learning_rate())
+      epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate())
       -- shuffle mini batch order
       batch_order = torch.randperm(#train_data)
     end
@@ -244,11 +238,11 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     opt.start_iteration = 1
     local iter = 1
 
-    for i = start_i, #train_data, utils.Parallel.count do
+    for i = start_i, #train_data, onmt.utils.Parallel.count do
       local batches = {}
       local total_size = 0
 
-      for j = 1, math.min(utils.Parallel.count, #train_data-i+1) do
+      for j = 1, math.min(onmt.utils.Parallel.count, #train_data-i+1) do
         local batch_idx = batch_order[i+j-1]
         if epoch <= opt.curriculum then
           batch_idx = i+j-1
@@ -259,14 +253,14 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
 
       local losses = {}
 
-      utils.Parallel.launch(nil, function(idx)
+      onmt.utils.Parallel.launch(nil, function(idx)
         _G.batch = batches[idx]
         if _G.batch == nil then
           return idx, 0
         end
 
         -- send batch data to GPU
-        utils.Cuda.convert(_G.batch)
+        onmt.utils.Cuda.convert(_G.batch)
         _G.batch.total_size = total_size
 
         optim:zero_grad(_G.grad_params)
@@ -281,14 +275,14 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
       function(idx, loss) losses[idx]=loss end)
 
       -- accumulate the gradients from the different parallel threads
-      utils.Parallel.accGradParams(grad_params, batches)
+      onmt.utils.Parallel.accGradParams(grad_params, batches)
 
       -- update the parameters
       optim:prepare_grad(grad_params[1], opt.max_grad_norm)
       optim:update_params(params[1], grad_params[1])
 
       -- sync the paramaters with the different parallel threads
-      utils.Parallel.syncParams(params)
+      onmt.utils.Parallel.syncParams(params)
 
       epoch_state:update(batches, losses)
 
@@ -327,18 +321,18 @@ local function main()
     "save_file"
   }
 
-  utils.Opt.init(opt, required_options)
-  utils.Cuda.init(opt)
-  utils.Parallel.init(opt)
+  onmt.utils.Opt.init(opt, required_options)
+  onmt.utils.Cuda.init(opt)
+  onmt.utils.Parallel.init(opt)
 
-  local log = utils.Log.new(opt.save_file .. ".log", not opt.no_log)
+  local log = onmt.utils.Log.new(opt.save_file .. ".log", not opt.no_log)
 
   -- Create the data loader class.
   print('Loading data from ' .. opt.data .. '...')
   local dataset = torch.load(opt.data)
 
-  local train_data = data.Dataset.new(dataset.train.src, dataset.train.tgt)
-  local valid_data = data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
+  local train_data = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
+  local valid_data = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
   train_data:set_batch_size(opt.max_batch_size)
   valid_data:set_batch_size(opt.max_batch_size)
@@ -350,7 +344,7 @@ local function main()
   print(string.format(' * maximum sequence length: source = %d; target = %d',
                       train_data.max_source_length, train_data.max_target_length))
   print(string.format(' * number of training sentences: %d', #train_data.src))
-  print(string.format(' * maximum batch size: %d', opt.max_batch_size * utils.Parallel.count))
+  print(string.format(' * maximum batch size: %d', opt.max_batch_size * onmt.utils.Parallel.count))
 
   local checkpoint = {}
 
@@ -391,20 +385,20 @@ local function main()
 
   local model
 
-  utils.Parallel.launch(nil, function(idx)
+  onmt.utils.Parallel.launch(nil, function(idx)
 
     _G.model = {}
 
     if checkpoint.models then
-      _G.model.encoder = Models.loadEncoder(checkpoint.models.encoder, idx > 1)
-      _G.model.decoder = Models.loadDecoder(checkpoint.models.decoder, idx > 1)
+      _G.model.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder, idx > 1)
+      _G.model.decoder = onmt.Models.loadDecoder(checkpoint.models.decoder, idx > 1)
     else
-      _G.model.encoder = Models.buildEncoder(opt, dataset.dicts.src)
-      _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.tgt)
+      _G.model.encoder = onmt.Models.buildEncoder(opt, dataset.dicts.src)
+      _G.model.decoder = onmt.Models.buildDecoder(opt, dataset.dicts.tgt)
     end
 
     for _, mod in pairs(_G.model) do
-      utils.Cuda.convert(mod)
+      onmt.utils.Cuda.convert(mod)
     end
 
     return idx, _G.model

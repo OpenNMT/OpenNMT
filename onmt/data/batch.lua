@@ -1,5 +1,3 @@
-local constants = require('lib.constants')
-
 --[[ Return the max_length, sizes, and non-zero count
   of a batch of `seq`s ignoring `ignore` words.
 --]]
@@ -55,7 +53,7 @@ function Batch:__init(src, src_features, tgt, tgt_features)
 
   self.source_length, self.source_size = get_length(src)
 
-  local source_seq = torch.IntTensor(self.source_length, self.size):fill(constants.PAD)
+  local source_seq = torch.IntTensor(self.source_length, self.size):fill(onmt.Constants.PAD)
   self.source_input = source_seq:clone()
   self.source_input_rev = source_seq:clone()
 
@@ -72,7 +70,7 @@ function Batch:__init(src, src_features, tgt, tgt_features)
   if tgt ~= nil then
     self.target_length, self.target_size, self.target_non_zeros = get_length(tgt, 1)
 
-    local target_seq = torch.IntTensor(self.target_length, self.size):fill(constants.PAD)
+    local target_seq = torch.IntTensor(self.target_length, self.size):fill(onmt.Constants.PAD)
     self.target_input = target_seq:clone()
     self.target_output = target_seq:clone()
 

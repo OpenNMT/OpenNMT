@@ -7,7 +7,7 @@ function PhraseTable:__init(file_path)
 
   for line in f:lines() do
     local c = line:split("|||")
-    self.table[utils.String.strip(c[1])] = c[2]
+    self.table[onmt.utils.String.strip(c[1])] = c[2]
   end
 
   f:close()

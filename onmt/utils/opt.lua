@@ -37,8 +37,8 @@ local function load_file(filename)
     if line:len() > 0 and string.sub(line, 1, 1) ~= '#' then
       local field = line:split('=')
       assert(#field == 2, 'badly formatted config file')
-      local key = utils.String.strip(field[1])
-      local val = utils.String.strip(field[2])
+      local key = onmt.utils.String.strip(field[1])
+      local val = onmt.utils.String.strip(field[2])
       opt[key] = convert(val)
     end
   end

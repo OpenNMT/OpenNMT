@@ -94,7 +94,7 @@ local function clonePretrained(model)
     if k == 'modules' then
       clone.modules = {}
       for i = 1, #v do
-        table.insert(clone.modules, utils.Tensor.deepClone(v[i]))
+        table.insert(clone.modules, onmt.utils.Tensor.deepClone(v[i]))
       end
     else
       clone[k] = v

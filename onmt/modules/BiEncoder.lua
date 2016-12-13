@@ -29,7 +29,7 @@ end
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
+Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 
 --]]
 local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
@@ -105,18 +105,18 @@ end
 
 function BiEncoder:forward(batch)
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
-                                                    self.stateProto,
-                                                    { batch.size, self.args.hidden_size })
+    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.num_effective_layers,
+                                                         self.stateProto,
+                                                         { batch.size, self.args.hidden_size })
 
     if self.train then
       self.bwd:shareInput(self.fwd)
     end
   end
 
-  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.hidden_size })
-  local context = utils.Tensor.reuseTensor(self.contextProto,
-                                           { batch.size, batch.source_length, self.args.hidden_size })
+  local states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.hidden_size })
+  local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
+                                                { batch.size, batch.source_length, self.args.hidden_size })
 
   local fwd_states, fwd_context = self.fwd:forward(batch)
   reverse_input(batch)
@@ -176,8 +176,8 @@ function BiEncoder:backward(batch, grad_states_output, grad_context_output)
   self.fwd:backward(batch, grad_states_output_fwd, grad_context_output_fwd)
 
   -- reverse gradients of the backward context
-  local grad_context_bwd = utils.Tensor.reuseTensor(self.gradContextBwdProto,
-                                                    { batch.size, batch.source_length, self.args.rnn_size })
+  local grad_context_bwd = onmt.utils.Tensor.reuseTensor(self.gradContextBwdProto,
+                                                         { batch.size, batch.source_length, self.args.rnn_size })
 
   for t = 1, batch.source_length do
     grad_context_bwd[{{}, t}]:copy(grad_context_output_bwd[{{}, batch.source_length - t + 1}])

@@ -1,5 +1,3 @@
-local constants = require 'lib.constants'
-
 --[[ nn unit. Maps from word ids to embeddings. Slim wrapper around
 nn.LookupTable to allow fixed and pretrained embeddings.
 --]]
@@ -16,7 +14,7 @@ Parameters:
 function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
   parent.__init(self)
   self.vocabSize = vocab_size
-  self.net = nn.LookupTable(vocab_size, vec_size, constants.PAD)
+  self.net = nn.LookupTable(vocab_size, vec_size, onmt.Constants.PAD)
   self:add(self.net)
 
   -- If embeddings are given. Initialize them.

@@ -1,5 +1,3 @@
-require 'torch'
-
 --[[ Class for managing the training process by logging and storing
   the state of the current epoch.
 ]]
@@ -42,7 +40,7 @@ end
 function EpochState:log(batch_index)
   local time_taken = self:get_time()
   local stats = ''
-  local freeMemory = utils.Cuda.freeMemory()
+  local freeMemory = onmt.utils.Cuda.freeMemory()
   if freeMemory < self.minFreeMemory then
     self.minFreeMemory = freeMemory
   end

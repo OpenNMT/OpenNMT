@@ -1,10 +1,9 @@
-require('./lib/translate')
-require('./lib/utils')
+require('onmt.init')
 
 local cmd = torch.CmdLine()
 
 cmd:text("")
-cmd:text("**translate.lua**")
+cmd:text("**onmt.translate.lua**")
 cmd:text("")
 
 
@@ -57,9 +56,9 @@ local function main()
     "src_file"
   }
 
-  utils.Opt.init(opt, required_options)
+  onmt.utils.Opt.init(opt, required_options)
 
-  local src_reader = utils.FileReader.new(opt.src_file)
+  local src_reader = onmt.utils.FileReader.new(opt.src_file)
   local src_batch = {}
   local src_words_batch = {}
   local src_features_batch = {}
@@ -72,13 +71,13 @@ local function main()
   local with_gold_score = opt.tgt_file:len() > 0
 
   if with_gold_score then
-    tgt_reader = utils.FileReader.new(opt.tgt_file)
+    tgt_reader = onmt.utils.FileReader.new(opt.tgt_file)
     tgt_batch = {}
     tgt_words_batch = {}
     tgt_features_batch = {}
   end
 
-  translate.Translator.init(opt)
+  onmt.translate.Translator.init(opt)
 
   local out_file = io.open(opt.output_file, 'w')
 
@@ -105,7 +104,7 @@ local function main()
     end
 
     if src_tokens ~= nil then
-      local src_words, src_feats = utils.Features.extract(src_tokens)
+      local src_words, src_feats = onmt.utils.Features.extract(src_tokens)
       table.insert(src_batch, src_tokens)
       table.insert(src_words_batch, src_words)
       if #src_feats > 0 then
@@ -113,7 +112,7 @@ local function main()
       end
 
       if with_gold_score then
-        local tgt_words, tgt_feats = utils.Features.extract(tgt_tokens)
+        local tgt_words, tgt_feats = onmt.utils.Features.extract(tgt_tokens)
         table.insert(tgt_batch, tgt_tokens)
         table.insert(tgt_words_batch, tgt_words)
         if #tgt_feats > 0 then
@@ -129,8 +128,8 @@ local function main()
         timer:resume()
       end
 
-      local pred_batch, info = translate.Translator.translate(src_words_batch, src_features_batch,
-                                                              tgt_words_batch, tgt_features_batch)
+      local pred_batch, info = onmt.translate.Translator.translate(src_words_batch, src_features_batch,
+                                                                   tgt_words_batch, tgt_features_batch)
 
       if opt.time then
         timer:stop()

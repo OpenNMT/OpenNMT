@@ -1,7 +1,7 @@
 require 'nn'
 require 'nngraph'
 
-require 'lib.utils.dict'
+require('onmt.init')
 
 local path = require 'pl.path'
 

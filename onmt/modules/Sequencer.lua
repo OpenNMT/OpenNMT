@@ -24,7 +24,7 @@ function Sequencer:__init(network)
 end
 
 function Sequencer:_sharedClone()
-  local clone = utils.Tensor.deepClone(self.network)
+  local clone = onmt.utils.Tensor.deepClone(self.network)
 
   -- Share parameters.
   if self.network.parameters then

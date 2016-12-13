@@ -66,7 +66,7 @@ end
 --[[ Get batch `idx`. If nil make a batch of all the data. ]]
 function Dataset:get_batch(idx)
   if idx == nil or self.batch_range == nil then
-    return data.Batch.new(self.src, self.src_features, self.tgt, self.tgt_features)
+    return onmt.data.Batch.new(self.src, self.src_features, self.tgt, self.tgt_features)
   end
 
   local range_start = self.batch_range[idx]["begin"]
@@ -91,7 +91,7 @@ function Dataset:get_batch(idx)
     end
   end
 
-  return data.Batch.new(src, src_features, tgt, tgt_features)
+  return onmt.data.Batch.new(src, src_features, tgt, tgt_features)
 end
 
 return Dataset

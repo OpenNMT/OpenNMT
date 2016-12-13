@@ -11,7 +11,7 @@
      |      |      |             |
     x_1    x_2    x_3           x_n
 
-Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
+Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 
 --]]
 local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
@@ -23,7 +23,7 @@ Parameters:
 
   * `input_network` - input module.
   * `rnn` - recurrent module.
-  * `generator` - optional, a output [onmt.Generator](lib+onmt+Generator).
+  * `generator` - optional, a output [onmt.Generator](onmt+modules+Generator).
   * `input_feed` - enable input feeding.
 --]]
 function Decoder:__init(input_network, rnn, generator, input_feed)
@@ -155,7 +155,7 @@ end
 
   Parameters:
 
-  * See  [onmt.MaskedSoftmax](lib+onmt+MaskedSoftmax).
+  * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
 function Decoder:maskPadding(source_sizes, source_length, beam_size)
   if not self.decoder_attn then
@@ -204,7 +204,7 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `build_network('dec')`).
-  utils.Table.append(inputs, prev_states)
+  onmt.utils.Table.append(inputs, prev_states)
   table.insert(inputs, input)
   table.insert(inputs, context)
   local input_size
@@ -216,8 +216,8 @@ function Decoder:forward_one(input, prev_states, context, prev_out, t)
 
   if self.args.input_feed then
     if prev_out == nil then
-      table.insert(inputs, utils.Tensor.reuseTensor(self.inputFeedProto,
-                                                    { input_size, self.args.rnn_size }))
+      table.insert(inputs, onmt.utils.Tensor.reuseTensor(self.inputFeedProto,
+                                                         { input_size, self.args.rnn_size }))
     else
       table.insert(inputs, prev_out)
     end
@@ -252,12 +252,12 @@ function Decoder:forward_and_apply(batch, encoder_states, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
-                                                    self.stateProto,
-                                                    { batch.size, self.args.rnn_size })
+    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.num_effective_layers,
+                                                         self.stateProto,
+                                                         { batch.size, self.args.rnn_size })
   end
 
-  local states = utils.Tensor.copyTensorTable(self.statesProto, encoder_states)
+  local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, encoder_states)
 
   local prev_out
 
@@ -269,13 +269,13 @@ end
 
 --[[Compute all forward steps.
 
-Parameters:
+  Parameters:
 
   * `batch` - as defined in batch.lua
   * `encoder_states` - the final encoder states
   * `context` - the context to apply attention to.
 
-Returns: Tables of top hidden layer at each timestep.
+  Returns: Tables of top hidden layer at each timestep.
 
 --]]
 function Decoder:forward(batch, encoder_states, context)
@@ -286,7 +286,7 @@ function Decoder:forward(batch, encoder_states, context)
   local outputs = {}
 
   self:forward_and_apply(batch, encoder_states, context, function (out)
-    table.insert(outputs, out)
+                           table.insert(outputs, out)
   end)
 
   return outputs
@@ -294,7 +294,7 @@ end
 
 --[[ Compute the standard backward update.
 
-Parameters:
+  Parameters:
 
   * `batch`
   * `outputs`
@@ -302,18 +302,18 @@ Parameters:
 
   Note: This code is both the standard backward and criterion forward/backward.
   It returns both the gradInputs (ret 1 and 2) and the loss.
--- ]]
+  -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_effective_layers + 1,
-                                                         self.gradOutputProto,
-                                                         { batch.size, self.args.rnn_size })
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.num_effective_layers + 1,
+                                                              self.gradOutputProto,
+                                                              { batch.size, self.args.rnn_size })
   end
 
-  local grad_states_input = utils.Tensor.reuseTensorTable(self.gradOutputsProto,
-                                                          { batch.size, self.args.rnn_size })
-  local grad_context_input = utils.Tensor.reuseTensor(self.gradContextProto,
-                                                      { batch.size, batch.source_length, self.args.rnn_size })
+  local grad_states_input = onmt.utils.Tensor.reuseTensorTable(self.gradOutputsProto,
+                                                               { batch.size, self.args.rnn_size })
+  local grad_context_input = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
+                                                           { batch.size, batch.source_length, self.args.rnn_size })
 
   local grad_context_idx = #self.statesProto + 2
   local grad_input_feed_idx = #self.statesProto + 3
@@ -363,9 +363,9 @@ end
 function Decoder:compute_loss(batch, encoder_states, context, criterion)
   local loss = 0
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
-    local pred = self.generator:forward(out)
-    local output = batch:get_target_output(t)
-    loss = loss + criterion:forward(pred, output)
+                           local pred = self.generator:forward(out)
+                           local output = batch:get_target_output(t)
+                           loss = loss + criterion:forward(pred, output)
   end)
 
   return loss
@@ -378,12 +378,12 @@ function Decoder:compute_score(batch, encoder_states, context)
   local score = {}
 
   self:forward_and_apply(batch, encoder_states, context, function (out, t)
-    local pred = self.generator:forward(out)
-    for b = 1, batch.size do
-      if t <= batch.target_size[b] then
-        score[b] = (score[b] or 0) + pred[1][b][batch.target_output[t][b]]
-      end
-    end
+                           local pred = self.generator:forward(out)
+                           for b = 1, batch.size do
+                             if t <= batch.target_size[b] then
+                               score[b] = (score[b] or 0) + pred[1][b][batch.target_output[t][b]]
+                             end
+                           end
   end)
   return score
 end

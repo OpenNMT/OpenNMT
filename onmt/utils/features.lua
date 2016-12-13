@@ -1,5 +1,3 @@
-local constants = require('lib.constants')
-
 --[[ Separate words and features (if any). ]]
 local function extract(tokens)
   local words = {}
@@ -7,7 +5,7 @@ local function extract(tokens)
   local num_features = nil
 
   for t = 1, #tokens do
-    local field = utils.String.split(tokens[t], '%-|%-')
+    local field = onmt.utils.String.split(tokens[t], '%-|%-')
     local word = field[1]
 
     if word:len() > 0 then
@@ -66,7 +64,7 @@ local function generateSource(dicts, src)
   local src_id = {}
 
   for j = 1, #dicts do
-    table.insert(src_id, dicts[j]:convert_to_idx(src[j], constants.UNK_WORD))
+    table.insert(src_id, dicts[j]:convert_to_idx(src[j], onmt.Constants.UNK_WORD))
   end
 
   return src_id
@@ -81,9 +79,9 @@ local function generateTarget(dicts, tgt)
   for j = 1, #dicts do
     -- Target features are shifted relative to the target words.
     -- Use EOS tokens as a placeholder.
-    table.insert(tgt[j], 1, constants.BOS_WORD)
-    table.insert(tgt[j], 1, constants.EOS_WORD)
-    table.insert(tgt_id, dicts[j]:convert_to_idx(tgt[j], constants.UNK_WORD))
+    table.insert(tgt[j], 1, onmt.Constants.BOS_WORD)
+    table.insert(tgt[j], 1, onmt.Constants.EOS_WORD)
+    table.insert(tgt_id, dicts[j]:convert_to_idx(tgt[j], onmt.Constants.UNK_WORD))
   end
 
   return tgt_id

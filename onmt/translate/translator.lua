@@ -1,10 +1,3 @@
-require('../onmt')
-require('../utils')
-require('../data')
-
-local Models = require('lib.models')
-local constants = require('lib.constants')
-
 local checkpoint = nil
 local models = {}
 local dicts = {}
@@ -14,24 +7,24 @@ local phrase_table
 
 local function init(args)
   opt = args
-  utils.Cuda.init(opt)
+  onmt.utils.Cuda.init(opt)
 
   print('Loading ' .. opt.model .. '...')
   checkpoint = torch.load(opt.model)
 
-  models.encoder = Models.loadEncoder(checkpoint.models.encoder)
-  models.decoder = Models.loadDecoder(checkpoint.models.decoder)
+  models.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder)
+  models.decoder = onmt.Models.loadDecoder(checkpoint.models.decoder)
 
   models.encoder:evaluate()
   models.decoder:evaluate()
 
-  utils.Cuda.convert(models.encoder)
-  utils.Cuda.convert(models.decoder)
+  onmt.utils.Cuda.convert(models.encoder)
+  onmt.utils.Cuda.convert(models.decoder)
 
   dicts = checkpoint.dicts
 
   if opt.phrase_table_file:len() > 0 then
-    phrase_table = translate.PhraseTable.new(opt.phrase_table_file)
+    phrase_table = onmt.translate.PhraseTable.new(opt.phrase_table_file)
   end
 end
 
@@ -48,39 +41,39 @@ local function build_data(src_batch, src_features_batch, gold_batch, gold_featur
   end
 
   for b = 1, #src_batch do
-    table.insert(src_data.words, dicts.src.words:convert_to_idx(src_batch[b], constants.UNK_WORD))
+    table.insert(src_data.words, dicts.src.words:convert_to_idx(src_batch[b], onmt.Constants.UNK_WORD))
 
     if #dicts.src.features > 0 then
       table.insert(src_data.features,
-                   utils.Features.generateSource(dicts.src.features, src_features_batch[b]))
+                   onmt.utils.Features.generateSource(dicts.src.features, src_features_batch[b]))
     end
 
     if tgt_data ~= nil then
       table.insert(tgt_data.words,
                    dicts.tgt.words:convert_to_idx(gold_batch[b],
-                                                   constants.UNK_WORD,
-                                                   constants.BOS_WORD,
-                                                   constants.EOS_WORD))
+                                                  onmt.Constants.UNK_WORD,
+                                                  onmt.Constants.BOS_WORD,
+                                                  onmt.Constants.EOS_WORD))
 
       if #dicts.tgt.features > 0 then
         table.insert(tgt_data.features,
-                     utils.Features.generateTarget(dicts.tgt.features, gold_features_batch[b]))
+                     onmt.utils.Features.generateTarget(dicts.tgt.features, gold_features_batch[b]))
       end
     end
   end
 
-  return data.Dataset.new(src_data, tgt_data)
+  return onmt.data.Dataset.new(src_data, tgt_data)
 end
 
 local function build_target_tokens(pred, pred_feats, src, attn)
-  local tokens = dicts.tgt.words:convert_to_labels(pred, constants.EOS)
+  local tokens = dicts.tgt.words:convert_to_labels(pred, onmt.Constants.EOS)
 
   -- Always ignore last token to stay consistent, even it may not be EOS.
   table.remove(tokens)
 
   if opt.replace_unk then
     for i = 1, #tokens do
-      if tokens[i] == constants.UNK_WORD then
+      if tokens[i] == onmt.Constants.UNK_WORD then
         local _, max_index = attn[i]:max(1)
         local source = src[max_index[1]]
 
@@ -94,7 +87,7 @@ local function build_target_tokens(pred, pred_feats, src, attn)
   end
 
   if pred_feats ~= nil then
-    tokens = utils.Features.annotate(tokens, pred_feats, dicts.tgt.features)
+    tokens = onmt.utils.Features.annotate(tokens, pred_feats, dicts.tgt.features)
   end
 
   return tokens
@@ -139,7 +132,7 @@ local function translate_batch(batch)
   local beam = {}
 
   for b = 1, batch.size do
-    table.insert(beam, translate.Beam.new(opt.beam_size, #dicts.tgt.features))
+    table.insert(beam, onmt.translate.Beam.new(opt.beam_size, #dicts.tgt.features))
     table.insert(batch_idx, b)
   end
 
@@ -185,7 +178,7 @@ local function translate_batch(batch)
     else
       inputs = {}
       table.insert(inputs, input)
-      utils.Table.append(inputs, input_features)
+      onmt.utils.Table.append(inputs, input_features)
     end
 
     if batch.size > 1 then

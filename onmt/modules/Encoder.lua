@@ -10,7 +10,7 @@
     x_1    x_2    x_3           x_n
 
 
-Inherits from [onmt.Sequencer](lib+onmt+Sequencer).
+Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
@@ -133,20 +133,20 @@ function Encoder:forward(batch)
   local output_size = self.args.rnn_size
 
   if self.statesProto == nil then
-    self.statesProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
-                                                    self.stateProto,
-                                                    { batch.size, output_size })
+    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.num_effective_layers,
+                                                         self.stateProto,
+                                                         { batch.size, output_size })
   end
 
   -- Make initial states h_0.
-  local states = utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, output_size })
+  local states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, output_size })
 
   -- Preallocated output matrix.
-  local context = utils.Tensor.reuseTensor(self.contextProto,
-                                           { batch.size, batch.source_length, output_size })
+  local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
+                                                { batch.size, batch.source_length, output_size })
 
   if self.mask_padding and not batch.source_input_pad_left then
-    final_states = utils.Tensor.recursiveClone(states)
+    final_states = onmt.utils.Tensor.recursiveClone(states)
   end
   if self.train then
     self.inputs = {}
@@ -158,7 +158,7 @@ function Encoder:forward(batch)
 
     -- Construct "inputs". Prev states come first then source.
     local inputs = {}
-    utils.Table.append(inputs, states)
+    onmt.utils.Table.append(inputs, states)
     table.insert(inputs, batch:get_source_input(t))
 
     if self.train then
@@ -195,24 +195,24 @@ end
 
 --[[ Backward pass (only called during training)
 
-Parameters:
+  Parameters:
 
   * `batch` - must be same as for forward
   * `grad_states_output` gradient of loss wrt last state
   * `grad_context_output` - gradient of loss wrt full context.
 
-Returns: nil
+  Returns: nil
 --]]
 function Encoder:backward(batch, grad_states_output, grad_context_output)
   -- TODO: change this to (input, gradOutput) as in nngraph.
   local output_size = self.args.rnn_size
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = utils.Tensor.initTensorTable(self.args.num_effective_layers,
-                                                         self.gradOutputProto,
-                                                         { batch.size, output_size })
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.num_effective_layers,
+                                                              self.gradOutputProto,
+                                                              { batch.size, output_size })
   end
 
-  local grad_states_input = utils.Tensor.copyTensorTable(self.gradOutputsProto, grad_states_output)
+  local grad_states_input = onmt.utils.Tensor.copyTensorTable(self.gradOutputsProto, grad_states_output)
   local gradInput = {}
 
   for t = batch.source_length, 1, -1 do

@@ -115,7 +115,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   -- Initialize all intermediate tensors with a first batch.
   local enc_states, context = model.encoder:forward(batch)
   local dec_outputs = model.decoder:forward(batch, enc_states, context)
-  dec_outputs = utils.Tensor.recursiveClone(dec_outputs)
+  dec_outputs = onmt.utils.Tensor.recursiveClone(dec_outputs)
   local enc_grad_states_out, grad_context, _ = model.decoder:backward(batch, dec_outputs, criterion)
   model.encoder:backward(batch, enc_grad_states_out, grad_context)
 

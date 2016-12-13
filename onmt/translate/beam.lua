@@ -1,5 +1,3 @@
-local constants = require 'lib.constants'
-
 --[[Helper function convert a `flat_index` to a row-column tuple
 
 Parameters:
@@ -36,16 +34,16 @@ function Beam:__init(size, num_features)
   self.prev_ks = { torch.LongTensor(size):fill(1) }
 
   -- The outputs at each time-step.
-  self.next_ys = { torch.LongTensor(size):fill(constants.PAD) }
-  self.next_ys[1][1] = constants.BOS
+  self.next_ys = { torch.LongTensor(size):fill(onmt.Constants.PAD) }
+  self.next_ys[1][1] = onmt.Constants.BOS
 
   -- The features output at each time-step
   self.next_features = { {} }
   for j = 1, num_features do
-    self.next_features[1][j] = torch.LongTensor(size):fill(constants.PAD)
+    self.next_features[1][j] = torch.LongTensor(size):fill(onmt.Constants.PAD)
 
     -- EOS is used as a placeholder to shift the features target sequence.
-    self.next_features[1][j][1] = constants.EOS
+    self.next_features[1][j][1] = onmt.Constants.EOS
   end
 
   -- The attentions (matrix) for each time.
@@ -117,7 +115,7 @@ function Beam:advance(word_lk, feats_lk, attn_out)
   end
 
   -- End condition is when top-of-beam is EOS.
-  if next_y[1] == constants.EOS then
+  if next_y[1] == onmt.Constants.EOS then
     self.done = true
   end
 

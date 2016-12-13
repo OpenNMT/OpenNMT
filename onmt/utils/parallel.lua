@@ -20,10 +20,10 @@ local function waitForDevice(dst, src)
 end
 
 function Parallel.init(args)
-  if utils.Cuda.activated then
+  if onmt.utils.Cuda.activated then
     Parallel.count = args.nparallel
-    Parallel.gpus = utils.Cuda.getGPUs(args.nparallel)
-    Parallel.gradBuffer = utils.Cuda.convert(Parallel.gradBuffer)
+    Parallel.gpus = onmt.utils.Cuda.getGPUs(args.nparallel)
+    Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
       local threads = require 'threads'
@@ -34,11 +34,8 @@ function Parallel.init(args)
         function(threadid)
           require 'cunn'
           require 'nngraph'
-          require('lib.utils.init')
-          require('lib.train.init')
-          require('lib.onmt.init')
-          require('lib.data')
-          utils.Cuda.init(args, thegpus[threadid])
+          require('onmt.init')
+          onmt.utils.Cuda.init(args, thegpus[threadid])
         end
       ) -- dedicate threads to GPUs
       Parallel._pool:specific(true)
@@ -59,7 +56,7 @@ function Parallel.init(args)
 end
 
 function Parallel.getGPU(i)
-  if utils.Cuda.activated and Parallel.gpus[i] ~= 0 then
+  if onmt.utils.Cuda.activated and Parallel.gpus[i] ~= 0 then
     return Parallel.gpus[i]
   end
   return 0
@@ -99,7 +96,7 @@ function Parallel.accGradParams(grad_params, batches)
          -- Synchronize before and after copy to ensure that it doesn't overlap
          -- with this add or previous adds
           waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
-          local remoteGrads = utils.Tensor.reuseTensor(Parallel.gradBuffer, grad_params[j][h]:size())
+          local remoteGrads = onmt.utils.Tensor.reuseTensor(Parallel.gradBuffer, grad_params[j][h]:size())
           remoteGrads:copy(grad_params[j][h])
           waitForDevice(Parallel.gpus[1], Parallel.gpus[j])
           grad_params[1][h]:add(remoteGrads)

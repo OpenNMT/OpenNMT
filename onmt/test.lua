@@ -1,6 +1,4 @@
-require('lib.onmt.init')
-require('lib.utils.init')
-require('lib.data.init')
+require('onmt.init')
 
 local tester = torch.Tester()
 
@@ -8,38 +6,38 @@ local tester = torch.Tester()
 local stringTest = torch.TestSuite()
 
 function stringTest.noSplit()
-  tester:eq(utils.String.split('foo-foo', '%-|%-'), { 'foo-foo' })
+  tester:eq(onmt.utils.String.split('foo-foo', '%-|%-'), { 'foo-foo' })
 end
 function stringTest.emptySplit2()
-  tester:eq(utils.String.split('-|-', '%-|%-'), { '', '' })
+  tester:eq(onmt.utils.String.split('-|-', '%-|%-'), { '', '' })
 end
 function stringTest.emptySplit1Right()
-  tester:eq(utils.String.split('foo-|-', '%-|%-'), { 'foo', '' })
+  tester:eq(onmt.utils.String.split('foo-|-', '%-|%-'), { 'foo', '' })
 end
 function stringTest.emptySplit1Middle()
-  tester:eq(utils.String.split('foo-|--|-bar', '%-|%-'), { 'foo', '', 'bar' })
+  tester:eq(onmt.utils.String.split('foo-|--|-bar', '%-|%-'), { 'foo', '', 'bar' })
 end
 function stringTest.emptySplit1Left()
-  tester:eq(utils.String.split('-|-foo', '%-|%-'), { '', 'foo' })
+  tester:eq(onmt.utils.String.split('-|-foo', '%-|%-'), { '', 'foo' })
 end
 function stringTest.split2()
-  tester:eq(utils.String.split('foo-|-bar', '%-|%-'), { 'foo', 'bar' })
+  tester:eq(onmt.utils.String.split('foo-|-bar', '%-|%-'), { 'foo', 'bar' })
 end
 function stringTest.split3()
-  tester:eq(utils.String.split('foo-|-bar-|-foobar', '%-|%-'), { 'foo', 'bar', 'foobar' })
+  tester:eq(onmt.utils.String.split('foo-|-bar-|-foobar', '%-|%-'), { 'foo', 'bar', 'foobar' })
 end
 
 function stringTest.noStrip()
-  tester:eq(utils.String.strip('foo'), 'foo')
+  tester:eq(onmt.utils.String.strip('foo'), 'foo')
 end
 function stringTest.stripLeft()
-  tester:eq(utils.String.strip('  foo'), 'foo')
+  tester:eq(onmt.utils.String.strip('  foo'), 'foo')
 end
 function stringTest.stripRight()
-  tester:eq(utils.String.strip('foo  '), 'foo')
+  tester:eq(onmt.utils.String.strip('foo  '), 'foo')
 end
 function stringTest.stripBoth()
-  tester:eq(utils.String.strip('    foo  '), 'foo')
+  tester:eq(onmt.utils.String.strip('    foo  '), 'foo')
 end
 
 tester:add(stringTest)

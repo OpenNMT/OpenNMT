@@ -1,7 +1,4 @@
-require 'torch'
-
 -- Class for saving and loading models during training.
-
 local Checkpoint = torch.class("Checkpoint")
 
 function Checkpoint:__init(options, model, optim, dataset)
