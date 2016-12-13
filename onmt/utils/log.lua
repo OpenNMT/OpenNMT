@@ -1,5 +1,3 @@
-require('torch')
-
 --[[ Class for managing tab separated training logs ]]
 local Log = torch.class("Log")
 

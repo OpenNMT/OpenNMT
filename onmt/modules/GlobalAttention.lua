@@ -1,4 +1,5 @@
 require('nngraph')
+
 --[[ Global attention takes a matrix and a query vector. It
 then computes a parameterized convex combination of the matrix
 based on the input query.
