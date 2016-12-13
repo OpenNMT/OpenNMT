@@ -48,7 +48,7 @@ function EpochState:log(batch_index)
   end
   stats = stats .. string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
                                  self.epoch, batch_index, self.num_iterations, self.learning_rate)
-  stats = stats .. string.format('Throughput %d/%d/%d total/src/targ tokens/sec ; ',
+  stats = stats .. string.format('Throughput %d/%d/%d total/src/tgt tokens/sec ; ',
                                  (self.num_words_target + self.num_words_source) / time_taken,
                                  self.num_words_source / time_taken,
                                  self.num_words_target / time_taken)

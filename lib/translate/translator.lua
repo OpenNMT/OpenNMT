@@ -40,11 +40,11 @@ local function build_data(src_batch, src_features_batch, gold_batch, gold_featur
   src_data.words = {}
   src_data.features = {}
 
-  local targ_data
+  local tgt_data
   if gold_batch ~= nil then
-    targ_data = {}
-    targ_data.words = {}
-    targ_data.features = {}
+    tgt_data = {}
+    tgt_data.words = {}
+    tgt_data.features = {}
   end
 
   for b = 1, #src_batch do
@@ -55,25 +55,25 @@ local function build_data(src_batch, src_features_batch, gold_batch, gold_featur
                    utils.Features.generateSource(dicts.src.features, src_features_batch[b]))
     end
 
-    if targ_data ~= nil then
-      table.insert(targ_data.words,
-                   dicts.targ.words:convert_to_idx(gold_batch[b],
+    if tgt_data ~= nil then
+      table.insert(tgt_data.words,
+                   dicts.tgt.words:convert_to_idx(gold_batch[b],
                                                    constants.UNK_WORD,
                                                    constants.BOS_WORD,
                                                    constants.EOS_WORD))
 
-      if #dicts.targ.features > 0 then
-        table.insert(targ_data.features,
-                     utils.Features.generateTarget(dicts.targ.features, gold_features_batch[b]))
+      if #dicts.tgt.features > 0 then
+        table.insert(tgt_data.features,
+                     utils.Features.generateTarget(dicts.tgt.features, gold_features_batch[b]))
       end
     end
   end
 
-  return data.Dataset.new(src_data, targ_data)
+  return data.Dataset.new(src_data, tgt_data)
 end
 
 local function build_target_tokens(pred, pred_feats, src, attn)
-  local tokens = dicts.targ.words:convert_to_labels(pred, constants.EOS)
+  local tokens = dicts.tgt.words:convert_to_labels(pred, constants.EOS)
 
   -- Always ignore last token to stay consistent, even it may not be EOS.
   table.remove(tokens)
@@ -94,7 +94,7 @@ local function build_target_tokens(pred, pred_feats, src, attn)
   end
 
   if pred_feats ~= nil then
-    tokens = utils.Features.annotate(tokens, pred_feats, dicts.targ.features)
+    tokens = utils.Features.annotate(tokens, pred_feats, dicts.tgt.features)
   end
 
   return tokens
@@ -139,7 +139,7 @@ local function translate_batch(batch)
   local beam = {}
 
   for b = 1, batch.size do
-    table.insert(beam, translate.Beam.new(opt.beam_size, #dicts.targ.features))
+    table.insert(beam, translate.Beam.new(opt.beam_size, #dicts.tgt.features))
     table.insert(batch_idx, b)
   end
 
@@ -165,7 +165,7 @@ local function translate_batch(batch)
         local word_state, features_state = beam[b]:get_current_state()
         input[{{}, idx}]:copy(word_state)
 
-        for j = 1, #dicts.targ.features do
+        for j = 1, #dicts.tgt.features do
           if input_features[j] == nil then
             input_features[j] = torch.IntTensor(opt.beam_size, remaining_sents)
           end
@@ -175,7 +175,7 @@ local function translate_batch(batch)
     end
 
     input = input:view(opt.beam_size * remaining_sents)
-    for j = 1, #dicts.targ.features do
+    for j = 1, #dicts.tgt.features do
       input_features[j] = input_features[j]:view(opt.beam_size * remaining_sents)
     end
 
@@ -209,7 +209,7 @@ local function translate_batch(batch)
         local idx = batch_idx[b]
 
         local feats_lk = {}
-        for j = 1, #dicts.targ.features do
+        for j = 1, #dicts.tgt.features do
           table.insert(feats_lk, out[j + 1][idx])
         end
 

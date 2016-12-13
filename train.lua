@@ -195,8 +195,8 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     end
 
     -- define criterion of each GPU
-    _G.criterion = utils.Cuda.convert(build_criterion(#dataset.dicts.targ.words,
-                                                      dataset.dicts.targ.features))
+    _G.criterion = utils.Cuda.convert(build_criterion(#dataset.dicts.tgt.words,
+                                                      dataset.dicts.tgt.features))
 
     -- optimize memory of the first clone
     if not opt.disable_mem_optimization then
@@ -335,16 +335,16 @@ local function main()
   print('Loading data from ' .. opt.data .. '...')
   local dataset = torch.load(opt.data)
 
-  local train_data = data.Dataset.new(dataset.train.src, dataset.train.targ)
-  local valid_data = data.Dataset.new(dataset.valid.src, dataset.valid.targ)
+  local train_data = data.Dataset.new(dataset.train.src, dataset.train.tgt)
+  local valid_data = data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
   train_data:set_batch_size(opt.max_batch_size)
   valid_data:set_batch_size(opt.max_batch_size)
 
   print(string.format(' * vocabulary size: source = %d; target = %d',
-                      #dataset.dicts.src.words, #dataset.dicts.targ.words))
+                      #dataset.dicts.src.words, #dataset.dicts.tgt.words))
   print(string.format(' * additional features: source = %d; target = %d',
-                      #dataset.dicts.src.features, #dataset.dicts.targ.features))
+                      #dataset.dicts.src.features, #dataset.dicts.tgt.features))
   print(string.format(' * maximum sequence length: source = %d; target = %d',
                       train_data.max_source_length, train_data.max_target_length))
   print(string.format(' * number of training sentences: %d', #train_data.src))
@@ -398,7 +398,7 @@ local function main()
       _G.model.decoder = Models.loadDecoder(checkpoint.models.decoder, idx > 1)
     else
       _G.model.encoder = Models.buildEncoder(opt, dataset.dicts.src)
-      _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.targ)
+      _G.model.decoder = Models.buildDecoder(opt, dataset.dicts.tgt)
     end
 
     for _, mod in pairs(_G.model) do

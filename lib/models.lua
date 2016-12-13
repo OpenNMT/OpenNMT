@@ -55,15 +55,15 @@ local function buildDecoder(opt, dicts)
 
   -- Sequences with features.
   if #dicts.features > 0 then
-    local targ_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features, opt.feat_vec_exponent)
+    local tgt_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features, opt.feat_vec_exponent)
 
     input_network = nn.Sequential()
       :add(nn.ParallelTable()
              :add(input_network)
-             :add(targ_feat_embedding))
+             :add(tgt_feat_embedding))
       :add(nn.JoinTable(2))
 
-    input_size = input_size + targ_feat_embedding.outputSize
+    input_size = input_size + tgt_feat_embedding.outputSize
 
     generator = onmt.FeaturesGenerator.new(opt.rnn_size, #dicts.words, dicts.features)
   else

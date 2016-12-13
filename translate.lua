@@ -16,7 +16,7 @@ cmd:text("")
 
 cmd:option('-model', '', [[Path to model .t7 file]])
 cmd:option('-src_file', '', [[Source sequence to decode (one line per sequence)]])
-cmd:option('-targ_file', '', [[True target sequence (optional)]])
+cmd:option('-tgt_file', '', [[True target sequence (optional)]])
 cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
 
 -- beam search options
@@ -64,18 +64,18 @@ local function main()
   local src_words_batch = {}
   local src_features_batch = {}
 
-  local targ_reader
-  local targ_batch
-  local targ_words_batch
-  local targ_features_batch
+  local tgt_reader
+  local tgt_batch
+  local tgt_words_batch
+  local tgt_features_batch
 
-  local with_gold_score = opt.targ_file:len() > 0
+  local with_gold_score = opt.tgt_file:len() > 0
 
   if with_gold_score then
-    targ_reader = utils.FileReader.new(opt.targ_file)
-    targ_batch = {}
-    targ_words_batch = {}
-    targ_features_batch = {}
+    tgt_reader = utils.FileReader.new(opt.tgt_file)
+    tgt_batch = {}
+    tgt_words_batch = {}
+    tgt_features_batch = {}
   end
 
   translate.Translator.init(opt)
@@ -99,9 +99,9 @@ local function main()
 
   while true do
     local src_tokens = src_reader:next()
-    local targ_tokens
+    local tgt_tokens
     if with_gold_score then
-      targ_tokens = targ_reader:next()
+      tgt_tokens = tgt_reader:next()
     end
 
     if src_tokens ~= nil then
@@ -113,11 +113,11 @@ local function main()
       end
 
       if with_gold_score then
-        local targ_words, targ_feats = utils.Features.extract(targ_tokens)
-        table.insert(targ_batch, targ_tokens)
-        table.insert(targ_words_batch, targ_words)
-        if #targ_feats > 0 then
-          table.insert(targ_features_batch, targ_feats)
+        local tgt_words, tgt_feats = utils.Features.extract(tgt_tokens)
+        table.insert(tgt_batch, tgt_tokens)
+        table.insert(tgt_words_batch, tgt_words)
+        if #tgt_feats > 0 then
+          table.insert(tgt_features_batch, tgt_feats)
         end
       end
     elseif #src_batch == 0 then
@@ -130,7 +130,7 @@ local function main()
       end
 
       local pred_batch, info = translate.Translator.translate(src_words_batch, src_features_batch,
-                                                              targ_words_batch, targ_features_batch)
+                                                              tgt_words_batch, tgt_features_batch)
 
       if opt.time then
         timer:stop()
@@ -150,13 +150,13 @@ local function main()
         pred_words_total = pred_words_total + #pred_batch[b]
 
         if with_gold_score then
-          local targ_sent = table.concat(targ_batch[b], " ")
+          local tgt_sent = table.concat(tgt_batch[b], " ")
 
-          print('GOLD ' .. sent_id .. ': ' .. targ_sent)
+          print('GOLD ' .. sent_id .. ': ' .. tgt_sent)
           print(string.format("GOLD SCORE: %.4f", info[b].gold_score))
 
           gold_score_total = gold_score_total + info[b].gold_score
-          gold_words_total = gold_words_total + #targ_batch[b]
+          gold_words_total = gold_words_total + #tgt_batch[b]
         end
 
         if opt.n_best > 1 then
@@ -180,9 +180,9 @@ local function main()
       src_words_batch = {}
       src_features_batch = {}
       if with_gold_score then
-        targ_batch = {}
-        targ_words_batch = {}
-        targ_features_batch = {}
+        tgt_batch = {}
+        tgt_words_batch = {}
+        tgt_features_batch = {}
       end
       collectgarbage()
     end

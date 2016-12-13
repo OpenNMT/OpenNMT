@@ -43,12 +43,12 @@ Batch interface [size]:
 --]]
 local Batch = torch.class('Batch')
 
---[[ Create a batch object given aligned sent tables `src` and `targ`
+--[[ Create a batch object given aligned sent tables `src` and `tgt`
   (optional). Data format is shown at the top of the file.
 --]]
-function Batch:__init(src, src_features, targ, targ_features)
-  if targ ~= nil then
-    assert(#src == #targ, "source and target must have the same batch size")
+function Batch:__init(src, src_features, tgt, tgt_features)
+  if tgt ~= nil then
+    assert(#src == #tgt, "source and target must have the same batch size")
   end
 
   self.size = #src
@@ -69,8 +69,8 @@ function Batch:__init(src, src_features, targ, targ_features)
     end
   end
 
-  if targ ~= nil then
-    self.target_length, self.target_size, self.target_non_zeros = get_length(targ, 1)
+  if tgt ~= nil then
+    self.target_length, self.target_size, self.target_non_zeros = get_length(tgt, 1)
 
     local target_seq = torch.IntTensor(self.target_length, self.size):fill(constants.PAD)
     self.target_input = target_seq:clone()
@@ -79,8 +79,8 @@ function Batch:__init(src, src_features, targ, targ_features)
     self.target_input_features = {}
     self.target_output_features = {}
 
-    if #targ_features > 0 then
-      for _ = 1, #targ_features[1] do
+    if #tgt_features > 0 then
+      for _ = 1, #tgt_features[1] do
         table.insert(self.target_input_features, target_seq:clone())
         table.insert(self.target_output_features, target_seq:clone())
       end
@@ -108,20 +108,20 @@ function Batch:__init(src, src_features, targ, targ_features)
       self.source_input_rev_features[i][{{1, self.source_size[b]}, b}]:copy(source_input_rev_features)
     end
 
-    if targ ~= nil then
+    if tgt ~= nil then
       -- Input: [<s>ABCDE]
       -- Ouput: [ABCDE</s>]
-      local target_length = targ[b]:size(1) - 1
-      local target_input = targ[b]:narrow(1, 1, target_length)
-      local target_output = targ[b]:narrow(1, 2, target_length)
+      local target_length = tgt[b]:size(1) - 1
+      local target_input = tgt[b]:narrow(1, 1, target_length)
+      local target_output = tgt[b]:narrow(1, 2, target_length)
 
       -- Target is right padded [<S>ABCDEPPPPPP] .
       self.target_input[{{1, target_length}, b}]:copy(target_input)
       self.target_output[{{1, target_length}, b}]:copy(target_output)
 
       for i = 1, #self.target_input_features do
-        local target_input_features = targ_features[b][i]:narrow(1, 1, target_length)
-        local target_output_features = targ_features[b][i]:narrow(1, 2, target_length)
+        local target_input_features = tgt_features[b][i]:narrow(1, 1, target_length)
+        local target_output_features = tgt_features[b][i]:narrow(1, 2, target_length)
 
         self.target_input_features[i][{{1, target_length}, b}]:copy(target_input_features)
         self.target_output_features[i][{{1, target_length}, b}]:copy(target_output_features)

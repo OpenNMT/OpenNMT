@@ -73,20 +73,20 @@ local function generateSource(dicts, src)
 end
 
 --[[ Generate target sequences from labels. ]]
-local function generateTarget(dicts, targ)
-  check('source', dicts, targ)
+local function generateTarget(dicts, tgt)
+  check('source', dicts, tgt)
 
-  local targ_id = {}
+  local tgt_id = {}
 
   for j = 1, #dicts do
     -- Target features are shifted relative to the target words.
     -- Use EOS tokens as a placeholder.
-    table.insert(targ[j], 1, constants.BOS_WORD)
-    table.insert(targ[j], 1, constants.EOS_WORD)
-    table.insert(targ_id, dicts[j]:convert_to_idx(targ[j], constants.UNK_WORD))
+    table.insert(tgt[j], 1, constants.BOS_WORD)
+    table.insert(tgt[j], 1, constants.EOS_WORD)
+    table.insert(tgt_id, dicts[j]:convert_to_idx(tgt[j], constants.UNK_WORD))
   end
 
-  return targ_id
+  return tgt_id
 end
 
 return {

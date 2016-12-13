@@ -14,16 +14,16 @@ cmd:text("")
 cmd:option('-config', '', [[Read options from this file]])
 
 cmd:option('-train_src_file', '', [[Path to the training source data]])
-cmd:option('-train_targ_file', '', [[Path to the training target data]])
+cmd:option('-train_tgt_file', '', [[Path to the training target data]])
 cmd:option('-valid_src_file', '', [[Path to the validation source data]])
-cmd:option('-valid_targ_file', '', [[Path to the validation target data]])
+cmd:option('-valid_tgt_file', '', [[Path to the validation target data]])
 
 cmd:option('-save_file', '', [[Output file for the prepared data]])
 
 cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
-cmd:option('-targ_vocab_size', 50000, [[Size of the target vocabulary]])
+cmd:option('-tgt_vocab_size', 50000, [[Size of the target vocabulary]])
 cmd:option('-src_vocab_file', '', [[Path to an existing source vocabulary]])
-cmd:option('-targ_vocab_file', '', [[Path to an existing target vocabulary]])
+cmd:option('-tgt_vocab_file', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
@@ -151,12 +151,12 @@ local function save_features_vocabularies(name, vocabs, prefix)
   end
 end
 
-local function make_data(src_file, targ_file, src_dicts, targ_dicts)
+local function make_data(src_file, tgt_file, src_dicts, tgt_dicts)
   local src = {}
   local src_features = {}
 
-  local targ = {}
-  local targ_features = {}
+  local tgt = {}
+  local tgt_features = {}
 
   local sizes = {}
 
@@ -164,33 +164,33 @@ local function make_data(src_file, targ_file, src_dicts, targ_dicts)
   local ignored = 0
 
   local src_reader = utils.FileReader.new(src_file)
-  local targ_reader = utils.FileReader.new(targ_file)
+  local tgt_reader = utils.FileReader.new(tgt_file)
 
   while true do
     local src_tokens = src_reader:next()
-    local targ_tokens = targ_reader:next()
+    local tgt_tokens = tgt_reader:next()
 
-    if src_tokens == nil or targ_tokens == nil then
-      if src_tokens == nil and targ_tokens ~= nil or src_tokens ~= nil and targ_tokens == nil then
+    if src_tokens == nil or tgt_tokens == nil then
+      if src_tokens == nil and tgt_tokens ~= nil or src_tokens ~= nil and tgt_tokens == nil then
         print('WARNING: source and target do not have the same number of sentences')
       end
       break
     end
 
     if #src_tokens > 0 and #src_tokens <= opt.seq_length
-    and #targ_tokens > 0 and #targ_tokens <= opt.seq_length then
+    and #tgt_tokens > 0 and #tgt_tokens <= opt.seq_length then
       local src_words, src_feats = utils.Features.extract(src_tokens)
-      local targ_words, targ_feats = utils.Features.extract(targ_tokens)
+      local tgt_words, tgt_feats = utils.Features.extract(tgt_tokens)
 
       table.insert(src, src_dicts.words:convert_to_idx(src_words, constants.UNK_WORD))
-      table.insert(targ, targ_dicts.words:convert_to_idx(targ_words, constants.UNK_WORD,
+      table.insert(tgt, tgt_dicts.words:convert_to_idx(tgt_words, constants.UNK_WORD,
                                                          constants.BOS_WORD, constants.EOS_WORD))
 
       if #src_dicts.features > 0 then
         table.insert(src_features, utils.Features.generateSource(src_dicts.features, src_feats))
       end
-      if #targ_dicts.features > 0 then
-        table.insert(targ_features, utils.Features.generateTarget(targ_dicts.features, targ_feats))
+      if #tgt_dicts.features > 0 then
+        table.insert(tgt_features, utils.Features.generateTarget(tgt_dicts.features, tgt_feats))
       end
 
       table.insert(sizes, #src_words)
@@ -206,33 +206,33 @@ local function make_data(src_file, targ_file, src_dicts, targ_dicts)
   end
 
   src_reader:close()
-  targ_reader:close()
+  tgt_reader:close()
 
   if opt.shuffle == 1 then
     print('... shuffling sentences')
     local perm = torch.randperm(#src)
     src = utils.Table.reorder(src, perm)
-    targ = utils.Table.reorder(targ, perm)
+    tgt = utils.Table.reorder(tgt, perm)
     sizes = utils.Table.reorder(sizes, perm)
 
     if #src_dicts.features > 0 then
       src_features = utils.Table.reorder(src_features, perm)
     end
-    if #targ_dicts.features > 0 then
-      targ_features = utils.Table.reorder(targ_features, perm)
+    if #tgt_dicts.features > 0 then
+      tgt_features = utils.Table.reorder(tgt_features, perm)
     end
   end
 
   print('... sorting sentences by size')
   local _, perm = torch.sort(torch.Tensor(sizes))
   src = utils.Table.reorder(src, perm)
-  targ = utils.Table.reorder(targ, perm)
+  tgt = utils.Table.reorder(tgt, perm)
 
   if #src_dicts.features > 0 then
     src_features = utils.Table.reorder(src_features, perm)
   end
-  if #targ_dicts.features > 0 then
-    targ_features = utils.Table.reorder(targ_features, perm)
+  if #tgt_dicts.features > 0 then
+    tgt_features = utils.Table.reorder(tgt_features, perm)
   end
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length == 0 or > ' .. opt.seq_length .. ')')
@@ -242,20 +242,20 @@ local function make_data(src_file, targ_file, src_dicts, targ_dicts)
     features = src_features
   }
 
-  local targ_data = {
-    words = targ,
-    features = targ_features
+  local tgt_data = {
+    words = tgt,
+    features = tgt_features
   }
 
-  return src_data, targ_data
+  return src_data, tgt_data
 end
 
 local function main()
   local required_options = {
     "train_src_file",
-    "train_targ_file",
+    "train_tgt_file",
     "valid_src_file",
-    "valid_targ_file",
+    "valid_tgt_file",
     "save_file"
   }
 
@@ -266,32 +266,32 @@ local function main()
   data.dicts = {}
   data.dicts.src = init_vocabulary('source', opt.train_src_file, opt.src_vocab_file,
                                    opt.src_vocab_size, opt.features_vocabs_prefix)
-  data.dicts.targ = init_vocabulary('target', opt.train_targ_file, opt.targ_vocab_file,
-                                    opt.targ_vocab_size, opt.features_vocabs_prefix)
+  data.dicts.tgt = init_vocabulary('target', opt.train_tgt_file, opt.tgt_vocab_file,
+                                    opt.tgt_vocab_size, opt.features_vocabs_prefix)
 
   print('Preparing training data...')
   data.train = {}
-  data.train.src, data.train.targ = make_data(opt.train_src_file, opt.train_targ_file,
-                                              data.dicts.src, data.dicts.targ)
+  data.train.src, data.train.tgt = make_data(opt.train_src_file, opt.train_tgt_file,
+                                              data.dicts.src, data.dicts.tgt)
   print('')
 
   print('Preparing validation data...')
   data.valid = {}
-  data.valid.src, data.valid.targ = make_data(opt.valid_src_file, opt.valid_targ_file,
-                                              data.dicts.src, data.dicts.targ)
+  data.valid.src, data.valid.tgt = make_data(opt.valid_src_file, opt.valid_tgt_file,
+                                              data.dicts.src, data.dicts.tgt)
   print('')
 
   if opt.src_vocab_file:len() == 0 then
     save_vocabulary('source', data.dicts.src.words, opt.save_file .. '.src.dict')
   end
 
-  if opt.targ_vocab_file:len() == 0 then
-    save_vocabulary('target', data.dicts.targ.words, opt.save_file .. '.targ.dict')
+  if opt.tgt_vocab_file:len() == 0 then
+    save_vocabulary('target', data.dicts.tgt.words, opt.save_file .. '.tgt.dict')
   end
 
   if opt.features_vocabs_prefix:len() == 0 then
     save_features_vocabularies('source', data.dicts.src.features, opt.save_file)
-    save_features_vocabularies('target', data.dicts.targ.features, opt.save_file)
+    save_features_vocabularies('target', data.dicts.tgt.features, opt.save_file)
   end
 
   print('Saving data to \'' .. opt.save_file .. '-train.t7\'...')
