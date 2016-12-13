@@ -24,12 +24,13 @@ end
 
 --[[ Load entries from a file. ]]
 function Dict:load_file(filename)
-  local file = assert(io.open(filename, 'r'))
+  local reader = onmt.utils.FileReader(filename)
 
-  for line in file:lines() do
-    local fields = {}
-    for w in line:gmatch'([^%s]+)' do
-      table.insert(fields, w)
+  while true do
+    local fields = reader:next()
+
+    if not fields then
+      break
     end
 
     local label = fields[1]
@@ -38,7 +39,7 @@ function Dict:load_file(filename)
     self:add(label, idx)
   end
 
-  file:close()
+  reader:close()
 end
 
 --[[ Write entries to a file. ]]
