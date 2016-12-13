@@ -28,7 +28,7 @@ sentence with capitalization.
 
 * Please run and correct all warnings from luacheck before sending a pull request. 
 
-> luacheck *
+> luacheck *lua onmt
 
 * All indentation should be 2 spaces.
 
