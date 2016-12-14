@@ -1,7 +1,7 @@
 local PhraseTable = torch.class('PhraseTable')
 
-function PhraseTable:__init(file_path)
-  local f = assert(io.open(file_path, 'r'))
+function PhraseTable:__init(filePath)
+  local f = assert(io.open(filePath, 'r'))
 
   self.table = {}
 

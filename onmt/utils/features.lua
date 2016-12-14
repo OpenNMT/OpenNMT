@@ -2,7 +2,7 @@
 local function extract(tokens)
   local words = {}
   local features = {}
-  local num_features = nil
+  local numFeatures = nil
 
   for t = 1, #tokens do
     local field = onmt.utils.String.split(tokens[t], '%-|%-')
@@ -11,10 +11,10 @@ local function extract(tokens)
     if word:len() > 0 then
       table.insert(words, word)
 
-      if num_features == nil then
-        num_features = #field - 1
+      if numFeatures == nil then
+        numFeatures = #field - 1
       else
-        assert(#field - 1 == num_features,
+        assert(#field - 1 == numFeatures,
                'all words must have the same number of features')
       end
 
@@ -28,7 +28,7 @@ local function extract(tokens)
       end
     end
   end
-  return words, features, num_features or 0
+  return words, features, numFeatures or 0
 end
 
 --[[ Reverse operation: attach features to tokens. ]]
@@ -61,30 +61,30 @@ end
 local function generateSource(dicts, src)
   check('source', dicts, src)
 
-  local src_id = {}
+  local srcId = {}
 
   for j = 1, #dicts do
-    table.insert(src_id, dicts[j]:convert_to_idx(src[j], onmt.Constants.UNK_WORD))
+    table.insert(srcId, dicts[j]:convertToIdx(src[j], onmt.Constants.UNK_WORD))
   end
 
-  return src_id
+  return srcId
 end
 
 --[[ Generate target sequences from labels. ]]
 local function generateTarget(dicts, tgt)
   check('source', dicts, tgt)
 
-  local tgt_id = {}
+  local tgtId = {}
 
   for j = 1, #dicts do
     -- Target features are shifted relative to the target words.
     -- Use EOS tokens as a placeholder.
     table.insert(tgt[j], 1, onmt.Constants.BOS_WORD)
     table.insert(tgt[j], 1, onmt.Constants.EOS_WORD)
-    table.insert(tgt_id, dicts[j]:convert_to_idx(tgt[j], onmt.Constants.UNK_WORD))
+    table.insert(tgtId, dicts[j]:convertToIdx(tgt[j], onmt.Constants.UNK_WORD))
   end
 
-  return tgt_id
+  return tgtId
 end
 
 return {

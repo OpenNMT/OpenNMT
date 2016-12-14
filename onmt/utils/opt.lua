@@ -1,18 +1,18 @@
-local function is_set(opt, name)
+local function isSet(opt, name)
   return opt[name]:len() > 0
 end
 
 --[[ Check that option `name` is set in `opt`. Throw an error if not set. ]]
-local function require_option(opt, name)
-  if not is_set(opt, name) then
+local function requireOption(opt, name)
+  if not isSet(opt, name) then
     error("option -" .. name .. " is required")
   end
 end
 
 --[[ Make sure all options in `names` are set in `opt`. ]]
-local function require_options(opt, names)
+local function requireOptions(opt, names)
   for i = 1, #names do
-    require_option(opt, names[i])
+    requireOption(opt, names[i])
   end
 end
 
@@ -28,7 +28,7 @@ local function convert(val)
 end
 
 --[[ Return options set in the file `filename`. ]]
-local function load_file(filename)
+local function loadFile(filename)
   local file = assert(io.open(filename, "r"))
   local opt = {}
 
@@ -48,8 +48,8 @@ local function load_file(filename)
 end
 
 --[[ Override `opt` with option values set in file `filename`. ]]
-local function load_config(filename, opt)
-  local config = load_file(filename)
+local function loadConfig(filename, opt)
+  local config = loadFile(filename)
 
   for key, val in pairs(config) do
     assert(opt[key] ~= nil, 'unkown option ' .. key)
@@ -69,12 +69,12 @@ local function dump(opt, filename)
   file:close()
 end
 
-local function init(opt, required_options)
+local function init(opt, requiredOptions)
   if opt.config:len() > 0 then
-    opt = load_config(opt.config, opt)
+    opt = loadConfig(opt.config, opt)
   end
 
-  require_options(opt, required_options)
+  requireOptions(opt, requiredOptions)
 
   if opt.seed then
     torch.manualSeed(opt.seed)

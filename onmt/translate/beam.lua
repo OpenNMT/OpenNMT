@@ -1,15 +1,15 @@
---[[Helper function convert a `flat_index` to a row-column tuple
+--[[Helper function convert a `flatIndex` to a row-column tuple
 
 Parameters:
 
   * `v` - matrix.
-  * `flat_index` - index
+  * `flatIndex` - index
 
 Returns: row/column.
 --]]
-local function flat_to_rc(v, flat_index)
-  local row = math.floor((flat_index - 1) / v:size(2)) + 1
-  return row, (flat_index - 1) % v:size(2) + 1
+local function flatToRc(v, flatIndex)
+  local row = math.floor((flatIndex - 1) / v:size(2)) + 1
+  return row, (flatIndex - 1) % v:size(2) + 1
 end
 
 --[[ Class for managing the beam search process. ]]
@@ -21,29 +21,29 @@ Parameters:
 
   * `size` : The beam `K`.
 --]]
-function Beam:__init(size, num_features)
+function Beam:__init(size, numFeatures)
 
   self.size = size
-  self.num_features = num_features
+  self.numFeatures = numFeatures
   self.done = false
 
   -- The score for each translation on the beam.
   self.scores = torch.FloatTensor(size):zero()
 
   -- The backpointers at each time-step.
-  self.prev_ks = { torch.LongTensor(size):fill(1) }
+  self.prevKs = { torch.LongTensor(size):fill(1) }
 
   -- The outputs at each time-step.
-  self.next_ys = { torch.LongTensor(size):fill(onmt.Constants.PAD) }
-  self.next_ys[1][1] = onmt.Constants.BOS
+  self.nextYs = { torch.LongTensor(size):fill(onmt.Constants.PAD) }
+  self.nextYs[1][1] = onmt.Constants.BOS
 
   -- The features output at each time-step
-  self.next_features = { {} }
-  for j = 1, num_features do
-    self.next_features[1][j] = torch.LongTensor(size):fill(onmt.Constants.PAD)
+  self.nextFeatures = { {} }
+  for j = 1, numFeatures do
+    self.nextFeatures[1][j] = torch.LongTensor(size):fill(onmt.Constants.PAD)
 
     -- EOS is used as a placeholder to shift the features target sequence.
-    self.next_features[1][j][1] = onmt.Constants.EOS
+    self.nextFeatures[1][j][1] = onmt.Constants.EOS
   end
 
   -- The attentions (matrix) for each time.
@@ -51,88 +51,88 @@ function Beam:__init(size, num_features)
 end
 
 --[[ Get the outputs for the current timestep.]]
-function Beam:get_current_state()
-  return self.next_ys[#self.next_ys], self.next_features[#self.next_features]
+function Beam:getCurrentState()
+  return self.nextYs[#self.nextYs], self.nextFeatures[#self.nextFeatures]
 end
 
 --[[ Get the backpointers for the current timestep.]]
-function Beam:get_current_origin()
-  return self.prev_ks[#self.prev_ks]
+function Beam:getCurrentOrigin()
+  return self.prevKs[#self.prevKs]
 end
 
---[[ Given prob over words for every last beam `word_lk` and attention
- `attn_out`. Compute and update the beam search.
+--[[ Given prob over words for every last beam `wordLk` and attention
+ `attnOut`. Compute and update the beam search.
 
 Parameters:
 
-  * `word_lk`- probs at the last step
-  * `attn_word_lk`- attention at the last step
+  * `wordLk`- probs at the last step
+  * `attnWordLk`- attention at the last step
 
 Returns: true if beam search is complete.
 --]]
-function Beam:advance(word_lk, feats_lk, attn_out)
+function Beam:advance(wordLk, featsLk, attnOut)
 
   -- The flattened scores.
-  local flat_word_lk
+  local flatWordLk
 
-  if #self.prev_ks > 1 then
+  if #self.prevKs > 1 then
     -- Sum the previous scores.
     for k = 1, self.size do
-      word_lk[k]:add(self.scores[k])
+      wordLk[k]:add(self.scores[k])
     end
-    flat_word_lk = word_lk:view(-1)
+    flatWordLk = wordLk:view(-1)
   else
-    flat_word_lk = word_lk[1]:view(-1)
+    flatWordLk = wordLk[1]:view(-1)
   end
 
 
-  -- Find the top-k elements in flat_word_lk and backpointers.
-  local prev_k = torch.LongTensor(self.size)
-  local next_y = torch.LongTensor(self.size)
-  local next_feat = {}
+  -- Find the top-k elements in flatWordLk and backpointers.
+  local prevK = torch.LongTensor(self.size)
+  local nextY = torch.LongTensor(self.size)
+  local nextFeat = {}
   local attn = {}
 
-  for j = 1, #feats_lk do
-    next_feat[j] = torch.LongTensor(self.size)
+  for j = 1, #featsLk do
+    nextFeat[j] = torch.LongTensor(self.size)
   end
 
-  local best_scores, best_scores_id = flat_word_lk:topk(self.size, 1, true, true)
+  local bestScores, bestScoresId = flatWordLk:topk(self.size, 1, true, true)
 
   for k = 1, self.size do
-    self.scores[k] = best_scores[k]
+    self.scores[k] = bestScores[k]
 
-    local from_beam, best_score_id = flat_to_rc(word_lk, best_scores_id[k])
+    local fromBeam, bestScoreId = flatToRc(wordLk, bestScoresId[k])
 
-    prev_k[k] = from_beam
-    next_y[k] = best_score_id
-    table.insert(attn, attn_out[from_beam]:clone())
+    prevK[k] = fromBeam
+    nextY[k] = bestScoreId
+    table.insert(attn, attnOut[fromBeam]:clone())
 
     -- For features, just store predictions for each beam.
-    for j = 1, #feats_lk do
-      local _, best = feats_lk[j]:max(2)
-      next_feat[j]:copy(best)
+    for j = 1, #featsLk do
+      local _, best = featsLk[j]:max(2)
+      nextFeat[j]:copy(best)
     end
   end
 
   -- End condition is when top-of-beam is EOS.
-  if next_y[1] == onmt.Constants.EOS then
+  if nextY[1] == onmt.Constants.EOS then
     self.done = true
   end
 
-  table.insert(self.prev_ks, prev_k)
-  table.insert(self.next_ys, next_y)
-  table.insert(self.next_features, next_feat)
+  table.insert(self.prevKs, prevK)
+  table.insert(self.nextYs, nextY)
+  table.insert(self.nextFeatures, nextFeat)
   table.insert(self.attn, attn)
 
   return self.done
 end
 
-function Beam:sort_best()
+function Beam:sortBest()
   return torch.sort(self.scores, 1, true)
 end
 
-function Beam:get_best()
-  local scores, ids = self:sort_best()
+function Beam:getBest()
+  local scores, ids = self:sortBest()
   return scores[1], ids[1]
 end
 
@@ -147,27 +147,27 @@ Returns:
   1. The hypothesis
   2. The attention at each time step.
 --]]
-function Beam:get_hyp(k)
+function Beam:getHyp(k)
   local hyp = {}
   local feats = {}
   local attn = {}
 
-  for _ = 1, #self.prev_ks - 1 do
+  for _ = 1, #self.prevKs - 1 do
     table.insert(hyp, {})
     table.insert(attn, {})
 
-    if self.num_features > 0 then
+    if self.numFeatures > 0 then
       table.insert(feats, {})
     end
   end
 
-  for j = #self.prev_ks, 2, -1 do
-    hyp[j - 1] = self.next_ys[j][k]
-    for i = 1, self.num_features do
-      feats[j - 1][i] = self.next_features[j][i][k]
+  for j = #self.prevKs, 2, -1 do
+    hyp[j - 1] = self.nextYs[j][k]
+    for i = 1, self.numFeatures do
+      feats[j - 1][i] = self.nextFeatures[j][i][k]
     end
     attn[j - 1] = self.attn[j - 1][k]
-    k = self.prev_ks[j][k]
+    k = self.prevKs[j][k]
   end
 
   return hyp, feats, attn

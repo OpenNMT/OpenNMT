@@ -1,14 +1,14 @@
 local Generator, parent = torch.class('onmt.Generator', 'nn.Container')
 
-function Generator:__init(rnn_size, output_size)
+function Generator:__init(rnnSize, outputSize)
   parent.__init(self)
-  self.net = self:_buildGenerator(rnn_size, output_size)
+  self.net = self:_buildGenerator(rnnSize, outputSize)
   self:add(self.net)
 end
 
-function Generator:_buildGenerator(rnn_size, output_size)
+function Generator:_buildGenerator(rnnSize, outputSize)
   return nn.Sequential()
-    :add(nn.Linear(rnn_size, output_size))
+    :add(nn.Linear(rnnSize, outputSize))
     :add(nn:LogSoftMax())
 end
 

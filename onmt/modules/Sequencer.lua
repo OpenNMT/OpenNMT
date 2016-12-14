@@ -20,7 +20,7 @@ function Sequencer:__init(network)
   self.network = network
   self:add(self.network)
 
-  self.network_clones = {}
+  self.networkClones = {}
 end
 
 function Sequencer:_sharedClone()
@@ -41,10 +41,10 @@ function Sequencer:_sharedClone()
   end
 
   -- Share intermediate tensors if defined.
-  if self.network_clones[1] then
+  if self.networkClones[1] then
     local sharedTensors = {}
 
-    self.network_clones[1]:apply(function(m)
+    self.networkClones[1]:apply(function(m)
       if m.gradInputSharedIdx then
         sharedTensors[m.gradInputSharedIdx] = m.gradInput
       end
@@ -80,15 +80,15 @@ function Sequencer:net(t)
   if self.train then
     -- In train mode, the network has to be cloned to remember intermediate
     -- outputs for each timestep and to allow backpropagation through time.
-    if self.network_clones[t] == nil then
+    if self.networkClones[t] == nil then
       local clone = self:_sharedClone()
       clone:training()
-      self.network_clones[t] = clone
+      self.networkClones[t] = clone
     end
-    return self.network_clones[t]
+    return self.networkClones[t]
   else
-    if #self.network_clones > 0 then
-      return self.network_clones[1]
+    if #self.networkClones > 0 then
+      return self.networkClones[1]
     else
       return self.network
     end
@@ -99,9 +99,9 @@ end
 function Sequencer:training()
   parent.training(self)
 
-  if #self.network_clones > 0 then
+  if #self.networkClones > 0 then
     -- Only first clone can be used for evaluation.
-    self.network_clones[1]:training()
+    self.networkClones[1]:training()
   end
 end
 
@@ -109,7 +109,7 @@ end
 function Sequencer:evaluate()
   parent.evaluate(self)
 
-  if #self.network_clones > 0 then
-    self.network_clones[1]:evaluate()
+  if #self.networkClones > 0 then
+    self.networkClones[1]:evaluate()
   end
 end

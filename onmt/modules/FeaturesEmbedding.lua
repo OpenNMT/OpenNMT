@@ -24,7 +24,7 @@ function FeaturesEmbedding:_buildModel(dicts, dimExponent, dim, merge)
   self.embs = {}
 
   for i = 1, #dicts do
-    local feat = nn.Identity()() -- batch_size
+    local feat = nn.Identity()() -- batchSize
     table.insert(inputs, feat)
 
     local vocabSize = dicts[i]:size()

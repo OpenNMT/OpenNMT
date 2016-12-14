@@ -19,10 +19,10 @@ local function waitForDevice(dst, src)
    end
 end
 
-function Parallel.init(args)
+function Parallel.init(opt)
   if onmt.utils.Cuda.activated then
-    Parallel.count = args.nparallel
-    Parallel.gpus = onmt.utils.Cuda.getGPUs(args.nparallel)
+    Parallel.count = opt.nparallel
+    Parallel.gpus = onmt.utils.Cuda.getGPUs(opt.nparallel)
     Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
@@ -35,12 +35,12 @@ function Parallel.init(args)
           require('cunn')
           require('nngraph')
           require('onmt.init')
-          onmt.utils.Cuda.init(args, thegpus[threadid])
+          onmt.utils.Cuda.init(opt, thegpus[threadid])
         end
       ) -- dedicate threads to GPUs
       Parallel._pool:specific(true)
     end
-    if Parallel.count > 1 and not(args.no_nccl) then
+    if Parallel.count > 1 and not(opt.no_nccl) then
       -- check if we have nccl installed
       local ret
       ret, Parallel.usenccl = pcall(require, 'nccl')
@@ -84,10 +84,10 @@ function Parallel.launch(label, closure, endcallback)
 end
 
 --[[ Accumulate the gradient parameters from the different parallel threads. ]]
-function Parallel.accGradParams(grad_params, batches)
+function Parallel.accGradParams(gradParams, batches)
   if Parallel.count > 1 then
-    for h = 1, #grad_params[1] do
-      local inputs = { grad_params[1][h] }
+    for h = 1, #gradParams[1] do
+      local inputs = { gradParams[1][h] }
       for j = 2, #batches do
         if not Parallel.usenccl then
           -- TODO - this is memory costly since we need to clone full parameters from one GPU to another
@@ -96,12 +96,12 @@ function Parallel.accGradParams(grad_params, batches)
          -- Synchronize before and after copy to ensure that it doesn't overlap
          -- with this add or previous adds
           waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
-          local remoteGrads = onmt.utils.Tensor.reuseTensor(Parallel.gradBuffer, grad_params[j][h]:size())
-          remoteGrads:copy(grad_params[j][h])
+          local remoteGrads = onmt.utils.Tensor.reuseTensor(Parallel.gradBuffer, gradParams[j][h]:size())
+          remoteGrads:copy(gradParams[j][h])
           waitForDevice(Parallel.gpus[1], Parallel.gpus[j])
-          grad_params[1][h]:add(remoteGrads)
+          gradParams[1][h]:add(remoteGrads)
         else
-          table.insert(inputs, grad_params[j][h])
+          table.insert(inputs, gradParams[j][h])
         end
       end
       if Parallel.usenccl then

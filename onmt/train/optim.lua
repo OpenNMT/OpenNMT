@@ -1,4 +1,4 @@
-local function adagrad_step(dfdx, lr, state)
+local function adagradStep(dfdx, lr, state)
   if not state.var then
     state.var = torch.Tensor():typeAs(dfdx):resizeAs(dfdx):zero()
     state.std = torch.Tensor():typeAs(dfdx):resizeAs(dfdx)
@@ -9,7 +9,7 @@ local function adagrad_step(dfdx, lr, state)
   dfdx:cdiv(state.std:add(1e-10)):mul(-lr)
 end
 
-local function adam_step(dfdx, lr, state)
+local function adamStep(dfdx, lr, state)
   local beta1 = state.beta1 or 0.9
   local beta2 = state.beta2 or 0.999
   local eps = state.eps or 1e-8
@@ -31,7 +31,7 @@ local function adam_step(dfdx, lr, state)
   dfdx:copy(state.m):cdiv(state.denom):mul(-stepSize)
 end
 
-local function adadelta_step(dfdx, lr, state)
+local function adadeltaStep(dfdx, lr, state)
   local rho = state.rho or 0.9
   local eps = state.eps or 1e-6
   state.var = state.var or dfdx.new(dfdx:size()):zero()
@@ -49,95 +49,95 @@ end
 local Optim = torch.class("Optim")
 
 function Optim:__init(args)
-  self.val_perf = {}
+  self.valPerf = {}
 
   self.method = args.method
-  self.learning_rate = args.learning_rate
+  self.learningRate = args.learningRate
 
   if self.method == 'sgd' then
-    self.learning_rate_decay = args.learning_rate_decay
-    self.start_decay = false
-    self.start_decay_at = args.start_decay_at
+    self.learningRateDecay = args.learningRateDecay
+    self.startDecay = false
+    self.startDecayAt = args.startDecayAt
   else
-    if args.optim_states ~= nil then
-      self.optim_states = args.optim_states
+    if args.optimStates ~= nil then
+      self.optimStates = args.optimStates
     else
-      self.optim_states = {}
-      for j = 1, args.num_models do
-        self.optim_states[j] = {}
+      self.optimStates = {}
+      for j = 1, args.numModels do
+        self.optimStates[j] = {}
       end
     end
   end
 end
 
-function Optim:zero_grad(grad_params)
-  for j = 1, #grad_params do
-    grad_params[j]:zero()
+function Optim:zeroGrad(gradParams)
+  for j = 1, #gradParams do
+    gradParams[j]:zero()
   end
 end
 
-function Optim:prepare_grad(grad_params, max_grad_norm)
+function Optim:prepareGrad(gradParams, maxGradNorm)
   -- Compute gradients norm.
-  local grad_norm = 0
-  for j = 1, #grad_params do
-    grad_norm = grad_norm + grad_params[j]:norm()^2
+  local gradNorm = 0
+  for j = 1, #gradParams do
+    gradNorm = gradNorm + gradParams[j]:norm()^2
   end
-  grad_norm = math.sqrt(grad_norm)
+  gradNorm = math.sqrt(gradNorm)
 
-  local shrinkage = max_grad_norm / grad_norm
+  local shrinkage = maxGradNorm / gradNorm
 
-  for j = 1, #grad_params do
+  for j = 1, #gradParams do
     -- Shrink gradients if needed.
     if shrinkage < 1 then
-      grad_params[j]:mul(shrinkage)
+      gradParams[j]:mul(shrinkage)
     end
 
     -- Prepare gradients params according to the optimization method.
     if self.method == 'adagrad' then
-      adagrad_step(grad_params[j], self.learning_rate, self.optim_states[j])
+      adagradStep(gradParams[j], self.learningRate, self.optimStates[j])
     elseif self.method == 'adadelta' then
-      adadelta_step(grad_params[j], self.learning_rate, self.optim_states[j])
+      adadeltaStep(gradParams[j], self.learningRate, self.optimStates[j])
     elseif self.method == 'adam' then
-      adam_step(grad_params[j], self.learning_rate, self.optim_states[j])
+      adamStep(gradParams[j], self.learningRate, self.optimStates[j])
     else
-      grad_params[j]:mul(-self.learning_rate)
+      gradParams[j]:mul(-self.learningRate)
     end
   end
 end
 
-function Optim:update_params(params, grad_params)
+function Optim:updateParams(params, gradParams)
   for j = 1, #params do
-    params[j]:add(grad_params[j])
+    params[j]:add(gradParams[j])
   end
 end
 
--- decay learning rate if val perf does not improve or we hit the start_decay_at limit
-function Optim:update_learning_rate(score, epoch)
-  self.val_perf[#self.val_perf + 1] = score
+-- decay learning rate if val perf does not improve or we hit the startDecayAt limit
+function Optim:updateLearningRate(score, epoch)
+  self.valPerf[#self.valPerf + 1] = score
 
-  if epoch >= self.start_decay_at then
-    self.start_decay = true
+  if epoch >= self.startDecayAt then
+    self.startDecay = true
   end
 
-  if self.val_perf[#self.val_perf] ~= nil and self.val_perf[#self.val_perf-1] ~= nil then
-    local curr_ppl = self.val_perf[#self.val_perf]
-    local prev_ppl = self.val_perf[#self.val_perf-1]
-    if curr_ppl > prev_ppl then
-      self.start_decay = true
+  if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
+    local currPpl = self.valPerf[#self.valPerf]
+    local prevPpl = self.valPerf[#self.valPerf-1]
+    if currPpl > prevPpl then
+      self.startDecay = true
     end
   end
 
-  if self.start_decay then
-    self.learning_rate = self.learning_rate * self.learning_rate_decay
+  if self.startDecay then
+    self.learningRate = self.learningRate * self.learningRateDecay
   end
 end
 
-function Optim:get_learning_rate()
-  return self.learning_rate
+function Optim:getLearningRate()
+  return self.learningRate
 end
 
-function Optim:get_states()
-  return self.optim_states
+function Optim:getStates()
+  return self.optimStates
 end
 
 return Optim

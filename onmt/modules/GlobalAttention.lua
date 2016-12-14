@@ -39,24 +39,24 @@ function GlobalAttention:_buildModel(dim)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local target_t = nn.Linear(dim, dim, false)(inputs[1]) -- batch_l x dim
-  local context = inputs[2] -- batch_l x source_timesteps x dim
+  local targetT = nn.Linear(dim, dim, false)(inputs[1]) -- batchL x dim
+  local context = inputs[2] -- batchL x sourceTimesteps x dim
 
   -- Get attention.
-  local attn = nn.MM()({context, nn.Replicate(1,3)(target_t)}) -- batch_l x source_l x 1
+  local attn = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
   attn = nn.Sum(3)(attn)
-  local softmax_attn = nn.SoftMax()
-  softmax_attn.name = 'softmax_attn'
-  attn = softmax_attn(attn)
-  attn = nn.Replicate(1,2)(attn) -- batch_l x 1 x source_l
+  local softmaxAttn = nn.SoftMax()
+  softmaxAttn.name = 'softmaxAttn'
+  attn = softmaxAttn(attn)
+  attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
 
   -- Apply attention to context.
-  local context_combined = nn.MM()({attn, context}) -- batch_l x 1 x dim
-  context_combined = nn.Sum(2)(context_combined) -- batch_l x dim
-  context_combined = nn.JoinTable(2)({context_combined, inputs[1]}) -- batch_l x dim*2
-  local context_output = nn.Tanh()(nn.Linear(dim*2, dim, false)(context_combined))
+  local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
+  contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
+  contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
+  local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
 
-  return nn.gModule(inputs, {context_output})
+  return nn.gModule(inputs, {contextOutput})
 end
 
 function GlobalAttention:updateOutput(input)

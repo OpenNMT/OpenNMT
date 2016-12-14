@@ -177,13 +177,13 @@ end
 
 tester:add(nmttest)
 
-function onmt.test(tests, fixed_seed)
+function onmt.test(tests, fixedSeed)
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()
   torch.setnumthreads(1)
 
    -- Randomize stuff
-  local seed = fixed_seed or (1e5 * torch.tic())
+  local seed = fixedSeed or (1e5 * torch.tic())
   print('Seed: ', seed)
   math.randomseed(seed)
   torch.manualSeed(seed)

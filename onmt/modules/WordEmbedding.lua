@@ -6,20 +6,20 @@ local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Container')
 --[[
 Parameters:
 
-  * `vocab_size` - size of the vocabulary
-  * `vec_size` - size of the embedding
-  * `pre_trainined` - path to a pretrained vector file
+  * `vocabSize` - size of the vocabulary
+  * `vecSize` - size of the embedding
+  * `preTrainined` - path to a pretrained vector file
   * `fix` - keep the weights of the embeddings fixed.
 --]]
-function WordEmbedding:__init(vocab_size, vec_size, pre_trained, fix)
+function WordEmbedding:__init(vocabSize, vecSize, preTrained, fix)
   parent.__init(self)
-  self.vocabSize = vocab_size
-  self.net = nn.LookupTable(vocab_size, vec_size, onmt.Constants.PAD)
+  self.vocabSize = vocabSize
+  self.net = nn.LookupTable(vocabSize, vecSize, onmt.Constants.PAD)
   self:add(self.net)
 
   -- If embeddings are given. Initialize them.
-  if pre_trained and pre_trained:len() > 0 then
-    local vecs = torch.load(pre_trained)
+  if preTrained and preTrained:len() > 0 then
+    local vecs = torch.load(preTrained)
     self.net.weight:copy(vecs)
   end
 

@@ -71,12 +71,12 @@ function Memory.optimize(model, criterion, batch, verbose)
   end
 
   -- Batch of one single word since we optimize the first clone.
-  local realSizes = { source_length = batch.source_length, target_length = batch.target_length }
+  local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength }
 
-  batch.source_length = 1
-  batch.target_length = 1
+  batch.sourceLength = 1
+  batch.targetLength = 1
 
-  local model_desc = {}
+  local modelDesc = {}
 
   -- Convenience function to register a network to optimize.
   local function registerNet(store, net, base)
@@ -95,33 +95,33 @@ function Memory.optimize(model, criterion, batch, verbose)
   end
 
   for name, mod in pairs(model) do
-    model_desc[name] = {}
+    modelDesc[name] = {}
 
     if mod.net then
       -- If the module directly contains a network, take the first clone.
-      model_desc[name][1] = {}
-      registerNet(model_desc[name][1], mod:net(1), mod.network)
+      modelDesc[name][1] = {}
+      registerNet(modelDesc[name][1], mod:net(1), mod.network)
     elseif mod.modules then
       -- Otherwise, look in submodules instead.
       for i = 1, #mod.modules do
         if mod.modules[i].net then
-          model_desc[name][i] = {}
-          registerNet(model_desc[name][i], mod.modules[i]:net(1), mod.modules[i].network)
+          modelDesc[name][i] = {}
+          registerNet(modelDesc[name][i], mod.modules[i]:net(1), mod.modules[i].network)
         end
       end
     end
   end
 
   -- Initialize all intermediate tensors with a first batch.
-  local enc_states, context = model.encoder:forward(batch)
-  local dec_outputs = model.decoder:forward(batch, enc_states, context)
-  dec_outputs = onmt.utils.Tensor.recursiveClone(dec_outputs)
-  local enc_grad_states_out, grad_context, _ = model.decoder:backward(batch, dec_outputs, criterion)
-  model.encoder:backward(batch, enc_grad_states_out, grad_context)
+  local encStates, context = model.encoder:forward(batch)
+  local decOutputs = model.decoder:forward(batch, encStates, context)
+  decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
+  local encGradStatesOut, gradContext, _ = model.decoder:backward(batch, decOutputs, criterion)
+  model.encoder:backward(batch, encGradStatesOut, gradContext)
 
   local totSize = 0
   local sharedSize = 0
-  for _, desc in pairs(model_desc) do
+  for _, desc in pairs(modelDesc) do
     for i = 1, #desc do
       local net = desc[i]['net']
       local base = desc[i]['base']
@@ -186,8 +186,8 @@ function Memory.optimize(model, criterion, batch, verbose)
   end
 
   -- Restore batch to be transparent for the calling code.
-  batch.source_length = realSizes.source_length
-  batch.target_length = realSizes.target_length
+  batch.sourceLength = realSizes.sourceLength
+  batch.targetLength = realSizes.targetLength
 end
 
 return Memory

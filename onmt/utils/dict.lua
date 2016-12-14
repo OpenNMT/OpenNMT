@@ -1,8 +1,8 @@
 local Dict = torch.class("Dict")
 
 function Dict:__init(data)
-  self.idx_to_label = {}
-  self.label_to_idx = {}
+  self.idxToLabel = {}
+  self.labelToIdx = {}
   self.frequencies = {}
 
   -- Special entries will not be pruned.
@@ -10,20 +10,20 @@ function Dict:__init(data)
 
   if data ~= nil then
     if type(data) == "string" then -- File to load.
-      self:load_file(data)
+      self:loadFile(data)
     else
-      self:add_specials(data)
+      self:addSpecials(data)
     end
   end
 end
 
 --[[ Return the number of entries in the dictionary. ]]
 function Dict:size()
-  return #self.idx_to_label
+  return #self.idxToLabel
 end
 
 --[[ Load entries from a file. ]]
-function Dict:load_file(filename)
+function Dict:loadFile(filename)
   local reader = onmt.utils.FileReader(filename)
 
   while true do
@@ -43,11 +43,11 @@ function Dict:load_file(filename)
 end
 
 --[[ Write entries to a file. ]]
-function Dict:write_file(filename)
+function Dict:writeFile(filename)
   local file = assert(io.open(filename, 'w'))
 
   for i = 1, self:size() do
-    local label = self.idx_to_label[i]
+    local label = self.idxToLabel[i]
     file:write(label .. ' ' .. i .. '\n')
   end
 
@@ -57,36 +57,36 @@ end
 --[[ Lookup `key` in the dictionary: it can be an index or a string. ]]
 function Dict:lookup(key)
   if type(key) == "string" then
-    return self.label_to_idx[key]
+    return self.labelToIdx[key]
   else
-    return self.idx_to_label[key]
+    return self.idxToLabel[key]
   end
 end
 
 --[[ Mark this `label` and `idx` as special (i.e. will not be pruned). ]]
-function Dict:add_special(label, idx)
+function Dict:addSpecial(label, idx)
   idx = self:add(label, idx)
   table.insert(self.special, idx)
 end
 
 --[[ Mark all labels in `labels` as specials (i.e. will not be pruned). ]]
-function Dict:add_specials(labels)
+function Dict:addSpecials(labels)
   for i = 1, #labels do
-    self:add_special(labels[i])
+    self:addSpecial(labels[i])
   end
 end
 
 --[[ Add `label` in the dictionary. Use `idx` as its index if given. ]]
 function Dict:add(label, idx)
   if idx ~= nil then
-    self.idx_to_label[idx] = label
-    self.label_to_idx[label] = idx
+    self.idxToLabel[idx] = label
+    self.labelToIdx[label] = idx
   else
-    idx = self.label_to_idx[label]
+    idx = self.labelToIdx[label]
     if idx == nil then
-      idx = #self.idx_to_label + 1
-      self.idx_to_label[idx] = label
-      self.label_to_idx[label] = idx
+      idx = #self.idxToLabel + 1
+      self.idxToLabel[idx] = label
+      self.labelToIdx[label] = idx
     end
   end
 
@@ -109,48 +109,48 @@ function Dict:prune(size)
   local freq = torch.Tensor(self.frequencies)
   local _, idx = torch.sort(freq, 1, true)
 
-  local new_dict = Dict.new()
+  local newDict = Dict.new()
 
   -- Add special entries in all cases.
   for i = 1, #self.special do
-    new_dict:add_special(self.idx_to_label[self.special[i]])
+    newDict:addSpecial(self.idxToLabel[self.special[i]])
   end
 
   for i = 1, size do
-    new_dict:add(self.idx_to_label[idx[i]])
+    newDict:add(self.idxToLabel[idx[i]])
   end
 
-  return new_dict
+  return newDict
 end
 
 --[[
-  Convert `labels` to indices. Use `unk_word` if not found.
-  Optionally insert `bos_word` at the beginning and `eos_word` at the end.
+  Convert `labels` to indices. Use `unkWord` if not found.
+  Optionally insert `bosWord` at the beginning and `eosWord` at the end.
 ]]
-function Dict:convert_to_idx(labels, unk_word, bos_word, eos_word)
+function Dict:convertToIdx(labels, unkWord, bosWord, eosWord)
   local vec = {}
 
-  if bos_word ~= nil then
-    table.insert(vec, self:lookup(bos_word))
+  if bosWord ~= nil then
+    table.insert(vec, self:lookup(bosWord))
   end
 
   for i = 1, #labels do
     local idx = self:lookup(labels[i])
     if idx == nil then
-      idx = self:lookup(unk_word)
+      idx = self:lookup(unkWord)
     end
     table.insert(vec, idx)
   end
 
-  if eos_word ~= nil then
-    table.insert(vec, self:lookup(eos_word))
+  if eosWord ~= nil then
+    table.insert(vec, self:lookup(eosWord))
   end
 
   return torch.IntTensor(vec)
 end
 
 --[[ Convert `idx` to labels. If index `stop` is reached, convert it and return. ]]
-function Dict:convert_to_labels(idx, stop)
+function Dict:convertToLabels(idx, stop)
   local labels = {}
 
   for i = 1, #idx do

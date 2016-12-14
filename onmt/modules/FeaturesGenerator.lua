@@ -1,23 +1,23 @@
 local FeaturesGenerator, parent = torch.class('onmt.FeaturesGenerator', 'nn.Container')
 
-function FeaturesGenerator:__init(rnn_size, output_size, features)
+function FeaturesGenerator:__init(rnnSize, outputSize, features)
   parent.__init(self)
-  self.net = self:_buildGenerator(rnn_size, output_size, features)
+  self.net = self:_buildGenerator(rnnSize, outputSize, features)
   self:add(self.net)
 end
 
-function FeaturesGenerator:_buildGenerator(rnn_size, output_size, features)
+function FeaturesGenerator:_buildGenerator(rnnSize, outputSize, features)
   local generator = nn.ConcatTable()
 
   -- Add default generator.
   generator:add(nn.Sequential()
-                  :add(onmt.Generator(rnn_size, output_size))
+                  :add(onmt.Generator(rnnSize, outputSize))
                   :add(nn.SelectTable(1)))
 
   -- Add a generator for each target feature.
   for i = 1, #features do
     generator:add(nn.Sequential()
-                    :add(nn.Linear(rnn_size, features[i]:size()))
+                    :add(nn.Linear(rnnSize, features[i]:size()))
                     :add(nn.LogSoftMax()))
   end
 

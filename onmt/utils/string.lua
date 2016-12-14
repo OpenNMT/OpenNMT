@@ -7,17 +7,17 @@ local function split(str, sep)
   local index = 1
 
   while index <= str:len() do
-    local sep_start, sep_end = str:find(sep, index)
+    local sepStart, sepEnd = str:find(sep, index)
 
     local sub
-    if not sep_start then
+    if not sepStart then
       sub = str:sub(index)
       table.insert(res, sub)
       index = str:len() + 1
     else
-      sub = str:sub(index, sep_start - 1)
+      sub = str:sub(index, sepStart - 1)
       table.insert(res, sub)
-      index = sep_end + 1
+      index = sepEnd + 1
       if index > str:len() then
         table.insert(res, '')
       end
@@ -33,12 +33,12 @@ local function strip(s)
 end
 
 --[[ Convenience function to test `s` for emptiness. ]]
-local function is_empty(s)
+local function isEmpty(s)
   return s == nil or s == ''
 end
 
 return {
   split = split,
   strip = strip,
-  is_empty = is_empty
+  isEmpty = isEmpty
 }

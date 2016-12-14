@@ -7,11 +7,11 @@ end
 
 --[[ Reorder table `tab` based on the `index` array. ]]
 local function reorder(tab, index)
-  local new_tab = {}
+  local newTab = {}
   for i = 1, #tab do
-    table.insert(new_tab, tab[index[i]])
+    table.insert(newTab, tab[index[i]])
   end
-  return new_tab
+  return newTab
 end
 
 return {

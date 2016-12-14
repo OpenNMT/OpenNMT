@@ -35,15 +35,15 @@ local opt = cmd:parse(arg)
 
 local function hasFeatures(filename)
   local reader = onmt.utils.FileReader.new(filename)
-  local _, _, num_features = onmt.utils.Features.extract(reader:next())
+  local _, _, numFeatures = onmt.utils.Features.extract(reader:next())
   reader:close()
-  return num_features > 0
+  return numFeatures > 0
 end
 
-local function make_vocabulary(filename, size)
-  local word_vocab = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
-                                          onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
-  local features_vocabs = {}
+local function makeVocabulary(filename, size)
+  local wordVocab = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
+                                         onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
+  local featuresVocabs = {}
 
   local reader = onmt.utils.FileReader.new(filename)
 
@@ -53,23 +53,23 @@ local function make_vocabulary(filename, size)
       break
     end
 
-    local words, features, num_features = onmt.utils.Features.extract(sent)
+    local words, features, numFeatures = onmt.utils.Features.extract(sent)
 
-    if #features_vocabs == 0 and num_features > 0 then
-      for j = 1, num_features do
-        features_vocabs[j] = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
-                                                  onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
+    if #featuresVocabs == 0 and numFeatures > 0 then
+      for j = 1, numFeatures do
+        featuresVocabs[j] = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
+                                                 onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
       end
     else
-      assert(#features_vocabs == num_features,
+      assert(#featuresVocabs == numFeatures,
              'all sentences must have the same numbers of additional features')
     end
 
     for i = 1, #words do
-      word_vocab:add(words[i])
+      wordVocab:add(words[i])
 
-      for j = 1, num_features do
-        features_vocabs[j]:add(features[j][i])
+      for j = 1, numFeatures do
+        featuresVocabs[j]:add(features[j][i])
       end
     end
 
@@ -77,122 +77,122 @@ local function make_vocabulary(filename, size)
 
   reader:close()
 
-  local original_size = word_vocab:size()
-  word_vocab = word_vocab:prune(size)
-  print('Created dictionary of size ' .. word_vocab:size() .. ' (pruned from ' .. original_size .. ')')
+  local originalSize = wordVocab:size()
+  wordVocab = wordVocab:prune(size)
+  print('Created dictionary of size ' .. wordVocab:size() .. ' (pruned from ' .. originalSize .. ')')
 
-  return word_vocab, features_vocabs
+  return wordVocab, featuresVocabs
 end
 
-local function init_vocabulary(name, data_file, vocab_file, vocab_size, features_vocabs_files)
-  local word_vocab
-  local features_vocabs = {}
+local function initVocabulary(name, dataFile, vocabFile, vocabSize, featuresVocabsFiles)
+  local wordVocab
+  local featuresVocabs = {}
 
-  if vocab_file:len() > 0 then
+  if vocabFile:len() > 0 then
     -- If given, load existing word dictionary.
-    print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '\'...')
-    word_vocab = onmt.utils.Dict.new()
-    word_vocab:load_file(vocab_file)
-    print('Loaded ' .. word_vocab:size() .. ' ' .. name .. ' words')
+    print('Reading ' .. name .. ' vocabulary from \'' .. vocabFile .. '\'...')
+    wordVocab = onmt.utils.Dict.new()
+    wordVocab:loadFile(vocabFile)
+    print('Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
   end
 
-  if features_vocabs_files:len() > 0 then
+  if featuresVocabsFiles:len() > 0 then
     -- If given, discover existing features dictionaries.
     local j = 1
 
     while true do
-      local file = features_vocabs_files .. '.' .. name .. '_feature_' .. j .. '.dict'
+      local file = featuresVocabsFiles .. '.' .. name .. '_feature_' .. j .. '.dict'
 
       if not path.exists(file) then
         break
       end
 
       print('Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
-      features_vocabs[j] = onmt.utils.Dict.new()
-      features_vocabs[j]:load_file(file)
-      print('Loaded ' .. features_vocabs[j]:size() .. ' labels')
+      featuresVocabs[j] = onmt.utils.Dict.new()
+      featuresVocabs[j]:loadFile(file)
+      print('Loaded ' .. featuresVocabs[j]:size() .. ' labels')
 
       j = j + 1
     end
   end
 
-  if word_vocab == nil or (#features_vocabs == 0 and hasFeatures(data_file)) then
+  if wordVocab == nil or (#featuresVocabs == 0 and hasFeatures(dataFile)) then
     -- If a dictionary is still missing, generate it.
     print('Building ' .. name  .. ' vocabulary...')
-    local gen_word_vocab, gen_features_vocabs = make_vocabulary(data_file, vocab_size)
+    local genWordVocab, genFeaturesVocabs = makeVocabulary(dataFile, vocabSize)
 
-    if word_vocab == nil then
-      word_vocab = gen_word_vocab
+    if wordVocab == nil then
+      wordVocab = genWordVocab
     end
-    if #features_vocabs == 0 then
-      features_vocabs = gen_features_vocabs
+    if #featuresVocabs == 0 then
+      featuresVocabs = genFeaturesVocabs
     end
   end
 
   print('')
 
   return {
-    words = word_vocab,
-    features = features_vocabs
+    words = wordVocab,
+    features = featuresVocabs
   }
 end
 
-local function save_vocabulary(name, vocab, file)
+local function saveVocabulary(name, vocab, file)
   print('Saving ' .. name .. ' vocabulary to \'' .. file .. '\'...')
-  vocab:write_file(file)
+  vocab:writeFile(file)
 end
 
-local function save_features_vocabularies(name, vocabs, prefix)
+local function saveFeaturesVocabularies(name, vocabs, prefix)
   for j = 1, #vocabs do
     local file = prefix .. '.' .. name .. '_feature_' .. j .. '.dict'
     print('Saving ' .. name .. ' feature ' .. j .. ' vocabulary to \'' .. file .. '\'...')
-    vocabs[j]:write_file(file)
+    vocabs[j]:writeFile(file)
   end
 end
 
-local function make_data(src_file, tgt_file, src_dicts, tgt_dicts)
+local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
   local src = {}
-  local src_features = {}
+  local srcFeatures = {}
 
   local tgt = {}
-  local tgt_features = {}
+  local tgtFeatures = {}
 
   local sizes = {}
 
   local count = 0
   local ignored = 0
 
-  local src_reader = onmt.utils.FileReader.new(src_file)
-  local tgt_reader = onmt.utils.FileReader.new(tgt_file)
+  local srcReader = onmt.utils.FileReader.new(srcFile)
+  local tgtReader = onmt.utils.FileReader.new(tgtFile)
 
   while true do
-    local src_tokens = src_reader:next()
-    local tgt_tokens = tgt_reader:next()
+    local srcTokens = srcReader:next()
+    local tgtTokens = tgtReader:next()
 
-    if src_tokens == nil or tgt_tokens == nil then
-      if src_tokens == nil and tgt_tokens ~= nil or src_tokens ~= nil and tgt_tokens == nil then
+    if srcTokens == nil or tgtTokens == nil then
+      if srcTokens == nil and tgtTokens ~= nil or srcTokens ~= nil and tgtTokens == nil then
         print('WARNING: source and target do not have the same number of sentences')
       end
       break
     end
 
-    if #src_tokens > 0 and #src_tokens <= opt.seq_length
-    and #tgt_tokens > 0 and #tgt_tokens <= opt.seq_length then
-      local src_words, src_feats = onmt.utils.Features.extract(src_tokens)
-      local tgt_words, tgt_feats = onmt.utils.Features.extract(tgt_tokens)
+    if #srcTokens > 0 and #srcTokens <= opt.seq_length
+    and #tgtTokens > 0 and #tgtTokens <= opt.seq_length then
+      local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
+      local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
 
-      table.insert(src, src_dicts.words:convert_to_idx(src_words, onmt.Constants.UNK_WORD))
-      table.insert(tgt, tgt_dicts.words:convert_to_idx(tgt_words, onmt.Constants.UNK_WORD,
-                                                       onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD))
+      table.insert(src, srcDicts.words:convertToIdx(srcWords, onmt.Constants.UNK_WORD))
+      table.insert(tgt, tgtDicts.words:convertToIdx(tgtWords, onmt.Constants.UNK_WORD,
+                                                    onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD))
 
-      if #src_dicts.features > 0 then
-        table.insert(src_features, onmt.utils.Features.generateSource(src_dicts.features, src_feats))
+      if #srcDicts.features > 0 then
+        table.insert(srcFeatures, onmt.utils.Features.generateSource(srcDicts.features, srcFeats))
       end
-      if #tgt_dicts.features > 0 then
-        table.insert(tgt_features, onmt.utils.Features.generateTarget(tgt_dicts.features, tgt_feats))
+      if #tgtDicts.features > 0 then
+        table.insert(tgtFeatures, onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats))
       end
 
-      table.insert(sizes, #src_words)
+      table.insert(sizes, #srcWords)
     else
       ignored = ignored + 1
     end
@@ -204,8 +204,8 @@ local function make_data(src_file, tgt_file, src_dicts, tgt_dicts)
     end
   end
 
-  src_reader:close()
-  tgt_reader:close()
+  srcReader:close()
+  tgtReader:close()
 
   if opt.shuffle == 1 then
     print('... shuffling sentences')
@@ -214,11 +214,11 @@ local function make_data(src_file, tgt_file, src_dicts, tgt_dicts)
     tgt = onmt.utils.Table.reorder(tgt, perm)
     sizes = onmt.utils.Table.reorder(sizes, perm)
 
-    if #src_dicts.features > 0 then
-      src_features = onmt.utils.Table.reorder(src_features, perm)
+    if #srcDicts.features > 0 then
+      srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm)
     end
-    if #tgt_dicts.features > 0 then
-      tgt_features = onmt.utils.Table.reorder(tgt_features, perm)
+    if #tgtDicts.features > 0 then
+      tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm)
     end
   end
 
@@ -227,30 +227,30 @@ local function make_data(src_file, tgt_file, src_dicts, tgt_dicts)
   src = onmt.utils.Table.reorder(src, perm)
   tgt = onmt.utils.Table.reorder(tgt, perm)
 
-  if #src_dicts.features > 0 then
-    src_features = onmt.utils.Table.reorder(src_features, perm)
+  if #srcDicts.features > 0 then
+    srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm)
   end
-  if #tgt_dicts.features > 0 then
-    tgt_features = onmt.utils.Table.reorder(tgt_features, perm)
+  if #tgtDicts.features > 0 then
+    tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm)
   end
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length == 0 or > ' .. opt.seq_length .. ')')
 
-  local src_data = {
+  local srcData = {
     words = src,
-    features = src_features
+    features = srcFeatures
   }
 
-  local tgt_data = {
+  local tgtData = {
     words = tgt,
-    features = tgt_features
+    features = tgtFeatures
   }
 
-  return src_data, tgt_data
+  return srcData, tgtData
 end
 
 local function main()
-  local required_options = {
+  local requiredOptions = {
     "train_src_file",
     "train_tgt_file",
     "valid_src_file",
@@ -258,39 +258,39 @@ local function main()
     "save_file"
   }
 
-  onmt.utils.Opt.init(opt, required_options)
+  onmt.utils.Opt.init(opt, requiredOptions)
 
   local data = {}
 
   data.dicts = {}
-  data.dicts.src = init_vocabulary('source', opt.train_src_file, opt.src_vocab_file,
-                                   opt.src_vocab_size, opt.features_vocabs_prefix)
-  data.dicts.tgt = init_vocabulary('target', opt.train_tgt_file, opt.tgt_vocab_file,
-                                   opt.tgt_vocab_size, opt.features_vocabs_prefix)
+  data.dicts.src = initVocabulary('source', opt.train_src_file, opt.src_vocab_file,
+                                  opt.src_vocab_size, opt.features_vocabs_prefix)
+  data.dicts.tgt = initVocabulary('target', opt.train_tgt_file, opt.tgt_vocab_file,
+                                  opt.tgt_vocab_size, opt.features_vocabs_prefix)
 
   print('Preparing training data...')
   data.train = {}
-  data.train.src, data.train.tgt = make_data(opt.train_src_file, opt.train_tgt_file,
-                                             data.dicts.src, data.dicts.tgt)
+  data.train.src, data.train.tgt = makeData(opt.train_src_file, opt.train_tgt_file,
+                                            data.dicts.src, data.dicts.tgt)
   print('')
 
   print('Preparing validation data...')
   data.valid = {}
-  data.valid.src, data.valid.tgt = make_data(opt.valid_src_file, opt.valid_tgt_file,
-                                             data.dicts.src, data.dicts.tgt)
+  data.valid.src, data.valid.tgt = makeData(opt.valid_src_file, opt.valid_tgt_file,
+                                            data.dicts.src, data.dicts.tgt)
   print('')
 
   if opt.src_vocab_file:len() == 0 then
-    save_vocabulary('source', data.dicts.src.words, opt.save_file .. '.src.dict')
+    saveVocabulary('source', data.dicts.src.words, opt.save_file .. '.src.dict')
   end
 
   if opt.tgt_vocab_file:len() == 0 then
-    save_vocabulary('target', data.dicts.tgt.words, opt.save_file .. '.tgt.dict')
+    saveVocabulary('target', data.dicts.tgt.words, opt.save_file .. '.tgt.dict')
   end
 
   if opt.features_vocabs_prefix:len() == 0 then
-    save_features_vocabularies('source', data.dicts.src.features, opt.save_file)
-    save_features_vocabularies('target', data.dicts.tgt.features, opt.save_file)
+    saveFeaturesVocabularies('source', data.dicts.src.features, opt.save_file)
+    saveFeaturesVocabularies('target', data.dicts.tgt.features, opt.save_file)
   end
 
   print('Saving data to \'' .. opt.save_file .. '-train.t7\'...')

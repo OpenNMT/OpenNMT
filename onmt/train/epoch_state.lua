@@ -4,23 +4,23 @@
 local EpochState = torch.class("EpochState")
 
 --[[ Initialize for epoch `epoch` and training `status` (current loss)]]
-function EpochState:__init(epoch, num_iterations, learning_rate, last_valid_ppl, status)
+function EpochState:__init(epoch, numIterations, learningRate, lastValidPpl, status)
   self.epoch = epoch
-  self.num_iterations = num_iterations
-  self.learning_rate = learning_rate
-  self.last_valid_ppl = last_valid_ppl
+  self.numIterations = numIterations
+  self.learningRate = learningRate
+  self.lastValidPpl = lastValidPpl
 
   if status ~= nil then
     self.status = status
   else
     self.status = {}
-    self.status.train_nonzeros = 0
-    self.status.train_loss = 0
+    self.status.trainNonzeros = 0
+    self.status.trainLoss = 0
   end
 
   self.timer = torch.Timer()
-  self.num_words_source = 0
-  self.num_words_target = 0
+  self.numWordsSource = 0
+  self.numWordsTarget = 0
 
   self.minFreeMemory = 100000000000
 end
@@ -28,15 +28,15 @@ end
 --[[ Update training status. Takes `batch` (described in data.lua) and last losses.]]
 function EpochState:update(batches, losses)
   for i = 1,#batches do
-    self.num_words_source = self.num_words_source + batches[i].size * batches[i].source_length
-    self.num_words_target = self.num_words_target + batches[i].size * batches[i].target_length
-    self.status.train_loss = self.status.train_loss + losses[i]
-    self.status.train_nonzeros = self.status.train_nonzeros + batches[i].target_non_zeros
+    self.numWordsSource = self.numWordsSource + batches[i].size * batches[i].sourceLength
+    self.numWordsTarget = self.numWordsTarget + batches[i].size * batches[i].targetLength
+    self.status.trainLoss = self.status.trainLoss + losses[i]
+    self.status.trainNonzeros = self.status.trainNonzeros + batches[i].targetNonZeros
   end
 end
 
 --[[ Log to status stdout. ]]
-function EpochState:log(batch_index, json)
+function EpochState:log(batchIndex, json)
   if json then
     local freeMemory = onmt.utils.Cuda.freeMemory()
     if freeMemory < self.minFreeMemory then
@@ -46,45 +46,45 @@ function EpochState:log(batch_index, json)
     local obj = {
       time = os.time(),
       epoch = self.epoch,
-      iteration = batch_index,
-      totalIterations = self.num_iterations,
-      learningRate = self.learning_rate,
-      trainingPerplexity = self:get_train_ppl(),
+      iteration = batchIndex,
+      totalIterations = self.numIterations,
+      learningRate = self.learningRate,
+      trainingPerplexity = self:getTrainPpl(),
       freeMemory = freeMemory,
-      lastValidationPerplexity = self.last_valid_ppl,
+      lastValidationPerplexity = self.lastValidPpl,
       processedTokens = {
-        source = self.num_words_source,
-        target = self.num_words_target
+        source = self.numWordsSource,
+        target = self.numWordsTarget
       }
     }
 
     onmt.utils.Log.logJson(obj)
   else
-    local time_taken = self:get_time()
+    local timeTaken = self:getTime()
 
     local stats = ''
     stats = stats .. string.format('Epoch %d ; ', self.epoch)
-    stats = stats .. string.format('Iteration %d/%d ; ', batch_index, self.num_iterations)
-    stats = stats .. string.format('Learning rate %.4f ; ', self.learning_rate)
-    stats = stats .. string.format('Source tokens/s %d ; ', self.num_words_source / time_taken)
-    stats = stats .. string.format('Perplexity %.2f', self:get_train_ppl())
+    stats = stats .. string.format('Iteration %d/%d ; ', batchIndex, self.numIterations)
+    stats = stats .. string.format('Learning rate %.4f ; ', self.learningRate)
+    stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
+    stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
     print(stats)
   end
 end
 
-function EpochState:get_train_ppl()
-  return math.exp(self.status.train_loss / self.status.train_nonzeros)
+function EpochState:getTrainPpl()
+  return math.exp(self.status.trainLoss / self.status.trainNonzeros)
 end
 
-function EpochState:get_time()
+function EpochState:getTime()
   return self.timer:time().real
 end
 
-function EpochState:get_status()
+function EpochState:getStatus()
   return self.status
 end
 
-function EpochState:get_min_freememory()
+function EpochState:getMinFreememory()
   return self.minFreeMemory
 end
 

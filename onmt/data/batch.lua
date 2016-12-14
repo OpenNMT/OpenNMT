@@ -1,7 +1,7 @@
---[[ Return the max_length, sizes, and non-zero count
+--[[ Return the maxLength, sizes, and non-zero count
   of a batch of `seq`s ignoring `ignore` words.
 --]]
-local function get_length(seq, ignore)
+local function getLength(seq, ignore)
   local sizes = torch.IntTensor(#seq):zero()
   local max = 0
   local sum = 0
@@ -23,19 +23,19 @@ end
 Batch interface [size]:
 
   * size: number of sentences in the batch [1]
-  * source_length: max length in source batch [1]
-  * source_size:  lengths of each source [batch x 1]
-  * source_input:  left-padded idx's of source (PPPPPPABCDE) [batch x max]
-  * source_input_features: table of source features sequences
-  * source_input_rev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]
-  * source_input_rev_features: table of reversed source features sequences
-  * target_length: max length in source batch [1]
-  * target_size: lengths of each source [batch x 1]
-  * target_non_zeros: number of non-ignored words in batch [1]
-  * target_input: input idx's of target (SABCDEPPPPPP) [batch x max]
-  * target_input_features: table of target input features sequences
-  * target_output: expected output idx's of target (ABCDESPPPPPP) [batch x max]
-  * target_output_features: table of target output features sequences
+  * sourceLength: max length in source batch [1]
+  * sourceSize:  lengths of each source [batch x 1]
+  * sourceInput:  left-padded idx's of source (PPPPPPABCDE) [batch x max]
+  * sourceInputFeatures: table of source features sequences
+  * sourceInputRev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]
+  * sourceInputRevFeatures: table of reversed source features sequences
+  * targetLength: max length in source batch [1]
+  * targetSize: lengths of each source [batch x 1]
+  * targetNonZeros: number of non-ignored words in batch [1]
+  * targetInput: input idx's of target (SABCDEPPPPPP) [batch x max]
+  * targetInputFeatures: table of target input features sequences
+  * targetOutput: expected output idx's of target (ABCDESPPPPPP) [batch x max]
+  * targetOutputFeatures: table of target output features sequences
 
  TODO: change name of size => maxlen
 --]]
@@ -44,121 +44,121 @@ local Batch = torch.class('Batch')
 --[[ Create a batch object given aligned sent tables `src` and `tgt`
   (optional). Data format is shown at the top of the file.
 --]]
-function Batch:__init(src, src_features, tgt, tgt_features)
+function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   if tgt ~= nil then
     assert(#src == #tgt, "source and target must have the same batch size")
   end
 
   self.size = #src
 
-  self.source_length, self.source_size = get_length(src)
+  self.sourceLength, self.sourceSize = getLength(src)
 
-  local source_seq = torch.IntTensor(self.source_length, self.size):fill(onmt.Constants.PAD)
-  self.source_input = source_seq:clone()
-  self.source_input_rev = source_seq:clone()
+  local sourceSeq = torch.IntTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
+  self.sourceInput = sourceSeq:clone()
+  self.sourceInputRev = sourceSeq:clone()
 
-  self.source_input_features = {}
-  self.source_input_rev_features = {}
+  self.sourceInputFeatures = {}
+  self.sourceInputRevFeatures = {}
 
-  if #src_features > 0 then
-    for _ = 1, #src_features[1] do
-      table.insert(self.source_input_features, source_seq:clone())
-      table.insert(self.source_input_rev_features, source_seq:clone())
+  if #srcFeatures > 0 then
+    for _ = 1, #srcFeatures[1] do
+      table.insert(self.sourceInputFeatures, sourceSeq:clone())
+      table.insert(self.sourceInputRevFeatures, sourceSeq:clone())
     end
   end
 
   if tgt ~= nil then
-    self.target_length, self.target_size, self.target_non_zeros = get_length(tgt, 1)
+    self.targetLength, self.targetSize, self.targetNonZeros = getLength(tgt, 1)
 
-    local target_seq = torch.IntTensor(self.target_length, self.size):fill(onmt.Constants.PAD)
-    self.target_input = target_seq:clone()
-    self.target_output = target_seq:clone()
+    local targetSeq = torch.IntTensor(self.targetLength, self.size):fill(onmt.Constants.PAD)
+    self.targetInput = targetSeq:clone()
+    self.targetOutput = targetSeq:clone()
 
-    self.target_input_features = {}
-    self.target_output_features = {}
+    self.targetInputFeatures = {}
+    self.targetOutputFeatures = {}
 
-    if #tgt_features > 0 then
-      for _ = 1, #tgt_features[1] do
-        table.insert(self.target_input_features, target_seq:clone())
-        table.insert(self.target_output_features, target_seq:clone())
+    if #tgtFeatures > 0 then
+      for _ = 1, #tgtFeatures[1] do
+        table.insert(self.targetInputFeatures, targetSeq:clone())
+        table.insert(self.targetOutputFeatures, targetSeq:clone())
       end
     end
   end
 
   for b = 1, self.size do
-    local source_offset = self.source_length - self.source_size[b] + 1
-    local source_input = src[b]
-    local source_input_rev = src[b]:index(1, torch.linspace(self.source_size[b], 1, self.source_size[b]):long())
+    local sourceOffset = self.sourceLength - self.sourceSize[b] + 1
+    local sourceInput = src[b]
+    local sourceInputRev = src[b]:index(1, torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long())
 
     -- Source input is left padded [PPPPPPABCDE] .
-    self.source_input[{{source_offset, self.source_length}, b}]:copy(source_input)
-    self.source_input_pad_left = true
+    self.sourceInput[{{sourceOffset, self.sourceLength}, b}]:copy(sourceInput)
+    self.sourceInputPadLeft = true
 
     -- Rev source input is right padded [EDCBAPPPPPP] .
-    self.source_input_rev[{{1, self.source_size[b]}, b}]:copy(source_input_rev)
-    self.source_input_rev_pad_left = false
+    self.sourceInputRev[{{1, self.sourceSize[b]}, b}]:copy(sourceInputRev)
+    self.sourceInputRevPadLeft = false
 
-    for i = 1, #self.source_input_features do
-      local source_input_features = src_features[b][i]
-      local source_input_rev_features = src_features[b][i]:index(1, torch.linspace(self.source_size[b], 1, self.source_size[b]):long())
+    for i = 1, #self.sourceInputFeatures do
+      local sourceInputFeatures = srcFeatures[b][i]
+      local sourceInputRevFeatures = srcFeatures[b][i]:index(1, torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long())
 
-      self.source_input_features[i][{{source_offset, self.source_length}, b}]:copy(source_input_features)
-      self.source_input_rev_features[i][{{1, self.source_size[b]}, b}]:copy(source_input_rev_features)
+      self.sourceInputFeatures[i][{{sourceOffset, self.sourceLength}, b}]:copy(sourceInputFeatures)
+      self.sourceInputRevFeatures[i][{{1, self.sourceSize[b]}, b}]:copy(sourceInputRevFeatures)
     end
 
     if tgt ~= nil then
       -- Input: [<s>ABCDE]
       -- Ouput: [ABCDE</s>]
-      local target_length = tgt[b]:size(1) - 1
-      local target_input = tgt[b]:narrow(1, 1, target_length)
-      local target_output = tgt[b]:narrow(1, 2, target_length)
+      local targetLength = tgt[b]:size(1) - 1
+      local targetInput = tgt[b]:narrow(1, 1, targetLength)
+      local targetOutput = tgt[b]:narrow(1, 2, targetLength)
 
       -- Target is right padded [<S>ABCDEPPPPPP] .
-      self.target_input[{{1, target_length}, b}]:copy(target_input)
-      self.target_output[{{1, target_length}, b}]:copy(target_output)
+      self.targetInput[{{1, targetLength}, b}]:copy(targetInput)
+      self.targetOutput[{{1, targetLength}, b}]:copy(targetOutput)
 
-      for i = 1, #self.target_input_features do
-        local target_input_features = tgt_features[b][i]:narrow(1, 1, target_length)
-        local target_output_features = tgt_features[b][i]:narrow(1, 2, target_length)
+      for i = 1, #self.targetInputFeatures do
+        local targetInputFeatures = tgtFeatures[b][i]:narrow(1, 1, targetLength)
+        local targetOutputFeatures = tgtFeatures[b][i]:narrow(1, 2, targetLength)
 
-        self.target_input_features[i][{{1, target_length}, b}]:copy(target_input_features)
-        self.target_output_features[i][{{1, target_length}, b}]:copy(target_output_features)
+        self.targetInputFeatures[i][{{1, targetLength}, b}]:copy(targetInputFeatures)
+        self.targetOutputFeatures[i][{{1, targetLength}, b}]:copy(targetOutputFeatures)
       end
     end
   end
 end
 
-function Batch:get_source_input(t)
+function Batch:getSourceInput(t)
   -- If a regular input, return word id, otherwise a table with features.
-  if #self.source_input_features > 0 then
-    local inputs = {self.source_input[t]}
-    for j = 1, #self.source_input_features do
-      table.insert(inputs, self.source_input_features[j][t])
+  if #self.sourceInputFeatures > 0 then
+    local inputs = {self.sourceInput[t]}
+    for j = 1, #self.sourceInputFeatures do
+      table.insert(inputs, self.sourceInputFeatures[j][t])
     end
     return inputs
   else
-    return self.source_input[t]
+    return self.sourceInput[t]
   end
 end
 
-function Batch:get_target_input(t)
+function Batch:getTargetInput(t)
   -- If a regular input, return word id, otherwise a table with features.
-  if #self.target_input_features > 0 then
-    local inputs = {self.target_input[t]}
-    for j = 1, #self.target_input_features do
-      table.insert(inputs, self.target_input_features[j][t])
+  if #self.targetInputFeatures > 0 then
+    local inputs = {self.targetInput[t]}
+    for j = 1, #self.targetInputFeatures do
+      table.insert(inputs, self.targetInputFeatures[j][t])
     end
     return inputs
   else
-    return self.target_input[t]
+    return self.targetInput[t]
   end
 end
 
-function Batch:get_target_output(t)
+function Batch:getTargetOutput(t)
   -- If a regular input, return word id, otherwise a table with features.
-  local outputs = { self.target_output[t] }
-  for j = 1, #self.target_output_features do
-    table.insert(outputs, self.target_output_features[j][t])
+  local outputs = { self.targetOutput[t] }
+  for j = 1, #self.targetOutputFeatures do
+    table.insert(outputs, self.targetOutputFeatures[j][t])
   end
   return outputs
 end

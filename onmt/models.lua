@@ -1,75 +1,75 @@
 local function buildEncoder(opt, dicts)
-  local input_network = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
-                                               opt.word_vec_size,
-                                               opt.pre_word_vecs_enc,
-                                               opt.fix_word_vecs_enc)
+  local inputNetwork = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
+                                              opt.word_vec_size,
+                                              opt.pre_word_vecs_enc,
+                                              opt.fix_word_vecs_enc)
 
-  local input_size = opt.word_vec_size
+  local inputSize = opt.word_vec_size
 
   -- Sequences with features.
   if #dicts.features > 0 then
-    local src_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features,
-                                                          opt.feat_vec_exponent,
-                                                          opt.feat_vec_size,
-                                                          opt.feat_merge)
+    local srcFeatEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
+                                                        opt.feat_vec_exponent,
+                                                        opt.feat_vec_size,
+                                                        opt.feat_merge)
 
-    input_network = nn.Sequential()
+    inputNetwork = nn.Sequential()
       :add(nn.ParallelTable()
-             :add(input_network)
-             :add(src_feat_embedding))
+             :add(inputNetwork)
+             :add(srcFeatEmbedding))
       :add(nn.JoinTable(2))
 
-    input_size = input_size + src_feat_embedding.outputSize
+    inputSize = inputSize + srcFeatEmbedding.outputSize
   end
 
   if opt.brnn then
     -- Compute rnn hidden size depending on hidden states merge action.
-    local rnn_size = opt.rnn_size
+    local rnnSize = opt.rnn_size
     if opt.brnn_merge == 'concat' then
       if opt.rnn_size % 2 ~= 0 then
         error('in concat mode, rnn_size must be divisible by 2')
       end
-      rnn_size = rnn_size / 2
+      rnnSize = rnnSize / 2
     elseif opt.brnn_merge == 'sum' then
-      rnn_size = rnn_size
+      rnnSize = rnnSize
     else
       error('invalid merge action ' .. opt.brnn_merge)
     end
 
-    local rnn = onmt.LSTM.new(opt.layers, input_size, rnn_size, opt.dropout, opt.residual)
+    local rnn = onmt.LSTM.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
 
-    return onmt.BiEncoder.new(input_network, rnn, opt.brnn_merge)
+    return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
   else
-    local rnn = onmt.LSTM.new(opt.layers, input_size, opt.rnn_size, opt.dropout, opt.residual)
+    local rnn = onmt.LSTM.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
-    return onmt.Encoder.new(input_network, rnn)
+    return onmt.Encoder.new(inputNetwork, rnn)
   end
 end
 
 local function buildDecoder(opt, dicts, verbose)
-  local input_network = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
-                                               opt.word_vec_size,
-                                               opt.pre_word_vecs_dec,
-                                               opt.fix_word_vecs_dec)
+  local inputNetwork = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
+                                              opt.word_vec_size,
+                                              opt.pre_word_vecs_dec,
+                                              opt.fix_word_vecs_dec)
 
-  local input_size = opt.word_vec_size
+  local inputSize = opt.word_vec_size
 
   local generator
 
   -- Sequences with features.
   if #dicts.features > 0 then
-    local tgt_feat_embedding = onmt.FeaturesEmbedding.new(dicts.features,
-                                                          opt.feat_vec_exponent,
-                                                          opt.feat_vec_size,
-                                                          opt.feat_merge)
+    local tgtFeatEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
+                                                        opt.feat_vec_exponent,
+                                                        opt.feat_vec_size,
+                                                        opt.feat_merge)
 
-    input_network = nn.Sequential()
+    inputNetwork = nn.Sequential()
       :add(nn.ParallelTable()
-             :add(input_network)
-             :add(tgt_feat_embedding))
+             :add(inputNetwork)
+             :add(tgtFeatEmbedding))
       :add(nn.JoinTable(2))
 
-    input_size = input_size + tgt_feat_embedding.outputSize
+    inputSize = inputSize + tgtFeatEmbedding.outputSize
 
     generator = onmt.FeaturesGenerator.new(opt.rnn_size, dicts.words:size(), dicts.features)
   else
@@ -80,12 +80,12 @@ local function buildDecoder(opt, dicts, verbose)
     if verbose then
       print(" * using input feeding")
     end
-    input_size = input_size + opt.rnn_size
+    inputSize = inputSize + opt.rnn_size
   end
 
-  local rnn = onmt.LSTM.new(opt.layers, input_size, opt.rnn_size, opt.dropout, opt.residual)
+  local rnn = onmt.LSTM.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
-  return onmt.Decoder.new(input_network, rnn, generator, opt.input_feed == 1)
+  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
 end
 
 --[[ This is useful when training from a model in parallel mode: each thread must own its model. ]]
