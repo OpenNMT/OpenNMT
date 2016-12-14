@@ -9,7 +9,7 @@ local function init(args)
   opt = args
   onmt.utils.Cuda.init(opt)
 
-  print('Loading ' .. opt.model .. '...')
+  print('Loading \'' .. opt.model .. '\'...')
   checkpoint = torch.load(opt.model)
 
   models.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder)

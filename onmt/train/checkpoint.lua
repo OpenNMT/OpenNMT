@@ -39,7 +39,7 @@ function Checkpoint:save_iteration(iteration, epoch_state, batch_order, verbose)
   local file_path = string.format('%s_checkpoint.t7', self.save_path)
 
   if verbose then
-    print('Saving checkpoint to ' .. file_path .. '...')
+    print('Saving checkpoint to \'' .. file_path .. '\'...')
   end
 
   -- Succeed serialization before overriding existing file
@@ -57,7 +57,7 @@ function Checkpoint:save_epoch(valid_ppl, epoch_state, verbose)
   local file_path = string.format('%s_epoch%d_%.2f.t7', self.save_path, epoch_state.epoch, valid_ppl)
 
   if verbose then
-    print('Saving checkpoint to ' .. file_path .. '...')
+    print('Saving checkpoint to \'' .. file_path .. '\'...')
   end
 
   self:save(file_path, info)

@@ -337,7 +337,7 @@ local function main()
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
 
     if not opt.json_log then
-      print('Loading checkpoint ' .. opt.train_from .. '...')
+      print('Loading checkpoint \'' .. opt.train_from .. '\'...')
     end
 
     checkpoint = torch.load(opt.train_from)
@@ -370,7 +370,7 @@ local function main()
 
   -- Create the data loader class.
   if not opt.json_log then
-    print('Loading data from ' .. opt.data .. '...')
+    print('Loading data from \'' .. opt.data .. '\'...')
   end
 
   local dataset = torch.load(opt.data)
