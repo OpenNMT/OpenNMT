@@ -43,6 +43,31 @@ end
 tester:add(stringTest)
 
 
+local tensorTest = torch.TestSuite()
+
+function tensorTest.reuseSmaller()
+  local a = torch.Tensor(10, 200)
+  local b = onmt.utils.Tensor.reuseTensor(a, { 5, 200 })
+  tester:eq(torch.pointer(a:storage()), torch.pointer(b:storage()))
+end
+
+function tensorTest.reuseSame()
+  local a = torch.Tensor(10, 200)
+  local b = onmt.utils.Tensor.reuseTensor(a, a:size())
+  tester:eq(torch.pointer(a:storage()), torch.pointer(b:storage()))
+end
+
+function tensorTest.reuseMultipleResize()
+  local a = torch.Tensor(10, 200)
+  local b = onmt.utils.Tensor.reuseTensor(a, { 5, 200 })
+  tester:eq(torch.pointer(a:storage()), torch.pointer(b:storage()))
+  local c = onmt.utils.Tensor.reuseTensor(a, { 10, 200 })
+  tester:eq(torch.pointer(a:storage()), torch.pointer(c:storage()))
+end
+
+tester:add(tensorTest)
+
+
 local nmttest = torch.TestSuite()
 
 -- local function equal(t1, t2, msg)
