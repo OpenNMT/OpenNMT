@@ -1,9 +1,6 @@
-require 'nn'
-require 'nngraph'
-
 require('onmt.init')
 
-local path = require 'pl.path'
+local path = require('pl.path')
 
 local cmd = torch.CmdLine()
 cmd:option('-model', '', 'trained model file')
@@ -30,23 +27,24 @@ local function main()
   end
 
   if opt.gpuid > 0 then
-    require 'cunn'
-    require 'cutorch'
+    require('cutorch')
     cutorch.setDevice(opt.gpuid)
   end
 
-  print('Loading model ' .. opt.model .. '...')
+  print('Loading model \'' .. opt.model .. '\'...')
   local checkpoint = torch.load(opt.model)
   print('... done.')
 
   print('Converting model...')
-  for _, net in pairs(checkpoint.nets) do
-    net:float()
-    net:clearState()
+  for _, model in pairs(checkpoint.models) do
+    for _, net in pairs(model.modules) do
+      net:float()
+      net:clearState()
+    end
   end
   print('... done.')
 
-  print('Releasing model ' .. opt.output_model .. '...')
+  print('Releasing model \'' .. opt.output_model .. '\'...')
   torch.save(opt.output_model, checkpoint)
   print('... done.')
 end
