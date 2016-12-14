@@ -173,7 +173,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
     gradStatesOutputBwd = gradStatesOutput
   end
 
-  local gradInputFwd = self.fwd:backward(batch, gradStatesOutputFwd, gradContextOutputFwd)
+  self.fwd:backward(batch, gradStatesOutputFwd, gradContextOutputFwd)
 
   -- reverse gradients of the backward context
   local gradContextBwd = onmt.utils.Tensor.reuseTensor(self.gradContextBwdProto,
@@ -183,11 +183,5 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
     gradContextBwd[{{}, t}]:copy(gradContextOutputBwd[{{}, batch.sourceLength - t + 1}])
   end
 
-  local gradInputBwd = self.bwd:backward(batch, gradStatesOutputBwd, gradContextBwd)
-  -- gradInput
-  local gradInput = {}
-  for t = 1, batch.source_length do
-      gradInput[t] = torch.add(gradInputFwd[t], gradInputBwd[batch.source_length-t+1], 2)
-  end
-  return gradInput
+  self.bwd:backward(batch, gradStatesOutputBwd, gradContextBwd)
 end
