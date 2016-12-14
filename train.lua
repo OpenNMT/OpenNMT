@@ -83,8 +83,7 @@ cmd:option('-save_every', 0, [[Save intermediate models every this many iteratio
                              If = 0, will not save models within an epoch. ]])
 cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
-cmd:option('-no_log', false, [[By default, a log file save_file.log is created during training giving time, ppl, and free memory at each
-                             epoch. Use this flag to disable.]])
+cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
 
 local opt = cmd:parse(arg)
 
@@ -176,13 +175,13 @@ local function eval(model, criterion, data)
   return math.exp(loss / total)
 end
 
-local function train_model(model, train_data, valid_data, dataset, info, log)
+local function train_model(model, train_data, valid_data, dataset, info)
   local params, grad_params = {}, {}
   local criterion
 
   onmt.utils.Parallel.launch(nil, function(idx)
     -- Only logs information of the first thread.
-    local verbose = idx == 1
+    local verbose = idx == 1 and not opt.json_log
 
     local nets = get_nets(_G.model)
     _G.params, _G.grad_params = init_params(nets, verbose)
@@ -219,7 +218,7 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
 
   local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
 
-  local function train_epoch(epoch)
+  local function train_epoch(epoch, last_valid_ppl)
     local epoch_state
     local batch_order
 
@@ -227,10 +226,10 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     local num_iterations = math.ceil(#train_data / onmt.utils.Parallel.count)
 
     if start_i > 1 and info ~= nil then
-      epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), info.epoch_status)
+      epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), last_valid_ppl, info.epoch_status)
       batch_order = info.batch_order
     else
-      epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate())
+      epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), last_valid_ppl)
       -- shuffle mini batch order
       batch_order = torch.randperm(#train_data)
     end
@@ -287,10 +286,10 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
       epoch_state:update(batches, losses)
 
       if iter % opt.report_every == 0 then
-        epoch_state:log(iter)
+        epoch_state:log(iter, opt.json_log)
       end
       if opt.save_every > 0 and iter % opt.save_every == 0 then
-        checkpoint:save_iteration(iter, epoch_state, batch_order)
+        checkpoint:save_iteration(iter, epoch_state, batch_order, not opt.json_log)
       end
       iter = iter + 1
     end
@@ -298,19 +297,26 @@ local function train_model(model, train_data, valid_data, dataset, info, log)
     return epoch_state
   end
 
-  for epoch = opt.start_epoch, opt.epochs do
-    local epoch_state = train_epoch(epoch)
+  local valid_ppl = 0
 
-    local valid_ppl = eval(model, criterion, valid_data)
-    print('Validation PPL: ' .. valid_ppl)
+  for epoch = opt.start_epoch, opt.epochs do
+    if not opt.json_log then
+      print('')
+    end
+
+    local epoch_state = train_epoch(epoch, valid_ppl)
+
+    valid_ppl = eval(model, criterion, valid_data)
+
+    if not opt.json_log then
+      print('Validation perplexity: ' .. valid_ppl)
+    end
 
     if opt.optim == 'sgd' then
       optim:update_learning_rate(valid_ppl, epoch)
     end
 
-    log:append({epoch, epoch_state:get_time(), epoch_state:get_train_ppl(), valid_ppl, epoch_state:get_min_freememory()})
-
-    checkpoint:save_epoch(valid_ppl, epoch_state, optim)
+    checkpoint:save_epoch(valid_ppl, epoch_state, not opt.json_log)
   end
 end
 
@@ -325,33 +331,15 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  local log = onmt.utils.Log.new(opt.save_file .. ".log", not opt.no_log)
-
-  -- Create the data loader class.
-  print('Loading data from ' .. opt.data .. '...')
-  local dataset = torch.load(opt.data)
-
-  local train_data = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
-  local valid_data = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
-
-  train_data:set_batch_size(opt.max_batch_size)
-  valid_data:set_batch_size(opt.max_batch_size)
-
-  print(string.format(' * vocabulary size: source = %d; target = %d',
-                      #dataset.dicts.src.words, #dataset.dicts.tgt.words))
-  print(string.format(' * additional features: source = %d; target = %d',
-                      #dataset.dicts.src.features, #dataset.dicts.tgt.features))
-  print(string.format(' * maximum sequence length: source = %d; target = %d',
-                      train_data.max_source_length, train_data.max_target_length))
-  print(string.format(' * number of training sentences: %d', #train_data.src))
-  print(string.format(' * maximum batch size: %d', opt.max_batch_size * onmt.utils.Parallel.count))
-
   local checkpoint = {}
 
   if opt.train_from:len() > 0 then
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
 
-    print('Loading checkpoint ' .. opt.train_from .. '...')
+    if not opt.json_log then
+      print('Loading checkpoint ' .. opt.train_from .. '...')
+    end
+
     checkpoint = torch.load(opt.train_from)
 
     opt.layers = checkpoint.options.layers
@@ -373,15 +361,59 @@ local function main()
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration
 
-      print('Resuming training from epoch ' .. opt.start_epoch
-              .. ' at iteration ' .. opt.start_iteration .. '...')
+      if not opt.json_log then
+        print('Resuming training from epoch ' .. opt.start_epoch
+                .. ' at iteration ' .. opt.start_iteration .. '...')
+      end
     end
-    log:append({'--- restart from checkpoint: ',opt.train_from})
-  else
-    log:clear()
   end
 
-  print('Building model...')
+  -- Create the data loader class.
+  if not opt.json_log then
+    print('Loading data from ' .. opt.data .. '...')
+  end
+
+  local dataset = torch.load(opt.data)
+
+  local train_data = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
+  local valid_data = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
+
+  train_data:set_batch_size(opt.max_batch_size)
+  valid_data:set_batch_size(opt.max_batch_size)
+
+  if not opt.json_log then
+    print(string.format(' * vocabulary size: source = %d; target = %d',
+                        #dataset.dicts.src.words, #dataset.dicts.tgt.words))
+    print(string.format(' * additional features: source = %d; target = %d',
+                        #dataset.dicts.src.features, #dataset.dicts.tgt.features))
+    print(string.format(' * maximum sequence length: source = %d; target = %d',
+                        train_data.max_source_length, train_data.max_target_length))
+    print(string.format(' * number of training sentences: %d', #train_data.src))
+    print(string.format(' * maximum batch size: %d', opt.max_batch_size * onmt.utils.Parallel.count))
+  else
+    local metadata = {
+      options = opt,
+      vocabSize = {
+        source = #dataset.dicts.src.words,
+        target = #dataset.dicts.tgt.words
+      },
+      additionalFeatures = {
+        source = #dataset.dicts.src.features,
+        target = #dataset.dicts.tgt.features
+      },
+      sequenceLength = {
+        source = train_data.max_source_length,
+        target = train_data.max_target_length
+      },
+      trainingSentences = #train_data.src
+    }
+
+    onmt.utils.Log.logJson(metadata)
+  end
+
+  if not opt.json_log then
+    print('Building model...')
+  end
 
   local model
 
@@ -393,8 +425,9 @@ local function main()
       _G.model.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder, idx > 1)
       _G.model.decoder = onmt.Models.loadDecoder(checkpoint.models.decoder, idx > 1)
     else
+      local verbose = idx == 1 and not opt.json_log
       _G.model.encoder = onmt.Models.buildEncoder(opt, dataset.dicts.src)
-      _G.model.decoder = onmt.Models.buildDecoder(opt, dataset.dicts.tgt)
+      _G.model.decoder = onmt.Models.buildDecoder(opt, dataset.dicts.tgt, verbose)
     end
 
     for _, mod in pairs(_G.model) do
@@ -408,7 +441,7 @@ local function main()
     end
   end)
 
-  train_model(model, train_data, valid_data, dataset, checkpoint.info, log)
+  train_model(model, train_data, valid_data, dataset, checkpoint.info)
 end
 
 main()

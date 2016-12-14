@@ -29,7 +29,7 @@ function Checkpoint:save(file_path, info)
 end
 
 --[[ Save the model and data in the middle of an epoch sorting the iteration. ]]
-function Checkpoint:save_iteration(iteration, epoch_state, batch_order)
+function Checkpoint:save_iteration(iteration, epoch_state, batch_order, verbose)
   local info = {}
   info.iteration = iteration + 1
   info.epoch = epoch_state.epoch
@@ -38,14 +38,16 @@ function Checkpoint:save_iteration(iteration, epoch_state, batch_order)
 
   local file_path = string.format('%s_checkpoint.t7', self.save_path)
 
-  print('Saving checkpoint to ' .. file_path .. '...')
+  if verbose then
+    print('Saving checkpoint to ' .. file_path .. '...')
+  end
 
   -- Succeed serialization before overriding existing file
   self:save(file_path .. '.tmp', info)
   os.rename(file_path .. '.tmp', file_path)
 end
 
-function Checkpoint:save_epoch(valid_ppl, epoch_state)
+function Checkpoint:save_epoch(valid_ppl, epoch_state, verbose)
   local info = {}
   info.valid_ppl = valid_ppl
   info.epoch = epoch_state.epoch + 1
@@ -54,7 +56,10 @@ function Checkpoint:save_epoch(valid_ppl, epoch_state)
 
   local file_path = string.format('%s_epoch%d_%.2f.t7', self.save_path, epoch_state.epoch, valid_ppl)
 
-  print('Saving checkpoint to ' .. file_path .. '...')
+  if verbose then
+    print('Saving checkpoint to ' .. file_path .. '...')
+  end
+
   self:save(file_path, info)
 end
 

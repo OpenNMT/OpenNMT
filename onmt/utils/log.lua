@@ -1,33 +1,33 @@
---[[ Class for managing tab separated training logs ]]
-local Log = torch.class("Log")
+local function logJsonRecursive(obj)
+  if type(obj) == 'string' then
+    io.write('"' .. obj .. '"')
+  elseif type(obj) == 'table' then
+    local first = true
 
-function Log:__init(logfile, dolog)
-  self.logfile = logfile
-  self.dolog = dolog
-  if not self.dolog then return end
-  local file = io.open(self.logfile, "a")
-  if not file then
-    print("ERROR: cannot access logfile", logfile)
-    os.exit(0)
+    io.write('{')
+
+    for key, val in pairs(obj) do
+      if not first then
+        io.write(',')
+      else
+        first = false
+      end
+      io.write('"' .. key .. '":')
+      logJsonRecursive(val)
+    end
+
+    io.write('}')
+  else
+    io.write(tostring(obj))
   end
-  file:close()
 end
 
-function Log:clear()
-  if not self.dolog then return end
-  local file = io.open(self.logfile, "w")
-  file:close()
+--[[ Recursively outputs a Lua object to a JSON objects followed by a new line. ]]
+local function logJson(obj)
+  logJsonRecursive(obj)
+  io.write('\n')
 end
 
-function Log:append(L)
-  if not self.dolog then return end
-  local file = io.open(self.logfile, "a")
-  for i = 1, #L do
-    if i > 1 then file:write("\t") end
-    file:write(L[i])
-  end
-  file:write("\n")
-  file:close()
-end
-
-return Log
+return {
+  logJson = logJson
+}

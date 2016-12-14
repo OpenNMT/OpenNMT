@@ -4,10 +4,11 @@
 local EpochState = torch.class("EpochState")
 
 --[[ Initialize for epoch `epoch` and training `status` (current loss)]]
-function EpochState:__init(epoch, num_iterations, learning_rate, status)
+function EpochState:__init(epoch, num_iterations, learning_rate, last_valid_ppl, status)
   self.epoch = epoch
   self.num_iterations = num_iterations
   self.learning_rate = learning_rate
+  self.last_valid_ppl = last_valid_ppl
 
   if status ~= nil then
     self.status = status
@@ -22,8 +23,6 @@ function EpochState:__init(epoch, num_iterations, learning_rate, status)
   self.num_words_target = 0
 
   self.minFreeMemory = 100000000000
-
-  print('')
 end
 
 --[[ Update training status. Takes `batch` (described in data.lua) and last losses.]]
@@ -37,22 +36,40 @@ function EpochState:update(batches, losses)
 end
 
 --[[ Log to status stdout. ]]
-function EpochState:log(batch_index)
-  local time_taken = self:get_time()
-  local stats = ''
-  local freeMemory = onmt.utils.Cuda.freeMemory()
-  if freeMemory < self.minFreeMemory then
-    self.minFreeMemory = freeMemory
-  end
-  stats = stats .. string.format('Epoch %d ; Batch %d/%d ; LR %.4f ; ',
-                                 self.epoch, batch_index, self.num_iterations, self.learning_rate)
-  stats = stats .. string.format('Throughput %d/%d/%d total/src/tgt tokens/sec ; ',
-                                 (self.num_words_target + self.num_words_source) / time_taken,
-                                 self.num_words_source / time_taken,
-                                 self.num_words_target / time_taken)
-  stats = stats .. string.format('PPL %.2f ; Free mem %d', self:get_train_ppl(), freeMemory)
+function EpochState:log(batch_index, json)
+  if json then
+    local freeMemory = onmt.utils.Cuda.freeMemory()
+    if freeMemory < self.minFreeMemory then
+      self.minFreeMemory = freeMemory
+    end
 
-  print(stats)
+    local obj = {
+      time = os.time(),
+      epoch = self.epoch,
+      iteration = batch_index,
+      totalIterations = self.num_iterations,
+      learningRate = self.learning_rate,
+      trainingPerplexity = self:get_train_ppl(),
+      freeMemory = freeMemory,
+      lastValidationPerplexity = self.last_valid_ppl,
+      processedTokens = {
+        source = self.num_words_source,
+        target = self.num_words_target
+      }
+    }
+
+    onmt.utils.Log.logJson(obj)
+  else
+    local time_taken = self:get_time()
+
+    local stats = ''
+    stats = stats .. string.format('Epoch %d ; ', self.epoch)
+    stats = stats .. string.format('Iteration %d/%d ; ', batch_index, self.num_iterations)
+    stats = stats .. string.format('Learning rate %.4f ; ', self.learning_rate)
+    stats = stats .. string.format('Source tokens/s %d ; ', self.num_words_source / time_taken)
+    stats = stats .. string.format('Perplexity %.2f', self:get_train_ppl())
+    print(stats)
+  end
 end
 
 function EpochState:get_train_ppl()

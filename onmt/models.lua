@@ -46,7 +46,7 @@ local function buildEncoder(opt, dicts)
   end
 end
 
-local function buildDecoder(opt, dicts)
+local function buildDecoder(opt, dicts, verbose)
   local input_network = onmt.WordEmbedding.new(#dicts.words, -- vocab size
                                                opt.word_vec_size,
                                                opt.pre_word_vecs_dec,
@@ -77,7 +77,9 @@ local function buildDecoder(opt, dicts)
   end
 
   if opt.input_feed == 1 then
-    print("Using input feeding")
+    if verbose then
+      print("Using input feeding")
+    end
     input_size = input_size + opt.rnn_size
   end
 
