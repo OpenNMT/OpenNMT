@@ -4,8 +4,8 @@ require 'nn'
 require 'cudnn'
 require 'optim'
 require 'paths'
-require('../../../../lib/utils')
-require 'src.data.batch'
+require('../../../../onmt/utils')
+require('../../../../onmt/modules')
 package.path = package.path .. ';src/?.lua' .. ';src/utils/?.lua' .. ';src/model/?.lua' .. ';src/optim/?.lua'
 require 'cnn'
 require 'LSTM'
@@ -354,9 +354,9 @@ function model:step(batch, forward_only, beam_size, trie)
             local beam_context = beam_replicate(context)
             local decoder_input
             local beam_input
-            local dec_states = utils.Tensor.initTensorTable(self.decoder.args.num_effective_layers,
+            local dec_states = utils.Tensor.initTensorTable(self.decoder.args.numEffectiveLayers,
                                                     localize(torch.Tensor()),
-                                                    { batch_size, self.decoder.args.rnn_size })
+                                                    { batch_size, self.decoder.args.rnnSize })
             for i = 1, #dec_states do
                 dec_states[i]:zero()
             end
@@ -414,9 +414,9 @@ function model:step(batch, forward_only, beam_size, trie)
             end
         else -- forward_only == false
             -- set decoder states
-            local statesProto = utils.Tensor.initTensorTable(self.decoder.args.num_effective_layers,
+            local statesProto = utils.Tensor.initTensorTable(self.decoder.args.numEffectiveLayers,
                                                     localize(torch.Tensor()),
-                                                    { dec_batch.size, self.decoder.args.rnn_size })
+                                                    { dec_batch.size, self.decoder.args.rnnSize })
             for i = 1, #statesProto do
                 statesProto[i]:zero()
             end
@@ -442,9 +442,9 @@ function model:step(batch, forward_only, beam_size, trie)
             accuracy = batch_size - word_err
             if self.visualize then
                 -- get gold score
-                local statesProto = utils.Tensor.initTensorTable(self.decoder.args.num_effective_layers,
+                local statesProto = utils.Tensor.initTensorTable(self.decoder.args.numEffectiveLayers,
                                                         localize(torch.Tensor()),
-                                                        { dec_batch.size, self.decoder.args.rnn_size })
+                                                        { dec_batch.size, self.decoder.args.rnnSize })
                 for i = 1, #statesProto do
                     statesProto[i]:zero()
                 end
@@ -453,9 +453,9 @@ function model:step(batch, forward_only, beam_size, trie)
                 local attn_probs = localize(torch.zeros(batch_size, target_l, source_l*imgH))
                 local attn_positions_h = localize(torch.zeros(batch_size, target_l))
                 local attn_positions_w = localize(torch.zeros(batch_size, target_l))
-                local dec_states = utils.Tensor.initTensorTable(self.decoder.args.num_effective_layers,
+                local dec_states = utils.Tensor.initTensorTable(self.decoder.args.numEffectiveLayers,
                                                         localize(torch.Tensor()),
-                                                        { batch_size, self.decoder.args.rnn_size })
+                                                        { batch_size, self.decoder.args.rnnSize })
                 for i = 1, #dec_states do
                     dec_states[i]:zero()
                 end
@@ -491,9 +491,9 @@ function model:step(batch, forward_only, beam_size, trie)
             end
             -- get gold score
             dec_batch = Batch():set_decoder(target, target_eval, context:size(2))
-            local statesProto = utils.Tensor.initTensorTable(self.decoder.args.num_effective_layers,
+            local statesProto = utils.Tensor.initTensorTable(self.decoder.args.numEffectiveLayers,
                                                     localize(torch.Tensor()),
-                                                    { dec_batch.size, self.decoder.args.rnn_size })
+                                                    { dec_batch.size, self.decoder.args.rnnSize })
             for i = 1, #statesProto do
                 statesProto[i]:zero()
             end
@@ -528,9 +528,9 @@ function model:step(batch, forward_only, beam_size, trie)
                 input = torch.cat(input, pos_embedding_bw, 1) --source_l+2, batch_size, hidden
                 local batch = Batch():set_encoder(input)
                 local _, row_context = self.encoder:forward(batch)
-                local gradOutputsProto = utils.Tensor.initTensorTable(self.encoder.args.num_effective_layers,
+                local gradOutputsProto = utils.Tensor.initTensorTable(self.encoder.args.numEffectiveLayers,
                                                          localize(torch.Tensor()),
-                                                         { batch.size, self.encoder.args.rnn_size*2 })
+                                                         { batch.size, self.encoder.args.rnnSize*2 })
                 local row_context_grad = self.encoder:backward(batch, gradOutputsProto, grad_context:select(2,i))
                 -- source_l+2, batch_size, hidden
                 for t = 1, source_l do

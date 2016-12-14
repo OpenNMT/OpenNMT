@@ -7,9 +7,9 @@ require 'cudnn'
 require 'optim'
 require 'paths'
 
-package.path = package.path .. ';../../?.lua' .. ';src/?.lua' .. ';src/utils/?.lua' .. ';src/model/?.lua'
-require('../../../lib/utils')
-require('../../../lib/onmt')
+package.path = package.path .. ';../../?.lua' .. ';src/?.lua' .. ';src/model/?.lua'
+utils = require('../../../onmt/utils')
+onmt = require('../../../onmt')
 require 'src.model.model'
 require 'src.data.data_gen'
 require 'src.utils.logging'
