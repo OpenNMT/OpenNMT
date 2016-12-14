@@ -18,7 +18,7 @@ function Dict:__init(data)
 end
 
 --[[ Return the number of entries in the dictionary. ]]
-function Dict:__len__()
+function Dict:size()
   return #self.idx_to_label
 end
 
@@ -46,7 +46,7 @@ end
 function Dict:write_file(filename)
   local file = assert(io.open(filename, 'w'))
 
-  for i = 1, #self do
+  for i = 1, self:size() do
     local label = self.idx_to_label[i]
     file:write(label .. ' ' .. i .. '\n')
   end
@@ -101,7 +101,7 @@ end
 
 --[[ Return a new dictionary with the `size` most frequent entries. ]]
 function Dict:prune(size)
-  if size >= #self then
+  if size >= self:size() then
     return self
   end
 

@@ -72,7 +72,7 @@ local dictTest = torch.TestSuite()
 
 function dictTest.createEmptyDict()
   local d = onmt.utils.Dict.new()
-  tester:eq(#d, 0)
+  tester:eq(d:size(), 0)
 end
 
 function dictTest.createSimpleDict()
@@ -81,7 +81,7 @@ function dictTest.createSimpleDict()
   d:add('bar')
   d:add('foobar')
 
-  tester:eq(#d, 3)
+  tester:eq(d:size(), 3)
 
   tester:ne(d:lookup('foo'), nil)
   tester:ne(d:lookup('bar'), nil)
@@ -94,7 +94,7 @@ function dictTest.createSimpleDictWithSpecialTokens()
   d:add('bar')
   d:add('foobar')
 
-  tester:eq(#d, 5)
+  tester:eq(d:size(), 5)
   tester:eq(#d.special, 2)
   tester:ne(d:lookup('toto'), nil)
   tester:ne(d:lookup('titi'), nil)
@@ -107,7 +107,7 @@ function dictTest.createSimpleDictDuplicate()
   d:add('foobar')
   d:add('bar')
 
-  tester:eq(#d, 3)
+  tester:eq(d:size(), 3)
   tester:eq(d.frequencies[d:lookup('bar')], 2)
 end
 
@@ -132,7 +132,7 @@ function dictTest.pruneSmaller()
   d:add('bar')
 
   local pruned = d:prune(2)
-  tester:eq(#pruned, 2)
+  tester:eq(pruned:size(), 2)
   tester:eq(pruned:lookup('foo'), nil)
   tester:ne(pruned:lookup('bar'), nil)
   tester:ne(pruned:lookup('foobar'), nil)
@@ -148,7 +148,7 @@ function dictTest.pruneSmallerWithSpecialTokens()
   d:add('bar')
 
   local pruned = d:prune(2)
-  tester:eq(#pruned, 2 + 2)
+  tester:eq(pruned:size(), 2 + 2)
   tester:eq(pruned:lookup('foo'), nil)
   tester:ne(pruned:lookup('bar'), nil)
   tester:ne(pruned:lookup('foobar'), nil)

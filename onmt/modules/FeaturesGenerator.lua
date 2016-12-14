@@ -17,7 +17,7 @@ function FeaturesGenerator:_buildGenerator(rnn_size, output_size, features)
   -- Add a generator for each target feature.
   for i = 1, #features do
     generator:add(nn.Sequential()
-                    :add(nn.Linear(rnn_size, #features[i]))
+                    :add(nn.Linear(rnn_size, features[i]:size()))
                     :add(nn.LogSoftMax()))
   end
 

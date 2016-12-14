@@ -27,7 +27,7 @@ function FeaturesEmbedding:_buildModel(dicts, dimExponent, dim, merge)
     local feat = nn.Identity()() -- batch_size
     table.insert(inputs, feat)
 
-    local vocabSize = #dicts[i]
+    local vocabSize = dicts[i]:size()
     local embSize
 
     if merge == 'sum' then

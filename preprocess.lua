@@ -77,9 +77,9 @@ local function make_vocabulary(filename, size)
 
   reader:close()
 
-  local original_size = #word_vocab
+  local original_size = word_vocab:size()
   word_vocab = word_vocab:prune(size)
-  print('Created dictionary of size ' .. #word_vocab .. ' (pruned from ' .. original_size .. ')')
+  print('Created dictionary of size ' .. word_vocab:size() .. ' (pruned from ' .. original_size .. ')')
 
   return word_vocab, features_vocabs
 end
@@ -93,7 +93,7 @@ local function init_vocabulary(name, data_file, vocab_file, vocab_size, features
     print('Reading ' .. name .. ' vocabulary from \'' .. vocab_file .. '\'...')
     word_vocab = onmt.utils.Dict.new()
     word_vocab:load_file(vocab_file)
-    print('Loaded ' .. #word_vocab .. ' ' .. name .. ' words')
+    print('Loaded ' .. word_vocab:size() .. ' ' .. name .. ' words')
   end
 
   if features_vocabs_files:len() > 0 then
@@ -110,7 +110,7 @@ local function init_vocabulary(name, data_file, vocab_file, vocab_size, features
       print('Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
       features_vocabs[j] = onmt.utils.Dict.new()
       features_vocabs[j]:load_file(file)
-      print('Loaded ' .. #features_vocabs[j] .. ' labels')
+      print('Loaded ' .. features_vocabs[j]:size() .. ' labels')
 
       j = j + 1
     end

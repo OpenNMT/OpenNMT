@@ -54,7 +54,7 @@ function Dataset:set_batch_size(max_batch_size)
 end
 
 --[[ Return number of batches. ]]
-function Dataset:__len__()
+function Dataset:batch_count()
 
   if self.batch_range == nil then
     return 1

@@ -149,7 +149,7 @@ local function build_criterion(vocab_size, features)
   add_nll_criterion(vocab_size)
 
   for j = 1, #features do
-    add_nll_criterion(#features[j])
+    add_nll_criterion(features[j]:size())
   end
 
   return criterion
@@ -162,7 +162,7 @@ local function eval(model, criterion, data)
   model.encoder:evaluate()
   model.decoder:evaluate()
 
-  for i = 1, #data do
+  for i = 1, data:batch_count() do
     local batch = onmt.utils.Cuda.convert(data:get_batch(i))
     local encoder_states, context = model.encoder:forward(batch)
     loss = loss + model.decoder:compute_loss(batch, encoder_states, context, criterion)
@@ -190,7 +190,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
     end
 
     -- define criterion of each GPU
-    _G.criterion = onmt.utils.Cuda.convert(build_criterion(#dataset.dicts.tgt.words,
+    _G.criterion = onmt.utils.Cuda.convert(build_criterion(dataset.dicts.tgt.words:size(),
                                                            dataset.dicts.tgt.features))
 
     -- optimize memory of the first clone
@@ -223,7 +223,7 @@ local function train_model(model, train_data, valid_data, dataset, info)
     local batch_order
 
     local start_i = opt.start_iteration
-    local num_iterations = math.ceil(#train_data / onmt.utils.Parallel.count)
+    local num_iterations = math.ceil(train_data:batch_count() / onmt.utils.Parallel.count)
 
     if start_i > 1 and info ~= nil then
       epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), last_valid_ppl, info.epoch_status)
@@ -231,17 +231,17 @@ local function train_model(model, train_data, valid_data, dataset, info)
     else
       epoch_state = onmt.train.EpochState.new(epoch, num_iterations, optim:get_learning_rate(), last_valid_ppl)
       -- shuffle mini batch order
-      batch_order = torch.randperm(#train_data)
+      batch_order = torch.randperm(train_data:batch_count())
     end
 
     opt.start_iteration = 1
     local iter = 1
 
-    for i = start_i, #train_data, onmt.utils.Parallel.count do
+    for i = start_i, train_data:batch_count(), onmt.utils.Parallel.count do
       local batches = {}
       local total_size = 0
 
-      for j = 1, math.min(onmt.utils.Parallel.count, #train_data-i+1) do
+      for j = 1, math.min(onmt.utils.Parallel.count, train_data:batch_count()-i+1) do
         local batch_idx = batch_order[i+j-1]
         if epoch <= opt.curriculum then
           batch_idx = i+j-1
@@ -383,7 +383,7 @@ local function main()
 
   if not opt.json_log then
     print(string.format(' * vocabulary size: source = %d; target = %d',
-                        #dataset.dicts.src.words, #dataset.dicts.tgt.words))
+                        dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size()))
     print(string.format(' * additional features: source = %d; target = %d',
                         #dataset.dicts.src.features, #dataset.dicts.tgt.features))
     print(string.format(' * maximum sequence length: source = %d; target = %d',
@@ -394,8 +394,8 @@ local function main()
     local metadata = {
       options = opt,
       vocabSize = {
-        source = #dataset.dicts.src.words,
-        target = #dataset.dicts.tgt.words
+        source = dataset.dicts.src.words:size(),
+        target = dataset.dicts.tgt.words:size()
       },
       additionalFeatures = {
         source = #dataset.dicts.src.features,

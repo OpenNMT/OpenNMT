@@ -1,5 +1,5 @@
 local function buildEncoder(opt, dicts)
-  local input_network = onmt.WordEmbedding.new(#dicts.words, -- vocab size
+  local input_network = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
                                                opt.word_vec_size,
                                                opt.pre_word_vecs_enc,
                                                opt.fix_word_vecs_enc)
@@ -47,7 +47,7 @@ local function buildEncoder(opt, dicts)
 end
 
 local function buildDecoder(opt, dicts, verbose)
-  local input_network = onmt.WordEmbedding.new(#dicts.words, -- vocab size
+  local input_network = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
                                                opt.word_vec_size,
                                                opt.pre_word_vecs_dec,
                                                opt.fix_word_vecs_dec)
@@ -71,9 +71,9 @@ local function buildDecoder(opt, dicts, verbose)
 
     input_size = input_size + tgt_feat_embedding.outputSize
 
-    generator = onmt.FeaturesGenerator.new(opt.rnn_size, #dicts.words, dicts.features)
+    generator = onmt.FeaturesGenerator.new(opt.rnn_size, dicts.words:size(), dicts.features)
   else
-    generator = onmt.Generator.new(opt.rnn_size, #dicts.words)
+    generator = onmt.Generator.new(opt.rnn_size, dicts.words:size())
   end
 
   if opt.input_feed == 1 then
