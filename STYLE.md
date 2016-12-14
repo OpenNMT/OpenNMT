@@ -24,10 +24,12 @@ google-chrome doc/index.html
 ```
 pip install mkdocs
 pip install python-markdown-math
-cd doc/;bash mkdocs.sh;mkdoc serve
+cd doc/
+bash mkdocs.sh
+mkdoc serve
 ```
 
-## Style:
+## Style
 
 * Please run and correct all warnings from `luacheck` before sending a pull request.
 
