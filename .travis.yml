@@ -55,8 +55,8 @@ before_script:
 - ${INSTALL_PREFIX}/bin/luarocks install luacheck
 script:
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
-- luacheck *lua lib/
+- luacheck *lua onmt/
 - ${INSTALL_PREFIX}/bin/luarocks make rocks/opennmt-scm-1.rockspec
 - echo ${ROOT_TRAVIS_DIR}
 - export TESTLUA=$(which luajit lua | head -n 1)
-- ${TESTLUA} -llib.test -e "t=onmt.test(); if t.errors[1] then os.exit(1) end"
+- ${TESTLUA} -lonmt.test -e "t=onmt.test(); if t.errors[1] then os.exit(1) end"

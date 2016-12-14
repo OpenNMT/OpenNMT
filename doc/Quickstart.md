@@ -4,7 +4,7 @@ OpenNMT consists of three commands
 
 1. Preprocess the data.
 
-> th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -save_file data/demo
+> th preprocess.lua -train_src_file data/src-train.txt -train_tgt_file data/tgt-train.txt -valid_src_file data/src-val.txt -valid_tgt_file data/tgt-val.txt -save_file data/demo
 
 2. Train the model.
 
@@ -20,17 +20,17 @@ Let's walk through each of these commands in more detail.
 ## Step 1: Preprocess Data
 
 ```
-th preprocess.lua -train_src_file data/src-train.txt -train_targ_file data/targ-train.txt
-    -valid_src_file data/src-val.txt -valid_targ_file data/targ-val.txt -save_file data/demo
+th preprocess.lua -train_src_file data/src-train.txt -train_tgt_file data/tgt-train.txt
+    -valid_src_file data/src-val.txt -valid_tgt_file data/tgt-val.txt -save_file data/demo
 ```
 
 
 We will be working with some example data in `data/` folder.
-The data consists of a source (`src`) and target (`targ`) data.
-This will take the source/target train/valid files (`src-train.txt, targ-train.txt,
-src-val.txt, targ-val.txt`). There is one sentence per line, and words are space separated.
+The data consists of a source (`src`) and target (`tgt`) data.
+This will take the source/target train/valid files (`src-train.txt, tgt-train.txt,
+src-val.txt, tgt-val.txt`). There is one sentence per line, and words are space separated.
 
-> head -n 3 data/targ-train.txt
+> head -n 3 data/tgt-train.txt
 
 ```
 Es geht nicht an , dass über Ausführungsbestimmungen , deren Inhalt , Zweck und Ausmaß vorher nicht bestimmt ist , zusammen mit den nationalen Bürokratien das Gesetzgebungsrecht des Europäischen Parlaments ausgehebelt wird .
@@ -49,7 +49,7 @@ Federal Master Trainer and Senior Instructor of the Italian Federation of Aerobi
 After running the system will build the following files:
 
 * `demo.src.dict`: Dictionary of source vocab to index mappings.
-* `demo.targ.dict`: Dictionary of target vocab to index mappings.
+* `demo.tgt.dict`: Dictionary of target vocab to index mappings.
 * `demo-train.t7`: serialized Torch file containing vocabulary, training and validation data
 
 The `*.dict` files are needed to check vocabulary, or to preprocess data with fixed vocabularies.
