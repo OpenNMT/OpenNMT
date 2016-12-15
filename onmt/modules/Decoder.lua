@@ -286,7 +286,7 @@ function Decoder:forward(batch, encoderStates, context)
   local outputs = {}
 
   self:forwardAndApply(batch, encoderStates, context, function (out)
-                           table.insert(outputs, out)
+    table.insert(outputs, out)
   end)
 
   return outputs
@@ -311,9 +311,9 @@ function Decoder:backward(batch, outputs, criterion)
   end
 
   local gradStatesInput = onmt.utils.Tensor.reuseTensorTable(self.gradOutputsProto,
-                                                               { batch.size, self.args.rnnSize })
+                                                             { batch.size, self.args.rnnSize })
   local gradContextInput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
-                                                           { batch.size, batch.sourceLength, self.args.rnnSize })
+                                                         { batch.size, batch.sourceLength, self.args.rnnSize })
 
   local gradContextIdx = #self.statesProto + 2
   local gradInputFeedIdx = #self.statesProto + 3
@@ -363,9 +363,9 @@ end
 function Decoder:computeLoss(batch, encoderStates, context, criterion)
   local loss = 0
   self:forwardAndApply(batch, encoderStates, context, function (out, t)
-                           local pred = self.generator:forward(out)
-                           local output = batch:getTargetOutput(t)
-                           loss = loss + criterion:forward(pred, output)
+    local pred = self.generator:forward(out)
+    local output = batch:getTargetOutput(t)
+    loss = loss + criterion:forward(pred, output)
   end)
 
   return loss
@@ -378,12 +378,13 @@ function Decoder:computeScore(batch, encoderStates, context)
   local score = {}
 
   self:forwardAndApply(batch, encoderStates, context, function (out, t)
-                           local pred = self.generator:forward(out)
-                           for b = 1, batch.size do
-                             if t <= batch.targetSize[b] then
-                               score[b] = (score[b] or 0) + pred[1][b][batch.targetOutput[t][b]]
-                             end
-                           end
+    local pred = self.generator:forward(out)
+    for b = 1, batch.size do
+      if t <= batch.targetSize[b] then
+        score[b] = (score[b] or 0) + pred[1][b][batch.targetOutput[t][b]]
+      end
+    end
   end)
+
   return score
 end
