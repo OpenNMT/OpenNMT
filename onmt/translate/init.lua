@@ -1,7 +1,7 @@
 local translate = {}
 
-translate.Beam = require('onmt.translate.beam')
-translate.PhraseTable = require('onmt.translate.phrase_table')
-translate.Translator = require('onmt.translate.translator')
+translate.Beam = require('onmt.translate.Beam')
+translate.PhraseTable = require('onmt.translate.PhraseTable')
+translate.Translator = require('onmt.translate.Translator')
 
 return translate
