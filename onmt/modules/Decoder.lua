@@ -382,7 +382,7 @@ end
 ]]
 function Decoder:computeScore(batch, encoderStates, context)
   encoderStates = encoderStates or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
-                                                    utils.Cuda.convert(torch.Tensor()),
+                                                    onmt.utils.Cuda.convert(torch.Tensor()),
                                                     { batch.size, self.args.rnnSize })
   local score = {}
 
