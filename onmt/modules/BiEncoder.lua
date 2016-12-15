@@ -188,9 +188,8 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
   local gradInputBwd = self.bwd:backward(batch, gradStatesOutputBwd, gradContextBwd)
   -- gradInput
-  local gradInput = {}
   for t = 1, batch.sourceLength do
-      gradInput[t] = torch.add(gradInputFwd[t], gradInputBwd[batch.sourceLength-t+1], 2)
+    gradInputFwd[t]:add(gradInputBwd[batch.sourceLength-t+1])
   end
-  return gradInput
+  return gradInputFwd
 end

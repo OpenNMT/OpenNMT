@@ -137,38 +137,38 @@ end
   * sourceInput: a tensor of size (sequence_length, batch_size, ...)
 --]]
 function Batch:setSourceInput(sourceInput)
-    assert (sourceInput:dim() >= 2, 'The sourceInput tensor should be of size (seq_len, batch_size, ...)')
-    self.size = sourceInput:size(2)
-    self.sourceLength = sourceInput:size(1)
-    self.sourceInputFeatures = {}
-    self.sourceInputRevReatures = {}
-    self.sourceInput = sourceInput
-    self.sourceInputRev = self.sourceInput:index(1, torch.linspace(self.sourceLength, 1, self.sourceLength):long())
-    return self
+  assert (sourceInput:dim() >= 2, 'The sourceInput tensor should be of size (seq_len, batch_size, ...)')
+  self.size = sourceInput:size(2)
+  self.sourceLength = sourceInput:size(1)
+  self.sourceInputFeatures = {}
+  self.sourceInputRevReatures = {}
+  self.sourceInput = sourceInput
+  self.sourceInputRev = self.sourceInput:index(1, torch.linspace(self.sourceLength, 1, self.sourceLength):long())
+  return self
 end
 
 --[[ Set targetInput directly. Be aware that targetInput is not cloned here.
   * targetInput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD
 --]]
 function Batch:setTargetInput(targetInput)
-    assert (targetInput:dim() == 2, 'The targetInput tensor should be of size (seq_len, batch_size)')
-    self.targetInput = targetInput
-    self.size = targetInput:size(2)
-    self.totalSize = self.size
-    self.targetLength = targetInput:size(1)
-    self.targetInputFeatures = {}
-    self.targetSize = torch.sum(targetInput:transpose(1,2):ne(onmt.Constants.PAD), 2):view(-1):double()
-    return self
+  assert (targetInput:dim() == 2, 'The targetInput tensor should be of size (seq_len, batch_size)')
+  self.targetInput = targetInput
+  self.size = targetInput:size(2)
+  self.totalSize = self.size
+  self.targetLength = targetInput:size(1)
+  self.targetInputFeatures = {}
+  self.targetSize = torch.sum(targetInput:transpose(1,2):ne(onmt.Constants.PAD), 2):view(-1):double()
+  return self
 end
 
 --[[ Set targetOutput directly. Be aware that targetOutput is not cloned here.
   * targetOutput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD
 --]]
 function Batch:setTargetOutput(targetOutput)
-    assert (targetOutput:dim() == 2, 'The targetOutput tensor should be of size (seq_len, batch_size)')
-    self.targetOutput = targetOutput
-    self.targetOutputFeatures = {}
-    return self
+  assert (targetOutput:dim() == 2, 'The targetOutput tensor should be of size (seq_len, batch_size)')
+  self.targetOutput = targetOutput
+  self.targetOutputFeatures = {}
+  return self
 end
 
 function Batch:getSourceInput(t)
