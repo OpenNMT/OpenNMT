@@ -4,15 +4,15 @@ OpenNMT consists of three commands
 
 1. Preprocess the data.
 
-> th preprocess.lua -train_src_file data/src-train.txt -train_tgt_file data/tgt-train.txt -valid_src_file data/src-val.txt -valid_tgt_file data/tgt-val.txt -save_file data/demo
+> th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo
 
 2. Train the model.
 
-> th train.lua -data data/demo-train.t7 -save_file demo-model
+> th train.lua -data data/demo-train.t7 -save_model demo-model
 
 3. Translate sentences.
 
-> th translate.lua -model demo-model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt
+> th translate.lua -model demo-model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
 
 Let's walk through each of these commands in more detail. 
 
@@ -20,8 +20,8 @@ Let's walk through each of these commands in more detail.
 ## Step 1: Preprocess Data
 
 ```
-th preprocess.lua -train_src_file data/src-train.txt -train_tgt_file data/tgt-train.txt
-    -valid_src_file data/src-val.txt -valid_tgt_file data/tgt-val.txt -save_file data/demo
+th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt
+    -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo
 ```
 
 
@@ -77,7 +77,7 @@ Note that if the corpus is not tokenized - you can use [`tools/tokenizer.lua`](h
 
 ## Step 2: Train the model
 
-> th train.lua -data data/demo-train.t7 -save_file demo-model
+> th train.lua -data data/demo-train.t7 -save_model demo-model
 
 The main train command is quite simple. Minimally it takes a data file
 and a save file.  This will run the default model, which consists of a
@@ -86,7 +86,7 @@ can also add `-gpuid 1` to use (say) GPU 1.
 
 ## Step 3: Translate
 
-> th translate.lua -model demo-model_epochX_PPL.t7 -src_file data/src-test.txt -output_file pred.txt
+> th translate.lua -model demo-model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
 
 Now you have a model which you can use to predict on new data. We do this by running beam search.
 
