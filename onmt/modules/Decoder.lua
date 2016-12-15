@@ -34,6 +34,9 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
 
+  self.args.inputIndex = {}
+  self.args.outputIndex = {}
+
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
@@ -113,14 +116,17 @@ function Decoder:_buildModel()
 
   local x = nn.Identity()() -- batchSize
   table.insert(inputs, x)
+  self.args.inputIndex.x = #inputs
 
   local context = nn.Identity()() -- batchSize x sourceLength x rnnSize
   table.insert(inputs, context)
+  self.args.inputIndex.context = #inputs
 
   local inputFeed
   if self.args.inputFeed then
     inputFeed = nn.Identity()() -- batchSize x rnnSize
     table.insert(inputs, inputFeed)
+    self.args.inputIndex.inputFeed = #inputs
   end
 
   -- Compute the input network.
@@ -289,7 +295,7 @@ function Decoder:forward(batch, encoderStates, context)
   local outputs = {}
 
   self:forwardAndApply(batch, encoderStates, context, function (out)
-                           table.insert(outputs, out)
+    table.insert(outputs, out)
   end)
 
   return outputs
@@ -314,12 +320,9 @@ function Decoder:backward(batch, outputs, criterion)
   end
 
   local gradStatesInput = onmt.utils.Tensor.reuseTensorTable(self.gradOutputsProto,
-                                                               { batch.size, self.args.rnnSize })
+                                                             { batch.size, self.args.rnnSize })
   local gradContextInput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
-                                                           { batch.size, batch.sourceLength, self.args.rnnSize })
-
-  local gradContextIdx = #self.statesProto + 2
-  local gradInputFeedIdx = #self.statesProto + 3
+                                                         { batch.size, batch.sourceLength, self.args.rnnSize })
 
   local loss = 0
 
@@ -345,12 +348,12 @@ function Decoder:backward(batch, outputs, criterion)
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
     -- Accumulate encoder output gradients.
-    gradContextInput:add(gradInput[gradContextIdx])
+    gradContextInput:add(gradInput[self.args.inputIndex.context])
     gradStatesInput[#gradStatesInput]:zero()
 
     -- Accumulate previous output gradients with input feeding gradients.
     if self.args.inputFeed and t > 1 then
-      gradStatesInput[#gradStatesInput]:add(gradInput[gradInputFeedIdx])
+      gradStatesInput[#gradStatesInput]:add(gradInput[self.args.inputIndex.inputFeed])
     end
 
     -- Prepare next decoder output gradients.
@@ -369,9 +372,9 @@ function Decoder:computeLoss(batch, encoderStates, context, criterion)
                                                     { batch.size, self.args.rnnSize })
   local loss = 0
   self:forwardAndApply(batch, encoderStates, context, function (out, t)
-                           local pred = self.generator:forward(out)
-                           local output = batch:getTargetOutput(t)
-                           loss = loss + criterion:forward(pred, output)
+    local pred = self.generator:forward(out)
+    local output = batch:getTargetOutput(t)
+    loss = loss + criterion:forward(pred, output)
   end)
 
   return loss
@@ -387,12 +390,13 @@ function Decoder:computeScore(batch, encoderStates, context)
   local score = {}
 
   self:forwardAndApply(batch, encoderStates, context, function (out, t)
-                           local pred = self.generator:forward(out)
-                           for b = 1, batch.size do
-                             if t <= batch.targetSize[b] then
-                               score[b] = (score[b] or 0) + pred[1][b][batch.targetOutput[t][b]]
-                             end
-                           end
+    local pred = self.generator:forward(out)
+    for b = 1, batch.size do
+      if t <= batch.targetSize[b] then
+        score[b] = (score[b] or 0) + pred[1][b][batch.targetOutput[t][b]]
+      end
+    end
   end)
+
   return score
 end
