@@ -6,8 +6,8 @@ cmd:text("")
 cmd:text("**tokenize.lua**")
 cmd:text("")
 
-cmd:option('-mode', 'aggressive', [[Define how aggressive should the tokenization be - 'aggressive' is only keep sequences of letters/numbers,
-                                    'conservative' allows mix of alphanumeric]])
+cmd:option('-mode', 'aggressive', [[Define how aggressive should the tokenization be - 'aggressive' (default) only keeps sequences of letters/numbers,
+                                    'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
 cmd:option('-sep_feature', false, [[Generate separator feature]])
 cmd:option('-case_feature', false, [[Generate case feature]])
 
