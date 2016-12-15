@@ -10,6 +10,7 @@ unicode = {}
 -- convert the next utf8 character to ucs
 -- returns codepoint and utf-8 character
 function _utf8_to_cp(s, idx)
+  if idx > #s then return end
   idx = idx or 1
   local c = string.byte(s, idx)
   local l = (c < 0x80 and 1) or (c < 0xE0 and 2) or (c < 0xF0 and 3) or (c < 0xF8 and 4)
@@ -52,13 +53,24 @@ function _cp_to_utf8(u)
 end
 
 function unicode.utf8_iter(s)
-  local p = 1
   local L = #s
+  local nextv, nextc = _utf8_to_cp(s, 1)
+  local p = 1
+  if nextc then
+    p = p + #nextc
+  end
   return function()
-    if p > L then return end
-    local v, c = _utf8_to_cp(s, p)
-    p = p + #c
-    return v, c
+    local v,c = nextv, nextc
+    if p > L then
+      if nextc then
+        nextc = nil
+        return v, c, nil
+      end
+      return
+    end
+    nextv, nextc = _utf8_to_cp(s, p)
+    p = p + #nextc
+    return v, c, nextv
   end
 end
 
@@ -76,12 +88,14 @@ local function _find_codepoint(u, utable)
 end
 
 function unicode.isSeparator(u)
+  if not u then return false end
   -- control character or separator
   return (u >= 9 and u <= 13) or _find_codepoint(u, unidata.Separator)
 end
 
 -- returns if letter and case "lower", "upper", "other"
 function unicode.isLetter(u)
+  if not u then return false end
   -- unicode letter or CJK Unified Ideograph
   if ((u>=0x4E00 and u<=0x9FD5) -- CJK Unified Ideograph
       or (u>=0x2F00 and u<=0x2FD5) -- Kangxi Radicals
@@ -101,6 +115,7 @@ function unicode.isLetter(u)
 end
 
 function unicode.isNumber(u)
+  if not u then return false end
   return _find_codepoint(u, unidata.Number)
 end
 

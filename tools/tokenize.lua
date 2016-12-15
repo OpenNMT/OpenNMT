@@ -6,6 +6,8 @@ cmd:text("")
 cmd:text("**tokenize.lua**")
 cmd:text("")
 
+cmd:option('-mode', 'aggressive', [[Define how aggressive should the tokenization be - 'aggressive' is only keep sequences of letters/numbers,
+                                    'conservative' allows mix of alphanumeric]])
 cmd:option('-sep_feature', false, [[Generate separator feature]])
 cmd:option('-case_feature', false, [[Generate case feature]])
 
@@ -39,7 +41,7 @@ function tokenize(line)
   local space = true
   local letter = false
   local number = false
-  for v, c in unicode.utf8_iter(line) do
+  for v, c, nextv in unicode.utf8_iter(line) do
     if unicode.isSeparator(v) then
       if space == false then
         if opt.sep_feature then nline = nline..'-|-'..spacefeat end
@@ -55,6 +57,14 @@ function tokenize(line)
     else
       if v > 32 and not(v == 0xFEFF) then
         local is_letter, case = unicode.isLetter(v)
+        local is_number = unicode.isNumber(v)
+        if opt.mode == 'conservative' then
+          if is_number or (c == '-' and letter == true) or c == '_' or
+             (letter == true and (c == '.' or c == ',') and (unicode.isNumber(nextv) or unicode.isLetter(nextv))) then
+            is_letter = true
+            case = "other"
+          end
+        end
         if is_letter then
           if not(letter == true or space == true) then
             if opt.sep_feature then nline = nline..'-|-'..spacefeat end
@@ -68,7 +78,7 @@ function tokenize(line)
           space = false
           number = false
           letter = true
-        elseif unicode.isNumber(v) then
+        elseif is_number then
           if not(number == true or space == true) then
             if opt.sep_feature then nline = nline..'-|-'..spacefeat end
             if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
