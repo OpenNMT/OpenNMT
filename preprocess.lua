@@ -12,17 +12,17 @@ cmd:text("")
 cmd:text("")
 cmd:option('-config', '', [[Read options from this file]])
 
-cmd:option('-train_src_file', '', [[Path to the training source data]])
-cmd:option('-train_tgt_file', '', [[Path to the training target data]])
-cmd:option('-valid_src_file', '', [[Path to the validation source data]])
-cmd:option('-valid_tgt_file', '', [[Path to the validation target data]])
+cmd:option('-train_src', '', [[Path to the training source data]])
+cmd:option('-train_tgt', '', [[Path to the training target data]])
+cmd:option('-valid_src', '', [[Path to the validation source data]])
+cmd:option('-valid_tgt', '', [[Path to the validation target data]])
 
-cmd:option('-save_file', '', [[Output file for the prepared data]])
+cmd:option('-save_data', '', [[Output file for the prepared data]])
 
 cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
 cmd:option('-tgt_vocab_size', 50000, [[Size of the target vocabulary]])
-cmd:option('-src_vocab_file', '', [[Path to an existing source vocabulary]])
-cmd:option('-tgt_vocab_file', '', [[Path to an existing target vocabulary]])
+cmd:option('-src_vocab', '', [[Path to an existing source vocabulary]])
+cmd:option('-tgt_vocab', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
@@ -251,11 +251,11 @@ end
 
 local function main()
   local requiredOptions = {
-    "train_src_file",
-    "train_tgt_file",
-    "valid_src_file",
-    "valid_tgt_file",
-    "save_file"
+    "train_src",
+    "train_tgt",
+    "valid_src",
+    "valid_tgt",
+    "save_data"
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
@@ -263,38 +263,38 @@ local function main()
   local data = {}
 
   data.dicts = {}
-  data.dicts.src = initVocabulary('source', opt.train_src_file, opt.src_vocab_file,
+  data.dicts.src = initVocabulary('source', opt.train_src, opt.src_vocab,
                                   opt.src_vocab_size, opt.features_vocabs_prefix)
-  data.dicts.tgt = initVocabulary('target', opt.train_tgt_file, opt.tgt_vocab_file,
+  data.dicts.tgt = initVocabulary('target', opt.train_tgt, opt.tgt_vocab,
                                   opt.tgt_vocab_size, opt.features_vocabs_prefix)
 
   print('Preparing training data...')
   data.train = {}
-  data.train.src, data.train.tgt = makeData(opt.train_src_file, opt.train_tgt_file,
+  data.train.src, data.train.tgt = makeData(opt.train_src, opt.train_tgt,
                                             data.dicts.src, data.dicts.tgt)
   print('')
 
   print('Preparing validation data...')
   data.valid = {}
-  data.valid.src, data.valid.tgt = makeData(opt.valid_src_file, opt.valid_tgt_file,
+  data.valid.src, data.valid.tgt = makeData(opt.valid_src, opt.valid_tgt,
                                             data.dicts.src, data.dicts.tgt)
   print('')
 
-  if opt.src_vocab_file:len() == 0 then
-    saveVocabulary('source', data.dicts.src.words, opt.save_file .. '.src.dict')
+  if opt.src_vocab:len() == 0 then
+    saveVocabulary('source', data.dicts.src.words, opt.save_data .. '.src.dict')
   end
 
-  if opt.tgt_vocab_file:len() == 0 then
-    saveVocabulary('target', data.dicts.tgt.words, opt.save_file .. '.tgt.dict')
+  if opt.tgt_vocab:len() == 0 then
+    saveVocabulary('target', data.dicts.tgt.words, opt.save_data .. '.tgt.dict')
   end
 
   if opt.features_vocabs_prefix:len() == 0 then
-    saveFeaturesVocabularies('source', data.dicts.src.features, opt.save_file)
-    saveFeaturesVocabularies('target', data.dicts.tgt.features, opt.save_file)
+    saveFeaturesVocabularies('source', data.dicts.src.features, opt.save_data)
+    saveFeaturesVocabularies('target', data.dicts.tgt.features, opt.save_data)
   end
 
-  print('Saving data to \'' .. opt.save_file .. '-train.t7\'...')
-  torch.save(opt.save_file .. '-train.t7', data)
+  print('Saving data to \'' .. opt.save_data .. '-train.t7\'...')
+  torch.save(opt.save_data .. '-train.t7', data)
 
 end
 

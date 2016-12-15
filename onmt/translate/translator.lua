@@ -23,8 +23,8 @@ local function init(args)
 
   dicts = checkpoint.dicts
 
-  if opt.phrase_table_file:len() > 0 then
-    phraseTable = onmt.translate.PhraseTable.new(opt.phrase_table_file)
+  if opt.phrase_table:len() > 0 then
+    phraseTable = onmt.translate.PhraseTable.new(opt.phrase_table)
   end
 end
 

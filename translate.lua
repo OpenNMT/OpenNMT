@@ -14,9 +14,9 @@ cmd:text("**Data options**")
 cmd:text("")
 
 cmd:option('-model', '', [[Path to model .t7 file]])
-cmd:option('-src_file', '', [[Source sequence to decode (one line per sequence)]])
-cmd:option('-tgt_file', '', [[True target sequence (optional)]])
-cmd:option('-output_file', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
+cmd:option('-src', '', [[Source sequence to decode (one line per sequence)]])
+cmd:option('-tgt', '', [[True target sequence (optional)]])
+cmd:option('-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
 
 -- beam search options
 cmd:text("")
@@ -26,11 +26,11 @@ cmd:option('-beam_size', 5,[[Beam size]])
 cmd:option('-batch_size', 30, [[Batch size]])
 cmd:option('-max_sent_length', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
 cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the source token that
-                              had the highest attention weight. If phrase_table_file is provided,
+                              had the highest attention weight. If phrase_table is provided,
                               it will lookup the identified source token and give the corresponding
                               target token. If it is not provided (or the identified source token
                               does not exist in the table) then it will copy the source token]])
-cmd:option('-phrase_table_file', '', [[Path to source-target dictionary to replace UNK
+cmd:option('-phrase_table', '', [[Path to source-target dictionary to replace UNK
                                      tokens. See README.md for the format this file should be in]])
 cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
 
@@ -53,12 +53,12 @@ local function main()
 
   local requiredOptions = {
     "model",
-    "src_file"
+    "src"
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  local srcReader = onmt.utils.FileReader.new(opt.src_file)
+  local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
   local srcWordsBatch = {}
   local srcFeaturesBatch = {}
@@ -68,10 +68,10 @@ local function main()
   local tgtWordsBatch
   local tgtFeaturesBatch
 
-  local withGoldScore = opt.tgt_file:len() > 0
+  local withGoldScore = opt.tgt:len() > 0
 
   if withGoldScore then
-    tgtReader = onmt.utils.FileReader.new(opt.tgt_file)
+    tgtReader = onmt.utils.FileReader.new(opt.tgt)
     tgtBatch = {}
     tgtWordsBatch = {}
     tgtFeaturesBatch = {}
@@ -79,7 +79,7 @@ local function main()
 
   onmt.translate.Translator.init(opt)
 
-  local outFile = io.open(opt.output_file, 'w')
+  local outFile = io.open(opt.output, 'w')
 
   local sentId = 1
   local batchId = 1
