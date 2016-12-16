@@ -3,7 +3,7 @@
 
     
     <url>
-     <loc>/</loc>
+     <loc>http://opennmt.net/OpenNMT//</loc>
      <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
@@ -11,7 +11,7 @@
 
     
     <url>
-     <loc>/Quickstart/</loc>
+     <loc>http://opennmt.net/OpenNMT//Quickstart/</loc>
      <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
@@ -20,25 +20,25 @@
     
         
     <url>
-     <loc></loc>
+     <loc>http://opennmt.net/OpenNMT/</loc>
      <lastmod></lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc></loc>
+     <loc>http://opennmt.net/OpenNMT/</loc>
      <lastmod></lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc></loc>
+     <loc>http://opennmt.net/OpenNMT/</loc>
      <lastmod></lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc></loc>
+     <loc>http://opennmt.net/OpenNMT/</loc>
      <lastmod></lastmod>
      <changefreq>daily</changefreq>
     </url>
@@ -48,19 +48,19 @@
     
         
     <url>
-     <loc>/details/preprocess/</loc>
+     <loc>http://opennmt.net/OpenNMT//details/preprocess/</loc>
      <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>/details/train/</loc>
+     <loc>http://opennmt.net/OpenNMT//details/train/</loc>
      <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>/details/translate/</loc>
+     <loc>http://opennmt.net/OpenNMT//details/translate/</loc>
      <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
