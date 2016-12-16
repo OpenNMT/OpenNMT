@@ -339,23 +339,23 @@
 <li>targetOutputFeatures: table of target output features sequences</li>
 </ul>
 <p>TODO: change name of size =&gt; maxlen</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L47">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Batch.lua#L47">[src]</a>
 <a name="onmt.Batch"></a></p>
 <h3 id="onmtbatchsrc-srcfeatures-tgt-tgtfeatures">onmt.Batch(src, srcFeatures, tgt, tgtFeatures)</h3>
 <p>Create a batch object given aligned sent tables <code>src</code> and <code>tgt</code>
   (optional). Data format is shown at the top of the file.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L139">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Batch.lua#L139">[src]</a>
 <a name="onmt.Batch:setSourceInput"></a></p>
 <h3 id="onmtbatchsetsourceinputsourceinput">onmt.Batch:setSourceInput(sourceInput)</h3>
 <p>Set sourceInput directly, can be either a Tensor of size (sequence_length, batch_size, feature_dim)
  , or a sequence of size (sequence_length, batch_size). Be aware that sourceInput is not cloned here.
   * sourceInput: a tensor of size (sequence_length, batch_size, ...)</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L153">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Batch.lua#L153">[src]</a>
 <a name="onmt.Batch:setTargetInput"></a></p>
 <h3 id="onmtbatchsettargetinputtargetinput">onmt.Batch:setTargetInput(targetInput)</h3>
 <p>Set targetInput directly. Be aware that targetInput is not cloned here.
   * targetInput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L167">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Batch.lua#L167">[src]</a>
 <a name="onmt.Batch:setTargetOutput"></a></p>
 <h3 id="onmtbatchsettargetoutputtargetoutput">onmt.Batch:setTargetOutput(targetOutput)</h3>
 <p>Set targetOutput directly. Be aware that targetOutput is not cloned here.
