@@ -36,11 +36,6 @@
             "title": "Quickstart"
         }, 
         {
-            "location": "/code/data/", 
-            "text": "", 
-            "title": "Home"
-        }, 
-        {
             "location": "/code/data/onmt+data+Batch/", 
             "text": "onmt.Batch\n\n\nData management and batch creation.\n\n\nBatch interface [size]:\n\n\n\n\nsize: number of sentences in the batch [1]\n\n\nsourceLength: max length in source batch [1]\n\n\nsourceSize:  lengths of each source [batch x 1]\n\n\nsourceInput:  left-padded idx's of source (PPPPPPABCDE) [batch x max]\n\n\nsourceInputFeatures: table of source features sequences\n\n\nsourceInputRev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]\n\n\nsourceInputRevFeatures: table of reversed source features sequences\n\n\ntargetLength: max length in source batch [1]\n\n\ntargetSize: lengths of each source [batch x 1]\n\n\ntargetNonZeros: number of non-ignored words in batch [1]\n\n\ntargetInput: input idx's of target (SABCDEPPPPPP) [batch x max]\n\n\ntargetInputFeatures: table of target input features sequences\n\n\ntargetOutput: expected output idx's of target (ABCDESPPPPPP) [batch x max]\n\n\ntargetOutputFeatures: table of target output features sequences\n\n\n\n\nTODO: change name of size =\n maxlen\n\n\n[src]\n\n\n\n\nonmt.Batch(src, srcFeatures, tgt, tgtFeatures)\n\n\nCreate a batch object given aligned sent tables \nsrc\n and \ntgt\n\n  (optional). Data format is shown at the top of the file.\n\n\n[src]\n\n\n\n\nonmt.Batch:setSourceInput(sourceInput)\n\n\nSet sourceInput directly, can be either a Tensor of size (sequence_length, batch_size, feature_dim)\n , or a sequence of size (sequence_length, batch_size). Be aware that sourceInput is not cloned here.\n  * sourceInput: a tensor of size (sequence_length, batch_size, ...)\n\n\n[src]\n\n\n\n\nonmt.Batch:setTargetInput(targetInput)\n\n\nSet targetInput directly. Be aware that targetInput is not cloned here.\n  * targetInput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD\n\n\n[src]\n\n\n\n\nonmt.Batch:setTargetOutput(targetOutput)\n\n\nSet targetOutput directly. Be aware that targetOutput is not cloned here.\n  * targetOutput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD\n\n\nUndocumented methods\n\n\n\n * \nonmt.Batch:getSourceInput(t)\n\n\n\n * \nonmt.Batch:getTargetInput(t)\n\n\n\n * \nonmt.Batch:getTargetOutput(t)", 
             "title": "onmt+data+Batch"
@@ -104,11 +99,6 @@
             "location": "/code/data/onmt+data+Dataset/#onmtdatasetgetbatchidx", 
             "text": "Get batch  idx . If nil make a batch of all the data.", 
             "title": "onmt.Dataset:getBatch(idx)"
-        }, 
-        {
-            "location": "/code/modules/", 
-            "text": "", 
-            "title": "Home"
         }, 
         {
             "location": "/code/modules/onmt+modules+BiEncoder/", 
@@ -396,11 +386,6 @@
             "title": "Undocumented methods"
         }, 
         {
-            "location": "/code/train/", 
-            "text": "", 
-            "title": "Home"
-        }, 
-        {
             "location": "/code/train/onmt+train+Checkpoint/", 
             "text": "onmt.Checkpoint\n\n\nClass for saving and loading models during training.\n\n\n[src]\n\n\n\n\nonmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)\n\n\nSave the model and data in the middle of an epoch sorting the iteration. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Checkpoint(options, model, optim, dataset)\n\n\n\n * \nonmt.Checkpoint:save(filePath, info)\n\n\n\n * \nonmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)", 
             "title": "onmt+train+Checkpoint"
@@ -469,11 +454,6 @@
             "location": "/code/train/onmt+train+Optim/#undocumented-methods", 
             "text": "*  onmt.Optim(args)  \n *  onmt.Optim:zeroGrad(gradParams)  \n *  onmt.Optim:prepareGrad(gradParams, maxGradNorm)  \n *  onmt.Optim:updateParams(params, gradParams)  \n *  onmt.Optim:getLearningRate()  \n *  onmt.Optim:getStates()", 
             "title": "Undocumented methods"
-        }, 
-        {
-            "location": "/code/translate/", 
-            "text": "", 
-            "title": "Home"
         }, 
         {
             "location": "/code/translate/onmt+translate+Beam/", 
