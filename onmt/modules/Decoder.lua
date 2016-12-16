@@ -285,9 +285,10 @@ end
 
 --]]
 function Decoder:forward(batch, encoderStates, context)
-  encoderStates = encoderStates or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
-                                                    onmt.utils.Cuda.convert(torch.Tensor()),
-                                                    { batch.size, self.args.rnnSize })
+  encoderStates = encoderStates
+    or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+                                         onmt.utils.Cuda.convert(torch.Tensor()),
+                                         { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
   end
@@ -367,9 +368,11 @@ end
 
 --[[ Compute the loss on a batch based on final layer `generator`.]]
 function Decoder:computeLoss(batch, encoderStates, context, criterion)
-  encoderStates = encoderStates or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
-                                                    onmt.utils.Cuda.convert(torch.Tensor()),
-                                                    { batch.size, self.args.rnnSize })
+  encoderStates = encoderStates
+    or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+                                         onmt.utils.Cuda.convert(torch.Tensor()),
+                                         { batch.size, self.args.rnnSize })
+
   local loss = 0
   self:forwardAndApply(batch, encoderStates, context, function (out, t)
     local pred = self.generator:forward(out)
@@ -384,9 +387,11 @@ end
   Used in decoding when gold data are provided.
 ]]
 function Decoder:computeScore(batch, encoderStates, context)
-  encoderStates = encoderStates or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
-                                                    onmt.utils.Cuda.convert(torch.Tensor()),
-                                                    { batch.size, self.args.rnnSize })
+  encoderStates = encoderStates
+    or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+                                         onmt.utils.Cuda.convert(torch.Tensor()),
+                                         { batch.size, self.args.rnnSize })
+
   local score = {}
 
   self:forwardAndApply(batch, encoderStates, context, function (out, t)
