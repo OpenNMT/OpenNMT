@@ -2,7 +2,8 @@ site_name: OpenNMT
 extra_javascript: 
     - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 docs_dir: tree
-  
+extra_css: [http://opennmt.net/OpenNMT/doc.css]
+
 markdown_extensions:
     - math
     - sane_lists
