@@ -23,7 +23,6 @@ addons:
     - curl
     - cmake 
     - libreadline-dev
-    - luacheck
     - git-core 
     - libqt4-core 
     - libqt4-gui
