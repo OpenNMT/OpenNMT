@@ -1,4 +1,4 @@
-require('onmt.init')
+require('./onmt/init')
 
 local cmd = torch.CmdLine()
 
