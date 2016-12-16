@@ -4,15 +4,15 @@
     
     <url>
      <loc>/</loc>
-     <lastmod>2016-12-01</lastmod>
+     <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
     <url>
-     <loc>/Options/</loc>
-     <lastmod>2016-12-01</lastmod>
+     <loc>/Quickstart/</loc>
+     <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -20,20 +20,48 @@
     
         
     <url>
-     <loc>/code/Models/</loc>
-     <lastmod>2016-12-01</lastmod>
+     <loc></loc>
+     <lastmod></lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>/code/Training/</loc>
-     <lastmod>2016-12-01</lastmod>
+     <loc></loc>
+     <lastmod></lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>/code/Translation/</loc>
-     <lastmod>2016-12-01</lastmod>
+     <loc></loc>
+     <lastmod></lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc></loc>
+     <lastmod></lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>/details/preprocess/</loc>
+     <lastmod>2016-12-16</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/details/train/</loc>
+     <lastmod>2016-12-16</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/details/translate/</loc>
+     <lastmod>2016-12-16</lastmod>
      <changefreq>daily</changefreq>
     </url>
         

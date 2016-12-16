@@ -7,25 +7,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   
-  <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Options - OpenNMT</title>
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Train - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
-  <link href="../doc.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Options";
-    var mkdocs_page_input_path = "Options.md";
-    var mkdocs_page_url = "/Options/";
+    var mkdocs_page_name = "Train";
+    var mkdocs_page_input_path = "details/train.md";
+    var mkdocs_page_url = "/details/train/";
   </script>
   
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
   
 </head>
 
@@ -36,9 +35,9 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> OpenNMT</a>
+        <a href="../.." class="icon icon-home"> OpenNMT</a>
         <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
   </form>
 </div>
@@ -49,27 +48,14 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="..">Home</a>
+        <a class="" href="../..">Home</a>
         
     </li>
 <li>
           
             <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Options</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#preprocess">Preprocess</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#train">Train</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#evaluate">Evaluate</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../../Quickstart/">Quickstart</a>
         
     </li>
 <li>
@@ -80,22 +66,227 @@
 
         
             
+    <ul class="subnav">
+    <li><span>Data</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../code/Models/">Models</a>
+        <a class="" href="../../code/data/">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../code/Training/">Training</a>
+        <a class="" href="../../code/data/onmt+data+Batch/">onmt+data+Batch</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../code/Translation/">Translation</a>
+        <a class="" href="../../code/data/onmt+data+Dataset/">onmt+data+Dataset</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+Decoder/">onmt+modules+Decoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+Encoder/">onmt+modules+Encoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+Generator/">onmt+modules+Generator</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+LSTM/">onmt+modules+LSTM</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+WordEmbedding/">onmt+modules+WordEmbedding</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Train</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/onmt+train+EpochState/">onmt+train+EpochState</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/translate/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/translate/onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/translate/onmt+translate+Translator/">onmt+translate+Translator</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Details</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../preprocess/">Preprocess</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Train</a>
+        
+            <ul>
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../translate/">Translate</a>
         
     </li>
 
@@ -113,7 +304,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">OpenNMT</a>
+        <a href="../..">OpenNMT</a>
       </nav>
 
       
@@ -121,11 +312,15 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="..">Docs</a> &raquo;</li>
+    <li><a href="../..">Docs</a> &raquo;</li>
     
       
+        
+          <li>Details &raquo;</li>
+        
+      
     
-    <li>Options</li>
+    <li>Train</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -135,42 +330,7 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="preprocess"></a></p>
-<h2 id="preprocess">Preprocess</h2>
-<p><strong>Preprocess Options</strong></p>
-<dl>
-<dt>config</dt>
-<dd>Read options from this file []</dd>
-<dt>train_src_file</dt>
-<dd>Path to the training source data []</dd>
-<dt>train_targ_file</dt>
-<dd>Path to the training target data []</dd>
-<dt>valid_src_file</dt>
-<dd>Path to the validation source data []</dd>
-<dt>valid_targ_file</dt>
-<dd>Path to the validation target data []</dd>
-<dt>output_file</dt>
-<dd>Output file for the prepared data []</dd>
-<dt>src_vocab_size</dt>
-<dd>Size of the source vocabulary [50000]</dd>
-<dt>targ_vocab_size</dt>
-<dd>Size of the target vocabulary [50000]</dd>
-<dt>src_vocab_file</dt>
-<dd>Path to an existing source vocabulary []</dd>
-<dt>targ_vocab_file</dt>
-<dd>Path to an existing target vocabulary []</dd>
-<dt>features_vocabs_prefix</dt>
-<dd>Path prefix to existing features vocabularies []</dd>
-<dt>seq_length</dt>
-<dd>Maximum sequence length [50]</dd>
-<dt>shuffle</dt>
-<dd>Suffle data [1]</dd>
-<dt>seed</dt>
-<dd>Random seed [3435]</dd>
-</dl>
-<p><a name="train"></a></p>
-<h2 id="train">Train</h2>
-<p><strong>train.lua</strong></p>
+                <p><strong>train.lua</strong></p>
 <dl>
 <dt>config</dt>
 <dd>Read options from this file []</dd>
@@ -179,7 +339,7 @@
 <dl>
 <dt>data</dt>
 <dd>Path to the training *-train.t7 file from preprocess.lua []</dd>
-<dt>save_file</dt>
+<dt>save_model</dt>
 <dd>Savefile name (model will be saved assavefile_epochX_PPL.t7 where X is the X-th epoch and PPL isthe validation perplexity []</dd>
 <dt>train_from</dt>
 <dd>If training from a checkpoint then this is the path to the pretrained model. []</dd>
@@ -188,16 +348,22 @@
 </dl>
 <p><strong>Model options</strong></p>
 <dl>
-<dt>num_layers</dt>
+<dt>layers</dt>
 <dd>Number of layers in the LSTM encoder/decoder [2]</dd>
 <dt>rnn_size</dt>
 <dd>Size of LSTM hidden states [500]</dd>
 <dt>word_vec_size</dt>
 <dd>Word embedding sizes [500]</dd>
+<dt>feat_merge</dt>
+<dd>Merge action for the features embeddings: concat or sum [concat]</dd>
 <dt>feat_vec_exponent</dt>
-<dd>If the feature takes N values, then theembedding dimension will be set to N^exponent [0.7]</dd>
+<dd>When using concatenation, if the feature takes N valuesthen the embedding dimension will be set to N^exponent [0.7]</dd>
+<dt>feat_vec_size</dt>
+<dd>When using sum, the common embedding size of the features [20]</dd>
 <dt>input_feed</dt>
 <dd>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</dd>
+<dt>residual</dt>
+<dd>Add residual connections between RNN layers. [false]</dd>
 <dt>brnn</dt>
 <dd>Use a bidirectional encoder [false]</dd>
 <dt>brnn_merge</dt>
@@ -223,7 +389,7 @@
 <dd>If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]</dd>
 <dt>dropout</dt>
 <dd>Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</dd>
-<dt>lr_decay</dt>
+<dt>learning_rate_decay</dt>
 <dd>Decay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</dd>
 <dt>start_decay_at</dt>
 <dd>Start decay after this epoch [9]</dd>
@@ -244,52 +410,16 @@
 <dd>Which gpu to use (1-indexed). &lt; 1 = use CPU [-1]</dd>
 <dt>nparallel</dt>
 <dd>When using GPUs, how many batches to execute in parallel.Note: this will technically change the final batch size to max_batch_size*nparallel. [1]</dd>
+<dt>no_nccl</dt>
+<dd>Disable usage of nccl in parallel mode. [false]</dd>
 <dt>disable_mem_optimization</dt>
 <dd>Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]</dd>
 <dt>save_every</dt>
 <dd>Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]</dd>
-<dt>print_every</dt>
+<dt>report_every</dt>
 <dd>Print stats every this many iterations within an epoch. [50]</dd>
-</dl>
-<p><a name="evaluate"></a></p>
-<h2 id="evaluate">Evaluate</h2>
-<p><strong>evaluate.lua</strong></p>
-<dl>
-<dt>config</dt>
-<dd>Read options from this file []</dd>
-</dl>
-<p><strong>Data options</strong></p>
-<dl>
-<dt>model</dt>
-<dd>Path to model .t7 file []</dd>
-<dt>src_file</dt>
-<dd>Source sequence to decode (one line per sequence) []</dd>
-<dt>targ_file</dt>
-<dd>True target sequence (optional) []</dd>
-<dt>output_file</dt>
-<dd>Path to output the predictions (each line will be the decoded sequence [pred.txt]</dd>
-</dl>
-<p><strong>Beam Search options</strong></p>
-<dl>
-<dt>beam</dt>
-<dd>Beam size [5]</dd>
-<dt>batch</dt>
-<dd>Batch size [30]</dd>
-<dt>max_sent_l</dt>
-<dd>Maximum sentence length. If any sequences in srcfile are longer than this then it will error out [250]</dd>
-<dt>replace_unk</dt>
-<dd>Replace the generated UNK tokens with the source token thathad the highest attention weight. If srctarg_dict is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]</dd>
-<dt>srctarg_dict</dt>
-<dd>Path to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []</dd>
-<dt>n_best</dt>
-<dd>If &gt; 1, it will also output an n_best list of decoded sentences [1]</dd>
-</dl>
-<p><strong>Other options</strong></p>
-<dl>
-<dt>gpuid</dt>
-<dd>ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs) [-1]</dd>
-<dt>fallback_to_cpu</dt>
-<dd>If = true, fallback to CPU if no GPU available [false]</dd>
+<dt>seed</dt>
+<dd>Seed for random initialization [3435]</dd>
 </dl>
               
             </div>
@@ -298,10 +428,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../code/Models/" class="btn btn-neutral float-right" title="Models">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../translate/" class="btn btn-neutral float-right" title="Translate">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../preprocess/" class="btn btn-neutral" title="Preprocess"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -327,14 +457,14 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../preprocess/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../code/Models/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../translate/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
-    <script src="../js/theme.js"></script>
+    <script src="../../js/theme.js"></script>
       <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
 </body>

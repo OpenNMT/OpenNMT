@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../../img/favicon.ico">
+  <title>onmt+data+Batch - OpenNMT</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "onmt+data+Batch";
+    var mkdocs_page_input_path = "code/data/onmt+data+Batch.md";
+    var mkdocs_page_url = "/code/data/onmt+data+Batch/";
+  </script>
+  
+  <script src="../../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../../.." class="icon icon-home"> OpenNMT</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../../Quickstart/">Quickstart</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Code</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+data+Batch</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtbatch">onmt.Batch</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbatchsrc-srcfeatures-tgt-tgtfeatures">onmt.Batch(src, srcFeatures, tgt, tgtFeatures)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbatchsetsourceinputsourceinput">onmt.Batch:setSourceInput(sourceInput)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbatchsettargetinputtargetinput">onmt.Batch:setTargetInput(targetInput)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbatchsettargetoutputtargetoutput">onmt.Batch:setTargetOutput(targetOutput)</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+data+Dataset/">onmt+data+Dataset</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+Decoder/">onmt+modules+Decoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+Encoder/">onmt+modules+Encoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+Generator/">onmt+modules+Generator</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+LSTM/">onmt+modules+LSTM</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+WordEmbedding/">onmt+modules+WordEmbedding</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Train</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/onmt+train+EpochState/">onmt+train+EpochState</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+Translator/">onmt+translate+Translator</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Details</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../../details/preprocess/">Preprocess</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../../details/train/">Train</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../../details/translate/">Translate</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../..">OpenNMT</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Code &raquo;</li>
+        
+      
+        
+          <li>Data &raquo;</li>
+        
+      
+    
+    <li>onmt+data+Batch</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a name="onmt.Batch.dok"></a></p>
+<h2 id="onmtbatch">onmt.Batch</h2>
+<p>Data management and batch creation.</p>
+<p>Batch interface [size]:</p>
+<ul>
+<li>size: number of sentences in the batch [1]</li>
+<li>sourceLength: max length in source batch [1]</li>
+<li>sourceSize:  lengths of each source [batch x 1]</li>
+<li>sourceInput:  left-padded idx's of source (PPPPPPABCDE) [batch x max]</li>
+<li>sourceInputFeatures: table of source features sequences</li>
+<li>sourceInputRev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]</li>
+<li>sourceInputRevFeatures: table of reversed source features sequences</li>
+<li>targetLength: max length in source batch [1]</li>
+<li>targetSize: lengths of each source [batch x 1]</li>
+<li>targetNonZeros: number of non-ignored words in batch [1]</li>
+<li>targetInput: input idx's of target (SABCDEPPPPPP) [batch x max]</li>
+<li>targetInputFeatures: table of target input features sequences</li>
+<li>targetOutput: expected output idx's of target (ABCDESPPPPPP) [batch x max]</li>
+<li>targetOutputFeatures: table of target output features sequences</li>
+</ul>
+<p>TODO: change name of size =&gt; maxlen</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L47">[src]</a>
+<a name="onmt.Batch"></a></p>
+<h3 id="onmtbatchsrc-srcfeatures-tgt-tgtfeatures">onmt.Batch(src, srcFeatures, tgt, tgtFeatures)</h3>
+<p>Create a batch object given aligned sent tables <code>src</code> and <code>tgt</code>
+  (optional). Data format is shown at the top of the file.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L139">[src]</a>
+<a name="onmt.Batch:setSourceInput"></a></p>
+<h3 id="onmtbatchsetsourceinputsourceinput">onmt.Batch:setSourceInput(sourceInput)</h3>
+<p>Set sourceInput directly, can be either a Tensor of size (sequence_length, batch_size, feature_dim)
+ , or a sequence of size (sequence_length, batch_size). Be aware that sourceInput is not cloned here.
+  * sourceInput: a tensor of size (sequence_length, batch_size, ...)</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L153">[src]</a>
+<a name="onmt.Batch:setTargetInput"></a></p>
+<h3 id="onmtbatchsettargetinputtargetinput">onmt.Batch:setTargetInput(targetInput)</h3>
+<p>Set targetInput directly. Be aware that targetInput is not cloned here.
+  * targetInput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/0b257a22b86703e7dcea6d623e96acb4b03bf0d8/onmt/data/Batch.lua#L167">[src]</a>
+<a name="onmt.Batch:setTargetOutput"></a></p>
+<h3 id="onmtbatchsettargetoutputtargetoutput">onmt.Batch:setTargetOutput(targetOutput)</h3>
+<p>Set targetOutput directly. Be aware that targetOutput is not cloned here.
+  * targetOutput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD</p>
+<h4 id="undocumented-methods">Undocumented methods</h4>
+<p><a name="onmt.Batch:getSourceInput"></a>
+ * <code>onmt.Batch:getSourceInput(t)</code>
+<a name="onmt.Batch:getTargetInput"></a>
+ * <code>onmt.Batch:getTargetInput(t)</code>
+<a name="onmt.Batch:getTargetOutput"></a>
+ * <code>onmt.Batch:getTargetOutput(t)</code></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../onmt+data+Dataset/" class="btn btn-neutral float-right" title="onmt+data+Dataset">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../onmt+data+Dataset/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../../js/theme.js"></script>
+      <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+</body>
+</html>
