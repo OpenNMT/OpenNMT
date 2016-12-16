@@ -1,5 +1,3 @@
-require('torch')
-
 onmt = {}
 
 require('onmt.modules.init')
