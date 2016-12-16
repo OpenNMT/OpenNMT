@@ -1,6 +1,6 @@
 local data = {}
 
-data.Dataset = require('./Dataset')
-data.Batch = require('./Batch')
+data.Dataset = require('onmt.data.Dataset')
+data.Batch = require('onmt.data.Batch')
 
 return data

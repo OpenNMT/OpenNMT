@@ -1,18 +1,18 @@
 onmt = onmt or {}
 
-require('./Sequencer')
-require('./Encoder')
-require('./BiEncoder')
-require('./Decoder')
+require('onmt.modules.Sequencer')
+require('onmt.modules.Encoder')
+require('onmt.modules.BiEncoder')
+require('onmt.modules.Decoder')
 
-require('./LSTM')
+require('onmt.modules.LSTM')
 
-require('./MaskedSoftmax')
-require('./WordEmbedding')
-require('./FeaturesEmbedding')
-require('./GlobalAttention')
+require('onmt.modules.MaskedSoftmax')
+require('onmt.modules.WordEmbedding')
+require('onmt.modules.FeaturesEmbedding')
+require('onmt.modules.GlobalAttention')
 
-require('./Generator')
-require('./FeaturesGenerator')
+require('onmt.modules.Generator')
+require('onmt.modules.FeaturesGenerator')
 
 return onmt

@@ -1,7 +1,7 @@
 local train = {}
 
-train.Checkpoint = require('./Checkpoint')
-train.EpochState = require('./EpochState')
-train.Optim = require('./Optim')
+train.Checkpoint = require('onmt.train.Checkpoint')
+train.EpochState = require('onmt.train.EpochState')
+train.Optim = require('onmt.train.Optim')
 
 return train

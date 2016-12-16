@@ -34,7 +34,7 @@ function Parallel.init(opt)
         function(threadid)
           require('cunn')
           require('nngraph')
-          require('../init')
+          require('onmt.init')
           onmt.utils.Cuda.init(opt, thegpus[threadid])
         end
       ) -- dedicate threads to GPUs

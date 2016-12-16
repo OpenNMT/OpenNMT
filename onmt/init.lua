@@ -1,13 +1,13 @@
 onmt = {}
 
-require('./modules/init')
+require('onmt.modules.init')
 
-onmt.data = require('./data/init')
-onmt.train = require('./train/init')
-onmt.translate = require('./translate/init')
-onmt.utils = require('./utils/init')
+onmt.data = require('onmt.data.init')
+onmt.train = require('onmt.train.init')
+onmt.translate = require('onmt.translate.init')
+onmt.utils = require('onmt.utils.init')
 
-onmt.Constants = require('./Constants')
-onmt.Models = require('./Models')
+onmt.Constants = require('onmt.Constants')
+onmt.Models = require('onmt.Models')
 
 return onmt

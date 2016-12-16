@@ -1,15 +1,15 @@
 local utils = {}
 
-utils.Cuda = require('./Cuda')
-utils.Dict = require('./Dict')
-utils.FileReader = require('./FileReader')
-utils.Tensor = require('./Tensor')
-utils.Opt = require('./Opt')
-utils.Table = require('./Table')
-utils.String = require('./String')
-utils.Memory = require('./Memory')
-utils.Parallel = require('./Parallel')
-utils.Features = require('./Features')
-utils.Log = require('./Log')
+utils.Cuda = require('onmt.utils.Cuda')
+utils.Dict = require('onmt.utils.Dict')
+utils.FileReader = require('onmt.utils.FileReader')
+utils.Tensor = require('onmt.utils.Tensor')
+utils.Opt = require('onmt.utils.Opt')
+utils.Table = require('onmt.utils.Table')
+utils.String = require('onmt.utils.String')
+utils.Memory = require('onmt.utils.Memory')
+utils.Parallel = require('onmt.utils.Parallel')
+utils.Features = require('onmt.utils.Features')
+utils.Log = require('onmt.utils.Log')
 
 return utils
