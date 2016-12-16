@@ -15,7 +15,7 @@ cmd:text("**Data options**")
 cmd:text("")
 
 cmd:option('-data', '', [[Path to the training *-train.t7 file from preprocess.lua]])
-cmd:option('-save_file', '', [[Savefile name (model will be saved as
+cmd:option('-save_model', '', [[Savefile name (model will be saved as
                                              savefile_epochX_PPL.t7 where X is the X-th epoch and PPL is
                                              the validation perplexity]])
 cmd:option('-train_from', '', [[If training from a checkpoint then this is the path to the pretrained model.]])
@@ -324,7 +324,7 @@ end
 local function main()
   local requiredOptions = {
     "data",
-    "save_file"
+    "save_model"
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)

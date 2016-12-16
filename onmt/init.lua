@@ -7,7 +7,7 @@ onmt.train = require('onmt.train.init')
 onmt.translate = require('onmt.translate.init')
 onmt.utils = require('onmt.utils.init')
 
-onmt.Constants = require('onmt.constants')
-onmt.Models = require('onmt.models')
+onmt.Constants = require('onmt.Constants')
+onmt.Models = require('onmt.Models')
 
 return onmt
