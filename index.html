@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="./css/theme.css" type="text/css" />
   <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="./css/highlight.css">
-  <link href="./doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -68,13 +67,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -82,6 +74,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="code/data/">Home</a>
+        
+    </li>
 
         
             
@@ -104,6 +103,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="code/modules/">Home</a>
+        
+    </li>
 
         
             
@@ -193,6 +199,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="code/train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="code/train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -218,6 +231,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="code/translate/">Home</a>
+        
+    </li>
 
         
             
@@ -326,25 +346,17 @@ accuracy. Features include:</p>
 </ul>
 <p><a id="onmt.README.Installation"></a></p>
 <h2 id="installation">Installation</h2>
-<p>OpenNMT only requires a vanilla torch/cutorch install. It uses <code>nn</code>, <code>nngraph</code>, and <code>cunn</code>.</p>
-<p>Alternatively there is a (CUDA) Docker container available at <a href="https://hub.docker.com/r/harvardnlp/opennmt/">here</a>.</p>
+<p>OpenNMT only requires a vanilla torch/cutorch install. It uses <code>nn</code>, <code>nngraph</code>, and <code>cunn</code>. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.</p>
 <p><a id="onmt.README.Quickstart"></a></p>
 <h2 id="quickstart">Quickstart</h2>
 <p>OpenNMT consists of three commands:</p>
 <p>1) Preprocess the data.</p>
-<pre><code>th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo
-</code></pre>
-
+<p><code>th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo</code></p>
 <p>2) Train the model.</p>
-<pre><code>th train.lua -data data/demo-train.t7 -save_model model
-</code></pre>
-
+<p><code>th train.lua -data data/demo-train.t7 -save_model model</code></p>
 <p>3) Translate sentences.</p>
-<pre><code>th translate.lua -model model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
-</code></pre>
-
+<p><code>th translate.lua -model model_final.t7 -src data/src-test.txt -output pred.txt</code></p>
 <p>See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.</p>
-<p><a id="onmt.README.Documentation"></a></p>
 <h2 id="documentation">Documentation</h2>
 <ul>
 <li><a href="http://opennmt.github.io/Guide">Options and Features</a> </li>
@@ -360,7 +372,7 @@ accuracy. Features include:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="Quickstart/" class="btn btn-neutral float-right" title="Quickstart">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="code/data/" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -388,7 +400,7 @@ accuracy. Features include:</p>
       
       
       
-        <span style="margin-left: 15px"><a href="Quickstart/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="code/data/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
@@ -400,5 +412,5 @@ accuracy. Features include:</p>
 
 <!--
 MkDocs version : 0.16.0
-Build Date UTC : 2016-12-16 21:31:49
+Build Date UTC : 2016-12-18 20:20:52
 -->

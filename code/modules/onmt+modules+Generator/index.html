@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/">Home</a>
+        
+    </li>
 
         
             
@@ -91,6 +90,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
 
         
             
@@ -189,6 +195,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -214,6 +227,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -314,6 +334,8 @@
               
                 <p><a name="onmt.Generator.dok"></a></p>
 <h2 id="onmtgenerator">onmt.Generator</h2>
+<p>Default decoder generator. Given RNN state, produce categorical distribution.</p>
+<p>Simply implements <script type="math/tex; mode=display">softmax(W h + b)</script>.</p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
 <p><a name="onmt.Generator"></a>
  * <code>onmt.Generator(rnnSize, outputSize)</code>

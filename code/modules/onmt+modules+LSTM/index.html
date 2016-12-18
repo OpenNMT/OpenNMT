@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/">Home</a>
+        
+    </li>
 
         
             
@@ -91,6 +90,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
 
         
             
@@ -189,6 +195,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -214,6 +227,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -332,14 +352,14 @@ an nn unit.</p>
             x_t
 </code></pre>
 <p>Computes <script type="math/tex; mode=display">(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})</script>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/LSTM.lua#L36">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/LSTM.lua#L36">[src]</a>
 <a name="onmt.LSTM"></a></p>
 <h3 id="onmtlstmlayers-inputsize-hiddensize-dropout-residual">onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)</h3>
 <p>Parameters:</p>
 <ul>
-<li><code>layers</code> - Number of LSTM layers, <script type="math/tex; mode=display">L</script>.</li>
-<li><code>inputSize</code> - Size of input layer,  <script type="math/tex; mode=display">|x|</script>.</li>
-<li><code>hiddenSize</code> - Size of the hidden layers (cell and hidden, <script type="math/tex; mode=display">c, h</script>).</li>
+<li><code>layers</code> - Number of LSTM layers, L.</li>
+<li><code>inputSize</code> - Size of input layer</li>
+<li><code>hiddenSize</code> - Size of the hidden layers.</li>
 <li><code>dropout</code> - Dropout rate to use.</li>
 <li><code>residual</code> - Residual connections between layers.</li>
 </ul>

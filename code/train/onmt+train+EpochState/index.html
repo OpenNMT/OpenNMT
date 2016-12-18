@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/">Home</a>
+        
+    </li>
 
         
             
@@ -91,6 +90,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/">Home</a>
+        
+    </li>
 
         
             
@@ -180,6 +186,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -218,6 +231,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -320,15 +340,15 @@
 <h2 id="onmtepochstate">onmt.EpochState</h2>
 <p>Class for managing the training process by logging and storing
   the state of the current epoch.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/train/EpochState.lua#L7">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/train/EpochState.lua#L7">[src]</a>
 <a name="onmt.EpochState"></a></p>
 <h3 id="onmtepochstateepoch-numiterations-learningrate-lastvalidppl-status">onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)</h3>
 <p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/train/EpochState.lua#L29">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/train/EpochState.lua#L29">[src]</a>
 <a name="onmt.EpochState:update"></a></p>
 <h3 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h3>
 <p>Update training status. Takes <code>batch</code> (described in data.lua) and last losses.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/train/EpochState.lua#L39">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/train/EpochState.lua#L39">[src]</a>
 <a name="onmt.EpochState:log"></a></p>
 <h3 id="onmtepochstatelogbatchindex-json">onmt.EpochState:log(batchIndex, json)</h3>
 <p>Log to status stdout. </p>

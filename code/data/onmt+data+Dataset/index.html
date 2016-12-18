@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
 
         
             
@@ -106,6 +105,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/">Home</a>
+        
+    </li>
 
         
             
@@ -195,6 +201,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -220,6 +233,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -320,24 +340,24 @@
               
                 <p><a name="onmt.Dataset.dok"></a></p>
 <h2 id="onmtdataset">onmt.Dataset</h2>
-<p>Data management and batch creation. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Dataset.lua#L7">[src]</a>
+<p>Data management and batch creation. Handles data created by <code>preprocess.lua</code>. </p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/data/Dataset.lua#L7">[src]</a>
 <a name="onmt.Dataset"></a></p>
 <h3 id="onmtdatasetsrcdata-tgtdata">onmt.Dataset(srcData, tgtData)</h3>
-<p>Initialize a data object given aligned tables of IntTensors <code>src</code>
-  and <code>tgt</code>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Dataset.lua#L19">[src]</a>
+<p>Initialize a data object given aligned tables of IntTensors <code>srcData</code>
+  and <code>tgtData</code>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/data/Dataset.lua#L19">[src]</a>
 <a name="onmt.Dataset:setBatchSize"></a></p>
 <h3 id="onmtdatasetsetbatchsizemaxbatchsize">onmt.Dataset:setBatchSize(maxBatchSize)</h3>
 <p>Setup up the training data to respect <code>maxBatchSize</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Dataset.lua#L57">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/data/Dataset.lua#L57">[src]</a>
 <a name="onmt.Dataset:batchCount"></a></p>
 <h3 id="onmtdatasetbatchcount">onmt.Dataset:batchCount()</h3>
 <p>Return number of batches. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/data/Dataset.lua#L67">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/data/Dataset.lua#L65">[src]</a>
 <a name="onmt.Dataset:getBatch"></a></p>
 <h3 id="onmtdatasetgetbatchidx">onmt.Dataset:getBatch(idx)</h3>
-<p>Get batch <code>idx</code>. If nil make a batch of all the data. </p>
+<p>Get <code>Batch</code> number <code>idx</code>. If nil make a batch of all the data. </p>
               
             </div>
           </div>
@@ -345,7 +365,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../modules/onmt+modules+BiEncoder/" class="btn btn-neutral float-right" title="onmt+modules+BiEncoder">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../modules/" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../onmt+data+Batch/" class="btn btn-neutral" title="onmt+data+Batch"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -377,7 +397,7 @@
         <span><a href="../onmt+data+Batch/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../modules/onmt+modules+BiEncoder/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../../modules/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/">Home</a>
+        
+    </li>
 
         
             
@@ -91,6 +90,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
 
         
             
@@ -195,6 +201,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -220,6 +233,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -325,14 +345,14 @@
   used during training.</p>
 <pre><code> :net(1) =&gt; :net(2) =&gt; ... =&gt; :net(n-1) =&gt; :net(n)
 </code></pre>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Sequencer.lua#L17">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Sequencer.lua#L17">[src]</a>
 <a name="onmt.Sequencer"></a></p>
 <h3 id="onmtsequencernetwork">onmt.Sequencer(network)</h3>
 <p>Parameters:</p>
 <ul>
 <li><code>network</code> - recurrent step template.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Sequencer.lua#L79">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Sequencer.lua#L79">[src]</a>
 <a name="onmt.Sequencer:net"></a></p>
 <h3 id="onmtsequencernett">onmt.Sequencer:net(t)</h3>
 <p>Get access to the recurrent unit at a timestep.</p>
@@ -340,11 +360,11 @@
   * <code>t</code> - timestep.</p>
 <p>Returns: The raw network clone at timestep t.
   When <code>evaluate()</code> has been called, cheat and return t=1.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Sequencer.lua#L99">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Sequencer.lua#L99">[src]</a>
 <a name="onmt.Sequencer:training"></a></p>
 <h3 id="onmtsequencertraining">onmt.Sequencer:training()</h3>
 <p>Move the network to train mode. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Sequencer.lua#L109">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Sequencer.lua#L109">[src]</a>
 <a name="onmt.Sequencer:evaluate"></a></p>
 <h3 id="onmtsequencerevaluate">onmt.Sequencer:evaluate()</h3>
 <p>Move the network to evaluation mode. </p>

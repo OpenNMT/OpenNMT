@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/">Home</a>
+        
+    </li>
 
         
             
@@ -91,6 +90,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
 
         
             
@@ -193,6 +199,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -218,6 +231,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -340,16 +360,21 @@ h_1 &lt;= h_2 &lt;= h_3 &lt;= ... &lt;= h_n
 x_1    x_2    x_3           x_n
 </code></pre>
 <p>Inherits from <a href="../onmt+modules+Sequencer">onmt.Sequencer</a>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/BiEncoder.lua#L40">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/BiEncoder.lua#L45">[src]</a>
 <a name="onmt.BiEncoder"></a></p>
 <h3 id="onmtbiencoderinput-rnn-merge">onmt.BiEncoder(input, rnn, merge)</h3>
-<p>Creates two Encoder's (encoder.lua) <code>netFwd</code> and <code>netBwd</code>.
-  The two are combined use <code>merge</code> operation (concat/sum).</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/BiEncoder.lua#L65">[src]</a>
+<p>Create a bi-encoder.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>input</code> - input neural network.</li>
+<li><code>rnn</code> - recurrent template module.</li>
+<li><code>merge</code> - fwd/bwd merge operation {"concat", "sum"}</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/BiEncoder.lua#L70">[src]</a>
 <a name="onmt.BiEncoder.load"></a></p>
 <h3 id="onmtbiencoderloadpretrained">onmt.BiEncoder.load(pretrained)</h3>
 <p>Return a new BiEncoder using the serialized data <code>pretrained</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/BiEncoder.lua#L83">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/BiEncoder.lua#L88">[src]</a>
 <a name="onmt.BiEncoder:serialize"></a></p>
 <h3 id="onmtbiencoderserialize">onmt.BiEncoder:serialize()</h3>
 <p>Return data to serialize. </p>
@@ -372,7 +397,7 @@ x_1    x_2    x_3           x_n
         <a href="../onmt+modules+Decoder/" class="btn btn-neutral float-right" title="onmt+modules+Decoder">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../../data/onmt+data+Dataset/" class="btn btn-neutral" title="onmt+data+Dataset"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -398,7 +423,7 @@ x_1    x_2    x_3           x_n
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../../data/onmt+data+Dataset/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../onmt+modules+Decoder/" style="color: #fcfcfc">Next &raquo;</a></span>

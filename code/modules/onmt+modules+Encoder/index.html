@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/">Home</a>
+        
+    </li>
 
         
             
@@ -91,6 +90,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
 
         
             
@@ -197,6 +203,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -222,6 +235,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -333,7 +353,7 @@ h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
 x_1    x_2    x_3           x_n
 </code></pre>
 <p>Inherits from <a href="../onmt+modules+Sequencer">onmt.Sequencer</a>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Encoder.lua#L24">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Encoder.lua#L24">[src]</a>
 <a name="onmt.Encoder"></a></p>
 <h3 id="onmtencoderinputnetwork-rnn">onmt.Encoder(inputNetwork, rnn)</h3>
 <p>Construct an encoder layer.</p>
@@ -342,15 +362,15 @@ x_1    x_2    x_3           x_n
 <li><code>inputNetwork</code> - input module.</li>
 <li><code>rnn</code> - recurrent module.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Encoder.lua#L39">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Encoder.lua#L39">[src]</a>
 <a name="onmt.Encoder.load"></a></p>
 <h3 id="onmtencoderloadpretrained">onmt.Encoder.load(pretrained)</h3>
 <p>Return a new Encoder using the serialized data <code>pretrained</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Encoder.lua#L57">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Encoder.lua#L57">[src]</a>
 <a name="onmt.Encoder:serialize"></a></p>
 <h3 id="onmtencoderserialize">onmt.Encoder:serialize()</h3>
 <p>Return data to serialize. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Encoder.lua#L128">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Encoder.lua#L128">[src]</a>
 <a name="onmt.Encoder:forward"></a></p>
 <h3 id="onmtencoderforwardbatch">onmt.Encoder:forward(batch)</h3>
 <p>Compute the context representation of an input.</p>
@@ -371,7 +391,7 @@ x_1    x_2    x_3           x_n
 </ul>
 </li>
 </ol>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b23a28281c54143c911061d1537f60281a1d4608/onmt/modules/Encoder.lua#L206">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/Encoder.lua#L206">[src]</a>
 <a name="onmt.Encoder:backward"></a></p>
 <h3 id="onmtencoderbackwardbatch-gradstatesoutput-gradcontextoutput">onmt.Encoder:backward(batch, gradStatesOutput, gradContextOutput)</h3>
 <p>Backward pass (only called during training)</p>
@@ -381,7 +401,7 @@ x_1    x_2    x_3           x_n
 <li><code>gradStatesOutput</code> gradient of loss wrt last state</li>
 <li><code>gradContextOutput</code> - gradient of loss wrt full context.</li>
 </ul>
-<p>Returns: nil</p>
+<p>Returns: <code>gradInputs</code> of input network.</p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
 <p><a name="onmt.Encoder:resetPreallocation"></a>
  * <code>onmt.Encoder:resetPreallocation()</code>

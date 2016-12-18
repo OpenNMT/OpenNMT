@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../../css/highlight.css">
-  <link href="../../../doc.css" rel="stylesheet">
   
   <script>
     // Current page data
@@ -55,13 +54,6 @@
 <li>
           
             <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../../Quickstart/">Quickstart</a>
-        
-    </li>
-<li>
-          
-            <li>
     <ul class="subnav">
     <li><span>Code</span></li>
 
@@ -69,6 +61,13 @@
             
     <ul class="subnav">
     <li><span>Data</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/">Home</a>
+        
+    </li>
 
         
             
@@ -91,6 +90,13 @@
             
     <ul class="subnav">
     <li><span>Modules</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Home</a>
+        
+    </li>
 
         
             
@@ -127,9 +133,12 @@
         
             <ul>
             
+                <li class="toctree-l3"><a href="#featuresgeneratorlua">FeaturesGenerator.lua</a></li>
+                
+            
                 <li class="toctree-l3"><a href="#onmtfeaturesgenerator">onmt.FeaturesGenerator</a></li>
                 
-                    <li><a class="toctree-l4" href="#undocumented-methods">Undocumented methods</a></li>
+                    <li><a class="toctree-l4" href="#onmtfeaturesgeneratorrnnsize-outputsize-features">onmt.FeaturesGenerator(rnnSize, outputSize, features)</a></li>
                 
             
             </ul>
@@ -189,6 +198,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../train/">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
@@ -214,6 +230,13 @@
             
     <ul class="subnav">
     <li><span>Translate</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/">Home</a>
+        
+    </li>
 
         
             
@@ -312,12 +335,23 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.FeaturesGenerator.dok"></a></p>
+                <h3 id="featuresgeneratorlua">FeaturesGenerator.lua</h3>
+<p>Feature decoder generator. Given RNN state, produce categorical distribution over
+tokens and features.</p>
+<p>Implements <script type="math/tex; mode=display">[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] </script>.</p>
+<p><a name="onmt.FeaturesGenerator.dok"></a></p>
 <h2 id="onmtfeaturesgenerator">onmt.FeaturesGenerator</h2>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e37096dee3388729d773d90c03e171f9b8a5a0f2/onmt/modules/FeaturesGenerator.lua#L17">[src]</a>
+<a name="onmt.FeaturesGenerator"></a></p>
+<h3 id="onmtfeaturesgeneratorrnnsize-outputsize-features">onmt.FeaturesGenerator(rnnSize, outputSize, features)</h3>
+<p>Parameters:</p>
+<ul>
+<li><code>rnnSize</code> - Input rnn size.</li>
+<li><code>outputSize</code> - Output size (number of tokens).</li>
+<li><code>features</code> - table of feature sizes.</li>
+</ul>
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.FeaturesGenerator"></a>
- * <code>onmt.FeaturesGenerator(rnnSize, outputSize, features)</code>
-<a name="onmt.FeaturesGenerator:updateOutput"></a>
+<p><a name="onmt.FeaturesGenerator:updateOutput"></a>
  * <code>onmt.FeaturesGenerator:updateOutput(input)</code>
 <a name="onmt.FeaturesGenerator:updateGradInput"></a>
  * <code>onmt.FeaturesGenerator:updateGradInput(input, gradOutput)</code>
