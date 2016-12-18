@@ -41,17 +41,17 @@ Batch interface reference [size]:
 --]]
 
 
---[[ A batch of sentences to translate and targets. Manages padding, 
+--[[ A batch of sentences to translate and targets. Manages padding,
   features, and batch alignment (for efficiency).
 
-  Used by the decoder and encoder objects.  
+  Used by the decoder and encoder objects.
 --]]
 local Batch = torch.class('Batch')
 
 --[[ Create a batch object.
 
-Parameters: 
-  
+Parameters:
+
   * `src` - 2D table of source batch indices
   * `srcFeatures` - 2D table of source batch features (opt)
   * `tgt` - 2D table of target batch indices
@@ -145,7 +145,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   end
 end
 
---[[ Set source input directly, 
+--[[ Set source input directly,
 
 Parameters:
 
@@ -164,7 +164,7 @@ function Batch:setSourceInput(sourceInput)
   return self
 end
 
---[[ Set target input directly. 
+--[[ Set target input directly.
 
 Parameters:
 
@@ -181,10 +181,10 @@ function Batch:setTargetInput(targetInput)
   return self
 end
 
---[[ Set target output directly. 
+--[[ Set target output directly.
 
 Parameters:
-  
+
   * `targetOutput` - a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD.  Be aware that targetOutput is not cloned here.
 --]]
 function Batch:setTargetOutput(targetOutput)

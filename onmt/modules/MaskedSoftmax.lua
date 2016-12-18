@@ -2,7 +2,7 @@ require('nngraph')
 
 --[[ A batched-softmax wrapper to mask the probabilities of padding.
 
-  For instance there may be a batch of instances where A is padding. 
+  For instance there may be a batch of instances where A is padding.
 
     AXXXAA
     AXXAAA

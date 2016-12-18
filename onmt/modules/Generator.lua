@@ -1,6 +1,6 @@
--- [[ Default decoder generator. Given RNN state, produce categorical distribution.
+--[[ Default decoder generator. Given RNN state, produce categorical distribution.
 
-Simply Implements $$softmax(W h + b)$$.
+Simply implements $$softmax(W h + b)$$.
 --]]
 local Generator, parent = torch.class('onmt.Generator', 'nn.Container')
 

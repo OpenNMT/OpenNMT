@@ -1,5 +1,5 @@
--- [[ Feature decoder generator. Given RNN state, produce categorical distribution over
-tokens and features. 
+--[[ Feature decoder generator. Given RNN state, produce categorical distribution over
+tokens and features.
 
   Implements $$[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] $$.
 --]]
@@ -12,7 +12,7 @@ Parameters:
 
   * `rnnSize` - Input rnn size.
   * `outputSize` - Output size (number of tokens).
-  * `features` - table of feature sizes. 
+  * `features` - table of feature sizes.
 --]]
 function FeaturesGenerator:__init(rnnSize, outputSize, features)
   parent.__init(self)

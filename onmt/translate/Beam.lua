@@ -12,7 +12,7 @@ local function flatToRc(v, flatIndex)
   return row, (flatIndex - 1) % v:size(2) + 1
 end
 
---[[ Class for managing the internals of the beam search process. 
+--[[ Class for managing the internals of the beam search process.
 
 
     hyp1---hyp1---hyp1 -hyp1
@@ -22,7 +22,7 @@ end
     hyp3---hyp3---hyp3 -hyp3
     ========================
 
-Takes care of beams, back pointers, and scores. 
+Takes care of beams, back pointers, and scores.
 ]]
 local Beam = torch.class('Beam')
 
@@ -144,7 +144,7 @@ function Beam:sortBest()
   return torch.sort(self.scores, 1, true)
 end
 
---[[ Get the score of the best in the beam. ]] 
+--[[ Get the score of the best in the beam. ]]
 function Beam:getBest()
   local scores, ids = self:sortBest()
   return scores[1], ids[1]

@@ -249,8 +249,8 @@ end
   Parameters:
 
   * `batch` - `Batch` object
-  * `encoderStates` - 
-  * `context` - 
+  * `encoderStates` -
+  * `context` -
   * `func` - Calls `func(out, t)` each timestep.
 --]]
 
@@ -368,7 +368,7 @@ end
 --[[ Compute the loss on a batch.
 
 Parameters:
-  
+
   * `batch` - a `Batch` to score.
   * `encoderStates` - initialization of decoder.
   * `context` - the attention context.
@@ -395,7 +395,7 @@ end
 --[[ Compute the score of a batch.
 
 Parameters:
-  
+
   * `batch` - a `Batch` to score.
   * `encoderStates` - initialization of decoder.
   * `context` - the attention context.
