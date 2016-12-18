@@ -34,7 +34,7 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
 local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 
---[[ Creates two Encoders (encoder.lua).
+--[[ Create a bi-encoder.
 
 Parameters:
 

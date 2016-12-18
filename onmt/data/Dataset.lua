@@ -1,8 +1,8 @@
---[[ Data management and batch creation. ]]
+--[[ Data management and batch creation. Handles data created by `preprocess.lua`. ]]
 local Dataset = torch.class("Dataset")
 
---[[ Initialize a data object given aligned tables of IntTensors `src`
-  and `tgt`.
+--[[ Initialize a data object given aligned tables of IntTensors `srcData`
+  and `tgtData`.
 --]]
 function Dataset:__init(srcData, tgtData)
 
@@ -55,15 +55,13 @@ end
 
 --[[ Return number of batches. ]]
 function Dataset:batchCount()
-
   if self.batchRange == nil then
     return 1
   end
-
   return #self.batchRange
 end
 
---[[ Get batch `idx`. If nil make a batch of all the data. ]]
+--[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
 function Dataset:getBatch(idx)
   if idx == nil or self.batchRange == nil then
     return onmt.data.Batch.new(self.src, self.srcFeatures, self.tgt, self.tgtFeatures)

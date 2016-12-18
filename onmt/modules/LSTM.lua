@@ -27,9 +27,9 @@ local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
 --[[
 Parameters:
 
-  * `layers` - Number of LSTM layers, $$L$$.
-  * `inputSize` - Size of input layer,  $$|x|$$.
-  * `hiddenSize` - Size of the hidden layers (cell and hidden, $$c, h$$).
+  * `layers` - Number of LSTM layers, L.
+  * `inputSize` - Size of input layer
+  * `hiddenSize` - Size of the hidden layers.
   * `dropout` - Dropout rate to use.
   * `residual` - Residual connections between layers.
 --]]

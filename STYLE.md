@@ -12,6 +12,16 @@ https://github.com/deepmind/torch-dokx/blob/master/doc/usage.md
 * All comments should be on their own line, and be a complete English
 sentence with capitalization.
 
+
+* Comments are of the form:
+
+
+--[[ Set target input directly. 
+
+Parameters:
+  * `targetInput` - a tensor of size (sequence_length, batch_size). Padded with onmt.Co
+--]]
+
 * Use torch-dokx and this command to build docs
 
 ```

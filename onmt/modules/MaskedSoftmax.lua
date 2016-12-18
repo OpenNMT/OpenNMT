@@ -2,10 +2,15 @@ require('nngraph')
 
 --[[ A batched-softmax wrapper to mask the probabilities of padding.
 
+  For instance there may be a batch of instances where A is padding. 
+
     AXXXAA
     AXXAAA
     AXXXXX
 
+  MaskedSoftmax ensures that no probability is given to the A's.
+
+  For this example, `beamSize` is 3, `sourceLength` is {3, 2, 5}.
 --]]
 local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Container')
 
@@ -16,7 +21,7 @@ Parameters:
 
   * `sourceSizes` -  the true lengths (with left padding).
   * `sourceLength` - the max length in the batch `beamSize`.
-  * `beamSize` - beam size ${K}
+  * `beamSize` - the batch size.
 --]]
 function MaskedSoftmax:__init(sourceSizes, sourceLength, beamSize)
   parent.__init(self)

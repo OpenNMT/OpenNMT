@@ -1,4 +1,8 @@
+
+--[[Parse and lookup a words from a phrase table.
+--]]
 local PhraseTable = torch.class('PhraseTable')
+
 
 function PhraseTable:__init(filePath)
   local f = assert(io.open(filePath, 'r'))
@@ -13,6 +17,7 @@ function PhraseTable:__init(filePath)
   f:close()
 end
 
+--[[ Return the phrase table match for `word`. ]]
 function PhraseTable:lookup(word)
   return self.table[word]
 end
