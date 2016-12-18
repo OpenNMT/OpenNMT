@@ -30,21 +30,15 @@ OpenNMT consists of three commands:
 
 1) Preprocess the data.
 
-```
-th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo
-```
+```th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo```
 
 2) Train the model.
 
-```
-th train.lua -data data/demo-train.t7 -save_model model
-```
+```th train.lua -data data/demo-train.t7 -save_model model```
 
 3) Translate sentences.
 
-```
-th translate.lua -model model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
-```
+```th translate.lua -model model_final.t7 -src data/src-test.txt -output pred.txt```
 
 See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.
 
