@@ -201,7 +201,7 @@ end
   * `gradStatesOutput` gradient of loss wrt last state
   * `gradContextOutput` - gradient of loss wrt full context.
 
-  Returns: nil
+  Returns: `gradInputs` of input network.
 --]]
 function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
   -- TODO: change this to (input, gradOutput) as in nngraph.

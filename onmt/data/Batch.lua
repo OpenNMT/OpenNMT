@@ -20,7 +20,7 @@ end
 
 --[[ Data management and batch creation.
 
-Batch interface [size]:
+Batch interface reference [size]:
 
   * size: number of sentences in the batch [1]
   * sourceLength: max length in source batch [1]
@@ -39,10 +39,23 @@ Batch interface [size]:
 
  TODO: change name of size => maxlen
 --]]
+
+
+--[[ A batch of sentences to translate and targets. Manages padding,
+  features, and batch alignment (for efficiency).
+
+  Used by the decoder and encoder objects.
+--]]
 local Batch = torch.class('Batch')
 
---[[ Create a batch object given aligned sent tables `src` and `tgt`
-  (optional). Data format is shown at the top of the file.
+--[[ Create a batch object.
+
+Parameters:
+
+  * `src` - 2D table of source batch indices
+  * `srcFeatures` - 2D table of source batch features (opt)
+  * `tgt` - 2D table of target batch indices
+  * `tgtFeatures` - 2D table of target batch features (opt)
 --]]
 function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   src = src or {}
@@ -132,9 +145,13 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   end
 end
 
---[[ Set sourceInput directly, can be either a Tensor of size (sequence_length, batch_size, feature_dim)
---  , or a sequence of size (sequence_length, batch_size). Be aware that sourceInput is not cloned here.
-  * sourceInput: a tensor of size (sequence_length, batch_size, ...)
+--[[ Set source input directly,
+
+Parameters:
+
+  * `sourceInput` - a Tensor of size (sequence_length, batch_size, feature_dim)
+  ,or a sequence of size (sequence_length, batch_size). Be aware that sourceInput is not cloned here.
+
 --]]
 function Batch:setSourceInput(sourceInput)
   assert (sourceInput:dim() >= 2, 'The sourceInput tensor should be of size (seq_len, batch_size, ...)')
@@ -147,8 +164,11 @@ function Batch:setSourceInput(sourceInput)
   return self
 end
 
---[[ Set targetInput directly. Be aware that targetInput is not cloned here.
-  * targetInput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD
+--[[ Set target input directly.
+
+Parameters:
+
+  * `targetInput` - a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD. Be aware that targetInput is not cloned here.
 --]]
 function Batch:setTargetInput(targetInput)
   assert (targetInput:dim() == 2, 'The targetInput tensor should be of size (seq_len, batch_size)')
@@ -161,8 +181,11 @@ function Batch:setTargetInput(targetInput)
   return self
 end
 
---[[ Set targetOutput directly. Be aware that targetOutput is not cloned here.
-  * targetOutput: a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD
+--[[ Set target output directly.
+
+Parameters:
+
+  * `targetOutput` - a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD.  Be aware that targetOutput is not cloned here.
 --]]
 function Batch:setTargetOutput(targetOutput)
   assert (targetOutput:dim() == 2, 'The targetOutput tensor should be of size (seq_len, batch_size)')
@@ -171,6 +194,8 @@ function Batch:setTargetOutput(targetOutput)
   return self
 end
 
+
+--[[ Get source input batch at timestep `t`. --]]
 function Batch:getSourceInput(t)
   -- If a regular input, return word id, otherwise a table with features.
   if #self.sourceInputFeatures > 0 then
@@ -184,6 +209,7 @@ function Batch:getSourceInput(t)
   end
 end
 
+--[[ Get target input batch at timestep `t`. --]]
 function Batch:getTargetInput(t)
   -- If a regular input, return word id, otherwise a table with features.
   if #self.targetInputFeatures > 0 then
@@ -197,6 +223,7 @@ function Batch:getTargetInput(t)
   end
 end
 
+--[[ Get target output batch at timestep `t` (values t+1). --]]
 function Batch:getTargetOutput(t)
   -- If a regular input, return word id, otherwise a table with features.
   local outputs = { self.targetOutput[t] }

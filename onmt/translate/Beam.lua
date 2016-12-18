@@ -12,7 +12,18 @@ local function flatToRc(v, flatIndex)
   return row, (flatIndex - 1) % v:size(2) + 1
 end
 
---[[ Class for managing the beam search process. ]]
+--[[ Class for managing the internals of the beam search process.
+
+
+    hyp1---hyp1---hyp1 -hyp1
+        \             /
+    hyp2 \-hyp2 /-hyp2--hyp2
+               /      \
+    hyp3---hyp3---hyp3 -hyp3
+    ========================
+
+Takes care of beams, back pointers, and scores.
+]]
 local Beam = torch.class('Beam')
 
 --[[Constructor
@@ -20,6 +31,7 @@ local Beam = torch.class('Beam')
 Parameters:
 
   * `size` : The beam `K`.
+  * `numFeatures` : Number of features, (optional)
 --]]
 function Beam:__init(size, numFeatures)
 
@@ -65,8 +77,9 @@ end
 
 Parameters:
 
-  * `wordLk`- probs at the last step
-  * `attnWordLk`- attention at the last step
+  * `wordLk`- probs of advancing from the last step (K x words)
+  * `featsLk`- probs of features at the last step (K x numfeatures x featsize)
+  * `attnOut`- attention at the last step
 
 Returns: true if beam search is complete.
 --]]
@@ -131,12 +144,13 @@ function Beam:sortBest()
   return torch.sort(self.scores, 1, true)
 end
 
+--[[ Get the score of the best in the beam. ]]
 function Beam:getBest()
   local scores, ids = self:sortBest()
   return scores[1], ids[1]
 end
 
---[[ Walk back to construct the full hypothesis `k`.
+--[[ Walk back to construct the full hypothesis.
 
 Parameters:
 

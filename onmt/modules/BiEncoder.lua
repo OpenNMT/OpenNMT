@@ -34,8 +34,13 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
 local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 
---[[ Creates two Encoder's (encoder.lua) `netFwd` and `netBwd`.
-  The two are combined use `merge` operation (concat/sum).
+--[[ Create a bi-encoder.
+
+Parameters:
+
+  * `input` - input neural network.
+  * `rnn` - recurrent template module.
+  * `merge` - fwd/bwd merge operation {"concat", "sum"}
 ]]
 function BiEncoder:__init(input, rnn, merge)
   parent.__init(self)

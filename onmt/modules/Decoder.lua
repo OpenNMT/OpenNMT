@@ -17,14 +17,14 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 
---[[ Construct an encoder layer.
+--[[ Construct a decoder layer.
 
 Parameters:
 
-  * `inputNetwork` - input module.
-  * `rnn` - recurrent module.
-  * `generator` - optional, a output [onmt.Generator](onmt+modules+Generator).
-  * `inputFeed` - enable input feeding.
+  * `inputNetwork` - input nn module.
+  * `rnn` - recurrent module, such as [onmt.LSTM](onmt+modules+LSTM).
+  * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
+  * `inputFeed` - bool, enable input feeding.
 --]]
 function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   self.rnn = rnn
@@ -195,16 +195,16 @@ end
 
 Parameters:
 
- * `input` - sparse input (1)
- * `prevStates` - stack of hidden states (batch x layers*model x rnnSize)
- * `context` - encoder output (batch x n x rnnSize)
- * `prevOut` - previous distribution (batch x #words)
- * `t` - current timestep
+  * `input` - input to be passed to inputNetwork.
+  * `prevStates` - stack of hidden states (batch x layers*model x rnnSize)
+  * `context` - encoder output (batch x n x rnnSize)
+  * `prevOut` - previous distribution (batch x #words)
+  * `t` - current timestep
 
 Returns:
 
- 1. `out` - Top-layer Hidden state
- 2. `states` - All states
+ 1. `out` - Top-layer hidden state.
+ 2. `states` - All states.
 --]]
 function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   local inputs = {}
@@ -248,9 +248,9 @@ end
 
   Parameters:
 
-  * `batch` - as defined in batch.lua
-  * `encoderStates`
-  * `context`
+  * `batch` - `Batch` object
+  * `encoderStates` -
+  * `context` -
   * `func` - Calls `func(out, t)` each timestep.
 --]]
 
@@ -277,12 +277,11 @@ end
 
   Parameters:
 
-  * `batch` - as defined in batch.lua
-  * `encoderStates` - the final encoder states
+  * `batch` - a `Batch` object.
+  * `encoderStates` - a batch of initial decoder states (optional) [0]
   * `context` - the context to apply attention to.
 
-  Returns: Tables of top hidden layer at each timestep.
-
+  Returns: Table of top hidden state for each timestep.
 --]]
 function Decoder:forward(batch, encoderStates, context)
   encoderStates = encoderStates
@@ -302,16 +301,16 @@ function Decoder:forward(batch, encoderStates, context)
   return outputs
 end
 
---[[ Compute the standard backward update.
+--[[ Compute the backward update.
 
-  Parameters:
+Parameters:
 
-  * `batch`
-  * `outputs`
-  * `criterion`
+  * `batch` - a `Batch` object
+  * `outputs` - expected outputs
+  * `criterion` - a single target criterion object
 
-  Note: This code is both the standard backward and criterion forward/backward.
-  It returns both the gradInputs (ret 1 and 2) and the loss.
+  Note: This code runs both the standard backward and criterion forward/backward.
+  It returns both the gradInputs and the loss.
   -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
@@ -366,7 +365,16 @@ function Decoder:backward(batch, outputs, criterion)
   return gradStatesInput, gradContextInput, loss
 end
 
---[[ Compute the loss on a batch based on final layer `generator`.]]
+--[[ Compute the loss on a batch.
+
+Parameters:
+
+  * `batch` - a `Batch` to score.
+  * `encoderStates` - initialization of decoder.
+  * `context` - the attention context.
+  * `criterion` - a pointwise criterion.
+
+--]]
 function Decoder:computeLoss(batch, encoderStates, context, criterion)
   encoderStates = encoderStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
@@ -383,9 +391,16 @@ function Decoder:computeLoss(batch, encoderStates, context, criterion)
   return loss
 end
 
---[[ Compute the cumulative score of a target sequence.
-  Used in decoding when gold data are provided.
-]]
+
+--[[ Compute the score of a batch.
+
+Parameters:
+
+  * `batch` - a `Batch` to score.
+  * `encoderStates` - initialization of decoder.
+  * `context` - the attention context.
+
+--]]
 function Decoder:computeScore(batch, encoderStates, context)
   encoderStates = encoderStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
