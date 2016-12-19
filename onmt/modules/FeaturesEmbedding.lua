@@ -35,7 +35,7 @@ function FeaturesEmbedding:_buildModel(dicts, dimExponent, dim, merge)
       self.outputSize = self.outputSize + embSize
     end
 
-    local emb = onmt.WordEmbedding(vocabSize, embSize)(feat)
+    local emb = nn.LookupTable(vocabSize, embSize)(feat)
 
     if not output then
       output = emb
