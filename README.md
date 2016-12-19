@@ -47,5 +47,5 @@ See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.
 * <a href="http://opennmt.github.io/OpenNMT">Documentation</a> 
 * <a href="http://opennmt.github.io/Models">Example Models</a>
 * <a href="http://demo-pnmt.systran.net">Live Demo</a>
-* <a href="http://opennmt.github.io/About">Bibliography</a>
+* <a href="http://opennmt.github.io/about">Bibliography</a>
 
