@@ -190,9 +190,17 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   end
 
   local gradInputBwd = self.bwd:backward(batch, gradStatesOutputBwd, gradContextBwd)
-  -- gradInput
+
   for t = 1, batch.sourceLength do
-    gradInputFwd[t]:add(gradInputBwd[batch.sourceLength-t+1])
+    local revIndex = batch.sourceLength - t + 1
+    if torch.isTensor(gradInputFwd[t]) then
+      gradInputFwd[t]:add(gradInputBwd[revIndex])
+    else
+      for i = 1, #gradInputFwd[t] do
+        gradInputFwd[t][i]:add(gradInputBwd[revIndex][i])
+      end
+    end
   end
+
   return gradInputFwd
 end
