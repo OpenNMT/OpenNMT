@@ -21,9 +21,12 @@ function WordEmbedding:__init(vocabSize, vecSize, preTrained, fix)
   if preTrained and preTrained:len() > 0 then
     local vecs = torch.load(preTrained)
     self.net.weight:copy(vecs)
-  end
 
-  self.fix = fix
+    self.fix = fix
+    if self.fix then
+      self.net.gradWeight = nil
+    end
+  end
 end
 
 function WordEmbedding:updateOutput(input)
@@ -36,10 +39,13 @@ function WordEmbedding:updateGradInput(input, gradOutput)
 end
 
 function WordEmbedding:accGradParameters(input, gradOutput, scale)
-  self.net:accGradParameters(input, gradOutput, scale)
+  if not self.fix then
+    self.net:accGradParameters(input, gradOutput, scale)
+  end
+end
 
-  if self.fix then
-    -- Ignore gradients if embeddings are not to be optimized.
-    self.net.gradWeight:zero()
+function WordEmbedding:parameters()
+  if not self.fix then
+    return parent.parameters(self)
   end
 end
