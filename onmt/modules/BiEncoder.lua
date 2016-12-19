@@ -46,7 +46,7 @@ function BiEncoder:__init(input, rnn, merge)
   parent.__init(self)
 
   self.fwd = onmt.Encoder.new(input, rnn)
-  self.bwd = onmt.Encoder.new(input:clone(), rnn:clone())
+  self.bwd = onmt.Encoder.new(input:clone('weight', 'bias', 'gradWeight', 'gradBias'), rnn:clone())
 
   self.args = {}
   self.args.merge = merge
@@ -113,10 +113,6 @@ function BiEncoder:forward(batch)
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                                          self.stateProto,
                                                          { batch.size, self.args.hiddenSize })
-
-    if self.train then
-      self.bwd:shareInput(self.fwd)
-    end
   end
 
   local states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.hiddenSize })

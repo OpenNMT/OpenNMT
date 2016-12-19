@@ -24,7 +24,6 @@ Parameters:
 function Encoder:__init(inputNetwork, rnn)
   self.rnn = rnn
   self.inputNet = inputNetwork
-  self.inputNet.name = 'inputNetwork'
 
   self.args = {}
   self.args.rnnSize = self.rnn.outputSize
@@ -41,12 +40,6 @@ function Encoder.load(pretrained)
 
   self.args = pretrained.args
   parent.__init(self, pretrained.modules[1])
-
-  self.network:apply(function (m)
-    if m.name == 'inputNetwork' then
-      self.inputNet = m
-    end
-  end)
 
   self:resetPreallocation()
 
@@ -108,10 +101,6 @@ function Encoder:_buildModel()
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
   return nn.gModule(inputs, { outputs })
-end
-
-function Encoder:shareInput(other)
-  self.inputNet:share(other.inputNet, 'weight', 'gradWeight')
 end
 
 --[[Compute the context representation of an input.

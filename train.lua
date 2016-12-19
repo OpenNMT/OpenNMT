@@ -87,23 +87,7 @@ cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
 
 local opt = cmd:parse(arg)
 
-local function getNets(model)
-  local nets = {}
-
-  if opt.brnn then
-    nets.encoder = model.encoder.fwd.network
-    nets.encoderBwd = model.encoder.bwd.network
-  else
-    nets.encoder = model.encoder.network
-  end
-
-  nets.decoder = model.decoder.network
-  nets.generator = model.decoder.generator
-
-  return nets
-end
-
-local function initParams(nets, verbose)
+local function initParams(model, verbose)
   local numParams = 0
   local params = {}
   local gradParams = {}
@@ -112,8 +96,8 @@ local function initParams(nets, verbose)
     print('Initializing parameters...')
   end
 
-  for _, net in pairs(nets) do
-    local p, gp = net:getParameters()
+  for _, mod in pairs(model) do
+    local p, gp = mod:getParameters()
 
     if opt.train_from:len() == 0 then
       p:uniform(-opt.param_init, opt.param_init)
@@ -183,8 +167,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     -- Only logs information of the first thread.
     local verbose = idx == 1 and not opt.json_log
 
-    local nets = getNets(_G.model)
-    _G.params, _G.gradParams = initParams(nets, verbose)
+    _G.params, _G.gradParams = initParams(_G.model, verbose)
     for _, mod in pairs(_G.model) do
       mod:training()
     end
