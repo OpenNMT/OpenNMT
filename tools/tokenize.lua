@@ -6,9 +6,9 @@ cmd:text("")
 cmd:text("**tokenize.lua**")
 cmd:text("")
 
-cmd:option('-mode', 'aggressive', [[Define how aggressive should the tokenization be - 'aggressive' (default) only keeps sequences of letters/numbers,
+cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers,
                                     'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-sep_feature', false, [[Generate separator feature]])
+cmd:option('-sep_annotate', 'marker', [[Include separator annotation using '-@-' (marker), or feature (feature), or nothing (none)]])
 cmd:option('-case_feature', false, [[Generate case feature]])
 
 local opt = cmd:parse(arg)
@@ -41,16 +41,18 @@ function tokenize(line)
   local space = true
   local letter = false
   local number = false
+  local other = false
   for v, c, nextv in unicode.utf8_iter(line) do
     if unicode.isSeparator(v) then
       if space == false then
-        if opt.sep_feature then nline = nline..'-|-'..spacefeat end
+        if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
         if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
         nline = nline..' '
       end
       number = false
       letter = false
       space = true
+      other = false
       spacefeat = 'S'
       casefeat = 'N'
       last = ' '
@@ -67,43 +69,71 @@ function tokenize(line)
         end
         if is_letter then
           if not(letter == true or space == true) then
-            if opt.sep_feature then nline = nline..'-|-'..spacefeat end
+            if opt.sep_annotate == 'marker' then
+              nline = nline..'-@-'
+            end
+            if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
             if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
             nline = nline..' '
             spacefeat = 'N'
             casefeat = 'N'
+          elseif other == true then
+            if opt.sep_annotate == 'marker' then
+              nline = string.sub(nline, 1, -2)..'-@- '
+            end
           end
           casefeat = combineCase(casefeat, case)
           nline = nline..c
           space = false
           number = false
+          other = false
           letter = true
         elseif is_number then
           if not(number == true or space == true) then
-            if opt.sep_feature then nline = nline..'-|-'..spacefeat end
+            if opt.sep_annotate == 'marker' then
+              if not(letter) then
+                nline = nline..'-@-'
+              else
+                c = '-@-'..c
+              end
+            end
+            if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
             if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
             nline = nline..' '
             spacefeat = 'N'
             casefeat = 'N'
+          elseif other == true then
+            if opt.sep_annotate == 'marker' then
+              nline = string.sub(nline, 1, -2)..'-@- '
+            end
           end
           nline = nline..c
           space = false
           letter = false
+          other = false
           number = true
         else
           if not space == true then
-            if opt.sep_feature then nline = nline..'-|-'..spacefeat end
+            if opt.sep_annotate == 'marker' then
+              c = '-@-'..c
+            end
+            if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
             if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
             nline = nline .. ' '
             spacefeat = 'N'
             casefeat = 'N'
+          elseif other == true then
+            if opt.sep_annotate == 'marker' then
+              c = '-@-'..c
+            end
           end
           nline = nline..c
-          if opt.sep_feature then nline = nline..'-|-'..spacefeat end
+          if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
           if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
           nline = nline..' '
           number = false
           letter = false
+          other = true
           space = true
         end
       end
