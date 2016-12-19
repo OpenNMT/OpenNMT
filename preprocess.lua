@@ -26,7 +26,7 @@ cmd:option('-tgt_vocab', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
 cmd:option('-seq_length', 50, [[Maximum sequence length]])
-cmd:option('-shuffle', 1, [[Suffle data]])
+cmd:option('-shuffle', 1, [[Shuffle data]])
 cmd:option('-seed', 3435, [[Random seed]])
 
 cmd:option('-report_every', 100000, [[Report status every this many sentences]])
