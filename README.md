@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT) [![Gitter chat](https://badges.gitter.im/OpenNMT/support.png)]
+[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT) [![Gitter chat](https://badges.gitter.im/OpenNMT/support.png)](https://gitter.im/OpenNMT/openmt) 
 
 
 # OpenNMT: Open-Source Neural Machine Translation
