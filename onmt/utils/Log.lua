@@ -1,5 +1,3 @@
-local path = require('pl.path')
-
 local function logJsonRecursive(obj)
   if type(obj) == 'string' then
     io.write('"' .. obj .. '"')
@@ -44,7 +42,9 @@ function logging:__init(logPath, mute)
   mute = mute or false
   self.mute = mute
   local openMode = 'w'
-  if path.exists(logPath) then
+  local f = io.open(logPath, 'r')
+  if f then
+    f:close()
     local input = nil
     while not input do
       print('Logging file exits. Overwrite(o)? Append(a)? Abort(q)?')
