@@ -38,7 +38,7 @@ local function strip(s)
   return s:gsub("^%s+",""):gsub("%s+$","")
 end
 
---[[ Convenience function to pretest `s` for emptiness. ]]
+--[[ Convenience function to test `s` for emptiness. ]]
 local function isEmpty(s)
   return s == nil or s == ''
 end
