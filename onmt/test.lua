@@ -203,7 +203,7 @@ end
 
 tester:add(nmttest)
 
---function onmt.test(tests, fixedSeed)
+function onmt.test(tests, fixedSeed)
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()
   torch.setnumthreads(1)
@@ -216,4 +216,4 @@ tester:add(nmttest)
   tester:run(tests)
   torch.setnumthreads(nThreads)
   return tester
---end
+end
