@@ -1,5 +1,5 @@
 require 'class'
-require 'paths'
+local path = require('pl.path')
 
 local function logJsonRecursive(obj)
   if type(obj) == 'string' then
@@ -45,7 +45,7 @@ function logging:__init(logPath, mute)
   mute = mute or false
   self.mute = mute
   local openMode = 'w'
-  if paths.filep(logPath) then
+  if path.exists(logPath) then
     local input = nil
     while not input do
       print('Logging file exits. Overwrite(o)? Append(a)? Abort(q)?')
