@@ -74,9 +74,9 @@ local function restoreCase(w, feats)
       return w
     else
       local wr = ''
-      for v, c, nextv in unicode.utf8_iter(w) do
+      for v, c in unicode.utf8_iter(w) do
         if wr == '' or feats[1] == 'U' then
-          local vu, cu = unicode.getUpper(v)
+          local _, cu = unicode.getUpper(v)
           if cu then c = cu end
         end
         wr = wr .. c
