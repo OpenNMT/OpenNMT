@@ -1,6 +1,10 @@
-unicode = require './utils/unicode'
+local unicode = require './utils/unicode'
 
 local cmd = torch.CmdLine()
+
+local sep_marker = '\\@'
+local feat_marker = '\\|'
+local protect_char = '\\'
 
 cmd:text("")
 cmd:text("**tokenize.lua**")
@@ -8,7 +12,7 @@ cmd:text("")
 
 cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers,
                                     'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-sep_annotate', 'marker', [[Include separator annotation using '-@-' (marker), or feature (feature), or nothing (none)]])
+cmd:option('-sep_annotate', 'marker', [[Include separator annotation using sep_marker (marker), or feature (feature), or nothing (none)]])
 cmd:option('-case_feature', false, [[Generate case feature]])
 
 local opt = cmd:parse(arg)
@@ -34,7 +38,7 @@ end
 -- - skip any other non control character [U+0001-U+002F]
 -- - keep sequence of letters/numbers and tokenize everything else
 
-function tokenize(line)
+local function tokenize(line)
   local nline = ""
   local spacefeat = 'N'
   local casefeat = 'N'
@@ -45,8 +49,8 @@ function tokenize(line)
   for v, c, nextv in unicode.utf8_iter(line) do
     if unicode.isSeparator(v) then
       if space == false then
-        if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
-        if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
+        if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
+        if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
         nline = nline..' '
       end
       number = false
@@ -55,9 +59,9 @@ function tokenize(line)
       other = false
       spacefeat = 'S'
       casefeat = 'N'
-      last = ' '
     else
       if v > 32 and not(v == 0xFEFF) then
+        if c == protect_char then c = protect_char..protect_char end
         local is_letter, case = unicode.isLetter(v)
         local is_number = unicode.isNumber(v)
         if opt.mode == 'conservative' then
@@ -70,16 +74,16 @@ function tokenize(line)
         if is_letter then
           if not(letter == true or space == true) then
             if opt.sep_annotate == 'marker' then
-              nline = nline..'-@-'
+              nline = nline..sep_marker
             end
-            if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
-            if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
+            if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
+            if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
             nline = nline..' '
             spacefeat = 'N'
             casefeat = 'N'
           elseif other == true then
             if opt.sep_annotate == 'marker' then
-              nline = string.sub(nline, 1, -2)..'-@- '
+              nline = string.sub(nline, 1, -2)..sep_marker..' '
             end
           end
           casefeat = combineCase(casefeat, case)
@@ -92,19 +96,19 @@ function tokenize(line)
           if not(number == true or space == true) then
             if opt.sep_annotate == 'marker' then
               if not(letter) then
-                nline = nline..'-@-'
+                nline = nline..sep_marker
               else
-                c = '-@-'..c
+                c = sep_marker..c
               end
             end
-            if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
-            if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
+            if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
+            if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
             nline = nline..' '
             spacefeat = 'N'
             casefeat = 'N'
           elseif other == true then
             if opt.sep_annotate == 'marker' then
-              nline = string.sub(nline, 1, -2)..'-@- '
+              nline = string.sub(nline, 1, -2)..sep_marker..' '
             end
           end
           nline = nline..c
@@ -115,21 +119,21 @@ function tokenize(line)
         else
           if not space == true then
             if opt.sep_annotate == 'marker' then
-              c = '-@-'..c
+              c = sep_marker..c
             end
-            if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
-            if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
+            if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
+            if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
             nline = nline .. ' '
             spacefeat = 'N'
             casefeat = 'N'
           elseif other == true then
             if opt.sep_annotate == 'marker' then
-              c = '-@-'..c
+              c = sep_marker..c
             end
           end
           nline = nline..c
-          if opt.sep_annotate=='feature' then nline = nline..'-|-'..spacefeat end
-          if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
+          if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
+          if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
           nline = nline..' '
           number = false
           letter = false
@@ -144,8 +148,8 @@ function tokenize(line)
   if space == true then
     nline = string.sub(nline, 1, -2)
   else
-    if opt.sep_feature then nline = nline..'-|-'..spacefeat end
-    if opt.case_feature then nline = nline..'-|-'..string.sub(casefeat,1,1) end
+    if opt.sep_feature then nline = nline..feat_marker..spacefeat end
+    if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
   end
 
   return nline

@@ -14,7 +14,7 @@ where the options are:
 
 * `-mode`: can be `aggressive` or `conservative` (default). In conservative mode, letters, numbers and '_' are kept in sequence, hyphens are accepted as part of tokens. Finally inner characters `[.,]` are also accepted (url, numbers).
 * `-sep_annotate`: indicate how to annotate non-separator tokenization - can be `marker` (default), `feature` or `none`:
-  * `marker`: when a space is added for tokenization, add reversible -@- mark on one side (preference symbol, number, letter)
+  * `marker`: when a space is added for tokenization, add reversible separtor marks on one side (preference symbol, number, letter)
   * `feature`: generate separator feature `S` means that the token is preceded by a space, `N` means that there is not space in original corpus
   * `none`: don't annotate
 * `-case_feature`: indicate case of the token
@@ -23,6 +23,12 @@ where the options are:
   * `U`: token is uppercased
   * `C`: token is capitalized
   * `M`: token case is mixed
+
+Note:
+
+* `\|` is the feature separator symbol
+* `\@` is the separator mark (generated in `-sep_annotate marker` mode)
+* character `\` is also used to self-protect `\`: for instance the actual text sequence `\@` is represented by `\\@`
 
 ## Release model
 
