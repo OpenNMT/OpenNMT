@@ -38,7 +38,7 @@ function unicode._cp_to_utf8(u)
     return string.char(u)
   elseif u <= 0x7FF then
     local b0 = 0xC0 + bit32.rshift(u, 6)
-    local b1 = 0x80 + bit.band(u, 0x3F)
+    local b1 = 0x80 + bit32.band(u, 0x3F)
     return string.char(b0, b1)
   elseif u <= 0xFFFF then
     local b0 = 0xE0 + bit32.rshift(u, 12)
@@ -81,7 +81,7 @@ local function _find_codepoint(u, utable)
       local idx = bit32.rshift(u-i,4) + 1
       local p = (u-i) % 16
       if v[idx] then
-        return not(bit.band(bit32.lshift(v[idx], p), 0x8000) == 0)
+        return not(bit32.band(bit32.lshift(v[idx], p), 0x8000) == 0)
       end
     end
   end
