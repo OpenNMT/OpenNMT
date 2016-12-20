@@ -1,4 +1,3 @@
-require 'class'
 local path = require('pl.path')
 
 local function logJsonRecursive(obj)
