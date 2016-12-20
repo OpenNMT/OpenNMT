@@ -1,24 +1,30 @@
 --[[
   Split `str` on string or pattern separator `sep`.
-  Compared to the standard Lua split function, this one does not drop empty fragment.
+  Compared to the standard Lua split function, this one does not drop empty fragment
+  and do not split if `sep` is escaped with \.
 ]]
 local function split(str, sep)
   local res = {}
-  local index = 1
+  local fragmentIndex = 1
+  local searchOffset = 1
 
-  while index <= str:len() do
-    local sepStart, sepEnd = str:find(sep, index)
+  while searchOffset <= str:len() do
+    local sepStart, sepEnd = str:find(sep, searchOffset)
 
     local sub
     if not sepStart then
-      sub = str:sub(index)
+      sub = str:sub(fragmentIndex)
       table.insert(res, sub)
-      index = str:len() + 1
+      fragmentIndex = str:len() + 1
+      searchOffset = fragmentIndex
+    elseif sepStart > 1 and str:sub(sepStart - 1, sepStart - 1) == '\\' then
+      searchOffset = sepStart + 1
     else
-      sub = str:sub(index, sepStart - 1)
+      sub = str:sub(fragmentIndex, sepStart - 1)
       table.insert(res, sub)
-      index = sepEnd + 1
-      if index > str:len() then
+      fragmentIndex = sepEnd + 1
+      searchOffset = fragmentIndex
+      if fragmentIndex > str:len() then
         table.insert(res, '')
       end
     end
@@ -32,7 +38,7 @@ local function strip(s)
   return s:gsub("^%s+",""):gsub("%s+$","")
 end
 
---[[ Convenience function to test `s` for emptiness. ]]
+--[[ Convenience function to pretest `s` for emptiness. ]]
 local function isEmpty(s)
   return s == nil or s == ''
 end
