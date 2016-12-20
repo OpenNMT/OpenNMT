@@ -11,5 +11,6 @@ utils.Memory = require('onmt.utils.Memory')
 utils.Parallel = require('onmt.utils.Parallel')
 utils.Features = require('onmt.utils.Features')
 utils.Log = require('onmt.utils.Log')
+require('onmt.utils.Logger')
 
 return utils
