@@ -1,15 +1,16 @@
 -- for lua < 5.3 compatibility
+local bit32 = nil
 if not bit32 then
   bit32 = require 'bit32'
 end
 
-unidata = require './unidata'
+local unidata = require './unidata'
 
-unicode = {}
+local unicode = {}
 
 -- convert the next utf8 character to ucs
 -- returns codepoint and utf-8 character
-function _utf8_to_cp(s, idx)
+function unicode._utf8_to_cp(s, idx)
   if idx > #s then return end
   idx = idx or 1
   local c = string.byte(s, idx)
@@ -31,7 +32,7 @@ function _utf8_to_cp(s, idx)
 end
 
 -- convert unicode codepoint to utf8
-function _cp_to_utf8(u)
+function unicode._cp_to_utf8(u)
   assert(u>=0 and u<=0x10FFFF)
   if u <= 0x7F then
     return string.char(u)
@@ -54,7 +55,7 @@ end
 
 function unicode.utf8_iter(s)
   local L = #s
-  local nextv, nextc = _utf8_to_cp(s, 1)
+  local nextv, nextc = unicode._utf8_to_cp(s, 1)
   local p = 1
   if nextc then
     p = p + #nextc
@@ -68,7 +69,7 @@ function unicode.utf8_iter(s)
       end
       return
     end
-    nextv, nextc = _utf8_to_cp(s, p)
+    nextv, nextc = unicode._utf8_to_cp(s, p)
     p = p + #nextc
     return v, c, nextv
   end
