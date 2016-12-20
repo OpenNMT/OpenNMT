@@ -17,12 +17,12 @@ where the options are:
   * `marker`: when a space is added for tokenization, add reversible separtor marks on one side (preference symbol, number, letter)
   * `feature`: generate separator feature `S` means that the token is preceded by a space, `N` means that there is not space in original corpus
   * `none`: don't annotate
-* `-case_feature`: indicate case of the token
+* `-case_feature`: generate case feature - and convert all tokens to lowercase
   * `N`: not defined (for instance tokens without case)
-  * `L`: token is lowercased
-  * `U`: token is uppercased
-  * `C`: token is capitalized
-  * `M`: token case is mixed
+  * `L`: token is lowercased (opennmt)
+  * `U`: token is uppercased (OPENNMT)
+  * `C`: token is capitalized (Opennmt)
+  * `M`: token case is mixed (OpenNMT)
 
 Note:
 
