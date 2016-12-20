@@ -115,10 +115,27 @@ function unicode.isLetter(u)
   return false
 end
 
+-- convert unicode character to lowercase form if defined in unicodedata
 function unicode.getLower(u)
-  local l=unidata.maplower[u]
+  local l = unidata.maplower[u]
   if l then
     return l, unicode._cp_to_utf8(l)
+  end
+  return
+end
+
+-- convert unicode character to uppercase form if defined in unicodedata
+-- dynamically reverse maplower if necessary
+function unicode.getUpper(l)
+  if not unicode.mapupper then
+    unidata.mapupper = {}
+    for uidx,lidx in pairs(unidata.maplower) do
+      unidata.mapupper[lidx] = uidx
+    end
+  end
+  local u = unidata.mapupper[l]
+  if u then
+    return u, unicode._cp_to_utf8(u)
   end
   return
 end
