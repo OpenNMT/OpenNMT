@@ -5,7 +5,7 @@ local function extract(tokens)
   local numFeatures = nil
 
   for t = 1, #tokens do
-    local field = onmt.utils.String.split(tokens[t], '%-|%-')
+    local field = onmt.utils.String.split(tokens[t], '\\|')
     local word = field[1]
 
     if word:len() > 0 then
@@ -39,7 +39,7 @@ local function annotate(tokens, features, dicts)
 
   for i = 1, #tokens do
     for j = 1, #features[i + 1] do
-      tokens[i] = tokens[i] .. '-|-' .. dicts[j]:lookup(features[i + 1][j])
+      tokens[i] = tokens[i] .. '\\|' .. dicts[j]:lookup(features[i + 1][j])
     end
   end
 
