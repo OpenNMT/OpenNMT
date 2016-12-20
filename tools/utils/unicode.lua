@@ -128,9 +128,12 @@ end
 -- dynamically reverse maplower if necessary
 function unicode.getUpper(l)
   if not unicode.mapupper then
+    -- make sure that reversing, we keep the smallest codepoint because we have İ>i, and I>i
     unidata.mapupper = {}
     for uidx,lidx in pairs(unidata.maplower) do
-      unidata.mapupper[lidx] = uidx
+      if not unidata.mapupper[lidx] or unidata.mapupper[lidx] > uidx then
+        unidata.mapupper[lidx] = uidx
+      end
     end
   end
   local u = unidata.mapupper[l]
