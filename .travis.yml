@@ -58,4 +58,4 @@ script:
 - ${INSTALL_PREFIX}/bin/luarocks make rocks/opennmt-scm-1.rockspec
 - echo ${ROOT_TRAVIS_DIR}
 - export TESTLUA=$(which luajit lua | head -n 1)
-- ${TESTLUA} -lonmt.test -e "t=onmt.test(); if t.errors[1] then os.exit(1) end"
+- ${TESTLUA} -ltest.test -e "t=onmt.test(); if t.errors[1] then os.exit(1) end"
