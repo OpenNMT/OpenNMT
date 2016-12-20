@@ -2,8 +2,9 @@
 
 This directory contains additional tools.
 
-## Tokenization
+## Tokenization/Detokenization
 
+### Tokenization
 To tokenize a corpus:
 
 ```
@@ -29,6 +30,14 @@ Note:
 * `\|` is the feature separator symbol
 * `\@` is the separator mark (generated in `-sep_annotate marker` mode)
 * character `\` is also used to self-protect `\`: for instance the actual text sequence `\@` is represented by `\\@`
+
+### Detokenization
+
+If you activate `sep_annotate` marker, the tokenization is reversible - just use:
+
+```
+th tools/detokenize.lua [-case_feature] < file.tok > file.detok
+```
 
 ## Release model
 
