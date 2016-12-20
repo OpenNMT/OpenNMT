@@ -1,6 +1,6 @@
 # Tools
 
-This directory contains additional tools
+This directory contains additional tools.
 
 ## Tokenization
 
@@ -24,3 +24,12 @@ where the options are:
   * `C`: token is capitalized
   * `M`: token case is mixed
 
+## Release model
+
+After training a model on the GPU, you may want to release it to run on the CPU with the `release_model.lua` script.
+
+```
+th tools/release_model.lua -model model.t7 -gpuid 1
+```
+
+By default, it will create a `model_release.t7` file. See `th tools/release_model.lua -h` for advanced options.
