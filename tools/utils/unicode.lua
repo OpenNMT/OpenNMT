@@ -115,6 +115,14 @@ function unicode.isLetter(u)
   return false
 end
 
+function unicode.getLower(u)
+  local l=unidata.maplower[u]
+  if l then
+    return l, unicode._cp_to_utf8(l)
+  end
+  return
+end
+
 function unicode.isNumber(u)
   if not u then return false end
   return _find_codepoint(u, unidata.Number)

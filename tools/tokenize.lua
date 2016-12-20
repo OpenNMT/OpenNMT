@@ -32,6 +32,14 @@ local function combineCase(feat, case)
   return feat
 end
 
+local function appendMarker(l)
+  if opt.case_feature then
+    local p=l:find(feat_marker, -4)
+    return l:sub(1,p)..sep_marker..l:sub(p+1)
+  end
+  return l..sep_marker
+end
+
 -- minimalistic tokenization
 -- - remove utf-8 BOM character
 -- - turn sequences of separators into single space
@@ -61,8 +69,12 @@ local function tokenize(line)
       casefeat = 'N'
     else
       if v > 32 and not(v == 0xFEFF) then
-        if c == protect_char then c = protect_char..protect_char end
+        if c == protect_char then c = protect_char..c end
         local is_letter, case = unicode.isLetter(v)
+        if is_letter and opt.case_feature then
+          local lu, lc = unicode.getLower(v)
+          if lu then c = lc end
+        end
         local is_number = unicode.isNumber(v)
         if opt.mode == 'conservative' then
           if is_number or (c == '-' and letter == true) or c == '_' or
@@ -74,7 +86,7 @@ local function tokenize(line)
         if is_letter then
           if not(letter == true or space == true) then
             if opt.sep_annotate == 'marker' then
-              nline = nline..sep_marker
+              nline = appendMarker(nline)
             end
             if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
             if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
@@ -83,7 +95,7 @@ local function tokenize(line)
             casefeat = 'N'
           elseif other == true then
             if opt.sep_annotate == 'marker' then
-              nline = string.sub(nline, 1, -2)..sep_marker..' '
+              nline = appendMarker(nline)
             end
           end
           casefeat = combineCase(casefeat, case)
@@ -96,7 +108,7 @@ local function tokenize(line)
           if not(number == true or space == true) then
             if opt.sep_annotate == 'marker' then
               if not(letter) then
-                nline = nline..sep_marker
+                nline = appendMarker(nline)
               else
                 c = sep_marker..c
               end
@@ -108,7 +120,7 @@ local function tokenize(line)
             casefeat = 'N'
           elseif other == true then
             if opt.sep_annotate == 'marker' then
-              nline = string.sub(nline, 1, -2)..sep_marker..' '
+              nline = appendMarker(nline)
             end
           end
           nline = nline..c
