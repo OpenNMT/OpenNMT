@@ -35,7 +35,7 @@ end
 local function appendMarker(l)
   if opt.case_feature then
     local p=l:find(feat_marker, -4)
-    return l:sub(1,p)..sep_marker..l:sub(p+1)
+    return l:sub(1,p-1)..sep_marker..l:sub(p)
   end
   return l..sep_marker
 end
