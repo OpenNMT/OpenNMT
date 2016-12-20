@@ -20,7 +20,8 @@ local function analyseToken(t)
   local p
   local leftsep = false
   local rightsep = false
-  for i = 1, #t do
+  local i = 1
+  while i <= #t do
     if t:sub(i, i) == protect_char and t:sub(i+1, i+1) == protect_char then
       i = i + 1
     elseif t:sub(i, i+#feat_marker-1) == feat_marker then
@@ -29,6 +30,7 @@ local function analyseToken(t)
       break
     end
     tok = tok .. t:sub(i, i)
+    i = i + 1
   end
   if tok:sub(1,#sep_marker) == sep_marker then
     tok = tok:sub(1+#sep_marker)
@@ -40,14 +42,16 @@ local function analyseToken(t)
   end
   if p then
     p = p + #feat_marker
-    for j = p, #t do
+    local j = p
+    while j <= #t do
       if t[j] == protect_char and t[j+1] == protect_char then
-      j = j + 1
+        j = j + 1
       elseif t:sub(j, j+#feat_marker-1) == feat_marker then
         table.insert(feats, t:sub(p, j-1))
         j = j + #feat_marker - 1
         p = j + 1
       end
+      j = j + 1
     end
     table.insert(feats, t:sub(p))
   end
@@ -55,10 +59,9 @@ local function analyseToken(t)
 end
 
 local function getTokens(t)
-  local fields={}
-  local pattern = string.format("([^ ]+)", sep)
-  t:gsub(pattern, function(t)
-    local w, leftsep, rightsep, feats =  analyseToken(t)
+  local fields = {}
+  t:gsub("([^ ]+)", function(tok)
+    local w, leftsep, rightsep, feats =  analyseToken(tok)
     table.insert(fields, { w=w, leftsep=leftsep, rightsep=rightsep, feats=feats })
   end)
   return fields
@@ -67,7 +70,19 @@ end
 local function restoreCase(w, feats)
   if opt.case_feature then
     assert(#feats>=1)
-    return feats[1]..'/'..w
+    if feats[1] == 'L' or feats[1] == 'N' then
+      return w
+    else
+      local wr = ''
+      for v, c, nextv in unicode.utf8_iter(w) do
+        if wr == '' or feats[1] == 'U' then
+          local vu, cu = unicode.getUpper(v)
+          if cu then c = cu end
+        end
+        wr = wr .. c
+      end
+      return wr
+    end
   end
   return w
 end
