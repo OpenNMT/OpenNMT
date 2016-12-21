@@ -51,6 +51,7 @@ before_script:
 - ${INSTALL_PREFIX}/bin/luarocks install torch
 - ${INSTALL_PREFIX}/bin/luarocks install nn
 - ${INSTALL_PREFIX}/bin/luarocks install nngraph
+- ${INSTALL_PREFIX}/bin/luarocks install bit32 || true
 - ${INSTALL_PREFIX}/bin/luarocks install luacheck
 script:
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
@@ -59,3 +60,4 @@ script:
 - echo ${ROOT_TRAVIS_DIR}
 - export TESTLUA=$(which luajit lua | head -n 1)
 - ${TESTLUA} -ltest.test -e "t=onmt.test(); if t.errors[1] then os.exit(1) end"
+- sh test/tokenization/test.sh

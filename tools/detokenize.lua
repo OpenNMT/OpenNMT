@@ -1,4 +1,6 @@
-local unicode = require './utils/unicode'
+require('torch')
+
+local unicode = require('tools.utils.unicode')
 
 local cmd = torch.CmdLine()
 
