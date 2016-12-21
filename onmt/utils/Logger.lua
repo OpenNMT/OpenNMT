@@ -1,6 +1,6 @@
 --[[ Logger is a class used for maintaining logs in a log file.
 --]]
-local logging = torch.class('onmt.Logger')
+local Logger = torch.class('Logger')
 
 --[[ Construct a onmt.Logger object.
 
@@ -10,12 +10,12 @@ Parameters:
 
 Example:
 
-    logging = onmt.Logger("./log.txt")
+    logging = onmt.utils.Logger.new("./log.txt")
     logging:info('%s is an extension of OpenNMT.', 'Im2Text')
     logging:shutDown()
 
 ]]
-function logging:__init(logPath, mute)
+function Logger:__init(logPath, mute)
   logPath = logPath or ''
   mute = mute or false
   self.mute = mute
@@ -53,7 +53,7 @@ Parameters:
   * `level` - the desired message level. ['INFO']
 
 ]]
-function logging:log(message, level)
+function Logger:log(message, level)
   level = level or 'INFO'
   local timeStamp = os.date('%x %X')
   local msgFormatted = string.format('[%s %s] %s', timeStamp, level, message)
@@ -72,7 +72,7 @@ Parameters:
   * `message` - the message to log. Supports formatting string.
 
 ]]
-function logging:info(...)
+function Logger:info(...)
   self:log(string.format(...), 'INFO')
 end
 
@@ -82,7 +82,7 @@ Parameters:
   * `message` - the message to log. Supports formatting string.
 
 ]]
-function logging:warning(...)
+function Logger:warning(...)
   self:log(string.format(...), 'WARNING')
 end
 
@@ -92,14 +92,16 @@ Parameters:
   * `message` - the message to log. Supports formatting string.
 
 ]]
-function logging:error(...)
+function Logger:error(...)
   self:log(string.format(...), 'ERROR')
 end
 
 --[[ Deconstructor. Close the log file.
 ]]
-function logging:shutDown()
+function Logger:shutDown()
   if self.logFile then
     self.logFile:close()
   end
 end
+
+return Logger
