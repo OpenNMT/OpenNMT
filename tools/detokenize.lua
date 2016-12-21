@@ -25,7 +25,6 @@ local function analyseToken(t)
     if t:sub(i, i) == protect_char and t:sub(i+1, i+1) == protect_char then
       i = i + 1
     elseif t:sub(i, i+#feat_marker-1) == feat_marker then
-      tok = t:sub(1, i-1)
       p = i
       break
     end
