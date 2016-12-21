@@ -10,3 +10,8 @@
 2. Create the expected tokenized output file `<name>.tokenized`.
 3. (optional) Create the expected detokenized output file `<name>.detokenized`.
    If this file is not provided, the detokenization of `<name>.tokenized` must match the raw input text.
+
+## Running tests
+
+1. Go to the top-level OpenNMT directory
+2. `sh test/tokenization/test.sh`
