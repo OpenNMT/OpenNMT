@@ -159,7 +159,7 @@ local function eval(model, criterion, data)
 end
 
 local function trainModel(model, trainData, validData, dataset, info)
-  local params, gradParams = {}, {}
+  local params = {}
   local criterion
 
   onmt.utils.Parallel.launch(nil, function(idx)
@@ -182,11 +182,10 @@ local function trainModel(model, trainData, validData, dataset, info)
       onmt.utils.Memory.optimize(_G.model, _G.criterion, batch, verbose)
     end
 
-    return idx, _G.criterion, _G.params, _G.gradParams
-  end, function(idx, thecriterion, theparams, thegradParams)
+    return idx, _G.criterion, _G.params
+  end, function(idx, thecriterion, theparams)
     if idx == 1 then criterion = thecriterion end
     params[idx] = theparams
-    gradParams[idx] = thegradParams
   end)
 
   local optim = onmt.train.Optim.new({
@@ -218,53 +217,58 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     opt.start_iteration = 1
 
-    local base_idx = atomic:inc()
+    local base_idx = onmt.utils.Parallel.atomic:inc()
 
-    onmt.utils.Parallel.launch(nil, function(idx)
-      -- first GPU is only used for master parameters
-      if idx == 1 then return end
+    while onmt.utils.Parallel.atomic - base_idx + startI -1 <= trainData:batchCount() do
 
-      local iter = 1
+      onmt.utils.Parallel.launch(nil, function(idx)
+        -- first GPU is only used for master parameters
+        if idx == 1 then return end
 
-      while true do
-        local i = atomic:inc() - base_idx + startI -1
-        if i > trainData:batchCount() then return end
+        local iter = 1
 
-        local batchIdx = batchOrder[i]
-        if epoch <= opt.curriculum then
-          batchIdx = i
-        end
+        while true do
+          -- do not process more than 1000 batches (TODO - make option) in one shot
+          if onmt.utils.Parallel.atomic - base_idx > 1000 then return end
+          local i = onmt.utils.Parallel.atomic:inc() - base_idx + startI -1
+          if i > trainData:batchCount() then return end
 
-        _G.batch = trainData:getBatch(batchIdx)
-
-        -- send batch data to GPU
-        onmt.utils.Cuda.convert(_G.batch)
-        _G.batch.totalSize = _G.batch.size
-
-        optim:zeroGrad(_G.gradParams)
-
-        local encStates, context = _G.model.encoder:forward(_G.batch)
-        local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
-
-        local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
-        _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
-
-        -- update the parameters
-        optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
-
-        -- add up gradParams to params and sync back to this thread
-        onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params)
-
-        -- second thread only reports on loss
-        if idx == 2 then
-          epochState:update(_G.batch, loss)
-          if iter % opt.report_every == 0 then
-            epochState:log(iter, opt.json_log)
+          local batchIdx = batchOrder[i]
+          if epoch <= opt.curriculum then
+            batchIdx = i
           end
-          iter = iter + 1
+
+          _G.batch = trainData:getBatch(batchIdx)
+
+          -- send batch data to GPU
+          onmt.utils.Cuda.convert(_G.batch)
+          _G.batch.totalSize = _G.batch.size
+
+          optim:zeroGrad(_G.gradParams)
+
+          local encStates, context = _G.model.encoder:forward(_G.batch)
+          local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
+
+          local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
+          _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+
+          -- update the parameters
+          optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
+
+          -- add up gradParams to params and sync back to this thread
+          onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params)
+
+          -- second thread only reports on loss
+          if idx == 2 then
+            epochState:update(_G.batch, loss)
+            if iter % opt.report_every == 0 then
+              epochState:log(iter, opt.json_log)
+            end
+            iter = iter + 1
+          end
         end
-      end
-    end)
+      end)
+    end
 
     return epochState
   end
