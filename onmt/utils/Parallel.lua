@@ -111,6 +111,23 @@ function Parallel.accGradParams(gradParams, batches)
   end
 end
 
+function Parallel.updateAndSync(master_params, replica_gradParams, replica_params)
+  local device = cutorch.getDevice()
+  cutorch.setDevice(Parallel.gpus[1])
+  for h = 1, #replica_gradParams do
+    waitForDevice(device, Parallel.gpus[1])
+    local remoteGrads = onmt.utils.Tensor.reuseTensor(Parallel.gradBuffer, replica_gradParams[h]:size())
+    remoteGrads:copy(replica_gradParams[h])
+    waitForDevice(Parallel.gpus[1], device)
+    master_params[h]:add(remoteGrads)
+  end
+  cutorch.setDevice(device)
+  for h = 1, #replica_gradParams do
+    replica_params[h]:copy(master_params[h])
+    waitForDevice(device, Parallel.gpus[1])
+  end
+end
+
 --[[ Sync parameters from main model to different parallel threads. ]]
 function Parallel.syncParams(params)
   if Parallel.count > 1 then

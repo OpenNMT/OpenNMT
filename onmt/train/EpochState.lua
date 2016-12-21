@@ -25,14 +25,12 @@ function EpochState:__init(epoch, numIterations, learningRate, lastValidPpl, sta
   self.minFreeMemory = 100000000000
 end
 
---[[ Update training status. Takes `batch` (described in data.lua) and last losses.]]
-function EpochState:update(batches, losses)
-  for i = 1,#batches do
-    self.numWordsSource = self.numWordsSource + batches[i].size * batches[i].sourceLength
-    self.numWordsTarget = self.numWordsTarget + batches[i].size * batches[i].targetLength
-    self.status.trainLoss = self.status.trainLoss + losses[i]
-    self.status.trainNonzeros = self.status.trainNonzeros + batches[i].targetNonZeros
-  end
+--[[ Update training status. Takes `batch` (described in data.lua) and last loss.]]
+function EpochState:update(batch, loss)
+  self.numWordsSource = self.numWordsSource + batch.size * batch.sourceLength
+  self.numWordsTarget = self.numWordsTarget + batch.size * batch.targetLength
+  self.status.trainLoss = self.status.trainLoss + loss
+  self.status.trainNonzeros = self.status.trainNonzeros + batch.targetNonZeros
 end
 
 --[[ Log to status stdout. ]]
