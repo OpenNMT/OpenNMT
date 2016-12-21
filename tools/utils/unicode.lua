@@ -1,10 +1,10 @@
 -- for lua < 5.3 compatibility
 local bit32 = nil
 if not bit32 then
-  bit32 = require 'bit32'
+  bit32 = require('bit32')
 end
 
-local unidata = require './unidata'
+local unidata = require('tools.utils.unidata')
 
 local unicode = {}
 
