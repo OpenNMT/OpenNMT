@@ -4,6 +4,10 @@ This directory contains additional tools.
 
 ## Tokenization/Detokenization
 
+### Dependencies
+
+* `bit32` for Lua < 5.2
+
 ### Tokenization
 To tokenize a corpus:
 
