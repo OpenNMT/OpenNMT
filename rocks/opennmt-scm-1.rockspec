@@ -60,6 +60,7 @@ build = {
     ["onmt.utils.Features"] = "onmt/utils/Features.lua",
     ["onmt.utils.FileReader"] = "onmt/utils/FileReader.lua",
     ["onmt.utils.Log"] = "onmt/utils/Log.lua",
+    ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",
     ["onmt.utils.Memory"] = "onmt/utils/Memory.lua",
     ["onmt.utils.Opt"] = "onmt/utils/Opt.lua",
     ["onmt.utils.Parallel"] = "onmt/utils/Parallel.lua",
