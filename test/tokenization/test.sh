@@ -25,7 +25,7 @@ for file in $dir/*.raw; do
     fi
 
     # Test tokenization.
-    $LUA tools/tokenize.lua $tokenize_opts < $dir/$test.raw >tmp 2>/dev/null
+    $LUA tools/tokenize.lua $tokenize_opts < $dir/$test.raw >tmp
     diff tmp $dir/$name.tokenized > /dev/null
     res=$?
     if [ $res -ne 0 ]; then
@@ -35,7 +35,7 @@ for file in $dir/*.raw; do
     fi
 
     # Test detokenization.
-    $LUA tools/detokenize.lua $detokenize_opts < $dir/$name.tokenized >tmp 2>/dev/null
+    $LUA tools/detokenize.lua $detokenize_opts < $dir/$name.tokenized >tmp
     if [ -f $dir/$name.detokenized ]; then
         diff tmp $dir/$name.detokenized > /dev/null
     else
