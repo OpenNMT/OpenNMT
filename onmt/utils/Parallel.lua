@@ -3,8 +3,6 @@
   in different threads and on different GPU
 ]]--
 
-local tds = require 'tds'
-
 local Parallel = {
   gpus = {0},
   _pool = nil,
@@ -26,6 +24,7 @@ function Parallel.init(opt)
     Parallel.count = opt.nparallel
     Parallel.gpus = onmt.utils.Cuda.getGPUs(opt.nparallel)
     Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
+    local tds = require 'tds'
     Parallel.atomic = tds.AtomicCounter()
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
