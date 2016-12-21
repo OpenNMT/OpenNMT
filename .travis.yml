@@ -51,7 +51,7 @@ before_script:
 - ${INSTALL_PREFIX}/bin/luarocks install torch
 - ${INSTALL_PREFIX}/bin/luarocks install nn
 - ${INSTALL_PREFIX}/bin/luarocks install nngraph
-- ${INSTALL_PREFIX}/bin/luarocks install bit32
+- ${INSTALL_PREFIX}/bin/luarocks install bit32 || true
 - ${INSTALL_PREFIX}/bin/luarocks install luacheck
 script:
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
