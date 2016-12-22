@@ -9,7 +9,7 @@ function BPE:__init(codesfile_path)
   local i=1
 
   while not(t == nil) do
-    l=string.split(t," ")
+    local l=string.split(t," ")
     if (#l==2) then
       codes[t]=i
       i=i+1
@@ -37,10 +37,10 @@ local function str2word(l)
 end
 
 function BPE:minPair(pairsTable)
-  mintmp = 100000
-  minpair = ''
+  local mintmp = 100000
+  local minpair = ''
   for i=1, #pairsTable, 1 do
-    pair_cur = pairsTable[i]
+    local pair_cur = pairsTable[i]
     if (self.codes[pair_cur] ~= nil) then
       scoretmp = self.codes[pair_cur]
       if (scoretmp < mintmp) then
@@ -55,7 +55,9 @@ end
 function BPE:encode(l)
   local nextv, nextc = unicode._utf8_to_cp(l, 1)
   if #l <= #nextc then
-    return l
+    local w = {}
+    table.insert(w, l)
+    return w
   end
   local word = str2word(l)
   local pairs = getPairs(word)
@@ -93,7 +95,7 @@ function BPE:encode(l)
   if word[#word] == '</w>' then
     table.remove(word, #word)
   elseif (string.sub(word[#word],-string.len('</w>'))=='</w>') then
-    word[#word] = string.sub(word[#word], 1, string.len('</w>'))
+    word[#word] = string.sub(word[#word], 1, -string.len('</w>')-1)
   end
   return word
 end
