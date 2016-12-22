@@ -24,7 +24,7 @@ end
 
 --[[ Load entries from a file. ]]
 function Dict:loadFile(filename)
-  local reader = onmt.utils.FileReader(filename)
+  local reader = onmt.utils.FileReader.new(filename)
 
   while true do
     local fields = reader:next()
