@@ -95,12 +95,7 @@ function BPE:encode(l)
   elseif (string.sub(word[#word],-string.len('</w>'))=='</w>') then
     word[#word] = string.sub(word[#word], 1, string.len('</w>'))
   end
-  output = ''
-  for i = 1, #word-1, 1 do
-    output = output..word[i]..'@@ '
-  end
-  output = output..word[#word]
-  return output
+  return word
 end
 
 return BPE
