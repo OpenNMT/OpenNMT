@@ -59,7 +59,6 @@ function BPE:encode(l)
   end
   local word = str2word(l)
   local pairs = getPairs(word)
-  print (pairs)
   while (true) do
     local bigram = self:minPair(pairs)
     if (bigram == '') then
