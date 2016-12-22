@@ -294,7 +294,7 @@ local function main()
   end
 
   print('Saving data to \'' .. opt.save_data .. '-train.t7\'...')
-  torch.save(opt.save_data .. '-train.t7', data)
+  torch.save(opt.save_data .. '-train.t7', data, 'binary', false)
 
 end
 
