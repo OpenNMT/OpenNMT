@@ -35,6 +35,9 @@ end
 function stringTest.doNotSplitEscaped3()
   tester:eq(onmt.utils.String.split('\\\\|', '\\|'), { '\\\\|' })
 end
+function stringTest.doNotSplit1()
+  tester:eq(onmt.utils.String.split('\\\\\\|N', '\\|'), { '\\\\', 'N' })
+end
 
 function stringTest.noStrip()
   tester:eq(onmt.utils.String.strip('foo'), 'foo')

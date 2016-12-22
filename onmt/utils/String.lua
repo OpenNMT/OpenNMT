@@ -1,7 +1,7 @@
 --[[
   Split `str` on string or pattern separator `sep`.
   Compared to the standard Lua split function, this one does not drop empty fragment
-  and do not split if `sep` is escaped with \.
+  and do not split if `sep` is escaped by a non-escaped \.
 ]]
 local function split(str, sep)
   local res = {}
@@ -17,7 +17,9 @@ local function split(str, sep)
       table.insert(res, sub)
       fragmentIndex = str:len() + 1
       searchOffset = fragmentIndex
-    elseif sepStart > 1 and str:sub(sepStart - 1, sepStart - 1) == '\\' then
+    elseif sepStart > 1
+      and str:sub(sepStart - 1, sepStart - 1) == '\\'
+      and (sepStart - 2 == 0 or str:sub(sepStart - 2, sepStart - 2) ~= '\\') then
       searchOffset = sepStart + 1
     else
       sub = str:sub(fragmentIndex, sepStart - 1)
