@@ -1,14 +1,21 @@
--- Allow tensor sharing for these modules.
-local supportedModules = {
-  'nn.Linear',
-  'nn.CMulTable',
-  'nn.MM',
-  'nn.Sum'
+-- We cannot share the output of these modules as they use it in their backward pass.
+local protectOutput = {
+  'nn.Sigmoid',
+  'nn.SoftMax',
+  'nn.Tanh'
 }
 
-local function isSupported(m)
-  for i = 1, #supportedModules do
-    if torch.typename(m) == supportedModules[i] then
+-- We cannot share the input of these modules as they use it in their backward pass.
+local protectInput = {
+  'nn.Linear',
+  'nn.JoinTable',
+  'nn.CMulTable',
+  'nn.MM'
+}
+
+local function contains(list, m)
+  for i = 1, #list do
+    if torch.typename(m) == list[i] then
       return true
     end
   end
@@ -92,6 +99,15 @@ function Memory.optimize(model, criterion, batch, verbose)
       store['gradOutput'] = gradOutput
       return store['backward'](network, input, gradOutput)
     end
+
+    -- Add a wrapper around updateOutput to catch the module input.
+    net:apply(function (m)
+      local updateOutput = m.updateOutput
+      m.updateOutput = function (mod, input)
+        mod.input = input
+        return updateOutput(mod, input)
+      end
+    end)
   end
 
   for name, mod in pairs(model) do
@@ -130,8 +146,11 @@ function Memory.optimize(model, criterion, batch, verbose)
       -- Some modules are using output when performing updateGradInput so we cannot share these.
       local protectedOutput = { desc[i]['input'] }
       net:apply(function(m)
-        if m.output and not isSupported(m) then
+        if contains(protectOutput, m) then
           table.insert(protectedOutput, m.output)
+        end
+        if contains(protectInput, m) then
+          table.insert(protectedOutput, m.input)
         end
       end)
 
@@ -159,6 +178,11 @@ function Memory.optimize(model, criterion, batch, verbose)
           outputMap[globalIdx] = idx
           idx = idx + 1
         end
+
+        -- Remove the wrapper around updateOutput to catch the module input.
+        m.updateOutput = nil
+        m.input = nil
+
         globalIdx = globalIdx + 1
       end)
 
