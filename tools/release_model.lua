@@ -5,7 +5,7 @@ local path = require('pl.path')
 local cmd = torch.CmdLine()
 cmd:option('-model', '', 'trained model file')
 cmd:option('-output_model', '', 'released model file')
-cmd:option('-gpuid', 0, 'which gpuid to use')
+cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-force', false, 'force output model creation')
 local opt = cmd:parse(arg)
 

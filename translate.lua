@@ -37,7 +37,7 @@ cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
-cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
+cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-time', false, [[Measure batch translation time]])
 

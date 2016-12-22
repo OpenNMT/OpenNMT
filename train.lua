@@ -70,7 +70,7 @@ cmd:text("**Other options**")
 cmd:text("")
 
 -- GPU
-cmd:option('-gpuid', -1, [[Which gpu to use (1-indexed). < 1 = use CPU]])
+cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
                             Note: this will technically change the final batch size to max_batch_size*nparallel.]])
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
