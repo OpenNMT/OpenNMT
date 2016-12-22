@@ -357,7 +357,7 @@
 <p><strong>Other options</strong></p>
 <dl>
 <dt>gpuid</dt>
-<dd>ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs) [-1]</dd>
+<dd>1-based identifier of the GPU to use. CPU is used when the option is &lt; 1 [0]</dd>
 <dt>fallback_to_cpu</dt>
 <dd>If = true, fallback to CPU if no GPU available [false]</dd>
 </dl>

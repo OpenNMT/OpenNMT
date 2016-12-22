@@ -400,7 +400,7 @@
 <p><strong>Other options</strong></p>
 <dl>
 <dt>gpuid</dt>
-<dd>Which gpu to use (1-indexed). &lt; 1 = use CPU [-1]</dd>
+<dd>1-based identifier of the GPU to use. CPU is used when the option is &lt; 1 [0]</dd>
 <dt>nparallel</dt>
 <dd>When using GPUs, how many batches to execute in parallel.Note: this will technically change the final batch size to max_batch_size*nparallel. [1]</dd>
 <dt>no_nccl</dt>
