@@ -1,4 +1,3 @@
-
 -- We cannot share the output of these modules as they use it in their backward pass.
 local protectOutput = {
   'nn.Sigmoid',
@@ -73,17 +72,24 @@ end
 
 local Memory = {}
 
-function Memory.optimize(model, criterion, batch, verbose)
-  if verbose then
-    print('Preparing memory optimization...')
-  end
 
-  -- Batch of one single word since we optimize the first clone.
-  local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength }
+--[[ Enable memory optimization by marking tensors to share.
 
-  batch.sourceLength = 1
-  batch.targetLength = 1
+Parameters:
+  * `modules` - a list of modules to optimize. The modules must have already initialized output and gradInput tensors, such as after calling forward() and backward().
 
+Returns:
+  1. `sharedSize` - shared tensor size
+  2. `totSize` - total tensor size
+
+Example:
+
+  model:forward(...) -- initialize output tensors
+  model:backward(...) -- intialize gradInput tensors
+  Memory.enableMemorySharing(model) -- actual optimization by marking shared tensors
+
+]]
+function Memory.enableMemorySharing(modules)
   local modelDesc = {}
 
   -- Convenience function to register a network to optimize.
@@ -111,7 +117,7 @@ function Memory.optimize(model, criterion, batch, verbose)
     end)
   end
 
-  for name, mod in pairs(model) do
+  for name, mod in pairs(modules) do
     modelDesc[name] = {}
 
     if mod.net then
@@ -128,13 +134,6 @@ function Memory.optimize(model, criterion, batch, verbose)
       end
     end
   end
-
-  -- Initialize all intermediate tensors with a first batch.
-  local encStates, context = model.encoder:forward(batch)
-  local decOutputs = model.decoder:forward(batch, encStates, context)
-  decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
-  local encGradStatesOut, gradContext, _ = model.decoder:backward(batch, decOutputs, criterion)
-  model.encoder:backward(batch, encGradStatesOut, gradContext)
 
   local totSize = 0
   local sharedSize = 0
@@ -205,6 +204,45 @@ function Memory.optimize(model, criterion, batch, verbose)
       net.forward = nil
     end
   end
+  return sharedSize, totSize
+end
+
+--[[ Optimize memory usage of Neural Machine Translation.
+
+Parameters:
+  * `model` - a table containing encoder and decoder
+  * `criterion` - a single target criterion object
+  * `batch` - a Batch object
+  * `verbose` - produce output or not
+
+Example:
+
+  local model = {}
+  model.encoder = onmt.Models.buildEncoder(...)
+  model.decoder = onmt.Models.buildDecoder(...)
+  Memory.optimize(model, criterion, batch, verbose)
+
+]]
+function Memory.optimize(model, criterion, batch, verbose)
+  if verbose then
+    print('Preparing memory optimization...')
+  end
+
+  -- Batch of one single word since we optimize the first clone.
+  local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength }
+
+  batch.sourceLength = 1
+  batch.targetLength = 1
+
+  -- Initialize all intermediate tensors with a first batch.
+  local encStates, context = model.encoder:forward(batch)
+  local decOutputs = model.decoder:forward(batch, encStates, context)
+  decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
+  local encGradStatesOut, gradContext, _ = model.decoder:backward(batch, decOutputs, criterion)
+  model.encoder:backward(batch, encGradStatesOut, gradContext)
+
+  -- mark shared tensors
+  local sharedSize, totSize = Memory.enableMemorySharing({model.encoder, model.decoder})
 
   if verbose then
     print(string.format(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100))
