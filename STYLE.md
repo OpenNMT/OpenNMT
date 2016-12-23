@@ -51,3 +51,9 @@ luacheck *lua onmt
 * All indentation should be 2 spaces.
 
 * All variables, functions and methods should use camelCase.
+
+* Do not use C-like extraneous parentheses or use less ';' instruction-separators
+
+* Use space around operators as much as possible to make code readable
+
+* add comments and extra-lines

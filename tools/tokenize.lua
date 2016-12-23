@@ -17,7 +17,7 @@ cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenizat
   'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
 cmd:option('-sep_annotate', false, [[Include separator annotation using sep_marker]])
 cmd:option('-case_feature', false, [[Generate case feature]])
-cmd:option('-bpe', '', [[Apply BPE if the BPE model path is given]])
+cmd:option('-bpe', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
 
 local opt = cmd:parse(arg)
 
@@ -182,25 +182,28 @@ end
 for line in io.lines() do
   local res
   local err
-  if bpe then
-    if (opt.case_feature) then
-      res, err = pcall(function() io.write(table.concat(addCase(bpe:segment(tokenize(line))), ' ') .. '\n') end)
-    else
-      res, err = pcall(function() io.write(table.concat(bpe:segment(tokenize(line)), ' ') .. '\n') end)
-    end
-  elseif (opt.case_feature) then
-    res, err = pcall(function() io.write(table.concat(addCase(tokenize(line)), ' ') .. '\n') end)
-  else
-    res, err = pcall(function() io.write(table.concat(tokenize(line), ' ') .. '\n') end)
-  end
+
+  local tokens
+  res, err = pcall(function() tokens = tokenize(line) end)
 
   if not res then
     if string.find(err, "interrupted") then
       error("interrupted")
     else
-      error("unicode error in line "..idx..": "..line..'-'..err)
+      error("unicode error in line " .. idx .. ": " .. line .. '-' .. err)
     end
   end
+
+  if bpe then
+    tokens = bpe:segment(tokens, sep_marker)
+  end
+
+  if opt.case_feature then
+    tokens = addCase(tokens)
+  end
+
+  io.write(table.concat(tokens, ' ') .. '\n')
+
   idx = idx + 1
 end
 
