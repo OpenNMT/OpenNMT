@@ -323,44 +323,7 @@
           <div role="main">
             <div class="section">
               
-                <p><strong>onmt.translate.lua</strong></p>
-<dl>
-<dt>config</dt>
-<dd>Read options from this file []</dd>
-</dl>
-<p><strong>Data options</strong></p>
-<dl>
-<dt>model</dt>
-<dd>Path to model .t7 file []</dd>
-<dt>src</dt>
-<dd>Source sequence to decode (one line per sequence) []</dd>
-<dt>tgt</dt>
-<dd>True target sequence (optional) []</dd>
-<dt>output</dt>
-<dd>Path to output the predictions (each line will be the decoded sequence [pred.txt]</dd>
-</dl>
-<p><strong>Beam Search options</strong></p>
-<dl>
-<dt>beam_size</dt>
-<dd>Beam size [5]</dd>
-<dt>batch_size</dt>
-<dd>Batch size [30]</dd>
-<dt>max_sent_length</dt>
-<dd>Maximum sentence length. If any sequences in srcfile are longer than this then it will error out [250]</dd>
-<dt>replace_unk</dt>
-<dd>Replace the generated UNK tokens with the source token thathad the highest attention weight. If phrase_table is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]</dd>
-<dt>phrase_table</dt>
-<dd>Path to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []</dd>
-<dt>n_best</dt>
-<dd>If &gt; 1, it will also output an n_best list of decoded sentences [1]</dd>
-</dl>
-<p><strong>Other options</strong></p>
-<dl>
-<dt>gpuid</dt>
-<dd>1-based identifier of the GPU to use. CPU is used when the option is &lt; 1 [0]</dd>
-<dt>fallback_to_cpu</dt>
-<dd>If = true, fallback to CPU if no GPU available [false]</dd>
-</dl>
+                
               
             </div>
           </div>

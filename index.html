@@ -328,7 +328,7 @@
           <div role="main">
             <div class="section">
               
-                <p><a href="https://travis-ci.org/OpenNMT/OpenNMT"><img alt="Build Status" src="https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master" /></a> <a href="https:+gitter.im+OpenNMT+support"><img alt="Gitter chat" src="https://badges.gitter.im/OpenNMT/support.png" /></a> </p>
+                <p><a href="https:+travis-ci.org+OpenNMT+OpenNMT"><img alt="Build Status" src="https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master" /></a> </p>
 <p><a id="onmt.README.OpenNMT__Open_Source_Neural_Machine_Translation"></a></p>
 <h1 id="opennmt-open-source-neural-machine-translation">OpenNMT: Open-Source Neural Machine Translation</h1>
 <p><a href="https://opennmt.github.io/">OpenNMT</a> is a full-featured,
@@ -346,7 +346,20 @@ accuracy. Features include:</p>
 </ul>
 <p><a id="onmt.README.Installation"></a></p>
 <h2 id="installation">Installation</h2>
-<p>OpenNMT only requires a vanilla torch/cutorch install. It uses <code>nn</code>, <code>nngraph</code>, and <code>cunn</code>. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.</p>
+<p>OpenNMT only requires a vanilla Torch install. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.</p>
+<p><a id="onmt.README.Dependencies"></a></p>
+<h3 id="dependencies">Dependencies</h3>
+<ul>
+<li><code>nn</code></li>
+<li><code>nngraph</code></li>
+<li><code>tds</code></li>
+<li><code>threads</code></li>
+</ul>
+<p>GPU will also require:</p>
+<ul>
+<li><code>cunn</code></li>
+<li><code>cutorch</code></li>
+</ul>
 <p><a id="onmt.README.Quickstart"></a></p>
 <h2 id="quickstart">Quickstart</h2>
 <p>OpenNMT consists of three commands:</p>
@@ -362,6 +375,7 @@ accuracy. Features include:</p>
 <li><a href="http://opennmt.github.io/Guide">Options and Features</a> </li>
 <li><a href="http://opennmt.github.io/OpenNMT">Documentation</a> </li>
 <li><a href="http://opennmt.github.io/Models">Example Models</a></li>
+<li><a href="http://forum.opennmt.net">Forum</a></li>
 <li><a href="http://demo-pnmt.systran.net">Live Demo</a></li>
 <li><a href="http://opennmt.github.io/about">Bibliography</a></li>
 </ul>
@@ -412,5 +426,5 @@ accuracy. Features include:</p>
 
 <!--
 MkDocs version : 0.16.0
-Build Date UTC : 2016-12-22 17:01:05
+Build Date UTC : 2016-12-23 17:01:05
 -->
