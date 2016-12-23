@@ -14,8 +14,8 @@ cmd:text("**tokenize.lua**")
 cmd:text("")
 
 cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers,
-                                    'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-sep_annotate', 'marker', [[Include separator annotation using sep_marker (marker), or feature (feature), or nothing (none)]])
+  'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
+cmd:option('-sep_annotate', false, [[Include separator annotation using sep_marker]])
 cmd:option('-case_feature', false, [[Generate case feature]])
 cmd:option('-bpe', '', [[Apply BPE if the BPE model path is given]])
 
@@ -49,10 +49,9 @@ end
 -- - turn sequences of separators into single space
 -- - skip any other non control character [U+0001-U+002F]
 -- - keep sequence of letters/numbers and tokenize everything else
-
 local function tokenize(line)
   local tokens = {}
-  local nline = ""
+  local curtok = ''
   local space = true
   local letter = false
   local number = false
@@ -60,79 +59,80 @@ local function tokenize(line)
   for v, c, nextv in unicode.utf8_iter(line) do
     if unicode.isSeparator(v) then
       if space == false then
-        table.insert(tokens, nline)
-	nline = ""
+        table.insert(tokens, curtok)
+        curtok = ''
       end
       number = false
       letter = false
       space = true
       other = false
     else
+      -- skip special charactes and BOM and
       if v > 32 and not(v == 0xFEFF) then
         if c == protect_char then c = protect_char..c end
         local is_letter, _ = unicode.isLetter(v)
         local is_number = unicode.isNumber(v)
         if opt.mode == 'conservative' then
           if is_number or (c == '-' and letter == true) or c == '_' or
-             (letter == true and (c == '.' or c == ',') and (unicode.isNumber(nextv) or unicode.isLetter(nextv))) then
+                (letter == true and (c == '.' or c == ',') and (unicode.isNumber(nextv) or unicode.isLetter(nextv))) then
             is_letter = true
           end
-        end
-        if is_letter then
-          if not(letter == true or space == true) then
-            if opt.sep_annotate == 'marker' then
-              nline = appendMarker(nline)
-            end
-            table.insert(tokens, nline)
-	    nline = ''
-          elseif other == true then
-            if opt.sep_annotate == 'marker' then
-	      if (nline == '') then
-	        tokens[#tokens]=tokens[#tokens]..sep_marker
-              end
-            end
+      end
+      if is_letter then
+        if not(letter == true or space == true) then
+          if opt.sep_annotate then
+            curtok = appendMarker(curtok)
           end
-          nline = nline..c
+          table.insert(tokens, curtok)
+          curtok = ''
+          elseif other == true then
+            if opt.sep_annotate then
+              if (curtok == '') then
+               tokens[#tokens] = tokens[#tokens] .. sep_marker
+             end
+           end
+          end
+          curtok = curtok .. c
           space = false
           number = false
           other = false
           letter = true
         elseif is_number then
           if not(number == true or space == true) then
-            if opt.sep_annotate == 'marker' then
+            if opt.sep_annotate then
               if not(letter) then
-                nline = appendMarker(nline)
+                curtok = appendMarker(curtok)
               else
-                c = sep_marker..c
+                c = sep_marker .. c
               end
             end
-            table.insert(tokens, nline)
-	    nline = ''
+            table.insert(tokens, curtok)
+            curtok = ''
           elseif other == true then
-            if opt.sep_annotate == 'marker' then
-              nline = appendMarker(nline)
+            if opt.sep_annotate then
+              curtok = appendMarker(curtok)
             end
           end
-          nline = nline..c
+          curtok = curtok..c
           space = false
           letter = false
           other = false
           number = true
         else
           if not space == true then
-            if opt.sep_annotate == 'marker' then
-              c = sep_marker..c
+            if opt.sep_annotate then
+              c = sep_marker .. c
             end
-            table.insert(tokens, nline)
-	    nline = ''
+            table.insert(tokens, curtok)
+            curtok = ''
           elseif other == true then
-            if opt.sep_annotate == 'marker' then
-              c = sep_marker..c
+            if opt.sep_annotate then
+              c = sep_marker .. c
             end
           end
-          nline = nline..c
-	  table.insert(tokens, nline)
-	  nline = ''
+          curtok = curtok .. c
+          table.insert(tokens, curtok)
+          curtok = ''
           number = false
           letter = false
           other = true
@@ -141,76 +141,48 @@ local function tokenize(line)
       end
     end
   end
-  if (nline ~= '') then
-    table.insert(tokens, nline)
+
+  -- last token
+  if (curtok ~= '') then
+    table.insert(tokens, curtok)
   end
+
   return tokens
 end
 
+-- add case feature to tokens
 local function addCase (toks)
   for i=1, #toks do
     local casefeat = 'N'
-    local letter = false
-    local number = false
-    local other = false
     local loweredTok = ''
 
-    for v, c, nextv in unicode.utf8_iter(toks[i]) do
-      if v > 32 and not(v == 0xFEFF) then
-        local is_letter, case = unicode.isLetter(v)
-        if is_letter then
-          local lu, lc = unicode.getLower(v)
-          if lu then c = lc end
-        end
-        local is_number = unicode.isNumber(v)
-        if opt.mode == 'conservative' then
-          if is_number or (c == '-' and letter == true) or c == '_' or
-             (letter == true and (c == '.' or c == ',') and (unicode.isNumber(nextv) or unicode.isLetter(nextv))) then
-            is_letter = true
-            case = "other"
-          end
-        end
-        if is_letter then
-          if not(letter == true) then
-	    casefeat = 'N'
-          end
-          casefeat = combineCase(casefeat, case)
-	  loweredTok = loweredTok..c
-          number = false
-          other = false
-          letter = true
-        elseif is_number then
-	  loweredTok = loweredTok..c
-          letter = false
-          other = false
-          number = true
-        else
-	  loweredTok = loweredTok..c
-          number = false
-          letter = false
-          other = true
-        end
+    for v, c in unicode.utf8_iter(toks[i]) do
+      local is_letter, case = unicode.isLetter(v)
+      -- find lowercase equivalent
+      if is_letter then
+        local lu, lc = unicode.getLower(v)
+        if lu then c = lc end
+        casefeat = combineCase(casefeat, case)
       end
+      loweredTok = loweredTok..c
     end
     toks[i] = loweredTok..feat_marker..string.sub(casefeat,1,1)
   end
   return toks
-
 end
 
 local timer = torch.Timer()
 local idx = 1
 local bpe = nil
 
-if (opt.bpe ~= '') then
+if opt.bpe ~= '' then
   bpe = BPE.new(opt.bpe)
 end
 
-
 for line in io.lines() do
-  local res = true
-  local err = ''
-  if (bpe ~= nil) then
+  local res
+  local err
+  if bpe then
     if (opt.case_feature) then
       res, err = pcall(function() io.write(table.concat(addCase(bpe:segment(tokenize(line))), ' ') .. '\n') end)
     else
@@ -223,7 +195,7 @@ for line in io.lines() do
   end
 
   if not res then
-    if string.find(err,"interrupted") then
+    if string.find(err, "interrupted") then
       error("interrupted")
     else
       error("unicode error in line "..idx..": "..line..'-'..err)
@@ -232,4 +204,4 @@ for line in io.lines() do
   idx = idx + 1
 end
 
-io.stderr:write(string.format('Tokenization completed in %0.3f seconds - %d sentences\n',timer:time().real,idx-1))
+io.stderr:write(string.format('Tokenization completed in %0.3f seconds - %d sentences\n', timer:time().real, idx-1))

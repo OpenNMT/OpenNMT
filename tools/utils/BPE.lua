@@ -1,4 +1,4 @@
-local unicode = require './unicode'
+local unicode = require 'tools.utils.unicode'
 
 local BPE = torch.class('BPE')
 

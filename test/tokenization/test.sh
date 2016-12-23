@@ -16,12 +16,16 @@ for file in $dir/*.raw; do
     sep_annotate=$(echo $test | cut -f3 -d$delim)
     case=$(echo $test | cut -f4 -d$delim)
 
-    tokenize_opts="-mode $mode -sep_annotate $sep_annotate"
+    tokenize_opts="-mode $mode"
     detokenize_opts=""
 
     if [ $case = "true" ]; then
         tokenize_opts="$tokenize_opts -case_feature"
         detokenize_opts="-case_feature"
+    fi
+
+    if [ $sep_annotate = "marker" ]; then
+        tokenize_opts="$tokenize_opts -sep_annotate"
     fi
 
     # Test tokenization.
