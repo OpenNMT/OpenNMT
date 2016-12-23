@@ -38,10 +38,20 @@ end
 
 local function str2word(l)
   local word = {}
-  for _, c in unicode.utf8_iter(l) do
-    table.insert(word, c)
+  local skipnext = false
+  for _, c, _, nextc in unicode.utf8_iter(l) do
+    if skipnext == true then
+      skipnext = false
+    else
+      if c == '\\' then
+        if nextc == '\\' or nextc == '@' then
+          c = c .. nextc
+          skipnext = true
+        end
+      end
+      table.insert(word, c)
+    end
   end
-  table.insert(word, '</w>')
   return word
 end
 
@@ -62,13 +72,11 @@ function BPE:minPair(pairsTable)
 end
 
 function BPE:encode(l)
-  local _, nextc = unicode._utf8_to_cp(l, 1)
-  if #l <= #nextc then
-    local w = {}
-    table.insert(w, l)
-    return w
-  end
   local word = str2word(l)
+  if #word == 1 then
+    return word
+  end
+  table.insert(word, '</w>')
   local pairs = getPairs(word)
   while true do
     local bigram = self:minPair(pairs)
@@ -81,7 +89,7 @@ function BPE:encode(l)
         if xx == bigram[2] then
           table.insert(new_word, bigram[1] .. bigram[2])
           merge = false
-        elseif (xx == bigram[1]) then
+        elseif xx == bigram[1] then
           table.insert(new_word, bigram[1])
         else
           table.insert(new_word, bigram[1])
@@ -103,11 +111,17 @@ function BPE:encode(l)
       pairs = getPairs(word)
     end
   end
+
   if word[#word] == '</w>' then
     table.remove(word, #word)
-  elseif (string.sub(word[#word],-string.len('</w>'))=='</w>') then
+  elseif word[#word] == '\\@</w>' then
+    -- if separator was separated - put it back...
+    word[#word-1] = word[#word-1] .. '\\@'
+    table.remove(word, #word)
+  elseif string.sub(word[#word],-string.len('</w>')) == '</w>' then
     word[#word] = string.sub(word[#word], 1, -string.len('</w>')-1)
   end
+
   return word
 end
 

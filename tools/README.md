@@ -18,16 +18,14 @@ th tools/tokenize.lua OPTIONS < file > file.tok
 where the options are:
 
 * `-mode`: can be `aggressive` or `conservative` (default). In conservative mode, letters, numbers and '_' are kept in sequence, hyphens are accepted as part of tokens. Finally inner characters `[.,]` are also accepted (url, numbers).
-* `-sep_annotate`: indicate how to annotate non-separator tokenization - can be `marker` (default), `feature` or `none`:
-  * `marker`: when a space is added for tokenization, add reversible separtor marks on one side (preference symbol, number, letter)
-  * `feature`: generate separator feature `S` means that the token is preceded by a space, `N` means that there is not space in original corpus
-  * `none`: don't annotate
+* `-sep_annotate`: if set, add reversible separator mark to indicate separator-less or BPE tokenization (preference on symbol, then number, then letter)
 * `-case_feature`: generate case feature - and convert all tokens to lowercase
   * `N`: not defined (for instance tokens without case)
   * `L`: token is lowercased (opennmt)
   * `U`: token is uppercased (OPENNMT)
   * `C`: token is capitalized (Opennmt)
   * `M`: token case is mixed (OpenNMT)
+* `-bpe_model`: when set, activate BPE using the BPE model filename
 
 Note:
 

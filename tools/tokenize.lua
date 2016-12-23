@@ -202,7 +202,9 @@ for line in io.lines() do
 
   -- apply bpe if requested
   if bpe then
-    tokens = bpe:segment(tokens, sep_marker)
+    local sep = ''
+    if opt.sep_annotate then sep = sep_marker end
+    tokens = bpe:segment(tokens, sep)
   end
 
   -- add-up case feature if requested

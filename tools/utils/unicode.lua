@@ -65,13 +65,13 @@ function unicode.utf8_iter(s)
     if p > L then
       if nextc then
         nextc = nil
-        return v, c, nil
+        return v, c
       end
       return
     end
     nextv, nextc = unicode._utf8_to_cp(s, p)
     p = p + #nextc
-    return v, c, nextv
+    return v, c, nextv, nextc
   end
 end
 
