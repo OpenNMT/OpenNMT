@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT) [![Gitter chat](https://badges.gitter.im/OpenNMT/support.png)](https://gitter.im/OpenNMT/support) 
+[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT) 
 
 
 # OpenNMT: Open-Source Neural Machine Translation
@@ -20,8 +20,19 @@ accuracy. Features include:
 
 ## Installation
 
-OpenNMT only requires a vanilla torch/cutorch install. It uses `nn`, `nngraph`, and `cunn`. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
+OpenNMT only requires a vanilla Torch install. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
 
+### Dependencies
+
+* `nn`
+* `nngraph`
+* `tds`
+* `threads`
+
+GPU will also require:
+
+* `cunn`
+* `cutorch`
 
 ## Quickstart
 
@@ -46,6 +57,7 @@ See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.
 * <a href="http://opennmt.github.io/Guide">Options and Features</a> 
 * <a href="http://opennmt.github.io/OpenNMT">Documentation</a> 
 * <a href="http://opennmt.github.io/Models">Example Models</a>
+* <a href="http://forum.opennmt.net">Forum</a>
 * <a href="http://demo-pnmt.systran.net">Live Demo</a>
 * <a href="http://opennmt.github.io/about">Bibliography</a>
 

@@ -1389,7 +1389,7 @@ das\|C haus\|C liegt\|l zwischen\|l stadtzentrum\|C und\|l land\|C ,\|n nur\|l 6
 für\|C den\|l besonders\|l sportlichen\|l auftritt\|C sorgen\|l zwei\|l m\|U felgen\|C .\|n
 sie\|C betonen\|l -\|n dies\|l möchte\|l ich\|l noch\|l kurz\|l anmerken\|l -\|n ,\|n daß\|l die\|l dringlichkeitsthemen\|C auf\|l unserer\|l tagesordnung\|C einen\|l bedeutenden\|l platz\|C erhalten\|l müssen\|l .\|n
 \|n (pl)\|U frau\|C präsidentin\|C !\|n die\|C europäische\|C union\|C sollte\|l aktiveren\|l anteil\|C am\|l geschehen\|C in\|l zentralasien\|C nehmen\|l und\|l die\|l wirtschaftliche\|l und\|l soziale\|l entwicklung\|C der\|l region\|C stärker\|l unterstützen\|l .\|n
-geben\|C sie\|C das\|l vereichnis\|C c:\|l ftpboot\|l \\|n ploplinux\|l mit\|l dem\|l namen\|C ploplinux\|l in\|l ihrem\|C netzwerk\|C frei\|l .\|n
+geben\|C sie\|C das\|l vereichnis\|C c:\|l ftpboot\|l \\\|n ploplinux\|l mit\|l dem\|l namen\|C ploplinux\|l in\|l ihrem\|C netzwerk\|C frei\|l .\|n
 in\|C der\|l nacht\|C fielen\|l mücken\|C über\|l uns\|l her\|l .\|n
 wir\|C müssen\|l wissen\|l ,\|n was\|l wir\|l tun\|l ,\|n und\|l sollten\|l nicht\|l blauäugig\|l sein\|l .\|n
 testformalisierung\|C in\|l uml\|U ausarbeitung\|C eines\|l konzeptes\|C zur\|l testformalisierung\|C in\|l uml\|U für\|l komplexe\|l sicherheitskritische\|l systeme\|C und\|l entwurf\|C eines\|l darauf\|l basierenden\|l generischen\|l xml-formates\|M für\|l den\|l austausch\|C von\|l testspezifikationen\|C und\|l testergebnissen\|C .\|n
@@ -3432,7 +3432,7 @@ krkonose\|C berge\|C voller\|l erleben\|C hier\|C finden\|l sie:\|C wandertouren
 \|n (das\|M parlament\|C beschließt\|l die\|l dringlichkeit\|C .)\|n
 dadurch\|C würde\|l sichergestellt\|l ,\|n dass\|l nach\|l drei\|l jahrzehnten\|C juristischer\|l reformen\|C von\|l diesen\|l nicht\|l nur\|l fließendes\|l wasser\|C ,\|n sondern\|l tatsächlich\|l knochen\|C und\|l sehnen\|C übrig\|l bleiben\|l .\|n
 ich\|C kann\|l ihnen\|C weiterhin\|l sagen\|l ,\|n dass\|l wir\|l bei\|l unseren\|l gesprächen\|C in\|l new\|C york\|C ausführlich\|l mit\|l unseren\|l russischen\|l freunden\|C gesprochen\|l haben\|l ,\|n wobei\|l wir\|l die\|l frage\|C der\|l an\|l russland\|C und\|l an\|l das\|l erweiterte\|l europa\|C angrenzenden\|l länder\|C unter\|l allen\|l gesichtspunkten\|C und\|l in\|l jeder\|l hinsicht\|C erörtert\|l haben\|l .\|n
-dazu\|C sollten\|l sie\|C die\|l software\|C auf\|l einer\|l anderen\|l partition\|C der\|l festplatte\|C installieren\|l (z.b.\|M &quot;\|l d:\|C \\|n &quot;\|l statt\|l &quot;\|l c:\|C \\|n &quot;).\|l
+dazu\|C sollten\|l sie\|C die\|l software\|C auf\|l einer\|l anderen\|l partition\|C der\|l festplatte\|C installieren\|l (z.b.\|M &quot;\|l d:\|C \\\|n &quot;\|l statt\|l &quot;\|l c:\|C \\\|n &quot;).\|l
 unsere\|C multitasking-pcs\|M sind\|l das\|l vermächtnis\|C des\|l pilot\|C ace\|U (automatic\|M computing\|C engine).\|C
 ein\|C globales\|l abkommen\|C wäre\|l die\|l beste\|l möglichkeit\|C zur\|l einführung\|C einer\|l solchen\|l steuer\|C ,\|n wobei\|l aber\|l die\|l stempelgebühr\|C auf\|l aktien\|C im\|l vereinigten\|C königreich\|C zeigt\|l ,\|n dass\|l es\|l unmöglich\|l ist\|l ,\|n eine\|l erfolgreiche\|l ,\|n gut\|l konzipierte\|l finanztransaktionssteuer\|C einzuführen\|l ,\|n ohne\|l die\|l wettbewerbsfähigkeit\|C zu\|l unterwandern\|l .\|n
 volle\|C reisedienst\|C für\|l die\|l teilnehmenden\|l und\|l begleitenden\|l gäste\|C laut\|l ihrem\|l wunsch\|C .\|n
@@ -4423,7 +4423,7 @@ information\|C mehr\|l noch\|l als\|l kommunikation\|C .\|n
 diese\|C site\|C enthalt\|l unterkategorien\|C und\|l seiten\|C mit\|l schlusselwortern\|C ,\|n die\|l kontextuell\|l ,\|n grammatisch\|l und\|l nach\|l bedeutung\|C mit\|l dem\|l schlusselwort\|C /\|n der\|l schlusselphrase\|C verbunden\|l sind\|l property\|l .\|n
 mit\|C messeverkäufen\|C im\|l 2-stelligen\|l bereich\|C gelang\|l gallus\|C eine\|l überaus\|l erfolgreiche\|l markteinführung\|C der\|l gallus\|C ecs\|U 340\|l .\|n
 daraus\|C folgt\|l -\|n und\|l das\|l macht\|l der\|l bericht\|C entschieden\|l deutlich\|l -\|n ,\|n dass\|l die\|l bekämpfung\|C des\|l terrorismus\|C eine\|l der\|l prioritäten\|C der\|l europäischen\|C union\|C und\|l ihrer\|l mitgliedstaaten\|C bleiben\|l muss\|l .\|n
--\|n %\|n sysdir\|U %\|n \\|n hjxrbpv.dll\|l weitere\|C untersuchungen\|C haben\|l ergeben\|l ,\|n dass\|l diese\|l datei\|C auch\|l malware\|C ist\|l .\|n
+-\|n %\|n sysdir\|U %\|n \\\|n hjxrbpv.dll\|l weitere\|C untersuchungen\|C haben\|l ergeben\|l ,\|n dass\|l diese\|l datei\|C auch\|l malware\|C ist\|l .\|n
 so\|C entstand\|l 1995\|l das\|l erste\|l umfassende\|l europäische\|l programm\|C für\|l die\|l zusammenarbeit\|C in\|l allen\|l bereichen\|C der\|l bildung\|C mit\|l dem\|l namen\|C sokrates\|U .\|n
 nenzen\|C leben\|l auf\|l der\|l jamal-insel\|M und\|l halten\|l grosse\|l rentierherden\|C .\|n
 aus\|C verfahrensgründen\|C wurde\|l der\|l bericht\|C am\|l 19.\|l dezember\|C 2006\|l im\|l entwicklungsausschuss\|C angenommen\|l ,\|n die\|l frist\|C war\|l auf\|l den\|l 15.\|l januar\|C 2007\|l festgelegt\|l .\|n
@@ -5130,7 +5130,7 @@ ursprünglich\|C wollte\|l die\|l kommission\|C degme\|U nur\|l in\|l farben\|C 
 von\|C der\|l konstablerwache\|C aus\|l liegt\|l der\|l hauptbahnhof\|C nur\|l 4\|l fahrminuten\|C (30\|l gehminuten)\|C und\|l das\|l messegelände\|C nur\|l 9\|l fahrminuten\|C (45\|l gehminuten)\|C entfernt\|l .\|n
 das\|C bruttoinlandsprodukt\|C wird\|l für\|l den\|l wichtigsten\|l indikator\|C für\|l das\|l nationale\|l wohlbefinden\|C gehalten\|l .\|n
 der\|C stab\|C im\|l weißen\|C haus\|C besprach\|l die\|l angelegenheit\|C mit\|l der\|l cia\|U und\|l schlug\|l dann\|l vor\|l ,\|n den\|l satz\|C dahingehend\|l zu\|l ändern\|l ,\|n dass\|l er\|l besagt\|l ,\|n die\|l briten\|C hätten\|l berichtet\|l ,\|n saddam\|C hussein\|C habeversucht\|l ,\|n in\|l afrika\|C uran\|C zu\|l kaufen\|l .\|n
-diese\|C wird\|l lokal\|l gespeichert\|l unter:\|l %\|n tempdir\|U %\|n \\|n laf\|l %\|n hexadezimale\|C zahl\|C %\|n .tmp\|l des\|C weiteren\|C wird\|l diese\|l datei\|C ausgeführt\|l nachdem\|l sie\|l vollständig\|l heruntergeladen\|l wurde\|l .\|n
+diese\|C wird\|l lokal\|l gespeichert\|l unter:\|l %\|n tempdir\|U %\|n \\\|n laf\|l %\|n hexadezimale\|C zahl\|C %\|n .tmp\|l des\|C weiteren\|C wird\|l diese\|l datei\|C ausgeführt\|l nachdem\|l sie\|l vollständig\|l heruntergeladen\|l wurde\|l .\|n
 doch\|C dem\|l ist\|l nicht\|l so\|l .\|n
 ich\|C habe\|l diese\|l frage\|C gestellt\|l ,\|n weil\|l die\|l gegner\|C der\|l schengener\|C zusammenarbeit\|C immer\|l behaupten\|l ,\|n es\|l würde\|l schwieriger\|l ,\|n kriminelle\|l banden\|C zu\|l stellen\|l ,\|n wenn\|l man\|l sich\|l dem\|l schengener\|C übereinkommen\|C anschließt\|l .\|n
 dieser\|C bericht\|C hilft\|l ihnen\|C zu\|l verstehen\|l ,\|n welches\|l die\|l größten\|l faktoren\|C sind\|l ,\|n die\|l zu\|l ihrem\|C geschäftswachstum\|C beitragen\|l ñ\|l wertvolles\|l wissen\|C für\|l anhaltenden\|l wachstum\|C .\|n

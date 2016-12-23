@@ -1389,7 +1389,7 @@ we\|C are\|l happy\|l to\|l welcome\|l you\|l in\|l our\|l guesthouse\|l in\|l q
 two\|C m\|U rims\|l also\|l are\|l available\|l for\|l extra\|l sports\|l appeal\|l .\|n
 you\|C have\|l emphasized\|l -\|n and\|l i\|U will\|l say\|l it\|l myself\|l -\|n that\|l the\|l topical\|l and\|l urgent\|l debate\|l must\|l occupy\|l a\|l more\|l favourable\|l position\|l in\|l the\|l part-session\|l .\|n
 \|n (pl)\|U madam\|C president\|C ,\|n the\|l european\|C union\|C should\|l engage\|l more\|l actively\|l in\|l events\|l in\|l central\|C asia\|C and\|l in\|l support\|l for\|l economic\|l and\|l social\|l development\|l in\|l the\|l region\|l .\|n
-share\|C the\|l directory\|l c:\|l ftpboot\|l \\|n ploplinux\|l with\|l the\|l share\|l name\|l ploplinux\|l .\|n
+share\|C the\|l directory\|l c:\|l ftpboot\|l \\\|n ploplinux\|l with\|l the\|l share\|l name\|l ploplinux\|l .\|n
 they\|C were\|l supposed\|l to\|l have\|l wireless\|l internet\|l in\|l all\|l rooms\|l ,\|n but\|l this\|l was\|l not\|l the\|l case\|l .\|n
 we\|C should\|l know\|l what\|l we\|l are\|l doing\|l and\|l we\|l should\|l not\|l be\|l naive\|l .\|n
 managing\|C a\|l software\|l development\|l project\|l for\|l 2\|l years\|l and\|l developing\|l the\|l specification\|l .\|n
@@ -3432,7 +3432,7 @@ krkonose\|C mts\|C .\|n mountains\|C of\|l enjoyment\|C here\|C you\|l will\|l f
 \|n (parliament\|M agreed\|l to\|l urgent\|l procedure)\|l
 that\|C would\|l help\|l to\|l ensure\|l that\|l three\|l decades\|l of\|l legal\|l reform\|l is\|l more\|l bone\|l and\|l sinew\|l than\|l running\|l water\|l .\|n
 i\|U can\|l tell\|l you\|l that\|l ,\|n at\|l the\|l meetings\|l in\|l new\|C york\|C ,\|n we\|l talked\|l in\|l depth\|l with\|l our\|l russian\|C friends\|l and\|l examined\|l from\|l all\|l angles\|l and\|l in\|l all\|l ways\|l the\|l issue\|l of\|l the\|l countries\|l bordering\|l upon\|l russia\|C and\|l the\|l enlarged\|l europe\|C .\|n
-you\|C may\|l load\|l and\|l install\|l the\|l software\|l onto\|l another\|l partition\|l of\|l the\|l hard\|l disk\|l (e.g.\|l &quot;\|l d:\|C \\|n &quot;\|l instead\|l of\|l &quot;\|l c:\|C \\|n &quot;).\|l
+you\|C may\|l load\|l and\|l install\|l the\|l software\|l onto\|l another\|l partition\|l of\|l the\|l hard\|l disk\|l (e.g.\|l &quot;\|l d:\|C \\\|n &quot;\|l instead\|l of\|l &quot;\|l c:\|C \\\|n &quot;).\|l
 our\|C multi-tasking\|l pcs\|M are\|l the\|l legacy\|l of\|l the\|l pilot\|C ace\|U (automatic\|M computing\|C engine).\|C
 global\|C agreement\|l would\|l be\|l the\|l best\|l way\|l to\|l introduce\|l such\|l a\|l tax\|l ,\|n but\|l the\|l uk\|U &apos;s\|l stamp\|l duty\|l on\|l shares\|l demonstrates\|l it\|l is\|l possible\|l to\|l introduce\|l a\|l successful\|l ,\|n well-designed\|l financial\|l transaction\|l tax\|l (ftt)\|U without\|l undermining\|l competitiveness\|l .\|n
 full\|C range\|l of\|l travel\|l services\|l conforming\|l to\|l the\|l needs\|l of\|l runners\|l ,\|n for\|l runners\|l and\|l their\|l companions\|l only\|l .\|n
@@ -4423,7 +4423,7 @@ information\|C more\|l so\|l than\|l communication\|l .\|n
 this\|C page\|l contains\|l sub-categories\|l and\|l keyword\|l pages\|l contextually\|l ,\|n grammatically\|l and\|l meaningfully\|l related\|l to\|l the\|l keyword\|l /\|n phrase\|l property\|l .\|n
 gallus\|C managed\|l a\|l very\|l successful\|l launch\|l of\|l the\|l gallus\|C ecs\|U 340\|l with\|l sales\|l at\|l labelexpo\|C in\|l the\|l 2-digit\|l area\|l .\|n
 from\|C this\|l it\|l follows\|l -\|n and\|l the\|l report\|l is\|l fairly\|l emphatic\|l on\|l this\|l point\|l -\|n that\|l the\|l fight\|l against\|l terrorism\|l must\|l remain\|l one\|l of\|l the\|l priorities\|l of\|l the\|l european\|C union\|C and\|l its\|l member\|C states\|C .\|n
--\|n %\|n sysdir\|U %\|n \\|n hjxrbpv.dll\|l further\|C investigation\|l pointed\|l out\|l that\|l this\|l file\|l is\|l malware\|l ,\|n too\|l .\|n
+-\|n %\|n sysdir\|U %\|n \\\|n hjxrbpv.dll\|l further\|C investigation\|l pointed\|l out\|l that\|l this\|l file\|l is\|l malware\|l ,\|n too\|l .\|n
 that\|C is\|l how\|l the\|l first\|l comprehensive\|l european\|C programme\|l for\|l cooperation\|l in\|l all\|l spheres\|l of\|l education\|l came\|l about\|l in\|l 1995;\|l it\|l was\|l called\|l socrates\|C .\|n
 nenets\|C live\|l on\|l the\|l island\|l jamal\|C and\|l own\|l huge\|l reindeer\|l stock\|l .\|n
 for\|C procedural\|l reasons\|l ,\|n this\|l report\|l was\|l approved\|l in\|l the\|l committee\|C on\|l development\|C on\|l 19\|l december\|C 2006\|l and\|l the\|l deadline\|l was\|l 15\|l january\|C 2007\|l .\|n
@@ -5130,7 +5130,7 @@ originally\|C ,\|n the\|l commission\|C would\|l only\|l have\|l prohibited\|l d
 this\|C underground\|l stop\|l connects\|l you\|l to\|l the\|l central\|l railway\|l station\|l in\|l just\|l 4\|l minutes\|l (30\|l minutes\|l on\|l foot)\|l and\|l the\|l exhibition\|l centre\|l in\|l 9\|l minutes\|l (45\|l minutes\|l on\|l foot).\|l
 gross\|C domestic\|l product\|l is\|l taken\|l to\|l be\|l the\|l leading\|l indicator\|l of\|l national\|l well-being\|l .\|n
 the\|C white\|C house\|C staff\|l member\|l who\|l discussed\|l it\|l with\|l the\|l cia\|U then\|l suggested\|l changing\|l the\|l sentence\|l so\|l that\|l it\|l stated\|l that\|l the\|l british\|C reported\|l that\|l saddam\|C hussein\|C hadsought\|l to\|l buy\|l uranium\|l from\|l africa\|C .\|n
-it\|C is\|l saved\|l on\|l the\|l local\|l hard\|l drive\|l under:\|l %\|n tempdir\|U %\|n \\|n laf\|l %\|n hex\|l number\|l %\|n .tmp\|l furthermore\|C this\|l file\|l gets\|l executed\|l after\|l it\|l was\|l fully\|l downloaded\|l .\|n
+it\|C is\|l saved\|l on\|l the\|l local\|l hard\|l drive\|l under:\|l %\|n tempdir\|U %\|n \\\|n laf\|l %\|n hex\|l number\|l %\|n .tmp\|l furthermore\|C this\|l file\|l gets\|l executed\|l after\|l it\|l was\|l fully\|l downloaded\|l .\|n
 but\|C they\|l did\|l nothing\|l of\|l the\|l sort\|l .\|n
 i\|U posed\|l this\|l question\|l because\|l the\|l opponents\|l of\|l cooperation\|l under\|l schengen\|C always\|l maintain\|l that\|l accession\|l to\|l schengen\|C will\|l make\|l it\|l more\|l difficult\|l to\|l catch\|l criminal\|l gangs\|l .\|n
 this\|C report\|l helps\|l you\|l understand\|l the\|l largest\|l contributors\|l to\|l your\|l business\|l "\|n growth\|l -\|n which\|l is\|l valuable\|l knowledge\|l to\|l have\|l in\|l order\|l to\|l continue\|l growing\|l .\|n

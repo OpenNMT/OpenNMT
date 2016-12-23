@@ -2,20 +2,22 @@ package = "opennmt"
 version = "scm-1"
 
 source = {
-   url = "git://github.com/opennmt/opennmt",
-   tag = "master"
+  url = "git://github.com/opennmt/opennmt",
+  tag = "master"
 }
 
 description = {
-   summary = "Neural Machine Translation for Torch",
-   homepage = "https://github.com/opennmt/opennmt",
-   license = "MIT"
+  summary = "Neural Machine Translation for Torch",
+  homepage = "https://github.com/opennmt/opennmt",
+  license = "MIT"
 }
 
 dependencies = {
-   "torch >= 7.0",
-   "nn >= 1.0",
-   "nngraph"
+  "nn >= 1.0",
+  "nngraph",
+  "tds",
+  "threads",
+  "torch >= 7.0"
 }
 
 
@@ -28,7 +30,7 @@ build = {
       onmt_translate = "translate.lua",
     }
   },
-  
+
   modules = {
     onmt = "onmt/init.lua",
     ["onmt.modules.init"] = "onmt/modules/init.lua",

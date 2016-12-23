@@ -15,12 +15,13 @@ sentence with capitalization.
 
 * Comments are of the form:
 
-
---[[ Set target input directly. 
+```
+--[[ Set target input directly.
 
 Parameters:
   * `targetInput` - a tensor of size (sequence_length, batch_size). Padded with onmt.Co
 --]]
+```
 
 * Use torch-dokx and this command to build docs
 
