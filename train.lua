@@ -47,8 +47,8 @@ cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration 
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
 cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
 cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
-                                then this is the global learning rate. Recommended settings: sgd =1,
-                                adagrad = 0.1, adadelta = 1, adam = 0.1]])
+                                then this is the global learning rate. Recommended settings are: sgd = 1,
+                                adagrad = 0.1, adadelta = 1, adam = 0.0002]])
 cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm]])
 cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]])
 cmd:option('-learning_rate_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
