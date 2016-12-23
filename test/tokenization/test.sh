@@ -15,6 +15,7 @@ for file in $dir/*.raw; do
     mode=$(echo $test | cut -f2 -d$delim)
     sep_annotate=$(echo $test | cut -f3 -d$delim)
     case=$(echo $test | cut -f4 -d$delim)
+    bpe=$(echo $test | cut -f5 -d$delim)
 
     tokenize_opts="-mode $mode"
     detokenize_opts=""
@@ -26,6 +27,10 @@ for file in $dir/*.raw; do
 
     if [ $sep_annotate = "marker" ]; then
         tokenize_opts="$tokenize_opts -sep_annotate"
+    fi
+
+    if [ $bpe ]; then
+        tokenize_opts="$tokenize_opts -bpe_model $dir/$bpe.bpe"
     fi
 
     # Test tokenization.

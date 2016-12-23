@@ -17,7 +17,7 @@ cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenizat
   'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
 cmd:option('-sep_annotate', false, [[Include separator annotation using sep_marker]])
 cmd:option('-case_feature', false, [[Generate case feature]])
-cmd:option('-bpe', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
+cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
 
 local opt = cmd:parse(arg)
 
@@ -51,11 +51,15 @@ end
 -- - keep sequence of letters/numbers and tokenize everything else
 local function tokenize(line)
   local tokens = {}
+  -- contains the current token
   local curtok = ''
+  -- keep category of the previous character
   local space = true
   local letter = false
   local number = false
   local other = false
+
+  -- iterate on utf-8 characters
   for v, c, nextv in unicode.utf8_iter(line) do
     if unicode.isSeparator(v) then
       if space == false then
@@ -173,19 +177,21 @@ end
 
 local timer = torch.Timer()
 local idx = 1
-local bpe = nil
+local bpe
 
-if opt.bpe ~= '' then
-  bpe = BPE.new(opt.bpe)
+if opt.bpe_model ~= '' then
+  bpe = BPE.new(opt.bpe_model)
 end
 
 for line in io.lines() do
   local res
   local err
 
+  -- tokenize
   local tokens
   res, err = pcall(function() tokens = tokenize(line) end)
 
+  -- it can generate an exception if there are utf-8 issues in the text
   if not res then
     if string.find(err, "interrupted") then
       error("interrupted")
@@ -194,14 +200,17 @@ for line in io.lines() do
     end
   end
 
+  -- apply bpe if requested
   if bpe then
     tokens = bpe:segment(tokens, sep_marker)
   end
 
+  -- add-up case feature if requested
   if opt.case_feature then
     tokens = addCase(tokens)
   end
 
+  -- output the tokenized and featurized string
   io.write(table.concat(tokens, ' ') .. '\n')
 
   idx = idx + 1

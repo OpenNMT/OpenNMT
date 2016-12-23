@@ -3,14 +3,24 @@ local unicode = require 'tools.utils.unicode'
 local BPE = torch.class('BPE')
 
 function BPE:__init(codesfile_path)
+  self.split = string.split
+  -- to be able to run the code without torch
+  if not self.split then
+    self.split = function(t, sep)
+      local fields = {}
+      local pattern = string.format("([^%s]+)", sep)
+      t:gsub(pattern, function(c) fields[#fields+1] = c end)
+      return fields
+    end
+  end
   self.codes = {}
   local f = assert(io.open(codesfile_path, "r"))
   local t = f:read("*line")
   local i = 1
 
   while not(t == nil) do
-    local l=string.split(t, " ")
-    if #l==2 then
+    local l = self.split(t, " ")
+    if #l == 2 then
       self.codes[t] = i
       i = i + 1
     end
@@ -63,7 +73,7 @@ function BPE:encode(l)
   while true do
     local bigram = self:minPair(pairs)
     if bigram == '' then break end
-    bigram = string.split(bigram, ' ')
+    bigram = self.split(bigram, ' ')
     local new_word = {}
     local merge = false
     for _, xx in ipairs(word) do
