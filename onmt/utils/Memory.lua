@@ -1,3 +1,4 @@
+
 -- We cannot share the output of these modules as they use it in their backward pass.
 local protectOutput = {
   'nn.Sigmoid',
