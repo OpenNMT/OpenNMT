@@ -281,6 +281,10 @@ local function trainModel(model, trainData, validData, dataset, info)
 
   local validPpl = 0
 
+  if not opt.json_log then
+    print('Start training...')
+  end
+
   for epoch = opt.start_epoch, opt.epochs do
     if not opt.json_log then
       print('')
