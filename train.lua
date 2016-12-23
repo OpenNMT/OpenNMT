@@ -359,7 +359,7 @@ local function main()
     print('Loading data from \'' .. opt.data .. '\'...')
   end
 
-  local dataset = torch.load(opt.data)
+  local dataset = torch.load(opt.data, 'binary', false)
 
   local trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)

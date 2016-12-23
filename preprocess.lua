@@ -1,5 +1,6 @@
 require('onmt.init')
 
+local tds = require('tds')
 local path = require('pl.path')
 
 local cmd = torch.CmdLine()
@@ -150,14 +151,22 @@ local function saveFeaturesVocabularies(name, vocabs, prefix)
   end
 end
 
+local function vecToTensor(vec)
+  local t = torch.Tensor(#vec)
+  for i, v in pairs(vec) do
+    t[i] = v
+  end
+  return t
+end
+
 local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
-  local src = {}
-  local srcFeatures = {}
+  local src = tds.Vec()
+  local srcFeatures = tds.Vec()
 
-  local tgt = {}
-  local tgtFeatures = {}
+  local tgt = tds.Vec()
+  local tgtFeatures = tds.Vec()
 
-  local sizes = {}
+  local sizes = tds.Vec()
 
   local count = 0
   local ignored = 0
@@ -181,18 +190,20 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
       local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
       local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
 
-      table.insert(src, srcDicts.words:convertToIdx(srcWords, onmt.Constants.UNK_WORD))
-      table.insert(tgt, tgtDicts.words:convertToIdx(tgtWords, onmt.Constants.UNK_WORD,
-                                                    onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD))
+      src:insert(srcDicts.words:convertToIdx(srcWords, onmt.Constants.UNK_WORD))
+      tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
+                                             onmt.Constants.UNK_WORD,
+                                             onmt.Constants.BOS_WORD,
+                                             onmt.Constants.EOS_WORD))
 
       if #srcDicts.features > 0 then
-        table.insert(srcFeatures, onmt.utils.Features.generateSource(srcDicts.features, srcFeats))
+        srcFeatures:insert(onmt.utils.Features.generateSource(srcDicts.features, srcFeats, true))
       end
       if #tgtDicts.features > 0 then
-        table.insert(tgtFeatures, onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats))
+        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
       end
 
-      table.insert(sizes, #srcWords)
+      sizes:insert(#srcWords)
     else
       ignored = ignored + 1
     end
@@ -210,28 +221,28 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
   if opt.shuffle == 1 then
     print('... shuffling sentences')
     local perm = torch.randperm(#src)
-    src = onmt.utils.Table.reorder(src, perm)
-    tgt = onmt.utils.Table.reorder(tgt, perm)
-    sizes = onmt.utils.Table.reorder(sizes, perm)
+    src = onmt.utils.Table.reorder(src, perm, true)
+    tgt = onmt.utils.Table.reorder(tgt, perm, true)
+    sizes = onmt.utils.Table.reorder(sizes, perm, true)
 
     if #srcDicts.features > 0 then
-      srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm)
+      srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm, true)
     end
     if #tgtDicts.features > 0 then
-      tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm)
+      tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm, true)
     end
   end
 
   print('... sorting sentences by size')
-  local _, perm = torch.sort(torch.Tensor(sizes))
-  src = onmt.utils.Table.reorder(src, perm)
-  tgt = onmt.utils.Table.reorder(tgt, perm)
+  local _, perm = torch.sort(vecToTensor(sizes))
+  src = onmt.utils.Table.reorder(src, perm, true)
+  tgt = onmt.utils.Table.reorder(tgt, perm, true)
 
   if #srcDicts.features > 0 then
-    srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm)
+    srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm, true)
   end
   if #tgtDicts.features > 0 then
-    tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm)
+    tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm, true)
   end
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length == 0 or > ' .. opt.seq_length .. ')')
