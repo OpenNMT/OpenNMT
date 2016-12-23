@@ -29,7 +29,7 @@ end
 
 local function str2word(l)
   local word = {}
-  for v, c in unicode.utf8_iter(l) do
+  for _, c in unicode.utf8_iter(l) do
     table.insert(word, c)
   end
   table.insert(word, '</w>')
@@ -42,7 +42,7 @@ function BPE:minPair(pairsTable)
   for i=1, #pairsTable, 1 do
     local pair_cur = pairsTable[i]
     if (self.codes[pair_cur] ~= nil) then
-      scoretmp = self.codes[pair_cur]
+      local scoretmp = self.codes[pair_cur]
       if (scoretmp < mintmp) then
         mintmp = scoretmp
         minpair = pair_cur
@@ -53,7 +53,7 @@ function BPE:minPair(pairsTable)
 end
 
 function BPE:encode(l)
-  local nextv, nextc = unicode._utf8_to_cp(l, 1)
+  local _, nextc = unicode._utf8_to_cp(l, 1)
   if #l <= #nextc then
     local w = {}
     table.insert(w, l)
@@ -69,14 +69,18 @@ function BPE:encode(l)
     bigram = string.split(bigram," ")
     local new_word = {}
     local merge = false
-    for ii, xx in ipairs(word) do
+    for _, xx in ipairs(word) do
       if (merge) then
-        if (bigram[2] == xx) then
+        if (xx == bigram[2]) then
           table.insert(new_word, bigram[1]..bigram[2])
-        else
+          merge = false
+        elseif (xx == bigram[1]) then
           table.insert(new_word, bigram[1])
-	  end
-        merge = false
+	else
+          table.insert(new_word, bigram[1])
+          table.insert(new_word, xx)
+          merge = false
+	end
       else
         if (bigram[1] == xx ) then
           merge = true
@@ -98,6 +102,18 @@ function BPE:encode(l)
     word[#word] = string.sub(word[#word], 1, -string.len('</w>')-1)
   end
   return word
+end
+
+function BPE:segment(tokens)
+  local bpeSegment = {}
+  for i=1, #tokens do
+    local bpeTokens = self:encode(tokens[i])
+    for j=1, #bpeTokens-1 do
+      table.insert(bpeSegment, bpeTokens[j]..'@@')
+    end
+    table.insert(bpeSegment, bpeTokens[#bpeTokens])
+  end
+  return bpeSegment
 end
 
 return BPE
