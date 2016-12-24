@@ -5,9 +5,7 @@ local BPE = require ('tools.utils.BPE')
 
 local cmd = torch.CmdLine()
 
-local sep_marker = '\\@'
-local feat_marker = '\\|'
-local protect_char = '\\'
+local separators = require('tools.utils.separators')
 
 cmd:text("")
 cmd:text("**tokenize.lua**")
@@ -34,14 +32,6 @@ local function combineCase(feat, case)
     if case == 'upper' then feat = 'M' end
   end
   return feat
-end
-
-local function appendMarker(l)
-  if opt.case_feature then
-    local p=l:find(feat_marker, -4)
-    return l:sub(1,p-1)..sep_marker..l:sub(p)
-  end
-  return l..sep_marker
 end
 
 -- minimalistic tokenization
@@ -73,7 +63,10 @@ local function tokenize(line)
     else
       -- skip special charactes and BOM and
       if v > 32 and not(v == 0xFEFF) then
-        if c == protect_char then c = protect_char..c end
+        -- normalize the separator marker and feat separator
+        if c == separators.sep_marker then c = separators.sep_marker_substitute end
+        if c == separators.feat_marker then c = separators.feat_marker_substitute end
+
         local is_letter, _ = unicode.isLetter(v)
         local is_number = unicode.isNumber(v)
         if opt.mode == 'conservative' then
@@ -85,14 +78,14 @@ local function tokenize(line)
       if is_letter then
         if not(letter == true or space == true) then
           if opt.sep_annotate then
-            curtok = appendMarker(curtok)
+            curtok = curtok .. separators.sep_marker
           end
           table.insert(tokens, curtok)
           curtok = ''
           elseif other == true then
             if opt.sep_annotate then
               if (curtok == '') then
-               tokens[#tokens] = tokens[#tokens] .. sep_marker
+               tokens[#tokens] = tokens[#tokens] .. separators.sep_marker
              end
            end
           end
@@ -105,16 +98,16 @@ local function tokenize(line)
           if not(number == true or space == true) then
             if opt.sep_annotate then
               if not(letter) then
-                curtok = appendMarker(curtok)
+                curtok = curtok .. separators.sep_marker
               else
-                c = sep_marker .. c
+                c = curtok .. separators.sep_marker .. c
               end
             end
             table.insert(tokens, curtok)
             curtok = ''
           elseif other == true then
             if opt.sep_annotate then
-              curtok = appendMarker(curtok)
+              curtok = curtok .. separators.sep_marker
             end
           end
           curtok = curtok..c
@@ -125,13 +118,13 @@ local function tokenize(line)
         else
           if not space == true then
             if opt.sep_annotate then
-              c = sep_marker .. c
+              c = separators.sep_marker .. c
             end
             table.insert(tokens, curtok)
             curtok = ''
           elseif other == true then
             if opt.sep_annotate then
-              c = sep_marker .. c
+              c = separators.sep_marker .. c
             end
           end
           curtok = curtok .. c
@@ -170,7 +163,7 @@ local function addCase (toks)
       end
       loweredTok = loweredTok..c
     end
-    toks[i] = loweredTok..feat_marker..string.sub(casefeat,1,1)
+    toks[i] = loweredTok..separators.feat_marker..string.sub(casefeat,1,1)
   end
   return toks
 end
@@ -203,7 +196,7 @@ for line in io.lines() do
   -- apply bpe if requested
   if bpe then
     local sep = ''
-    if opt.sep_annotate then sep = sep_marker end
+    if opt.sep_annotate then sep = separators.sep_marker end
     tokens = bpe:segment(tokens, sep)
   end
 

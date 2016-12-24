@@ -29,9 +29,8 @@ where the options are:
 
 Note:
 
-* `\|` is the feature separator symbol
-* `\@` is the separator mark (generated in `-sep_annotate marker` mode)
-* character `\` is also used to self-protect `\`: for instance the actual text sequence `\@` is represented by `\\@`
+* `￨` is the feature separator symbol - if such character is used in source text, it is replace by its non presentation form `│`
+* `￭` is the separator mark (generated in `-sep_annotate marker` mode) - if such character is used in source text, it is replace by its non presentation form `■`
 
 ### Detokenization
 

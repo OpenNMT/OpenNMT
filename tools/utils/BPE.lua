@@ -38,19 +38,8 @@ end
 
 local function str2word(l)
   local word = {}
-  local skipnext = false
-  for _, c, _, nextc in unicode.utf8_iter(l) do
-    if skipnext == true then
-      skipnext = false
-    else
-      if c == '\\' then
-        if nextc == '\\' or nextc == '@' then
-          c = c .. nextc
-          skipnext = true
-        end
-      end
-      table.insert(word, c)
-    end
+  for _, c in unicode.utf8_iter(l) do
+    table.insert(word, c)
   end
   return word
 end
@@ -114,10 +103,6 @@ function BPE:encode(l)
 
   if word[#word] == '</w>' then
     table.remove(word, #word)
-  elseif word[#word] == '\\@</w>' then
-    -- if separator was separated - put it back...
-    word[#word-1] = word[#word-1] .. '\\@'
-    table.remove(word, #word)
   elseif string.sub(word[#word],-string.len('</w>')) == '</w>' then
     word[#word] = string.sub(word[#word], 1, -string.len('</w>')-1)
   end
@@ -128,7 +113,24 @@ end
 function BPE:segment(tokens, separator)
   local bpeSegment = {}
   for i=1, #tokens do
-    local bpeTokens = self:encode(tokens[i])
+    local token = tokens[i]
+    local left_sep = false
+    local right_sep = false
+    if token:sub(1, #separator) == separator then
+      token = token:sub(#separator + 1)
+      left_sep = true
+    end
+    if token:sub(-#separator, -1) == separator then
+      token = token:sub(1, -#separator-1)
+      right_sep = true
+    end
+    local bpeTokens = self:encode(token)
+    if left_sep then
+      bpeTokens[1] = separator .. bpeTokens[1]
+    end
+    if right_sep then
+      bpeTokens[#bpeTokens] = bpeTokens[#bpeTokens] .. separator
+    end
     for j=1, #bpeTokens-1 do
       table.insert(bpeSegment, bpeTokens[j] .. separator)
     end

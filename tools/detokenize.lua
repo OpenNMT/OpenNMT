@@ -4,9 +4,7 @@ local unicode = require('tools.utils.unicode')
 
 local cmd = torch.CmdLine()
 
-local sep_marker = '\\@'
-local feat_marker = '\\|'
-local protect_char = '\\'
+local separators = require('tools.utils.separators')
 
 cmd:text("")
 cmd:text("**detokenize.lua**")
@@ -24,32 +22,28 @@ local function analyseToken(t)
   local rightsep = false
   local i = 1
   while i <= #t do
-    if t:sub(i, i) == protect_char and t:sub(i+1, i+1) == protect_char then
-      i = i + 1
-    elseif t:sub(i, i+#feat_marker-1) == feat_marker then
+    if t:sub(i, i+#separators.feat_marker-1) == separators.feat_marker then
       p = i
       break
     end
     tok = tok .. t:sub(i, i)
     i = i + 1
   end
-  if tok:sub(1,#sep_marker) == sep_marker then
-    tok = tok:sub(1+#sep_marker)
+  if tok:sub(1,#separators.sep_marker) == separators.sep_marker then
+    tok = tok:sub(1+#separators.sep_marker)
     leftsep = true
   end
-  if tok:sub(-#sep_marker,-1) == sep_marker then
-    tok = tok:sub(1,-#sep_marker-1)
+  if tok:sub(-#separators.sep_marker,-1) == separators.sep_marker then
+    tok = tok:sub(1,-#separators.sep_marker-1)
     rightsep = true
   end
   if p then
-    p = p + #feat_marker
+    p = p + #separators.feat_marker
     local j = p
     while j <= #t do
-      if t[j] == protect_char and t[j+1] == protect_char then
-        j = j + 1
-      elseif t:sub(j, j+#feat_marker-1) == feat_marker then
+      if t:sub(j, j+#separators.feat_marker-1) == separators.feat_marker then
         table.insert(feats, t:sub(p, j-1))
-        j = j + #feat_marker - 1
+        j = j + #separators.feat_marker - 1
         p = j + 1
       end
       j = j + 1
