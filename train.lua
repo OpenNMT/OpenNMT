@@ -1,7 +1,7 @@
 require('onmt.init')
 
 local path = require('pl.path')
-
+local tds = require('tds')
 local cmd = torch.CmdLine()
 
 cmd:text("")
