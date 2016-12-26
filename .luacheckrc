@@ -3,7 +3,8 @@ globals = {
   "cutorch",
   "nn",
   "cudnn",
-  "onmt"
+  "onmt",
+  "tds"
 }
 
 self = false
