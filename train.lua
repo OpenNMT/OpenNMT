@@ -306,7 +306,7 @@ local function trainModel(model, trainData, validData, dataset, info)
 
             while true do
               -- do not process more than 1000 batches (TODO - make option) in one shot
-              if counter:get()-start_counter >= 1000 then return end
+              if counter:get()-start_counter >= 1000 then return loss_thread, batch_thread end
               local i = counter:inc()
               if i > trainData:batchCount() then return loss_thread, batch_thread end
 
