@@ -167,7 +167,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     local verbose = idx == 1 and not opt.json_log
 
     _G.params, _G.gradParams = initParams(_G.model, verbose)
-    print('***idx',_G.params[1]:size())
+    print('***idx',idx,_G.params[1]:size(),_G.params[2]:size())
     for _, mod in pairs(_G.model) do
       mod:training()
     end
@@ -188,8 +188,6 @@ local function trainModel(model, trainData, validData, dataset, info)
     if idx == 1 then criterion = thecriterion end
     params[idx] = theparams
   end)
-
-  print('***global 1', params[1][1]:size())
 
   local optim = onmt.train.Optim.new({
     method = opt.optim,
