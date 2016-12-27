@@ -95,7 +95,15 @@ local function initParams(model, verbose)
     print('Initializing parameters...')
   end
 
-  for _, mod in pairs(model) do
+  -- orders the model table because we need all replica to have the same order
+  local orderedIndex = {}
+  for key in pairs(model) do
+    table.insert( orderedIndex, key )
+  end
+  table.sort( orderedIndex )
+
+  for _, key in ipairs(orderedIndex) do
+    local mod = model[key]
     local p, gp = mod:getParameters()
 
     if opt.train_from:len() == 0 then
