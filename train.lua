@@ -74,6 +74,7 @@ cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when
 cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
                             Note: this will technically change the final batch size to max_batch_size*nparallel.]])
 cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
+cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
                                                 except if you want to look inside clones for visualization purpose for instance.]])
@@ -301,9 +302,9 @@ local function trainModel(model, trainData, validData, dataset, info)
           onmt.utils.Parallel.launch(nil, function(idx)
             -- first GPU is only used for master parameters
             -- use 1 GPU only for 1000 first batch
-            if idx == 1 or (idx>2 and epoch ==1 and counter:get()<1000) then return end
+            if idx == 1 or (idx>2 and epoch ==1 and counter:get()<opt.async_parallel_minbatch) then return end
 
-            local batch_thread = { size=1, sourceLength=0, targetLength=0, targetNonZeros=0}
+            local batch_thread = { size=1, sourceLength=0, targetLength=0, targetNonZeros=0 }
             local loss_thread = 0
 
             while true do
@@ -343,8 +344,10 @@ local function trainModel(model, trainData, validData, dataset, info)
               loss_thread = loss_thread + loss
             end
           end,
-        function(theloss,thebatch)
-          if theloss then epochState:update(theloss, thebatch) end
+        function(theloss, thebatch)
+          if theloss then
+            epochState:update(thebatch, theloss)
+          end
         end)
 
         if opt.report_every > 0 then
