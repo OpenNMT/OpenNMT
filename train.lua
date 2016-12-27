@@ -204,7 +204,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     local batchOrder
 
     local startI = opt.start_iteration
-    local numIterations = math.ceil(trainData:batchCount() / onmt.utils.Parallel.count)
+    local numIterations = trainData:batchCount()
 
     if startI > 1 and info ~= nil then
       epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate(), lastValidPpl, info.epochStatus)
@@ -223,7 +223,8 @@ local function trainModel(model, trainData, validData, dataset, info)
 
       onmt.utils.Parallel.launch(nil, function(idx)
         -- first GPU is only used for master parameters
-        if idx == 1 then return end
+        -- use 1 GPU only for 1000 first batch
+        if idx == 1 or (idx>2 and epoch ==1 and onmt.utils.Parallel.atomic - base_idx+startI<1000) then return end
 
         local iter = 1
 
