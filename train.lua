@@ -272,9 +272,7 @@ local function trainModel(model, trainData, validData, dataset, info)
           optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
 
           -- add up gradParams to params and sync back to this thread
-          --mutex.lock()
           onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, master_gpu, gmutex_id)
-          --mutex.unlock()
 
           batch_thread.sourceLength = batch_thread.sourceLength+_G.batch.sourceLength*_G.batch.size
           batch_thread.targetLength = batch_thread.targetLength+_G.batch.targetLength*_G.batch.size
