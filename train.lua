@@ -217,65 +217,134 @@ local function trainModel(model, trainData, validData, dataset, info)
     end
 
     opt.start_iteration = 1
-    local iter = 1
 
-    for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
-      local batches = {}
-      local totalSize = 0
+    if not opt.async_parallel then
+      local iter = 1
+      for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
+        local batches = {}
+        local totalSize = 0
 
-      for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount()-i+1) do
-        local batchIdx = batchOrder[i+j-1]
-        if epoch <= opt.curriculum then
-          batchIdx = i+j-1
-        end
-        table.insert(batches, trainData:getBatch(batchIdx))
-        totalSize = totalSize + batches[#batches].size
-      end
-
-      local losses = {}
-
-      onmt.utils.Parallel.launch(nil, function(idx)
-        _G.batch = batches[idx]
-        if _G.batch == nil then
-          return idx, 0
+        for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount()-i+1) do
+          local batchIdx = batchOrder[i+j-1]
+          if epoch <= opt.curriculum then
+            batchIdx = i+j-1
+          end
+          table.insert(batches, trainData:getBatch(batchIdx))
+          totalSize = totalSize + batches[#batches].size
         end
 
-        -- send batch data to GPU
-        onmt.utils.Cuda.convert(_G.batch)
-        _G.batch.totalSize = totalSize
+        local losses = {}
 
-        optim:zeroGrad(_G.gradParams)
+        onmt.utils.Parallel.launch(nil, function(idx)
+          _G.batch = batches[idx]
+          if _G.batch == nil then
+            return idx, 0
+          end
 
-        local encStates, context = _G.model.encoder:forward(_G.batch)
-        local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
+          -- send batch data to GPU
+          onmt.utils.Cuda.convert(_G.batch)
+          _G.batch.totalSize = totalSize
 
-        local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
-        _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
-        return idx, loss
-      end,
-      function(idx, loss) losses[idx]=loss end)
+          optim:zeroGrad(_G.gradParams)
 
-      -- accumulate the gradients from the different parallel threads
-      onmt.utils.Parallel.accGradParams(gradParams, batches)
+          local encStates, context = _G.model.encoder:forward(_G.batch)
+          local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
 
-      -- update the parameters
-      optim:prepareGrad(gradParams[1], opt.max_grad_norm)
-      optim:updateParams(params[1], gradParams[1])
+          local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
+          _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+          return idx, loss
+        end,
+        function(idx, loss) losses[idx]=loss end)
 
-      -- sync the paramaters with the different parallel threads
-      onmt.utils.Parallel.syncParams(params)
+        -- accumulate the gradients from the different parallel threads
+        onmt.utils.Parallel.accGradParams(gradParams, batches)
 
-      for i = 1,#batches do
-        epochState:update(batches[i], losses[i])
+        -- update the parameters
+        optim:prepareGrad(gradParams[1], opt.max_grad_norm)
+        optim:updateParams(params[1], gradParams[1])
+
+        -- sync the paramaters with the different parallel threads
+        onmt.utils.Parallel.syncParams(params)
+
+        for bi = 1,#batches do
+          epochState:update(batches[bi], losses[bi])
+        end
+
+        if iter % opt.report_every == 0 then
+          epochState:log(iter, opt.json_log)
+        end
+        if opt.save_every > 0 and iter % opt.save_every == 0 then
+          checkpoint:saveIteration(iter, epochState, batchOrder, not opt.json_log)
+        end
+        iter = iter + 1
       end
+    else
+        local counter = onmt.utils.Parallel.getCounter()
+        counter:set(startI)
+        local master_gpu = onmt.utils.Parallel.gpus[1]
+        local gradBuffer = onmt.utils.Parallel.gradBuffer
+        local gmutex_id = onmt.utils.Parallel.gmutexId()
 
-      if iter % opt.report_every == 0 then
-        epochState:log(iter, opt.json_log)
+        while counter:get() <= trainData:batchCount() do
+          local start_counter = counter:get()
+
+          onmt.utils.Parallel.launch(nil, function(idx)
+            -- first GPU is only used for master parameters
+            -- use 1 GPU only for 1000 first batch
+            if idx == 1 or (idx>2 and epoch ==1 and counter:get()<1000) then return end
+
+            local batch_thread = { size=1, sourceLength=0, targetLength=0, targetNonZeros=0}
+            local loss_thread = 0
+
+            while true do
+              -- do not process more than 1000 batches (TODO - make option) in one shot
+              if counter:get()-start_counter >= 1000 then return end
+              local i = counter:inc()
+              if i > trainData:batchCount() then return loss_thread, batch_thread end
+
+              local batchIdx = batchOrder[i]
+              if epoch <= opt.curriculum then
+                batchIdx = i
+              end
+
+              _G.batch = trainData:getBatch(batchIdx)
+
+              -- send batch data to GPU
+              onmt.utils.Cuda.convert(_G.batch)
+              _G.batch.totalSize = _G.batch.size
+
+              optim:zeroGrad(_G.gradParams)
+
+              local encStates, context = _G.model.encoder:forward(_G.batch)
+              local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
+
+              local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
+              _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+
+              -- update the parameters
+              optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
+
+              -- add up gradParams to params and sync back to this thread
+              onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, master_gpu, gmutex_id)
+
+              batch_thread.sourceLength = batch_thread.sourceLength+_G.batch.sourceLength*_G.batch.size
+              batch_thread.targetLength = batch_thread.targetLength+_G.batch.targetLength*_G.batch.size
+              batch_thread.targetNonZeros = batch_thread.targetNonZeros+_G.batch.targetNonZeros
+              loss_thread = loss_thread + loss
+            end
+          end,
+        function(theloss,thebatch)
+          if theloss then epochState:update(theloss, thebatch) end
+        end)
+
+        if opt.report_every > 0 then
+          epochState:log(counter:get(), opt.json_log)
+        end
+        if opt.save_every > 0 then
+          checkpoint:saveIteration(counter:get(), epochState, batchOrder, not opt.json_log)
+        end
+
       end
-      if opt.save_every > 0 and iter % opt.save_every == 0 then
-        checkpoint:saveIteration(iter, epochState, batchOrder, not opt.json_log)
-      end
-      iter = iter + 1
     end
 
     return epochState
@@ -377,7 +446,7 @@ local function main()
     print(string.format(' * maximum sequence length: source = %d; target = %d',
                         trainData.maxSourceLength, trainData.maxTargetLength))
     print(string.format(' * number of training sentences: %d', #trainData.src))
-    print(string.format(' * maximum batch size: %d', opt.max_batch_size * onmt.utils.Parallel.count))
+    print(string.format(' * maximum batch size: %d', opt.max_batch_size))
   else
     local metadata = {
       options = opt,
