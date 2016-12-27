@@ -224,7 +224,7 @@ local function trainModel(model, trainData, validData, dataset, info)
       onmt.utils.Parallel.launch(nil, function(idx)
         -- first GPU is only used for master parameters
         -- use 1 GPU only for 1000 first batch
-        if idx == 1 or (idx>2 and epoch ==1 and onmt.utils.Parallel.atomic - base_idx+startI<1000) then return end
+        if idx == 1 or (idx>2 and epoch ==1 and onmt.utils.Parallel.atomic:get() - base_idx+startI<1000) then return end
 
         local iter = 1
 
