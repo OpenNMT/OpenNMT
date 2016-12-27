@@ -167,6 +167,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     local verbose = idx == 1 and not opt.json_log
 
     _G.params, _G.gradParams = initParams(_G.model, verbose)
+    print('***idx',_G.params[1]:size())
     for _, mod in pairs(_G.model) do
       mod:training()
     end
@@ -187,6 +188,8 @@ local function trainModel(model, trainData, validData, dataset, info)
     if idx == 1 then criterion = thecriterion end
     params[idx] = theparams
   end)
+
+  print('***global 1', params[1][1]:size())
 
   local optim = onmt.train.Optim.new({
     method = opt.optim,
@@ -217,22 +220,28 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     opt.start_iteration = 1
 
-    local base_idx = onmt.utils.Parallel.atomic:inc()
+    local counter = onmt.utils.Parallel.getCounter()
+    counter:set(startI)
+    local master_gpu = onmt.utils.Parallel.gpus[1]
+    local gradBuffer = onmt.utils.Parallel.gradBuffer
+    local gmutex_id = onmt.utils.Parallel.gmutexId()
 
-    while onmt.utils.Parallel.atomic - base_idx + startI -1 <= trainData:batchCount() do
+    while counter:get() <= trainData:batchCount() do
+      local start_counter = counter:get()
 
       onmt.utils.Parallel.launch(nil, function(idx)
         -- first GPU is only used for master parameters
         -- use 1 GPU only for 1000 first batch
-        if idx == 1 or (idx>2 and epoch ==1 and onmt.utils.Parallel.atomic:get() - base_idx+startI<1000) then return end
+        if idx == 1 or (idx>2 and epoch ==1 and counter:get()<1000) then return end
 
-        local iter = 1
+        local batch_thread = { size=1, sourceLength=0, targetLength=0, targetNonZeros=0}
+        local loss_thread = 0
 
         while true do
           -- do not process more than 1000 batches (TODO - make option) in one shot
-          if onmt.utils.Parallel.atomic - base_idx > 1000 then return end
-          local i = onmt.utils.Parallel.atomic:inc() - base_idx + startI -1
-          if i > trainData:batchCount() then return end
+          if counter:get()-start_counter >= 1000 then return end
+          local i = counter:inc()
+          if i > trainData:batchCount() then return loss_thread, batch_thread end
 
           local batchIdx = batchOrder[i]
           if epoch <= opt.curriculum then
@@ -257,17 +266,18 @@ local function trainModel(model, trainData, validData, dataset, info)
           optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
 
           -- add up gradParams to params and sync back to this thread
-          onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params)
+          --mutex.lock()
+          onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, master_gpu, gmutex_id)
+          --mutex.unlock()
 
-          -- second thread only reports on loss
-          if idx == 2 then
-            epochState:update(_G.batch, loss)
-            if iter % opt.report_every == 0 then
-              epochState:log(iter, opt.json_log)
-            end
-            iter = iter + 1
-          end
+          batch_thread.sourceLength = batch_thread.sourceLength+_G.batch.sourceLength*_G.batch.size
+          batch_thread.targetLength = batch_thread.targetLength+_G.batch.targetLength*_G.batch.size
+          batch_thread.targetNonZeros = batch_thread.targetNonZeros+_G.batch.targetNonZeros
+          loss_thread = loss_thread + loss
         end
+      end,
+      function(theloss,thebatch)
+        if theloss then epochState:update(theloss, thebatch) end
       end)
     end
 
@@ -366,7 +376,7 @@ local function main()
     print(string.format(' * maximum sequence length: source = %d; target = %d',
                         trainData.maxSourceLength, trainData.maxTargetLength))
     print(string.format(' * number of training sentences: %d', #trainData.src))
-    print(string.format(' * maximum batch size: %d', opt.max_batch_size * onmt.utils.Parallel.count))
+    print(string.format(' * maximum batch size: %d', opt.max_batch_size ))
   else
     local metadata = {
       options = opt,
