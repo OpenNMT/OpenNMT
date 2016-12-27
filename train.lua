@@ -175,7 +175,6 @@ local function trainModel(model, trainData, validData, dataset, info)
     local verbose = idx == 1 and not opt.json_log
 
     _G.params, _G.gradParams = initParams(_G.model, verbose)
-    print('***idx',idx,_G.params[1]:size(),_G.params[2]:size())
     for _, mod in pairs(_G.model) do
       mod:training()
     end
@@ -283,6 +282,15 @@ local function trainModel(model, trainData, validData, dataset, info)
       function(theloss,thebatch)
         if theloss then epochState:update(theloss, thebatch) end
       end)
+
+      if opt.report_every > 0 then
+        epochState:log(counter:get(), opt.json_log)
+      end
+      if opt.save_every > 0 then
+        checkpoint:saveIteration(counter:get(), epochState, batchOrder, not opt.json_log)
+      end
+
+
     end
 
     return epochState
