@@ -265,7 +265,9 @@ local function trainModel(model, trainData, validData, dataset, info)
       -- sync the paramaters with the different parallel threads
       onmt.utils.Parallel.syncParams(params)
 
-      epochState:update(batches, losses)
+      for i = 1,#batches do
+        epochState:update(batches[i], losses[i])
+      end
 
       if iter % opt.report_every == 0 then
         epochState:log(iter, opt.json_log)
