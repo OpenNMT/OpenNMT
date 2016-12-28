@@ -196,10 +196,11 @@ local function translateBatch(batch)
     local inputs
     if #inputFeatures == 0 then
       inputs = input
+    elseif #inputFeatures == 1 then
+      inputs = { input, inputFeatures[1] }
     else
-      inputs = {}
-      table.insert(inputs, input)
-      onmt.utils.Table.append(inputs, inputFeatures)
+      inputs = { input }
+      table.insert(inputs, inputFeatures)
     end
 
     if batch.size > 1 then

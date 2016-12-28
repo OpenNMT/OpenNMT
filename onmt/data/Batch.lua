@@ -194,15 +194,24 @@ function Batch:setTargetOutput(targetOutput)
   return self
 end
 
+local function addInputFeatures(inputs, featuresSeq, t)
+  local features = {}
+  for j = 1, #featuresSeq do
+    table.insert(features, featuresSeq[j][t])
+  end
+  if #features > 1 then
+    table.insert(inputs, features)
+  else
+    onmt.utils.Table.append(inputs, features)
+  end
+end
 
 --[[ Get source input batch at timestep `t`. --]]
 function Batch:getSourceInput(t)
   -- If a regular input, return word id, otherwise a table with features.
   if #self.sourceInputFeatures > 0 then
     local inputs = {self.sourceInput[t]}
-    for j = 1, #self.sourceInputFeatures do
-      table.insert(inputs, self.sourceInputFeatures[j][t])
-    end
+    addInputFeatures(inputs, self.sourceInputFeatures, t)
     return inputs
   else
     return self.sourceInput[t]
@@ -214,9 +223,7 @@ function Batch:getTargetInput(t)
   -- If a regular input, return word id, otherwise a table with features.
   if #self.targetInputFeatures > 0 then
     local inputs = {self.targetInput[t]}
-    for j = 1, #self.targetInputFeatures do
-      table.insert(inputs, self.targetInputFeatures[j][t])
-    end
+    addInputFeatures(inputs, self.targetInputFeatures, t)
     return inputs
   else
     return self.targetInput[t]
