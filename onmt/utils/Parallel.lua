@@ -34,7 +34,7 @@ function Parallel.init(opt)
     Parallel.count = opt.nparallel
     Parallel.gpus = onmt.utils.Cuda.getGPUs(opt.nparallel)
     Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
-    Parallel._tds = require 'tds'
+    Parallel._tds = require('tds')
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
       local threads = require('threads')
@@ -126,7 +126,7 @@ end
 
 -- [[ In async mode, sync the parameters from all replica to master replica. ]]
 function Parallel.updateAndSync(master_params, replica_gradParams, replica_params, gradBuffer, master_gpu, gmutex_id)
-  -- add a mutex to avoid competition while accessing shared buffer and while updating parameters
+  -- Add a mutex to avoid competition while accessing shared buffer and while updating parameters.
   local mutex = _G.threads.Mutex(gmutex_id)
   mutex:lock()
   local device = cutorch.getDevice()

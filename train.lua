@@ -97,12 +97,12 @@ local function initParams(model, verbose)
     print('Initializing parameters...')
   end
 
-  -- orders the model table because we need all replica to have the same order
+  -- Order the model table because we need all replicas to have the same order.
   local orderedIndex = {}
   for key in pairs(model) do
-    table.insert( orderedIndex, key )
+    table.insert(orderedIndex, key)
   end
-  table.sort( orderedIndex )
+  table.sort(orderedIndex)
 
   for _, key in ipairs(orderedIndex) do
     local mod = model[key]
@@ -216,8 +216,8 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     local startI = opt.start_iteration
 
-    -- if parallel mode, number of iterations is reduced
     local numIterations = trainData:batchCount()
+    -- In parallel mode, number of iterations is reduced to reflect larger batch size.
     if onmt.utils.Parallel.count > 1 and not opt.async_parallel then
       numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
     end
@@ -227,7 +227,7 @@ local function trainModel(model, trainData, validData, dataset, info)
       batchOrder = info.batchOrder
     else
       epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate(), lastValidPpl)
-      -- shuffle mini batch order
+      -- Shuffle mini batch order.
       batchOrder = torch.randperm(trainData:batchCount())
     end
 
@@ -251,10 +251,10 @@ local function trainModel(model, trainData, validData, dataset, info)
         local batches = {}
         local totalSize = 0
 
-        for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount()-i+1) do
-          local batchIdx = batchOrder[i+j-1]
+        for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount() - i + 1) do
+          local batchIdx = batchOrder[i + j - 1]
           if epoch <= opt.curriculum then
-            batchIdx = i+j-1
+            batchIdx = i + j - 1
           end
           table.insert(batches, trainData:getBatch(batchIdx))
           totalSize = totalSize + batches[#batches].size
@@ -268,25 +268,28 @@ local function trainModel(model, trainData, validData, dataset, info)
             return idx, 0
           end
 
-          -- send batch data to GPU
+          -- Send batch data to the GPU.
           onmt.utils.Cuda.convert(_G.batch)
           _G.batch.totalSize = totalSize
           local loss = trainNetwork()
+
           return idx, loss
         end,
-        function(idx, loss) losses[idx]=loss end)
+        function(idx, loss)
+          losses[idx]=loss
+        end)
 
-        -- accumulate the gradients from the different parallel threads
+        -- Accumulate the gradients from the different parallel threads.
         onmt.utils.Parallel.accGradParams(gradParams, batches)
 
-        -- update the parameters
+        -- Update the parameters.
         optim:prepareGrad(gradParams[1], opt.max_grad_norm)
         optim:updateParams(params[1], gradParams[1])
 
-        -- sync the paramaters with the different parallel threads
+        -- Synchronize the parameters with the different parallel threads.
         onmt.utils.Parallel.syncParams(params)
 
-        for bi = 1,#batches do
+        for bi = 1, #batches do
           epochState:update(batches[bi], losses[bi])
         end
 
@@ -299,29 +302,41 @@ local function trainModel(model, trainData, validData, dataset, info)
         iter = iter + 1
       end
     else
-      -- asynchronous parallel
+      -- Asynchronous parallel.
       local counter = onmt.utils.Parallel.getCounter()
       counter:set(startI)
-      local master_gpu = onmt.utils.Parallel.gpus[1]
+      local masterGPU = onmt.utils.Parallel.gpus[1]
       local gradBuffer = onmt.utils.Parallel.gradBuffer
-      local gmutex_id = onmt.utils.Parallel.gmutexId()
+      local gmutexId = onmt.utils.Parallel.gmutexId()
 
       while counter:get() <= trainData:batchCount() do
-        local start_counter = counter:get()
+        local startCounter = counter:get()
 
         onmt.utils.Parallel.launch(nil, function(idx)
-          -- first GPU is only used for master parameters
-          -- use 1 GPU only for 1000 first batch
-          if idx == 1 or (idx>2 and epoch ==1 and counter:get()<opt.async_parallel_minbatch) then return end
+          -- First GPU is only used for master parameters.
+          -- Use 1 GPU only for 1000 first batch.
+          if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < opt.async_parallel_minbatch) then
+            return
+          end
 
-          local batch_thread = { size=1, sourceLength=0, targetLength=0, targetNonZeros=0 }
-          local loss_thread = 0
+          local lossThread = 0
+          local batchThread = {
+            size = 1,
+            sourceLength = 0,
+            targetLength = 0,
+            targetNonZeros = 0
+          }
 
           while true do
-            -- do not process more than 1000 batches (TODO - make option) in one shot
-            if counter:get()-start_counter >= 1000 then return loss_thread, batch_thread end
+            -- Do not process more than 1000 batches (TODO - make option) in one shot.
+            if counter:get() - startCounter >= 1000 then
+              return lossThread, batchThread
+            end
+
             local i = counter:inc()
-            if i > trainData:batchCount() then return loss_thread, batch_thread end
+            if i > trainData:batchCount() then
+              return lossThread, batchThread
+            end
 
             local batchIdx = batchOrder[i]
             if epoch <= opt.curriculum then
@@ -330,21 +345,21 @@ local function trainModel(model, trainData, validData, dataset, info)
 
             _G.batch = trainData:getBatch(batchIdx)
 
-            -- send batch data to GPU
+            -- Send batch data to the GPU.
             onmt.utils.Cuda.convert(_G.batch)
             _G.batch.totalSize = _G.batch.size
             local loss = trainNetwork()
 
-            -- update the parameters
+            -- Update the parameters.
             optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
 
-            -- add up gradParams to params and sync back to this thread
-            onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, master_gpu, gmutex_id)
+            -- Add up gradParams to params and synchronize back to this thread.
+            onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
 
-            batch_thread.sourceLength = batch_thread.sourceLength+_G.batch.sourceLength*_G.batch.size
-            batch_thread.targetLength = batch_thread.targetLength+_G.batch.targetLength*_G.batch.size
-            batch_thread.targetNonZeros = batch_thread.targetNonZeros+_G.batch.targetNonZeros
-            loss_thread = loss_thread + loss
+            batchThread.sourceLength = batchThread.sourceLength + _G.batch.sourceLength * _G.batch.size
+            batchThread.targetLength = batchThread.targetLength + _G.batch.targetLength * _G.batch.size
+            batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
+            lossThread = lossThread + loss
           end
         end,
         function(theloss, thebatch)
