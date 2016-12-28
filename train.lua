@@ -215,7 +215,12 @@ local function trainModel(model, trainData, validData, dataset, info)
     local batchOrder
 
     local startI = opt.start_iteration
-    local numIterations = math.ceil(trainData:batchCount() / onmt.utils.Parallel.count)
+
+    -- if parallel mode, number of iterations is reduced
+    local numIterations = trainData:batchCount()
+    if onmt.utils.Parallel.count > 1 and not opt.async_parallel then
+      numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
+    end
 
     if startI > 1 and info ~= nil then
       epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate(), lastValidPpl, info.epochStatus)
