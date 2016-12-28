@@ -86,8 +86,13 @@ end
 
 --[[ Return data to serialize. ]]
 function BiEncoder:serialize()
+  local modulesData = {}
+  for i = 1, #self.modules do
+    table.insert(modulesData, self.modules[i]:serialize())
+  end
+
   return {
-    modules = self.modules,
+    modules = modulesData,
     args = self.args
   }
 end
