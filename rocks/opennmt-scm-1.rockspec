@@ -64,6 +64,7 @@ build = {
     ["onmt.utils.Log"] = "onmt/utils/Log.lua",
     ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",
     ["onmt.utils.Memory"] = "onmt/utils/Memory.lua",
+    ["onmt.utils.MemoryOptimizer"] = "onmt/utils/MemoryOptimizer.lua",
     ["onmt.utils.Opt"] = "onmt/utils/Opt.lua",
     ["onmt.utils.Parallel"] = "onmt/utils/Parallel.lua",
     ["onmt.utils.String"] = "onmt/utils/String.lua",

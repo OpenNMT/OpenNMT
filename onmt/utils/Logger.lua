@@ -2,7 +2,7 @@
 --]]
 local Logger = torch.class('Logger')
 
---[[ Construct a onmt.Logger object.
+--[[ Construct a Logger object.
 
 Parameters:
   * `logPath` - the path to log file. If left blank, then output log to stdout.
