@@ -124,6 +124,7 @@ function Parallel.accGradParams(gradParams, batches)
   end
 end
 
+-- [[ In async mode, sync the parameters from all replica to master replica. ]]
 function Parallel.updateAndSync(master_params, replica_gradParams, replica_params, gradBuffer, master_gpu, gmutex_id)
   -- add a mutex to avoid competition while accessing shared buffer and while updating parameters
   local mutex = _G.threads.Mutex(gmutex_id)
