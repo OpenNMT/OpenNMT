@@ -233,6 +233,18 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     opt.start_iteration = 1
 
+    local function trainNetwork()
+      optim:zeroGrad(_G.gradParams)
+
+      local encStates, context = _G.model.encoder:forward(_G.batch)
+      local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
+
+      local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
+      _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+
+      return loss
+    end
+
     if not opt.async_parallel then
       local iter = 1
       for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
@@ -259,14 +271,7 @@ local function trainModel(model, trainData, validData, dataset, info)
           -- send batch data to GPU
           onmt.utils.Cuda.convert(_G.batch)
           _G.batch.totalSize = totalSize
-
-          optim:zeroGrad(_G.gradParams)
-
-          local encStates, context = _G.model.encoder:forward(_G.batch)
-          local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
-
-          local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
-          _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+          local loss = trainNetwork()
           return idx, loss
         end,
         function(idx, loss) losses[idx]=loss end)
@@ -328,14 +333,7 @@ local function trainModel(model, trainData, validData, dataset, info)
             -- send batch data to GPU
             onmt.utils.Cuda.convert(_G.batch)
             _G.batch.totalSize = _G.batch.size
-
-            optim:zeroGrad(_G.gradParams)
-
-            local encStates, context = _G.model.encoder:forward(_G.batch)
-            local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
-
-            local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
-            _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+            local loss = trainNetwork()
 
             -- update the parameters
             optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
