@@ -102,6 +102,12 @@ local function initParams(model, verbose)
       p:uniform(-opt.param_init, opt.param_init)
     end
 
+    mod:apply(function (m)
+      if m.postParametersInitialization then
+        m:postParametersInitialization()
+      end
+    end)
+
     numParams = numParams + p:size(1)
     table.insert(params, p)
     table.insert(gradParams, gp)
