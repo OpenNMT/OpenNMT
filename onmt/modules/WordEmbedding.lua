@@ -29,6 +29,10 @@ function WordEmbedding:__init(vocabSize, vecSize, preTrained, fix)
   end
 end
 
+function WordEmbedding:postParametersInitialization()
+  self.net.weight[onmt.Constants.PAD]:zero()
+end
+
 function WordEmbedding:updateOutput(input)
   self.output = self.net:updateOutput(input)
   return self.output
@@ -41,6 +45,7 @@ end
 function WordEmbedding:accGradParameters(input, gradOutput, scale)
   if not self.fix then
     self.net:accGradParameters(input, gradOutput, scale)
+    self.net.gradWeight[onmt.Constants.PAD]:zero()
   end
 end
 
