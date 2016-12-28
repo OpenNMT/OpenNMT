@@ -294,61 +294,61 @@ local function trainModel(model, trainData, validData, dataset, info)
         iter = iter + 1
       end
     else
-        -- asynchronous parallel
-        local counter = onmt.utils.Parallel.getCounter()
-        counter:set(startI)
-        local master_gpu = onmt.utils.Parallel.gpus[1]
-        local gradBuffer = onmt.utils.Parallel.gradBuffer
-        local gmutex_id = onmt.utils.Parallel.gmutexId()
+      -- asynchronous parallel
+      local counter = onmt.utils.Parallel.getCounter()
+      counter:set(startI)
+      local master_gpu = onmt.utils.Parallel.gpus[1]
+      local gradBuffer = onmt.utils.Parallel.gradBuffer
+      local gmutex_id = onmt.utils.Parallel.gmutexId()
 
-        while counter:get() <= trainData:batchCount() do
-          local start_counter = counter:get()
+      while counter:get() <= trainData:batchCount() do
+        local start_counter = counter:get()
 
-          onmt.utils.Parallel.launch(nil, function(idx)
-            -- first GPU is only used for master parameters
-            -- use 1 GPU only for 1000 first batch
-            if idx == 1 or (idx>2 and epoch ==1 and counter:get()<opt.async_parallel_minbatch) then return end
+        onmt.utils.Parallel.launch(nil, function(idx)
+          -- first GPU is only used for master parameters
+          -- use 1 GPU only for 1000 first batch
+          if idx == 1 or (idx>2 and epoch ==1 and counter:get()<opt.async_parallel_minbatch) then return end
 
-            local batch_thread = { size=1, sourceLength=0, targetLength=0, targetNonZeros=0 }
-            local loss_thread = 0
+          local batch_thread = { size=1, sourceLength=0, targetLength=0, targetNonZeros=0 }
+          local loss_thread = 0
 
-            while true do
-              -- do not process more than 1000 batches (TODO - make option) in one shot
-              if counter:get()-start_counter >= 1000 then return loss_thread, batch_thread end
-              local i = counter:inc()
-              if i > trainData:batchCount() then return loss_thread, batch_thread end
+          while true do
+            -- do not process more than 1000 batches (TODO - make option) in one shot
+            if counter:get()-start_counter >= 1000 then return loss_thread, batch_thread end
+            local i = counter:inc()
+            if i > trainData:batchCount() then return loss_thread, batch_thread end
 
-              local batchIdx = batchOrder[i]
-              if epoch <= opt.curriculum then
-                batchIdx = i
-              end
-
-              _G.batch = trainData:getBatch(batchIdx)
-
-              -- send batch data to GPU
-              onmt.utils.Cuda.convert(_G.batch)
-              _G.batch.totalSize = _G.batch.size
-
-              optim:zeroGrad(_G.gradParams)
-
-              local encStates, context = _G.model.encoder:forward(_G.batch)
-              local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
-
-              local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
-              _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
-
-              -- update the parameters
-              optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
-
-              -- add up gradParams to params and sync back to this thread
-              onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, master_gpu, gmutex_id)
-
-              batch_thread.sourceLength = batch_thread.sourceLength+_G.batch.sourceLength*_G.batch.size
-              batch_thread.targetLength = batch_thread.targetLength+_G.batch.targetLength*_G.batch.size
-              batch_thread.targetNonZeros = batch_thread.targetNonZeros+_G.batch.targetNonZeros
-              loss_thread = loss_thread + loss
+            local batchIdx = batchOrder[i]
+            if epoch <= opt.curriculum then
+              batchIdx = i
             end
-          end,
+
+            _G.batch = trainData:getBatch(batchIdx)
+
+            -- send batch data to GPU
+            onmt.utils.Cuda.convert(_G.batch)
+            _G.batch.totalSize = _G.batch.size
+
+            optim:zeroGrad(_G.gradParams)
+
+            local encStates, context = _G.model.encoder:forward(_G.batch)
+            local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
+
+            local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
+            _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+
+            -- update the parameters
+            optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
+
+            -- add up gradParams to params and sync back to this thread
+            onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, master_gpu, gmutex_id)
+
+            batch_thread.sourceLength = batch_thread.sourceLength+_G.batch.sourceLength*_G.batch.size
+            batch_thread.targetLength = batch_thread.targetLength+_G.batch.targetLength*_G.batch.size
+            batch_thread.targetNonZeros = batch_thread.targetNonZeros+_G.batch.targetNonZeros
+            loss_thread = loss_thread + loss
+          end
+        end,
         function(theloss, thebatch)
           if theloss then
             epochState:update(thebatch, theloss)
