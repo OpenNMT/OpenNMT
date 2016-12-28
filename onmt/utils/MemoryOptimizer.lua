@@ -136,7 +136,7 @@ function MemoryOptimizer:__init(modules)
   end
 end
 
---[[ Enable memory optimization by marking tensors to share. Note that the modules must have been initialized 
+--[[ Enable memory optimization by marking tensors to share. Note that the modules must have been initialized
 -- by calling forward() and backward() before calling this function and after calling the MemoryOptimizer constructor.
 
 Returns:
