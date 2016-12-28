@@ -342,8 +342,8 @@ local function main()
       opt.epochs = checkpoint.options.epochs
       opt.curriculum = checkpoint.options.curriculum
 
-      opt.learning_rate = checkpoint.info.learning_rate
-      opt.optim_states = checkpoint.info.optim_states
+      opt.learning_rate = checkpoint.info.learningRate
+      opt.optim_states = checkpoint.info.optimStates
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration
 
