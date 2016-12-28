@@ -26,7 +26,8 @@ cmd:option('-src_vocab', '', [[Path to an existing source vocabulary]])
 cmd:option('-tgt_vocab', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
 
-cmd:option('-seq_length', 50, [[Maximum sequence length]])
+cmd:option('-src_seq_length', 50, [[Maximum source sequence length]])
+cmd:option('-tgt_seq_length', 50, [[Maximum target sequence length]])
 cmd:option('-shuffle', 1, [[Shuffle data]])
 cmd:option('-seed', 3435, [[Random seed]])
 
@@ -185,8 +186,8 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
       break
     end
 
-    if #srcTokens > 0 and #srcTokens <= opt.seq_length
-    and #tgtTokens > 0 and #tgtTokens <= opt.seq_length then
+    if #srcTokens > 0 and #srcTokens <= opt.src_seq_length
+    and #tgtTokens > 0 and #tgtTokens <= opt.tgt_seq_length then
       local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
       local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
 
@@ -245,7 +246,9 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
     tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm, true)
   end
 
-  print('Prepared ' .. #src .. ' sentences (' .. ignored .. ' ignored due to length == 0 or > ' .. opt.seq_length .. ')')
+  print('Prepared ' .. #src .. ' sentences (' .. ignored
+          .. ' ignored due to source length > ' .. opt.src_seq_length
+          .. ' or target length > ' .. opt.tgt_seq_length .. ')')
 
   local srcData = {
     words = src,
