@@ -32,7 +32,15 @@ local function main()
   end
 
   print('Loading model \'' .. opt.model .. '\'...')
-  local checkpoint = torch.load(opt.model)
+
+  local checkpoint
+  local _, err = pcall(function ()
+    checkpoint = torch.load(opt.model)
+  end)
+  if err then
+    error('unable to load the model (' .. err .. '). If you are releasing a GPU model, it needs to be loaded on the GPU first (set -gpuid > 0)')
+  end
+
   print('... done.')
 
   print('Converting model...')
