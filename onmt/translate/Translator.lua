@@ -34,13 +34,8 @@ local function init(args)
   checkpoint = torch.load(opt.model)
 
   models.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder)
-  models.decoder = onmt.Models.loadDecoder(checkpoint.models.decoder)
-
   models.encoder:evaluate()
-  models.decoder:evaluate()
-
   onmt.utils.Cuda.convert(models.encoder)
-  onmt.utils.Cuda.convert(models.decoder)
 
   dicts = checkpoint.dicts
 
