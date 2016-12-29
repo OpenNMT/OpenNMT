@@ -1,26 +1,46 @@
-local function buildEncoder(opt, dicts)
-  local inputNetwork = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
-                                              opt.word_vec_size,
-                                              opt.pre_word_vecs_enc,
-                                              opt.fix_word_vecs_enc)
+local function buildInputNetwork(opt, dicts, pretrainedWords, fixWords)
+  local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
+                                               opt.word_vec_size,
+                                               pretrainedWords,
+                                               fixWords)
 
+  local inputs
   local inputSize = opt.word_vec_size
 
-  -- Sequences with features.
-  if #dicts.features > 0 then
-    local srcFeatEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
-                                                        opt.feat_vec_exponent,
-                                                        opt.feat_vec_size,
-                                                        opt.feat_merge)
+  local multiInputs = #dicts.features > 0
 
-    inputNetwork = nn.Sequential()
-      :add(nn.ParallelTable()
-             :add(inputNetwork)
-             :add(srcFeatEmbedding))
-      :add(nn.JoinTable(2))
-
-    inputSize = inputSize + srcFeatEmbedding.outputSize
+  if multiInputs then
+    inputs = nn.ParallelTable()
+      :add(wordEmbedding)
+  else
+    inputs = wordEmbedding
   end
+
+  -- Sequence with features.
+  if #dicts.features > 0 then
+    local featEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
+                                                     opt.feat_vec_exponent,
+                                                     opt.feat_vec_size,
+                                                     opt.feat_merge)
+    inputs:add(featEmbedding)
+    inputSize = inputSize + featEmbedding.outputSize
+  end
+
+  local inputNetwork
+
+  if multiInputs then
+    inputNetwork = nn.Sequential()
+      :add(inputs)
+      :add(nn.JoinTable(2))
+  else
+    inputNetwork = inputs
+  end
+
+  return inputNetwork, inputSize
+end
+
+local function buildEncoder(opt, dicts)
+  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   if opt.brnn then
     -- Compute rnn hidden size depending on hidden states merge action.
@@ -47,30 +67,11 @@ local function buildEncoder(opt, dicts)
 end
 
 local function buildDecoder(opt, dicts, verbose)
-  local inputNetwork = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
-                                              opt.word_vec_size,
-                                              opt.pre_word_vecs_dec,
-                                              opt.fix_word_vecs_dec)
-
-  local inputSize = opt.word_vec_size
+  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
   local generator
 
-  -- Sequences with features.
   if #dicts.features > 0 then
-    local tgtFeatEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
-                                                        opt.feat_vec_exponent,
-                                                        opt.feat_vec_size,
-                                                        opt.feat_merge)
-
-    inputNetwork = nn.Sequential()
-      :add(nn.ParallelTable()
-             :add(inputNetwork)
-             :add(tgtFeatEmbedding))
-      :add(nn.JoinTable(2))
-
-    inputSize = inputSize + tgtFeatEmbedding.outputSize
-
     generator = onmt.FeaturesGenerator.new(opt.rnn_size, dicts.words:size(), dicts.features)
   else
     generator = onmt.Generator.new(opt.rnn_size, dicts.words:size())
