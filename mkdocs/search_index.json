@@ -392,7 +392,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+WordEmbedding/",
-            "text": "onmt.WordEmbedding\n\n\nnn unit. Maps from word ids to embeddings. Slim wrapper around\nnn.LookupTable to allow fixed and pretrained embeddings.\n\n\n[src]\n\n\n\n\nonmt.WordEmbedding(vocabSize, vecSize, preTrained, fix)\n\n\nParameters:\n\n\n\n\nvocabSize\n - size of the vocabulary\n\n\nvecSize\n - size of the embedding\n\n\npreTrainined\n - path to a pretrained vector file\n\n\nfix\n - keep the weights of the embeddings fixed.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.WordEmbedding:updateOutput(input)\n\n\n\n * \nonmt.WordEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.WordEmbedding:accGradParameters(input, gradOutput, scale)\n\n\n\n * \nonmt.WordEmbedding:parameters()",
+            "text": "onmt.WordEmbedding\n\n\nnn unit. Maps from word ids to embeddings. Slim wrapper around\nnn.LookupTable to allow fixed and pretrained embeddings.\n\n\n[src]\n\n\n\n\nonmt.WordEmbedding(vocabSize, vecSize, preTrained, fix)\n\n\nParameters:\n\n\n\n\nvocabSize\n - size of the vocabulary\n\n\nvecSize\n - size of the embedding\n\n\npreTrainined\n - path to a pretrained vector file\n\n\nfix\n - keep the weights of the embeddings fixed.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.WordEmbedding:postParametersInitialization()\n\n\n\n * \nonmt.WordEmbedding:updateOutput(input)\n\n\n\n * \nonmt.WordEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.WordEmbedding:accGradParameters(input, gradOutput, scale)\n\n\n\n * \nonmt.WordEmbedding:parameters()",
             "title": "onmt+modules+WordEmbedding"
         },
         {
@@ -407,7 +407,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+WordEmbedding/#undocumented-methods",
-            "text": "*  onmt.WordEmbedding:updateOutput(input)  \n *  onmt.WordEmbedding:updateGradInput(input, gradOutput)  \n *  onmt.WordEmbedding:accGradParameters(input, gradOutput, scale)  \n *  onmt.WordEmbedding:parameters()",
+            "text": "*  onmt.WordEmbedding:postParametersInitialization()  \n *  onmt.WordEmbedding:updateOutput(input)  \n *  onmt.WordEmbedding:updateGradInput(input, gradOutput)  \n *  onmt.WordEmbedding:accGradParameters(input, gradOutput, scale)  \n *  onmt.WordEmbedding:parameters()",
             "title": "Undocumented methods"
         },
         {
@@ -437,7 +437,7 @@
         },
         {
             "location": "/code/train/onmt+train+EpochState/",
-            "text": "onmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)\n\n\nInitialize for epoch \nepoch\n and training \nstatus\n (current loss)\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(batches, losses)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last losses.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(batchIndex, json)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:getTrainPpl()\n\n\n\n * \nonmt.EpochState:getTime()\n\n\n\n * \nonmt.EpochState:getStatus()\n\n\n\n * \nonmt.EpochState:getMinFreememory()",
+            "text": "onmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)\n\n\nInitialize for epoch \nepoch\n and training \nstatus\n (current loss)\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(batch, loss)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last loss.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(batchIndex, json)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:getTrainPpl()\n\n\n\n * \nonmt.EpochState:getTime()\n\n\n\n * \nonmt.EpochState:getStatus()\n\n\n\n * \nonmt.EpochState:getMinFreememory()",
             "title": "onmt+train+EpochState"
         },
         {
@@ -451,9 +451,9 @@
             "title": "onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)"
         },
         {
-            "location": "/code/train/onmt+train+EpochState/#onmtepochstateupdatebatches-losses",
-            "text": "Update training status. Takes  batch  (described in data.lua) and last losses.  [src]",
-            "title": "onmt.EpochState:update(batches, losses)"
+            "location": "/code/train/onmt+train+EpochState/#onmtepochstateupdatebatch-loss",
+            "text": "Update training status. Takes  batch  (described in data.lua) and last loss.  [src]",
+            "title": "onmt.EpochState:update(batch, loss)"
         },
         {
             "location": "/code/train/onmt+train+EpochState/#onmtepochstatelogbatchindex-json",

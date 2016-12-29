@@ -363,7 +363,7 @@ h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
 x_1    x_2    x_3           x_n
 </code></pre>
 <p>Inherits from <a href="../onmt+modules+Sequencer">onmt.Sequencer</a>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L29">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L29">[src]</a>
 <a name="onmt.Decoder"></a></p>
 <h3 id="onmtdecoderinputnetwork-rnn-generator-inputfeed">onmt.Decoder(inputNetwork, rnn, generator, inputFeed)</h3>
 <p>Construct a decoder layer.</p>
@@ -374,15 +374,15 @@ x_1    x_2    x_3           x_n
 <li><code>generator</code> - optional, an output <a href="../onmt+modules+Generator">onmt.Generator</a>.</li>
 <li><code>inputFeed</code> - bool, enable input feeding.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L56">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L56">[src]</a>
 <a name="onmt.Decoder.load"></a></p>
 <h3 id="onmtdecoderloadpretrained">onmt.Decoder.load(pretrained)</h3>
 <p>Return a new Decoder using the serialized data <code>pretrained</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L71">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L71">[src]</a>
 <a name="onmt.Decoder:serialize"></a></p>
 <h3 id="onmtdecoderserialize">onmt.Decoder:serialize()</h3>
 <p>Return data to serialize. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L166">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L166">[src]</a>
 <a name="onmt.Decoder:maskPadding"></a></p>
 <h3 id="onmtdecodermaskpaddingsourcesizes-sourcelength-beamsize">onmt.Decoder:maskPadding(sourceSizes, sourceLength, beamSize)</h3>
 <p>Mask padding means that the attention-layer is constrained to
@@ -392,7 +392,7 @@ x_1    x_2    x_3           x_n
 <ul>
 <li>See  <a href="../onmt+modules+MaskedSoftmax">onmt.MaskedSoftmax</a>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L209">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L209">[src]</a>
 <a name="onmt.Decoder:forwardOne"></a></p>
 <h3 id="onmtdecoderforwardoneinput-prevstates-context-prevout-t">onmt.Decoder:forwardOne(input, prevStates, context, prevOut, t)</h3>
 <p>Run one step of the decoder.</p>
@@ -409,7 +409,7 @@ x_1    x_2    x_3           x_n
 <li><code>out</code> - Top-layer hidden state.</li>
 <li><code>states</code> - All states.</li>
 </ol>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L286">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L286">[src]</a>
 <a name="onmt.Decoder:forward"></a></p>
 <h3 id="onmtdecoderforwardbatch-encoderstates-context">onmt.Decoder:forward(batch, encoderStates, context)</h3>
 <p>Compute all forward steps.</p>
@@ -420,7 +420,7 @@ x_1    x_2    x_3           x_n
 <li><code>context</code> - the context to apply attention to.</li>
 </ul>
 <p>Returns: Table of top hidden state for each timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L315">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L315">[src]</a>
 <a name="onmt.Decoder:backward"></a></p>
 <h3 id="onmtdecoderbackwardbatch-outputs-criterion">onmt.Decoder:backward(batch, outputs, criterion)</h3>
 <p>Compute the backward update.</p>
@@ -433,7 +433,7 @@ x_1    x_2    x_3           x_n
 <p>Note: This code runs both the standard backward and criterion forward/backward.
   It returns both the gradInputs and the loss.
   -- </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L378">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L378">[src]</a>
 <a name="onmt.Decoder:computeLoss"></a></p>
 <h3 id="onmtdecodercomputelossbatch-encoderstates-context-criterion">onmt.Decoder:computeLoss(batch, encoderStates, context, criterion)</h3>
 <p>Compute the loss on a batch.</p>
@@ -444,7 +444,7 @@ x_1    x_2    x_3           x_n
 <li><code>context</code> - the attention context.</li>
 <li><code>criterion</code> - a pointwise criterion.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/modules/Decoder.lua#L404">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/modules/Decoder.lua#L404">[src]</a>
 <a name="onmt.Decoder:computeScore"></a></p>
 <h3 id="onmtdecodercomputescorebatch-encoderstates-context">onmt.Decoder:computeScore(batch, encoderStates, context)</h3>
 <p>Compute the score of a batch.</p>

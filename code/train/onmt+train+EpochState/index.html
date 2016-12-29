@@ -208,7 +208,7 @@
                 
                     <li><a class="toctree-l4" href="#onmtepochstateepoch-numiterations-learningrate-lastvalidppl-status">onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</a></li>
+                    <li><a class="toctree-l4" href="#onmtepochstateupdatebatch-loss">onmt.EpochState:update(batch, loss)</a></li>
                 
                     <li><a class="toctree-l4" href="#onmtepochstatelogbatchindex-json">onmt.EpochState:log(batchIndex, json)</a></li>
                 
@@ -340,15 +340,15 @@
 <h2 id="onmtepochstate">onmt.EpochState</h2>
 <p>Class for managing the training process by logging and storing
   the state of the current epoch.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/train/EpochState.lua#L7">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/train/EpochState.lua#L7">[src]</a>
 <a name="onmt.EpochState"></a></p>
 <h3 id="onmtepochstateepoch-numiterations-learningrate-lastvalidppl-status">onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)</h3>
 <p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/train/EpochState.lua#L29">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/train/EpochState.lua#L29">[src]</a>
 <a name="onmt.EpochState:update"></a></p>
-<h3 id="onmtepochstateupdatebatches-losses">onmt.EpochState:update(batches, losses)</h3>
-<p>Update training status. Takes <code>batch</code> (described in data.lua) and last losses.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4bc8a43b79bf7bec18cf449d67650ade2b4d5406/onmt/train/EpochState.lua#L39">[src]</a>
+<h3 id="onmtepochstateupdatebatch-loss">onmt.EpochState:update(batch, loss)</h3>
+<p>Update training status. Takes <code>batch</code> (described in data.lua) and last loss.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/33524905e19440e42b1fa39728485122c12a6e88/onmt/train/EpochState.lua#L37">[src]</a>
 <a name="onmt.EpochState:log"></a></p>
 <h3 id="onmtepochstatelogbatchindex-json">onmt.EpochState:log(batchIndex, json)</h3>
 <p>Log to status stdout. </p>
