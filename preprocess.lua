@@ -219,12 +219,9 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
   srcReader:close()
   tgtReader:close()
 
-  if opt.shuffle == 1 then
-    print('... shuffling sentences')
-    local perm = torch.randperm(#src)
+  local function reorderData(perm)
     src = onmt.utils.Table.reorder(src, perm, true)
     tgt = onmt.utils.Table.reorder(tgt, perm, true)
-    sizes = onmt.utils.Table.reorder(sizes, perm, true)
 
     if #srcDicts.features > 0 then
       srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm, true)
@@ -234,17 +231,16 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
     end
   end
 
+  if opt.shuffle == 1 then
+    print('... shuffling sentences')
+    local perm = torch.randperm(#src)
+    sizes = onmt.utils.Table.reorder(sizes, perm, true)
+    reorderData(perm)
+  end
+
   print('... sorting sentences by size')
   local _, perm = torch.sort(vecToTensor(sizes))
-  src = onmt.utils.Table.reorder(src, perm, true)
-  tgt = onmt.utils.Table.reorder(tgt, perm, true)
-
-  if #srcDicts.features > 0 then
-    srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm, true)
-  end
-  if #tgtDicts.features > 0 then
-    tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm, true)
-  end
+  reorderData(perm)
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored
           .. ' ignored due to source length > ' .. opt.src_seq_length
