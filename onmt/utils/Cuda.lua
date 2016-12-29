@@ -5,6 +5,12 @@ local Cuda = {
   activated = false
 }
 
+function Cuda.declareOpts(cmd)
+  -- GPU
+  cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
+end
+
+
 function Cuda.init(opt, gpuIdx)
   Cuda.activated = opt.gpuid > 0
 

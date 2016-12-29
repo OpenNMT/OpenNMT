@@ -1,3 +1,31 @@
+
+local function declareOpts(cmd)
+  cmd:text("")
+  cmd:text("**Model options**")
+  cmd:text("")
+  
+  cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
+  cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
+  cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
+  cmd:option('-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]])
+  cmd:option('-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
+                                      then the embedding dimension will be set to N^exponent]])
+  cmd:option('-feat_vec_size', 20, [[When using sum, the common embedding size of the features]])
+  cmd:option('-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
+  cmd:option('-residual', false, [[Add residual connections between RNN layers.]])
+  cmd:option('-brnn', false, [[Use a bidirectional encoder]])
+  cmd:option('-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states: concat or sum]])
+  
+  cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
+                                     pretrained word embeddings on the encoder side.
+                                     See README for specific formatting instructions.]])
+  cmd:option('-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
+                                     pretrained word embeddings on the decoder side.
+                                     See README for specific formatting instructions.]])
+  cmd:option('-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]])
+  cmd:option('-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]])
+end
+
 local function buildInputNetwork(opt, dicts, pretrainedWords, fixWords)
   local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
                                                opt.word_vec_size,
@@ -129,9 +157,35 @@ local function loadDecoder(pretrained, clone)
   return onmt.Decoder.load(pretrained)
 end
 
+local function buildCriterion(vocabSize, features)
+  local criterion = nn.ParallelCriterion(false)
+
+  local function addNllCriterion(size)
+    -- Ignores padding value.
+    local w = torch.ones(size)
+    w[onmt.Constants.PAD] = 0
+
+    local nll = nn.ClassNLLCriterion(w)
+
+    -- Let the training code manage loss normalization.
+    nll.sizeAverage = false
+    criterion:add(nll)
+  end
+
+  addNllCriterion(vocabSize)
+
+  for j = 1, #features do
+    addNllCriterion(features[j]:size())
+  end
+
+  return criterion
+end
+
 return {
+  declareOpts = declareOpts,
   buildEncoder = buildEncoder,
   buildDecoder = buildDecoder,
+  buildCriterion = buildCriterion,
   loadEncoder = loadEncoder,
   loadDecoder = loadDecoder
 }

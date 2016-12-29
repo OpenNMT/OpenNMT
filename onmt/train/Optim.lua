@@ -48,6 +48,37 @@ end
 
 local Optim = torch.class("Optim")
 
+
+function Optim.declareOpts(cmd)
+  cmd:text("")
+  cmd:text("**Optimization options**")
+  cmd:text("")
+
+  cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
+  cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
+                                then this is the global learning rate. Recommended settings are: sgd = 1,
+                                adagrad = 0.1, adadelta = 1, adam = 0.0002]])
+  cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm]])
+  cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]])
+  cmd:option('-learning_rate_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
+                                        on the validation set or (ii) epoch has gone past the start_decay_at_limit]])
+  cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
+  cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
+                             sequence length. Sometimes setting this to 1 will increase convergence speed.]])
+end
+
+function Optim.make(numModels, opt)
+  return Optim.new({
+    method = opt.optim,
+    numModels = numModels,
+    learningRate = opt.learning_rate,
+    learningRateDecay = opt.learning_rate_decay,
+    startDecayAt = opt.start_decay_at,
+    optimStates = opt.optim_states
+  })
+end
+
+
 function Optim:__init(args)
   self.valPerf = {}
 
