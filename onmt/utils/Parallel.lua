@@ -76,11 +76,8 @@ function Parallel.getGPU(i)
 end
 
 --[[ Launch function in parallel on different threads. ]]
-function Parallel.launch(label, closure, endcallback)
+function Parallel.launch(closure, endcallback)
   endcallback = endcallback or function() end
-  if label ~= nil then
-    print("START",label)
-  end
   for j = 1, Parallel.count do
     if Parallel._pool == nil then
       endcallback(closure(j))
@@ -90,9 +87,6 @@ function Parallel.launch(label, closure, endcallback)
   end
   if Parallel._pool then
     Parallel._pool:synchronize()
-  end
-  if label ~= nil then
-    print("DONE",label)
   end
 end
 

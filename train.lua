@@ -178,7 +178,7 @@ local function trainModel(model, trainData, validData, dataset, info)
   local params, gradParams = {}, {}
   local criterion
 
-  onmt.utils.Parallel.launch(nil, function(idx)
+  onmt.utils.Parallel.launch(function(idx)
     -- Only logs information of the first thread.
     local verbose = idx == 1 and not opt.json_log
 
@@ -270,7 +270,7 @@ local function trainModel(model, trainData, validData, dataset, info)
 
         local losses = {}
 
-        onmt.utils.Parallel.launch(nil, function(idx)
+        onmt.utils.Parallel.launch(function(idx)
           _G.batch = batches[idx]
           if _G.batch == nil then
             return idx, 0
@@ -320,7 +320,7 @@ local function trainModel(model, trainData, validData, dataset, info)
       while counter:get() <= trainData:batchCount() do
         local startCounter = counter:get()
 
-        onmt.utils.Parallel.launch(nil, function(idx)
+        onmt.utils.Parallel.launch(function(idx)
           -- First GPU is only used for master parameters.
           -- Use 1 GPU only for 1000 first batch.
           if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < opt.async_parallel_minbatch) then
@@ -513,7 +513,7 @@ local function main()
 
   local model
 
-  onmt.utils.Parallel.launch(nil, function(idx)
+  onmt.utils.Parallel.launch(function(idx)
 
     _G.model = {}
 
