@@ -17,7 +17,8 @@ dependencies = {
   "nngraph",
   "tds",
   "threads",
-  "torch >= 7.0"
+  "torch >= 7.0",
+  "penlight"  
 }
 
 
