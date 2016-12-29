@@ -348,7 +348,6 @@ local function translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatc
         info.nBest[n].score = predScore[b][n]
       end
     end
-
     table.insert(infoBatch, info)
   end
 
@@ -358,5 +357,8 @@ end
 return {
   init = init,
   translate = translate,
-  declareOpts = declareOpts
+  declareOpts = declareOpts,
+  buildData = buildData,
+  translateBatch = translateBatch,
+  buildTargetTokens = buildTargetTokens
 }
