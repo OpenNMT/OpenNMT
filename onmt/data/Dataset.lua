@@ -15,6 +15,60 @@ function Dataset:__init(srcData, tgtData)
   end
 end
 
+function Dataset.declareOpts(cmd)
+  cmd:text("")
+  cmd:text("**Data options**")
+  cmd:text("")
+  cmd:option('-data', '', [[Path to the training *-train.t7 file from preprocess.lua]])
+  cmd:option('-max_batch_size', 64, [[Maximum batch size]])
+end
+
+function Dataset.load(opt)
+  -- Create the data loader class.
+  if not opt.json_log then
+    print('Loading data from \'' .. opt.data .. '\'...')
+  end
+
+  local dataset = torch.load(opt.data, 'binary', false)
+
+  local trainData = Dataset.new(dataset.train.src, dataset.train.tgt)
+  local validData = Dataset.new(dataset.valid.src, dataset.valid.tgt)
+
+  trainData:setBatchSize(opt.max_batch_size)
+  validData:setBatchSize(opt.max_batch_size)
+
+  if not opt.json_log then
+    print(string.format(' * vocabulary size: source = %d; target = %d',
+                        dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size()))
+    print(string.format(' * additional features: source = %d; target = %d',
+                        #dataset.dicts.src.features, #dataset.dicts.tgt.features))
+    print(string.format(' * maximum sequence length: source = %d; target = %d',
+                        trainData.maxSourceLength, trainData.maxTargetLength))
+    print(string.format(' * number of training sentences: %d', #trainData.src))
+    print(string.format(' * maximum batch size: %d', opt.max_batch_size))
+  else
+    local metadata = {
+      options = opt,
+      vocabSize = {
+        source = dataset.dicts.src.words:size(),
+        target = dataset.dicts.tgt.words:size()
+      },
+      additionalFeatures = {
+        source = #dataset.dicts.src.features,
+        target = #dataset.dicts.tgt.features
+      },
+      sequenceLength = {
+        source = trainData.maxSourceLength,
+        target = trainData.maxTargetLength
+      },
+      trainingSentences = #trainData.src
+    }
+
+    onmt.utils.Log.logJson(metadata)
+  end
+  return dataset, trainData, validData
+end
+
 --[[ Setup up the training data to respect `maxBatchSize`. ]]
 function Dataset:setBatchSize(maxBatchSize)
 

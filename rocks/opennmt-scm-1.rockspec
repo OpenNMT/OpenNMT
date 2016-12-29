@@ -17,7 +17,8 @@ dependencies = {
   "nngraph",
   "tds",
   "threads",
-  "torch >= 7.0"
+  "torch >= 7.0",
+  "penlight"  
 }
 
 
@@ -52,6 +53,7 @@ build = {
     ["onmt.train.Checkpoint"] = "onmt/train/Checkpoint.lua",
     ["onmt.train.EpochState"] = "onmt/train/EpochState.lua",
     ["onmt.train.Optim"] = "onmt/train/Optim.lua",
+    ["onmt.train.Train"] = "onmt/train/Train.lua",
     ["onmt.translate.init"] = "onmt/translate/init.lua",
     ["onmt.translate.Beam"] = "onmt/translate/Beam.lua",
     ["onmt.translate.Translator"] = "onmt/translate/Translator.lua",
