@@ -35,6 +35,7 @@ function Parallel.init(opt)
     Parallel.gpus = onmt.utils.Cuda.getGPUs(opt.nparallel)
     Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
     Parallel._tds = require('tds')
+
     if Parallel.count > 1 then
       print('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
       local threads = require('threads')
@@ -53,7 +54,8 @@ function Parallel.init(opt)
       ) -- dedicate threads to GPUs
       Parallel._pool:specific(true)
     end
-    if Parallel.count > 1 and not(opt.no_nccl) and not(opt.async_parallel) then
+
+    if Parallel.count > 1 and not opt.no_nccl and not opt.async_parallel then
       -- check if we have nccl installed
       local ret
       ret, Parallel.usenccl = pcall(require, 'nccl')
@@ -65,6 +67,7 @@ function Parallel.init(opt)
         Parallel.usenccl = nil
       end
     end
+
   end
 end
 
@@ -76,13 +79,13 @@ function Parallel.getGPU(i)
 end
 
 --[[ Launch function in parallel on different threads. ]]
-function Parallel.launch(closure, endcallback)
-  endcallback = endcallback or function() end
+function Parallel.launch(closure, endCallback)
+  endCallback = endCallback or function() end
   for j = 1, Parallel.count do
     if Parallel._pool == nil then
-      endcallback(closure(j))
+      endCallback(closure(j))
     else
-      Parallel._pool:addjob(j, function() return closure(j) end, endcallback)
+      Parallel._pool:addjob(j, function() return closure(j) end, endCallback)
     end
   end
   if Parallel._pool then
@@ -119,23 +122,23 @@ function Parallel.accGradParams(gradParams, batches)
 end
 
 -- [[ In async mode, sync the parameters from all replica to master replica. ]]
-function Parallel.updateAndSync(master_params, replica_gradParams, replica_params, gradBuffer, master_gpu, gmutex_id)
+function Parallel.updateAndSync(masterParams, replicaGradParams, replicaParams, gradBuffer, masterGPU, gmutexId)
   -- Add a mutex to avoid competition while accessing shared buffer and while updating parameters.
-  local mutex = _G.threads.Mutex(gmutex_id)
+  local mutex = _G.threads.Mutex(gmutexId)
   mutex:lock()
   local device = cutorch.getDevice()
-  cutorch.setDevice(master_gpu)
-  for h = 1, #replica_gradParams do
-    waitForDevice(device, master_gpu)
-    local remoteGrads = onmt.utils.Tensor.reuseTensor(gradBuffer, replica_gradParams[h]:size())
-    remoteGrads:copy(replica_gradParams[h])
-    waitForDevice(master_gpu, device)
-    master_params[h]:add(remoteGrads)
+  cutorch.setDevice(masterGPU)
+  for h = 1, #replicaGradParams do
+    waitForDevice(device, masterGPU)
+    local remoteGrads = onmt.utils.Tensor.reuseTensor(gradBuffer, replicaGradParams[h]:size())
+    remoteGrads:copy(replicaGradParams[h])
+    waitForDevice(masterGPU, device)
+    masterParams[h]:add(remoteGrads)
   end
   cutorch.setDevice(device)
-  for h = 1, #replica_gradParams do
-    replica_params[h]:copy(master_params[h])
-    waitForDevice(device, master_gpu)
+  for h = 1, #replicaGradParams do
+    replicaParams[h]:copy(masterParams[h])
+    waitForDevice(device, masterGPU)
   end
   mutex:unlock()
 end
