@@ -20,7 +20,7 @@ local function waitForDevice(dst, src)
 end
 
 function Parallel.getCounter()
-  local atomic=Parallel._tds.AtomicCounter()
+  local atomic = Parallel._tds.AtomicCounter()
   atomic:inc()
   return atomic
 end
@@ -57,7 +57,7 @@ function Parallel.init(opt)
       -- check if we have nccl installed
       local ret
       ret, Parallel.usenccl = pcall(require, 'nccl')
-      if not ret  then
+      if not ret then
         print("WARNING: for improved efficiency in nparallel mode - do install nccl")
         Parallel.usenccl = nil
       elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then

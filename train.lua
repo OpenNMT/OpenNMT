@@ -112,9 +112,9 @@ local function initParams(model, verbose)
       p:uniform(-opt.param_init, opt.param_init)
 
       mod:apply(function (m)
-          if m.postParametersInitialization then
-            m:postParametersInitialization()
-          end
+        if m.postParametersInitialization then
+          m:postParametersInitialization()
+        end
       end)
     end
 
@@ -200,7 +200,9 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     return idx, _G.criterion, _G.params, _G.gradParams
   end, function(idx, thecriterion, theparams, thegradParams)
-    if idx == 1 then criterion = thecriterion end
+    if idx == 1 then
+      criterion = thecriterion
+    end
     params[idx] = theparams
     gradParams[idx] = thegradParams
   end)
