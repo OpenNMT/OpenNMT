@@ -9,6 +9,17 @@ cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when
 cmd:option('-force', false, 'force output model creation')
 local opt = cmd:parse(arg)
 
+local function toCPU(model)
+  for _, submodule in pairs(model.modules) do
+    if torch.type(submodule) == 'table' and submodule.modules then
+      toCPU(submodule)
+    else
+      submodule:float()
+      submodule:clearState()
+    end
+  end
+end
+
 local function main()
   assert(path.exists(opt.model), 'model \'' .. opt.model .. '\' does not exist.')
 
@@ -45,10 +56,7 @@ local function main()
 
   print('Converting model...')
   for _, model in pairs(checkpoint.models) do
-    for _, net in pairs(model.modules) do
-      net:float()
-      net:clearState()
-    end
+    toCPU(model)
   end
   print('... done.')
 
