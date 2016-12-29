@@ -19,7 +19,6 @@ function Dataset.declareOpts(cmd)
   cmd:text("")
   cmd:text("**Data options**")
   cmd:text("")
-  
   cmd:option('-data', '', [[Path to the training *-train.t7 file from preprocess.lua]])
   cmd:option('-max_batch_size', 64, [[Maximum batch size]])
 end
@@ -67,7 +66,7 @@ function Dataset.load(opt)
 
     onmt.utils.Log.logJson(metadata)
   end
-  return trainData, valData
+  return dataset, trainData, validData
 end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]

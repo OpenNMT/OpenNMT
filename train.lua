@@ -1,6 +1,4 @@
 require('onmt.init')
-
-local path = require('pl.path')
 require('tds')
 local cmd = torch.CmdLine()
 
@@ -32,12 +30,6 @@ cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
 
 local opt = cmd:parse(arg)
 
-local function criterionBuilder(dataset)
-  return buildCriterion(dataset.dicts.tgt.words:size(),
-                        dataset.dicts.tgt.features)
-end
-
-
 
 local function main()
   local requiredOptions = {
@@ -48,13 +40,13 @@ local function main()
   onmt.utils.Opt.init(opt, requiredOptions)
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
-  onmt.utils.Train.init(opt)
+  onmt.train.Train.init(opt)
 
   -- Setup the checkpoint.
-  local checkpoint = onmt.train.Checkpoint.init()
-  
-  -- Load the data. 
-  local trainData, valData = omnt.data.Dataset.load(opt)
+  local checkpoint = onmt.train.Checkpoint.init(opt)
+
+  -- Load the data.
+  local dataset, trainData, validData = onmt.data.Dataset.load(opt)
 
   -- Build/load the model (possibly in parallel)
   if not opt.json_log then
@@ -83,8 +75,13 @@ local function main()
     end
   end)
 
+  local function criterionBuilder(data)
+    return onmt.Models.buildCriterion(data.dicts.tgt.words:size(),
+                                      data.dicts.tgt.features)
+  end
+
   -- Train the model.
-  omnt.train.Train.trainModel(model, trainData, validData, dataset, checkpoint.info,
+  onmt.train.Train.trainModel(model, trainData, validData, dataset, checkpoint.info,
                               criterionBuilder)
 end
 

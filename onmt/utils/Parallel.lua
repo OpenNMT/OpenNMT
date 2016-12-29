@@ -24,7 +24,7 @@ function Parallel.declareOpts(cmd)
                             Note: this will technically change the final batch size to max_batch_size*nparallel.]])
     cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
   cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
-  cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])  
+  cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 end
 
 function Parallel.getCounter()

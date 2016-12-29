@@ -3,7 +3,6 @@ local function declareOpts(cmd)
   cmd:text("")
   cmd:text("**Model options**")
   cmd:text("")
-  
   cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
   cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
   cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
@@ -15,7 +14,6 @@ local function declareOpts(cmd)
   cmd:option('-residual', false, [[Add residual connections between RNN layers.]])
   cmd:option('-brnn', false, [[Use a bidirectional encoder]])
   cmd:option('-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states: concat or sum]])
-  
   cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the encoder side.
                                      See README for specific formatting instructions.]])
