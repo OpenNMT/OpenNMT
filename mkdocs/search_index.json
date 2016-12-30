@@ -557,8 +557,18 @@
         },
         {
             "location": "/code/translate/onmt+translate+Translator/",
-            "text": "",
+            "text": "onmt.Translator\n\n\nUndocumented methods\n\n\n\n * \nonmt.Translator.declareOpts(cmd)\n\n\n\n * \nonmt.Translator(args)\n\n\n\n * \nonmt.Translator:buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)\n\n\n\n * \nonmt.Translator:buildTargetTokens(pred, predFeats, src, attn)\n\n\n\n * \nonmt.Translator:translateBatch(batch)\n\n\n\n * \nonmt.Translator:translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)",
             "title": "onmt+translate+Translator"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Translator/#onmttranslator",
+            "text": "",
+            "title": "onmt.Translator"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Translator/#undocumented-methods",
+            "text": "*  onmt.Translator.declareOpts(cmd)  \n *  onmt.Translator(args)  \n *  onmt.Translator:buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)  \n *  onmt.Translator:buildTargetTokens(pred, predFeats, src, attn)  \n *  onmt.Translator:translateBatch(batch)  \n *  onmt.Translator:translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)",
+            "title": "Undocumented methods"
         },
         {
             "location": "/details/preprocess/",
