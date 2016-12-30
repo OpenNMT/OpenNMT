@@ -90,7 +90,7 @@ local function buildTargetTokens(pred, predFeats, src, attn)
   local tokens = dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
   -- Always ignore last token to stay consistent, even it may not be EOS.
-  table.remove(tokens)
+  --table.remove(tokens)
 
   if opt.replace_unk then
     for i = 1, #tokens do
@@ -214,6 +214,12 @@ local function translateBatch(batch)
       local scores = result['scores'][b]
       local attn = result['outputs'][b][5]
       local feats = result['outputs'][b][6]
+      -- feats offset 1
+      local featsTemp = {}
+      for k = 1, #feats do
+        featsTemp[k + 1] = feats[k]
+      end
+      feats = featsTemp
 
       -- remove unnecessary values from the attention vectors
       for j = 1, #attn do
