@@ -2,6 +2,23 @@
 --]]
 local BeamSearcher = torch.class('BeamSearcher')
 
+local function recursiveClone(h)
+  local hOut
+  if torch.type(h) == 'table' then
+    hOut = {}
+    for key, val in pairs(h) do
+      hOut[key] = recursiveClone(val)
+    end
+    return hOut
+  end
+  if torch.isTensor(h) then
+    hOut = h:clone()
+  else
+    hOut = h
+  end
+  return hOut
+end
+
 local function beamReplicate(h, beamSize)
   local hOut
   if torch.type(h) == 'table' then
@@ -36,7 +53,7 @@ local function beamSelect(h, selIndexes)
   if torch.isTensor(h) then
     local batchSize = selIndexes:size(1)
     local beamSize = selIndexes:size(2)
-    hOut = h:index(1, selIndexes:view(-1) + onmt.utils.Cuda.convert(torch.range(0, (batchSize - 1) * beamSize, beamSize):long()):contiguous():view(batchSize, 1):expand(batchSize, beamSize):contiguous():view(-1))
+    hOut = h:index(1, selIndexes:view(-1):long() + (torch.range(0, (batchSize - 1) * beamSize, beamSize):long()):contiguous():view(batchSize, 1):expand(batchSize, beamSize):contiguous():view(-1))
   else
     hOut = h
   end
@@ -67,9 +84,6 @@ local function flatToRc(h, beamSize)
 end
 
 local function selectBatch(h, remaining)
-  if torch.type(remaining) == 'table' then
-    remaining = onmt.utils.Cuda.convert(torch.Tensor(remaining))
-  end
   local hOut
   if torch.type(h) == 'table' then
     hOut = {}
@@ -79,6 +93,9 @@ local function selectBatch(h, remaining)
     return hOut
   end
   if torch.isTensor(h) then
+    if not torch.isTensor(remaining) then
+      remaining = torch.LongTensor(remaining)
+    end
     hOut = h:index(1, remaining)
   else
     hOut = h
@@ -88,13 +105,13 @@ end
 
 local function selectBatchBeam(h, beamSize, batch, beam)
   if torch.type(remaining) == 'table' then
-    remaining = onmt.utils.Cuda.convert(torch.Tensor(remaining))
+    remaining = torch.LongTensor(remaining)
   end
   local hOut
   if torch.type(h) == 'table' then
     hOut = {}
     for key, val in pairs(h) do
-      hOut[key] = selectBatch(val, beamSize, batch, beam)
+      hOut[key] = selectBatchBeam(val, beamSize, batch, beam)
     end
     return hOut
   end
@@ -105,7 +122,7 @@ local function selectBatchBeam(h, beamSize, batch, beam)
         sizes[j - 1] = h:size(j)
     end
     hOut = h:view(batchSize, beamSize, table.unpack(sizes))
-    hOut = h[{batch, beam}]
+    hOut = hOut[{batch, beam}]
   else
     hOut = h
   end
@@ -212,21 +229,19 @@ function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength,
       end
     end
     remainingBatchIdToOrigBatchId = remainingBatchIdToOrigBatchIdTemp
+    table.insert(beamParentsHistory, beamParents) -- remainingBatchSize
+    table.insert(beamScoresHistory, beamScores:clone()) -- remainingBatchSize
     if newId ~= remainingBatchSize then
       if #remaining ~= 0 then
         stepOutputs = rcToFlat(selectBatch(flatToRc(stepOutputs, beamSize), remaining))
         topIndexes = selectBatch(topIndexes, remaining)
         beamScores = selectBatch(beamScores, remaining)
       else
-        table.insert(beamParentsHistory, beamParents) -- remainingBatchSize
-        table.insert(beamScoresHistory, beamScores) -- remainingBatchSize
         break
       end
     end
-    table.insert(beamParentsHistory, beamParents) -- remainingBatchSize
-    table.insert(beamScoresHistory, beamScores) -- remainingBatchSize
     table.insert(topIndexesHistory, topIndexes:clone()) -- newRemainingBatchSize
-    table.insert(stepOutputsHistory, onmt.utils.recursiveClone(stepOutputs)) -- newRemainingBatchSize
+    table.insert(stepOutputsHistory, recursiveClone(stepOutputs)) -- newRemainingBatchSize
     t = t + 1
   end
 
@@ -239,6 +254,7 @@ function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength,
   self.origBatchIdToRemainingBatchId = origBatchIdToRemainingBatchId
   self.nBest = nBest
   self.endSymbol = endSymbol
+  self.completed = completed
 end
 
 function BeamSearcher:getPredictions(k)
@@ -253,6 +269,7 @@ function BeamSearcher:getPredictions(k)
   local topIndexesHistory = self.topIndexesHistory
   local stepOutputsHistory = self.stepOutputsHistory
   local origBatchIdToRemainingBatchId = self.origBatchIdToRemainingBatchId
+  local completed = self.completed
 
   -- final decoding
   for b = 1, origBatchSize do
@@ -262,7 +279,7 @@ function BeamSearcher:getPredictions(k)
     local parentIndex, topIndex
     parentIndex = k
     if t then
-      scores[b] = beamParentsHistory[t][origBatchIdToRemainingBatchId[t-1][b]][parentIndex]
+      scores[b] = beamScoresHistory[t][origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
       while t > 1 do
         parentIndex = beamParentsHistory[t][origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
         topIndex = topIndexesHistory[t - 1][origBatchIdToRemainingBatchId[t - 1][b]][parentIndex] 
@@ -272,7 +289,7 @@ function BeamSearcher:getPredictions(k)
       end
     else
       t = maxSeqLength
-      scores[b] = beamParentsHistory[t][origBatchIdToRemainingBatchId[t-1][b]][parentIndex]
+      scores[b] = beamScoresHistory[t][origBatchIdToRemainingBatchId[t-1][b]][parentIndex]
       topIndex = topIndexesHistory[t][origBatchIdToRemainingBatchId[t][b]][parentIndex] -- 1 ~ beamSize
       outputs[b][t] = stepOutputsHistory[t][origBatchIdToRemainingBatchId[t][b]][parentIndex]
       predictions[b][t] = topIndex
@@ -295,5 +312,21 @@ function BeamSearcher:getPredictions(k)
       end
     end
   end
+  -- transpose outputs
+  local outputsTemp = {}
+  for b = 1, #outputs do
+    outputsTemp[b] = {}
+    for t = 1, #outputs[b] do
+      for j = 1, #outputs[b][t] do
+        if not outputsTemp[b][j] then
+          outputsTemp[b][j] = {}
+        end
+        outputsTemp[b][j][t] = outputs[b][t][j]
+      end
+    end
+  end
+  outputs = outputsTemp
   return {predictions = predictions, scores = scores, outputs = outputs}
 end
+
+return BeamSearcher

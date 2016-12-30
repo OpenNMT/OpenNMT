@@ -147,14 +147,14 @@ local function translateBatch(batch)
       end
       local decStates = encStates
       local decOut = nil
-      local sourceSizes = onmt.utils.recursiveClone(batch.sourceSize)
+      local sourceSizes = batch.sourceSize:clone()
 
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes}
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, 1}
       return stepInputs
     else
       local input = topIndexes:view(-1)
-      local scores, decStates, decOut, context, softmaxOut, features, sourceSizes = table.unpack(stepOutputs)
-      local inputFeatures = onmt.utils.recursiveClone(features)
+      local scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t = table.unpack(stepOutputs)
+      local inputFeatures = features
       local inputs
       if #inputFeatures == 0 then
         inputs = input
@@ -164,13 +164,17 @@ local function translateBatch(batch)
         inputs = { input }
         table.insert(inputs, inputFeatures)
       end
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes}
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, t + 1}
       return stepInputs
     end
   end
   local function stepFunction(stepInputs)
-    local inputs, decStates, context, decOut, sourceSizes = table.unpack(stepInputs)
-    models.decoder:maskPadding(sourceSizes, batch.sourceLength, opt.beam_size)
+    local inputs, decStates, context, decOut, sourceSizes, t = table.unpack(stepInputs)
+    if t == 1 then
+      models.decoder:maskPadding(sourceSizes, batch.sourceLength, 1)
+    else
+      models.decoder:maskPadding(sourceSizes:view(-1, opt.beam_size)[{{}, 1}], batch.sourceLength, opt.beam_size)
+    end
     decOut, decStates = models.decoder:forwardOne(inputs, decStates, context, decOut)
     local out = models.decoder.generator:forward(decOut)
     local softmaxOut = models.decoder.softmaxAttn.output
@@ -180,12 +184,12 @@ local function translateBatch(batch)
       local _, best = out[j]:max(2)
       features[j - 1] = best
     end
-    local stepOutputs = {scores, decStates, decOut, context, softmaxOut, features, sourceSizes}
+    local stepOutputs = {scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t}
     return stepOutputs
   end
-  local beamSearcher = onmt.translate.BeamSearcher()
+  local beamSearcher = onmt.translate.BeamSearcher.new()
 
-  local predictions = beamSearcher:search(stepFunction, feedFunction, beamSize, opt.max_sent_length - 1, onmt.Constants.EOS, opt.n_best)
+  local predictions = beamSearcher:search(stepFunction, feedFunction, opt.beam_size, opt.max_sent_length - 1, onmt.Constants.EOS, opt.n_best)
 
   collectgarbage()
 
@@ -194,20 +198,22 @@ local function translateBatch(batch)
   local allAttn = {}
   local allScores = {}
 
+  local results = {}
+  for n = 1, opt.n_best do
+    results[n] = beamSearcher:getPredictions(n)
+  end
   for b = 1, batch.size do
-    local scores, ks = beam[b]:sortBest()
-
     local hypBatch = {}
     local featsBatch = {}
     local attnBatch = {}
     local scoresBatch = {}
 
     for n = 1, opt.n_best do
-      local results = beamSearcher:getPredictions(k)
-      local hyp = results['predictions']
-      local scores = results['scores']
-      local attn = results['outputs'][5]
-      local feats = results['outputs'][6]
+      local result = results[n]
+      local hyp = result['predictions'][b]
+      local scores = result['scores'][b]
+      local attn = result['outputs'][b][5]
+      local feats = result['outputs'][b][6]
 
       -- remove unnecessary values from the attention vectors
       for j = 1, #attn do
@@ -220,7 +226,7 @@ local function translateBatch(batch)
         table.insert(featsBatch, feats)
       end
       table.insert(attnBatch, attn)
-      table.insert(scoresBatch, scores[n])
+      table.insert(scoresBatch, scores)
     end
 
     table.insert(allHyp, hypBatch)
