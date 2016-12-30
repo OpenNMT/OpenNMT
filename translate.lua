@@ -62,7 +62,7 @@ local function main()
     tgtFeaturesBatch = {}
   end
 
-  onmt.translate.Translator.init(opt)
+  local translator = onmt.translate.Translator.new(opt)
 
   local outFile = io.open(opt.output, 'w')
 
@@ -113,8 +113,8 @@ local function main()
         timer:resume()
       end
 
-      local predBatch, info = onmt.translate.Translator.translate(srcWordsBatch, srcFeaturesBatch,
-                                                                  tgtWordsBatch, tgtFeaturesBatch)
+      local predBatch, info = translator:translate(srcWordsBatch, srcFeaturesBatch,
+                                                   tgtWordsBatch, tgtFeaturesBatch)
 
       if opt.time then
         timer:stop()
