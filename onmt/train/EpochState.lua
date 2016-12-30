@@ -57,6 +57,11 @@ function EpochState:log(batchIndex, json, partial)
     }
 
     onmt.utils.Log.logJson(obj)
+  elseif partial then
+    local stats = ''
+    stats = stats .. string.format('Epoch %d ; ', self.epoch)
+    stats = stats .. string.format('Iteration %d/%d ; ', batchIndex, self.numIterations)
+    print(stats)
   else
     local timeTaken = self:getTime()
 
@@ -64,12 +69,8 @@ function EpochState:log(batchIndex, json, partial)
     stats = stats .. string.format('Epoch %d ; ', self.epoch)
     stats = stats .. string.format('Iteration %d/%d ; ', batchIndex, self.numIterations)
     stats = stats .. string.format('Learning rate %.4f ; ', self.learningRate)
-    if not partial then
-      stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
-      stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
-    else
-      stats = stats .. '...'
-    end
+    stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
+    stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
     print(stats)
   end
 end
