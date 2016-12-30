@@ -368,6 +368,10 @@ local function trainModel(model, trainData, validData, dataset, info)
             batchThread.targetLength = batchThread.targetLength + _G.batch.targetLength * _G.batch.size
             batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
             lossThread = lossThread + loss
+
+            if opt.report_every % i == 0 then
+              epochState:log(counter:get(), opt.json_log, true)
+            end
           end
         end,
         function(theloss, thebatch)

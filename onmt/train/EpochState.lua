@@ -34,7 +34,7 @@ function EpochState:update(batch, loss)
 end
 
 --[[ Log to status stdout. ]]
-function EpochState:log(batchIndex, json)
+function EpochState:log(batchIndex, json, partial)
   if json then
     local freeMemory = onmt.utils.Cuda.freeMemory()
     if freeMemory < self.minFreeMemory then
@@ -64,8 +64,12 @@ function EpochState:log(batchIndex, json)
     stats = stats .. string.format('Epoch %d ; ', self.epoch)
     stats = stats .. string.format('Iteration %d/%d ; ', batchIndex, self.numIterations)
     stats = stats .. string.format('Learning rate %.4f ; ', self.learningRate)
-    stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
-    stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
+    if not partial then
+      stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
+      stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
+    else
+      stats = stats .. '...'
+    end
     print(stats)
   end
 end
