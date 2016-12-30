@@ -1,11 +1,6 @@
-local checkpoint = nil
-local models = {}
-local dicts = {}
-local opt = {}
+local Translator = torch.class('Translator')
 
-local phraseTable
-
-local function declareOpts(cmd)
+function Translator.declareOpts(cmd)
   cmd:option('-model', '', [[Path to model .t7 file]])
 
   -- beam search options
@@ -26,30 +21,31 @@ local function declareOpts(cmd)
 end
 
 
-local function init(args)
-  opt = args
-  onmt.utils.Cuda.init(opt)
+function Translator:__init(args)
+  self.opt = args
+  onmt.utils.Cuda.init(self.opt)
 
-  print('Loading \'' .. opt.model .. '\'...')
-  checkpoint = torch.load(opt.model)
+  print('Loading \'' .. self.opt.model .. '\'...')
+  self.checkpoint = torch.load(self.opt.model)
 
-  models.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder)
-  models.decoder = onmt.Models.loadDecoder(checkpoint.models.decoder)
+  self.models = {}
+  self.models.encoder = onmt.Models.loadEncoder(self.checkpoint.models.encoder)
+  self.models.decoder = onmt.Models.loadDecoder(self.checkpoint.models.decoder)
 
-  models.encoder:evaluate()
-  models.decoder:evaluate()
+  self.models.encoder:evaluate()
+  self.models.decoder:evaluate()
 
-  onmt.utils.Cuda.convert(models.encoder)
-  onmt.utils.Cuda.convert(models.decoder)
+  onmt.utils.Cuda.convert(self.models.encoder)
+  onmt.utils.Cuda.convert(self.models.decoder)
 
-  dicts = checkpoint.dicts
+  self.dicts = self.checkpoint.dicts
 
-  if opt.phrase_table:len() > 0 then
-    phraseTable = onmt.translate.PhraseTable.new(opt.phrase_table)
+  if self.opt.phrase_table:len() > 0 then
+    self.phraseTable = onmt.translate.PhraseTable.new(self.opt.phrase_table)
   end
 end
 
-local function buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
+function Translator:buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
   local srcData = {}
   srcData.words = {}
   srcData.features = {}
@@ -62,23 +58,24 @@ local function buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatc
   end
 
   for b = 1, #srcBatch do
-    table.insert(srcData.words, dicts.src.words:convertToIdx(srcBatch[b], onmt.Constants.UNK_WORD))
+    table.insert(srcData.words,
+                 self.dicts.src.words:convertToIdx(srcBatch[b], onmt.Constants.UNK_WORD))
 
-    if #dicts.src.features > 0 then
+    if #self.dicts.src.features > 0 then
       table.insert(srcData.features,
-                   onmt.utils.Features.generateSource(dicts.src.features, srcFeaturesBatch[b]))
+                   onmt.utils.Features.generateSource(self.dicts.src.features, srcFeaturesBatch[b]))
     end
 
     if tgtData ~= nil then
       table.insert(tgtData.words,
-                   dicts.tgt.words:convertToIdx(goldBatch[b],
-                                                  onmt.Constants.UNK_WORD,
-                                                  onmt.Constants.BOS_WORD,
-                                                  onmt.Constants.EOS_WORD))
+                   self.dicts.tgt.words:convertToIdx(goldBatch[b],
+                                                     onmt.Constants.UNK_WORD,
+                                                     onmt.Constants.BOS_WORD,
+                                                     onmt.Constants.EOS_WORD))
 
-      if #dicts.tgt.features > 0 then
+      if #self.dicts.tgt.features > 0 then
         table.insert(tgtData.features,
-                     onmt.utils.Features.generateTarget(dicts.tgt.features, goldFeaturesBatch[b]))
+                     onmt.utils.Features.generateTarget(self.dicts.tgt.features, goldFeaturesBatch[b]))
       end
     end
   end
@@ -86,20 +83,20 @@ local function buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatc
   return onmt.data.Dataset.new(srcData, tgtData)
 end
 
-local function buildTargetTokens(pred, predFeats, src, attn)
-  local tokens = dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
+function Translator:buildTargetTokens(pred, predFeats, src, attn)
+  local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
   -- Always ignore last token to stay consistent, even it may not be EOS.
   table.remove(tokens)
 
-  if opt.replace_unk then
+  if self.opt.replace_unk then
     for i = 1, #tokens do
       if tokens[i] == onmt.Constants.UNK_WORD then
         local _, maxIndex = attn[i]:max(1)
         local source = src[maxIndex[1]]
 
-        if phraseTable and phraseTable:contains(source) then
-          tokens[i] = phraseTable:lookup(source)
+        if self.phraseTable and self.phraseTable:contains(source) then
+          tokens[i] = self.phraseTable:lookup(source)
         else
           tokens[i] = source
         end
@@ -108,40 +105,40 @@ local function buildTargetTokens(pred, predFeats, src, attn)
   end
 
   if predFeats ~= nil then
-    tokens = onmt.utils.Features.annotate(tokens, predFeats, dicts.tgt.features)
+    tokens = onmt.utils.Features.annotate(tokens, predFeats, self.dicts.tgt.features)
   end
 
   return tokens
 end
 
-local function translateBatch(batch)
-  models.encoder:maskPadding()
-  models.decoder:maskPadding()
+function Translator:translateBatch(batch)
+  self.models.encoder:maskPadding()
+  self.models.decoder:maskPadding()
 
-  local encStates, context = models.encoder:forward(batch)
+  local encStates, context = self.models.encoder:forward(batch)
 
   local goldScore
   if batch.targetInput ~= nil then
     if batch.size > 1 then
-      models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
+      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
     end
-    goldScore = models.decoder:computeScore(batch, encStates, context)
+    goldScore = self.models.decoder:computeScore(batch, encStates, context)
   end
 
   -- Expand tensors for each beam.
   context = context
     :contiguous()
-    :view(1, batch.size, batch.sourceLength, checkpoint.options.rnn_size)
-    :expand(opt.beam_size, batch.size, batch.sourceLength, checkpoint.options.rnn_size)
+    :view(1, batch.size, batch.sourceLength, self.checkpoint.options.rnn_size)
+    :expand(self.opt.beam_size, batch.size, batch.sourceLength, self.checkpoint.options.rnn_size)
     :contiguous()
-    :view(opt.beam_size * batch.size, batch.sourceLength, checkpoint.options.rnn_size)
+    :view(self.opt.beam_size * batch.size, batch.sourceLength, self.checkpoint.options.rnn_size)
 
   for j = 1, #encStates do
     encStates[j] = encStates[j]
-      :view(1, batch.size, checkpoint.options.rnn_size)
-      :expand(opt.beam_size, batch.size, checkpoint.options.rnn_size)
+      :view(1, batch.size, self.checkpoint.options.rnn_size)
+      :expand(self.opt.beam_size, batch.size, self.checkpoint.options.rnn_size)
       :contiguous()
-      :view(opt.beam_size * batch.size, checkpoint.options.rnn_size)
+      :view(self.opt.beam_size * batch.size, self.checkpoint.options.rnn_size)
   end
 
   local remainingSents = batch.size
@@ -153,7 +150,7 @@ local function translateBatch(batch)
   local beam = {}
 
   for b = 1, batch.size do
-    table.insert(beam, onmt.translate.Beam.new(opt.beam_size, #dicts.tgt.features))
+    table.insert(beam, onmt.translate.Beam.new(self.opt.beam_size, #self.dicts.tgt.features))
     table.insert(batchIdx, b)
   end
 
@@ -162,11 +159,11 @@ local function translateBatch(batch)
   local decOut
   local decStates = encStates
 
-  while remainingSents > 0 and i < opt.max_sent_length do
+  while remainingSents > 0 and i < self.opt.max_sent_length do
     i = i + 1
 
     -- Prepare decoder input.
-    local input = torch.IntTensor(opt.beam_size, remainingSents)
+    local input = torch.IntTensor(self.opt.beam_size, remainingSents)
     local inputFeatures = {}
     local sourceSizes = torch.IntTensor(remainingSents)
 
@@ -179,18 +176,18 @@ local function translateBatch(batch)
         local wordState, featuresState = beam[b]:getCurrentState()
         input[{{}, idx}]:copy(wordState)
 
-        for j = 1, #dicts.tgt.features do
+        for j = 1, #self.dicts.tgt.features do
           if inputFeatures[j] == nil then
-            inputFeatures[j] = torch.IntTensor(opt.beam_size, remainingSents)
+            inputFeatures[j] = torch.IntTensor(self.opt.beam_size, remainingSents)
           end
           inputFeatures[j][{{}, idx}]:copy(featuresState[j])
         end
       end
     end
 
-    input = input:view(opt.beam_size * remainingSents)
-    for j = 1, #dicts.tgt.features do
-      inputFeatures[j] = inputFeatures[j]:view(opt.beam_size * remainingSents)
+    input = input:view(self.opt.beam_size * remainingSents)
+    for j = 1, #self.dicts.tgt.features do
+      inputFeatures[j] = inputFeatures[j]:view(self.opt.beam_size * remainingSents)
     end
 
     local inputs
@@ -204,19 +201,19 @@ local function translateBatch(batch)
     end
 
     if batch.size > 1 then
-      models.decoder:maskPadding(sourceSizes, batch.sourceLength, opt.beam_size)
+      self.models.decoder:maskPadding(sourceSizes, batch.sourceLength, self.opt.beam_size)
     end
 
-    decOut, decStates = models.decoder:forwardOne(inputs, decStates, context, decOut)
+    decOut, decStates = self.models.decoder:forwardOne(inputs, decStates, context, decOut)
 
-    local out = models.decoder.generator:forward(decOut)
+    local out = self.models.decoder.generator:forward(decOut)
 
     for j = 1, #out do
-      out[j] = out[j]:view(opt.beam_size, remainingSents, out[j]:size(2)):transpose(1, 2):contiguous()
+      out[j] = out[j]:view(self.opt.beam_size, remainingSents, out[j]:size(2)):transpose(1, 2):contiguous()
     end
     local wordLk = out[1]
 
-    local softmaxOut = models.decoder.softmaxAttn.output:view(opt.beam_size, remainingSents, -1)
+    local softmaxOut = self.models.decoder.softmaxAttn.output:view(self.opt.beam_size, remainingSents, -1)
     local newRemainingSents = remainingSents
 
     for b = 1, batch.size do
@@ -224,7 +221,7 @@ local function translateBatch(batch)
         local idx = batchIdx[b]
 
         local featsLk = {}
-        for j = 1, #dicts.tgt.features do
+        for j = 1, #self.dicts.tgt.features do
           table.insert(featsLk, out[j + 1][idx])
         end
 
@@ -235,7 +232,7 @@ local function translateBatch(batch)
 
         for j = 1, #decStates do
           local view = decStates[j]
-            :view(opt.beam_size, remainingSents, checkpoint.options.rnn_size)
+            :view(self.opt.beam_size, remainingSents, self.checkpoint.options.rnn_size)
           view[{{}, idx}] = view[{{}, idx}]:index(1, beam[b]:getCurrentOrigin())
         end
       end
@@ -259,20 +256,20 @@ local function translateBatch(batch)
       -- Update rnn states and context.
       for j = 1, #decStates do
         decStates[j] = decStates[j]
-          :view(opt.beam_size, remainingSents, checkpoint.options.rnn_size)
+          :view(self.opt.beam_size, remainingSents, self.checkpoint.options.rnn_size)
           :index(2, toKeep)
-          :view(opt.beam_size*newRemainingSents, checkpoint.options.rnn_size)
+          :view(self.opt.beam_size*newRemainingSents, self.checkpoint.options.rnn_size)
       end
 
       decOut = decOut
-        :view(opt.beam_size, remainingSents, checkpoint.options.rnn_size)
+        :view(self.opt.beam_size, remainingSents, self.checkpoint.options.rnn_size)
         :index(2, toKeep)
-        :view(opt.beam_size*newRemainingSents, checkpoint.options.rnn_size)
+        :view(self.opt.beam_size*newRemainingSents, self.checkpoint.options.rnn_size)
 
       context = context
-        :view(opt.beam_size, remainingSents, batch.sourceLength, checkpoint.options.rnn_size)
+        :view(self.opt.beam_size, remainingSents, batch.sourceLength, self.checkpoint.options.rnn_size)
         :index(2, toKeep)
-        :view(opt.beam_size*newRemainingSents, batch.sourceLength, checkpoint.options.rnn_size)
+        :view(self.opt.beam_size*newRemainingSents, batch.sourceLength, self.checkpoint.options.rnn_size)
 
       -- The `index()` method allocates a new storage so clean the previous ones to
       -- keep a stable memory usage.
@@ -295,7 +292,7 @@ local function translateBatch(batch)
     local attnBatch = {}
     local scoresBatch = {}
 
-    for n = 1, opt.n_best do
+    for n = 1, self.opt.n_best do
       local hyp, feats, attn = beam[b]:getHyp(ks[n])
 
       -- remove unnecessary values from the attention vectors
@@ -321,17 +318,17 @@ local function translateBatch(batch)
   return allHyp, allFeats, allScores, allAttn, goldScore
 end
 
-local function translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
-  local data = buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
+function Translator:translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
+  local data = self:buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
   local batch = data:getBatch()
 
-  local pred, predFeats, predScore, attn, goldScore = translateBatch(batch)
+  local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
 
   local predBatch = {}
   local infoBatch = {}
 
   for b = 1, batch.size do
-    table.insert(predBatch, buildTargetTokens(pred[b][1], predFeats[b][1], srcBatch[b], attn[b][1]))
+    table.insert(predBatch, self:buildTargetTokens(pred[b][1], predFeats[b][1], srcBatch[b], attn[b][1]))
 
     local info = {}
     info.score = predScore[b][1]
@@ -341,10 +338,10 @@ local function translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatc
       info.goldScore = goldScore[b]
     end
 
-    if opt.n_best > 1 then
-      for n = 1, opt.n_best do
+    if self.opt.n_best > 1 then
+      for n = 1, self.opt.n_best do
         info.nBest[n] = {}
-        info.nBest[n].tokens = buildTargetTokens(pred[b][n], predFeats[b][n], srcBatch[b], attn[b][n])
+        info.nBest[n].tokens = self:buildTargetTokens(pred[b][n], predFeats[b][n], srcBatch[b], attn[b][n])
         info.nBest[n].score = predScore[b][n]
       end
     end
@@ -355,8 +352,4 @@ local function translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatc
   return predBatch, infoBatch
 end
 
-return {
-  init = init,
-  translate = translate,
-  declareOpts = declareOpts
-}
+return Translator
