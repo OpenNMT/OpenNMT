@@ -34,7 +34,7 @@ function EpochState:update(batch, loss)
 end
 
 --[[ Log to status stdout. ]]
-function EpochState:log(batchIndex, json, partial)
+function EpochState:log(batchIndex, json)
   if json then
     local freeMemory = onmt.utils.Cuda.freeMemory()
     if freeMemory < self.minFreeMemory then
@@ -57,11 +57,6 @@ function EpochState:log(batchIndex, json, partial)
     }
 
     onmt.utils.Log.logJson(obj)
-  elseif partial then
-    local stats = ''
-    stats = stats .. string.format('Epoch %d ; ', self.epoch)
-    stats = stats .. string.format('Iteration %d/%d ; ', batchIndex, self.numIterations)
-    print(stats)
   else
     local timeTaken = self:getTime()
 

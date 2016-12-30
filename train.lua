@@ -369,8 +369,12 @@ local function trainModel(model, trainData, validData, dataset, info)
             batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
             lossThread = lossThread + loss
 
-            if opt.report_every % i == 0 then
-              epochState:log(counter:get(), opt.json_log, true)
+            -- we don't have information about the other threads here - we can only report progress
+            if i % opt.report_every == 0 then
+              local stats = ''
+              stats = stats .. string.format('Epoch %d ; ', epoch)
+              stats = stats .. string.format('... batch %d/%d', i, trainData:batchCount())
+              print(stats)
             end
           end
         end,
