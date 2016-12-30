@@ -154,10 +154,9 @@ end
 function BeamSearcher:__init()
 end
 
-function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength, endSymbol, nBest, maxScore)
+function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength, endSymbol, nBest)
   endSymbol = endSymbol or onmt.Constants.EOS
   nBest = nBest or 1
-  maxScore = maxScore or 0.0
   local stepOutputs
   local topIndexes -- kept top beamSize ids in the beam, (batchSize, beamSize)
   local beamScores -- scores in the beam, (batchSize, beamSize)
@@ -192,8 +191,13 @@ function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength,
       topIndexes = onmt.utils.Cuda.convert(rawIndexes:double()) + 1 -- (origBatchSize, beamSize)
     else
       remainingBatchSize = math.floor(scores:size(1) / beamSize)
-      scores:select(2, endSymbol):maskedFill(topIndexes:view(-1):eq(endSymbol), maxScore) -- once padding or EOS encountered, stuck at that point
+      --scores:select(2, endSymbol):maskedFill(topIndexes:view(-1):eq(endSymbol), 0) -- once padding or EOS encountered, stuck at that point
       local totalScores = (scores:view(remainingBatchSize, beamSize, vocabSize) + beamScores:view(remainingBatchSize, beamSize, 1):expand(remainingBatchSize, beamSize, vocabSize)):view(remainingBatchSize, beamSize * vocabSize) -- (remainingBatchSize, beamSize * vocabSize)
+      if global_t == nil then
+          global_t = 1
+      else
+          global_t = global_t + 1
+      end
       beamScores, rawIndexes = totalScores:topk(beamSize, 2, true, true) -- (remainingBatchSize, beamSize)
       rawIndexes = onmt.utils.Cuda.convert(rawIndexes:double())
       rawIndexes:add(-1)
@@ -255,6 +259,7 @@ function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength,
   self.nBest = nBest
   self.endSymbol = endSymbol
   self.completed = completed
+  self.maxSeqLength = maxSeqLength
 end
 
 function BeamSearcher:getPredictions(k)
@@ -270,6 +275,7 @@ function BeamSearcher:getPredictions(k)
   local stepOutputsHistory = self.stepOutputsHistory
   local origBatchIdToRemainingBatchId = self.origBatchIdToRemainingBatchId
   local completed = self.completed
+  local maxSeqLength = self.maxSeqLength
 
   -- final decoding
   for b = 1, origBatchSize do
@@ -301,14 +307,14 @@ function BeamSearcher:getPredictions(k)
         t = t - 1
       end
     end
-    if self.nBest > 1 then -- trim trailing EOS
-      for t = #predictions[b], 1, -1 do
-        if predictions[b][t] == self.endSymbol then
-          predictions[b][t] = nil
-          outputs[b][t] = nil
-        else
-          break
-        end
+    assert (predictions[b][#predictions[b]] ~= self.endSymbol)
+    -- trim trailing EOS
+    for t = #predictions[b], 1, -1 do
+      if predictions[b][t] == self.endSymbol then
+        predictions[b][t] = nil
+        outputs[b][t] = nil
+      else
+        break
       end
     end
   end

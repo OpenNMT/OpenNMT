@@ -130,7 +130,7 @@ local function translateBatch(batch)
 
   --function beamSearch(stepFunction, feedFunction, beamSize, endSymbol, maxSeqLength, maxScore)
   local function feedFunction(stepOutputs, topIndexes)
-    if stepOutputs == nil then
+    if stepOutputs == nil then -- initial inputs, t == 1
       local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size)):fill(onmt.Constants.BOS)
       local inputFeatures = {}
       for j = 1, #dicts.tgt.features do
@@ -151,18 +151,17 @@ local function translateBatch(batch)
 
       local stepInputs = {inputs, decStates, context, decOut, sourceSizes, 1}
       return stepInputs
-    else
+    else -- inputs for t > 1
       local input = topIndexes:view(-1)
       local scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t = table.unpack(stepOutputs)
-      local inputFeatures = features
       local inputs
-      if #inputFeatures == 0 then
+      if #features == 0 then
         inputs = input
-      elseif #inputFeatures == 1 then
-        inputs = { input, inputFeatures[1] }
+      elseif #features == 1 then
+        inputs = { input, features[1] }
       else
         inputs = { input }
-        table.insert(inputs, inputFeatures)
+        table.insert(inputs, features)
       end
       local stepInputs = {inputs, decStates, context, decOut, sourceSizes, t + 1}
       return stepInputs
@@ -170,11 +169,7 @@ local function translateBatch(batch)
   end
   local function stepFunction(stepInputs)
     local inputs, decStates, context, decOut, sourceSizes, t = table.unpack(stepInputs)
-    if t == 1 then
-      models.decoder:maskPadding(sourceSizes, batch.sourceLength, 1)
-    else
-      models.decoder:maskPadding(sourceSizes:view(-1, opt.beam_size)[{{}, 1}], batch.sourceLength, opt.beam_size)
-    end
+    models.decoder:maskPadding(sourceSizes, batch.sourceLength)
     decOut, decStates = models.decoder:forwardOne(inputs, decStates, context, decOut)
     local out = models.decoder.generator:forward(decOut)
     local softmaxOut = models.decoder.softmaxAttn.output
