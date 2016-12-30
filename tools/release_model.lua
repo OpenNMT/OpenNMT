@@ -55,6 +55,7 @@ local function main()
   print('... done.')
 
   print('Converting model...')
+  checkpoint.info = nil
   for _, model in pairs(checkpoint.models) do
     toCPU(model)
   end
