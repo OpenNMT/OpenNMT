@@ -128,159 +128,66 @@ local function translateBatch(batch)
     goldScore = models.decoder:computeScore(batch, encStates, context)
   end
 
-  -- Expand tensors for each beam.
-  context = context
-    :contiguous()
-    :view(1, batch.size, batch.sourceLength, checkpoint.options.rnn_size)
-    :expand(opt.beam_size, batch.size, batch.sourceLength, checkpoint.options.rnn_size)
-    :contiguous()
-    :view(opt.beam_size * batch.size, batch.sourceLength, checkpoint.options.rnn_size)
-
-  for j = 1, #encStates do
-    encStates[j] = encStates[j]
-      :view(1, batch.size, checkpoint.options.rnn_size)
-      :expand(opt.beam_size, batch.size, checkpoint.options.rnn_size)
-      :contiguous()
-      :view(opt.beam_size * batch.size, checkpoint.options.rnn_size)
-  end
-
-  local remainingSents = batch.size
-
-  -- As finished sentences are removed from the batch, this table maps the batches
-  -- to their index within the remaining sentences.
-  local batchIdx = {}
-
-  local beam = {}
-
-  for b = 1, batch.size do
-    table.insert(beam, onmt.translate.Beam.new(opt.beam_size, #dicts.tgt.features))
-    table.insert(batchIdx, b)
-  end
-
-  local i = 1
-
-  local decOut
-  local decStates = encStates
-
-  while remainingSents > 0 and i < opt.max_sent_length do
-    i = i + 1
-
-    -- Prepare decoder input.
-    local input = torch.IntTensor(opt.beam_size, remainingSents)
-    local inputFeatures = {}
-    local sourceSizes = torch.IntTensor(remainingSents)
-
-    for b = 1, batch.size do
-      if not beam[b].done then
-        local idx = batchIdx[b]
-        sourceSizes[idx] = batch.sourceSize[b]
-
-        -- Get current state of the beam search.
-        local wordState, featuresState = beam[b]:getCurrentState()
-        input[{{}, idx}]:copy(wordState)
-
-        for j = 1, #dicts.tgt.features do
-          if inputFeatures[j] == nil then
-            inputFeatures[j] = torch.IntTensor(opt.beam_size, remainingSents)
-          end
-          inputFeatures[j][{{}, idx}]:copy(featuresState[j])
-        end
+  --function beamSearch(stepFunction, feedFunction, beamSize, endSymbol, maxSeqLength, maxScore)
+  local function feedFunction(stepOutputs, topIndexes)
+    if stepOutputs == nil then
+      local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size)):fill(onmt.Constants.BOS)
+      local inputFeatures = {}
+      for j = 1, #dicts.tgt.features do
+        inputFeatures[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
       end
-    end
+      local inputs
+      if #inputFeatures == 0 then
+        inputs = input
+      elseif #inputFeatures == 1 then
+        inputs = { input, inputFeatures[1] }
+      else
+        inputs = { input }
+        table.insert(inputs, inputFeatures)
+      end
+      local decStates = encStates
+      local decOut = nil
+      local sourceSizes = onmt.utils.recursiveClone(batch.sourceSize)
 
-    input = input:view(opt.beam_size * remainingSents)
-    for j = 1, #dicts.tgt.features do
-      inputFeatures[j] = inputFeatures[j]:view(opt.beam_size * remainingSents)
-    end
-
-    local inputs
-    if #inputFeatures == 0 then
-      inputs = input
-    elseif #inputFeatures == 1 then
-      inputs = { input, inputFeatures[1] }
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes}
+      return stepInputs
     else
-      inputs = { input }
-      table.insert(inputs, inputFeatures)
-    end
-
-    if batch.size > 1 then
-      models.decoder:maskPadding(sourceSizes, batch.sourceLength, opt.beam_size)
-    end
-
-    decOut, decStates = models.decoder:forwardOne(inputs, decStates, context, decOut)
-
-    local out = models.decoder.generator:forward(decOut)
-
-    for j = 1, #out do
-      out[j] = out[j]:view(opt.beam_size, remainingSents, out[j]:size(2)):transpose(1, 2):contiguous()
-    end
-    local wordLk = out[1]
-
-    local softmaxOut = models.decoder.softmaxAttn.output:view(opt.beam_size, remainingSents, -1)
-    local newRemainingSents = remainingSents
-
-    for b = 1, batch.size do
-      if not beam[b].done then
-        local idx = batchIdx[b]
-
-        local featsLk = {}
-        for j = 1, #dicts.tgt.features do
-          table.insert(featsLk, out[j + 1][idx])
-        end
-
-        if beam[b]:advance(wordLk[idx], featsLk, softmaxOut[{{}, idx}]) then
-          newRemainingSents = newRemainingSents - 1
-          batchIdx[b] = 0
-        end
-
-        for j = 1, #decStates do
-          local view = decStates[j]
-            :view(opt.beam_size, remainingSents, checkpoint.options.rnn_size)
-          view[{{}, idx}] = view[{{}, idx}]:index(1, beam[b]:getCurrentOrigin())
-        end
+      local input = topIndexes:view(-1)
+      local scores, decStates, decOut, context, softmaxOut, features, sourceSizes = table.unpack(stepOutputs)
+      local inputFeatures = onmt.utils.recursiveClone(features)
+      local inputs
+      if #inputFeatures == 0 then
+        inputs = input
+      elseif #inputFeatures == 1 then
+        inputs = { input, inputFeatures[1] }
+      else
+        inputs = { input }
+        table.insert(inputs, inputFeatures)
       end
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes}
+      return stepInputs
     end
-
-    if newRemainingSents > 0 and newRemainingSents ~= remainingSents then
-      -- Update sentence indices within the batch and mark sentences to keep.
-      local toKeep = {}
-      local newIdx = 1
-      for b = 1, #batchIdx do
-        local idx = batchIdx[b]
-        if idx > 0 then
-          table.insert(toKeep, idx)
-          batchIdx[b] = newIdx
-          newIdx = newIdx + 1
-        end
-      end
-
-      toKeep = torch.LongTensor(toKeep)
-
-      -- Update rnn states and context.
-      for j = 1, #decStates do
-        decStates[j] = decStates[j]
-          :view(opt.beam_size, remainingSents, checkpoint.options.rnn_size)
-          :index(2, toKeep)
-          :view(opt.beam_size*newRemainingSents, checkpoint.options.rnn_size)
-      end
-
-      decOut = decOut
-        :view(opt.beam_size, remainingSents, checkpoint.options.rnn_size)
-        :index(2, toKeep)
-        :view(opt.beam_size*newRemainingSents, checkpoint.options.rnn_size)
-
-      context = context
-        :view(opt.beam_size, remainingSents, batch.sourceLength, checkpoint.options.rnn_size)
-        :index(2, toKeep)
-        :view(opt.beam_size*newRemainingSents, batch.sourceLength, checkpoint.options.rnn_size)
-
-      -- The `index()` method allocates a new storage so clean the previous ones to
-      -- keep a stable memory usage.
-      collectgarbage()
-    end
-
-    remainingSents = newRemainingSents
   end
+  local function stepFunction(stepInputs)
+    local inputs, decStates, context, decOut, sourceSizes = table.unpack(stepInputs)
+    models.decoder:maskPadding(sourceSizes, batch.sourceLength, opt.beam_size)
+    decOut, decStates = models.decoder:forwardOne(inputs, decStates, context, decOut)
+    local out = models.decoder.generator:forward(decOut)
+    local softmaxOut = models.decoder.softmaxAttn.output
+    local scores = out[1]:clone()
+    local features = {}
+    for j = 2, #out do
+      local _, best = out[j]:max(2)
+      features[j - 1] = best
+    end
+    local stepOutputs = {scores, decStates, decOut, context, softmaxOut, features, sourceSizes}
+    return stepOutputs
+  end
+  local beamSearcher = onmt.translate.BeamSearcher()
+
+  local predictions = beamSearcher:search(stepFunction, feedFunction, beamSize, opt.max_sent_length - 1, onmt.Constants.EOS, opt.n_best)
+
+  collectgarbage()
 
   local allHyp = {}
   local allFeats = {}
@@ -296,7 +203,11 @@ local function translateBatch(batch)
     local scoresBatch = {}
 
     for n = 1, opt.n_best do
-      local hyp, feats, attn = beam[b]:getHyp(ks[n])
+      local results = beamSearcher:getPredictions(k)
+      local hyp = results['predictions']
+      local scores = results['scores']
+      local attn = results['outputs'][5]
+      local feats = results['outputs'][6]
 
       -- remove unnecessary values from the attention vectors
       for j = 1, #attn do
