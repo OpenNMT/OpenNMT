@@ -154,9 +154,10 @@ end
 function BeamSearcher:__init()
 end
 
-function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength, endSymbol, nBest)
+function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength, endSymbol, nBest, allowEmptyHyp)
   endSymbol = endSymbol or onmt.Constants.EOS
   nBest = nBest or 1
+  allowEmptyHyp = allowEmptyHyp or false -- by default, we do consider sequences of length >= 1
   local stepOutputs
   local topIndexes -- kept top beamSize ids in the beam, (batchSize, beamSize)
   local beamScores -- scores in the beam, (batchSize, beamSize)
@@ -185,6 +186,9 @@ function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength,
       remainingBatchSize = origBatchSize
       for b = 1, origBatchSize do
         remainingBatchIdToOrigBatchId[b] = b
+      end
+      if not allowEmptyHyp then
+        scores:select(2, endSymbol):fill(-math.huge)
       end
       beamScores, rawIndexes = scores:topk(beamSize, 2, true, true)
       rawIndexes:add(-1)
@@ -297,7 +301,7 @@ function BeamSearcher:getPredictions(k)
       t = maxSeqLength
       scores[b] = beamScoresHistory[t][origBatchIdToRemainingBatchId[t-1][b]][parentIndex]
       topIndex = topIndexesHistory[t][origBatchIdToRemainingBatchId[t][b]][parentIndex] -- 1 ~ beamSize
-      outputs[b][t] = stepOutputsHistory[t][origBatchIdToRemainingBatchId[t][b]][parentIndex]
+      outputs[b][t] = selectBatchBeam(stepOutputsHistory[t], self.beamSize, origBatchIdToRemainingBatchId[t][b], parentIndex)
       predictions[b][t] = topIndex
       while t > 1 do
         parentIndex = beamParentsHistory[t][origBatchIdToRemainingBatchId[t-1][b]][parentIndex]
@@ -323,9 +327,7 @@ function BeamSearcher:getPredictions(k)
     outputsTemp[b] = {}
     for t = 1, #outputs[b] do
       for j = 1, #outputs[b][t] do
-        if not outputsTemp[b][j] then
-          outputsTemp[b][j] = {}
-        end
+        outputsTemp[b][j] = outputsTemp[b][j] or {}
         outputsTemp[b][j][t] = outputs[b][t][j]
       end
     end

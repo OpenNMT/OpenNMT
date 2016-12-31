@@ -207,8 +207,8 @@ local function translateBatch(batch)
       local result = results[n]
       local hyp = result['predictions'][b]
       local scores = result['scores'][b]
-      local attn = result['outputs'][b][5]
-      local feats = result['outputs'][b][6]
+      local attn = result['outputs'][b][5] or {}
+      local feats = result['outputs'][b][6] or {}
       -- feats offset 1
       local featsTemp = {}
       for k = 1, #feats do
