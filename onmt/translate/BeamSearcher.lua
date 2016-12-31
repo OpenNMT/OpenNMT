@@ -191,7 +191,7 @@ function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength,
       topIndexes = onmt.utils.Cuda.convert(rawIndexes:double()) + 1 -- (origBatchSize, beamSize)
     else
       remainingBatchSize = math.floor(scores:size(1) / beamSize)
-      --scores:select(2, endSymbol):maskedFill(topIndexes:view(-1):eq(endSymbol), 0) -- once padding or EOS encountered, stuck at that point
+      scores:select(2, endSymbol):maskedFill(topIndexes:view(-1):eq(endSymbol), 0) -- once padding or EOS encountered, stuck at that point
       local totalScores = (scores:view(remainingBatchSize, beamSize, vocabSize) + beamScores:view(remainingBatchSize, beamSize, 1):expand(remainingBatchSize, beamSize, vocabSize)):view(remainingBatchSize, beamSize * vocabSize) -- (remainingBatchSize, beamSize * vocabSize)
       if global_t == nil then
           global_t = 1
