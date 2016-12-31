@@ -307,7 +307,6 @@ function BeamSearcher:getPredictions(k)
         t = t - 1
       end
     end
-    assert (predictions[b][#predictions[b]] ~= self.endSymbol)
     -- trim trailing EOS
     for t = #predictions[b], 1, -1 do
       if predictions[b][t] == self.endSymbol then
