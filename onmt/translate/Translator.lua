@@ -132,6 +132,7 @@ local function translateBatch(batch)
   local function feedFunction(stepOutputs, topIndexes)
     if stepOutputs == nil then -- initial inputs, t == 1
       local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size)):fill(onmt.Constants.BOS)
+      local numUnks = onmt.utils.Cuda.convert(torch.zeros(batch.size))
       local inputFeatures = {}
       for j = 1, #dicts.tgt.features do
         inputFeatures[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
@@ -149,11 +150,12 @@ local function translateBatch(batch)
       local decOut = nil
       local sourceSizes = batch.sourceSize:clone()
 
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, 1}
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, 1, numUnks}
       return stepInputs
     else -- inputs for t > 1
-      local input = topIndexes:view(-1)
-      local scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t = table.unpack(stepOutputs)
+      local input = topIndexes
+      local scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t, numUnks = table.unpack(stepOutputs)
+      numUnks:add(onmt.utils.Cuda.convert(topIndexes:eq(onmt.Constants.UNK):double()))
       local inputs
       if #features == 0 then
         inputs = input
@@ -163,23 +165,24 @@ local function translateBatch(batch)
         inputs = { input }
         table.insert(inputs, features)
       end
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, t + 1}
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, t + 1, numUnks}
       return stepInputs
     end
   end
   local function stepFunction(stepInputs)
-    local inputs, decStates, context, decOut, sourceSizes, t = table.unpack(stepInputs)
+    local inputs, decStates, context, decOut, sourceSizes, t, numUnks = table.unpack(stepInputs)
     models.decoder:maskPadding(sourceSizes, batch.sourceLength)
     decOut, decStates = models.decoder:forwardOne(inputs, decStates, context, decOut)
     local out = models.decoder.generator:forward(decOut)
     local softmaxOut = models.decoder.softmaxAttn.output
-    local scores = out[1]:clone()
+    local scores = out[1]
+    scores:select(2, onmt.Constants.UNK):maskedFill(numUnks:ge(3), -math.huge)
     local features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
       features[j - 1] = best
     end
-    local stepOutputs = {scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t}
+    local stepOutputs = {scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t, numUnks}
     return stepOutputs
   end
   local beamSearcher = onmt.translate.BeamSearcher.new()

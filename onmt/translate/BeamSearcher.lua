@@ -151,10 +151,15 @@ local function rcToFlat(h)
   return hOut
 end
 
-function BeamSearcher:__init()
+function BeamSearcher:__init(stepFunction, feedFunction, maxSeqLength, endSymbol, allowEmptyHyp)
+  self.stepFunction = stepFunction
+  self.feedFunction = feedFunction
+  self.maxSeqLength = maxSeqLength
+  self.endSymbol = endSymbol or onmt.Constants.EOS
+  self.allowEmptyHyp = allowEmptyHyp or false
 end
 
-function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength, endSymbol, nBest, allowEmptyHyp)
+function BeamSearcher:search(beamSize, nBest)
   endSymbol = endSymbol or onmt.Constants.EOS
   nBest = nBest or 1
   allowEmptyHyp = allowEmptyHyp or false -- by default, we do consider sequences of length >= 1
@@ -171,7 +176,11 @@ function BeamSearcher:search(stepFunction, feedFunction, beamSize, maxSeqLength,
   local beamScoresHistory = {}
   local t = 1
   while t <= maxSeqLength do
-    local nextInputs = feedFunction(stepOutputs, topIndexes)
+    local flatTopIndexes = topIndexes
+    if flatTopIndexes then
+      flatTopIndexes = flatTopIndexes:view(-1)
+    end
+    local nextInputs = feedFunction(stepOutputs, flatTopIndexes)
     stepOutputs = stepFunction(nextInputs)
     local scores = stepOutputs[1] -- if t == 1, (origBatchSize, vocabSize); else (remainingBatchSize * beamSize, vocabSize)
     if vocabSize == nil then
