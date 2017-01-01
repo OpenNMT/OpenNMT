@@ -99,7 +99,7 @@ Parameters:
 
 Example:
 
-    See function translateBatch in onmt/translate/Translator.lua. Note that by specifying `stepFunction` and `feedFunction`, we can use it to perform general beam search. We can easily add filters to prune some sequences during beam search, like sequences with too many UNKs.
+    See function `translateBatch` in `onmt/translate/Translator.lua`. Note that by specifying `stepFunction` and `feedFunction`, we can use it to perform general beam search. We can easily add filters to prune some sequences during beam search, like sequences with too many UNKs.
 
 ]]
 function BeamSearcher:__init(stepFunction, feedFunction, maxSeqLength, endSymbol, allowEmptyHyp)
