@@ -23,6 +23,7 @@ local function declareOpts(cmd)
   cmd:option('-phrase_table', '', [[Path to source-target dictionary to replace UNK
                                      tokens. See README.md for the format this file should be in]])
   cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
+  cmd:option('-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored during beam search]])
 end
 
 
@@ -150,11 +151,11 @@ local function translateBatch(batch)
       local decOut = nil
       local sourceSizes = batch.sourceSize:clone()
 
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, 1, numUnks}
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, numUnks}
       return stepInputs
     else -- inputs for t > 1
       local input = topIndexes
-      local scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t, numUnks = table.unpack(stepOutputs)
+      local scores, decStates, decOut, context, softmaxOut, features, sourceSizes, numUnks = table.unpack(stepOutputs)
       numUnks:add(onmt.utils.Cuda.convert(topIndexes:eq(onmt.Constants.UNK):double()))
       local inputs
       if #features == 0 then
@@ -165,29 +166,28 @@ local function translateBatch(batch)
         inputs = { input }
         table.insert(inputs, features)
       end
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, t + 1, numUnks}
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, numUnks}
       return stepInputs
     end
   end
   local function stepFunction(stepInputs)
-    local inputs, decStates, context, decOut, sourceSizes, t, numUnks = table.unpack(stepInputs)
+    local inputs, decStates, context, decOut, sourceSizes, numUnks = table.unpack(stepInputs)
     models.decoder:maskPadding(sourceSizes, batch.sourceLength)
     decOut, decStates = models.decoder:forwardOne(inputs, decStates, context, decOut)
     local out = models.decoder.generator:forward(decOut)
-    local softmaxOut = models.decoder.softmaxAttn.output
     local scores = out[1]
-    scores:select(2, onmt.Constants.UNK):maskedFill(numUnks:ge(3), -math.huge)
+    scores:select(2, onmt.Constants.UNK):maskedFill(numUnks:ge(opt.max_num_unks), -math.huge)
     local features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
       features[j - 1] = best
     end
-    local stepOutputs = {scores, decStates, decOut, context, softmaxOut, features, sourceSizes, t, numUnks}
+    local stepOutputs = {scores, decStates, decOut, context, models.decoder.softmaxAttn.output, features, sourceSizes, numUnks}
     return stepOutputs
   end
-  local beamSearcher = onmt.translate.BeamSearcher.new()
+  local beamSearcher = onmt.translate.BeamSearcher.new(stepFunction, feedFunction, opt.max_sent_length)
 
-  local predictions = beamSearcher:search(stepFunction, feedFunction, opt.beam_size, opt.max_sent_length - 1, onmt.Constants.EOS, opt.n_best)
+  local predictions = beamSearcher:search(opt.beam_size, opt.n_best)
 
   collectgarbage()
 
@@ -198,7 +198,7 @@ local function translateBatch(batch)
 
   local results = {}
   for n = 1, opt.n_best do
-    results[n] = beamSearcher:getPredictions(n)
+    results[n] = table.pack(beamSearcher:getPredictions(n))
   end
   for b = 1, batch.size do
     local hypBatch = {}
@@ -208,10 +208,10 @@ local function translateBatch(batch)
 
     for n = 1, opt.n_best do
       local result = results[n]
-      local hyp = result['predictions'][b]
-      local scores = result['scores'][b]
-      local attn = result['outputs'][b][5] or {}
-      local feats = result['outputs'][b][6] or {}
+      local hyp = result[1][b]
+      local scores = result[2][b]
+      local attn = result[3][b][5] or {}
+      local feats = result[3][b][6] or {}
       -- feats offset 1
       local featsTemp = {}
       for k = 1, #feats do

@@ -107,7 +107,7 @@ function BeamSearcher:__init(stepFunction, feedFunction, maxSeqLength, endSymbol
   self.feedFunction = feedFunction
   self.maxSeqLength = maxSeqLength
   self.endSymbol = endSymbol or onmt.Constants.EOS
-  self.allowEmptyHyp = allowEmptyHyp or false
+  self.allowEmptyHyp = allowEmptyHyp or false -- by default, we only consider sequences of length >= 1
 end
 
 --[[ Perform beam search.
@@ -121,56 +121,53 @@ function BeamSearcher:search(beamSize, nBest)
   assert (nBest <= beamSize)
   self.nBest = nBest or 1
   self.beamSize = beamSize or 1
-  allowEmptyHyp = allowEmptyHyp or false -- by default, we do consider sequences of length >= 1
-  local stepOutputs
+  self.origBatchIdToRemainingBatchId = {}
+  self.origBatchSize = nil
+  self.topIndexesHistory = {}
+  self.stepOutputsHistory = {} 
+  self.beamParentsHistory = {}
+  self.beamScoresHistory = {}
+  self.completedTimeStep = {}
+
+  local vocabSize
   local topIndexes -- kept top beamSize ids in the beam, (batchSize, beamSize)
   local beamScores -- scores in the beam, (batchSize, beamSize)
-  local vocabSize
-  local origBatchSize
-  local origBatchIdToRemainingBatchId, remainingBatchIdToOrigBatchId = {}, {}
-  local completed = {}
-  local beamParentsHistory = {}
-  local topIndexesHistory = {}
-  local stepOutputsHistory = {}
-  local beamScoresHistory = {}
+  local stepOutputs
+  local remainingBatchIdToOrigBatchId = {}
+
   local t = 1
-  while t <= maxSeqLength do
+  while t <= self.maxSeqLength do
     local flatTopIndexes = topIndexes
     if flatTopIndexes then
       flatTopIndexes = flatTopIndexes:view(-1)
     end
-    local nextInputs = feedFunction(stepOutputs, flatTopIndexes)
-    stepOutputs = stepFunction(nextInputs)
+    local nextInputs = self.feedFunction(stepOutputs, flatTopIndexes) -- prepare next step inputs (when t == 1, initialize)
+    stepOutputs = self.stepFunction(nextInputs) -- go one step forward
     local scores = stepOutputs[1] -- if t == 1, (origBatchSize, vocabSize); else (remainingBatchSize * beamSize, vocabSize)
-    if vocabSize == nil then
-      vocabSize = scores:size(2)
-    else
+    if vocabSize then
       assert (vocabSize == scores:size(2))
+    else
+      vocabSize = scores:size(2)
     end
     -- figure out the top k indexes, and where they come from
     local rawIndexes, remainingBatchSize
     if t == 1 then
-      origBatchSize = scores:size(1)
-      remainingBatchSize = origBatchSize
+      self.origBatchSize = scores:size(1)
+      remainingBatchSize = self.origBatchSize -- completed sequences will be removed from batch, so batch size changes
       for b = 1, origBatchSize do
         remainingBatchIdToOrigBatchId[b] = b
       end
-      if not allowEmptyHyp then
+      if not self.allowEmptyHyp then
         scores:select(2, endSymbol):fill(-math.huge)
       end
-      beamScores, rawIndexes = scores:topk(beamSize, 2, true, true)
+      beamScores, rawIndexes = scores:topk(self.beamSize, 2, true, true)
       rawIndexes:add(-1)
       topIndexes = onmt.utils.Cuda.convert(rawIndexes:double()) + 1 -- (origBatchSize, beamSize)
     else
-      remainingBatchSize = math.floor(scores:size(1) / beamSize)
-      scores:select(2, endSymbol):maskedFill(topIndexes:view(-1):eq(endSymbol), 0) -- once padding or EOS encountered, stuck at that point
-      local totalScores = (scores:view(remainingBatchSize, beamSize, vocabSize) + beamScores:view(remainingBatchSize, beamSize, 1):expand(remainingBatchSize, beamSize, vocabSize)):view(remainingBatchSize, beamSize * vocabSize) -- (remainingBatchSize, beamSize * vocabSize)
-      if global_t == nil then
-          global_t = 1
-      else
-          global_t = global_t + 1
-      end
-      beamScores, rawIndexes = totalScores:topk(beamSize, 2, true, true) -- (remainingBatchSize, beamSize)
+      remainingBatchSize = math.floor(scores:size(1) / self.beamSize)
+      scores:select(2, endSymbol):maskedFill(topIndexes:view(-1):eq(endSymbol), 0) -- once EOS encountered, stuck at that point
+      local totalScores = (scores:view(remainingBatchSize, self.beamSize, vocabSize) + beamScores:view(remainingBatchSize, self.beamSize, 1):expand(remainingBatchSize, self.beamSize, vocabSize)):view(remainingBatchSize, self.beamSize * vocabSize) -- (remainingBatchSize, beamSize * vocabSize)
+      beamScores, rawIndexes = totalScores:topk(self.beamSize, 2, true, true) -- (remainingBatchSize, beamSize)
       rawIndexes = onmt.utils.Cuda.convert(rawIndexes:double())
       rawIndexes:add(-1)
       topIndexes = onmt.utils.Cuda.convert(rawIndexes:double():fmod(vocabSize)) + 1 -- (remainingBatchSize, beamSize)
@@ -178,14 +175,14 @@ function BeamSearcher:search(beamSize, nBest)
     local beamParents = onmt.utils.Cuda.convert(rawIndexes:int()/vocabSize + 1) -- (remainingBatchSize, beamSize)
     -- use the top k indexes to select the stepOutputs
     if t == 1 then -- beamReplicate
-      stepOutputs = beamReplicate(stepOutputs, beamSize) -- convert to (origBatchSize * beamSize, *)
+      stepOutputs = beamReplicate(stepOutputs, self.beamSize) -- convert to (origBatchSize * beamSize, *)
     end
     stepOutputs = beamSelect(stepOutputs, beamParents) -- (remainingBatchSize * beamSize, *)
 
     -- judge whether end has been reached use topIndexes (batchSize, beamSize)
     local remaining = {}
-    local newId = 0
-    origBatchIdToRemainingBatchId[t] = {}
+    local newRemainingBatchSize = 0
+    self.origBatchIdToRemainingBatchId[t] = {}
     local remainingBatchIdToOrigBatchIdTemp = {}
     for b = 1, remainingBatchSize do
       local origBatchId = remainingBatchIdToOrigBatchId[b]
@@ -196,42 +193,30 @@ function BeamSearcher:search(beamSize, nBest)
         end
       end
       if not done then
-        newId = newId + 1
-        origBatchIdToRemainingBatchId[t][origBatchId] = newId
-        remainingBatchIdToOrigBatchIdTemp[newId] = origBatchId
+        newRemainingBatchSize = newRemainingBatchSize + 1
+        self.origBatchIdToRemainingBatchId[t][origBatchId] = newRemainingBatchSize
+        remainingBatchIdToOrigBatchIdTemp[newRemainingBatchSize] = origBatchId
         table.insert(remaining, b)
       else
-        completed[origBatchId] = t
+        self.completedTimeStep[origBatchId] = t
       end
     end
     remainingBatchIdToOrigBatchId = remainingBatchIdToOrigBatchIdTemp
-    table.insert(beamParentsHistory, beamParents) -- remainingBatchSize
-    table.insert(beamScoresHistory, beamScores:clone()) -- remainingBatchSize
-    if newId ~= remainingBatchSize then
+    table.insert(self.beamParentsHistory, beamParents) -- (remainingBatchSize, beamSize)
+    table.insert(self.beamScoresHistory, beamScores:clone()) -- (remainingBatchSize, beamSize)
+    if newRemainingBatchSize ~= remainingBatchSize then -- some batches are finished
       if #remaining ~= 0 then
-        stepOutputs = rcToFlat(selectBatch(flatToRc(stepOutputs, beamSize), remaining))
+        stepOutputs = rcToFlat(selectBatch(flatToRc(stepOutputs, self.beamSize), remaining))
         topIndexes = selectBatch(topIndexes, remaining)
         beamScores = selectBatch(beamScores, remaining)
       else
         break
       end
     end
-    table.insert(topIndexesHistory, topIndexes:clone()) -- newRemainingBatchSize
-    table.insert(stepOutputsHistory, recursiveClone(stepOutputs)) -- newRemainingBatchSize
+    table.insert(self.topIndexesHistory, topIndexes:clone()) -- newRemainingBatchSize
+    table.insert(self.stepOutputsHistory, recursiveClone(stepOutputs)) -- newRemainingBatchSize
     t = t + 1
   end
-
-  self.origBatchSize = origBatchSize
-  self.beamSize = beamSize
-  self.beamParentsHistory = beamParentsHistory
-  self.topIndexesHistory = topIndexesHistory
-  self.stepOutputsHistory = stepOutputsHistory
-  self.beamScoresHistory = beamScoresHistory
-  self.origBatchIdToRemainingBatchId = origBatchIdToRemainingBatchId
-  self.nBest = nBest
-  self.endSymbol = endSymbol
-  self.completed = completed
-  self.maxSeqLength = maxSeqLength
 end
 
 --[[ Get beam search predictions.
@@ -252,41 +237,32 @@ function BeamSearcher:getPredictions(k)
   local scores = {}
   local outputs = {}
 
-  local origBatchSize = self.origBatchSize
-  local beamParentsHistory = self.beamParentsHistory
-  local beamScoresHistory = self.beamScoresHistory
-  local topIndexesHistory = self.topIndexesHistory
-  local stepOutputsHistory = self.stepOutputsHistory
-  local origBatchIdToRemainingBatchId = self.origBatchIdToRemainingBatchId
-  local completed = self.completed
-  local maxSeqLength = self.maxSeqLength
-
   -- final decoding
-  for b = 1, origBatchSize do
+  for b = 1, self.origBatchSize do
     predictions[b] = {}
     outputs[b] = {}
-    t = completed[b]
+    t = self.completedTimeStep[b]
     local parentIndex, topIndex
     parentIndex = k
     if t then
-      scores[b] = beamScoresHistory[t][origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
+      scores[b] = self.beamScoresHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
       while t > 1 do
-        parentIndex = beamParentsHistory[t][origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
-        topIndex = topIndexesHistory[t - 1][origBatchIdToRemainingBatchId[t - 1][b]][parentIndex] 
-        outputs[b][t - 1] = selectBatchBeam(stepOutputsHistory[t - 1], self.beamSize, origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
+        parentIndex = self.beamParentsHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
+        topIndex = self.topIndexesHistory[t - 1][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex] 
+        outputs[b][t - 1] = selectBatchBeam(self.stepOutputsHistory[t - 1], self.beamSize, self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
         predictions[b][t - 1] = topIndex
         t = t - 1
       end
     else
-      t = maxSeqLength
-      scores[b] = beamScoresHistory[t][origBatchIdToRemainingBatchId[t-1][b]][parentIndex]
-      topIndex = topIndexesHistory[t][origBatchIdToRemainingBatchId[t][b]][parentIndex] -- 1 ~ beamSize
-      outputs[b][t] = selectBatchBeam(stepOutputsHistory[t], self.beamSize, origBatchIdToRemainingBatchId[t][b], parentIndex)
+      t = self.maxSeqLength
+      scores[b] = self.beamScoresHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
+      topIndex = self.topIndexesHistory[t][self.origBatchIdToRemainingBatchId[t][b]][parentIndex] -- 1 ~ beamSize
+      outputs[b][t] = selectBatchBeam(self.stepOutputsHistory[t], self.beamSize, self.origBatchIdToRemainingBatchId[t][b], parentIndex)
       predictions[b][t] = topIndex
       while t > 1 do
-        parentIndex = beamParentsHistory[t][origBatchIdToRemainingBatchId[t-1][b]][parentIndex]
-        topIndex = topIndexesHistory[t - 1][origBatchIdToRemainingBatchId[t-1][b]][parentIndex] -- 1 ~ beamSize
-        outputs[b][t - 1] = selectBatchBeam(stepOutputsHistory[t - 1], self.beamSize, origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
+        parentIndex = self.beamParentsHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
+        topIndex = self.topIndexesHistory[t - 1][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex] -- 1 ~ beamSize
+        outputs[b][t - 1] = selectBatchBeam(self.stepOutputsHistory[t - 1], self.beamSize, self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
         predictions[b][t - 1] = topIndex
         t = t - 1
       end
@@ -313,7 +289,7 @@ function BeamSearcher:getPredictions(k)
     end
   end
   outputs = outputsTemp
-  return {predictions = predictions, scores = scores, outputs = outputs}
+  return predictions, scores, outputs
 end
 
 return BeamSearcher
