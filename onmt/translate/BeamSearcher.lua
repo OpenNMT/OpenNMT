@@ -99,7 +99,7 @@ Parameters:
 
 Example:
 
-    See onmt/translate/Translator.lua. Note that by specifying `stepFunction` and `feedFunction`, we can use it to perform general beam search. We can easily add filters to prune some sequences during beam search, like sequences with too many UNKs.
+    See function translateBatch in onmt/translate/Translator.lua. Note that by specifying `stepFunction` and `feedFunction`, we can use it to perform general beam search. We can easily add filters to prune some sequences during beam search, like sequences with too many UNKs.
 
 ]]
 function BeamSearcher:__init(stepFunction, feedFunction, maxSeqLength, endSymbol, allowEmptyHyp)
@@ -204,6 +204,7 @@ function BeamSearcher:search(beamSize, nBest)
     remainingBatchIdToOrigBatchId = remainingBatchIdToOrigBatchIdTemp
     table.insert(self.beamParentsHistory, beamParents) -- (remainingBatchSize, beamSize)
     table.insert(self.beamScoresHistory, beamScores:clone()) -- (remainingBatchSize, beamSize)
+    table.insert(self.stepOutputsHistory, recursiveClone(stepOutputs)) -- newRemainingBatchSize
     if newRemainingBatchSize ~= remainingBatchSize then -- some batches are finished
       if #remaining ~= 0 then
         stepOutputs = rcToFlat(selectBatch(flatToRc(stepOutputs, self.beamSize), remaining))
@@ -214,7 +215,6 @@ function BeamSearcher:search(beamSize, nBest)
       end
     end
     table.insert(self.topIndexesHistory, topIndexes:clone()) -- newRemainingBatchSize
-    table.insert(self.stepOutputsHistory, recursiveClone(stepOutputs)) -- newRemainingBatchSize
     t = t + 1
   end
 end
@@ -247,31 +247,33 @@ function BeamSearcher:getPredictions(k)
     if t then
       scores[b] = self.beamScoresHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
       while t > 1 do
+        outputs[b][t] = selectBatchBeam(self.stepOutputsHistory[t], self.beamSize, self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
         parentIndex = self.beamParentsHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
         topIndex = self.topIndexesHistory[t - 1][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex] 
-        outputs[b][t - 1] = selectBatchBeam(self.stepOutputsHistory[t - 1], self.beamSize, self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
         predictions[b][t - 1] = topIndex
         t = t - 1
       end
+      outputs[b][1] = selectBatchBeam(self.stepOutputsHistory[1], self.beamSize, b, parentIndex)
     else
       t = self.maxSeqLength
       scores[b] = self.beamScoresHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
       topIndex = self.topIndexesHistory[t][self.origBatchIdToRemainingBatchId[t][b]][parentIndex] -- 1 ~ beamSize
-      outputs[b][t] = selectBatchBeam(self.stepOutputsHistory[t], self.beamSize, self.origBatchIdToRemainingBatchId[t][b], parentIndex)
       predictions[b][t] = topIndex
       while t > 1 do
+        outputs[b][t] = selectBatchBeam(self.stepOutputsHistory[t], self.beamSize, self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
         parentIndex = self.beamParentsHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
         topIndex = self.topIndexesHistory[t - 1][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex] -- 1 ~ beamSize
         outputs[b][t - 1] = selectBatchBeam(self.stepOutputsHistory[t - 1], self.beamSize, self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
         predictions[b][t - 1] = topIndex
         t = t - 1
       end
+      outputs[b][1] = selectBatchBeam(self.stepOutputsHistory[1], self.beamSize, b, parentIndex)
     end
     -- trim trailing EOS
     for t = #predictions[b], 1, -1 do
       if predictions[b][t] == self.endSymbol then
         predictions[b][t] = nil
-        outputs[b][t] = nil
+        outputs[b][t + 1] = nil
       else
         break
       end

@@ -90,9 +90,6 @@ end
 local function buildTargetTokens(pred, predFeats, src, attn)
   local tokens = dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  -- Always ignore last token to stay consistent, even it may not be EOS.
-  --table.remove(tokens)
-
   if opt.replace_unk then
     for i = 1, #tokens do
       if tokens[i] == onmt.Constants.UNK_WORD then
@@ -180,9 +177,9 @@ local function translateBatch(batch)
     local features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
-      features[j - 1] = best
+      features[j - 1] = best:view(-1)
     end
-    local stepOutputs = {scores, decStates, decOut, context, models.decoder.softmaxAttn.output, features, sourceSizes, numUnks}
+    local stepOutputs = {scores, decStates, decOut, context, models.decoder.softmaxAttn.output:clone(), features, sourceSizes, numUnks}
     return stepOutputs
   end
   local beamSearcher = onmt.translate.BeamSearcher.new(stepFunction, feedFunction, opt.max_sent_length)
@@ -212,16 +209,10 @@ local function translateBatch(batch)
       local scores = result[2][b]
       local attn = result[3][b][5] or {}
       local feats = result[3][b][6] or {}
-      -- feats offset 1
-      local featsTemp = {}
-      for k = 1, #feats do
-        featsTemp[k + 1] = feats[k]
-      end
-      feats = featsTemp
 
       -- remove unnecessary values from the attention vectors
+      local size = batch.sourceSize[b]
       for j = 1, #attn do
-        local size = batch.sourceSize[b]
         attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
       end
 
