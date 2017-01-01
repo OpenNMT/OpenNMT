@@ -154,18 +154,18 @@ function BeamSearcher:search(beamSize, nBest)
     if t == 1 then
       self.origBatchSize = scores:size(1)
       remainingBatchSize = self.origBatchSize -- completed sequences will be removed from batch, so batch size changes
-      for b = 1, origBatchSize do
+      for b = 1, self.origBatchSize do
         remainingBatchIdToOrigBatchId[b] = b
       end
       if not self.allowEmptyHyp then
-        scores:select(2, endSymbol):fill(-math.huge)
+        scores:select(2, self.endSymbol):fill(-math.huge)
       end
       beamScores, rawIndexes = scores:topk(self.beamSize, 2, true, true)
       rawIndexes:add(-1)
       topIndexes = onmt.utils.Cuda.convert(rawIndexes:double()) + 1 -- (origBatchSize, beamSize)
     else
       remainingBatchSize = math.floor(scores:size(1) / self.beamSize)
-      scores:select(2, endSymbol):maskedFill(topIndexes:view(-1):eq(endSymbol), 0) -- once EOS encountered, stuck at that point
+      scores:select(2, self.endSymbol):maskedFill(topIndexes:view(-1):eq(self.endSymbol), 0) -- once EOS encountered, stuck at that point
       local totalScores = (scores:view(remainingBatchSize, self.beamSize, vocabSize) + beamScores:view(remainingBatchSize, self.beamSize, 1):expand(remainingBatchSize, self.beamSize, vocabSize)):view(remainingBatchSize, self.beamSize * vocabSize) -- (remainingBatchSize, beamSize * vocabSize)
       beamScores, rawIndexes = totalScores:topk(self.beamSize, 2, true, true) -- (remainingBatchSize, beamSize)
       rawIndexes = onmt.utils.Cuda.convert(rawIndexes:double())
@@ -188,7 +188,7 @@ function BeamSearcher:search(beamSize, nBest)
       local origBatchId = remainingBatchIdToOrigBatchId[b]
       local done = true
       for k = 1, nBest do
-        if topIndexes[b][k] ~= endSymbol then
+        if topIndexes[b][k] ~= self.endSymbol then
           done = false
         end
       end
