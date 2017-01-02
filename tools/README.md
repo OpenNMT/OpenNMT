@@ -65,7 +65,8 @@ luarocks install https://raw.github.com/Neopallium/lua-zmq/master/rockspecs/lua-
 Also you will need to install the OpenNMT as a library.
 
 ```
-luarocks make rocks/opennmt-scm-1.rockspec```
+luarocks make rocks/opennmt-scm-1.rockspec
+```
 
 The translation server can be run using any of the arguments from `translate.lua`. 
 
