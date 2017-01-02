@@ -11,8 +11,7 @@ This directory contains additional tools.
 ### Tokenization
 To tokenize a corpus:
 
-```
-th tools/tokenize.lua OPTIONS < file > file.tok
+```th tools/tokenize.lua OPTIONS < file > file.tok
 ```
 
 where the options are:
@@ -36,16 +35,48 @@ Note:
 
 If you activate `sep_annotate` marker, the tokenization is reversible - just use:
 
-```
-th tools/detokenize.lua [-case_feature] < file.tok > file.detok
+```th tools/detokenize.lua [-case_feature] < file.tok > file.detok
 ```
 
 ## Release model
 
 After training a model on the GPU, you may want to release it to run on the CPU with the `release_model.lua` script.
 
-```
-th tools/release_model.lua -model model.t7 -gpuid 1
+```th tools/release_model.lua -model model.t7 -gpuid 1
 ```
 
 By default, it will create a `model_release.t7` file. See `th tools/release_model.lua -h` for advanced options.
+
+## Translation Server
+
+OpenNMT includes a translation server for running translate remotely. This also is an
+easy way to use models from other languages such as Java and Python. 
+
+The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubuntu by running:
+
+```
+sudo apt-get install libzmq-dev
+luarocks install https://raw.github.com/Neopallium/lua-zmq/master/rockspecs/lua-zmq-scm-1.rockspec  ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
+```
+
+Also you will need to install the OpenNMT as a library.
+
+```luarocks make rocks/opennmt-scm-1.rockspec```
+
+The translation server can be run using any of the arguments from `translate.lua`. 
+
+```th tools/translation_server.lua -port ... -model ...
+```
+
+It runs as a message queue that takes in a JSON batch of src sentences. For example the following 5 lines of Python
+code can be used to send a single sentence for translation.
+
+```
+import zmq, sys, json
+sock = zmq.Context().socket(zmq.REQ)
+sock.connect("tcp://127.0.0.1:5556")
+sock.send(json.dumps([{"src": " ".join(sys.argv[1:])}]))
+print sock.recv()
+```
+
+For a longer example, see our <a href="http://github.com/OpenNMT/Server/">Python/Flask server</a> in development. 
