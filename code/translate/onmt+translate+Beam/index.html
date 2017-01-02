@@ -353,7 +353,7 @@ hyp3---hyp3---hyp3 -hyp3
 ========================
 </code></pre>
 <p>Takes care of beams, back pointers, and scores.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/3ae2e738487c7481a5179f15ba363968d1795efb/onmt/translate/Beam.lua#L36">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/80768829158a8c56ed8ba8f34b03dbfce1b7c046/onmt/translate/Beam.lua#L36">[src]</a>
 <a name="onmt.Beam"></a></p>
 <h3 id="onmtbeamsize-numfeatures">onmt.Beam(size, numFeatures)</h3>
 <p>Constructor</p>
@@ -362,15 +362,15 @@ hyp3---hyp3---hyp3 -hyp3
 <li><code>size</code> : The beam <code>K</code>.</li>
 <li><code>numFeatures</code> : Number of features, (optional)</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/3ae2e738487c7481a5179f15ba363968d1795efb/onmt/translate/Beam.lua#L66">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/80768829158a8c56ed8ba8f34b03dbfce1b7c046/onmt/translate/Beam.lua#L66">[src]</a>
 <a name="onmt.Beam:getCurrentState"></a></p>
 <h3 id="onmtbeamgetcurrentstate">onmt.Beam:getCurrentState()</h3>
 <p>Get the outputs for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/3ae2e738487c7481a5179f15ba363968d1795efb/onmt/translate/Beam.lua#L71">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/80768829158a8c56ed8ba8f34b03dbfce1b7c046/onmt/translate/Beam.lua#L71">[src]</a>
 <a name="onmt.Beam:getCurrentOrigin"></a></p>
 <h3 id="onmtbeamgetcurrentorigin">onmt.Beam:getCurrentOrigin()</h3>
 <p>Get the backpointers for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/3ae2e738487c7481a5179f15ba363968d1795efb/onmt/translate/Beam.lua#L86">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/80768829158a8c56ed8ba8f34b03dbfce1b7c046/onmt/translate/Beam.lua#L86">[src]</a>
 <a name="onmt.Beam:advance"></a></p>
 <h3 id="onmtbeamadvancewordlk-featslk-attnout">onmt.Beam:advance(wordLk, featsLk, attnOut)</h3>
 <p>Given prob over words for every last beam <code>wordLk</code> and attention
@@ -382,11 +382,11 @@ hyp3---hyp3---hyp3 -hyp3
 <li><code>attnOut</code>- attention at the last step</li>
 </ul>
 <p>Returns: true if beam search is complete.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/3ae2e738487c7481a5179f15ba363968d1795efb/onmt/translate/Beam.lua#L148">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/80768829158a8c56ed8ba8f34b03dbfce1b7c046/onmt/translate/Beam.lua#L148">[src]</a>
 <a name="onmt.Beam:getBest"></a></p>
 <h3 id="onmtbeamgetbest">onmt.Beam:getBest()</h3>
 <p>Get the score of the best in the beam. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/3ae2e738487c7481a5179f15ba363968d1795efb/onmt/translate/Beam.lua#L164">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/80768829158a8c56ed8ba8f34b03dbfce1b7c046/onmt/translate/Beam.lua#L164">[src]</a>
 <a name="onmt.Beam:getHyp"></a></p>
 <h3 id="onmtbeamgethypk">onmt.Beam:getHyp(k)</h3>
 <p>Walk back to construct the full hypothesis.</p>
