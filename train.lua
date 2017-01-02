@@ -368,6 +368,14 @@ local function trainModel(model, trainData, validData, dataset, info)
             batchThread.targetLength = batchThread.targetLength + _G.batch.targetLength * _G.batch.size
             batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
             lossThread = lossThread + loss
+
+            -- we don't have information about the other threads here - we can only report progress
+            if i % opt.report_every == 0 then
+              local stats = ''
+              stats = stats .. string.format('Epoch %d ; ', epoch)
+              stats = stats .. string.format('... batch %d/%d', i, trainData:batchCount())
+              print(stats)
+            end
           end
         end,
         function(theloss, thebatch)

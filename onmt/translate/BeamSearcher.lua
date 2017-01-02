@@ -19,54 +19,51 @@ local function recursiveApply(h, func, ...)
   return hOut
 end
 
-local function recursiveClone(h)
-  return recursiveApply(h, function (h) return h:clone() end)
+local function recursiveClone(hIn)
+  return recursiveApply(hIn, function (h) return h:clone() end)
 end
 
-local function beamReplicate(h, beamSize)
-  return recursiveApply(h, function (h, beamSize)
+local function beamReplicate(hIn, beamSizeIn)
+  return recursiveApply(hIn, function (h, beamSize)
     local batchSize = h:size(1)
     local sizes = {}
     for j = 2, #h:size() do
         sizes[j - 1] = h:size(j)
     end
     return h:contiguous():view(batchSize, 1, table.unpack(sizes)):expand(batchSize, beamSize, table.unpack(sizes)):contiguous():view(batchSize * beamSize, table.unpack(sizes))
-  end, beamSize)
+  end, beamSizeIn)
 end
 
-local function beamSelect(h, selIndexes)
-  return recursiveApply(h, function (h, selIndexes)
+local function beamSelect(hIn, selIndexesIn)
+  return recursiveApply(hIn, function (h, selIndexes)
     local batchSize = selIndexes:size(1)
     local beamSize = selIndexes:size(2)
     return h:index(1, selIndexes:view(-1):long() + (torch.range(0, (batchSize - 1) * beamSize, beamSize):long()):contiguous():view(batchSize, 1):expand(batchSize, beamSize):contiguous():view(-1))
-  end, selIndexes)
+  end, selIndexesIn)
 end
 
-local function flatToRc(h, beamSize)
-  return recursiveApply(h, function (h, beamSize)
+local function flatToRc(hIn, beamSizeIn)
+  return recursiveApply(hIn, function (h, beamSize)
     local batchSize = math.floor(h:size(1) / beamSize)
     local sizes = {}
     for j = 2, #h:size() do
         sizes[j - 1] = h:size(j)
     end
     return h:view(batchSize, beamSize, table.unpack(sizes))
-  end, beamSize)
+  end, beamSizeIn)
 end
 
-local function selectBatch(h, remaining)
-  return recursiveApply(h, function (h, remaining)
+local function selectBatch(hIn, remainingIn)
+  return recursiveApply(hIn, function (h, remaining)
     if not torch.isTensor(remaining) then
       remaining = torch.LongTensor(remaining)
     end
     return h:index(1, remaining)
-  end, remaining)
+  end, remainingIn)
 end
 
-local function selectBatchBeam(h, beamSize, batch, beam)
-  return recursiveApply(h, function (h, beamSize, batch, beam)
-    if torch.type(remaining) == 'table' then
-      remaining = torch.LongTensor(remaining)
-    end
+local function selectBatchBeam(hIn, beamSizeIn, batchIn, beamIn)
+  return recursiveApply(hIn, function (h, beamSize, batch, beam)
     local batchSize = math.floor(h:size(1) / beamSize)
     local sizes = {}
     for j = 2, #h:size() do
@@ -74,11 +71,11 @@ local function selectBatchBeam(h, beamSize, batch, beam)
     end
     local hOut = h:view(batchSize, beamSize, table.unpack(sizes))
     return hOut[{batch, beam}]
-  end, beamSize, batch, beam)
+  end, beamSizeIn, batchIn, beamIn)
 end
 
-local function rcToFlat(h)
-  return recursiveApply(h, function (h)
+local function rcToFlat(hIn)
+  return recursiveApply(hIn, function (h)
     local sizes = {}
     sizes[1] = h:size(1) * h:size(2)
     for j = 3, #h:size() do
@@ -124,7 +121,7 @@ function BeamSearcher:search(beamSize, nBest)
   self.origBatchIdToRemainingBatchId = {}
   self.origBatchSize = nil
   self.topIndexesHistory = {}
-  self.stepOutputsHistory = {} 
+  self.stepOutputsHistory = {}
   self.beamParentsHistory = {}
   self.beamScoresHistory = {}
   self.completedTimeStep = {}
@@ -165,6 +162,10 @@ function BeamSearcher:search(beamSize, nBest)
       topIndexes = onmt.utils.Cuda.convert(rawIndexes:double()) + 1 -- (origBatchSize, beamSize)
     else
       remainingBatchSize = math.floor(scores:size(1) / self.beamSize)
+      if self.nBest > 1 then
+        local minScore = -9e9
+        scores:add(onmt.utils.Cuda.convert(topIndexes:view(-1):eq(self.endSymbol):double()):mul(minScore):view(-1, 1):expand(scores:size(1), vocabSize)) -- once EOS encountered, set other token scores to -inf
+      end
       scores:select(2, self.endSymbol):maskedFill(topIndexes:view(-1):eq(self.endSymbol), 0) -- once EOS encountered, stuck at that point
       local totalScores = (scores:view(remainingBatchSize, self.beamSize, vocabSize) + beamScores:view(remainingBatchSize, self.beamSize, 1):expand(remainingBatchSize, self.beamSize, vocabSize)):view(remainingBatchSize, self.beamSize * vocabSize) -- (remainingBatchSize, beamSize * vocabSize)
       beamScores, rawIndexes = totalScores:topk(self.beamSize, 2, true, true) -- (remainingBatchSize, beamSize)
@@ -241,7 +242,7 @@ function BeamSearcher:getPredictions(k)
   for b = 1, self.origBatchSize do
     predictions[b] = {}
     outputs[b] = {}
-    t = self.completedTimeStep[b]
+    local t = self.completedTimeStep[b]
     local parentIndex, topIndex
     parentIndex = k
     if t then
@@ -249,7 +250,7 @@ function BeamSearcher:getPredictions(k)
       while t > 1 do
         outputs[b][t] = selectBatchBeam(self.stepOutputsHistory[t], self.beamSize, self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
         parentIndex = self.beamParentsHistory[t][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
-        topIndex = self.topIndexesHistory[t - 1][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex] 
+        topIndex = self.topIndexesHistory[t - 1][self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
         predictions[b][t - 1] = topIndex
         t = t - 1
       end
@@ -270,10 +271,10 @@ function BeamSearcher:getPredictions(k)
       outputs[b][1] = selectBatchBeam(self.stepOutputsHistory[1], self.beamSize, b, parentIndex)
     end
     -- trim trailing EOS
-    for t = #predictions[b], 1, -1 do
-      if predictions[b][t] == self.endSymbol then
-        predictions[b][t] = nil
-        outputs[b][t + 1] = nil
+    for s = #predictions[b], 1, -1 do
+      if predictions[b][s] == self.endSymbol then
+        predictions[b][s] = nil
+        outputs[b][s + 1] = nil
       else
         break
       end
