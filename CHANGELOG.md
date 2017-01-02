@@ -1,4 +1,4 @@
-## [Unreleased]
+## [v0.2.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.2.0) (2017-01-02)
 
 ### New features
 
@@ -10,6 +10,7 @@
 ### Fixes and improvements
 
 * Smaller memory footprint during training
+* Smaller released model size after a non-SGD training
 * Fix out of memory errors in preprocessing
 * Fix BRNN models serialization and release
 * Fix crash when retraining a model
