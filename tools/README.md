@@ -11,7 +11,8 @@ This directory contains additional tools.
 ### Tokenization
 To tokenize a corpus:
 
-```th tools/tokenize.lua OPTIONS < file > file.tok
+```
+th tools/tokenize.lua OPTIONS < file > file.tok
 ```
 
 where the options are:
@@ -35,14 +36,16 @@ Note:
 
 If you activate `sep_annotate` marker, the tokenization is reversible - just use:
 
-```th tools/detokenize.lua [-case_feature] < file.tok > file.detok
+```
+th tools/detokenize.lua [-case_feature] < file.tok > file.detok
 ```
 
 ## Release model
 
 After training a model on the GPU, you may want to release it to run on the CPU with the `release_model.lua` script.
 
-```th tools/release_model.lua -model model.t7 -gpuid 1
+```
+th tools/release_model.lua -model model.t7 -gpuid 1
 ```
 
 By default, it will create a `model_release.t7` file. See `th tools/release_model.lua -h` for advanced options.
@@ -61,11 +64,13 @@ luarocks install https://raw.github.com/Neopallium/lua-zmq/master/rockspecs/lua-
 
 Also you will need to install the OpenNMT as a library.
 
-```luarocks make rocks/opennmt-scm-1.rockspec```
+```
+luarocks make rocks/opennmt-scm-1.rockspec```
 
 The translation server can be run using any of the arguments from `translate.lua`. 
 
-```th tools/translation_server.lua -port ... -model ...
+```
+th tools/translation_server.lua -port ... -model ...
 ```
 
 It runs as a message queue that takes in a JSON batch of src sentences. For example the following 5 lines of Python
