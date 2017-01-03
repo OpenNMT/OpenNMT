@@ -8,8 +8,12 @@
         /                   \    /                 \     /
     step()                   \ step()               \  step()
        /                      \ /                    \ /
-  nil, nil                 tokens, states        tokens, states
-    t = 1                      t = 2             t = max seq len
+  nil, nil---------------tokens, states........tokens, states
+
+      |                        |                      |
+
+    t = 1--------------------t = 2..............t = max seq len
+
  ==================================================================
 
 Speicifies how to go one step forward.

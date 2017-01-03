@@ -366,7 +366,7 @@ function BeamSearcher:getPredictions(k)
     end
     outputs[b][1] = selectBatchBeam(self.stepOutputsHistory[1], self.beamSize
       , b, parentIndex)
-    -- trim trailing EOS
+    -- Trim trailing EOS
     for s = #predictions[b], 1, -1 do
       if predictions[b][s] == self.endSymbol then
         predictions[b][s] = nil
@@ -376,7 +376,8 @@ function BeamSearcher:getPredictions(k)
       end
     end
   end
-  -- transpose outputs
+
+  -- Transpose outputs
   local outputsTemp = {}
   for b = 1, #outputs do
     outputsTemp[b] = {}
