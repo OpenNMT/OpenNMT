@@ -163,6 +163,10 @@ Returns: if `x` is cuda tensor, return `v:cuda()`; otherwise, return `v`.
 local function localize(v, x)
   if x:type() == 'torch.CudaTensor' then
     return v:cuda()
+  elseif x:type() == 'torch.CudaByteTensor' then
+    return v:cuda()
+  elseif x:type() == 'torch.CudaLongTensor' then
+    return v:cuda()
   else
     return v
   end
@@ -215,9 +219,9 @@ function BeamSearcher:search(beamSize, nBest)
       flatTopIndexes = flatTopIndexes:view(-1)
     end
     -- Go one step forward
-    scores, stepOutputs = self.stepFunction(stepOutputs, flatTopIndexes)
+    scores, stepOutputs = self.stepFunction(flatTopIndexes, stepOutputs)
     if scores == nil then
-      self.maxSeqLength = t
+      self.maxSeqLength = t - 1
       break
     end
     if vocabSize then
@@ -257,7 +261,7 @@ function BeamSearcher:search(beamSize, nBest)
       rawIndexes:add(-1)
       topIndexes = localize(rawIndexes:double():fmod(vocabSize), rawIndexes) + 1
     end
-    local beamParents = localize(rawIndexes:int() / vocabSize + 1)
+    local beamParents = localize(rawIndexes:int() / vocabSize + 1, rawIndexes)
     -- Use the top k indexes to select the stepOutputs
     if t == 1 then
       -- Replicate batchSize hypotheses to batchSize * beamSize hypotheses

@@ -152,7 +152,7 @@ function Translator:translateBatch(batch)
       sourceSizes = batch.sourceSize:clone()
     else
       local input = tokens
-      if t >= self.opt.max_sent_length + 1 then
+      if t > self.opt.max_sent_length + 1 then
         return nil, nil
       end
       numUnks:add(onmt.utils.Cuda.convert(tokens
