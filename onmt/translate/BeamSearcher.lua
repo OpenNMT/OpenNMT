@@ -242,11 +242,12 @@ function BeamSearcher:search(beamSize, nBest)
       topIndexes = localize(rawIndexes:double(), rawIndexes) + 1
     else
       remainingBatchSize = math.floor(scores:size(1) / self.beamSize)
-      -- Set other tokens scores to -inf to avoid ABCD<EOS>FG on beam
+      -- Set other tokens scores to -inf to avoid ABCD<EOS>FG being on beam
       if self.nBest > 1 then
-        local minScore = -9e9
-        scores:add(localize(topIndexes:view(-1):eq(self.endSymbol):double(), scores)
-          :mul(minScore):view(-1, 1):expand(scores:size(1), vocabSize))
+        local maskScores = scores.new():resize(scores:size(1)):fill(0)
+        maskScores:maskedFill(topIndexes:view(-1):eq(self.endSymbol), -math.huge)
+        scores:add(maskScores
+          :view(-1, 1):expand(scores:size(1), vocabSize))
       end
       -- Ensure that tokens after <EOS> remain <EOS> and scores do not change
       scores:select(2, self.endSymbol)
