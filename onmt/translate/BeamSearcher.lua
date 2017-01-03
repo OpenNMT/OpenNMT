@@ -1,81 +1,77 @@
---[[ BeamSearcher is a class used for performing general beam search.
+--[[ Class for managing the internals of the beam search process.
+
+
+      hyp1---hyp1---hyp1 -hyp1
+          \             /
+      hyp2 \-hyp2 /-hyp2--hyp2
+                 /      \
+      hyp3---hyp3---hyp3 -hyp3
+      ========================
+
+Takes care of beams, back pointers, and scores.
 --]]
 local BeamSearcher = torch.class('BeamSearcher')
 
-local function recursiveApply(h, func, ...)
-  local hOut
-  if torch.type(h) == 'table' then
-    hOut = {}
-    for key, val in pairs(h) do
-      hOut[key] = recursiveApply(val, func, ...)
-    end
-    return hOut
-  end
-  if torch.isTensor(h) then
-    hOut = func(h, ...)
-  else
-    hOut = h
-  end
-  return hOut
-end
 
-local function recursiveClone(hIn)
-  return recursiveApply(hIn, function (h) return h:clone() end)
-end
-
-local function beamReplicate(hIn, beamSizeIn)
-  return recursiveApply(hIn, function (h, beamSize)
+local function beamReplicate(v, beamSize)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
     local batchSize = h:size(1)
     local sizes = {}
     for j = 2, #h:size() do
         sizes[j - 1] = h:size(j)
     end
-    return h:contiguous():view(batchSize, 1, table.unpack(sizes)):expand(batchSize, beamSize, table.unpack(sizes)):contiguous():view(batchSize * beamSize, table.unpack(sizes))
-  end, beamSizeIn)
+    return h:contiguous():view(batchSize, 1, table.unpack(sizes))
+      :expand(batchSize, beamSize, table.unpack(sizes)):contiguous()
+      :view(batchSize * beamSize, table.unpack(sizes))
+  end)
 end
 
-local function beamSelect(hIn, selIndexesIn)
-  return recursiveApply(hIn, function (h, selIndexes)
+local function beamSelect(v, selIndexes)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
     local batchSize = selIndexes:size(1)
     local beamSize = selIndexes:size(2)
-    return h:index(1, selIndexes:view(-1):long() + (torch.range(0, (batchSize - 1) * beamSize, beamSize):long()):contiguous():view(batchSize, 1):expand(batchSize, beamSize):contiguous():view(-1))
-  end, selIndexesIn)
+    return h:index(1, selIndexes:view(-1):long()
+      + (torch.range(0, (batchSize - 1) * beamSize, beamSize):long())
+      :contiguous():view(batchSize, 1)
+      :expand(batchSize, beamSize):contiguous():view(-1))
+  end)
 end
 
-local function flatToRc(hIn, beamSizeIn)
-  return recursiveApply(hIn, function (h, beamSize)
+--[[Helper function. Recursively convert flat `batchSize * beamSize` tensors
+ to 2D `(batchSize, beamSize)` tensors.
+
+Parameters:
+
+  * `v` - flat tensor of size `batchSize * beamSize` or a table containing such tensors.
+  * `beamSize` - beam size
+
+Returns: `(batchSize, beamSize)` tensor or a table containing such tensors.
+
+--]]
+local function flatToRc(v, beamSize)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
     local batchSize = math.floor(h:size(1) / beamSize)
     local sizes = {}
     for j = 2, #h:size() do
         sizes[j - 1] = h:size(j)
     end
     return h:view(batchSize, beamSize, table.unpack(sizes))
-  end, beamSizeIn)
+  end)
 end
 
-local function selectBatch(hIn, remainingIn)
-  return recursiveApply(hIn, function (h, remaining)
-    if not torch.isTensor(remaining) then
-      remaining = torch.LongTensor(remaining)
-    end
-    return h:index(1, remaining)
-  end, remainingIn)
-end
+--[[Helper function. Recursively convert 2D `(batchSize, beamSize)` tensors to
+ flat `batchSize * beamSize` tensors.
 
-local function selectBatchBeam(hIn, beamSizeIn, batchIn, beamIn)
-  return recursiveApply(hIn, function (h, beamSize, batch, beam)
-    local batchSize = math.floor(h:size(1) / beamSize)
-    local sizes = {}
-    for j = 2, #h:size() do
-        sizes[j - 1] = h:size(j)
-    end
-    local hOut = h:view(batchSize, beamSize, table.unpack(sizes))
-    return hOut[{batch, beam}]
-  end, beamSizeIn, batchIn, beamIn)
-end
+Parameters:
 
-local function rcToFlat(hIn)
-  return recursiveApply(hIn, function (h)
+  * `v` - flat tensor of size `(batchSize, beamSize)` or a table containing such tensors.
+  * `beamSize` - beam size
+
+Returns: `batchSize * beamSize` tensor or a table containing such tensors.
+
+--]]
+local function rcToFlat(v)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
     local sizes = {}
     sizes[1] = h:size(1) * h:size(2)
     for j = 3, #h:size() do
@@ -85,31 +81,51 @@ local function rcToFlat(hIn)
   end)
 end
 
---[[ Construct a BeamSearcher object. BeamSearcher takes charge of the beam search related logic such as ranking the predictions, tracking the parents in each beam, and transforming the outputs from last time step according to the parent indexes in the current time step.
+local function selectBatch(v, remaining)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    if not torch.isTensor(remaining) then
+      remaining = torch.LongTensor(remaining)
+    end
+    return h:index(1, remaining)
+  end)
+end
+
+local function selectBatchBeam(v, beamSize, batch, beam)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local batchSize = math.floor(h:size(1) / beamSize)
+    local sizes = {}
+    for j = 2, #h:size() do
+        sizes[j - 1] = h:size(j)
+    end
+    local hOut = h:view(batchSize, beamSize, table.unpack(sizes))
+    return hOut[{batch, beam}]
+  end)
+end
+
+
+--[[Constructor
 
 Parameters:
+
   * `stepFunction` - this function specifies how to go one step forward. It will take a table `stepInputs` as input, produce a table `stepOutputs` as output. All tensors inside tables must have the same first dimension `batchSize`. `stepOutputs[1]` should be of shape (`batchSize`, `numTokens`), which denotes the scores in this step.
   * `feedFunction` - this function specifies how to prepare the input `stepInputs` to stepFunction given `stepOutputs` and predictions from last time step. All tensors inside tables must have the same first dimension `batchSize`. Input: `topIndexes`, a tensor of shape (`batchSize`), which are the predictions from last time step; `stepOutputs`, the corresponding output of `stepFunction` from last time step. At the first time step, both `stepOutputs` and `topIndexes` will be passed as nil, and the returned values of this function acts as an initializer.
   * `maxSeqLength` - maximum output sequence length.
   * `endSymbol` - end of sequence symbol. [onmt.Constants.EOS]
-  * `allowEmptyHyp` - whether or not allow empty sequence. If set to false, then only non-empty sequences will be considered. Otherwise, it may output empty sequences, and there may be nils in the predictions. [false]
-
-Example:
-
-    See function `translateBatch` in `onmt/translate/Translator.lua`. Note that by specifying `stepFunction` and `feedFunction`, we can use it to perform general beam search. We can easily add filters to prune some sequences during beam search, like sequences with too many UNKs.
 
 ]]
-function BeamSearcher:__init(stepFunction, feedFunction, maxSeqLength, endSymbol, allowEmptyHyp)
+function BeamSearcher:__init(stepFunction, feedFunction, maxSeqLength,
+    keptIndexes, endSymbol)
   self.stepFunction = stepFunction
   self.feedFunction = feedFunction
   self.maxSeqLength = maxSeqLength
   self.endSymbol = endSymbol or onmt.Constants.EOS
-  self.allowEmptyHyp = allowEmptyHyp or false -- by default, we only consider sequences of length >= 1
+  self.keptIndexes = keptIndexes
 end
 
 --[[ Perform beam search.
 
 Parameters:
+
   * `beamSize` - this function specifies how to go one step forward. It will take a table `stepInputs` as input, produce a table `stepOutputs` as output. All tensors inside tables must have the same first dimension `batchSize`. `stepOutputs[1]` should be of shape (`batchSize`, `numTokens`), which denotes the scores in this step. [1]
   * `nBest` - the `nBest` top hypotheses can be returned after performing beam search. This value must be smaller than or equal to `beamSize`. [1]
 
@@ -153,9 +169,6 @@ function BeamSearcher:search(beamSize, nBest)
       remainingBatchSize = self.origBatchSize -- completed sequences will be removed from batch, so batch size changes
       for b = 1, self.origBatchSize do
         remainingBatchIdToOrigBatchId[b] = b
-      end
-      if not self.allowEmptyHyp then
-        scores:select(2, self.endSymbol):fill(-math.huge)
       end
       beamScores, rawIndexes = scores:topk(self.beamSize, 2, true, true)
       rawIndexes:add(-1)
@@ -205,7 +218,11 @@ function BeamSearcher:search(beamSize, nBest)
     remainingBatchIdToOrigBatchId = remainingBatchIdToOrigBatchIdTemp
     table.insert(self.beamParentsHistory, beamParents) -- (remainingBatchSize, beamSize)
     table.insert(self.beamScoresHistory, beamScores:clone()) -- (remainingBatchSize, beamSize)
-    table.insert(self.stepOutputsHistory, recursiveClone(stepOutputs)) -- newRemainingBatchSize
+    local keptStepOutputs = {}--stepOutputs
+    for _, val in pairs(self.keptIndexes) do
+      keptStepOutputs[val] = stepOutputs[val]
+    end
+    table.insert(self.stepOutputsHistory, onmt.utils.Tensor.recursiveClone(keptStepOutputs)) -- newRemainingBatchSize
     if newRemainingBatchSize ~= remainingBatchSize then -- some batches are finished
       if #remaining ~= 0 then
         stepOutputs = rcToFlat(selectBatch(flatToRc(stepOutputs, self.beamSize), remaining))
@@ -223,9 +240,11 @@ end
 --[[ Get beam search predictions.
 
 Parameters:
+
   * `k` - if set to k, then the k-th predictions will be returned. It must be smaller than or equal to `nBest` in `BeamSearcher:search`. [1]
 
 Returns:
+
   * `predictions` - a table. predictions[b][t] stores the prediction in batch `b` and time step `t`.
   * `scores` - a table. scores[b] stores the prediction score of batch `b`.
   * `outputs` - a table. outputs[b][j][t] stores the j-th element in `stepOutputs` produced by `stepFunction` in batch `b` and time step `t`. In the case of an empty prediction, i.e. `predictions[b] == {}`, `outputs[b]` will be nil.
@@ -285,7 +304,7 @@ function BeamSearcher:getPredictions(k)
   for b = 1, #outputs do
     outputsTemp[b] = {}
     for t = 1, #outputs[b] do
-      for j = 1, #outputs[b][t] do
+      for j, _ in pairs(outputs[b][t]) do
         outputsTemp[b][j] = outputsTemp[b][j] or {}
         outputsTemp[b][j][t] = outputs[b][t][j]
       end

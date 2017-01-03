@@ -145,11 +145,11 @@ function Translator:translateBatch(batch)
       local decOut = nil
       local sourceSizes = batch.sourceSize:clone()
 
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, numUnks}
+      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, numUnks, 1}
       return stepInputs
     else -- inputs for >= 2 time steps
       local input = topIndexes
-      local _, decStates, decOut, contextNew, _, features, sourceSizes, numUnks = table.unpack(stepOutputs)
+      local _, decStates, decOut, contextNew, _, features, sourceSizes, numUnks, t = table.unpack(stepOutputs)
       numUnks:add(onmt.utils.Cuda.convert(topIndexes:eq(onmt.Constants.UNK):double()))
       local inputs
       if #features == 0 then
@@ -160,29 +160,32 @@ function Translator:translateBatch(batch)
         inputs = { input }
         table.insert(inputs, features)
       end
-      local stepInputs = {inputs, decStates, contextNew, decOut, sourceSizes, numUnks}
+      local stepInputs = {inputs, decStates, contextNew, decOut, sourceSizes, numUnks, t + 1}
       return stepInputs
     end
   end
   -- go one step forward
   local function stepFunction(stepInputs)
-    local inputs, decStates, contextNew, decOut, sourceSizes, numUnks = table.unpack(stepInputs)
+    local inputs, decStates, contextNew, decOut, sourceSizes, numUnks, t = table.unpack(stepInputs)
     self.models.decoder:maskPadding(sourceSizes, batch.sourceLength)
     decOut, decStates = self.models.decoder:forwardOne(inputs, decStates, contextNew, decOut)
     local out = self.models.decoder.generator:forward(decOut)
     local scores = out[1]
+    if t == 1 then
+      scores:select(2, onmt.Constants.EOS):fill(-math.huge)
+    end
     scores:select(2, onmt.Constants.UNK):maskedFill(numUnks:ge(self.opt.max_num_unks), -math.huge)
     local features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
       features[j - 1] = best:view(-1)
     end
-    local stepOutputs = {scores, decStates, decOut, contextNew, self.models.decoder.softmaxAttn.output, features, sourceSizes, numUnks}
+    local stepOutputs = {scores, decStates, decOut, contextNew, self.models.decoder.softmaxAttn.output, features, sourceSizes, numUnks, t}
     return stepOutputs
   end
 
   -- construct BeamSearcher, note that to support input features, we increase max_sent_length by 1
-  local beamSearcher = onmt.translate.BeamSearcher.new(stepFunction, feedFunction, self.opt.max_sent_length + 1)
+  local beamSearcher = onmt.translate.BeamSearcher.new(stepFunction, feedFunction, self.opt.max_sent_length + 1, {5, 6})
   -- search
   beamSearcher:search(self.opt.beam_size, self.opt.n_best)
 
@@ -210,7 +213,6 @@ function Translator:translateBatch(batch)
       local scores = result[2][b]
       local attn = result[3][b][5] or {}
       local feats = result[3][b][6] or {}
-
       if #feats < #hyp + 1 then
         table.remove(hyp)
       end
