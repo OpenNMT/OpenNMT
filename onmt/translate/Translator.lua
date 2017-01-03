@@ -185,7 +185,7 @@ function Translator:translateBatch(batch)
   end
 
   -- construct BeamSearcher, note that to support input features, we increase max_sent_length by 1
-  local beamSearcher = onmt.translate.BeamSearcher.new(stepFunction, feedFunction, self.opt.max_sent_length + 1, {5, 6})
+  local beamSearcher = onmt.translate.BeamSearcher.new(stepFunction, self.opt.max_sent_length + 1, {5, 6})
   -- search
   beamSearcher:search(self.opt.beam_size, self.opt.n_best)
 

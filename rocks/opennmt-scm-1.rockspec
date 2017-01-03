@@ -53,6 +53,7 @@ build = {
     ["onmt.train.EpochState"] = "onmt/train/EpochState.lua",
     ["onmt.train.Optim"] = "onmt/train/Optim.lua",
     ["onmt.translate.init"] = "onmt/translate/init.lua",
+    ["onmt.translate.BeamSearchAdvancer"] = "onmt/translate/BeamSearchAdvancer.lua",
     ["onmt.translate.BeamSearcher"] = "onmt/translate/BeamSearcher.lua",
     ["onmt.translate.Translator"] = "onmt/translate/Translator.lua",
     ["onmt.translate.PhraseTable"] = "onmt/translate/PhraseTable.lua",
