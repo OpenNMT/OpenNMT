@@ -123,7 +123,7 @@ function Translator:translateBatch(batch)
     goldScore = self.models.decoder:computeScore(batch, encStates, context)
   end
 
-  -- go one step forward
+  -- Go one step forward
   local function stepFunction(tokens, states)
     states = states or {}
     local decStates, decOut, prevContext, _, features, sourceSizes, numUnks, t

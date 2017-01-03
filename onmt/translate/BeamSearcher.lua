@@ -182,7 +182,7 @@ Parameters:
 ]]
 function BeamSearcher:__init(advancer, endSymbol)
   self.stepFunction = advancer.step
-  self.keptStateIndexes = advancer.keptStateIndexes
+  self.keptStateIndexes = advancer.keptStateIndexes or {}
   self.endSymbol = endSymbol or onmt.Constants.EOS
 end
 
