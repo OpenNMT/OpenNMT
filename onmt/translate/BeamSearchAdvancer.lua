@@ -41,12 +41,12 @@ Returns:
 function BeamSearchAdvancer:step(tokens, states)
   local scores, statesOut, t
   if tokens == nil then
-    -- the first step, batchSize 3, vocabSize 5, hiddenSize 7 and 8
+    -- The first step, batchSize 3, vocabSize 5, hiddenSize 7 and 8
     t = 1
     scores = torch.zeros(3, 5)
     statesOut = {torch.zeros(3, 7), torch.zeros(3, 8), 1}
   else
-    -- the following steps, must obtain batchSize from tokens
+    -- The following steps, must obtain batchSize from tokens
     local batchSize = tokens:size(1)
     t = states[3]
     scores = torch.zeros(batchSize, 5)
