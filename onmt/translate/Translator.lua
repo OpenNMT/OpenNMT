@@ -183,7 +183,7 @@ function Translator:translateBatch(batch)
     end
     t = t + 1
     local softmaxOut = self.models.decoder.softmaxAttn.output
-    local nextStates = {decStates, decOut, context, softmaxOut, features,
+    local nextStates = {decStates, decOut, prevContext, softmaxOut, features,
       sourceSizes, numUnks, t}
     return scores, nextStates
   end
