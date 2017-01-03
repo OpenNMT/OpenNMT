@@ -4,7 +4,7 @@
            ______________
           / (update beam)\
          /                \
-      scores, states       \     .................    nil, nil 
+      scores, states       \     .................    nil, nil
         /                   \    /                 \     /
     step()                   \ step()               \  step()
        /                      \ /                    \ /
@@ -12,7 +12,7 @@
     t = 1                      t = 2             t = max seq len
  ==================================================================
 
-Speicifies how to go one step forward. 
+Speicifies how to go one step forward.
 --]]
 local BeamSearchAdvancer = torch.class('BeamSearchAdvancer')
 

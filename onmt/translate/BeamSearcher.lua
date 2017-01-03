@@ -203,7 +203,7 @@ function BeamSearcher:search(beamSize, nBest)
   self.completedTimeStep = {}
 
   local vocabSize
-  local topIndexes 
+  local topIndexes
   local beamScores
   local stepOutputs, scores
   local remainingBatchIdToOrigBatchId = {}
@@ -242,13 +242,13 @@ function BeamSearcher:search(beamSize, nBest)
       if self.nBest > 1 then
         local minScore = -9e9
         scores:add(localize(topIndexes:view(-1):eq(self.endSymbol):double(), scores)
-          :mul(minScore):view(-1, 1):expand(scores:size(1), vocabSize)) 
+          :mul(minScore):view(-1, 1):expand(scores:size(1), vocabSize))
       end
       -- Ensure that tokens after <EOS> remain <EOS> and scores do not change
       scores:select(2, self.endSymbol)
         :maskedFill(topIndexes:view(-1):eq(self.endSymbol), 0)
       local totalScores = (scores:view(remainingBatchSize, self.beamSize
-        , vocabSize) 
+        , vocabSize)
         + beamScores:view(remainingBatchSize, self.beamSize, 1)
         :expand(remainingBatchSize, self.beamSize, vocabSize))
         :view(remainingBatchSize, self.beamSize * vocabSize)
@@ -295,7 +295,7 @@ function BeamSearcher:search(beamSize, nBest)
     for _, val in pairs(self.keptStateIndexes) do
       keptStepOutputs[val] = stepOutputs[val]
     end
-    table.insert(self.stepOutputsHistory, 
+    table.insert(self.stepOutputsHistory,
       onmt.utils.Tensor.recursiveClone(keptStepOutputs))
     -- Remove finished batches
     if newRemainingBatchSize ~= remainingBatchSize then

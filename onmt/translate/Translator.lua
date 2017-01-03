@@ -123,16 +123,22 @@ function Translator:translateBatch(batch)
     goldScore = self.models.decoder:computeScore(batch, encStates, context)
   end
 
-  -- prepare inputs for next time step
-  local function feedFunction(stepOutputs, topIndexes)
-    if stepOutputs == nil then -- initial inputs for first time step
-      local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size)):fill(onmt.Constants.BOS)
-      local numUnks = onmt.utils.Cuda.convert(torch.zeros(batch.size))
+  -- go one step forward
+  local function stepFunction(tokens, states)
+    states = states or {}
+    local decStates, decOut, prevContext, _, features, sourceSizes, numUnks, t
+        = table.unpack(states)
+    -- Prepare inputs
+    local inputs
+    if tokens == nil then
+      t = 1
+      local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size))
+        :fill(onmt.Constants.BOS)
+      numUnks = onmt.utils.Cuda.convert(torch.zeros(batch.size))
       local inputFeatures = {}
       for j = 1, #self.dicts.tgt.features do
         inputFeatures[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
       end
-      local inputs
       if #inputFeatures == 0 then
         inputs = input
       elseif #inputFeatures == 1 then
@@ -141,17 +147,16 @@ function Translator:translateBatch(batch)
         inputs = { input }
         table.insert(inputs, inputFeatures)
       end
-      local decStates = encStates
-      local decOut = nil
-      local sourceSizes = batch.sourceSize:clone()
-
-      local stepInputs = {inputs, decStates, context, decOut, sourceSizes, numUnks, 1}
-      return stepInputs
-    else -- inputs for >= 2 time steps
-      local input = topIndexes
-      local _, decStates, decOut, contextNew, _, features, sourceSizes, numUnks, t = table.unpack(stepOutputs)
-      numUnks:add(onmt.utils.Cuda.convert(topIndexes:eq(onmt.Constants.UNK):double()))
-      local inputs
+      decStates = encStates
+      prevContext = context
+      sourceSizes = batch.sourceSize:clone()
+    else
+      local input = tokens
+      if t >= self.opt.max_sent_length + 1 then
+        return nil, nil
+      end
+      numUnks:add(onmt.utils.Cuda.convert(tokens
+        :eq(onmt.Constants.UNK):double()))
       if #features == 0 then
         inputs = input
       elseif #features == 1 then
@@ -160,33 +165,36 @@ function Translator:translateBatch(batch)
         inputs = { input }
         table.insert(inputs, features)
       end
-      local stepInputs = {inputs, decStates, contextNew, decOut, sourceSizes, numUnks, t + 1}
-      return stepInputs
     end
-  end
-  -- go one step forward
-  local function stepFunction(stepInputs)
-    local inputs, decStates, contextNew, decOut, sourceSizes, numUnks, t = table.unpack(stepInputs)
     self.models.decoder:maskPadding(sourceSizes, batch.sourceLength)
-    decOut, decStates = self.models.decoder:forwardOne(inputs, decStates, contextNew, decOut)
+    decOut, decStates = self.models.decoder
+      :forwardOne(inputs, decStates, prevContext, decOut)
     local out = self.models.decoder.generator:forward(decOut)
     local scores = out[1]
     if t == 1 then
       scores:select(2, onmt.Constants.EOS):fill(-math.huge)
     end
-    scores:select(2, onmt.Constants.UNK):maskedFill(numUnks:ge(self.opt.max_num_unks), -math.huge)
-    local features = {}
+    scores:select(2, onmt.Constants.UNK)
+      :maskedFill(numUnks:ge(self.opt.max_num_unks), -math.huge)
+    features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
       features[j - 1] = best:view(-1)
     end
-    local stepOutputs = {scores, decStates, decOut, contextNew, self.models.decoder.softmaxAttn.output, features, sourceSizes, numUnks, t}
-    return stepOutputs
+    t = t + 1
+    local softmaxOut = self.models.decoder.softmaxAttn.output
+    local nextStates = {decStates, decOut, context, softmaxOut, features,
+      sourceSizes, numUnks, t}
+    return scores, nextStates
   end
 
-  -- construct BeamSearcher, note that to support input features, we increase max_sent_length by 1
-  local beamSearcher = onmt.translate.BeamSearcher.new(stepFunction, self.opt.max_sent_length + 1, {5, 6})
-  -- search
+  -- Construct BeamSearchAdvancer
+  local advancer = onmt.translate.BeamSearchAdvancer.new()
+  advancer.step = stepFunction
+  advancer:setKeptStateIndexes({4, 5})
+  -- Construct BeamSearcher
+  local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  -- Search
   beamSearcher:search(self.opt.beam_size, self.opt.n_best)
 
   collectgarbage()
@@ -196,10 +204,11 @@ function Translator:translateBatch(batch)
   local allAttn = {}
   local allScores = {}
 
-  -- get predictions
+  -- Get predictions
   local results = {}
   for n = 1, self.opt.n_best do
-    results[n] = table.pack(beamSearcher:getPredictions(n))
+    local hyps, scores, outputs = beamSearcher:getPredictions(n)
+    results[n] = {hyps, scores, outputs}
   end
   for b = 1, batch.size do
     local hypBatch = {}
@@ -208,15 +217,15 @@ function Translator:translateBatch(batch)
     local scoresBatch = {}
 
     for n = 1, self.opt.n_best do
-      local result = results[n]
-      local hyp = result[1][b]
-      local scores = result[2][b]
-      local attn = result[3][b][5] or {}
-      local feats = result[3][b][6] or {}
+      local hyps, scores, outputs = table.unpack(results[n])
+      local hyp = hyps[b]
+      local score = scores[b]
+      local attn = outputs[b][4] or {}
+      local feats = outputs[b][5] or {}
       if #feats < #hyp + 1 then
         table.remove(hyp)
       end
-      -- remove unnecessary values from the attention vectors
+      -- Remove unnecessary values from the attention vectors
       local size = batch.sourceSize[b]
       for j = 1, #attn do
         attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
@@ -227,7 +236,7 @@ function Translator:translateBatch(batch)
         table.insert(featsBatch, feats)
       end
       table.insert(attnBatch, attn)
-      table.insert(scoresBatch, scores)
+      table.insert(scoresBatch, score)
     end
 
     table.insert(allHyp, hypBatch)
