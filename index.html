@@ -346,19 +346,23 @@ accuracy. Features include:</p>
 </ul>
 <p><a id="onmt.README.Installation"></a></p>
 <h2 id="installation">Installation</h2>
-<p>OpenNMT only requires a vanilla Torch install. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.</p>
+<p>OpenNMT only requires a vanilla Torch install with few dependencies. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.</p>
 <p><a id="onmt.README.Dependencies"></a></p>
 <h3 id="dependencies">Dependencies</h3>
 <ul>
 <li><code>nn</code></li>
 <li><code>nngraph</code></li>
 <li><code>tds</code></li>
-<li><code>threads</code></li>
+<li><code>penlight</code></li>
 </ul>
-<p>GPU will also require:</p>
+<p>GPU training requires:</p>
 <ul>
 <li><code>cunn</code></li>
 <li><code>cutorch</code></li>
+</ul>
+<p>Multi-GPU training additionally requires:</p>
+<ul>
+<li><code>threads</code></li>
 </ul>
 <p><a id="onmt.README.Quickstart"></a></p>
 <h2 id="quickstart">Quickstart</h2>
@@ -426,5 +430,5 @@ accuracy. Features include:</p>
 
 <!--
 MkDocs version : 0.16.0
-Build Date UTC : 2017-01-03 17:01:05
+Build Date UTC : 2017-01-04 17:01:05
 -->

@@ -2,7 +2,7 @@
     "docs": [
         {
             "location": "/",
-            "text": "OpenNMT: Open-Source Neural Machine Translation\n\n\nOpenNMT\n is a full-featured,\nopen-source (MIT) neural machine translation system utilizing the\n\nTorch\n mathematical toolkit.\n\n\n\n\nThe system is designed to be simple to use and easy to extend , while\nmaintaining efficiency and state-of-the-art translation\naccuracy. Features include:\n\n\n\n\nSpeed and memory optimizations for high-performance GPU training.\n\n\nSimple general-purpose interface, only requires and source/target data files.\n\n\nC-only decoder implementation for easy deployment.\n\n\nExtensions to allow other sequence generation tasks such as summarization and image captioning.\n\n\n\n\n\n\nInstallation\n\n\nOpenNMT only requires a vanilla Torch install. Alternatively there is a (CUDA) \nDocker container\n.\n\n\n\n\nDependencies\n\n\n\n\nnn\n\n\nnngraph\n\n\ntds\n\n\nthreads\n\n\n\n\nGPU will also require:\n\n\n\n\ncunn\n\n\ncutorch\n\n\n\n\n\n\nQuickstart\n\n\nOpenNMT consists of three commands:\n\n\n1) Preprocess the data.\n\n\nth preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo\n\n\n2) Train the model.\n\n\nth train.lua -data data/demo-train.t7 -save_model model\n\n\n3) Translate sentences.\n\n\nth translate.lua -model model_final.t7 -src data/src-test.txt -output pred.txt\n\n\nSee the \nguide\n for more details.\n\n\nDocumentation\n\n\n\n\nOptions and Features\n \n\n\nDocumentation\n \n\n\nExample Models\n\n\nForum\n\n\nLive Demo\n\n\nBibliography",
+            "text": "OpenNMT: Open-Source Neural Machine Translation\n\n\nOpenNMT\n is a full-featured,\nopen-source (MIT) neural machine translation system utilizing the\n\nTorch\n mathematical toolkit.\n\n\n\n\nThe system is designed to be simple to use and easy to extend , while\nmaintaining efficiency and state-of-the-art translation\naccuracy. Features include:\n\n\n\n\nSpeed and memory optimizations for high-performance GPU training.\n\n\nSimple general-purpose interface, only requires and source/target data files.\n\n\nC-only decoder implementation for easy deployment.\n\n\nExtensions to allow other sequence generation tasks such as summarization and image captioning.\n\n\n\n\n\n\nInstallation\n\n\nOpenNMT only requires a vanilla Torch install with few dependencies. Alternatively there is a (CUDA) \nDocker container\n.\n\n\n\n\nDependencies\n\n\n\n\nnn\n\n\nnngraph\n\n\ntds\n\n\npenlight\n\n\n\n\nGPU training requires:\n\n\n\n\ncunn\n\n\ncutorch\n\n\n\n\nMulti-GPU training additionally requires:\n\n\n\n\nthreads\n\n\n\n\n\n\nQuickstart\n\n\nOpenNMT consists of three commands:\n\n\n1) Preprocess the data.\n\n\nth preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo\n\n\n2) Train the model.\n\n\nth train.lua -data data/demo-train.t7 -save_model model\n\n\n3) Translate sentences.\n\n\nth translate.lua -model model_final.t7 -src data/src-test.txt -output pred.txt\n\n\nSee the \nguide\n for more details.\n\n\nDocumentation\n\n\n\n\nOptions and Features\n \n\n\nDocumentation\n \n\n\nExample Models\n\n\nForum\n\n\nLive Demo\n\n\nBibliography",
             "title": "Home"
         },
         {
@@ -12,12 +12,12 @@
         },
         {
             "location": "/#installation",
-            "text": "OpenNMT only requires a vanilla Torch install. Alternatively there is a (CUDA)  Docker container .",
+            "text": "OpenNMT only requires a vanilla Torch install with few dependencies. Alternatively there is a (CUDA)  Docker container .",
             "title": "Installation"
         },
         {
             "location": "/#dependencies",
-            "text": "nn  nngraph  tds  threads   GPU will also require:   cunn  cutorch",
+            "text": "nn  nngraph  tds  penlight   GPU training requires:   cunn  cutorch   Multi-GPU training additionally requires:   threads",
             "title": "Dependencies"
         },
         {
