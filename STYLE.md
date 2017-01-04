@@ -2,7 +2,7 @@
 
 ## Comments
 
-* All non-private method should have a [torch-dokx](https://github.com/deepmind/torch-dokx/blob/master/doc/usage.md) documentation describing input/output.
+* All non-private methods should have a [torch-dokx](https://github.com/deepmind/torch-dokx/blob/master/doc/usage.md) documentation describing input/output.
 
 * All classes should have a class docstring at the top of the file.
 
@@ -16,7 +16,7 @@ The torch-dokx documentation is automatically deployed [here](http://opennmt.net
 
 * Use object-oriented programming whenever appropriate.
 
-* Avoid using global variable.
+* Avoid using global variables.
 
 * Avoid writing functions with more than 100 lines.
 
@@ -32,4 +32,4 @@ The torch-dokx documentation is automatically deployed [here](http://opennmt.net
 
 * Commande line options and scripts name should use snake_case.
 
-* Use space around operators to increase readability.
+* Use spaces around operators to increase readability.
