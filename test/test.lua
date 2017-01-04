@@ -188,24 +188,6 @@ end
 tester:add(dictTest)
 
 
-local nmttest = torch.TestSuite()
-
--- local function equal(t1, t2, msg)
---    if (torch.type(t1) == "table") then
---       for k, _ in pairs(t2) do
---          equal(t1[k], t2[k], msg)
---       end
---    else
---       tester:eq(t1, t2, 0.00001, msg)
---    end
--- end
-
-
-function nmttest.Data()
-end
-
-tester:add(nmttest)
-
 function onmt.test(tests, fixedSeed)
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()
