@@ -10,7 +10,7 @@
 
 The torch-dokx documentation is automatically deployed [here](http://opennmt.net/OpenNMT/).
 
-## Code
+## Design
 
 * All files should pass `luacheck`.
 
@@ -24,7 +24,7 @@ The torch-dokx documentation is automatically deployed [here](http://opennmt.net
 
 * If a new module relies on command line options, consider defining a static `declareOpts(cmd)` function. See `onmt/translate/Translator.lua` for an example.
 
-## Style
+## Formatting
 
 * All indentation should be 2 spaces.
 
