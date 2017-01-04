@@ -209,34 +209,38 @@ end
 --[[ Get source input batch at timestep `t`. --]]
 function Batch:getSourceInput(t)
   -- If a regular input, return word id, otherwise a table with features.
+  local inputs = self.sourceInput[t]
+
   if #self.sourceInputFeatures > 0 then
-    local inputs = {self.sourceInput[t]}
+    inputs = { inputs }
     addInputFeatures(inputs, self.sourceInputFeatures, t)
-    return inputs
-  else
-    return self.sourceInput[t]
   end
+
+  return inputs
 end
 
 --[[ Get target input batch at timestep `t`. --]]
 function Batch:getTargetInput(t)
   -- If a regular input, return word id, otherwise a table with features.
+  local inputs = self.targetInput[t]
+
   if #self.targetInputFeatures > 0 then
-    local inputs = {self.targetInput[t]}
+    inputs = { inputs }
     addInputFeatures(inputs, self.targetInputFeatures, t)
-    return inputs
-  else
-    return self.targetInput[t]
   end
+
+  return inputs
 end
 
 --[[ Get target output batch at timestep `t` (values t+1). --]]
 function Batch:getTargetOutput(t)
   -- If a regular input, return word id, otherwise a table with features.
   local outputs = { self.targetOutput[t] }
+
   for j = 1, #self.targetOutputFeatures do
     table.insert(outputs, self.targetOutputFeatures[j][t])
   end
+
   return outputs
 end
 
