@@ -101,7 +101,9 @@ function unicode.isLetter(u)
   if ((u>=0x4E00 and u<=0x9FD5) -- CJK Unified Ideograph
       or (u>=0x2F00 and u<=0x2FD5) -- Kangxi Radicals
       or (u>=0x2E80 and u<=0x2EFF) -- CJK Radicals Supplement
-      or (u>=0x3040 and u<=0x319F) -- Hiragana, Katakana, Bopomofo, Hangul, Kanbun
+      or (u>=0x3040 and u<=0x319F) -- Hiragana, Katakana, Bopomofo, Hangul Compatibility Jamo, Kanbun
+      or (u>=0x1100 and u<=0x11FF) -- Hangul Jamo
+      or (u>=0xAC00 and u<=0xD7AF) -- Hangul Syllables
       or _find_codepoint(u, unidata.LetterOther)
       ) then
     return true, "other"
