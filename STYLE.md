@@ -33,3 +33,5 @@ The torch-dokx documentation is automatically deployed [here](http://opennmt.net
 * Commande line options and scripts name should use snake_case.
 
 * Use spaces around operators to increase readability.
+
+* Avoid lines with more than 100 columns.
