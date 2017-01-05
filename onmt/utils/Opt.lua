@@ -53,6 +53,8 @@ local function loadConfig(filename, opt)
 
   for key, val in pairs(config) do
     assert(opt[key] ~= nil, 'unkown option ' .. key)
+    assert(type(val) == type(opt[key]),
+           'option ' .. key .. ' expects a ' .. type(opt[key]) .. ' value but a ' .. type(val) .. ' was given')
     opt[key] = val
   end
 
