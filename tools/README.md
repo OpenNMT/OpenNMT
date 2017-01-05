@@ -77,7 +77,7 @@ th tools/translation_server.lua -port ... -model ...
 It runs as a message queue that takes in a JSON batch of src sentences. For example the following 5 lines of Python
 code can be used to send a single sentence for translation.
 
-```
+```python
 import zmq, sys, json
 sock = zmq.Context().socket(zmq.REQ)
 sock.connect("tcp://127.0.0.1:5556")
