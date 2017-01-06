@@ -61,7 +61,7 @@ Returns:
 function BeamSearchAdvancer:expand(states)
 end
 
---[[Determines which hypotheses are final.
+--[[Determines which hypotheses are complete.
 
 Parameters:
 
@@ -71,9 +71,20 @@ Parameters:
 Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses are complete.
 
 ]]
-function BeamSearchAdvancer:isFinal(hypotheses, states)
+function BeamSearchAdvancer:isComplete(hypotheses, states)
 end
 
+--[[Specifies which states to keep track of. After beam search, those states
+  can be retrieved during all steps along with the predictions.
+
+Parameters:
+
+  * `indexes` - a table of integers, specifying the indexes in the `states` to track.
+
+]]
+function BeamSearchAdvancer:setKeptStateIndexes(indexes)
+  self.keptStateIndexes = indexes
+end
 
 --[[Determines which hypotheses shall be pruned.
 --
@@ -96,10 +107,6 @@ Parameters:
   * `indexes` - a table of integers, specifying the indexes in the `states` to track.
 
 ]]
-function BeamSearchAdvancer:setKeptStateIndexes(indexes)
-  self.keptStateIndexes = indexes
-end
-
 -- Private function, not recommended to overwrite.
 function BeamSearchAdvancer:_step(extensions, states)
   if states == nil then

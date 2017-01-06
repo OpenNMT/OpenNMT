@@ -123,74 +123,87 @@ function Translator:translateBatch(batch)
     goldScore = self.models.decoder:computeScore(batch, encStates, context)
   end
 
-  -- Go one step forward
-  local function stepFunction(tokens, states)
-    states = states or {}
+  -- Initialize function
+  local function initFunction()
+    local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size))
+      :fill(onmt.Constants.BOS)
+    local features = {}
+    for j = 1, #self.dicts.tgt.features do
+      features[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
+    end
+    local sourceSizes = batch.sourceSize:clone()
+    -- Define states to be { decoder states, decoder output, context,
+    -- attentions, features, sourceSizes, number of UNKs, step }
+    local states = {encStates, nil, context, nil, features,
+      sourceSizes, numUnks, 1}
+    return input, nextStates
+  end
+  -- Forward function
+  local function stepFunction(extensions, states)
     local decStates, decOut, prevContext, _, features, sourceSizes, numUnks, t
         = table.unpack(states)
-    -- Prepare inputs
     local inputs
-    if tokens == nil then
-      t = 1
-      local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size))
-        :fill(onmt.Constants.BOS)
-      numUnks = onmt.utils.Cuda.convert(torch.zeros(batch.size))
-      local inputFeatures = {}
-      for j = 1, #self.dicts.tgt.features do
-        inputFeatures[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
-      end
-      if #inputFeatures == 0 then
-        inputs = input
-      elseif #inputFeatures == 1 then
-        inputs = { input, inputFeatures[1] }
-      else
-        inputs = { input }
-        table.insert(inputs, inputFeatures)
-      end
-      decStates = encStates
-      prevContext = context
-      sourceSizes = batch.sourceSize:clone()
+    local input = extensions
+    if #features == 0 then
+      inputs = input
+    elseif #features == 1 then
+      inputs = { input, features[1] }
     else
-      local input = tokens
-      if t > self.opt.max_sent_length + 1 then
-        return nil, nil
-      end
-      numUnks:add(onmt.utils.Cuda.convert(tokens
-        :eq(onmt.Constants.UNK):double()))
-      if #features == 0 then
-        inputs = input
-      elseif #features == 1 then
-        inputs = { input, features[1] }
-      else
-        inputs = { input }
-        table.insert(inputs, features)
-      end
+      inputs = { input }
+      table.insert(inputs, features)
     end
     self.models.decoder:maskPadding(sourceSizes, batch.sourceLength)
     decOut, decStates = self.models.decoder
       :forwardOne(inputs, decStates, prevContext, decOut)
+    t = t + 1
+    local softmaxOut = self.models.decoder.softmaxAttn.output
+    local nextStates = {decStates, decOut, prevContext, softmaxOut, nil,
+      sourceSizes, numUnks, t}
+    return scores, nextStates
+  end
+  -- Expand function
+  local function expandFunction(states)
+    local decOut = states[2]
     local out = self.models.decoder.generator:forward(decOut)
-    local scores = out[1]
-    if t == 1 then
-      scores:select(2, onmt.Constants.EOS):fill(-math.huge)
-    end
-    scores:select(2, onmt.Constants.UNK)
-      :maskedFill(numUnks:ge(self.opt.max_num_unks), -math.huge)
-    features = {}
+    local features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
       features[j - 1] = best:view(-1)
     end
-    t = t + 1
-    local softmaxOut = self.models.decoder.softmaxAttn.output
-    local nextStates = {decStates, decOut, prevContext, softmaxOut, features,
-      sourceSizes, numUnks, t}
-    return scores, nextStates
+    states[5] = features
+    local scores = out[1]
+    if t == 1 then
+      scores:select(2, onmt.Constants.EOS):fill(-math.huge)
+    end
+    return scores
+  end
+  -- IsComplete function
+  local function isCompleteFunction(hypotheses, states)
+    local batchSize = hypotheses[1]:size(1)
+    local seqLength = #hypotheses
+    local complete = onmt.utils.Cuda.convert(torch.zeros(batchSize))
+    if seqLength > self.opt.max_sent_length + 1 then
+      return complete:fill(1)
+    end
+    return hypotheses[#hypotheses]:eq(onmt.Constants.EOS)
+  end
+  -- Filter function (ignore too many UNKs)
+  local function filterFunction(hypotheses, states)
+    local numUnks = onmt.utils.Cuda.convert(torch.zeros(batch.size))
+    for t = 1, #hypotheses do
+      numUnks:add(onmt.utils.Cuda.convert(extensions
+                                          :eq(onmt.Constants.UNK):double()))
+    end
+    return numUnks:gt(self.opt.max_num_unks)
   end
 
   -- Construct BeamSearchAdvancer
   local advancer = onmt.translate.BeamSearchAdvancer.new()
-  advancer.step = stepFunction
+  advancer.init = initFunction
+  advancer.forward = forwardFunction
+  advancer.expand = expandFunction
+  advancer.isComplete = isCompleteFunction
+  advancer.filter = filterFunction
   advancer:setKeptStateIndexes({4, 5})
   -- Construct BeamSearcher
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
