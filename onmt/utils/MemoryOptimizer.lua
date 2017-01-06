@@ -58,7 +58,7 @@ local function canShare(t, net, protected)
 end
 
 local function getSize(t, mempool)
-  local size=0
+  local size = 0
   if torch.isTensor(t) then
     if t:storage() then
       if not mempool[torch.pointer(t:storage())] then
