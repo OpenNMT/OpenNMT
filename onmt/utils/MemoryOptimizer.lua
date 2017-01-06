@@ -74,6 +74,30 @@ local function getSize(t, mempool)
   return size
 end
 
+-- Convenience function to register a network to optimize.
+local function registerNet(store, net, base)
+  store['net'] = net
+  store['base'] = base
+  store['forward'] = net.forward
+  net.forward = function(network, input)
+    store['input'] = input
+    return store['forward'](network, input)
+  end
+  store['backward'] = net.backward
+  net.backward = function(network, input, gradOutput)
+    store['gradOutput'] = gradOutput
+    return store['backward'](network, input, gradOutput)
+  end
+
+  -- Add a wrapper around updateOutput to catch the module input.
+  net:apply(function (m)
+      local updateOutput = m.updateOutput
+      m.updateOutput = function (mod, input)
+        mod.input = input
+        return updateOutput(mod, input)
+      end
+  end)
+end
 
 --[[ Construct a MemoryOptimizer object. In this function, forward and backward function will
 --  be overwrited to record input and gradOutput in order to determine which tensors can be shared.
@@ -91,31 +115,6 @@ Example:
 ]]
 function MemoryOptimizer:__init(modules)
   self.modelDesc = {}
-
-  -- Convenience function to register a network to optimize.
-  local function registerNet(store, net, base)
-    store['net'] = net
-    store['base'] = base
-    store['forward'] = net.forward
-    net.forward = function(network, input)
-      store['input'] = input
-      return store['forward'](network, input)
-    end
-    store['backward'] = net.backward
-    net.backward = function(network, input, gradOutput)
-      store['gradOutput'] = gradOutput
-      return store['backward'](network, input, gradOutput)
-    end
-
-    -- Add a wrapper around updateOutput to catch the module input.
-    net:apply(function (m)
-      local updateOutput = m.updateOutput
-      m.updateOutput = function (mod, input)
-        mod.input = input
-        return updateOutput(mod, input)
-      end
-    end)
-  end
 
   for name, mod in pairs(modules) do
     self.modelDesc[name] = {}
