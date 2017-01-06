@@ -76,17 +76,17 @@ end
 
 -- Convenience function to register a network to optimize.
 local function registerNet(store, net, base)
-  store['net'] = net
-  store['base'] = base
-  store['forward'] = net.forward
+  store.net = net
+  store.base = base
+  store.forward = net.forward
   net.forward = function(network, input)
-    store['input'] = input
-    return store['forward'](network, input)
+    store.input = input
+    return store.forward(network, input)
   end
-  store['backward'] = net.backward
+  store.backward = net.backward
   net.backward = function(network, input, gradOutput)
-    store['gradOutput'] = gradOutput
-    return store['backward'](network, input, gradOutput)
+    store.gradOutput = gradOutput
+    return store.backward(network, input, gradOutput)
   end
 
   -- Add a wrapper around updateOutput to catch the module input.
@@ -147,12 +147,12 @@ function MemoryOptimizer:optimize()
   local sharedSize = 0
   for _, desc in pairs(self.modelDesc) do
     for i = 1, #desc do
-      local net = desc[i]['net']
-      local base = desc[i]['base']
+      local net = desc[i].net
+      local base = desc[i].base
       local mempool = {}
 
       -- Some modules are using output when performing updateGradInput so we cannot share these.
-      local protectedOutput = { desc[i]['input'] }
+      local protectedOutput = { desc[i].input }
       net:apply(function(m)
         if contains(protectOutput, m) then
           table.insert(protectedOutput, m.output)
@@ -174,7 +174,7 @@ function MemoryOptimizer:optimize()
         local oSize = getSize(m.output, mempool)
         totSize = totSize + giSize
         totSize = totSize + oSize
-        if canShare(m.gradInput, net, desc[i]['gradOutput']) then
+        if canShare(m.gradInput, net, desc[i].gradOutput) then
           sharedSize = sharedSize + giSize
           m.gradInputSharedIdx = idx
           gradInputMap[globalIdx] = idx
