@@ -43,10 +43,10 @@ Returns:
   * `states` - a table containing the updated states.
 
 ]]
-function BeamSearchAdvancer:forward(extensions, states)
+function BeamSearchAdvancer:forward()
 end
 
---[[Expand function. Given states, returns the scores of the possible 
+--[[Expand function. Given states, returns the scores of the possible
   `extensionSize` extensions.
 
 Parameters:
@@ -58,7 +58,7 @@ Returns:
   * `scores` - a 2D tensor of size `(batchSize, extensionSize)`.
 
 ]]
-function BeamSearchAdvancer:expand(states)
+function BeamSearchAdvancer:expand()
 end
 
 --[[Determines which hypotheses are complete.
@@ -71,7 +71,7 @@ Parameters:
 Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses are complete.
 
 ]]
-function BeamSearchAdvancer:isComplete(hypotheses, states)
+function BeamSearchAdvancer:isComplete()
 end
 
 --[[Specifies which states to keep track of. After beam search, those states
@@ -96,25 +96,7 @@ Parameters:
 Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses shall be pruned.
 
 ]]
-function BeamSearchAdvancer:filter(hypotheses, states)
-end
-
---[[Specifies which states to keep track of. After beam search, those states
-  can be retrieved during all steps along with the predictions.
-
-Parameters:
-
-  * `indexes` - a table of integers, specifying the indexes in the `states` to track.
-
-]]
--- Private function, not recommended to overwrite.
-function BeamSearchAdvancer:_step(extensions, states)
-  if states == nil then
-    extensions, states = self:init()
-  end
-  states = self:forward(extensions, states)
-  local scores = self:extend(states)
-  return scores, states
+function BeamSearchAdvancer:filter()
 end
 
 return BeamSearchAdvancer

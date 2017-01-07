@@ -135,12 +135,12 @@ function Translator:translateBatch(batch)
     -- Define states to be { decoder states, decoder output, context,
     -- attentions, features, sourceSizes, number of UNKs, step }
     local states = {encStates, nil, context, nil, features,
-      sourceSizes, numUnks, 1}
-    return input, nextStates
+      sourceSizes, 1}
+    return input, states
   end
   -- Forward function
-  local function stepFunction(extensions, states)
-    local decStates, decOut, prevContext, _, features, sourceSizes, numUnks, t
+  local function forwardFunction(extensions, states)
+    local decStates, decOut, prevContext, _, features, sourceSizes, t
         = table.unpack(states)
     local inputs
     local input = extensions
@@ -158,8 +158,8 @@ function Translator:translateBatch(batch)
     t = t + 1
     local softmaxOut = self.models.decoder.softmaxAttn.output
     local nextStates = {decStates, decOut, prevContext, softmaxOut, nil,
-      sourceSizes, numUnks, t}
-    return scores, nextStates
+      sourceSizes, t}
+    return nextStates
   end
   -- Expand function
   local function expandFunction(states)
@@ -172,13 +172,10 @@ function Translator:translateBatch(batch)
     end
     states[5] = features
     local scores = out[1]
-    if t == 1 then
-      scores:select(2, onmt.Constants.EOS):fill(-math.huge)
-    end
     return scores
   end
   -- IsComplete function
-  local function isCompleteFunction(hypotheses, states)
+  local function isCompleteFunction(hypotheses)
     local batchSize = hypotheses[1]:size(1)
     local seqLength = #hypotheses
     local complete = onmt.utils.Cuda.convert(torch.zeros(batchSize))
@@ -188,13 +185,19 @@ function Translator:translateBatch(batch)
     return hypotheses[#hypotheses]:eq(onmt.Constants.EOS)
   end
   -- Filter function (ignore too many UNKs)
-  local function filterFunction(hypotheses, states)
+  local function filterFunction(hypotheses)
     local numUnks = onmt.utils.Cuda.convert(torch.zeros(batch.size))
     for t = 1, #hypotheses do
-      numUnks:add(onmt.utils.Cuda.convert(extensions
-                                          :eq(onmt.Constants.UNK):double()))
+      local extensions = hypotheses[t]
+      numUnks:add(extensions:eq(onmt.Constants.UNK))
     end
-    return numUnks:gt(self.opt.max_num_unks)
+    -- Disallow too many UNKs
+    local unSatisfied = numUnks:gt(self.opt.max_num_unks)
+    -- Disallow empty predictions
+    if #hypotheses == 1 then
+      unSatisfied = unSatisfied:add(hypotheses[1]:eq(onmt.Constants.EOS))
+    end
+    return unSatisfied
   end
 
   -- Construct BeamSearchAdvancer

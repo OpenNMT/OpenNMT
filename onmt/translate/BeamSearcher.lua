@@ -185,7 +185,7 @@ function BeamSearcher:search(beamSize, nBest)
                    backPointers = {},
                    totalScores = {},
                    isComplete = {},
-                   orig2Remaining = {}
+                   orig2Remaining = {},
                    remaining2Orig = {}
                  }
   -- Other stats
@@ -199,7 +199,7 @@ function BeamSearcher:search(beamSize, nBest)
 
   local t = 1
   local hypotheses = {}
-  local scores, kMaxScores, kMaxIds, remaining, prevComplete
+  local scores, totalScores, backPointers, remaining, prevComplete
   while remaining == nil or remaining > 0 do
     -- Forward
     states = self.advancer:forward(extensions, states)
@@ -207,15 +207,16 @@ function BeamSearcher:search(beamSize, nBest)
     scores = self.advancer:expand(states)
     self.stats.batchSize = self.stats.batchSize or scores:size(1)
     self.stats.extensionSize = self.stats.extensionSize or scores:size(2)
-    remaining = remaining or scores:size(1)
     -- Select extensions with k-max scores (and satisfying filters)
-    kMaxScores, kMaxIds, backPointers = self:_kArgMax(beamSize,
-                                                      kMaxScores, 
-                                                      scores, t,
-                                                      self.advancer.filter
-                                                     )
+    totalScores, extensions, backPointers = self:_kArgMax(beamSize,
+                                                          totalScores,
+                                                          scores, t,
+                                                          prevComplete,
+                                                          self.advancer.filter,
+                                                          hypotheses, states
+                                                          )
     -- Update hypotheses
-    hypotheses = self:_updateHyps(hypotheses, backPointers, kMaxIds)
+    hypotheses = self:_updateHyps(hypotheses, backPointers, extensions)
     -- Index states using backpointers to feed next step
     states = self:_indexStates(states, backPointers, t, beamSize)
     -- Determine which states are complete
@@ -225,83 +226,69 @@ function BeamSearcher:search(beamSize, nBest)
     end
     prevComplete = complete
     -- Keep track of history
-    self:_updateHistory(backPointers, states, complete)
+    self:_trackHistory(backPointers, states, complete)
     -- Remove complete batches
-    local remainingIds = self:_removeComplete(complete:viewAs(kMaxIds),
-                                              states, hypotheses, t)
+    prevComplete, extensions, totalScores, states, hypotheses, remaining =
+           self:_removeComplete(prevComplete, extensions, totalScores, states,
+                                hypotheses, beamSize, nBest)
     t = t + 1
   end
   -- Return predictions
   local results = {}
   for k = 1, nBest do
-    local predictions, scores, states = self:_getPredictions(k)
+    hypotheses, scores, states = self:_getPredictions(k)
     results[k] = { hypotheses = hypotheses, scores = scores, states = states}
   end
-  return resultss
+  return results
 end
 
-function BeamSearcher:_getPredictions(k)
+function BeamSearcher:_getPredictions(k, beamSize)
   local predictions = {}
   local scores = {}
-  local outputs = {}
+  local states = {}
 
   -- Decode
   for b = 1, self.stats.batchSize do
     predictions[b] = {}
-    outputs[b] = {}
-    local t = self.completedTimeStep[b]
-    local parentIndex, topIndex
-    parentIndex = k
-    if t == nil then
-      t = self.maxSeqLength
-      scores[b] = self.beamScoresHistory[t]
-        [self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
-      topIndex = self.topIndexesHistory[t]
-        [self.origBatchIdToRemainingBatchId[t][b]][parentIndex]
-      predictions[b][t] = topIndex
-    end
-    scores[b] = self.beamScoresHistory[t]
-      [self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
-    while t > 1 do
-      outputs[b][t] = selectBatchBeam(self.stepOutputsHistory[t], beamSize
-        , self.origBatchIdToRemainingBatchId[t - 1][b], parentIndex)
-      parentIndex = self.backPointersHistory[t]
-        [self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
-      topIndex = self.topIndexesHistory[t - 1]
-        [self.origBatchIdToRemainingBatchId[t - 1][b]][parentIndex]
-      predictions[b][t - 1] = topIndex
-      t = t - 1
-    end
-    outputs[b][1] = selectBatchBeam(self.stepOutputsHistory[1], beamSize
-      , b, parentIndex)
-    -- Trim trailing EOS
-    for s = #predictions[b], 1, -1 do
-      if predictions[b][s] == self.endSymbol then
-        predictions[b][s] = nil
-        outputs[b][s + 1] = nil
-      else
-        break
+    states[b] = {}
+    local t = self.stats.completedStep[b]
+    local fromBeam = k
+    scores[b] = self.history.totalScores[t]
+      [self.history.orig2Remaining[t][b] or b][fromBeam]
+    while t > 0 do
+      local remaining = self.history.orig2Remaining[t][b] or b
+      states[b][t] = selectBatchBeam(self.states[t], beamSize,
+                                     remaining, fromBeam)
+      predictions[b][t] = self.history.extensions[t][remaining][fromBeam]
+      local complete = self.history.isComplete[t]
+      if selectBatchBeam(complete, beamSize, remaining, fromBeam) then
+        states[b][t + 1] = nil
+        predictions[b][t + 1] = nil
       end
+      fromBeam = self.history.backPointers[t]
+        [remaining][fromBeam]
+      t = t - 1
     end
   end
 
-  -- Transpose outputs
-  local outputsTemp = {}
-  for b = 1, #outputs do
-    outputsTemp[b] = {}
-    for t = 1, #outputs[b] do
-      for j, _ in pairs(outputs[b][t]) do
-        outputsTemp[b][j] = outputsTemp[b][j] or {}
-        outputsTemp[b][j][t] = outputs[b][t][j]
+  -- Transpose states
+  local statesTemp = {}
+  for b = 1, #states do
+    statesTemp[b] = {}
+    for t = 1, #states[b] do
+      for j, _ in pairs(states[b][t]) do
+        statesTemp[b][j] = statesTemp[b][j] or {}
+        statesTemp[b][j][t] = states[b][t][j]
       end
     end
   end
-  outputs = outputsTemp
-  return predictions, scores, outputs
+  states = statesTemp
+  return predictions, scores, states
 end
 
 -- Find the top k extensions (satisfying filters)
-function BeamSearcher:_kArgMax(beamSize, prevKMaxScores, scores, t, filterFunction, hypotheses)
+function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
+    t, prevComplete, filterFunction, hypotheses, states)
   local kMaxScores, kMaxIds, backPointers
   local loop = 0
   local filtersSatisfied = false
@@ -312,21 +299,20 @@ function BeamSearcher:_kArgMax(beamSize, prevKMaxScores, scores, t, filterFuncti
       backPointers = kMaxIds.new():resizeAs(kMaxIds):fill(1)
     else
       local extensionSize = scores:size(2)
-      remaining = math.floor(scores:size(1) / beamSize)
-      local complete = self.history.isComplete[#self.history.isComplete]
+      local remaining = math.floor(scores:size(1) / beamSize)
       -- Set other tokens scores to -inf to avoid ABCD<EOS>FG being on beam
       if self.nBest > 1 then
         local maskScores = scores.new():resize(scores:size(1)):fill(0)
-        maskScores:maskedFill(complete, -math.huge)
+        maskScores:maskedFill(prevComplete, -math.huge)
         scores:add(maskScores:view(-1, 1):expandAs(scores))
       end
       -- Ensure that complete hypotheses remain and their scores do not change
-      scores:select(2, 1):maskedFill(complete, 0)
-      local totalScores = (scores:view(remaining, beamSize, -1)
-                           + prevKMaxScores:view(remaining, beamSize, 1)
-                                           :expand(remaining, beamSize, extensionSize)
+      scores:select(2, 1):maskedFill(prevComplete, 0)
+      local expandedScores = (scores:view(remaining, beamSize, -1)
+                           + totalScores:view(remaining, beamSize, 1)
+                                        :expand(remaining, beamSize, extensionSize)
                           ):view(remaining, -1)
-      kMaxScores, kMaxIds = totalScores:topk(beamSize, 2, true, true)
+      kMaxScores, kMaxIds = expandedScores:topk(beamSize, 2, true, true)
       kMaxIds:add(-1)
       backPointers = (kMaxIds / extensionSize):add(1)
       kMaxIds = kMaxIds:fmod(extensionSize) + 1
@@ -364,13 +350,12 @@ function BeamSearcher:_updateHyps(hypotheses, backPointers, kMaxIds)
   return hypotheses
 end
 
-function BeamSearcher:_removeComplete(complete, states, hypotheses, t)
-  local prevComplete = self.history.isComplete[t - 1]
-  if isComplete then
-    complete = (complete + prevComplete):ge(1)
-  end
-  complete = complete:view(self.stats.batchSize, -1)
+function BeamSearcher:_removeComplete(complete, extensions, totalScores, states,
+    hypotheses, beamSize, nBest)
+  local batchSize = hypotheses[1]:size(1)
+  complete = complete:view(batchSize, -1)
   local remainingIds = {}
+  local t = #self.history.orig2Remaining + 1
   self.history.orig2Remaining[t] = {}
   self.history.remaining2Orig[t] = {}
   local remaining = 0
@@ -384,36 +369,37 @@ function BeamSearcher:_removeComplete(complete, states, hypotheses, t)
     end
     if not done then
       remaining = remaining + 1
-      self.history.orig2Remaining[t][orig] = remaining
+      self.history.orig2Remaining[t + 1][orig] = remaining
       self.history.remaining2Orig[t][remaining] = orig
       table.insert(remainingIds, b)
     else
       self.stats.completedStep[orig] = t
     end
   end
-  return remainingIds
-end
-
-function BeamSearcher:_keepTrack(complete)
-  table.insert(self.backPointersHistory, backPointers)
-  table.insert(self.beamScoresHistory, beamScores:clone())
-  local keptStepOutputs = {}
-  for _, val in pairs(self.keptStateIndexes) do
-    keptStepOutputs[val] = stepOutputs[val]
-  end
-  table.insert(self.stepOutputsHistory,
-    onmt.utils.Tensor.recursiveClone(keptStepOutputs))
   -- Remove finished batches
-  if newRemainingBatchSize ~= remainingBatchSize then
-    if #remaining ~= 0 then
-      stepOutputs = rcToFlat(selectBatch(
-        flatToRc(stepOutputs, beamSize), remaining))
-      topIndexes = selectBatch(topIndexes, remaining)
-      beamScores = selectBatch(beamScores, remaining)
-    else
-      break
+  if remaining < batchSize then
+    if remaining > 0 then
+      states = rcToFlat(selectBatch(
+        flatToRc(states, beamSize), remainingIds))
+      hypotheses = rcToFlat(selectBatch(
+        flatToRc(hypotheses, beamSize), remainingIds))
+      extensions = selectBatch(extensions, remainingIds)
+      totalScores = selectBatch(totalScores, remainingIds)
+      complete = selectBatch(complete, remainingIds)
     end
   end
-  table.insert(self.topIndexesHistory, topIndexes:clone())
+  return complete, extensions, totalScores, states, hypotheses, remaining
+end
+
+function BeamSearcher:_keepTrack(totalScores, extensions, backPointers, states, complete)
+  table.insert(self.history.totalScores, totalScores:clone())
+  table.insert(self.history.extensions, extensions:clone())
+  table.insert(self.history.backPointers, backPointers:clone())
+  table.insert(self.history.isComplete, complete:clone())
+  local keptStates = {}
+  for _, val in pairs(self.keptStateIndexes) do
+    keptStates[val] = states[val]
+  end
+  table.insert(self.history.states, onmt.utils.Tensor.recursiveClone(keptStates))
 end
 return BeamSearcher
