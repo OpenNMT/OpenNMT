@@ -46,7 +46,7 @@ local function loadAuto(lang)
 
 
   local filename = 'polyglot-' .. lang:lower() .. '.txt'
-  local filepath = opt.save_data .. filename
+  local filepath = opt.save_data .. "-" .. filename
 
   if path.exists(filepath) then
     return filepath
