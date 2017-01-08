@@ -1,7 +1,7 @@
 --[[ Class for specifying how to advance one step
 
       -- Initialize states
-      
+
       extensions, states <-- init()
 
       WHILE number of remaining hypotheses > 0 DO
@@ -11,7 +11,7 @@
         states <-- forward(extensions, states)
 
         -- Extend hypotheses by one step and return the scores
-        
+
         scores <-- expand(states)
 
         -- Update beam (maintained by BeamSearcher)
