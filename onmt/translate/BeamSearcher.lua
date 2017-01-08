@@ -421,7 +421,7 @@ function BeamSearcher:_trackHistory(totalScores, extensions, backPointers,
   table.insert(self.history.backPointers, backPointers:clone())
   table.insert(self.history.isComplete, complete:clone())
   local keptStates = {}
-  local keptStateIndexes = self.advancer.keptStatesIndexes or {}
+  local keptStateIndexes = self.advancer.keptStateIndexes or {}
   for _, val in pairs(keptStateIndexes) do
     keptStates[val] = states[val]
   end
