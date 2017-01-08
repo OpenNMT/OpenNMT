@@ -193,7 +193,7 @@ function Translator:translateBatch(batch)
     end
     -- Disallow too many UNKs
     local unSatisfied = numUnks:gt(self.opt.max_num_unks)
-    -- Disallow empty predictions
+    -- Disallow empty hypotheses
     if #hypotheses == 1 then
       unSatisfied:add(hypotheses[1]:eq(onmt.Constants.EOS))
     end
@@ -231,10 +231,10 @@ function Translator:translateBatch(batch)
     local scoresBatch = {}
 
     for n = 1, self.opt.n_best do
-      local hypotheses = results[n].hypotheses
+      local hypothesis = results[n].hypotheses
       local scores = results[n].scores
       local states = results[n].states
-      local hyp = hypotheses[b]
+      local hyp = hypothesis[b]
       local score = scores[b]
       local attn = states[b][attnIndex] or {}
       local feats = states[b][featsIndex] or {}

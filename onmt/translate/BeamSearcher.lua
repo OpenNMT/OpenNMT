@@ -25,7 +25,7 @@ Returns: Expanded `(batchSize * beamSize, ...)` tensor or a table containing
   such tensors
 
 --]]
-local function beamReplicate(v, beamSize)
+local function replicateBeam(v, beamSize)
   return onmt.utils.Tensor.recursiveApply(v, function (h)
     local batchSize = h:size(1)
     local sizes = {}
@@ -49,7 +49,7 @@ Parameters:
 Returns: Indexed `(batchSize * beamSize, ...)` tensor or a table containing such tensors
 
 --]]
-local function beamSelect(v, indexes)
+local function selectBeam(v, indexes)
   return onmt.utils.Tensor.recursiveApply(v, function (h)
     local batchSize = indexes:size(1)
     local beamSize = indexes:size(2)
@@ -174,24 +174,20 @@ function BeamSearcher:__init(advancer)
                }
 end
 
---[[ Perform beam search.
+--[[ Performs beam search.
 
 Parameters:
 
   * `beamSize` - beam size. [1]
-  * `nBest` - the `nBest` top hypotheses can be returned after performing beam search. This value must be smaller than or equal to `beamSize`. [1]
+  * `nBest` - the `nBest` top hypotheses will be returned after beam search. [1]
 
-Returns:
-
-  * `hypotheses` - a table. hypotheses[b][t] stores the prediction in batch `b` and time step `t`.
-  * `scores` - a table. scores[b] stores the prediction score of batch `b`.
-  * `outputs` - a table. outputs[b][j][t] stores the j-th element in `stepOutputs` produced by `stepFunction` in batch `b` and time step `t`. In the case of an empty prediction, i.e. `hypotheses[b] == {}`, `outputs[b]` will be nil.
+Returns: a table `results`. `results[n]` contains the n-th best `hypotheses`, `scores` and `states`. `hypotheses[b][t]` stores the hypothesis in batch `b` and step `t`. `scores[b]` stores the hypothesis score of batch `b`. `states[b][j][t]` stores the j-th element in `states` in batch `b` and step `t`.
 
 ]]
 function BeamSearcher:search(beamSize, nBest)
-  assert (nBest <= beamSize)
-  self.nBest = nBest or 1
+  nBest = nBest or 1
   beamSize = beamSize or 1
+  assert (nBest <= beamSize)
 
   -- Initialize
   local extensions, states = self.advancer.init()
@@ -208,7 +204,7 @@ function BeamSearcher:search(beamSize, nBest)
     self.stats.extensionSize = self.stats.extensionSize or scores:size(2)
     -- Select extensions with k-max scores (and satisfying filters)
     totalScores, extensions, backPointers, hypotheses, states
-                                          = self:_kArgMax(beamSize,
+                                          = self:_kArgMax(beamSize, nBest,
                                                           totalScores, scores,
                                                           prevComplete,
                                                           self.advancer.filter,
@@ -217,7 +213,7 @@ function BeamSearcher:search(beamSize, nBest)
     -- Determine which states are complete
     local complete = self.advancer.isComplete(hypotheses, states)
     if prevComplete then
-      complete = (complete + beamSelect(prevComplete, backPointers)):ge(1)
+      complete = (complete + selectBeam(prevComplete, backPointers)):ge(1)
     end
     prevComplete = complete
     -- Keep track of history
@@ -293,7 +289,7 @@ function BeamSearcher:_getResults(k, beamSize)
 end
 
 -- Find the top k extensions (satisfying filters)
-function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
+function BeamSearcher:_kArgMax(beamSize, nBest, totalScores, scores,
     prevComplete, filterFunction, hypotheses, states)
   local kMaxScores, kMaxIds, backPointers, newHypotheses, newStates
   local loop = 0
@@ -310,7 +306,7 @@ function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
       remaining = math.floor(scores:size(1) / beamSize)
       -- Set other tokens scores to -inf to avoid ABCD<EOS>FG being on beam
       if prevComplete then
-        if self.nBest > 1 then
+        if nBest > 1 then
           local maskScores = scores.new():resize(scores:size(1)):fill(0)
           maskScores:maskedFill(prevComplete, -math.huge)
           scores:add(maskScores:view(-1, 1):expandAs(scores))
@@ -346,7 +342,9 @@ function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
       for b = 1, pruneIds:size(1) do
         local pruneId = pruneIds[b]
         local batchId = math.floor((pruneId - 1) / beamSize) + 1
-        scores:view(remaining, -1, scores:size(2))[batchId][backPointers:view(-1)[pruneId]][kMaxIds:view(-1)[pruneId]] = -math.huge
+        scores:view(remaining, -1, scores:size(2))[batchId]
+                     [backPointers:view(-1)[pruneId]][kMaxIds:view(-1)[pruneId]]
+                     = -math.huge
       end
     end
   end
@@ -356,15 +354,15 @@ end
 function BeamSearcher:_indexStates(states, backPointers, t, beamSize)
   if t == 1 then
     -- Replicate batchSize hypotheses to batchSize * beamSize hypotheses
-    states = beamReplicate(states, beamSize)
+    states = replicateBeam(states, beamSize)
   end
   -- Select the on-beam states using the pointers
-  states = beamSelect(states, backPointers)
+  states = selectBeam(states, backPointers)
   return states
 end
 
 function BeamSearcher:_updateHyps(hypotheses, backPointers, kMaxIds)
-  hypotheses = beamSelect(hypotheses, backPointers)
+  hypotheses = selectBeam(hypotheses, backPointers)
   hypotheses[#hypotheses + 1] = kMaxIds:clone():view(-1)
   return hypotheses
 end

@@ -1,22 +1,38 @@
 --[[ Class for specifying how to advance one step
 
-  -- Initialize states
-  extensions, states <-- init()
-  while number of remaining hypotheses > 0 do
-    -- Update states
-    states <-- forward(extensions, states)
-    -- Extend hypotheses by one step and return the scores
-     scores <-- expand(states)
-    -- Update beam (maintained by BeamSearcher)
-    extensions <-- _updateBeam()
-    for b = 1, batchSize do
-      if isFinal(hypotheses)[b] then
-        -- Remove completed hypotheses (maintained by BeamSearcher)
-        _removeHypotheses(b)
+      -- Initialize states
+      
+      extensions, states <-- init()
+
+      WHILE number of remaining hypotheses > 0 DO
+
+        -- Update states
+
+        states <-- forward(extensions, states)
+
+        -- Extend hypotheses by one step and return the scores
+        
+        scores <-- expand(states)
+
+        -- Update beam (maintained by BeamSearcher)
+
+        extensions, states <-- _updateBeam()
+
+        FOR b = 1, batchSize DO
+
+          IF isComplete(hypotheses)[b] THEN
+
+            -- Remove completed hypotheses (maintained by BeamSearcher)
+
+            _removeHypotheses(b)
+
+          ENDIF
+
+        ENDFOR
+
+      ENDWHILE
 
  ==================================================================
-
-Speicifies how to go one step forward.
 --]]
 local BeamSearchAdvancer = torch.class('BeamSearchAdvancer')
 
