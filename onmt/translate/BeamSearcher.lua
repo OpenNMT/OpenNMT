@@ -324,10 +324,10 @@ function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
                           ):view(remaining, -1)
       kMaxScores, kMaxIds = expandedScores:topk(beamSize, 2, true, true)
       kMaxIds:add(-1)
-      backPointers = (kMaxIds / extensionSize):add(1)
+      backPointers = (kMaxIds:clone():div(extensionSize)):add(1)
       kMaxIds = kMaxIds:fmod(extensionSize):add(1)
     end
-    if not filterFunction then
+    if self.advancer.skipFilter then
       break
     end
     -- Prune hypotheses if necessary
@@ -335,7 +335,7 @@ function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
     local newHypotheses = self:_updateHyps(hypotheses, backPointers, kMaxIds)
     local newStates = self:_indexStates(states, backPointers,
                                         #hypotheses + 1, beamSize)
-    local prune = filterFunction(newHypotheses, newStates):eq(1)
+    local prune = filterFunction(newHypotheses, newStates)
     if prevComplete then
       prune = (prune:eq(0):add(prevComplete)):eq(0)
     end
@@ -345,7 +345,7 @@ function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
       local pruneIds = prune:nonzero():view(-1)
       for b = 1, pruneIds:size(1) do
         local pruneId = pruneIds[b]
-        scores[pruneId][kMaxIds:view(-1)[pruneId]] = -math.huge
+        scores[backPointers:view(-1)[pruneId]][kMaxIds:view(-1)[pruneId]] = -math.huge
       end
     end
   end
