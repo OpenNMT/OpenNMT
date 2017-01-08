@@ -86,3 +86,47 @@ print sock.recv()
 ```
 
 For a longer example, see our <a href="http://github.com/OpenNMT/Server/">Python/Flask server</a> in development. 
+
+
+## Embedding Conversion
+
+
+### Dependencies
+
+* `zlib` for Lua
+
+### Conversion
+
+Produces dictionary-reduced encoder and decoder embedding files in t7 format given word2vec, glove, or auto-loaded language embeddings.
+
+```
+th tools/embedding_convert.lua OPTIONS
+```
+
+examples:
+
+* Autoload
+```
+th tools/embedding_convert.lua -auto_load en -dict_file data/demo/demo.src.dict -save_data data/demo/demo-src
+```
+
+* word2vec
+```
+th tools/embedding_convert.lua -embed_type word2vec -embed_file data/demo/GoogleNews-vectors-negative300.bin -dict_file data/demo/demo.src.dict -save_data data/demo/demo-src
+```
+
+where the options are:
+
+* `-dict_file`: Path to the outputted dict file from preprocess.lua. Must be run separately for src and tgt dictionaries.
+* `-embed_file`: Path to embedding file. Ignored if 'auto_lang' is used.
+* `-save_data`: Output file path/label.
+* `-auto_lang`: Wikipedia Language Code to autoload embeddings.
+* `-embed_type`: `word2vec` (default) or `glove`. Ignored if 'auto_lang' is used.
+* `-normalize`: `true` (default) or `false`. Boolean to normalize the word vectors, or not.
+* `-report_every`: `100000` (default). Print stats every this many lines read from embedding file.
+
+Notes and Attribution:
+* Must be run separately for src and tgt dictionary files to produce enc and dec embedding files, respectively.
+* 'auto_lang' feature is provided courtesy of Rami Al-Rfou through Polygot ( <a href="https://pypi.python.org/pypi/polyglot">Project</a> / <a href="http://www.aclweb.org/anthology/W13-3520">Paper</a> )
+* Polygot Wikipedia Language Codes can be referenced <a href="https://sites.google.com/site/rmyeid/projects/polyglot">here</a>.
+* Some code for bin conversion used with permission from Michael Rotman. <a href="https://github.com/rotmanmi/word2vec.torch">Original Code</a>. 
