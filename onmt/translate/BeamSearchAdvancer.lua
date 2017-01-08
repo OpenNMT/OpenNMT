@@ -20,6 +20,24 @@ Speicifies how to go one step forward.
 --]]
 local BeamSearchAdvancer = torch.class('BeamSearchAdvancer')
 
+--[[Constructor
+
+Parameters:
+
+  * `init` - the initialize function.
+  * `forward` - the forward function.
+  * `expand` - the expand function.
+  * `isComplete` - the function that determines complete hypotheses.
+  * `filter` - the filter function. Optional.
+
+]]
+function BeamSearchAdvancer:__init(init, forward, expand, isComplete, filter)
+  self.init = init
+  self.forward = forward
+  self.expand = expand
+  self.isComplete = isComplete
+  self.filter = filter
+end
 --[[Initialize function. Returns initial inputs for the forward function.
 
 Returns:
@@ -28,7 +46,7 @@ Returns:
   * `states` - the initial states.
 
 ]]
-function BeamSearchAdvancer:init()
+function BeamSearchAdvancer.init()
 end
 
 --[[Forward function. Update states given extensions from the previous step.
@@ -43,7 +61,7 @@ Returns:
   * `states` - a table containing the updated states.
 
 ]]
-function BeamSearchAdvancer:forward()
+function BeamSearchAdvancer.forward()
 end
 
 --[[Expand function. Given states, returns the scores of the possible
@@ -58,7 +76,7 @@ Returns:
   * `scores` - a 2D tensor of size `(batchSize, extensionSize)`.
 
 ]]
-function BeamSearchAdvancer:expand()
+function BeamSearchAdvancer.expand()
 end
 
 --[[Determines which hypotheses are complete.
@@ -71,7 +89,7 @@ Parameters:
 Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses are complete.
 
 ]]
-function BeamSearchAdvancer:isComplete()
+function BeamSearchAdvancer.isComplete()
 end
 
 --[[Specifies which states to keep track of. After beam search, those states
@@ -96,7 +114,7 @@ Parameters:
 Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses shall be pruned.
 
 ]]
-function BeamSearchAdvancer:filter()
+function BeamSearchAdvancer.filter()
 end
 
 return BeamSearchAdvancer

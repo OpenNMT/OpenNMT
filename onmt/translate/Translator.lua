@@ -133,7 +133,7 @@ function Translator:translateBatch(batch)
     end
     local sourceSizes = batch.sourceSize:clone()
     -- Define states to be { decoder states, decoder output, context,
-    -- attentions, features, sourceSizes, number of UNKs, step }
+    -- attentions, features, sourceSizes, step }
     local states = {encStates, nil, context, nil, features,
       sourceSizes, 1}
     return input, states
@@ -186,10 +186,11 @@ function Translator:translateBatch(batch)
   end
   -- Filter function (ignore too many UNKs)
   local function filterFunction(hypotheses)
-    local numUnks = onmt.utils.Cuda.convert(torch.zeros(batch.size))
+    local numUnks = onmt.utils.Cuda.convert(torch.zeros(hypotheses[1]:size(1)))
     for t = 1, #hypotheses do
       local extensions = hypotheses[t]
-      numUnks:add(extensions:eq(onmt.Constants.UNK))
+      numUnks:add(onmt.utils.Cuda.convert(
+                                   extensions:eq(onmt.Constants.UNK):double()))
     end
     -- Disallow too many UNKs
     local unSatisfied = numUnks:gt(self.opt.max_num_unks)
@@ -201,17 +202,16 @@ function Translator:translateBatch(batch)
   end
 
   -- Construct BeamSearchAdvancer
-  local advancer = onmt.translate.BeamSearchAdvancer.new()
-  advancer.init = initFunction
-  advancer.forward = forwardFunction
-  advancer.expand = expandFunction
-  advancer.isComplete = isCompleteFunction
-  advancer.filter = filterFunction
+  local advancer = onmt.translate.BeamSearchAdvancer.new(initFunction,
+                                                         forwardFunction,
+                                                         expandFunction,
+                                                         isCompleteFunction,
+                                                         filterFunction)
   advancer:setKeptStateIndexes({4, 5})
   -- Construct BeamSearcher
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
   -- Search
-  beamSearcher:search(self.opt.beam_size, self.opt.n_best)
+  local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best)
 
   collectgarbage()
 
@@ -220,12 +220,6 @@ function Translator:translateBatch(batch)
   local allAttn = {}
   local allScores = {}
 
-  -- Get predictions
-  local results = {}
-  for n = 1, self.opt.n_best do
-    local hyps, scores, outputs = beamSearcher:getPredictions(n)
-    results[n] = {hyps, scores, outputs}
-  end
   for b = 1, batch.size do
     local hypBatch = {}
     local featsBatch = {}
@@ -233,14 +227,14 @@ function Translator:translateBatch(batch)
     local scoresBatch = {}
 
     for n = 1, self.opt.n_best do
-      local hyps, scores, outputs = table.unpack(results[n])
-      local hyp = hyps[b]
+      local hypotheses = results[n].hypotheses
+      local scores = results[n].scores
+      local states = results[n].states
+      local hyp = hypotheses[b]
       local score = scores[b]
-      local attn = outputs[b][4] or {}
-      local feats = outputs[b][5] or {}
-      if #feats < #hyp + 1 then
-        table.remove(hyp)
-      end
+      local attn = states[b][4] or {}
+      local feats = states[b][5] or {}
+      table.remove(hyp)
       -- Remove unnecessary values from the attention vectors
       local size = batch.sourceSize[b]
       for j = 1, #attn do
