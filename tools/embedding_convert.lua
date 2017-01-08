@@ -2,8 +2,7 @@ require('onmt.init')
 require('torch')
 local tds = require('tds')
 local zlib = require ('zlib')
-
-
+local path = require('pl.path')
 
 local cmd = torch.CmdLine()
 
@@ -52,13 +51,13 @@ local function loadAuto(lang)
     return filepath
   end
 
-  local resp, stat, hdr = http.request(endpoint .. filename .. '.gz')
+  local resp, stat = http.request(endpoint .. filename .. '.gz')
 
   if stat == 200 then
 
     local autoFile = io.open(filepath, "w")
 
-    local result, eof, bytes_in, bytes_out = zlib.inflate()(resp)
+    local result = zlib.inflate()(resp)
 
     autoFile:write(result)
     autoFile:close()
@@ -83,7 +82,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     local str = {}
     local max_w = 50
 
-    for i = 1, max_w do
+    for _ = 1, max_w do
       local char = file:readChar()
 
       if char == 32 or char == 10 or char == 0 then
@@ -99,15 +98,15 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   end
 
   -- [[Looks for cased version and then lower version of matching dictionary word.]]
-  local function locateIdx(word, dictionary)
+  local function locateIdx(word, dict)
 
     local idx = nil
 
-    if dictionary:lookup(word) ~= nil then
-      idx = dictionary:lookup(word)  
+    if dict:lookup(word) ~= nil then
+      idx = dict:lookup(word)
 
-    elseif dictionary:lookup(word:lower()) ~= nil then
-      idx = dictionary:lookup(word:lower())
+    elseif dict:lookup(word:lower()) ~= nil then
+      idx = dict:lookup(word:lower())
 
     end
 
@@ -115,10 +114,11 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
   end
 
+
   -- [[Fills value for unmatched embeddings]]
   local function fillGaps(weights, loaded, dictSize, embeddingSize)
 
-    for idx = 1, dictSize do 
+    for idx = 1, dictSize do
       if loaded[idx] == nil then
         for i=1, embeddingSize do
           weights[idx][i] = torch.uniform(-1, 1)
@@ -131,14 +131,14 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   end
 
   -- [[Initializes OpenNMT constants.]]
-  local function preloadSpecial (weights, loaded, dictionary, embeddingSize)
+  local function preloadSpecial (weights, loaded, dict, embeddingSize)
 
     local specials = {onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD, onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD}
 
     for i = 1, #specials do
-      local idx = locateIdx(specials[i], dictionary)
-      for i=1, embeddingSize do
-        weights[idx][i] = torch.normal(0, 0.9)
+      local idx = locateIdx(specials[i], dict)
+      for e=1, embeddingSize do
+        weights[idx][e] = torch.normal(0, 0.9)
       end
       loaded[idx] = true
     end
@@ -148,28 +148,26 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   end
 
   --[[Given a word2vec embedings file name and dictionary, outputs weights. Some portions courtesy of Courtesy of https://github.com/rotmanmi/word2vec.torch]]
-  local function loadWord2vec(embeddingFilename, dictionary)
+  local function loadWord2vec(filename, dict)
 
     local loaded = tds.Hash()
-    local dictSize = dictionary:size()
-    local embeddingSize = nil
-    local weights = nil
+    local dictSize = dict:size()
 
-    file = torch.DiskFile(embeddingFilename, "r")
+    local f = torch.DiskFile(filename, "r")
 
     -- read header
-    file:ascii()
-    numWords = file:readInt()
-    embeddingSize = file:readInt()
+    f:ascii()
+    local numWords = f:readInt()
+    local embeddingSize = f:readInt()
 
 
-    weights = torch.Tensor(dictSize, embeddingSize)
+    local weights = torch.Tensor(dictSize, embeddingSize)
 
     -- preload constants
-    weights, loaded = preloadSpecial (weights, loaded, dictionary, embeddingSize)
+    weights, loaded = preloadSpecial (weights, loaded, dict, embeddingSize)
 
     -- read content
-    file:binary()
+    f:binary()
 
     print('processing embeddding file')
     for i = 1, numWords do
@@ -178,11 +176,11 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
          print(i .. ' embedding tokens reviewed. ' .. #loaded .. ' out of ' .. dictSize .. ' dictionary tokens matched.' )
       end
 
-      local word = readStringv2(file)
-      local wordEmbedding = file:readFloat(embeddingSize)
+      local word = readStringv2(f)
+      local wordEmbedding = f:readFloat(embeddingSize)
       wordEmbedding = torch.FloatTensor(wordEmbedding)
 
-      local idx = locateIdx(word, dictionary)
+      local idx = locateIdx(word, dict)
 
       if idx ~= nil then
 
@@ -198,7 +196,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
       end
 
-      if #loaded == dictSize then 
+      if #loaded == dictSize then
         print('Quitting early. All ' .. dictSize .. ' dictionary tokens matched.')
         break
       end
@@ -212,24 +210,24 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       print('Remaining randomly assigned according to uniform distribution')
     end
 
-    return weight, embeddingSize, matched, dictSize
+    return weights, embeddingSize
 
   end
 
 
   --[[Given a glove embedings file name and dictionary, outputs weights ]]
-  local function loadGlove(embeddingFilename, dictionary)
+  local function loadGlove(filename, dict)
     local loaded = tds.Hash()
-    local dictSize = dictionary:size()
+    local dictSize = dict:size()
     local embeddingSize = nil
     local weights = nil
     local first = true
     local count = 0
 
-    local file = io.open(embeddingFilename, "r")
+    local f = io.open(filename, "r")
 
     print('processing embeddding file')
-    for line in file:lines() do
+    for line in f:lines() do
 
       count = count + 1
       if count%opt.report_every == 0 then
@@ -243,12 +241,12 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         weights = torch.Tensor(dictSize, embeddingSize)
 
         -- preload constants
-        weights, loaded = preloadSpecial (weights, loaded, dictionary, embeddingSize)
+        weights, loaded = preloadSpecial (weights, loaded, dict, embeddingSize)
         first = false
       end
 
       local word = splitLine[1]
-      local idx = locateIdx(word, dictionary)
+      local idx = locateIdx(word, dict)
 
       if idx ~= nil then
 
@@ -278,7 +276,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     -- End File loop
     end
 
-	file:close()
+	f:close()
 
     if #loaded ~= dictSize then
       print('Embedding file fully processed. ' .. #loaded .. ' out of ' .. dictSize .. ' dictionary tokens matched.')
@@ -286,7 +284,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       print('Remaining randomly assigned according to uniform distribution')
     end
 
-    return weights, embeddingSize, matched, dictSize
+    return weights, embeddingSize
 
   end
 
@@ -316,29 +314,23 @@ local function main()
 
   local timer = torch.Timer()
 
-  assert(path.exists(opt.dict_file), 'dictionary file \'' .. opt.dict_file .. '\' does not exist.')  
+  assert(path.exists(opt.dict_file), 'dictionary file \'' .. opt.dict_file .. '\' does not exist.')
 
-  local dictionary = onmt.utils.Dict.new(opt.dict_file)
-  local weights = nil
-  local embeddingSize = nil
-  local matched = nil
-  local dictSize = nil
+  local dict = onmt.utils.Dict.new(opt.dict_file)
+
+  local embedFile = opt.embed_file
+  local embedType = opt.embed_type
 
   if opt.auto_lang and opt.auto_lang:len() > 0 then
 
     print('running autoload for ' .. opt.auto_lang)
-    local embedFile = loadAuto(opt.auto_lang)
-
-    assert(path.exists(embedFile), 'embeddings file \'' .. embedFile .. '\' does not exist. Check file permissions.')
-    weights, embeddingSize, matched, dictSize = loadEmbeddings(embedFile, "glove", dictionary)
-
-  else
-
-    assert(path.exists(opt.embed_file), 'embeddings file \'' .. opt.embed_file .. '\' does not exist.')
-    weights, embeddingSize, matched, dictSize = loadEmbeddings(opt.embed_file, opt.embed_type, dictionary)     
+    embedFile = loadAuto(opt.auto_lang)
+    embedType = 'glove'
 
   end
 
+  assert(path.exists(embedFile), 'embeddings file \'' .. opt.embed_file .. '\' does not exist.')
+  local weights, embeddingSize = loadEmbeddings(embedFile, embedType, dict)
 
   print('saving weights: ' .. opt.save_data .. '-embeddings-' .. tostring(embeddingSize) .. '.t7' )
   torch.save(opt.save_data .. '-embeddings-' .. tostring(embeddingSize) .. '.t7', weights)
