@@ -176,7 +176,6 @@ function Translator:translateBatch(batch)
   end
   -- IsComplete function
   local function isCompleteFunction(hypotheses)
-    local batchSize = hypotheses[1]:size(1)
     local seqLength = #hypotheses
     local complete = hypotheses[#hypotheses]:eq(onmt.Constants.EOS)
     if seqLength > self.opt.max_sent_length then

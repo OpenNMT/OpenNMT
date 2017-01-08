@@ -183,9 +183,9 @@ Parameters:
 
 Returns:
 
-  * `predictions` - a table. predictions[b][t] stores the prediction in batch `b` and time step `t`.
+  * `hypotheses` - a table. hypotheses[b][t] stores the prediction in batch `b` and time step `t`.
   * `scores` - a table. scores[b] stores the prediction score of batch `b`.
-  * `outputs` - a table. outputs[b][j][t] stores the j-th element in `stepOutputs` produced by `stepFunction` in batch `b` and time step `t`. In the case of an empty prediction, i.e. `predictions[b] == {}`, `outputs[b]` will be nil.
+  * `outputs` - a table. outputs[b][j][t] stores the j-th element in `stepOutputs` produced by `stepFunction` in batch `b` and time step `t`. In the case of an empty prediction, i.e. `hypotheses[b] == {}`, `outputs[b]` will be nil.
 
 ]]
 function BeamSearcher:search(beamSize, nBest)
@@ -228,23 +228,24 @@ function BeamSearcher:search(beamSize, nBest)
                                 hypotheses, beamSize, nBest)
     t = t + 1
   end
-  -- Return predictions
+  -- Return results
   local results = {}
   for k = 1, nBest do
-    hypotheses, scores, states = self:_getPredictions(k, beamSize)
+    hypotheses, scores, states = self:_getResults(k, beamSize)
     results[k] = { hypotheses = hypotheses, scores = scores, states = states}
   end
+  self.history, self.stats = nil, nil
   return results
 end
 
-function BeamSearcher:_getPredictions(k, beamSize)
-  local predictions = {}
+function BeamSearcher:_getResults(k, beamSize)
+  local hypotheses = {}
   local scores = {}
   local states = {}
 
   -- Decode
   for b = 1, self.stats.batchSize do
-    predictions[b] = {}
+    hypotheses[b] = {}
     states[b] = {}
     local t = self.stats.completedStep[b]
     local fromBeam = k
@@ -264,11 +265,11 @@ function BeamSearcher:_getPredictions(k, beamSize)
       end
       states[b][t] = selectBatchBeam(self.history.states[t], beamSize,
                                      remaining, fromBeam)
-      predictions[b][t] = self.history.extensions[t][remaining][fromBeam]
+      hypotheses[b][t] = self.history.extensions[t][remaining][fromBeam]
       local complete = self.history.isComplete[t]
       if selectBatchBeam(complete, beamSize, remaining, fromBeam) == 1 then
         states[b][t + 1] = nil
-        predictions[b][t + 1] = nil
+        hypotheses[b][t + 1] = nil
       end
       fromBeam = self.history.backPointers[t]
         [remaining][fromBeam]
@@ -288,7 +289,7 @@ function BeamSearcher:_getPredictions(k, beamSize)
     end
   end
   states = statesTemp
-  return predictions, scores, states
+  return hypotheses, scores, states
 end
 
 -- Find the top k extensions (satisfying filters)
@@ -422,7 +423,8 @@ function BeamSearcher:_trackHistory(totalScores, extensions, backPointers,
   table.insert(self.history.backPointers, backPointers:clone())
   table.insert(self.history.isComplete, complete:clone())
   local keptStates = {}
-  for _, val in pairs(self.advancer.keptStateIndexes) do
+  local keptStateIndexes = self.advancer.keptStatesIndexes or {}
+  for _, val in pairs(keptStateIndexes) do
     keptStates[val] = states[val]
   end
   table.insert(self.history.states, onmt.utils.Tensor.recursiveClone(keptStates))
