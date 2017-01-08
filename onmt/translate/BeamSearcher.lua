@@ -207,16 +207,13 @@ function BeamSearcher:search(beamSize, nBest)
     self.stats.batchSize = self.stats.batchSize or scores:size(1)
     self.stats.extensionSize = self.stats.extensionSize or scores:size(2)
     -- Select extensions with k-max scores (and satisfying filters)
-    totalScores, extensions, backPointers = self:_kArgMax(beamSize,
+    totalScores, extensions, backPointers, hypotheses, states 
+                                          = self:_kArgMax(beamSize,
                                                           totalScores, scores,
                                                           prevComplete,
                                                           self.advancer.filter,
                                                           hypotheses, states
                                                           )
-    -- Update hypotheses
-    hypotheses = self:_updateHyps(hypotheses, backPointers, extensions)
-    -- Index states using backpointers to feed next step
-    states = self:_indexStates(states, backPointers, t, beamSize)
     -- Determine which states are complete
     local complete = self.advancer.isComplete(hypotheses, states)
     if prevComplete then
@@ -297,17 +294,19 @@ end
 -- Find the top k extensions (satisfying filters)
 function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
     prevComplete, filterFunction, hypotheses, states)
-  local kMaxScores, kMaxIds, backPointers
+  local kMaxScores, kMaxIds, backPointers, newHypotheses, newStates
   local loop = 0
   local filtersSatisfied = false
   while not filtersSatisfied do
     loop = loop + 1
+    local remaining
     if not totalScores then
       kMaxScores, kMaxIds = scores:topk(beamSize, 2, true, true)
       backPointers = kMaxIds.new():resizeAs(kMaxIds):fill(1)
+      remaining = scores:size(1)
     else
       local extensionSize = scores:size(2)
-      local remaining = math.floor(scores:size(1) / beamSize)
+      remaining = math.floor(scores:size(1) / beamSize)
       -- Set other tokens scores to -inf to avoid ABCD<EOS>FG being on beam
       if prevComplete then
         if self.nBest > 1 then
@@ -327,15 +326,15 @@ function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
       backPointers = (kMaxIds:clone():div(extensionSize)):add(1)
       kMaxIds = kMaxIds:fmod(extensionSize):add(1)
     end
-    if self.advancer.skipFilter then
-      break
-    end
+    newHypotheses = self:_updateHyps(hypotheses, backPointers, kMaxIds)
+    newStates = self:_indexStates(states, backPointers,
+                                        #hypotheses + 1, beamSize)
     -- Prune hypotheses if necessary
     assert (loop <= scores:size(2), 'All hypotheses do not satisfy filters!')
-    local newHypotheses = self:_updateHyps(hypotheses, backPointers, kMaxIds)
-    local newStates = self:_indexStates(states, backPointers,
-                                        #hypotheses + 1, beamSize)
     local prune = filterFunction(newHypotheses, newStates)
+    if not prune then
+      break
+    end
     if prevComplete then
       prune = (prune:eq(0):add(prevComplete)):eq(0)
     end
@@ -345,11 +344,12 @@ function BeamSearcher:_kArgMax(beamSize, totalScores, scores,
       local pruneIds = prune:nonzero():view(-1)
       for b = 1, pruneIds:size(1) do
         local pruneId = pruneIds[b]
-        scores[backPointers:view(-1)[pruneId]][kMaxIds:view(-1)[pruneId]] = -math.huge
+        local batchId = math.floor((pruneId - 1) / beamSize) + 1
+        scores:view(remaining, -1, scores:size(2))[batchId][backPointers:view(-1)[pruneId]][kMaxIds:view(-1)[pruneId]] = -math.huge
       end
     end
   end
-  return kMaxScores, kMaxIds, backPointers
+  return kMaxScores, kMaxIds, backPointers, newHypotheses, newStates
 end
 
 function BeamSearcher:_indexStates(states, backPointers, t, beamSize)

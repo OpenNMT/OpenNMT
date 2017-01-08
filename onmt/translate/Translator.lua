@@ -178,11 +178,11 @@ function Translator:translateBatch(batch)
   local function isCompleteFunction(hypotheses)
     local batchSize = hypotheses[1]:size(1)
     local seqLength = #hypotheses
-    local complete = onmt.utils.Cuda.convert(torch.zeros(batchSize))
-    if seqLength > self.opt.max_sent_length + 1 then
-      return complete:fill(1)
+    local complete = hypotheses[#hypotheses]:eq(onmt.Constants.EOS)
+    if seqLength > self.opt.max_sent_length then
+      complete:fill(1)
     end
-    return hypotheses[#hypotheses]:eq(onmt.Constants.EOS)
+    return complete
   end
   -- Filter function (ignore too many UNKs)
   local function filterFunction(hypotheses)
@@ -196,7 +196,7 @@ function Translator:translateBatch(batch)
     local unSatisfied = numUnks:gt(self.opt.max_num_unks)
     -- Disallow empty predictions
     if #hypotheses == 1 then
-      unSatisfied = unSatisfied:add(hypotheses[1]:eq(onmt.Constants.EOS))
+      unSatisfied:add(hypotheses[1]:eq(onmt.Constants.EOS))
     end
     return unSatisfied
   end
@@ -207,7 +207,12 @@ function Translator:translateBatch(batch)
                                                          expandFunction,
                                                          isCompleteFunction,
                                                          filterFunction)
-  advancer:setKeptStateIndexes({4, 5})
+  local attnIndex, featsIndex = 4, 5
+  if self.opt.replace_unk then
+    advancer:setKeptStateIndexes({attnIndex, featsIndex})
+  else
+    advancer:setKeptStateIndexes({featsIndex})
+  end
   -- Construct BeamSearcher
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
   -- Search
@@ -232,8 +237,8 @@ function Translator:translateBatch(batch)
       local states = results[n].states
       local hyp = hypotheses[b]
       local score = scores[b]
-      local attn = states[b][4] or {}
-      local feats = states[b][5] or {}
+      local attn = states[b][attnIndex] or {}
+      local feats = states[b][featsIndex] or {}
       table.remove(hyp)
       -- Remove unnecessary values from the attention vectors
       local size = batch.sourceSize[b]

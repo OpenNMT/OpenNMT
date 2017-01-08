@@ -37,9 +37,6 @@ function BeamSearchAdvancer:__init(init, forward, expand, isComplete, filter)
   self.expand = expand
   self.isComplete = isComplete
   self.filter = filter
-  if not filter then
-    self.skipFilter = true
-  end
 end
 --[[Initialize function. Returns initial inputs for the forward function.
 
