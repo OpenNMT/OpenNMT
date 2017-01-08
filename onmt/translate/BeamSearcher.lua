@@ -207,7 +207,7 @@ function BeamSearcher:search(beamSize, nBest)
     self.stats.batchSize = self.stats.batchSize or scores:size(1)
     self.stats.extensionSize = self.stats.extensionSize or scores:size(2)
     -- Select extensions with k-max scores (and satisfying filters)
-    totalScores, extensions, backPointers, hypotheses, states 
+    totalScores, extensions, backPointers, hypotheses, states
                                           = self:_kArgMax(beamSize,
                                                           totalScores, scores,
                                                           prevComplete,
