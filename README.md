@@ -15,7 +15,7 @@ accuracy. Features include:
 
 * Speed and memory optimizations for high-performance GPU training.
 * Simple general-purpose interface, only requires and source/target data files.
-* C-only decoder implementation for easy deployment.
+* [C++ implementation of the translator](https://github.com/OpenNMT/CTranslate) for easy deployment.
 * Extensions to allow other sequence generation tasks such as summarization and image captioning.
 
 ## Installation
