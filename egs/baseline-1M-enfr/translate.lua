@@ -1,1 +1,1 @@
-/home/moses/torchwork/OpenNMT/translate.lua
+../../translate.lua

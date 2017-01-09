@@ -1,1 +1,1 @@
-/home/moses/torchwork/OpenNMT/train.lua
+../../train.lua

@@ -1,1 +1,1 @@
-/home/moses/torchwork/OpenNMT/preprocess.lua
+../../preprocess.lua
