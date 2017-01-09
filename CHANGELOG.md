@@ -4,6 +4,10 @@
 
 * ZeroMQ translation server
 
+### Fixes and improvements
+
+* Fix Hangul tokenization
+
 ## [v0.2.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.2.0) (2017-01-02)
 
 ### New features
