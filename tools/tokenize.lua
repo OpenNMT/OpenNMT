@@ -30,6 +30,8 @@ local function combineCase(feat, case)
     if case == 'lower' then feat = 'C' end
   elseif feat == 'C' then
     if case == 'upper' then feat = 'M' end
+  elseif feat == 'U' then
+    if case == 'lower' then feat = 'M' end
   end
   return feat
 end
