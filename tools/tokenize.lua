@@ -102,7 +102,7 @@ local function tokenize(line)
               if not(letter) then
                 curtok = curtok .. separators.sep_marker
               else
-                c = curtok .. separators.sep_marker .. c
+                c = separators.sep_marker .. c
               end
             end
             table.insert(tokens, curtok)
