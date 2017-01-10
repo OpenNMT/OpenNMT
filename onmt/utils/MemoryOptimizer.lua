@@ -91,11 +91,11 @@ local function registerNet(store, net, base)
 
   -- Add a wrapper around updateOutput to catch the module input.
   net:apply(function (m)
-      local updateOutput = m.updateOutput
-      m.updateOutput = function (mod, input)
-        mod.input = input
-        return updateOutput(mod, input)
-      end
+    local updateOutput = m.updateOutput
+    m.updateOutput = function (mod, input)
+      mod.input = input
+      return updateOutput(mod, input)
+    end
   end)
 end
 
