@@ -277,7 +277,13 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  _G.logger = onmt.utils.Logger.new(opt.log_file, true)
+  local logFile = opt.log_file
+  local mute = (opt.log_file:len() > 0)
+  if opt.disable_logs then
+    logFile = nil
+    mute = true
+  end
+  _G.logger = onmt.utils.Logger.new(logFile, mute)
 
   local data = {}
 
@@ -314,7 +320,7 @@ local function main()
 
   _G.logger:info('Saving data to \'' .. opt.save_data .. '-train.t7\'...')
   torch.save(opt.save_data .. '-train.t7', data, 'binary', false)
-
+  _G.logger:shutDown()
 end
 
 main()
