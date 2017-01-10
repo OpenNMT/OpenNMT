@@ -188,17 +188,18 @@ end
 tester:add(dictTest)
 
 
-function onmt.test(tests, fixedSeed)
+function main()
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()
   torch.setnumthreads(1)
 
-   -- Randomize stuff
-  local seed = fixedSeed or (1e5 * torch.tic())
-  print('Seed: ', seed)
-  math.randomseed(seed)
-  torch.manualSeed(seed)
   tester:run(tests)
+
   torch.setnumthreads(nThreads)
-  return tester
+
+  if tester.errors[1] then
+    os.exit(1)
+  end
 end
+
+main()
