@@ -239,7 +239,7 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
   end
 
   print('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes))
+  local _, perm = torch.sort(vecToTensor(sizes), true)
   reorderData(perm)
 
   print('Prepared ' .. #src .. ' sentences (' .. ignored

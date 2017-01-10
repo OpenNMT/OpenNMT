@@ -15,24 +15,28 @@ accuracy. Features include:
 
 * Speed and memory optimizations for high-performance GPU training.
 * Simple general-purpose interface, only requires and source/target data files.
-* C-only decoder implementation for easy deployment.
+* [C++ implementation of the translator](https://github.com/OpenNMT/CTranslate) for easy deployment.
 * Extensions to allow other sequence generation tasks such as summarization and image captioning.
 
 ## Installation
 
-OpenNMT only requires a vanilla Torch install. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
+OpenNMT only requires a vanilla Torch install with few dependencies. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
 
 ### Dependencies
 
 * `nn`
 * `nngraph`
 * `tds`
-* `threads`
+* `penlight`
 
-GPU will also require:
+GPU training requires:
 
 * `cunn`
 * `cutorch`
+
+Multi-GPU training additionally requires:
+
+* `threads`
 
 ## Quickstart
 

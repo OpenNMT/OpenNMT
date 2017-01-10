@@ -23,15 +23,11 @@ end
 
 --[[ Clone any serializable Torch object. ]]
 local function deepClone(obj)
-  local mem = torch.MemoryFile("w"):binary()
+  local mem = torch.MemoryFile("rw"):binary()
   mem:writeObject(obj)
-
-  local reader = torch.MemoryFile(mem:storage(), "r"):binary()
-  local clone = reader:readObject()
-
-  reader:close()
+  mem:seek(1)
+  local clone = mem:readObject()
   mem:close()
-
   return clone
 end
 
