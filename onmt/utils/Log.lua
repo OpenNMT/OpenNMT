@@ -1,11 +1,11 @@
-local write
-if _G.logger then
-  write = function (...) return _G.logger:write(...) end
-else
-  write = io.write
-end
 
 local function logJsonRecursive(obj)
+  local write
+  if _G.logger then
+    write = function (...) return _G.logger:write(...) end
+  else
+    write = io.write
+  end
   if type(obj) == 'string' then
     write('"' .. obj .. '"')
   elseif type(obj) == 'table' then
@@ -32,6 +32,12 @@ end
 --[[ Recursively outputs a Lua object to a JSON objects followed by a new line. ]]
 local function logJson(obj)
   logJsonRecursive(obj)
+  local write
+  if _G.logger then
+    write = function (...) return _G.logger:write(...) end
+  else
+    write = io.write
+  end
   write('\n')
 end
 
