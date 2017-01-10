@@ -46,9 +46,9 @@ function Cuda.convert(obj)
   if torch.typename(obj) then
     if Cuda.activated and obj.cuda ~= nil then
       if Cuda.fp16 then
-        return obj:cuda():half()
-      else
         return torch.CudaHalfTensor(obj:size()):copy(obj)
+      else
+        return obj:cuda()
       end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
