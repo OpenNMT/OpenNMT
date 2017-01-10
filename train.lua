@@ -434,13 +434,11 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  local logFile = opt.log_file
   local mute = (opt.log_file:len() > 0)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
   if opt.disable_logs then
-    logFile = nil
-    mute = true
+    _G.logger:setVisibleLevel('ERROR')
   end
-  _G.logger = onmt.utils.Logger.new(logFile, mute)
 
   local checkpoint = {}
 

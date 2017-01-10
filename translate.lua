@@ -45,13 +45,11 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  local logFile = opt.log_file
   local mute = (opt.log_file:len() > 0)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
   if opt.disable_logs then
-    logFile = nil
-    mute = true
+    _G.logger:setVisibleLevel('ERROR')
   end
-  _G.logger = onmt.utils.Logger.new(logFile, mute)
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}

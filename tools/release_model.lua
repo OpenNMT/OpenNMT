@@ -25,13 +25,11 @@ end
 local function main()
   assert(path.exists(opt.model), 'model \'' .. opt.model .. '\' does not exist.')
 
-  local logFile = opt.log_file
   local mute = (opt.log_file:len() > 0)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
   if opt.disable_logs then
-    logFile = nil
-    mute = true
+    _G.logger:setVisibleLevel('ERROR')
   end
-  _G.logger = onmt.utils.Logger.new(logFile, mute)
 
   if opt.output_model:len() == 0 then
     if opt.model:sub(-3) == '.t7' then
