@@ -5,14 +5,14 @@ local Logger = torch.class('Logger')
 --[[ Construct a Logger object.
 
 Parameters:
-  * `logPath` - the path to log file. If left blank, then output log to stdout.
+  * `logPath` - the path to log file.
   * `mute` - whether or not suppress outputs to stdout. [false]
 
 Example:
 
-    logging = onmt.utils.Logger.new("./log.txt")
-    logging:info('%s is an extension of OpenNMT.', 'Im2Text')
-    logging:shutDown()
+    logger = onmt.utils.Logger.new("./log.txt")
+    logger:info('%s is an extension of OpenNMT.', 'Im2Text')
+    logger:shutDown()
 
 ]]
 function Logger:__init(logPath, mute)
@@ -42,7 +42,6 @@ function Logger:__init(logPath, mute)
     self.logFile = io.open(logPath, openMode)
   else
     self.logFile = nil
-    self.mute = false
   end
 end
 
@@ -94,6 +93,23 @@ Parameters:
 ]]
 function Logger:error(...)
   self:log(string.format(...), 'ERROR')
+end
+
+--[[ Log a message as exactly it is.
+
+Parameters:
+  * `message` - the message to log. Supports formatting string.
+
+]]
+function Logger:write(...)
+  local msg = string.format(...)
+  if not self.mute then
+    print (msg)
+  end
+  if self.logFile then
+    self.logFile:write(msg)
+    self.logFile:flush()
+  end
 end
 
 --[[ Deconstructor. Close the log file.

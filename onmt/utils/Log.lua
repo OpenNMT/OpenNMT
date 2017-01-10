@@ -1,31 +1,38 @@
+local write
+if _G.logger then
+  write = function (...) return _G.logger:write(...) end
+else
+  write = io.write
+end
+
 local function logJsonRecursive(obj)
   if type(obj) == 'string' then
-    io.write('"' .. obj .. '"')
+    write('"' .. obj .. '"')
   elseif type(obj) == 'table' then
     local first = true
 
-    io.write('{')
+    write('{')
 
     for key, val in pairs(obj) do
       if not first then
-        io.write(',')
+        write(',')
       else
         first = false
       end
-      io.write('"' .. key .. '":')
+      write('"' .. key .. '":')
       logJsonRecursive(val)
     end
 
-    io.write('}')
+    write('}')
   else
-    io.write(tostring(obj))
+    write(tostring(obj))
   end
 end
 
 --[[ Recursively outputs a Lua object to a JSON objects followed by a new line. ]]
 local function logJson(obj)
   logJsonRecursive(obj)
-  io.write('\n')
+  write('\n')
 end
 
 return {

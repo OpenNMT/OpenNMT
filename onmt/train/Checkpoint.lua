@@ -39,7 +39,13 @@ function Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)
   local filePath = string.format('%s_checkpoint.t7', self.savePath)
 
   if verbose then
-    print('Saving checkpoint to \'' .. filePath .. '\'...')
+    local log
+    if _G.logger then
+      log = function (...) return _G.logger:info(...) end
+    else
+      log = print
+    end
+    log('Saving checkpoint to \'' .. filePath .. '\'...')
   end
 
   -- Succeed serialization before overriding existing file
@@ -57,7 +63,13 @@ function Checkpoint:saveEpoch(validPpl, epochState, verbose)
   local filePath = string.format('%s_epoch%d_%.2f.t7', self.savePath, epochState.epoch, validPpl)
 
   if verbose then
-    print('Saving checkpoint to \'' .. filePath .. '\'...')
+    local log
+    if _G.logger then
+      log = function (...) return _G.logger:info(...) end
+    else
+      log = print
+    end
+    log('Saving checkpoint to \'' .. filePath .. '\'...')
   end
 
   self:save(filePath, info)

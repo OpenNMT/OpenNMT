@@ -17,8 +17,15 @@ Example:
 
 ]]
 function Memory.optimize(model, criterion, batch, verbose)
+
+  local log
+  if _G.logger then
+    log = function (...) return _G.logger:info(...) end
+  else
+    log = print
+  end
   if verbose then
-    print('Preparing memory optimization...')
+    log('Preparing memory optimization...')
   end
 
   -- Prepare memory optimization
@@ -41,7 +48,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   local sharedSize, totSize = memoryOptimizer:optimize()
 
   if verbose then
-    print(string.format(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100))
+    log(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100)
   end
 
   -- Restore batch to be transparent for the calling code.

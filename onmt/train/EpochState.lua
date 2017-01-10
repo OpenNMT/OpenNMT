@@ -35,6 +35,12 @@ end
 
 --[[ Log to status stdout. ]]
 function EpochState:log(batchIndex, json)
+  local log
+  if _G.logger then
+    log = function (...) return _G.logger:info(...) end
+  else
+    log = print
+  end
   if json then
     local freeMemory = onmt.utils.Cuda.freeMemory()
     if freeMemory < self.minFreeMemory then
@@ -66,7 +72,7 @@ function EpochState:log(batchIndex, json)
     stats = stats .. string.format('Learning rate %.4f ; ', self.learningRate)
     stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
     stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
-    print(stats)
+    log(stats)
   end
 end
 

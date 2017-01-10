@@ -19,6 +19,8 @@ cmd:text("**Other options**")
 cmd:text("")
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
+cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout.]])
+cmd:option('-disable_logs', false, [[If = true, output nothing.]])
 
 
 local function translateMessage(translator, lines)
@@ -77,7 +79,15 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  print("Loading model")
+  local logFile = opt.log_file
+  local mute = (opt.log_file:len() > 0)
+  if opt.disable_logs then
+    logFile = nil
+    mute = true
+  end
+  _G.logger = onmt.utils.Logger.new(logFile, mute)
+
+  _G.logger:info("Loading model")
   local translator = onmt.translate.Translator.new(opt)
 
   local ctx = zmq.init(1)
@@ -85,19 +95,20 @@ local function main()
 
   local url = "tcp://" .. opt.host .. ":" .. opt.port
   s:bind(url)
-  print("Server initialized at " .. url)
+  _G.logger:info("Server initialized at " .. url)
   while true do
     -- Input format is a json batch of src strings.
     local recv = s:recv()
-    print("Received... " .. recv)
+    _G.logger:info("Received... " .. recv)
     local message = json.decode(recv)
 
     local translate = translateMessage(translator, message)
     local ret = json.encode(translate)
     s:send(ret)
-    print("Returning... " .. ret)
+    _G.logger:info("Returning... " .. ret)
     collectgarbage()
   end
+  _G.logger:shutDown()
 end
 
 main()

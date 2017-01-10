@@ -85,6 +85,8 @@ cmd:option('-save_every', 0, [[Save intermediate models every this many iteratio
 cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
+cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout.]])
+cmd:option('-disable_logs', false, [[If = true, output nothing.]])
 
 local opt = cmd:parse(arg)
 
@@ -94,7 +96,7 @@ local function initParams(model, verbose)
   local gradParams = {}
 
   if verbose then
-    print('Initializing parameters...')
+    _G.logger:info('Initializing parameters...')
   end
 
   -- Order the model table because we need all replicas to have the same order.
@@ -124,7 +126,7 @@ local function initParams(model, verbose)
   end
 
   if verbose then
-    print(" * number of parameters: " .. numParams)
+    _G.logger:info(" * number of parameters: " .. numParams)
   end
 
   return params, gradParams
@@ -371,10 +373,7 @@ local function trainModel(model, trainData, validData, dataset, info)
 
             -- we don't have information about the other threads here - we can only report progress
             if i % opt.report_every == 0 then
-              local stats = ''
-              stats = stats .. string.format('Epoch %d ; ', epoch)
-              stats = stats .. string.format('... batch %d/%d', i, trainData:batchCount())
-              print(stats)
+              _G.logger:info('Epoch %d ; ... batch %d/%d', epoch, i, trainData:batchCount())
             end
           end
         end,
@@ -400,12 +399,12 @@ local function trainModel(model, trainData, validData, dataset, info)
   local validPpl = 0
 
   if not opt.json_log then
-    print('Start training...')
+    _G.logger:info('Start training...')
   end
 
   for epoch = opt.start_epoch, opt.epochs do
     if not opt.json_log then
-      print('')
+      _G.logger:info('')
     end
 
     local epochState = trainEpoch(epoch, validPpl)
@@ -413,7 +412,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     validPpl = eval(model, criterion, validData)
 
     if not opt.json_log then
-      print('Validation perplexity: ' .. validPpl)
+      _G.logger:info('Validation perplexity: ' .. validPpl)
     end
 
     if opt.optim == 'sgd' then
@@ -435,13 +434,21 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
+  local logFile = opt.log_file
+  local mute = (opt.log_file:len() > 0)
+  if opt.disable_logs then
+    logFile = nil
+    mute = true
+  end
+  _G.logger = onmt.utils.Logger.new(logFile, mute)
+
   local checkpoint = {}
 
   if opt.train_from:len() > 0 then
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
 
     if not opt.json_log then
-      print('Loading checkpoint \'' .. opt.train_from .. '\'...')
+      _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
     end
 
     checkpoint = torch.load(opt.train_from)
@@ -466,7 +473,7 @@ local function main()
       opt.start_iteration = checkpoint.info.iteration
 
       if not opt.json_log then
-        print('Resuming training from epoch ' .. opt.start_epoch
+        _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
                 .. ' at iteration ' .. opt.start_iteration .. '...')
       end
     end
@@ -474,7 +481,7 @@ local function main()
 
   -- Create the data loader class.
   if not opt.json_log then
-    print('Loading data from \'' .. opt.data .. '\'...')
+    _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
   end
 
   local dataset = torch.load(opt.data, 'binary', false)
@@ -486,14 +493,14 @@ local function main()
   validData:setBatchSize(opt.max_batch_size)
 
   if not opt.json_log then
-    print(string.format(' * vocabulary size: source = %d; target = %d',
-                        dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size()))
-    print(string.format(' * additional features: source = %d; target = %d',
-                        #dataset.dicts.src.features, #dataset.dicts.tgt.features))
-    print(string.format(' * maximum sequence length: source = %d; target = %d',
-                        trainData.maxSourceLength, trainData.maxTargetLength))
-    print(string.format(' * number of training sentences: %d', #trainData.src))
-    print(string.format(' * maximum batch size: %d', opt.max_batch_size))
+    _G.logger:info(' * vocabulary size: source = %d; target = %d',
+                        dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
+    _G.logger:info(' * additional features: source = %d; target = %d',
+                        #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+    _G.logger:info(' * maximum sequence length: source = %d; target = %d',
+                        trainData.maxSourceLength, trainData.maxTargetLength)
+    _G.logger:info(' * number of training sentences: %d', #trainData.src)
+    _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
   else
     local metadata = {
       options = opt,
@@ -516,7 +523,7 @@ local function main()
   end
 
   if not opt.json_log then
-    print('Building model...')
+    _G.logger:info('Building model...')
   end
 
   local model
@@ -546,6 +553,8 @@ local function main()
   end)
 
   trainModel(model, trainData, validData, dataset, checkpoint.info)
+
+  _G.logger:shutDown()
 end
 
 main()
