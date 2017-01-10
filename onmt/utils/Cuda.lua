@@ -43,20 +43,21 @@ end
   When using CPU only, converts to float instead of the default double.
 ]]
 function Cuda.convert(obj)
-  if torch.typename(obj) then
-    if Cuda.activated and obj.cuda ~= nil then
+  local objTorchType = torch.typename(obj)
+  if objTorchType then
+    if Cuda.activated and obj.type ~= nil then
       if Cuda.fp16 then
-        return torch.CudaHalfTensor(obj:size()):copy(obj)
+        return obj:type('torch.CudaHalfTensor')
       else
-        return obj:cuda()
+        return obj:type('torch.CudaTensor')
       end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
-      return obj:float()
+      return obj:type('torch.FloatTensor')
     end
   end
 
-  if torch.typename(obj) or type(obj) == 'table' then
+  if objTorchType or type(obj) == 'table' then
     for k, v in pairs(obj) do
       obj[k] = Cuda.convert(v)
     end
