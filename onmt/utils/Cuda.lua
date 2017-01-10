@@ -2,13 +2,15 @@ require('nn')
 require('nngraph')
 
 local Cuda = {
-  activated = false
+  activated = false,
+  fp16 = false
 }
 
 function Cuda.init(opt, gpuIdx)
   Cuda.activated = opt.gpuid > 0
 
   if Cuda.activated then
+    Cuda.fp16 = opt.fp16
     local _, err = pcall(function()
       require('cutorch')
       require('cunn')
@@ -30,6 +32,9 @@ function Cuda.init(opt, gpuIdx)
     if err then
       error(err)
     end
+    if Cuda.fp16 and not cutorch.hasHalf then
+      error("installed cutorch does not support half-tensor")
+    end
   end
 end
 
@@ -40,7 +45,11 @@ end
 function Cuda.convert(obj)
   if torch.typename(obj) then
     if Cuda.activated and obj.cuda ~= nil then
-      return obj:cuda()
+      if Cuda.fp16 then
+        return obj:cuda():half()
+      else
+        return torch.CudaHalfTensor(obj:size()):copy(obj)
+      end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
       return obj:float()
