@@ -106,7 +106,6 @@ local function main()
     _G.logger:info("Returning... " .. ret)
     collectgarbage()
   end
-  _G.logger:shutDown()
 end
 
 main()
