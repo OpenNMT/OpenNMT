@@ -8,8 +8,8 @@
 
 * Fix Hangul tokenization
 * Fix duplicated tokens in aggressive tokenization
-* Fix crash when using BRNN and multiple source features
-* Fix crash when preprocessing empty lines and using additional features
+* Fix error when using BRNN and multiple source features
+* Fix error when preprocessing empty lines and using additional features
 
 ## [v0.2.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.2.0) (2017-01-02)
 
@@ -26,8 +26,8 @@
 * Smaller released model size after a non-SGD training
 * Fix out of memory errors in preprocessing
 * Fix BRNN models serialization and release
-* Fix crash when retraining a model
-* Fix crash when using more than one feature
+* Fix error when retraining a model
+* Fix error when using more than one feature
 
 ## [v0.1.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.1.0) (2016-12-19)
 
