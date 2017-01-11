@@ -13,7 +13,9 @@ cmd:text("")
 
 cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers,
   'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-sep_annotate', false, [[Include separator annotation using sep_marker]])
+cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner' character]])
+cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners]])
+cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token]])
 cmd:option('-case_feature', false, [[Generate case feature]])
 cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
 
@@ -58,18 +60,30 @@ local function tokenize(line)
         table.insert(tokens, curtok)
         curtok = ''
       end
+      -- if the character is the ZERO-WIDTH JOINER character (ZWJ), add joiner
+      if v == 0x200D then
+        if opt.joiner_annotate and opt.joiner_new and #tokens then
+          table.insert(tokens, opt.joiner)
+        elseif opt.joiner_annotate then
+          if other or (number and unicode.isLetter(nextv)) then
+            tokens[#tokens] = tokens[#tokens] .. opt.joiner
+          else
+            curtok = opt.joiner
+          end
+        end
+      end
       number = false
       letter = false
       space = true
       other = false
     else
-      -- skip special charactes and BOM and
+      -- skip special characters and BOM and
       if v > 32 and not(v == 0xFEFF) then
         -- normalize the separator marker and feat separator
-        if c == separators.sep_marker then c = separators.sep_marker_substitute end
+        if c == separators.joiner_marker then c = separators.joiner_substitute end
         if c == separators.feat_marker then c = separators.feat_marker_substitute end
 
-        local is_letter, _ = unicode.isLetter(v)
+        local is_letter = unicode.isLetter(v)
         local is_number = unicode.isNumber(v)
         if opt.mode == 'conservative' then
           if is_number or (c == '-' and letter == true) or c == '_' or
@@ -79,15 +93,19 @@ local function tokenize(line)
       end
       if is_letter then
         if not(letter == true or space == true) then
-          if opt.sep_annotate then
-            curtok = curtok .. separators.sep_marker
+          if opt.joiner_annotate and not(opt.joiner_new) then
+            curtok = curtok .. opt.joiner
           end
           table.insert(tokens, curtok)
+          if opt.joiner_annotate and opt.joiner_new then
+            table.insert(tokens, opt.joiner)
+          end
           curtok = ''
           elseif other == true then
-            if opt.sep_annotate then
-              if (curtok == '') then
-               tokens[#tokens] = tokens[#tokens] .. separators.sep_marker
+            if opt.joiner_annotate then
+              if curtok == '' then
+                if opt.joiner_new then table.insert(tokens, opt.joiner)
+                else tokens[#tokens] = tokens[#tokens] .. opt.joiner end
              end
            end
           end
@@ -98,18 +116,30 @@ local function tokenize(line)
           letter = true
         elseif is_number then
           if not(number == true or space == true) then
-            if opt.sep_annotate then
-              if not(letter) then
-                curtok = curtok .. separators.sep_marker
+            local addjoiner = false
+            if opt.joiner_annotate then
+              if opt.joiner_new then
+                addjoiner = true
               else
-                c = separators.sep_marker .. c
+                if not(letter) then
+                  curtok = curtok .. opt.joiner
+                else
+                  c = opt.joiner .. c
+                end
               end
             end
             table.insert(tokens, curtok)
+            if addjoiner then
+              table.insert(tokens, opt.joiner)
+            end
             curtok = ''
           elseif other == true then
-            if opt.sep_annotate then
-              curtok = curtok .. separators.sep_marker
+            if opt.joiner_annotate then
+              if opt.joiner_new then
+                table.insert(tokens, opt.joiner)
+              else
+                curtok = opt.joiner
+              end
             end
           end
           curtok = curtok..c
@@ -119,14 +149,19 @@ local function tokenize(line)
           number = true
         else
           if not space == true then
-            if opt.sep_annotate then
-              c = separators.sep_marker .. c
+            if opt.joiner_annotate and not(opt.joiner_new) then
+              c = opt.joiner .. c
             end
             table.insert(tokens, curtok)
+            if opt.joiner_annotate and opt.joiner_new then
+              table.insert(tokens, opt.joiner)
+            end
             curtok = ''
           elseif other == true then
-            if opt.sep_annotate then
-              c = separators.sep_marker .. c
+            if opt.joiner_new then
+              table.insert(tokens, opt.joiner)
+            else
+              curtok = opt.joiner
             end
           end
           curtok = curtok .. c
@@ -175,7 +210,7 @@ local idx = 1
 local bpe
 
 if opt.bpe_model ~= '' then
-  bpe = BPE.new(opt.bpe_model)
+  bpe = BPE.new(opt.bpe_model, opt.joiner_new)
 end
 
 for line in io.lines() do
@@ -198,7 +233,7 @@ for line in io.lines() do
   -- apply bpe if requested
   if bpe then
     local sep = ''
-    if opt.sep_annotate then sep = separators.sep_marker end
+    if opt.joiner_annotate then sep = opt.joiner end
     tokens = bpe:segment(tokens, sep)
   end
 
