@@ -36,16 +36,8 @@ function Parallel.init(opt)
     Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
     Parallel._tds = require('tds')
 
-    local log, warn
-    if _G.logger then
-      log = function (...) return _G.logger:info(...) end
-      warn = function (...) return _G.logger:warning(...) end
-    else
-      log, warn = print, print
-    end
-
     if Parallel.count > 1 then
-      log('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
+      _G.logger:info('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
       local threads = require('threads')
       threads.Threads.serialization('threads.sharedserialize')
       local thegpus = Parallel.gpus
@@ -68,10 +60,10 @@ function Parallel.init(opt)
       local ret
       ret, Parallel.usenccl = pcall(require, 'nccl')
       if not ret then
-        warn("For improved efficiency in nparallel mode - do install nccl")
+        _G.logger:warning("For improved efficiency in nparallel mode - do install nccl")
         Parallel.usenccl = nil
       elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
-        warn("CUDA_LAUNCH_BLOCKING set - cannot use nccl")
+        _G.logger:warning("CUDA_LAUNCH_BLOCKING set - cannot use nccl")
         Parallel.usenccl = nil
       end
     end

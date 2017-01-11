@@ -18,14 +18,8 @@ Example:
 ]]
 function Memory.optimize(model, criterion, batch, verbose)
 
-  local log
-  if _G.logger then
-    log = function (...) return _G.logger:info(...) end
-  else
-    log = print
-  end
   if verbose then
-    log('Preparing memory optimization...')
+    _G.logger:info('Preparing memory optimization...')
   end
 
   -- Prepare memory optimization
