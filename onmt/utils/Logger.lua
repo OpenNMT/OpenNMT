@@ -135,7 +135,7 @@ function Logger:setVisibleLevel(level)
   self.level = level
 end
 
--- Private function for comparing level against visible level. 
+-- Private function for comparing level against visible level.
 -- `level` - 'DEBUG', 'INFO', 'WARNING' or 'ERROR'.
 function Logger:_isVisible(level)
   self.level = self.level or 'INFO'
