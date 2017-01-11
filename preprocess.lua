@@ -250,8 +250,8 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
   reorderData(perm)
 
   _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
-          .. ' ignored due to source length > ' .. opt.src_seq_length
-          .. ' or target length > ' .. opt.tgt_seq_length .. ')')
+                   .. ' ignored due to source length > ' .. opt.src_seq_length
+                   .. ' or target length > ' .. opt.tgt_seq_length .. ')')
 
   local srcData = {
     words = src,

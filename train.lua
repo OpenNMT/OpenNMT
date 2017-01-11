@@ -468,7 +468,7 @@ local function main()
 
       if not opt.json_log then
         _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
-                       .. ' at iteration ' .. opt.start_iteration .. '...')
+                         .. ' at iteration ' .. opt.start_iteration .. '...')
       end
     end
   end
