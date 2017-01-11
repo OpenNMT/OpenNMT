@@ -51,7 +51,7 @@ function Dataset:setBatchSize(maxBatchSize)
     targetLength = math.max(targetLength, targetSeqLength)
     self.maxTargetLength = math.max(self.maxTargetLength, targetSeqLength)
   end
-  -- catch last batch
+  -- Catch last batch.
   table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src })
 end
 
