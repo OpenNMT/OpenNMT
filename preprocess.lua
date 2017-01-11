@@ -189,7 +189,7 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
 
     if srcTokens == nil or tgtTokens == nil then
       if srcTokens == nil and tgtTokens ~= nil or srcTokens ~= nil and tgtTokens == nil then
-        _G.logger:info('WARNING: source and target do not have the same number of sentences')
+        _G.logger:warning('source and target do not have the same number of sentences')
       end
       break
     end
