@@ -11,6 +11,18 @@ local function recursiveClone(out)
   end
 end
 
+--[[ Recursively add `b` tensors into `a`'s. ]]
+local function recursiveAdd(a, b)
+  if torch.isTensor(a) then
+    a:add(b)
+  else
+    for i = 1, #a do
+      recursiveAdd(a[i], b[i])
+    end
+  end
+  return a
+end
+
 local function recursiveSet(dst, src)
   if torch.isTensor(dst) then
     dst:set(src)
@@ -149,6 +161,7 @@ end
 
 return {
   recursiveClone = recursiveClone,
+  recursiveAdd = recursiveAdd,
   recursiveSet = recursiveSet,
   deepClone = deepClone,
   reuseTensor = reuseTensor,
