@@ -11,6 +11,7 @@ cmd:text("**detokenize.lua**")
 cmd:text("")
 
 cmd:option('-case_feature', false, [[First feature is case feature]])
+cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners]])
 
 local opt = cmd:parse(arg)
 
@@ -29,12 +30,13 @@ local function analyseToken(t)
     tok = tok .. t:sub(i, i)
     i = i + 1
   end
-  if tok:sub(1,#separators.sep_marker) == separators.sep_marker then
-    tok = tok:sub(1+#separators.sep_marker)
+  if tok:sub(1,#opt.joiner) == opt.joiner then
+    tok = tok:sub(1+#opt.joiner)
     leftsep = true
+    if tok == '' then rightsep = true end
   end
-  if tok:sub(-#separators.sep_marker,-1) == separators.sep_marker then
-    tok = tok:sub(1,-#separators.sep_marker-1)
+  if tok:sub(-#opt.joiner,-1) == opt.joiner then
+    tok = tok:sub(1,-#opt.joiner-1)
     rightsep = true
   end
   if p then
