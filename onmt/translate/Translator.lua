@@ -332,6 +332,7 @@ function Translator:translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeature
 
     local info = {}
     info.score = predScore[b][1]
+    info.attention = attn[b][1]
     info.nBest = {}
 
     if goldScore ~= nil then
@@ -342,6 +343,7 @@ function Translator:translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeature
       for n = 1, self.opt.n_best do
         info.nBest[n] = {}
         info.nBest[n].tokens = self:buildTargetTokens(pred[b][n], predFeats[b][n], srcBatch[b], attn[b][n])
+        info.nBest[n].attention = attn[b][n]
         info.nBest[n].score = predScore[b][n]
       end
     end
