@@ -537,7 +537,7 @@
         },
         {
             "location": "/code/translate/onmt+translate+PhraseTable/",
-            "text": "onmt.PhraseTable\n\n\nParse and lookup a words from a phrase table.\n\n\n[src]\n\n\n\n\nonmt.PhraseTable:lookup(word)\n\n\nReturn the phrase table match for \nword\n. \n\n\nUndocumented methods\n\n\n\n * \nonmt.PhraseTable(filePath)\n\n\n\n * \nonmt.PhraseTable:contains(word)",
+            "text": "onmt.PhraseTable\n\n\nParse and lookup a words from a phrase table.\n\n\n[src]\n\n\n\n\nonmt.PhraseTable:lookup(word)\n\n\nReturn the phrase table match for \nword\n. \n\n\n[src]\n\n\n\n\nonmt.PhraseTable:contains(word)\n\n\nReturn true if the phrase table contains the source word \nword\n. \n\n\nUndocumented methods\n\n\n\n * \nonmt.PhraseTable(filePath)",
             "title": "onmt+translate+PhraseTable"
         },
         {
@@ -547,12 +547,17 @@
         },
         {
             "location": "/code/translate/onmt+translate+PhraseTable/#onmtphrasetablelookupword",
-            "text": "Return the phrase table match for  word .",
+            "text": "Return the phrase table match for  word .   [src]",
             "title": "onmt.PhraseTable:lookup(word)"
         },
         {
+            "location": "/code/translate/onmt+translate+PhraseTable/#onmtphrasetablecontainsword",
+            "text": "Return true if the phrase table contains the source word  word .",
+            "title": "onmt.PhraseTable:contains(word)"
+        },
+        {
             "location": "/code/translate/onmt+translate+PhraseTable/#undocumented-methods",
-            "text": "*  onmt.PhraseTable(filePath)  \n *  onmt.PhraseTable:contains(word)",
+            "text": "*  onmt.PhraseTable(filePath)",
             "title": "Undocumented methods"
         },
         {
