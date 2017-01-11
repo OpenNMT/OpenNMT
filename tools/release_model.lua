@@ -7,8 +7,7 @@ cmd:option('-model', '', 'trained model file')
 cmd:option('-output_model', '', 'released model file')
 cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-force', false, 'force output model creation')
-cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout.]])
-cmd:option('-disable_logs', false, [[If = true, output nothing.]])
+onmt.utils.Logger.declareOpts(cmd)
 local opt = cmd:parse(arg)
 
 local function toCPU(model)
@@ -25,11 +24,7 @@ end
 local function main()
   assert(path.exists(opt.model), 'model \'' .. opt.model .. '\' does not exist.')
 
-  local mute = (opt.log_file:len() > 0)
-  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
-  if opt.disable_logs then
-    _G.logger:setVisibleLevel('ERROR')
-  end
+  _G.logger = onmt.utils.Logger.new(opt)
 
   if opt.output_model:len() == 0 then
     if opt.model:sub(-3) == '.t7' then

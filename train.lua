@@ -85,8 +85,8 @@ cmd:option('-save_every', 0, [[Save intermediate models every this many iteratio
 cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
-cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout.]])
-cmd:option('-disable_logs', false, [[If = true, output nothing.]])
+
+onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
@@ -434,11 +434,7 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  local mute = (opt.log_file:len() > 0)
-  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
-  if opt.disable_logs then
-    _G.logger:setVisibleLevel('ERROR')
-  end
+  _G.logger = onmt.utils.Logger.new(opt)
 
   local checkpoint = {}
 

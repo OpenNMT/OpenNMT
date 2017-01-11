@@ -2,7 +2,37 @@
 --]]
 local Logger = torch.class('Logger')
 
+function Logger.declareOpts(cmd)
+  cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout.]])
+  cmd:option('-disable_logs', false, [[If = true, output nothing.]])
+end
+
 --[[ Construct a Logger object.
+
+Parameters:
+  * `args` - options.
+
+Example:
+
+    local cmd = torch.CmdLine()
+    onmt.utils.Logger.declareOpts(cmd)
+    opt = cmd:parse(arg)
+    logger = onmt.utils.Logger.new(opt)
+    logger:info('%s is an extension of OpenNMT.', 'Im2Text')
+    logger:shutDown()
+
+]]
+function Logger:__init(args)
+  if args then
+    local mute = (args.log_file:len() > 0)
+    self:build(args.log_file, mute)
+    if args.disable_logs then
+      self:setVisibleLevel('ERROR')
+    end
+  end
+end
+
+--[[ Build a Logger object.
 
 Parameters:
   * `logPath` - the path to log file.
@@ -10,12 +40,12 @@ Parameters:
 
 Example:
 
-    logger = onmt.utils.Logger.new("./log.txt")
+    logger = onmt.utils.Logger.new():build("./log.txt")
     logger:info('%s is an extension of OpenNMT.', 'Im2Text')
     logger:shutDown()
 
 ]]
-function Logger:__init(logPath, mute)
+function Logger:build(logPath, mute)
   logPath = logPath or ''
   mute = mute or false
   self.mute = mute
@@ -44,6 +74,7 @@ function Logger:__init(logPath, mute)
     self.logFile = nil
   end
   self.LEVELS = { DEBUG = 0, INFO = 1, WARNING = 2, ERROR = 3 }
+  return self
 end
 
 --[[ Log a message at a specified level.

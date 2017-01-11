@@ -32,8 +32,8 @@ cmd:option('-shuffle', 1, [[Shuffle data]])
 cmd:option('-seed', 3435, [[Random seed]])
 
 cmd:option('-report_every', 100000, [[Report status every this many sentences]])
-cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout]])
-cmd:option('-disable_logs', false, [[Outputs nothing]])
+
+onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
@@ -277,11 +277,7 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  local mute = (opt.log_file:len() > 0)
-  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
-  if opt.disable_logs then
-    _G.logger:setVisibleLevel('ERROR')
-  end
+  _G.logger = onmt.utils.Logger.new(opt)
 
   local data = {}
 

@@ -19,8 +19,7 @@ cmd:text("**Other options**")
 cmd:text("")
 cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
-cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout.]])
-cmd:option('-disable_logs', false, [[If = true, output nothing.]])
+onmt.utils.Logger.declareOpts(cmd)
 
 
 local function translateMessage(translator, lines)
@@ -79,11 +78,7 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  local mute = (opt.log_file:len() > 0)
-  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
-  if opt.disable_logs then
-    _G.logger:setVisibleLevel('ERROR')
-  end
+  _G.logger = onmt.utils.Logger.new(opt)
 
   _G.logger:info("Loading model")
   local translator = onmt.translate.Translator.new(opt)

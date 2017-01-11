@@ -25,9 +25,8 @@ cmd:text("")
 cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-time', false, [[Measure batch translation time]])
-cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout]])
-cmd:option('-disable_logs', false, [[If = true, output nothing]])
 
+onmt.utils.Logger.declareOpts(cmd)
 
 local function reportScore(name, scoreTotal, wordsTotal)
   _G.logger:info(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
@@ -45,11 +44,7 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  local mute = (opt.log_file:len() > 0)
-  _G.logger = onmt.utils.Logger.new(opt.log_file, mute)
-  if opt.disable_logs then
-    _G.logger:setVisibleLevel('ERROR')
-  end
+  _G.logger = onmt.utils.Logger.new(opt)
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
