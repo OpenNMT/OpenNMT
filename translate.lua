@@ -30,8 +30,8 @@ onmt.utils.Logger.declareOpts(cmd)
 
 local function reportScore(name, scoreTotal, wordsTotal)
   _G.logger:info(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
-                      scoreTotal / wordsTotal,
-                      math.exp(-scoreTotal/wordsTotal))
+                 scoreTotal / wordsTotal,
+                 math.exp(-scoreTotal/wordsTotal))
 end
 
 local function main()
@@ -44,7 +44,7 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  _G.logger = onmt.utils.Logger.new(opt)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}

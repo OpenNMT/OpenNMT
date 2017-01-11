@@ -434,7 +434,7 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  _G.logger = onmt.utils.Logger.new(opt)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   local checkpoint = {}
 
@@ -468,7 +468,7 @@ local function main()
 
       if not opt.json_log then
         _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
-                .. ' at iteration ' .. opt.start_iteration .. '...')
+                       .. ' at iteration ' .. opt.start_iteration .. '...')
       end
     end
   end
@@ -488,11 +488,11 @@ local function main()
 
   if not opt.json_log then
     _G.logger:info(' * vocabulary size: source = %d; target = %d',
-                        dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
+                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
     _G.logger:info(' * additional features: source = %d; target = %d',
-                        #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
     _G.logger:info(' * maximum sequence length: source = %d; target = %d',
-                        trainData.maxSourceLength, trainData.maxTargetLength)
+                   trainData.maxSourceLength, trainData.maxTargetLength)
     _G.logger:info(' * number of training sentences: %d', #trainData.src)
     _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
   else

@@ -5,52 +5,36 @@ local Logger = torch.class('Logger')
 function Logger.declareOpts(cmd)
   cmd:option('-log_file', '', [[Outputs logs to a file under this path instead of stdout.]])
   cmd:option('-disable_logs', false, [[If = true, output nothing.]])
+  cmd:option('-log_level', 'INFO', [[Outputs logs at this level and above. Possible options are: DEBUG, INFO, WARNING and ERROR.]])
 end
 
 --[[ Construct a Logger object.
 
 Parameters:
-  * `args` - options.
+  * `logFile` - Outputs logs to a file under this path instead of stdout. ['']
+  * `disableLogs` - If = true, output nothing. [false]
+  * `logLevel` - Outputs logs at this level and above. Possible options are: DEBUG, INFO, WARNING and ERROR. ['INFO']
 
 Example:
 
-    local cmd = torch.CmdLine()
-    onmt.utils.Logger.declareOpts(cmd)
-    opt = cmd:parse(arg)
-    logger = onmt.utils.Logger.new(opt)
+    logger = onmt.utils.Logger.new('log.txt')
     logger:info('%s is an extension of OpenNMT.', 'Im2Text')
     logger:shutDown()
 
 ]]
-function Logger:__init(args)
-  if args then
-    local mute = (args.log_file:len() > 0)
-    self:build(args.log_file, mute)
-    if args.disable_logs then
-      self:setVisibleLevel('ERROR')
-    end
+function Logger:__init(logFile, disableLogs, logLevel)
+  logFile = logFile or ''
+  disableLogs = disableLogs or false
+  logLevel = logLevel or 'INFO'
+
+  self.mute = (logFile:len() > 0)
+  if disableLogs then
+    self:setVisibleLevel('ERROR')
+  else
+    self:setVisibleLevel(logLevel)
   end
-end
-
---[[ Build a Logger object.
-
-Parameters:
-  * `logPath` - the path to log file.
-  * `mute` - whether or not suppress outputs to stdout. [false]
-
-Example:
-
-    logger = onmt.utils.Logger.new():build("./log.txt")
-    logger:info('%s is an extension of OpenNMT.', 'Im2Text')
-    logger:shutDown()
-
-]]
-function Logger:build(logPath, mute)
-  logPath = logPath or ''
-  mute = mute or false
-  self.mute = mute
   local openMode = 'w'
-  local f = io.open(logPath, 'r')
+  local f = io.open(logFile, 'r')
   if f then
     f:close()
     local input = nil
@@ -68,13 +52,12 @@ function Logger:build(logPath, mute)
       end
     end
   end
-  if string.len(logPath) > 0 then
-    self.logFile = io.open(logPath, openMode)
+  if string.len(logFile) > 0 then
+    self.logFile = io.open(logFile, openMode)
   else
     self.logFile = nil
   end
   self.LEVELS = { DEBUG = 0, INFO = 1, WARNING = 2, ERROR = 3 }
-  return self
 end
 
 --[[ Log a message at a specified level.

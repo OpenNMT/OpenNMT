@@ -277,7 +277,7 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
-  _G.logger = onmt.utils.Logger.new(opt)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   local data = {}
 
