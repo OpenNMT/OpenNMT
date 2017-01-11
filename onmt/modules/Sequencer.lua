@@ -24,21 +24,7 @@ function Sequencer:__init(network)
 end
 
 function Sequencer:_sharedClone()
-  local clone = onmt.utils.Tensor.deepClone(self.network)
-
-  -- Share parameters.
-  if self.network.parameters then
-    local params, gradParams = self.network:parameters()
-    if params == nil then
-      params = {}
-    end
-
-    local cloneParams, cloneGradParams = clone:parameters()
-    for i = 1, #params do
-      cloneParams[i]:set(params[i])
-      cloneGradParams[i]:set(gradParams[i])
-    end
-  end
+  local clone = self.network:clone('weight', 'gradWeight', 'bias', 'gradBias')
 
   -- Manually share word embeddings if they are fixed as they are not declared as parameters.
   local wordEmb
