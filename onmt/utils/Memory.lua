@@ -42,7 +42,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   local sharedSize, totSize = memoryOptimizer:optimize()
 
   if verbose then
-    log(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100)
+    _G.logger:info(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100)
   end
 
   -- Restore batch to be transparent for the calling code.
