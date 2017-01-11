@@ -9,6 +9,7 @@
 * Fix Hangul tokenization
 * Fix duplicated tokens in aggressive tokenization
 * Fix crash when using BRNN and multiple source features
+* Fix crash when preprocessing empty lines and using additional features
 
 ## [v0.2.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.2.0) (2017-01-02)
 
