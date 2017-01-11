@@ -73,7 +73,7 @@ Parameters:
 
 ]]
 function Logger:info(...)
-  self:log(string.format(...), 'INFO')
+  self:log(self:_format(...), 'INFO')
 end
 
 --[[ Log a message at 'WARNING' level.
@@ -83,7 +83,7 @@ Parameters:
 
 ]]
 function Logger:warning(...)
-  self:log(string.format(...), 'WARNING')
+  self:log(self:_format(...), 'WARNING')
 end
 
 --[[ Log a message at 'ERROR' level.
@@ -93,7 +93,7 @@ Parameters:
 
 ]]
 function Logger:error(...)
-  self:log(string.format(...), 'ERROR')
+  self:log(self:_format(...), 'ERROR')
 end
 
 --[[ Log a message at 'DEBUG' level.
@@ -103,7 +103,7 @@ Parameters:
 
 ]]
 function Logger:debug(...)
-  self:log(string.format(...), 'DEBUG')
+  self:log(self:_format(...), 'DEBUG')
 end
 
 --[[ Log a message as exactly it is.
@@ -113,7 +113,7 @@ Parameters:
 
 ]]
 function Logger:write(...)
-  local msg = string.format(...)
+  local msg = self:_format(...)
   if (not self.mute) and self:_isVisible('WARNING') then
     io.write(msg)
   end
@@ -135,15 +135,19 @@ function Logger:setVisibleLevel(level)
   self.level = level
 end
 
---[[Private function for comparing level against visible level.
-
-Parameters:
-  * `level` - 'DEBUG', 'INFO', 'WARNING' or 'ERROR'.
-
-]]
+-- Private function for comparing level against visible level. 
+-- `level` - 'DEBUG', 'INFO', 'WARNING' or 'ERROR'.
 function Logger:_isVisible(level)
   self.level = self.level or 'INFO'
   return self.LEVELS[level] >= self.LEVELS[self.level]
+end
+
+function Logger:_format(...)
+  if #table.pack(...) == 1 then
+    return ...
+  else
+    return string.format(...)
+  end
 end
 
 --[[ Deconstructor. Close the log file.
