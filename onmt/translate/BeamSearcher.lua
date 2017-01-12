@@ -159,7 +159,7 @@ Parameters:
 function BeamSearcher:__init(advancer)
   self.advancer = advancer
   -- Step stats
-  self.history = { extensions = {},
+  self.history = { tokens = {},
                    states = {},
                    backPointers = {},
                    totalScores = {},
@@ -185,43 +185,50 @@ Returns: a table `results`. `results[n]` contains the n-th best `hypotheses`, `s
 
 ]]
 function BeamSearcher:search(beamSize, nBest)
-  nBest = nBest or 1
-  beamSize = beamSize or 1
-  assert (nBest <= beamSize)
+  self.nBest = nBest or 1
+  self.beamSize = beamSize or 1
 
-  -- Initialize
-  local extensions, states = self.advancer.init()
-
+  -- Initialize the beam.
+  local beam = self.advancer.init()
+-- check beam size
   local t = 1
   local hypotheses = {}
-  local scores, totalScores, backPointers, remaining, prevComplete
+  local totalScores, backPointers, remaining, prevComplete
   while remaining == nil or remaining > 0 do
-    -- Forward
-    states = self.advancer.forward(extensions:view(-1), states)
-    -- Expand
-    scores = self.advancer.expand(states)
+    beam[t + 1] = self.advancer.update(beam[t])
+
+    local scores = self.advancer.expand(beam[t + 1])
     self.stats.batchSize = self.stats.batchSize or scores:size(1)
     self.stats.extensionSize = self.stats.extensionSize or scores:size(2)
-    -- Select extensions with k-max scores (and satisfying filters)
-    totalScores, extensions, backPointers, hypotheses, states
-                                          = self:_kArgMax(beamSize, nBest,
-                                                          totalScores, scores,
-                                                          prevComplete,
-                                                          self.advancer.filter,
-                                                          hypotheses, states
-                                                          )
-    -- Determine which states are complete
-    local complete = self.advancer.isComplete(hypotheses, states)
+
+    ---- Select tokens with k-max scores (and satisfying filters)
+    --totalScores, tokens, backPointers, hypotheses, states
+    --                                      = self:_kArgMax(beamSize, nBest,
+    --                                                      totalScores, scores,
+    --                                                      prevComplete,
+    --                                                      self.advancer.filter,
+    --                                                      hypotheses, states
+    --                                                      )
+
+    self:_findKMax(beam[t + 1], scores, t)
+
+    -- Determine which hypotheses are complete.
+    local completed = self.advancer.isComplete(beam)
     if prevComplete then
-      complete = (complete + selectBeam(prevComplete, backPointers)):ge(1)
+      completed = (completed + selectBeam(prevComplete, backPointers)):ge(1)
     end
-    prevComplete = complete
-    -- Keep track of history
-    self:_trackHistory(totalScores, extensions, backPointers, states, complete)
+    prevComplete = completed
+
+    ---- Keep track of history
+    --self:_trackHistory(totalScores, tokens, backPointers, states, complete)
+
     -- Remove complete batches
-    prevComplete, extensions, totalScores, states, hypotheses, remaining =
-           self:_removeComplete(prevComplete, extensions, totalScores, states,
-                                hypotheses, beamSize, nBest)
+    --prevComplete, tokens, totalScores, states, hypotheses, remaining =
+    --       self:_removeComplete(prevComplete, tokens, totalScores, states,
+    --                            hypotheses, beamSize, nBest)
+
+    self:_completeHypotheses(beam, prevComplete)
+
     t = t + 1
   end
   -- Return results
@@ -261,7 +268,7 @@ function BeamSearcher:_getResults(k, beamSize)
       end
       states[b][t] = selectBatchBeam(self.history.states[t], beamSize,
                                      remaining, fromBeam)
-      hypotheses[b][t] = self.history.extensions[t][remaining][fromBeam]
+      hypotheses[b][t] = self.history.tokens[t][remaining][fromBeam]
       local complete = self.history.isComplete[t]
       if selectBatchBeam(complete, beamSize, remaining, fromBeam) == 1 then
         states[b][t + 1] = nil
@@ -288,44 +295,47 @@ function BeamSearcher:_getResults(k, beamSize)
   return hypotheses, scores, states
 end
 
--- Find the top k extensions (satisfying filters)
-function BeamSearcher:_kArgMax(beamSize, nBest, totalScores, scores,
-    prevComplete, filterFunction, hypotheses, states)
-  local kMaxScores, kMaxIds, backPointers, newHypotheses, newStates
+-- Find the top k tokens (satisfying filters)
+function BeamSearcher:_findKMax(beam, scores, t)
+  --local kMaxScores, kMaxIds, newHypotheses, newStates
   local loop = 0
   local filtersSatisfied = false
+
   while not filtersSatisfied do
     loop = loop + 1
     local remaining
-    if not totalScores then
-      kMaxScores, kMaxIds = scores:topk(beamSize, 2, true, true)
-      backPointers = kMaxIds.new():resizeAs(kMaxIds):fill(1)
+    if t == 1 then
+      local kMaxScores, kMaxIds = scores:topk(beamSize, 2, true, true)
+      beam.backPointers = kMaxIds.new():resizeAs(kMaxIds):fill(1)
       remaining = scores:size(1)
     else
       local extensionSize = scores:size(2)
       remaining = math.floor(scores:size(1) / beamSize)
-      -- Set other tokens scores to -inf to avoid ABCD<EOS>FG being on beam
-      if prevComplete then
-        if nBest > 1 then
-          local maskScores = scores.new():resize(scores:size(1)):fill(0)
-          maskScores:maskedFill(prevComplete, -math.huge)
-          scores:add(maskScores:view(-1, 1):expandAs(scores))
-        end
-        -- Ensure that complete hypotheses remain and their scores do not change
-        scores:select(2, 1):maskedFill(prevComplete, 0)
-      end
-      local expandedScores = (scores:view(remaining, beamSize, -1)
-                           + totalScores:view(remaining, beamSize, 1)
-                                        :expand(remaining, beamSize, extensionSize)
-                          ):view(remaining, -1)
+      ---- Set other tokens scores to -inf to avoid ABCD<EOS>FG being on beam
+      --if prevComplete then
+      --  if nBest > 1 then
+      --    local maskScores = scores.new():resize(scores:size(1)):fill(0)
+      --    maskScores:maskedFill(prevComplete, -math.huge)
+      --    scores:add(maskScores:view(-1, 1):expandAs(scores))
+      --  end
+      --  -- Ensure that complete hypotheses remain and their scores do not change
+      --  scores:select(2, 1):maskedFill(prevComplete, 0)
+      --end
+      --local expandedScores = (scores:view(remaining, beamSize, -1)
+      --                     + totalScores:view(remaining, beamSize, 1)
+      --                                  :expand(remaining, beamSize, extensionSize)
+      --                    ):view(remaining, -1)
+      local expandedScores = beam:expandScores(scores)
       kMaxScores, kMaxIds = expandedScores:topk(beamSize, 2, true, true)
       kMaxIds:add(-1)
       backPointers = (kMaxIds:clone():div(extensionSize)):add(1)
       kMaxIds = kMaxIds:fmod(extensionSize):add(1)
     end
-    newHypotheses = self:_updateHyps(hypotheses, backPointers, kMaxIds)
+
+    newTokens = beam:nextTokens(kMaxIds)
+    newStates = beam:nextStates(t)
     newStates = self:_indexStates(states, backPointers,
-                                        #hypotheses + 1, beamSize)
+                                        t, beamSize)
     -- Prune hypotheses if necessary
     assert (loop <= scores:size(2), 'All hypotheses do not satisfy filters!')
     local prune = filterFunction(newHypotheses, newStates)
@@ -367,7 +377,7 @@ function BeamSearcher:_updateHyps(hypotheses, backPointers, kMaxIds)
   return hypotheses
 end
 
-function BeamSearcher:_removeComplete(prevComplete, extensions, totalScores, states,
+function BeamSearcher:_removeComplete(prevComplete, tokens, totalScores, states,
     hypotheses, beamSize, nBest)
   local batchSize = math.floor(hypotheses[1]:size(1) / beamSize)
   local t = #hypotheses
@@ -407,17 +417,17 @@ function BeamSearcher:_removeComplete(prevComplete, extensions, totalScores, sta
         flatToRc(hypotheses, beamSize), remainingIds))
       prevComplete = rcToFlat(selectBatch(
         flatToRc(prevComplete, beamSize), remainingIds))
-      extensions = selectBatch(extensions, remainingIds)
+      tokens = selectBatch(tokens, remainingIds)
       totalScores = selectBatch(totalScores, remainingIds)
     end
   end
-  return prevComplete, extensions, totalScores, states, hypotheses, remaining
+  return prevComplete, tokens, totalScores, states, hypotheses, remaining
 end
 
-function BeamSearcher:_trackHistory(totalScores, extensions, backPointers,
+function BeamSearcher:_trackHistory(totalScores, tokens, backPointers,
                                     states, complete)
   table.insert(self.history.totalScores, totalScores:clone())
-  table.insert(self.history.extensions, extensions:clone())
+  table.insert(self.history.tokens, tokens:clone())
   table.insert(self.history.backPointers, backPointers:clone())
   table.insert(self.history.isComplete, complete:clone())
   local keptStates = {}

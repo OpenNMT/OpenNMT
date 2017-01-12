@@ -1,34 +1,34 @@
---[[ Class for specifying how to advance one step
+--[[ Class for specifying how to advance one step. A hypothesis consists of a list
+   of tokens and a state. In the code, hypotheses are stored as a table of two
+   objects, a table representing tokens, and an abstract state object.
 
-      -- Initialize states
+  Pseudocode:
 
-      extensions, states <-- init()
+      finished = []
 
-      WHILE number of remaining hypotheses > 0 DO
+      -- Initialize hypotheses
 
-        -- Update states
+      [hypotheses] <-- init()
 
-        states <-- forward(extensions, states)
+      WHILE [hypotheses] is not empty DO
 
-        -- Extend hypotheses by one step and return the scores
+        -- Update hypothesis states based on new tokens
 
-        scores <-- expand(states)
+        update([hypotheses])
 
-        -- Update beam (maintained by BeamSearcher)
+        -- Expand hypotheses by all possible tokens and return the scores
 
-        extensions, states <-- _updateBeam()
+        [ [scores] ] <-- expand([hypotheses])
 
-        FOR b = 1, batchSize DO
+        -- Find k best next hypotheses (maintained by BeamSearcher)
 
-          IF isComplete(hypotheses)[b] THEN
+        _findKBest([hypotheses], [ [scores] ])
 
-            -- Remove completed hypotheses (maintained by BeamSearcher)
+        -- Remove completed hypotheses (maintained by BeamSearcher)
 
-            _removeHypotheses(b)
+        completed <-- isComplete([hypotheses])
 
-          ENDIF
-
-        ENDFOR
+        finished += _completeHypotheses([hypotheses], completed)
 
       ENDWHILE
 
@@ -36,56 +36,32 @@
 --]]
 local BeamSearchAdvancer = torch.class('BeamSearchAdvancer')
 
---[[Constructor
+--[[Initialize function. Returns an initial beam.
+
+Returns: `hypotheses`, where .
+
+]]
+function BeamSearchAdvancer:initHypotheses()
+end
+
+--[[Update function. Update hypothesis states given new tokens
 
 Parameters:
 
-  * `init` - the initialize function.
-  * `forward` - the forward function.
-  * `expand` - the expand function.
-  * `isComplete` - the function that determines complete hypotheses.
-  * `filter` - the filter function. Optional.
-
-]]
-function BeamSearchAdvancer:__init(init, forward, expand, isComplete, filter)
-  self.init = init
-  self.forward = forward
-  self.expand = expand
-  self.isComplete = isComplete
-  self.filter = filter
-end
---[[Initialize function. Returns initial inputs for the forward function.
-
-Returns:
-
-  * `extensions` - the initial extensions if necessary.
-  * `states` - the initial states.
-
-]]
-function BeamSearchAdvancer:init()
-end
-
---[[Forward function. Update states given extensions from the previous step.
-
-Parameters:
-
-  * `extensions` - a flat tensor of size `batchSize`, the selected extension indexes from the previous step.
+  * `tokens` - a flat tensor of size `batchSize`, the selected extension indexes from the previous step.
   * `states` - a table containing the states from the previous step.
 
-Returns:
-
-  * `states` - a table containing the updated states.
-
 ]]
-function BeamSearchAdvancer:forward()
+function BeamSearchAdvancer:update(beam)
 end
 
 --[[Expand function. Given states, returns the scores of the possible
-  `extensionSize` extensions.
+  `extensionSize` tokens.
+        -- Expand hypotheses by all possible tokens and return the scores
 
 Parameters:
 
-  * `states` - the current states.
+  * `hypotheses` - the current states.
 
 Returns:
 
