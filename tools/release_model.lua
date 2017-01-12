@@ -7,6 +7,7 @@ cmd:option('-model', '', 'trained model file')
 cmd:option('-output_model', '', 'released model file')
 cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-force', false, 'force output model creation')
+onmt.utils.Logger.declareOpts(cmd)
 local opt = cmd:parse(arg)
 
 local function toCPU(model)
@@ -22,6 +23,8 @@ end
 
 local function main()
   assert(path.exists(opt.model), 'model \'' .. opt.model .. '\' does not exist.')
+
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   if opt.output_model:len() == 0 then
     if opt.model:sub(-3) == '.t7' then
@@ -42,7 +45,7 @@ local function main()
     cutorch.setDevice(opt.gpuid)
   end
 
-  print('Loading model \'' .. opt.model .. '\'...')
+  _G.logger:info('Loading model \'' .. opt.model .. '\'...')
 
   local checkpoint
   local _, err = pcall(function ()
@@ -52,18 +55,20 @@ local function main()
     error('unable to load the model (' .. err .. '). If you are releasing a GPU model, it needs to be loaded on the GPU first (set -gpuid > 0)')
   end
 
-  print('... done.')
+  _G.logger:info('... done.')
 
-  print('Converting model...')
+  _G.logger:info('Converting model...')
   checkpoint.info = nil
   for _, model in pairs(checkpoint.models) do
     toCPU(model)
   end
-  print('... done.')
+  _G.logger:info('... done.')
 
-  print('Releasing model \'' .. opt.output_model .. '\'...')
+  _G.logger:info('Releasing model \'' .. opt.output_model .. '\'...')
   torch.save(opt.output_model, checkpoint)
-  print('... done.')
+  _G.logger:info('... done.')
+
+  _G.logger:shutDown()
 end
 
 main()

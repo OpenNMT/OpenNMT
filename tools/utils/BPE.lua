@@ -2,7 +2,7 @@ local unicode = require 'tools.utils.unicode'
 
 local BPE = torch.class('BPE')
 
-function BPE:__init(codesfile_path)
+function BPE:__init(codesfile_path, joiner_new)
   self.split = string.split
   -- to be able to run the code without torch
   if not self.split then
@@ -26,6 +26,7 @@ function BPE:__init(codesfile_path)
     end
     t=f:read("*line")
   end
+  self.joiner_new = joiner_new
 end
 
 local function getPairs(word)
@@ -132,7 +133,12 @@ function BPE:segment(tokens, separator)
       bpeTokens[#bpeTokens] = bpeTokens[#bpeTokens] .. separator
     end
     for j=1, #bpeTokens-1 do
-      table.insert(bpeSegment, bpeTokens[j] .. separator)
+      if not self.joiner_new then
+        table.insert(bpeSegment, bpeTokens[j] .. separator)
+      else
+        table.insert(bpeSegment, bpeTokens[j])
+        table.insert(bpeSegment, separator)
+      end
     end
     table.insert(bpeSegment, bpeTokens[#bpeTokens])
   end

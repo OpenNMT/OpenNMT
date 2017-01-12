@@ -33,6 +33,8 @@ cmd:option('-seed', 3435, [[Random seed]])
 
 cmd:option('-report_every', 100000, [[Report status every this many sentences]])
 
+onmt.utils.Logger.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
 local function hasFeatures(filename)
@@ -42,7 +44,11 @@ local function hasFeatures(filename)
   return numFeatures > 0
 end
 
-local function makeVocabulary(filename, size)
+local function isValid(sent, maxSeqLength)
+  return #sent > 0 and #sent <= maxSeqLength
+end
+
+local function makeVocabulary(filename, size, maxSeqLength)
   local wordVocab = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
                                          onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
   local featuresVocabs = {}
@@ -55,23 +61,25 @@ local function makeVocabulary(filename, size)
       break
     end
 
-    local words, features, numFeatures = onmt.utils.Features.extract(sent)
+    if isValid(sent, maxSeqLength) then
+      local words, features, numFeatures = onmt.utils.Features.extract(sent)
 
-    if #featuresVocabs == 0 and numFeatures > 0 then
-      for j = 1, numFeatures do
-        featuresVocabs[j] = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
-                                                 onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
+      if #featuresVocabs == 0 and numFeatures > 0 then
+        for j = 1, numFeatures do
+          featuresVocabs[j] = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
+                                                   onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
+        end
+      else
+        assert(#featuresVocabs == numFeatures,
+               'all sentences must have the same numbers of additional features')
       end
-    else
-      assert(#featuresVocabs == numFeatures,
-             'all sentences must have the same numbers of additional features')
-    end
 
-    for i = 1, #words do
-      wordVocab:add(words[i])
+      for i = 1, #words do
+        wordVocab:add(words[i])
 
-      for j = 1, numFeatures do
-        featuresVocabs[j]:add(features[j][i])
+        for j = 1, numFeatures do
+          featuresVocabs[j]:add(features[j][i])
+        end
       end
     end
 
@@ -81,21 +89,21 @@ local function makeVocabulary(filename, size)
 
   local originalSize = wordVocab:size()
   wordVocab = wordVocab:prune(size)
-  print('Created dictionary of size ' .. wordVocab:size() .. ' (pruned from ' .. originalSize .. ')')
+  _G.logger:info('Created dictionary of size ' .. wordVocab:size() .. ' (pruned from ' .. originalSize .. ')')
 
   return wordVocab, featuresVocabs
 end
 
-local function initVocabulary(name, dataFile, vocabFile, vocabSize, featuresVocabsFiles)
+local function initVocabulary(name, dataFile, vocabFile, vocabSize, featuresVocabsFiles, maxSeqLength)
   local wordVocab
   local featuresVocabs = {}
 
   if vocabFile:len() > 0 then
     -- If given, load existing word dictionary.
-    print('Reading ' .. name .. ' vocabulary from \'' .. vocabFile .. '\'...')
+    _G.logger:info('Reading ' .. name .. ' vocabulary from \'' .. vocabFile .. '\'...')
     wordVocab = onmt.utils.Dict.new()
     wordVocab:loadFile(vocabFile)
-    print('Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
+    _G.logger:info('Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
   end
 
   if featuresVocabsFiles:len() > 0 then
@@ -109,10 +117,10 @@ local function initVocabulary(name, dataFile, vocabFile, vocabSize, featuresVoca
         break
       end
 
-      print('Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
+      _G.logger:info('Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
       featuresVocabs[j] = onmt.utils.Dict.new()
       featuresVocabs[j]:loadFile(file)
-      print('Loaded ' .. featuresVocabs[j]:size() .. ' labels')
+      _G.logger:info('Loaded ' .. featuresVocabs[j]:size() .. ' labels')
 
       j = j + 1
     end
@@ -120,8 +128,8 @@ local function initVocabulary(name, dataFile, vocabFile, vocabSize, featuresVoca
 
   if wordVocab == nil or (#featuresVocabs == 0 and hasFeatures(dataFile)) then
     -- If a dictionary is still missing, generate it.
-    print('Building ' .. name  .. ' vocabulary...')
-    local genWordVocab, genFeaturesVocabs = makeVocabulary(dataFile, vocabSize)
+    _G.logger:info('Building ' .. name  .. ' vocabulary...')
+    local genWordVocab, genFeaturesVocabs = makeVocabulary(dataFile, vocabSize, maxSeqLength)
 
     if wordVocab == nil then
       wordVocab = genWordVocab
@@ -131,7 +139,7 @@ local function initVocabulary(name, dataFile, vocabFile, vocabSize, featuresVoca
     end
   end
 
-  print('')
+  _G.logger:info('')
 
   return {
     words = wordVocab,
@@ -140,14 +148,14 @@ local function initVocabulary(name, dataFile, vocabFile, vocabSize, featuresVoca
 end
 
 local function saveVocabulary(name, vocab, file)
-  print('Saving ' .. name .. ' vocabulary to \'' .. file .. '\'...')
+  _G.logger:info('Saving ' .. name .. ' vocabulary to \'' .. file .. '\'...')
   vocab:writeFile(file)
 end
 
 local function saveFeaturesVocabularies(name, vocabs, prefix)
   for j = 1, #vocabs do
     local file = prefix .. '.' .. name .. '_feature_' .. j .. '.dict'
-    print('Saving ' .. name .. ' feature ' .. j .. ' vocabulary to \'' .. file .. '\'...')
+    _G.logger:info('Saving ' .. name .. ' feature ' .. j .. ' vocabulary to \'' .. file .. '\'...')
     vocabs[j]:writeFile(file)
   end
 end
@@ -181,13 +189,12 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
 
     if srcTokens == nil or tgtTokens == nil then
       if srcTokens == nil and tgtTokens ~= nil or srcTokens ~= nil and tgtTokens == nil then
-        print('WARNING: source and target do not have the same number of sentences')
+        _G.logger:warning('source and target do not have the same number of sentences')
       end
       break
     end
 
-    if #srcTokens > 0 and #srcTokens <= opt.src_seq_length
-    and #tgtTokens > 0 and #tgtTokens <= opt.tgt_seq_length then
+    if isValid(srcTokens, opt.src_seq_length) and isValid(tgtTokens, opt.tgt_seq_length) then
       local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
       local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
 
@@ -212,7 +219,7 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
     count = count + 1
 
     if count % opt.report_every == 0 then
-      print('... ' .. count .. ' sentences prepared')
+      _G.logger:info('... ' .. count .. ' sentences prepared')
     end
   end
 
@@ -232,19 +239,19 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
   end
 
   if opt.shuffle == 1 then
-    print('... shuffling sentences')
+    _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  print('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes))
+  _G.logger:info('... sorting sentences by size')
+  local _, perm = torch.sort(vecToTensor(sizes), true)
   reorderData(perm)
 
-  print('Prepared ' .. #src .. ' sentences (' .. ignored
-          .. ' ignored due to source length > ' .. opt.src_seq_length
-          .. ' or target length > ' .. opt.tgt_seq_length .. ')')
+  _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
+                   .. ' ignored due to source length > ' .. opt.src_seq_length
+                   .. ' or target length > ' .. opt.tgt_seq_length .. ')')
 
   local srcData = {
     words = src,
@@ -270,25 +277,27 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
   local data = {}
 
   data.dicts = {}
-  data.dicts.src = initVocabulary('source', opt.train_src, opt.src_vocab,
-                                  opt.src_vocab_size, opt.features_vocabs_prefix)
-  data.dicts.tgt = initVocabulary('target', opt.train_tgt, opt.tgt_vocab,
-                                  opt.tgt_vocab_size, opt.features_vocabs_prefix)
+  data.dicts.src = initVocabulary('source', opt.train_src, opt.src_vocab, opt.src_vocab_size,
+                                  opt.features_vocabs_prefix, opt.src_seq_length)
+  data.dicts.tgt = initVocabulary('target', opt.train_tgt, opt.tgt_vocab, opt.tgt_vocab_size,
+                                  opt.features_vocabs_prefix, opt.tgt_seq_length)
 
-  print('Preparing training data...')
+  _G.logger:info('Preparing training data...')
   data.train = {}
   data.train.src, data.train.tgt = makeData(opt.train_src, opt.train_tgt,
                                             data.dicts.src, data.dicts.tgt)
-  print('')
+  _G.logger:info('')
 
-  print('Preparing validation data...')
+  _G.logger:info('Preparing validation data...')
   data.valid = {}
   data.valid.src, data.valid.tgt = makeData(opt.valid_src, opt.valid_tgt,
                                             data.dicts.src, data.dicts.tgt)
-  print('')
+  _G.logger:info('')
 
   if opt.src_vocab:len() == 0 then
     saveVocabulary('source', data.dicts.src.words, opt.save_data .. '.src.dict')
@@ -303,9 +312,9 @@ local function main()
     saveFeaturesVocabularies('target', data.dicts.tgt.features, opt.save_data)
   end
 
-  print('Saving data to \'' .. opt.save_data .. '-train.t7\'...')
+  _G.logger:info('Saving data to \'' .. opt.save_data .. '-train.t7\'...')
   torch.save(opt.save_data .. '-train.t7', data, 'binary', false)
-
+  _G.logger:shutDown()
 end
 
 main()

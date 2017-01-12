@@ -26,11 +26,12 @@ cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when
 cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-time', false, [[Measure batch translation time]])
 
+onmt.utils.Logger.declareOpts(cmd)
 
 local function reportScore(name, scoreTotal, wordsTotal)
-  print(string.format(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
-                      scoreTotal / wordsTotal,
-                      math.exp(-scoreTotal/wordsTotal)))
+  _G.logger:info(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
+                 scoreTotal / wordsTotal,
+                 math.exp(-scoreTotal/wordsTotal))
 end
 
 local function main()
@@ -42,6 +43,8 @@ local function main()
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
+
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
@@ -126,9 +129,9 @@ local function main()
 
         outFile:write(predSent .. '\n')
 
-        print('SENT ' .. sentId .. ': ' .. srcSent)
-        print('PRED ' .. sentId .. ': ' .. predSent)
-        print(string.format("PRED SCORE: %.4f", info[b].score))
+        _G.logger:info('SENT ' .. sentId .. ': ' .. srcSent)
+        _G.logger:info('PRED ' .. sentId .. ': ' .. predSent)
+        _G.logger:info("PRED SCORE: %.4f", info[b].score)
 
         predScoreTotal = predScoreTotal + info[b].score
         predWordsTotal = predWordsTotal + #predBatch[b]
@@ -136,22 +139,22 @@ local function main()
         if withGoldScore then
           local tgtSent = table.concat(tgtBatch[b], " ")
 
-          print('GOLD ' .. sentId .. ': ' .. tgtSent)
-          print(string.format("GOLD SCORE: %.4f", info[b].goldScore))
+          _G.logger:info('GOLD ' .. sentId .. ': ' .. tgtSent)
+          _G.logger:info("GOLD SCORE: %.4f", info[b].goldScore)
 
           goldScoreTotal = goldScoreTotal + info[b].goldScore
           goldWordsTotal = goldWordsTotal + #tgtBatch[b]
         end
 
         if opt.n_best > 1 then
-          print('\nBEST HYP:')
+          _G.logger:info('\nBEST HYP:')
           for n = 1, #info[b].nBest do
             local nBest = table.concat(info[b].nBest[n].tokens, " ")
-            print(string.format("[%.4f] %s", info[b].nBest[n].score, nBest))
+            _G.logger:info("[%.4f] %s", info[b].nBest[n].score, nBest)
           end
         end
 
-        print('')
+        _G.logger:info('')
         sentId = sentId + 1
       end
 
@@ -175,10 +178,10 @@ local function main()
   if opt.time then
     local time = timer:time()
     local sentenceCount = sentId-1
-    io.stderr:write("Average sentence translation time (in seconds):\n")
-    io.stderr:write("avg real\t" .. time.real / sentenceCount .. "\n")
-    io.stderr:write("avg user\t" .. time.user / sentenceCount .. "\n")
-    io.stderr:write("avg sys\t" .. time.sys / sentenceCount .. "\n")
+    _G.logger:info("Average sentence translation time (in seconds):\n")
+    _G.logger:info("avg real\t" .. time.real / sentenceCount .. "\n")
+    _G.logger:info("avg user\t" .. time.user / sentenceCount .. "\n")
+    _G.logger:info("avg sys\t" .. time.sys / sentenceCount .. "\n")
   end
 
   reportScore('PRED', predScoreTotal, predWordsTotal)
@@ -188,6 +191,7 @@ local function main()
   end
 
   outFile:close()
+  _G.logger:shutDown()
 end
 
 main()
