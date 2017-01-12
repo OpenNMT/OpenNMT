@@ -61,7 +61,8 @@ The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubu
 
 ```
 sudo apt-get install libzmq-dev
-luarocks install https://raw.github.com/Neopallium/lua-zmq/master/rockspecs/lua-zmq-scm-1.rockspec  ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
+luarocks install json
+luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
 ```
 
 Also you will need to install the OpenNMT as a library.
