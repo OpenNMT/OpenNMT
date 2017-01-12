@@ -23,7 +23,6 @@ cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
 cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
-cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-time', false, [[Measure batch translation time]])
 
 onmt.utils.Logger.declareOpts(cmd)
