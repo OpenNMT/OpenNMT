@@ -431,10 +431,11 @@ local function main()
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
-  onmt.utils.Cuda.init(opt)
-  onmt.utils.Parallel.init(opt)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
+  onmt.utils.Cuda.init(opt)
+  onmt.utils.Parallel.init(opt)
 
   local checkpoint = {}
 

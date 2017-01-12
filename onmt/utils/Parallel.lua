@@ -38,6 +38,7 @@ function Parallel.init(opt)
 
     if Parallel.count > 1 then
       _G.logger:info('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
+      local globalLogger = _G.logger
       local threads = require('threads')
       threads.Threads.serialization('threads.sharedserialize')
       local thegpus = Parallel.gpus
@@ -49,6 +50,9 @@ function Parallel.init(opt)
           require('nngraph')
           require('onmt.init')
           _G.threads = require('threads')
+        end,
+        function(threadid)
+          _G.logger = globalLogger
           onmt.utils.Cuda.init(opt, thegpus[threadid])
         end
       ) -- dedicate threads to GPUs

@@ -126,7 +126,7 @@ Parameters:
   * `message` - the message to log. Supports formatting string.
 
 ]]
-function Logger:write(...)
+function Logger:writeMsg(...)
   local msg = self:_format(...)
   if (not self.mute) and self:_isVisible('WARNING') then
     io.write(msg)
