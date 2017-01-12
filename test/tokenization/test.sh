@@ -1,6 +1,7 @@
 LUA=$(which luajit lua | head -n 1)
 
 dir=test/tokenization
+bpe_dir=bpe-models
 ret=0
 count=0
 err=0
@@ -30,7 +31,7 @@ for file in $dir/*.raw; do
     fi
 
     if [ $bpe ]; then
-        tokenize_opts="$tokenize_opts -bpe_model $dir/$bpe.bpe"
+        tokenize_opts="$tokenize_opts -bpe_model $dir/$bpe_dir/$bpe"
     fi
 
     # Test tokenization 1.
