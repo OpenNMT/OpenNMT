@@ -25,7 +25,7 @@ function Translator:__init(args)
   self.opt = args
   onmt.utils.Cuda.init(self.opt)
 
-  print('Loading \'' .. self.opt.model .. '\'...')
+  _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
   self.checkpoint = torch.load(self.opt.model)
 
   self.models = {}

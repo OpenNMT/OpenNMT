@@ -66,7 +66,7 @@ function EpochState:log(batchIndex, json)
     stats = stats .. string.format('Learning rate %.4f ; ', self.learningRate)
     stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
     stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
-    print(stats)
+    _G.logger:info(stats)
   end
 end
 
