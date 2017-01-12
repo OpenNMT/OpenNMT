@@ -45,7 +45,7 @@ function Parallel.init(opt)
       Parallel._gmutex = threads.Mutex()
       Parallel._pool = threads.Threads(
         Parallel.count,
-        function(threadid)
+        function()
           require('cunn')
           require('nngraph')
           require('onmt.init')
