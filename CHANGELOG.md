@@ -9,6 +9,7 @@
 ### Fixes and improvements
 
 * Fix Hangul tokenization
+* Zero-Width Joiner unicode character (ZWJ) is now tokenizing - but as a joiner
 * Fix duplicated tokens in aggressive tokenization
 * Fix error when using BRNN and multiple source features
 * Fix error when preprocessing empty lines and using additional features
