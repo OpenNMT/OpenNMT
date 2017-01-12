@@ -3,6 +3,8 @@
 ### New features
 
 * ZeroMQ translation server
+* Advanced log management
+* Tokenization option to make the token separator an independent token
 
 ### Fixes and improvements
 
