@@ -41,7 +41,7 @@ cmd:text("**Optimization options**")
 cmd:text("")
 
 cmd:option('-max_batch_size', 64, [[Maximum batch size]])
-cmd:option('-epochs', 13, [[Number of training epochs]])
+cmd:option('-end_epoch', 13, [[The final epoch of the training]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
@@ -402,7 +402,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     _G.logger:info('Start training...')
   end
 
-  for epoch = opt.start_epoch, opt.epochs do
+  for epoch = opt.start_epoch, opt.end_epoch do
     if not opt.json_log then
       _G.logger:info('')
     end
@@ -459,7 +459,7 @@ local function main()
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
-      opt.epochs = checkpoint.options.epochs
+      opt.end_epoch = checkpoint.options.end_epoch
       opt.curriculum = checkpoint.options.curriculum
 
       opt.learning_rate = checkpoint.info.learningRate
