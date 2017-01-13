@@ -57,6 +57,13 @@ By default, it will create a `model_release.t7` file. See `th tools/release_mode
 OpenNMT includes a translation server for running translate remotely. This also is an
 easy way to use models from other languages such as Java and Python.
 
+### Dependencies
+
+* `lua-zmq`
+* `json`
+
+### Installation
+
 The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubuntu by running:
 
 ```
@@ -74,7 +81,7 @@ luarocks make rocks/opennmt-scm-1.rockspec
 The translation server can be run using any of the arguments from `translate.lua`.
 
 ```
-th tools/translation_server.lua -port ... -model ...
+th tools/translation_server.lua -host ... -port ... -model ...
 ```
 
 It runs as a message queue that takes in a JSON batch of src sentences. For example the following 5 lines of Python
