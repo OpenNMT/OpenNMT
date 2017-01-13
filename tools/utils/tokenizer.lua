@@ -169,4 +169,69 @@ function tokenizer.tokenize(opt, line, bpe)
   return tokens
 end
 
+local function analyseToken(t, joiner)
+  local feats = {}
+  local tok = ""
+  local p
+  local leftsep = false
+  local rightsep = false
+  local i = 1
+  while i <= #t do
+    if t:sub(i, i+#separators.feat_marker-1) == separators.feat_marker then
+      p = i
+      break
+    end
+    tok = tok .. t:sub(i, i)
+    i = i + 1
+  end
+  if tok:sub(1,#joiner) == joiner then
+    tok = tok:sub(1+#joiner)
+    leftsep = true
+    if tok == '' then rightsep = true end
+  end
+  if tok:sub(-#joiner,-1) == joiner then
+    tok = tok:sub(1,-#joiner-1)
+    rightsep = true
+  end
+  if p then
+    p = p + #separators.feat_marker
+    local j = p
+    while j <= #t do
+      if t:sub(j, j+#separators.feat_marker-1) == separators.feat_marker then
+        table.insert(feats, t:sub(p, j-1))
+        j = j + #separators.feat_marker - 1
+        p = j + 1
+      end
+      j = j + 1
+    end
+    table.insert(feats, t:sub(p))
+  end
+  return tok, leftsep, rightsep, feats
+end
+
+local function getTokens(t, joiner)
+  local fields = {}
+  t:gsub("([^ ]+)", function(tok)
+    local w, leftsep, rightsep, feats =  analyseToken(tok, joiner)
+    table.insert(fields, { w=w, leftsep=leftsep, rightsep=rightsep, feats=feats })
+  end)
+  return fields
+end
+
+function tokenizer.detokenize(line, opt)
+  local dline = ""
+  local tokens = getTokens(line, opt.joiner)
+  for j = 1, #tokens do
+    if j > 1 and not tokens[j-1].rightsep and not tokens[j].leftsep then
+      dline = dline .. " "
+    end
+    local word = tokens[j].w
+    if opt.case_feature then
+      word = case.restoreCase(word, tokens[j].feats)
+    end
+    dline = dline .. word
+  end
+  return dline
+end
+
 return tokenizer

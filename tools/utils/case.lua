@@ -43,4 +43,22 @@ function case.addCase (toks)
   return toks
 end
 
+function case.restoreCase(w, feats)
+  assert(#feats>=1)
+  if feats[1] == 'L' or feats[1] == 'N' then
+    return w
+  else
+    local wr = ''
+    for v, c in unicode.utf8_iter(w) do
+      if wr == '' or feats[1] == 'U' then
+        local _, cu = unicode.getUpper(v)
+        if cu then c = cu end
+      end
+      wr = wr .. c
+    end
+    return wr
+  end
+  return w
+end
+
 return case
