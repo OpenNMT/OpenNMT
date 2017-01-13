@@ -84,6 +84,8 @@ The translation server can be run using any of the arguments from `translate.lua
 th tools/translation_server.lua -host ... -port ... -model ...
 ```
 
+**Note:** the default host is set to `127.0.0.1` which only allows local access. If you want to support remote access, use `0.0.0.0` instead.
+
 It runs as a message queue that takes in a JSON batch of src sentences. For example the following 5 lines of Python
 code can be used to send a single sentence for translation.
 
