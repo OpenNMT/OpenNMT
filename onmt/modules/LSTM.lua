@@ -140,7 +140,8 @@ function LSTM:updateOutput(input)
 end
 
 function LSTM:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
+  self.gradInput = self.net:updateGradInput(input, gradOutput)
+  return self.gradInput
 end
 
 function LSTM:accGradParameters(input, gradOutput, scale)
