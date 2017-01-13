@@ -58,7 +58,6 @@ function case.restoreCase(w, feats)
     end
     return wr
   end
-  return w
 end
 
 return case

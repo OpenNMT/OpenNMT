@@ -41,8 +41,15 @@ Note:
 If you activate `joiner_annotate` marker, the tokenization is reversible - just use:
 
 ```
-th tools/detokenize.lua [-case_feature] [-joiner xx] < file.tok > file.detok
+th tools/detokenize.lua OPTIONS < file.tok > file.detok
 ```
+
+where the options are:
+
+* `-joiner`: default (￭) - the joiner marker
+* `-case_feature`: if the
+* `-nparallel`: Number of parallel thread to run the tokenization
+* `-batchsize`: Size of each parallel batch - you should not change except if low memory
 
 ## Release model
 
