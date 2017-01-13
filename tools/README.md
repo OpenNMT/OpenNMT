@@ -28,6 +28,8 @@ where the options are:
   * `C`: token is capitalized (Opennmt)
   * `M`: token case is mixed (OpenNMT)
 * `-bpe_model`: when set, activate BPE using the BPE model filename
+* `-nparallel`: Number of parallel thread to run the tokenization
+* `-batchsize`: Size of each parallel batch - you should not change except if low memory
 
 Note:
 

@@ -5,6 +5,7 @@
 * ZeroMQ translation server
 * Advanced log management
 * Tokenization option to make the token separator an independent token
+* Tokenization can run in parallel mode
 
 ### Fixes and improvements
 
