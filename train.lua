@@ -455,7 +455,7 @@ local function main()
     opt.input_feed = checkpoint.options.input_feed
 
     -- Resume training from checkpoint
-    if opt.train_from:len() > 0 and opt.continue then
+    if opt.continue then
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
