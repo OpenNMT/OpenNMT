@@ -16,6 +16,7 @@
 * Fix error when using BRNN and multiple source features
 * Fix error when preprocessing empty lines and using additional features
 * Fix error when translating empty sentences
+* Fix error when retraining a BRNN model on multiple GPUs
 
 ## [v0.2.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.2.0) (2017-01-02)
 
