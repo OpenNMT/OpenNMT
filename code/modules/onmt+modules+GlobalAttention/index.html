@@ -173,6 +173,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -349,7 +356,7 @@ based on the input query.</p>
   <script type="math/tex; mode=display">(H_1 .. H_n, q) => (a)</script>
   Where H is of <code>batch x n x dim</code> and q is of <code>batch x dim</code>.</p>
 <p>The full function is  <script type="math/tex; mode=display">\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)</script>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/beee59d8183d5c1953b7c32407763a87fa81b78e/onmt/modules/GlobalAttention.lua#L31">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/bc2ef63adbf64f22fbd1317162809a4a875067ef/onmt/modules/GlobalAttention.lua#L31">[src]</a>
 <a name="onmt.GlobalAttention"></a></p>
 <h3 id="onmtglobalattentiondim">onmt.GlobalAttention(dim)</h3>
 <p>A nn-style module computing attention.</p>
@@ -357,13 +364,6 @@ based on the input query.</p>
 <ul>
 <li><code>dim</code> - dimension of the context vectors.</li>
 </ul>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.GlobalAttention:updateOutput"></a>
- * <code>onmt.GlobalAttention:updateOutput(input)</code>
-<a name="onmt.GlobalAttention:updateGradInput"></a>
- * <code>onmt.GlobalAttention:updateGradInput(input, gradOutput)</code>
-<a name="onmt.GlobalAttention:accGradParameters"></a>
- * <code>onmt.GlobalAttention:accGradParameters(input, gradOutput, scale)</code></p>
               
             </div>
           </div>

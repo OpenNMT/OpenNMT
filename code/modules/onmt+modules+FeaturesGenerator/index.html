@@ -133,9 +133,6 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#featuresgeneratorlua">FeaturesGenerator.lua</a></li>
-                
-            
                 <li class="toctree-l3"><a href="#onmtfeaturesgenerator">onmt.FeaturesGenerator</a></li>
                 
                     <li><a class="toctree-l4" href="#onmtfeaturesgeneratorrnnsize-outputsize-features">onmt.FeaturesGenerator(rnnSize, outputSize, features)</a></li>
@@ -170,6 +167,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
         
     </li>
 
@@ -335,13 +339,12 @@
           <div role="main">
             <div class="section">
               
-                <h3 id="featuresgeneratorlua">FeaturesGenerator.lua</h3>
+                <p><a name="onmt.FeaturesGenerator.dok"></a></p>
+<h2 id="onmtfeaturesgenerator">onmt.FeaturesGenerator</h2>
 <p>Feature decoder generator. Given RNN state, produce categorical distribution over
 tokens and features.</p>
 <p>Implements <script type="math/tex; mode=display">[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] </script>.</p>
-<p><a name="onmt.FeaturesGenerator.dok"></a></p>
-<h2 id="onmtfeaturesgenerator">onmt.FeaturesGenerator</h2>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/beee59d8183d5c1953b7c32407763a87fa81b78e/onmt/modules/FeaturesGenerator.lua#L17">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/bc2ef63adbf64f22fbd1317162809a4a875067ef/onmt/modules/FeaturesGenerator.lua#L15">[src]</a>
 <a name="onmt.FeaturesGenerator"></a></p>
 <h3 id="onmtfeaturesgeneratorrnnsize-outputsize-features">onmt.FeaturesGenerator(rnnSize, outputSize, features)</h3>
 <p>Parameters:</p>
@@ -350,13 +353,6 @@ tokens and features.</p>
 <li><code>outputSize</code> - Output size (number of tokens).</li>
 <li><code>features</code> - table of feature sizes.</li>
 </ul>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.FeaturesGenerator:updateOutput"></a>
- * <code>onmt.FeaturesGenerator:updateOutput(input)</code>
-<a name="onmt.FeaturesGenerator:updateGradInput"></a>
- * <code>onmt.FeaturesGenerator:updateGradInput(input, gradOutput)</code>
-<a name="onmt.FeaturesGenerator:accGradParameters"></a>
- * <code>onmt.FeaturesGenerator:accGradParameters(input, gradOutput, scale)</code></p>
               
             </div>
           </div>

@@ -247,7 +247,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+FeaturesEmbedding/",
-            "text": "onmt.FeaturesEmbedding\n\n\nA nngraph unit that maps features ids to embeddings. When using multiple\n  features this can be the concatenation or the sum of each individual embedding.\n\n\nUndocumented methods\n\n\n\n * \nonmt.FeaturesEmbedding(dicts, dimExponent, dim, merge)\n\n\n\n * \nonmt.FeaturesEmbedding:updateOutput(input)\n\n\n\n * \nonmt.FeaturesEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.FeaturesEmbedding:accGradParameters(input, gradOutput, scale)",
+            "text": "onmt.FeaturesEmbedding\n\n\nA nngraph unit that maps features ids to embeddings. When using multiple\n  features this can be the concatenation or the sum of each individual embedding.\n\n\nUndocumented methods\n\n\n\n * \nonmt.FeaturesEmbedding(dicts, dimExponent, dim, merge)",
             "title": "onmt+modules+FeaturesEmbedding"
         },
         {
@@ -257,33 +257,23 @@
         },
         {
             "location": "/code/modules/onmt+modules+FeaturesEmbedding/#undocumented-methods",
-            "text": "*  onmt.FeaturesEmbedding(dicts, dimExponent, dim, merge)  \n *  onmt.FeaturesEmbedding:updateOutput(input)  \n *  onmt.FeaturesEmbedding:updateGradInput(input, gradOutput)  \n *  onmt.FeaturesEmbedding:accGradParameters(input, gradOutput, scale)",
+            "text": "*  onmt.FeaturesEmbedding(dicts, dimExponent, dim, merge)",
             "title": "Undocumented methods"
         },
         {
             "location": "/code/modules/onmt+modules+FeaturesGenerator/",
-            "text": "FeaturesGenerator.lua\n\n\nFeature decoder generator. Given RNN state, produce categorical distribution over\ntokens and features.\n\n\nImplements \n[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] \n.\n\n\n\n\nonmt.FeaturesGenerator\n\n\n[src]\n\n\n\n\nonmt.FeaturesGenerator(rnnSize, outputSize, features)\n\n\nParameters:\n\n\n\n\nrnnSize\n - Input rnn size.\n\n\noutputSize\n - Output size (number of tokens).\n\n\nfeatures\n - table of feature sizes.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.FeaturesGenerator:updateOutput(input)\n\n\n\n * \nonmt.FeaturesGenerator:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.FeaturesGenerator:accGradParameters(input, gradOutput, scale)",
+            "text": "onmt.FeaturesGenerator\n\n\nFeature decoder generator. Given RNN state, produce categorical distribution over\ntokens and features.\n\n\nImplements \n[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] \n.\n\n\n[src]\n\n\n\n\nonmt.FeaturesGenerator(rnnSize, outputSize, features)\n\n\nParameters:\n\n\n\n\nrnnSize\n - Input rnn size.\n\n\noutputSize\n - Output size (number of tokens).\n\n\nfeatures\n - table of feature sizes.",
             "title": "onmt+modules+FeaturesGenerator"
         },
         {
-            "location": "/code/modules/onmt+modules+FeaturesGenerator/#featuresgeneratorlua",
-            "text": "Feature decoder generator. Given RNN state, produce categorical distribution over\ntokens and features.  Implements  [softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)]  .",
-            "title": "FeaturesGenerator.lua"
-        },
-        {
             "location": "/code/modules/onmt+modules+FeaturesGenerator/#onmtfeaturesgenerator",
-            "text": "[src]",
+            "text": "Feature decoder generator. Given RNN state, produce categorical distribution over\ntokens and features.  Implements  [softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)]  .  [src]",
             "title": "onmt.FeaturesGenerator"
         },
         {
             "location": "/code/modules/onmt+modules+FeaturesGenerator/#onmtfeaturesgeneratorrnnsize-outputsize-features",
             "text": "Parameters:   rnnSize  - Input rnn size.  outputSize  - Output size (number of tokens).  features  - table of feature sizes.",
             "title": "onmt.FeaturesGenerator(rnnSize, outputSize, features)"
-        },
-        {
-            "location": "/code/modules/onmt+modules+FeaturesGenerator/#undocumented-methods",
-            "text": "*  onmt.FeaturesGenerator:updateOutput(input)  \n *  onmt.FeaturesGenerator:updateGradInput(input, gradOutput)  \n *  onmt.FeaturesGenerator:accGradParameters(input, gradOutput, scale)",
-            "title": "Undocumented methods"
         },
         {
             "location": "/code/modules/onmt+modules+Generator/",
@@ -302,7 +292,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+GlobalAttention/",
-            "text": "onmt.GlobalAttention\n\n\nGlobal attention takes a matrix and a query vector. It\nthen computes a parameterized convex combination of the matrix\nbased on the input query.\n\n\nH_1 H_2 H_3 ... H_n\n q   q   q       q\n  |  |   |       |\n   \\ |   |      /\n       .....\n     \\   |  /\n         a\n\n\n\nConstructs a unit mapping:\n  \n(H_1 .. H_n, q) => (a)\n\n  Where H is of \nbatch x n x dim\n and q is of \nbatch x dim\n.\n\n\nThe full function is  \n\\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)\n.\n\n\n[src]\n\n\n\n\nonmt.GlobalAttention(dim)\n\n\nA nn-style module computing attention.\n\n\nParameters:\n\n\n\n\ndim\n - dimension of the context vectors.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.GlobalAttention:updateOutput(input)\n\n\n\n * \nonmt.GlobalAttention:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.GlobalAttention:accGradParameters(input, gradOutput, scale)",
+            "text": "onmt.GlobalAttention\n\n\nGlobal attention takes a matrix and a query vector. It\nthen computes a parameterized convex combination of the matrix\nbased on the input query.\n\n\nH_1 H_2 H_3 ... H_n\n q   q   q       q\n  |  |   |       |\n   \\ |   |      /\n       .....\n     \\   |  /\n         a\n\n\n\nConstructs a unit mapping:\n  \n(H_1 .. H_n, q) => (a)\n\n  Where H is of \nbatch x n x dim\n and q is of \nbatch x dim\n.\n\n\nThe full function is  \n\\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)\n.\n\n\n[src]\n\n\n\n\nonmt.GlobalAttention(dim)\n\n\nA nn-style module computing attention.\n\n\nParameters:\n\n\n\n\ndim\n - dimension of the context vectors.",
             "title": "onmt+modules+GlobalAttention"
         },
         {
@@ -316,13 +306,8 @@
             "title": "onmt.GlobalAttention(dim)"
         },
         {
-            "location": "/code/modules/onmt+modules+GlobalAttention/#undocumented-methods",
-            "text": "*  onmt.GlobalAttention:updateOutput(input)  \n *  onmt.GlobalAttention:updateGradInput(input, gradOutput)  \n *  onmt.GlobalAttention:accGradParameters(input, gradOutput, scale)",
-            "title": "Undocumented methods"
-        },
-        {
             "location": "/code/modules/onmt+modules+LSTM/",
-            "text": "onmt.LSTM\n\n\nImplementation of a single stacked-LSTM step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n  c^L_{t-1} --- c^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n  c^1_{t-1} --- c^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)\n\n\nParameters:\n\n\n\n\nlayers\n - Number of LSTM layers, L.\n\n\ninputSize\n - Size of input layer\n\n\nhiddenSize\n - Size of the hidden layers.\n\n\ndropout\n - Dropout rate to use.\n\n\nresidual\n - Residual connections between layers.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.LSTM:updateOutput(input)\n\n\n\n * \nonmt.LSTM:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.LSTM:accGradParameters(input, gradOutput, scale)",
+            "text": "onmt.LSTM\n\n\nImplementation of a single stacked-LSTM step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n  c^L_{t-1} --- c^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n  c^1_{t-1} --- c^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)\n\n\nParameters:\n\n\n\n\nlayers\n - Number of LSTM layers, L.\n\n\ninputSize\n - Size of input layer\n\n\nhiddenSize\n - Size of the hidden layers.\n\n\ndropout\n - Dropout rate to use.\n\n\nresidual\n - Residual connections between layers.",
             "title": "onmt+modules+LSTM"
         },
         {
@@ -336,13 +321,8 @@
             "title": "onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)"
         },
         {
-            "location": "/code/modules/onmt+modules+LSTM/#undocumented-methods",
-            "text": "*  onmt.LSTM:updateOutput(input)  \n *  onmt.LSTM:updateGradInput(input, gradOutput)  \n *  onmt.LSTM:accGradParameters(input, gradOutput, scale)",
-            "title": "Undocumented methods"
-        },
-        {
             "location": "/code/modules/onmt+modules+MaskedSoftmax/",
-            "text": "onmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nFor instance there may be a batch of instances where A is padding.\n\n\nAXXXAA\nAXXAAA\nAXXXXX\n\n\n\nMaskedSoftmax ensures that no probability is given to the A's.\n\n\nFor this example, \nbeamSize\n is 3, \nsourceLength\n is {3, 2, 5}.\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsourceSizes\n -  the true lengths (with left padding).\n\n\nsourceLength\n - the max length in the batch \nbeamSize\n.\n\n\nbeamSize\n - the batch size.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.MaskedSoftmax:updateOutput(input)\n\n\n\n * \nonmt.MaskedSoftmax:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.MaskedSoftmax:accGradParameters(input, gradOutput, scale)",
+            "text": "onmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nFor instance there may be a batch of instances where A is padding.\n\n\nAXXXAA\nAXXAAA\nAXXXXX\n\n\n\nMaskedSoftmax ensures that no probability is given to the A's.\n\n\nFor this example, \nbeamSize\n is 3, \nsourceLength\n is {3, 2, 5}.\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsourceSizes\n -  the true lengths (with left padding).\n\n\nsourceLength\n - the max length in the batch \nbeamSize\n.\n\n\nbeamSize\n - the batch size.",
             "title": "onmt+modules+MaskedSoftmax"
         },
         {
@@ -356,8 +336,18 @@
             "title": "onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)"
         },
         {
-            "location": "/code/modules/onmt+modules+MaskedSoftmax/#undocumented-methods",
-            "text": "*  onmt.MaskedSoftmax:updateOutput(input)  \n *  onmt.MaskedSoftmax:updateGradInput(input, gradOutput)  \n *  onmt.MaskedSoftmax:accGradParameters(input, gradOutput, scale)",
+            "location": "/code/modules/onmt+modules+Network/",
+            "text": "onmt.Network\n\n\nWrapper around a single network. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Network(net)\n\n\n\n * \nonmt.Network:updateOutput(input)\n\n\n\n * \nonmt.Network:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.Network:accGradParameters(input, gradOutput, scale)",
+            "title": "onmt+modules+Network"
+        },
+        {
+            "location": "/code/modules/onmt+modules+Network/#onmtnetwork",
+            "text": "Wrapper around a single network.",
+            "title": "onmt.Network"
+        },
+        {
+            "location": "/code/modules/onmt+modules+Network/#undocumented-methods",
+            "text": "*  onmt.Network(net)  \n *  onmt.Network:updateOutput(input)  \n *  onmt.Network:updateGradInput(input, gradOutput)  \n *  onmt.Network:accGradParameters(input, gradOutput, scale)",
             "title": "Undocumented methods"
         },
         {
@@ -392,7 +382,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+WordEmbedding/",
-            "text": "onmt.WordEmbedding\n\n\nnn unit. Maps from word ids to embeddings. Slim wrapper around\nnn.LookupTable to allow fixed and pretrained embeddings.\n\n\n[src]\n\n\n\n\nonmt.WordEmbedding(vocabSize, vecSize, preTrained, fix)\n\n\nParameters:\n\n\n\n\nvocabSize\n - size of the vocabulary\n\n\nvecSize\n - size of the embedding\n\n\npreTrainined\n - path to a pretrained vector file\n\n\nfix\n - keep the weights of the embeddings fixed.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.WordEmbedding:postParametersInitialization()\n\n\n\n * \nonmt.WordEmbedding:updateOutput(input)\n\n\n\n * \nonmt.WordEmbedding:updateGradInput(input, gradOutput)\n\n\n\n * \nonmt.WordEmbedding:accGradParameters(input, gradOutput, scale)\n\n\n\n * \nonmt.WordEmbedding:parameters()",
+            "text": "onmt.WordEmbedding\n\n\nnn unit. Maps from word ids to embeddings. Slim wrapper around\nnn.LookupTable to allow fixed and pretrained embeddings.\n\n\n[src]\n\n\n\n\nonmt.WordEmbedding(vocabSize, vecSize, preTrained, fix)\n\n\nParameters:\n\n\n\n\nvocabSize\n - size of the vocabulary\n\n\nvecSize\n - size of the embedding\n\n\npreTrainined\n - path to a pretrained vector file\n\n\nfix\n - keep the weights of the embeddings fixed.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.WordEmbedding:postParametersInitialization()\n\n\n\n * \nonmt.WordEmbedding:accGradParameters(input, gradOutput, scale)\n\n\n\n * \nonmt.WordEmbedding:parameters()",
             "title": "onmt+modules+WordEmbedding"
         },
         {
@@ -407,7 +397,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+WordEmbedding/#undocumented-methods",
-            "text": "*  onmt.WordEmbedding:postParametersInitialization()  \n *  onmt.WordEmbedding:updateOutput(input)  \n *  onmt.WordEmbedding:updateGradInput(input, gradOutput)  \n *  onmt.WordEmbedding:accGradParameters(input, gradOutput, scale)  \n *  onmt.WordEmbedding:parameters()",
+            "text": "*  onmt.WordEmbedding:postParametersInitialization()  \n *  onmt.WordEmbedding:accGradParameters(input, gradOutput, scale)  \n *  onmt.WordEmbedding:parameters()",
             "title": "Undocumented methods"
         },
         {

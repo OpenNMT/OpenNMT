@@ -173,6 +173,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -342,7 +349,7 @@ AXXXXX
 </code></pre>
 <p>MaskedSoftmax ensures that no probability is given to the A's.</p>
 <p>For this example, <code>beamSize</code> is 3, <code>sourceLength</code> is {3, 2, 5}.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/beee59d8183d5c1953b7c32407763a87fa81b78e/onmt/modules/MaskedSoftmax.lua#L26">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/bc2ef63adbf64f22fbd1317162809a4a875067ef/onmt/modules/MaskedSoftmax.lua#L26">[src]</a>
 <a name="onmt.MaskedSoftmax"></a></p>
 <h3 id="onmtmaskedsoftmaxsourcesizes-sourcelength-beamsize">onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)</h3>
 <p>A nn-style module that applies a softmax on input that gives no weight to the left padding.</p>
@@ -352,13 +359,6 @@ AXXXXX
 <li><code>sourceLength</code> - the max length in the batch <code>beamSize</code>.</li>
 <li><code>beamSize</code> - the batch size.</li>
 </ul>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.MaskedSoftmax:updateOutput"></a>
- * <code>onmt.MaskedSoftmax:updateOutput(input)</code>
-<a name="onmt.MaskedSoftmax:updateGradInput"></a>
- * <code>onmt.MaskedSoftmax:updateGradInput(input, gradOutput)</code>
-<a name="onmt.MaskedSoftmax:accGradParameters"></a>
- * <code>onmt.MaskedSoftmax:accGradParameters(input, gradOutput, scale)</code></p>
               
             </div>
           </div>
@@ -366,7 +366,7 @@ AXXXXX
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+modules+Sequencer/" class="btn btn-neutral float-right" title="onmt+modules+Sequencer">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+modules+Network/" class="btn btn-neutral float-right" title="onmt+modules+Network">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../onmt+modules+LSTM/" class="btn btn-neutral" title="onmt+modules+LSTM"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -398,7 +398,7 @@ AXXXXX
         <span><a href="../onmt+modules+LSTM/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+modules+Sequencer/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+modules+Network/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
