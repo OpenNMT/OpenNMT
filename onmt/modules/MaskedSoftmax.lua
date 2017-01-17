@@ -12,7 +12,7 @@ require('nngraph')
 
   For this example, `beamSize` is 3, `sourceLength` is {3, 2, 5}.
 --]]
-local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'nn.Container')
+local MaskedSoftmax, parent = torch.class('onmt.MaskedSoftmax', 'onmt.Network')
 
 
 --[[ A nn-style module that applies a softmax on input that gives no weight to the left padding.
@@ -24,10 +24,8 @@ Parameters:
   * `beamSize` - the batch size.
 --]]
 function MaskedSoftmax:__init(sourceSizes, sourceLength, beamSize)
-  parent.__init(self)
   --TODO: better names for these variables. Beam size =? batchSize?
-  self.net = self:_buildModel(sourceSizes, sourceLength, beamSize)
-  self:add(self.net)
+  parent.__init(self, self:_buildModel(sourceSizes, sourceLength, beamSize))
 end
 
 function MaskedSoftmax:_buildModel(sourceSizes, sourceLength, beamSize)
@@ -74,17 +72,4 @@ function MaskedSoftmax:_buildModel(sourceSizes, sourceLength, beamSize)
   output = nn.Normalize(1)(output)
 
   return nn.gModule({input}, {output})
-end
-
-function MaskedSoftmax:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function MaskedSoftmax:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
-end
-
-function MaskedSoftmax:accGradParameters(input, gradOutput, scale)
-  return self.net:accGradParameters(input, gradOutput, scale)
 end
