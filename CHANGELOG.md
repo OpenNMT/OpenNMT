@@ -9,8 +9,8 @@
 
 ### Fixes and improvements
 
-* Rename `-epochs` option to `-end_epoch` to clarify its behavior
-* Zero-Width Joiner unicode character (ZWJ) is now tokenizing - but as a joiner
+* [*Breaking, renamed option*] Rename `-epochs` option to `-end_epoch` to clarify its behavior
+* [*Breaking, renamed option*] Zero-Width Joiner unicode character (ZWJ) is now tokenizing - but as a joiner
 * Fix Hangul tokenization
 * Fix duplicated tokens in aggressive tokenization
 * Fix error when using BRNN and multiple source features
@@ -22,10 +22,10 @@
 
 ### New features
 
+* [*Breaking, renamed option*] Control maximum source and target length independently
 * Asynchronous SGD
 * Detokenization
 * BPE support in tokenization
-* Control maximum source and target length independently
 
 ### Fixes and improvements
 
