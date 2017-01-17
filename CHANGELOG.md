@@ -9,12 +9,13 @@
 
 ### Fixes and improvements
 
-* Fix Hangul tokenization
+* Rename `-epochs` option to `-end_epoch` to clarify its behavior
 * Zero-Width Joiner unicode character (ZWJ) is now tokenizing - but as a joiner
+* Fix Hangul tokenization
 * Fix duplicated tokens in aggressive tokenization
 * Fix error when using BRNN and multiple source features
 * Fix error when preprocessing empty lines and using additional features
-* Rename `-epochs` option to `-end_epoch` to clarify its behavior
+* Fix error when translating empty sentences
 
 ## [v0.2.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.2.0) (2017-01-02)
 

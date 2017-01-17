@@ -128,28 +128,32 @@ local function main()
 
         outFile:write(predSent .. '\n')
 
-        _G.logger:info('SENT ' .. sentId .. ': ' .. srcSent)
-        _G.logger:info('PRED ' .. sentId .. ': ' .. predSent)
-        _G.logger:info("PRED SCORE: %.4f", info[b].score)
+        if (#srcBatch[b] == 0) then
+          _G.logger:warning('SENT ' .. sentId .. ' is empty.')
+        else
+          _G.logger:info('SENT ' .. sentId .. ': ' .. srcSent)
+          _G.logger:info('PRED ' .. sentId .. ': ' .. predSent)
+          _G.logger:info("PRED SCORE: %.4f", info[b].score)
 
-        predScoreTotal = predScoreTotal + info[b].score
-        predWordsTotal = predWordsTotal + #predBatch[b]
+          predScoreTotal = predScoreTotal + info[b].score
+          predWordsTotal = predWordsTotal + #predBatch[b]
 
-        if withGoldScore then
-          local tgtSent = table.concat(tgtBatch[b], " ")
+          if withGoldScore then
+            local tgtSent = table.concat(tgtBatch[b], " ")
 
-          _G.logger:info('GOLD ' .. sentId .. ': ' .. tgtSent)
-          _G.logger:info("GOLD SCORE: %.4f", info[b].goldScore)
+            _G.logger:info('GOLD ' .. sentId .. ': ' .. tgtSent)
+            _G.logger:info("GOLD SCORE: %.4f", info[b].goldScore)
 
-          goldScoreTotal = goldScoreTotal + info[b].goldScore
-          goldWordsTotal = goldWordsTotal + #tgtBatch[b]
-        end
+            goldScoreTotal = goldScoreTotal + info[b].goldScore
+            goldWordsTotal = goldWordsTotal + #tgtBatch[b]
+          end
 
-        if opt.n_best > 1 then
-          _G.logger:info('\nBEST HYP:')
-          for n = 1, #info[b].nBest do
-            local nBest = table.concat(info[b].nBest[n].tokens, " ")
-            _G.logger:info("[%.4f] %s", info[b].nBest[n].score, nBest)
+          if opt.n_best > 1 then
+            _G.logger:info('\nBEST HYP:')
+            for n = 1, #info[b].nBest do
+              local nBest = table.concat(info[b].nBest[n].tokens, " ")
+              _G.logger:info("[%.4f] %s", info[b].nBest[n].score, nBest)
+            end
           end
         end
 

@@ -57,30 +57,36 @@ function Translator:buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeature
     tgtData.features = {}
   end
 
+  local ignored = {}
+
   for b = 1, #srcBatch do
-    table.insert(srcData.words,
-                 self.dicts.src.words:convertToIdx(srcBatch[b], onmt.Constants.UNK_WORD))
+    if #srcBatch[b] == 0 then
+      table.insert(ignored, b)
+    else
+      table.insert(srcData.words,
+                   self.dicts.src.words:convertToIdx(srcBatch[b], onmt.Constants.UNK_WORD))
 
-    if #self.dicts.src.features > 0 then
-      table.insert(srcData.features,
-                   onmt.utils.Features.generateSource(self.dicts.src.features, srcFeaturesBatch[b]))
-    end
+      if #self.dicts.src.features > 0 then
+        table.insert(srcData.features,
+                     onmt.utils.Features.generateSource(self.dicts.src.features, srcFeaturesBatch[b]))
+      end
 
-    if tgtData ~= nil then
-      table.insert(tgtData.words,
-                   self.dicts.tgt.words:convertToIdx(goldBatch[b],
-                                                     onmt.Constants.UNK_WORD,
-                                                     onmt.Constants.BOS_WORD,
-                                                     onmt.Constants.EOS_WORD))
+      if tgtData ~= nil then
+        table.insert(tgtData.words,
+                     self.dicts.tgt.words:convertToIdx(goldBatch[b],
+                                                       onmt.Constants.UNK_WORD,
+                                                       onmt.Constants.BOS_WORD,
+                                                       onmt.Constants.EOS_WORD))
 
-      if #self.dicts.tgt.features > 0 then
-        table.insert(tgtData.features,
-                     onmt.utils.Features.generateTarget(self.dicts.tgt.features, goldFeaturesBatch[b]))
+        if #self.dicts.tgt.features > 0 then
+          table.insert(tgtData.features,
+                       onmt.utils.Features.generateTarget(self.dicts.tgt.features, goldFeaturesBatch[b]))
+        end
       end
     end
   end
 
-  return onmt.data.Dataset.new(srcData, tgtData)
+  return onmt.data.Dataset.new(srcData, tgtData), ignored
 end
 
 function Translator:buildTargetTokens(pred, predFeats, src, attn)
@@ -319,7 +325,7 @@ function Translator:translateBatch(batch)
 end
 
 function Translator:translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
-  local data = self:buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
+  local data, ignored = self:buildData(srcBatch, srcFeaturesBatch, goldBatch, goldFeaturesBatch)
   local batch = data:getBatch()
 
   local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
@@ -349,6 +355,11 @@ function Translator:translate(srcBatch, srcFeaturesBatch, goldBatch, goldFeature
     end
 
     table.insert(infoBatch, info)
+  end
+
+  for i = 1, #ignored do
+    table.insert(predBatch, ignored[i], {})
+    table.insert(infoBatch, ignored[i], {})
   end
 
   return predBatch, infoBatch
