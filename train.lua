@@ -70,9 +70,7 @@ cmd:text("**Other options**")
 cmd:text("")
 
 -- GPU
-cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
-cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
-                            Note: this will technically change the final batch size to max_batch_size*nparallel.]])
+onmt.utils.Cuda.declareOpts(cmd)
 cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
 cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
@@ -315,7 +313,7 @@ local function trainModel(model, trainData, validData, dataset, info)
       -- Asynchronous parallel.
       local counter = onmt.utils.Parallel.getCounter()
       counter:set(startI)
-      local masterGPU = onmt.utils.Parallel.gpus[1]
+      local masterGPU = onmt.utils.Cuda.gpuIds[1]
       local gradBuffer = onmt.utils.Parallel.gradBuffer
       local gmutexId = onmt.utils.Parallel.gmutexId()
 

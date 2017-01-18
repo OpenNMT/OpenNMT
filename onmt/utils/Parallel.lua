@@ -4,7 +4,6 @@
 ]]--
 
 local Parallel = {
-  gpus = {0},
   _pool = nil,
   count = 1,
   gradBuffer = torch.Tensor()
@@ -31,13 +30,11 @@ end
 
 function Parallel.init(opt)
   if onmt.utils.Cuda.activated then
-    Parallel.count = opt.nparallel
-    Parallel.gpus = onmt.utils.Cuda.getGPUs(opt.nparallel)
+    Parallel.count = onmt.utils.Cuda.gpuCount()
     Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
     Parallel._tds = require('tds')
 
     if Parallel.count > 1 then
-      _G.logger:info('Using ' .. Parallel.count .. ' threads on ' .. #Parallel.gpus .. ' GPUs')
       local globalLogger = _G.logger
       local threads = require('threads')
       threads.Threads.serialization('threads.sharedserialize')
@@ -53,7 +50,7 @@ function Parallel.init(opt)
         end,
         function(threadid)
           _G.logger = globalLogger
-          onmt.utils.Cuda.init(opt, thegpus[threadid])
+          onmt.utils.Cuda.init(opt, threadid)
         end
       ) -- dedicate threads to GPUs
       Parallel._pool:specific(true)
@@ -64,7 +61,7 @@ function Parallel.init(opt)
       local ret
       ret, Parallel.usenccl = pcall(require, 'nccl')
       if not ret then
-        _G.logger:warning("For improved efficiency in nparallel mode - do install nccl")
+        _G.logger:warning("For improved efficiency with multiple GPUs, consider installing nccl")
         Parallel.usenccl = nil
       elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
         _G.logger:warning("CUDA_LAUNCH_BLOCKING set - cannot use nccl")
@@ -73,13 +70,6 @@ function Parallel.init(opt)
     end
 
   end
-end
-
-function Parallel.getGPU(i)
-  if onmt.utils.Cuda.activated and Parallel.gpus[i] ~= 0 then
-    return Parallel.gpus[i]
-  end
-  return 0
 end
 
 --[[ Launch function in parallel on different threads. ]]
@@ -109,10 +99,10 @@ function Parallel.accGradParams(gradParams, batches)
 
          -- Synchronize before and after copy to ensure that it doesn't overlap
          -- with this add or previous adds
-          waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
+          waitForDevice(onmt.utils.Cuda.gpuIds[j], onmt.utils.Cuda.gpuIds[1])
           local remoteGrads = onmt.utils.Tensor.reuseTensor(Parallel.gradBuffer, gradParams[j][h]:size())
           remoteGrads:copy(gradParams[j][h])
-          waitForDevice(Parallel.gpus[1], Parallel.gpus[j])
+          waitForDevice(onmt.utils.Cuda.gpuIds[1], onmt.utils.Cuda.gpuIds[j])
           gradParams[1][h]:add(remoteGrads)
         else
           table.insert(inputs, gradParams[j][h])
@@ -155,7 +145,7 @@ function Parallel.syncParams(params)
         for h = 1, #params[1] do
           params[j][h]:copy(params[1][h])
         end
-        waitForDevice(Parallel.gpus[j], Parallel.gpus[1])
+        waitForDevice(onmt.utils.Cuda.gpuIds[j], onmt.utils.Cuda.gpuIds[1])
       end
     else
       for h = 1, #params[1] do

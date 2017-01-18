@@ -5,8 +5,8 @@ local path = require('pl.path')
 local cmd = torch.CmdLine()
 cmd:option('-model', '', 'trained model file')
 cmd:option('-output_model', '', 'released model file')
-cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-force', false, 'force output model creation')
+onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 local opt = cmd:parse(arg)
 
@@ -40,10 +40,7 @@ local function main()
            'output model already exists; use -force to overwrite.')
   end
 
-  if opt.gpuid > 0 then
-    require('cutorch')
-    cutorch.setDevice(opt.gpuid)
-  end
+  onmt.utils.Cuda.init(opt)
 
   _G.logger:info('Loading model \'' .. opt.model .. '\'...')
 
