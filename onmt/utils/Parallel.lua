@@ -38,7 +38,6 @@ function Parallel.init(opt)
       local globalLogger = _G.logger
       local threads = require('threads')
       threads.Threads.serialization('threads.sharedserialize')
-      local thegpus = Parallel.gpus
       Parallel._gmutex = threads.Mutex()
       Parallel._pool = threads.Threads(
         Parallel.count,
