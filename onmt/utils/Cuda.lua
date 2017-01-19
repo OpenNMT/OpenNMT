@@ -61,7 +61,7 @@ end
   Recursively move all supported objects in `obj` on the GPU.
   When using CPU only, converts to float instead of the default double.
 ]]
-function Cuda.convert(obj)
+function Cuda.convert(obj, doNotConvertCudnn)
   if torch.typename(obj) then
     if Cuda.activated and obj.cuda ~= nil then
       return obj:cuda()
@@ -73,8 +73,13 @@ function Cuda.convert(obj)
 
   if torch.typename(obj) or type(obj) == 'table' then
     for k, v in pairs(obj) do
-      obj[k] = Cuda.convert(v)
+      obj[k] = Cuda.convert(v, true)
     end
+  end
+
+  if Cuda.cudnn and not doNotConvertCudnn then
+    _G.logger:info('Using cudnn modules')
+    Cuda.cudnn.convert(Cuda.cudnn, obj)
   end
 
   return obj
