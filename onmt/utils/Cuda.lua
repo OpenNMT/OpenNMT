@@ -73,11 +73,11 @@ function Cuda.convert(obj)
             for i, _ in ipairs(m.modules) do
               if torch.type(m.modules[i]) == 'nn.Sigmoid' then
                 count = count + 1
-                local modules=m.modules[i].modules
+                local modules = m.modules[i].modules
                 -- disable recursivity in conversion since we are already recursing
-                m.modules[i].modules=nil
-                m.modules[i]= Cuda.cudnn.convert(m.modules[i], Cuda.cudnn)
-                m.modules[i].modules=modules
+                m.modules[i].modules = nil
+                m.modules[i] = Cuda.cudnn.convert(m.modules[i], Cuda.cudnn)
+                m.modules[i].modules = modules
               end
             end
           end
@@ -95,7 +95,7 @@ function Cuda.convert(obj)
 
   if torch.typename(obj) or type(obj) == 'table' then
     for k, v in pairs(obj) do
-      obj[k] = Cuda.convert(v, true)
+      obj[k] = Cuda.convert(v)
     end
   end
 
