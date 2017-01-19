@@ -66,8 +66,9 @@ function Cuda.convert(obj)
     if Cuda.activated and obj.cuda ~= nil then
       if Cuda.cudnn and obj.modules then
         local count = 0
+        local cudaobj = obj:cuda()
         -- recursively goes through the graph
-        obj:apply(function(m)
+        cudaobj:apply(function(m)
           if m.modules then
             for i, _ in ipairs(m.modules) do
               if torch.type(m.modules[i]) == 'nn.Sigmoid' then
@@ -85,7 +86,7 @@ function Cuda.convert(obj)
           _G.logger:info('Using cudnn modules for ...'..torch.typename(obj)..' ('..count..')')
         end
       end
-      return obj:cuda()
+      return cudaobj
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
       return obj:float()
