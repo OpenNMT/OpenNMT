@@ -64,9 +64,9 @@ end
 function Cuda.convert(obj)
   if torch.typename(obj) then
     if Cuda.activated and obj.cuda ~= nil then
+      local cudaobj = obj:cuda()
       if Cuda.cudnn and obj.modules then
         local count = 0
-        local cudaobj = obj:cuda()
         -- recursively goes through the graph
         cudaobj:apply(function(m)
           if m.modules then
