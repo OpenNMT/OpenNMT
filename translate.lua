@@ -22,9 +22,9 @@ onmt.translate.Translator.declareOpts(cmd)
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
-cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
 cmd:option('-time', false, [[Measure batch translation time]])
 
+onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
 local function reportScore(name, scoreTotal, wordsTotal)

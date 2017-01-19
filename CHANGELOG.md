@@ -10,6 +10,7 @@
 ### Fixes and improvements
 
 * [*Breaking, renamed option*] Rename `-epochs` option to `-end_epoch` to clarify its behavior
+* [*Breaking, removed option*] Remove `-nparallel` option and support a list of comma-separated identifiers on `-gpuid`
 * [*Breaking, renamed option*] Zero-Width Joiner unicode character (ZWJ) is now tokenizing - but as a joiner
 * Fix Hangul tokenization
 * Fix duplicated tokens in aggressive tokenization
