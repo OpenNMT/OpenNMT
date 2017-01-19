@@ -68,14 +68,14 @@ function Cuda.convert(obj)
         local count = 0
         -- recursively goes through the graph
         obj:apply(function(m)
-          for i, module in ipairs(obj.modules) do
-            if torch.type(x) == 'nn.Sigmoid' then
+          for i, _ in ipairs(m.modules) do
+            if torch.type(m.modules[i]) == 'nn.Sigmoid' then
               count = count + 1
-              local modules=obj.modules[i].modules
+              local modules=m.modules[i].modules
               -- disable recursivity in conversion since we are already recursing
-              obj.modules[i].modules=nil
-              obj.modules[i]= Cuda.cudnn.convert(obj.modules[i], Cuda.cudnn)
-              obj.modules[i].modules=modules
+              m.modules[i].modules=nil
+              m.modules[i]= Cuda.cudnn.convert(m.modules[i], Cuda.cudnn)
+              m.modules[i].modules=modules
             end
           end
         end)
