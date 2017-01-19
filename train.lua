@@ -41,7 +41,7 @@ cmd:text("**Optimization options**")
 cmd:text("")
 
 cmd:option('-max_batch_size', 64, [[Maximum batch size]])
-cmd:option('-epochs', 13, [[Number of training epochs]])
+cmd:option('-end_epoch', 13, [[The final epoch of the training]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
@@ -70,10 +70,8 @@ cmd:text("**Other options**")
 cmd:text("")
 
 -- GPU
-cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
-cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
-                            Note: this will technically change the final batch size to max_batch_size*nparallel.]])
-cmd:option('-async_parallel', false, [[Use asynchronous parallelism training]])
+onmt.utils.Cuda.declareOpts(cmd)
+cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
 cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode]])
 cmd:option('-fp16', false, [[Use half-precision float on GPU]])
@@ -88,6 +86,8 @@ cmd:option('-report_every', 50, [[Print stats every this many iterations within 
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
 
+onmt.utils.Logger.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
 local function initParams(model, verbose)
@@ -96,7 +96,7 @@ local function initParams(model, verbose)
   local gradParams = {}
 
   if verbose then
-    print('Initializing parameters...')
+    _G.logger:info('Initializing parameters...')
   end
 
   -- Order the model table because we need all replicas to have the same order.
@@ -126,7 +126,7 @@ local function initParams(model, verbose)
   end
 
   if verbose then
-    print(" * number of parameters: " .. numParams)
+    _G.logger:info(" * number of parameters: " .. numParams)
   end
 
   return params, gradParams
@@ -315,7 +315,7 @@ local function trainModel(model, trainData, validData, dataset, info)
       -- Asynchronous parallel.
       local counter = onmt.utils.Parallel.getCounter()
       counter:set(startI)
-      local masterGPU = onmt.utils.Parallel.gpus[1]
+      local masterGPU = onmt.utils.Cuda.gpuIds[1]
       local gradBuffer = onmt.utils.Parallel.gradBuffer
       local gmutexId = onmt.utils.Parallel.gmutexId()
 
@@ -373,10 +373,7 @@ local function trainModel(model, trainData, validData, dataset, info)
 
             -- we don't have information about the other threads here - we can only report progress
             if i % opt.report_every == 0 then
-              local stats = ''
-              stats = stats .. string.format('Epoch %d ; ', epoch)
-              stats = stats .. string.format('... batch %d/%d', i, trainData:batchCount())
-              print(stats)
+              _G.logger:info('Epoch %d ; ... batch %d/%d', epoch, i, trainData:batchCount())
             end
           end
         end,
@@ -402,12 +399,12 @@ local function trainModel(model, trainData, validData, dataset, info)
   local validPpl = 0
 
   if not opt.json_log then
-    print('Start training...')
+    _G.logger:info('Start training...')
   end
 
-  for epoch = opt.start_epoch, opt.epochs do
+  for epoch = opt.start_epoch, opt.end_epoch do
     if not opt.json_log then
-      print('')
+      _G.logger:info('')
     end
 
     local epochState = trainEpoch(epoch, validPpl)
@@ -415,7 +412,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     validPpl = eval(model, criterion, validData)
 
     if not opt.json_log then
-      print('Validation perplexity: ' .. validPpl)
+      _G.logger:info('Validation perplexity: %.2f', validPpl)
     end
 
     if opt.optim == 'sgd' then
@@ -434,6 +431,9 @@ local function main()
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
+
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
@@ -443,7 +443,7 @@ local function main()
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
 
     if not opt.json_log then
-      print('Loading checkpoint \'' .. opt.train_from .. '\'...')
+      _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
     end
 
     checkpoint = torch.load(opt.train_from)
@@ -455,11 +455,10 @@ local function main()
     opt.input_feed = checkpoint.options.input_feed
 
     -- Resume training from checkpoint
-    if opt.train_from:len() > 0 and opt.continue then
+    if opt.continue then
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
-      opt.epochs = checkpoint.options.epochs
       opt.curriculum = checkpoint.options.curriculum
 
       opt.learning_rate = checkpoint.info.learningRate
@@ -468,15 +467,15 @@ local function main()
       opt.start_iteration = checkpoint.info.iteration
 
       if not opt.json_log then
-        print('Resuming training from epoch ' .. opt.start_epoch
-                .. ' at iteration ' .. opt.start_iteration .. '...')
+        _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
+                         .. ' at iteration ' .. opt.start_iteration .. '...')
       end
     end
   end
 
   -- Create the data loader class.
   if not opt.json_log then
-    print('Loading data from \'' .. opt.data .. '\'...')
+    _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
   end
 
   local dataset = torch.load(opt.data, 'binary', false)
@@ -488,14 +487,14 @@ local function main()
   validData:setBatchSize(opt.max_batch_size)
 
   if not opt.json_log then
-    print(string.format(' * vocabulary size: source = %d; target = %d',
-                        dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size()))
-    print(string.format(' * additional features: source = %d; target = %d',
-                        #dataset.dicts.src.features, #dataset.dicts.tgt.features))
-    print(string.format(' * maximum sequence length: source = %d; target = %d',
-                        trainData.maxSourceLength, trainData.maxTargetLength))
-    print(string.format(' * number of training sentences: %d', #trainData.src))
-    print(string.format(' * maximum batch size: %d', opt.max_batch_size))
+    _G.logger:info(' * vocabulary size: source = %d; target = %d',
+                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
+    _G.logger:info(' * additional features: source = %d; target = %d',
+                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+    _G.logger:info(' * maximum sequence length: source = %d; target = %d',
+                   trainData.maxSourceLength, trainData.maxTargetLength)
+    _G.logger:info(' * number of training sentences: %d', #trainData.src)
+    _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
   else
     local metadata = {
       options = opt,
@@ -518,7 +517,7 @@ local function main()
   end
 
   if not opt.json_log then
-    print('Building model...')
+    _G.logger:info('Building model...')
   end
 
   local model
@@ -548,6 +547,8 @@ local function main()
   end)
 
   trainModel(model, trainData, validData, dataset, checkpoint.info)
+
+  _G.logger:shutDown()
 end
 
 main()

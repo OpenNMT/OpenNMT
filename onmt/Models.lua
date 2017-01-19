@@ -79,7 +79,7 @@ local function buildDecoder(opt, dicts, verbose)
 
   if opt.input_feed == 1 then
     if verbose then
-      print(" * using input feeding")
+      _G.logger:info(" * using input feeding")
     end
     inputSize = inputSize + opt.rnn_size
   end
@@ -89,29 +89,11 @@ local function buildDecoder(opt, dicts, verbose)
   return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
 end
 
---[[ This is useful when training from a model in parallel mode: each thread must own its model. ]]
-local function clonePretrained(model)
-  local clone = {}
-
-  for k, v in pairs(model) do
-    if k == 'modules' then
-      clone.modules = {}
-      for i = 1, #v do
-        table.insert(clone.modules, onmt.utils.Tensor.deepClone(v[i]))
-      end
-    else
-      clone[k] = v
-    end
-  end
-
-  return clone
-end
-
 local function loadEncoder(pretrained, clone)
   local brnn = #pretrained.modules == 2
 
   if clone then
-    pretrained = clonePretrained(pretrained)
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
   if brnn then
@@ -123,7 +105,7 @@ end
 
 local function loadDecoder(pretrained, clone)
   if clone then
-    pretrained = clonePretrained(pretrained)
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
   return onmt.Decoder.load(pretrained)

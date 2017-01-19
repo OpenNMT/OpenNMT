@@ -188,12 +188,12 @@ end
 tester:add(dictTest)
 
 
-function main()
+local function main()
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()
   torch.setnumthreads(1)
 
-  tester:run(tests)
+  tester:run()
 
   torch.setnumthreads(nThreads)
 

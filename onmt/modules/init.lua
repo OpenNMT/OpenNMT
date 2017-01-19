@@ -5,6 +5,8 @@ require('onmt.modules.Encoder')
 require('onmt.modules.BiEncoder')
 require('onmt.modules.Decoder')
 
+require('onmt.modules.Network')
+
 require('onmt.modules.LSTM')
 
 require('onmt.modules.MaskedSoftmax')

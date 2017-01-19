@@ -22,7 +22,7 @@ an nn unit.
 Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
 
 --]]
-local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
+local LSTM, parent = torch.class('onmt.LSTM', 'onmt.Network')
 
 --[[
 Parameters:
@@ -34,16 +34,13 @@ Parameters:
   * `residual` - Residual connections between layers.
 --]]
 function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual)
-  parent.__init(self)
-
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
 
-  self.net = self:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
-  self:add(self.net)
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual))
 end
 
 --[[ Stack the LSTM units. ]]
@@ -132,17 +129,4 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
 
   return nn.gModule(inputs, {nextC, nextH})
-end
-
-function LSTM:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function LSTM:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
-end
-
-function LSTM:accGradParameters(input, gradOutput, scale)
-  return self.net:accGradParameters(input, gradOutput, scale)
 end
