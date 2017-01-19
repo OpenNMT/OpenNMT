@@ -1,6 +1,7 @@
 local Cuda = {
   gpuIds = {},
-  activated = false
+  activated = false,
+  cudnn = nil
 }
 
 function Cuda.declareOpts(cmd)
@@ -21,6 +22,12 @@ function Cuda.init(opt, masterGPU)
   if Cuda.activated then
     require('cutorch')
     require('cunn')
+    local ret
+    ret, Cuda.cudnn = pcall(require, 'cudnn')
+    if not ret then
+      _G.logger:warning("For improved efficiency with GPU - install cudnn")
+      Cuda.cudnn = nil
+    end
 
     if masterGPU == nil then
       masterGPU = 1
