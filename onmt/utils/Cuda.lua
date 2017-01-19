@@ -61,9 +61,28 @@ end
   Recursively move all supported objects in `obj` on the GPU.
   When using CPU only, converts to float instead of the default double.
 ]]
-function Cuda.convert(obj, doNotConvertCudnn)
+function Cuda.convert(obj)
   if torch.typename(obj) then
     if Cuda.activated and obj.cuda ~= nil then
+      if Cuda.cudnn and obj.modules then
+        local count = 0
+        -- recursively goes through the graph
+        obj:apply(function(m)
+          for i, module in ipairs(obj.modules) do
+            if torch.type(x) == 'nn.Sigmoid' then
+              count = count + 1
+              local modules=obj.modules[i].modules
+              -- disable recursivity in conversion since we are already recursing
+              obj.modules[i].modules=nil
+              obj.modules[i]= Cuda.cudnn.convert(obj.modules[i], Cuda.cudnn)
+              obj.modules[i].modules=modules
+            end
+          end
+        end)
+        if count > 0 then
+          _G.logger:info('Using cudnn modules for ...'..torch.typename(obj)..' ('..count..')')
+        end
+      end
       return obj:cuda()
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
@@ -75,11 +94,6 @@ function Cuda.convert(obj, doNotConvertCudnn)
     for k, v in pairs(obj) do
       obj[k] = Cuda.convert(v, true)
     end
-  end
-
-  if Cuda.cudnn and not doNotConvertCudnn then
-    _G.logger:info('Using cudnn modules')
-    Cuda.cudnn.convert(Cuda.cudnn, obj)
   end
 
   return obj
