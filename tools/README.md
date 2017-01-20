@@ -47,7 +47,7 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 where the options are:
 
 * `-joiner`: default (￭) - the joiner marker
-* `-case_feature`: if the
+* `-case_feature`: First feature is case feature
 * `-nparallel`: Number of parallel thread to run the tokenization
 * `-batchsize`: Size of each parallel batch - you should not change except if low memory
 
