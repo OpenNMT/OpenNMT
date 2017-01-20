@@ -24,8 +24,9 @@ cmd:text("")
 cmd:text("**Model options**")
 cmd:text("")
 
-cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
-cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
+cmd:option('-layers', 2, [[Number of layers in the RNN encoder/decoder]])
+cmd:option('-rnn_size', 500, [[Size of RNN hidden states]])
+cmd:option('-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
 cmd:option('-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]])
 cmd:option('-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values

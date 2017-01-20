@@ -235,6 +235,9 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   end
 
   local outputs = self:net(t):forward(inputs)
+  -- make sure it always returns table
+  if type(outputs) ~= "table" then outputs = { outputs } end
+
   local out = outputs[#outputs]
   local states = {}
   for i = 1, #outputs - 1 do
