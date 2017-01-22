@@ -242,10 +242,10 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     opt.start_iteration = 1
 
-    local function trainNetwork()
+    local function trainNetwork(batch)
       optim:zeroGrad(_G.gradParams)
 
-      local encStates, context = _G.model.encoder:forward(_G.batch)
+      local encStates, context = _G.model.encoder:forward(batch)
       local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
 
       local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
@@ -280,7 +280,7 @@ local function trainModel(model, trainData, validData, dataset, info)
           -- Send batch data to the GPU.
           onmt.utils.Cuda.convert(_G.batch)
           _G.batch.totalSize = totalSize
-          local loss = trainNetwork()
+          local loss = trainNetwork(_G.batch)
 
           return idx, loss
         end,

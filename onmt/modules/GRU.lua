@@ -43,6 +43,9 @@ end
 
 --[[ Stack the GRU units. ]]
 function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
+  -- inputs: { prevOutput L1, ..., prevOutput Ln, input }
+  -- outputs: { output L1, ..., output Ln }
+
   local inputs = {}
   local outputs = {}
 

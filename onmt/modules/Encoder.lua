@@ -190,7 +190,7 @@ end
   Parameters:
 
   * `batch` - must be same as for forward
-  * `gradStatesOutput` gradient of loss wrt last state
+  * `gradStatesOutput` gradient of loss wrt last state - this can be null if states are not used
   * `gradContextOutput` - gradient of loss wrt full context.
 
   Returns: `gradInputs` of input network.
@@ -204,7 +204,14 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
                                                               { batch.size, outputSize })
   end
 
-  local gradStatesInput = onmt.utils.Tensor.copyTensorTable(self.gradOutputsProto, gradStatesOutput)
+  local gradStatesInput
+  if gradStatesOutput then
+    gradStatesInput = onmt.utils.Tensor.copyTensorTable(self.gradOutputsProto, gradStatesOutput)
+  else
+    -- if gradStatesOutput is not defined - start with empty tensor
+    gradStatesInput = onmt.utils.Tensor.reuseTensorTable(self.gradOutputsProto, { batch.size, outputSize })
+  end
+
   local gradInputs = {}
 
   for t = batch.sourceLength, 1, -1 do
