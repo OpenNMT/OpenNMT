@@ -1,3 +1,5 @@
+local path = require('pl.path')
+
 --[[ Vocabulary management utility functions. ]]
 local Vocabulary = torch.class("Vocabulary")
 

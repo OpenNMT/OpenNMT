@@ -1,10 +1,9 @@
 require 'onmt.init'
 
 local tds = require('tds')
-local path = require('pl.path')
 
 --[[ command line arguments ]]--
-cmd = torch.CmdLine()
+local cmd = torch.CmdLine()
 
 cmd:text("")
 cmd:text("**language-model.lua**")
@@ -76,8 +75,6 @@ cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of int
                                                 except if you want to look inside clones for visualization purpose for instance.]])
 
 -- bookkeeping
-cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
-                             If = 0, will not save models within an epoch. ]])
 cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 
@@ -228,11 +225,46 @@ local function buildCriterion(vocabSize, features)
   return criterion
 end
 
+local function eval(model, criterion, data, EOS_vector)
+  local loss = 0
+  local total = 0
+
+  model.encoder:evaluate()
+  model.generator:evaluate()
+
+  for i = 1, data:batchCount() do
+    local batch = onmt.utils.Cuda.convert(data:getBatch(i))
+    local _, context = model.encoder:forward(batch)
+
+    for t = 1, batch.sourceLength do
+      local genOutputs = model.generator:forward(context:select(2,t))
+      -- LM is supposed to predict following word
+      local output
+      if i ~= batch.sourceLength then
+        output = batch:getSourceInput(t+1)
+      else
+        output = EOS_vector:narrow(1,1,batch.size)
+      end
+      -- same format with and without features
+      if torch.type(output) ~= 'table' then output = { output } end
+      loss = loss + criterion:forward(genOutputs, output)
+    end
+
+    total = total + batch.sourceLength*batch.size
+
+  end
+
+  model.encoder:training()
+  model.generator:training()
+
+  return math.exp(loss / total)
+end
+
 local function trainModel(model, trainData, validData, dicts)
-  local params, gradParams = {}, {}
+  local params, gradParams
   local criterion
 
-  params, gradParams = initParams(model, verbose)
+  params, gradParams = initParams(model, true)
   for _, mod in pairs(model) do
     mod:training()
   end
@@ -261,7 +293,7 @@ local function trainModel(model, trainData, validData, dicts)
     local function trainNetwork(batch)
       optim:zeroGrad(gradParams)
       local loss = 0
-      local encStates, context = model.encoder:forward(batch)
+      local _, context = model.encoder:forward(batch)
       local gradContexts = torch.Tensor(batch.size, batch.sourceLength, opt.rnn_size)
       gradContexts = onmt.utils.Cuda.convert(gradContexts)
       -- for each word of the sentence, generate target
@@ -306,9 +338,6 @@ local function trainModel(model, trainData, validData, dicts)
       if iter % opt.report_every == 0 then
         epochState:log(iter, opt.json_log)
       end
-      if opt.save_every > 0 and iter % opt.save_every == 0 then
-        checkpoint:saveIteration(iter, epochState, batchOrder, not opt.json_log)
-      end
       iter = iter + 1
     end
 
@@ -323,17 +352,15 @@ local function trainModel(model, trainData, validData, dicts)
   for epoch = 1, opt.end_epoch do
     _G.logger:info('')
 
-    local epochState = trainEpoch(epoch, validPpl)
+    trainEpoch(epoch, validPpl)
 
-    --validPpl = eval(model, criterion, validData)
+    validPpl = eval(model, criterion, validData)
 
-    --_G.logger:info('Validation perplexity: %.2f', validPpl)
+    _G.logger:info('Validation perplexity: %.2f', validPpl)
 
-    --if opt.optim == 'sgd' then
-    --  optim:updateLearningRate(validPpl, epoch)
-    --end
-
-    --checkpoint:saveEpoch(validPpl, epochState, not opt.json_log)
+    if opt.optim == 'sgd' then
+      optim:updateLearningRate(validPpl, epoch)
+    end
   end
 
 end
