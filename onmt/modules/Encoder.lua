@@ -155,9 +155,10 @@ function Encoder:forward(batch)
       self.inputs[t] = inputs
     end
     states = self:net(t):forward(inputs)
-    -- make sure it always returns table
 
+    -- Make sure it always returns table.
     if type(states) ~= "table" then states = { states } end
+
     -- Special case padding.
     if self.maskPad then
       for b = 1, batch.size do
