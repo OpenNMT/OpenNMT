@@ -225,7 +225,7 @@ local function buildCriterion(vocabSize, features)
   return criterion
 end
 
-local function eval(model, criterion, data)
+local function eval(model, criterion, data, dicts)
   local loss = 0
   local total = 0
 
@@ -356,7 +356,7 @@ local function trainModel(model, trainData, validData, dicts)
 
     trainEpoch(epoch, validPpl)
 
-    validPpl = eval(model, criterion, validData)
+    validPpl = eval(model, criterion, validData, dicts)
 
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
@@ -374,9 +374,10 @@ local function main()
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
-  onmt.utils.Cuda.init(opt)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
+  onmt.utils.Cuda.init(opt)
 
   local Vocabulary = onmt.data.Vocabulary
 
