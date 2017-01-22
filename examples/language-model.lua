@@ -29,6 +29,9 @@ cmd:text("")
 cmd:text("**Model options**")
 cmd:text("")
 
+cmd:option('-save_model', '', [[Model filename (the model will be saved as
+                              <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]])
+
 cmd:option('-layers', 2, [[Number of layers in the RNN encoder/decoder]])
 cmd:option('-rnn_size', 500, [[Size of RNN hidden states]])
 cmd:option('-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]])
