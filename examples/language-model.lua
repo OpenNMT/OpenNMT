@@ -234,7 +234,7 @@ local function eval(model, criterion, data, dicts)
   model.generator:evaluate()
 
   for i = 1, data:batchCount() do
-    local batch = onmt.utils.Cuda.convert(data:getBatch(t))
+    local batch = onmt.utils.Cuda.convert(data:getBatch(i))
     local _, context = model.encoder:forward(batch)
     local EOS_vector = torch.LongTensor(batch.size):fill(dicts.words:lookup(onmt.Constants.EOS_WORD))
     onmt.utils.Cuda.convert(EOS_vector)
@@ -284,7 +284,7 @@ local function trainModel(model, trainData, validData, dicts)
     optimStates = opt.optim_states
   })
 
-  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
+  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dicts)
 
   local EOS_vector = torch.LongTensor(opt.max_batch_size):fill(dicts.words:lookup(onmt.Constants.EOS_WORD))
   onmt.utils.Cuda.convert(EOS_vector)

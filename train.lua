@@ -217,7 +217,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     optimStates = opt.optim_states
   })
 
-  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
+  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
 
   local function trainEpoch(epoch, lastValidPpl)
     local epochState

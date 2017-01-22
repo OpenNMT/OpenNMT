@@ -1,11 +1,11 @@
 -- Class for saving and loading models during training.
 local Checkpoint = torch.class("Checkpoint")
 
-function Checkpoint:__init(options, model, optim, dataset)
+function Checkpoint:__init(options, model, optim, dicts)
   self.options = options
   self.model = model
   self.optim = optim
-  self.dataset = dataset
+  self.dicts = dicts
 
   self.savePath = self.options.save_model
 end
@@ -18,7 +18,7 @@ function Checkpoint:save(filePath, info)
     models = {},
     options = self.options,
     info = info,
-    dicts = self.dataset.dicts
+    dicts = self.dicts
   }
 
   for k, v in pairs(self.model) do
