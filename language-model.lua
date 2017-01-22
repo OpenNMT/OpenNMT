@@ -233,14 +233,14 @@ local function eval(model, criterion, data, EOS_vector)
   model.generator:evaluate()
 
   for i = 1, data:batchCount() do
-    local batch = onmt.utils.Cuda.convert(data:getBatch(i))
+    local batch = onmt.utils.Cuda.convert(data:getBatch(t))
     local _, context = model.encoder:forward(batch)
 
     for t = 1, batch.sourceLength do
       local genOutputs = model.generator:forward(context:select(2,t))
       -- LM is supposed to predict following word
       local output
-      if i ~= batch.sourceLength then
+      if t ~= batch.sourceLength then
         output = batch:getSourceInput(t+1)
       else
         output = EOS_vector:narrow(1,1,batch.size)
@@ -297,12 +297,12 @@ local function trainModel(model, trainData, validData, dicts)
       local gradContexts = torch.Tensor(batch.size, batch.sourceLength, opt.rnn_size)
       gradContexts = onmt.utils.Cuda.convert(gradContexts)
       -- for each word of the sentence, generate target
-      for i = 1, batch.sourceLength do
-        local genOutputs = model.generator:forward(context:select(2,i))
+      for t = 1, batch.sourceLength do
+        local genOutputs = model.generator:forward(context:select(2,t))
         -- LM is supposed to predict following word
         local output
-        if i ~= batch.sourceLength then
-          output = batch:getSourceInput(i+1)
+        if t ~= batch.sourceLength then
+          output = batch:getSourceInput(t+1)
         else
           output = EOS_vector:narrow(1,1,batch.size)
         end
@@ -314,7 +314,7 @@ local function trainModel(model, trainData, validData, dicts)
         for j = 1, #genGradOutput do
           genGradOutput[j]:div(batch.totalSize)
         end
-        gradContexts[{{},i}]:copy(model.generator:backward(context:select(2,i), genGradOutput))
+        gradContexts[{{},t}]:copy(model.generator:backward(context:select(2,t), genGradOutput))
       end
       model.encoder:backward(batch, nil, gradContexts)
       return loss
@@ -354,7 +354,7 @@ local function trainModel(model, trainData, validData, dicts)
 
     trainEpoch(epoch, validPpl)
 
-    validPpl = eval(model, criterion, validData)
+    validPpl = eval(model, criterion, validData, EOS_vector)
 
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
