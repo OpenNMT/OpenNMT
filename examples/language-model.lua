@@ -71,8 +71,6 @@ onmt.utils.Cuda.declareOpts(cmd)
 cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
 cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
-cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
-                                                except if you want to look inside clones for visualization purpose for instance.]])
 
 -- bookkeeping
 cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
@@ -283,6 +281,8 @@ local function trainModel(model, trainData, validData, dicts)
     optimStates = opt.optim_states
   })
 
+  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
+
   local EOS_vector = torch.LongTensor(opt.max_batch_size):fill(dicts.words:lookup(onmt.Constants.EOS_WORD))
   onmt.utils.Cuda.convert(EOS_vector)
 
@@ -354,7 +354,7 @@ local function trainModel(model, trainData, validData, dicts)
   for epoch = 1, opt.end_epoch do
     _G.logger:info('')
 
-    trainEpoch(epoch, validPpl)
+    local epochState = trainEpoch(epoch, validPpl)
 
     validPpl = eval(model, criterion, validData, dicts)
 
@@ -363,6 +363,9 @@ local function trainModel(model, trainData, validData, dicts)
     if opt.optim == 'sgd' then
       optim:updateLearningRate(validPpl, epoch)
     end
+
+    checkpoint:saveEpoch(validPpl, epochState, true)
+
   end
 
 end
