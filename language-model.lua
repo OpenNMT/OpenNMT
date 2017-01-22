@@ -225,7 +225,7 @@ local function buildCriterion(vocabSize, features)
   return criterion
 end
 
-local function eval(model, criterion, data, EOS_vector)
+local function eval(model, criterion, data)
   local loss = 0
   local total = 0
 
@@ -235,6 +235,8 @@ local function eval(model, criterion, data, EOS_vector)
   for i = 1, data:batchCount() do
     local batch = onmt.utils.Cuda.convert(data:getBatch(t))
     local _, context = model.encoder:forward(batch)
+    local EOS_vector = torch.LongTensor(batch.size):fill(dicts.words:lookup(onmt.Constants.EOS_WORD))
+    onmt.utils.Cuda.convert(EOS_vector)
 
     for t = 1, batch.sourceLength do
       local genOutputs = model.generator:forward(context:select(2,t))
@@ -243,7 +245,7 @@ local function eval(model, criterion, data, EOS_vector)
       if t ~= batch.sourceLength then
         output = batch:getSourceInput(t+1)
       else
-        output = EOS_vector:narrow(1,1,batch.size)
+        output = EOS_vector
       end
       -- same format with and without features
       if torch.type(output) ~= 'table' then output = { output } end
@@ -354,7 +356,7 @@ local function trainModel(model, trainData, validData, dicts)
 
     trainEpoch(epoch, validPpl)
 
-    validPpl = eval(model, criterion, validData, EOS_vector)
+    validPpl = eval(model, criterion, validData)
 
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
