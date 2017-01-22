@@ -2,8 +2,8 @@ package = "opennmt"
 version = "scm-1"
 
 source = {
-  url = "git://github.com/opennmt/opennmt",
-  tag = "master"
+  url = "git://github.com/jsenellart-systran/opennmt",
+  tag = "norm_LSTM"
 }
 
 description = {
@@ -43,6 +43,8 @@ build = {
     ["onmt.modules.Generator"] = "onmt/modules/Generator.lua",
     ["onmt.modules.GlobalAttention"] = "onmt/modules/GlobalAttention.lua",
     ["onmt.modules.LSTM"] = "onmt/modules/LSTM.lua",
+    ["onmt.modules.GRU"] = "onmt/modules/GRU.lua",
+    ["onmt.modules.Network"] = "onmt/modules/Network.lua",
     ["onmt.modules.MaskedSoftmax"] = "onmt/modules/MaskedSoftmax.lua",
     ["onmt.modules.Sequencer"] = "onmt/modules/Sequencer.lua",
     ["onmt.modules.WordEmbedding"] = "onmt/modules/WordEmbedding.lua",

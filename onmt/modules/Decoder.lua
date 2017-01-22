@@ -235,6 +235,10 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   end
 
   local outputs = self:net(t):forward(inputs)
+
+  -- Make sure decoder always returns table.
+  if type(outputs) ~= "table" then outputs = { outputs } end
+
   local out = outputs[#outputs]
   local states = {}
   for i = 1, #outputs - 1 do
@@ -258,7 +262,7 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(#encoderStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.rnnSize })
   end
