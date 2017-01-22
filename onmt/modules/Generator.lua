@@ -28,3 +28,19 @@ end
 function Generator:accGradParameters(input, gradOutput, scale)
   self.net:accGradParameters(input, gradOutput[1], scale)
 end
+
+--[[ Return a new Decoder using the serialized data `pretrained`. ]]
+function Generator.load(pretrained)
+  local self = torch.factory('onmt.Decoder')()
+
+  parent.__init(self, pretrained.modules[1])
+
+  return self
+end
+
+--[[ Return data to serialize. ]]
+function Generator:serialize()
+  return {
+    modules = self.modules
+  }
+end
