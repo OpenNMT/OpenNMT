@@ -376,7 +376,8 @@ end
 local function main()
   local requiredOptions = {
     "train",
-    "valid"
+    "valid",
+    "save_model"
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
