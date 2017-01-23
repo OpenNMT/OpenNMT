@@ -106,6 +106,7 @@ local function selectBatchBeam(v, beamSize, batch, beam)
     return hOut[{batch, beam}]
   end)
 end
+
 --[[Helper function. Recursively index `(batchSize * beamSize, ...)`
   tensors by specified indexes.
 
@@ -128,23 +129,6 @@ local function selectBeam(v, indexes, beamSize)
                  :contiguous():view(batchSize, 1)
                  :expandAs(indexes):contiguous():view(-1))
   end)
-end
-
-function Beam:__init(token, state, batchSize)
-  batchSize = batchSize or token:size(1)
-  self._remaining = batchSize
-
-  self._tokens = { token }
-  self._state = state
-
-  self._scores = localize(torch.zeros(batchSize), token)
-  self._backPointers = nil
-  self._orig2Remaining = {}
-  self._remaining2Orig = {}
-  for b = 1, batchSize do
-    self._orig2Remaining[b] = b
-    self._remaining2Orig[b] = b
-  end
 end
 
 --[[Helper function. Recursively expand `(batchSize, ...)` tensors
@@ -172,6 +156,53 @@ local function replicateBeam(v, beamSize)
   end)
 end
 
+
+--[[Constructor.
+
+Parameters:
+
+  * `token` - tensor of size `(batchSize, vocabSize)` or `(batchSize * beamSize, vocabSize)`.
+  * `state` - an iteratable object, where the contained tensors should have the same first dimension as `token`.
+  * `batchSize` - batch size. [`token:size(1)`]
+
+--]]
+function Beam:__init(token, state, batchSize)
+  batchSize = batchSize or token:size(1)
+  self._remaining = batchSize
+
+  self._tokens = { token }
+  self._state = state
+
+  self._scores = localize(torch.zeros(batchSize), token)
+  self._backPointers = nil
+  self._orig2Remaining = {}
+  self._remaining2Orig = {}
+  for b = 1, batchSize do
+    self._orig2Remaining[b] = b
+    self._remaining2Orig[b] = b
+  end
+end
+
+function Beam:tokens()
+  return self._tokens
+end
+
+function Beam:state()
+  return self._state
+end
+
+function Beam:setState(state)
+  self._state = state
+end
+
+function Beam:scores()
+  return self._scores
+end
+
+function Beam:backPointers()
+  return self._backPointers
+end
+
 --[[Helper function. In the first step, if there is only 1 hypothesis per
   batch, then each hypothesis is replicated beamSize times to keep consistency
   with the following beam search steps, while the scores of the auxiliary
@@ -193,28 +224,6 @@ function Beam:replicate(beamSize)
   maskScores:fill(-math.huge)
   maskScores:select(2,1):fill(0)
   self._scores:add(maskScores:view(-1))
-end
-
-function Beam:tokens()
-  return self._tokens
-end
-
-function Beam:flatTokens()
-  return self._tokens:view(-1)
-end
-function Beam:state()
-  return self._state
-end
-function Beam:setState(state)
-  self._state = state
-end
-
-function Beam:scores()
-  return self._scores
-end
-
-function Beam:backPointers()
-  return self._backPointers
 end
 
 function Beam:expandScores(scores, beamSize)
