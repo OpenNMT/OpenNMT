@@ -34,7 +34,7 @@ function Cuda.init(opt, masterGPU)
         Cuda.cudnn = nil
       else
         local modules = onmt.utils.String.split(opt.cudnn, ",")
-        for k in modules do
+        for _,k in ipairs(modules) do
           Cuda._cudnnModule[k] = true
         end
       end
