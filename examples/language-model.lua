@@ -2,7 +2,6 @@ require 'onmt.init'
 
 local tds = require('tds')
 
---[[ command line arguments ]]--
 local cmd = torch.CmdLine()
 
 cmd:text("")
@@ -185,9 +184,9 @@ local function initParams(model, verbose)
     p:uniform(-opt.param_init, opt.param_init)
 
     mod:apply(function (m)
-     if m.postParametersInitialization then
-       m:postParametersInitialization()
-     end
+      if m.postParametersInitialization then
+        m:postParametersInitialization()
+      end
     end)
 
     numParams = numParams + p:size(1)
@@ -240,15 +239,15 @@ local function eval(model, criterion, data, dicts)
     onmt.utils.Cuda.convert(EOS_vector)
 
     for t = 1, batch.sourceLength do
-      local genOutputs = model.generator:forward(context:select(2,t))
-      -- LM is supposed to predict following word
+      local genOutputs = model.generator:forward(context:select(2, t))
+      -- LM is supposed to predict the following word.
       local output
       if t ~= batch.sourceLength then
-        output = batch:getSourceInput(t+1)
+        output = batch:getSourceInput(t + 1)
       else
         output = EOS_vector
       end
-      -- same format with and without features
+      -- Same format with and without features.
       if torch.type(output) ~= 'table' then output = { output } end
       loss = loss + criterion:forward(genOutputs, output)
     end
@@ -272,7 +271,7 @@ local function trainModel(model, trainData, validData, dicts)
     mod:training()
   end
 
-  -- define criterion
+  -- Define criterion.
   criterion = onmt.utils.Cuda.convert(buildCriterion(dicts.words:size(), dicts.features))
 
   local optim = onmt.train.Optim.new({
@@ -307,9 +306,9 @@ local function trainModel(model, trainData, validData, dicts)
         -- LM is supposed to predict following word
         local output
         if t ~= batch.sourceLength then
-          output = batch:getSourceInput(t+1)
+          output = batch:getSourceInput(t + 1)
         else
-          output = EOS_vector:narrow(1,1,batch.size)
+          output = EOS_vector:narrow(1, 1, batch.size)
         end
         -- same format with and without features
         if torch.type(output) ~= 'table' then output = { output } end
@@ -319,7 +318,7 @@ local function trainModel(model, trainData, validData, dicts)
         for j = 1, #genGradOutput do
           genGradOutput[j]:div(batch.totalSize)
         end
-        gradContexts[{{},t}]:copy(model.generator:backward(context:select(2,t), genGradOutput))
+        gradContexts[{{}, t}]:copy(model.generator:backward(context:select(2, t), genGradOutput))
       end
       model.encoder:backward(batch, nil, gradContexts)
       return loss
@@ -392,7 +391,7 @@ local function main()
 
   data.dicts = {}
   data.dicts = Vocabulary.init('train', opt.train, opt.vocab, opt.vocab_size,
-                                   opt.features_vocabs_prefix, function(s) return isValid(s, opt.seq_length) end)
+                               opt.features_vocabs_prefix, function(s) return isValid(s, opt.seq_length) end)
 
   _G.logger:info('Preparing training data...')
   data.train = makeData(opt.train, data.dicts)
@@ -409,7 +408,7 @@ local function main()
   validData:setBatchSize(opt.max_batch_size)
 
   _G.logger:info('Building models...')
-  local model={}
+  local model = {}
   model.encoder = onmt.Models.buildEncoder(opt, data.dicts)
   if #data.dicts.features > 0 then
     model.generator = onmt.FeaturesGenerator.new(opt.rnn_size, data.dicts.words:size(), data.dicts.features)

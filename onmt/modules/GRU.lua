@@ -117,20 +117,20 @@ function GRU:_buildLayer(inputSize, hiddenSize)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  -- recurrent input
+  -- Recurrent input.
   local prevH = inputs[1]
-  -- previous layer input
+  -- Previous layer input.
   local x = inputs[2]
 
   -- Evaluate the input sums at once for efficiency.
   local x2h = nn.Linear(inputSize, 3 * hiddenSize)(x)
   local h2h = nn.Linear(hiddenSize, 3 * hiddenSize)(prevH)
 
-  -- extract Wxr.x+bir, Wxi.x+bxi, Wxn.x+bin
+  -- Extract Wxr.x+bir, Wxi.x+bxi, Wxn.x+bin.
   local x2h_reshaped = nn.Reshape(3, hiddenSize)(x2h)
   local x2h_r, x2h_i, x2h_n = nn.SplitTable(2)(x2h_reshaped):split(3)
 
-  -- extract Whr.x+bhr, Whi.x+bhi, Whn.x+bhn
+  -- Extract Whr.x+bhr, Whi.x+bhi, Whn.x+bhn
   local h2h_reshaped = nn.Reshape(3, hiddenSize)(h2h)
   local h2h_r, h2h_i, h2h_n = nn.SplitTable(2)(h2h_reshaped):split(3)
 
