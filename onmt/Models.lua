@@ -44,7 +44,10 @@ local function buildEncoder(opt, dicts)
 
   -- if cudnn is enabled with RNN support
   if onmt.utils.Cuda.cudnnSupport('RNN') then
-    print('[WIP] cudnn.RNN support')
+    if opt.residual then
+      error('-residual is not supported in cudnn mode')
+    end
+    return onmt.CudnnEncoder.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.brnn, inputNetwork)
   else
     -- otherwise use Sequential RNN
     local RNN = onmt.LSTM

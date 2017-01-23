@@ -26,7 +26,7 @@ function Cuda.init(opt, masterGPU)
     require('cunn')
     local ret
 
-    if opt.cudnn then
+    if opt.cudnn ~= '' then
       -- first check cudnn is available
       ret, Cuda.cudnn = pcall(require, 'cudnn')
       if not ret then
@@ -69,7 +69,7 @@ function Cuda.init(opt, masterGPU)
 end
 
 local function _cudnnSupportedNN(name)
-  return ((name == 'nn.SoftMax' or name == 'nn.LogSoftMax') and Cuda.cudnnSupport('Softmax'))
+  return ((name == 'nn.SoftMax' or name == 'nn.LogSoftMax') and Cuda.cudnnSupport('SoftMax'))
          or ((name == 'nn.Sigmoid' or name == 'nn.Tanh' or name == 'nn.ReLU') and Cuda.cudnnSupport('Activation'))
 end
 
