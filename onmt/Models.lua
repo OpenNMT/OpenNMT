@@ -43,7 +43,7 @@ local function buildEncoder(opt, dicts)
   local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   -- if cudnn is enabled with RNN support
-  if Cuda.cudnnSupport('RNN') then
+  if onmt.utils.Cuda.cudnnSupport('RNN') then
     print('[WIP] cudnn.RNN support')
   else
     -- otherwise use Sequential RNN
