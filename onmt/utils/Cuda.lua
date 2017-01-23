@@ -35,7 +35,7 @@ function Cuda.init(opt, masterGPU)
       _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
 
       -- Allow memory access between devices.
-      cutorch.getKernelPeerToPeerAccess(true)
+      cutorch.setKernelPeerToPeerAccess(true)
 
       if opt.seed then
         cutorch.manualSeedAll(opt.seed)
