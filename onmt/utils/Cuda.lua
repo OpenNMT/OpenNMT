@@ -71,7 +71,7 @@ function Cuda.convert(obj)
         cudaobj:apply(function(m)
           if m.modules then
             for i, _ in ipairs(m.modules) do
-              if torch.type(m.modules[i]) == 'nn.Sigmoid' then
+              if torch.type(m.modules[i]) == 'nn.Softmax' then
                 count = count + 1
                 local modules = m.modules[i].modules
                 -- disable recursivity in conversion since we are already recursing
