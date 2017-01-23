@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+modules+Generator - OpenNMT</title>
+  <title>onmt+modules+GRU - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+modules+Generator";
-    var mkdocs_page_input_path = "code/modules/onmt+modules+Generator.md";
-    var mkdocs_page_url = "/code/modules/onmt+modules+Generator/";
+    var mkdocs_page_name = "onmt+modules+GRU";
+    var mkdocs_page_input_path = "code/modules/onmt+modules+GRU.md";
+    var mkdocs_page_url = "/code/modules/onmt+modules+GRU/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -142,24 +142,24 @@
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+GRU/">onmt+modules+GRU</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+modules+GRU</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtgru">onmt.GRU</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtgrulayers-inputsize-hiddensize-dropout-residual">onmt.GRU(layers, inputSize, hiddenSize, dropout, residual)</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+modules+Generator</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtgenerator">onmt.Generator</a></li>
-                
-                    <li><a class="toctree-l4" href="#undocumented-methods">Undocumented methods</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+Generator/">onmt+modules+Generator</a>
         
     </li>
 
@@ -343,7 +343,7 @@
         
       
     
-    <li>onmt+modules+Generator</li>
+    <li>onmt+modules+GRU</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -353,19 +353,35 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.Generator.dok"></a></p>
-<h2 id="onmtgenerator">onmt.Generator</h2>
-<p>Default decoder generator. Given RNN state, produce categorical distribution.</p>
-<p>Simply implements <script type="math/tex; mode=display">softmax(W h + b)</script>.</p>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.Generator"></a>
- * <code>onmt.Generator(rnnSize, outputSize)</code>
-<a name="onmt.Generator:updateOutput"></a>
- * <code>onmt.Generator:updateOutput(input)</code>
-<a name="onmt.Generator:updateGradInput"></a>
- * <code>onmt.Generator:updateGradInput(input, gradOutput)</code>
-<a name="onmt.Generator:accGradParameters"></a>
- * <code>onmt.Generator:accGradParameters(input, gradOutput, scale)</code></p>
+                <p><a name="onmt.GRU.dok"></a></p>
+<h2 id="onmtgru">onmt.GRU</h2>
+<p>Implementation of a single stacked-GRU step as
+an nn unit.</p>
+<pre><code>  h^L_{t-1} --- h^L_t
+             |
+
+
+             .
+             |
+         [dropout]
+             |
+  h^1_{t-1} --- h^1_t
+             |
+             |
+            x_t
+</code></pre>
+<p>Computes <script type="math/tex; mode=display">(h_{t-1}, x_t) => (h_{t})</script>.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b47f47d9c165faf08b9291a804345c3cc092a7f1/onmt/modules/GRU.lua#L34">[src]</a>
+<a name="onmt.GRU"></a></p>
+<h3 id="onmtgrulayers-inputsize-hiddensize-dropout-residual">onmt.GRU(layers, inputSize, hiddenSize, dropout, residual)</h3>
+<p>Parameters:</p>
+<ul>
+<li><code>layers</code> - Number of layers</li>
+<li><code>inputSize</code> - Size of input layer</li>
+<li><code>hiddenSize</code> - Size of the hidden layers</li>
+<li><code>dropout</code> - Dropout rate to use (should be in <script type="math/tex; mode=display">[0,1]</script> range.</li>
+<li><code>residual</code> - Residual connections between layers (boolean)</li>
+</ul>
               
             </div>
           </div>
@@ -373,10 +389,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+modules+GlobalAttention/" class="btn btn-neutral float-right" title="onmt+modules+GlobalAttention">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+modules+Generator/" class="btn btn-neutral float-right" title="onmt+modules+Generator">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../onmt+modules+GRU/" class="btn btn-neutral" title="onmt+modules+GRU"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+modules+FeaturesGenerator/" class="btn btn-neutral" title="onmt+modules+FeaturesGenerator"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -402,10 +418,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt+modules+GRU/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+modules+FeaturesGenerator/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+modules+GlobalAttention/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+modules+Generator/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

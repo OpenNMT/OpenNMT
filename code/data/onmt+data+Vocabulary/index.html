@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+modules+Generator - OpenNMT</title>
+  <title>onmt+data+Vocabulary - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+modules+Generator";
-    var mkdocs_page_input_path = "code/modules/onmt+modules+Generator.md";
-    var mkdocs_page_url = "/code/modules/onmt+modules+Generator/";
+    var mkdocs_page_name = "onmt+data+Vocabulary";
+    var mkdocs_page_input_path = "code/data/onmt+data+Vocabulary.md";
+    var mkdocs_page_url = "/code/data/onmt+data+Vocabulary/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -65,28 +65,37 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../data/">Home</a>
+        <a class="" href="../">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../data/onmt+data+Batch/">onmt+data+Batch</a>
+        <a class="" href="../onmt+data+Batch/">onmt+data+Batch</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../data/onmt+data+Dataset/">onmt+data+Dataset</a>
+        <a class="" href="../onmt+data+Dataset/">onmt+data+Dataset</a>
         
     </li>
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../../data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+data+Vocabulary</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtvocabulary">onmt.Vocabulary</a></li>
+                
+                    <li><a class="toctree-l4" href="#undocumented-methods">Undocumented methods</a></li>
+                
+            
+            </ul>
         
     </li>
 
@@ -101,107 +110,98 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
+        <a class="" href="../../modules/">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        <a class="" href="../../modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Decoder/">onmt+modules+Decoder</a>
+        <a class="" href="../../modules/onmt+modules+Decoder/">onmt+modules+Decoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Encoder/">onmt+modules+Encoder</a>
+        <a class="" href="../../modules/onmt+modules+Encoder/">onmt+modules+Encoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
+        <a class="" href="../../modules/onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
+        <a class="" href="../../modules/onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+GRU/">onmt+modules+GRU</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+modules+Generator</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtgenerator">onmt.Generator</a></li>
-                
-                    <li><a class="toctree-l4" href="#undocumented-methods">Undocumented methods</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../modules/onmt+modules+GRU/">onmt+modules+GRU</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
+        <a class="" href="../../modules/onmt+modules+Generator/">onmt+modules+Generator</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+LSTM/">onmt+modules+LSTM</a>
+        <a class="" href="../../modules/onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
+        <a class="" href="../../modules/onmt+modules+LSTM/">onmt+modules+LSTM</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
+        <a class="" href="../../modules/onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
+        <a class="" href="../../modules/onmt+modules+Network/">onmt+modules+Network</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+WordEmbedding/">onmt+modules+WordEmbedding</a>
+        <a class="" href="../../modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+WordEmbedding/">onmt+modules+WordEmbedding</a>
         
     </li>
 
@@ -339,11 +339,11 @@
         
       
         
-          <li>Modules &raquo;</li>
+          <li>Data &raquo;</li>
         
       
     
-    <li>onmt+modules+Generator</li>
+    <li>onmt+data+Vocabulary</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -353,19 +353,18 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.Generator.dok"></a></p>
-<h2 id="onmtgenerator">onmt.Generator</h2>
-<p>Default decoder generator. Given RNN state, produce categorical distribution.</p>
-<p>Simply implements <script type="math/tex; mode=display">softmax(W h + b)</script>.</p>
+                <p><a name="onmt.Vocabulary.dok"></a></p>
+<h2 id="onmtvocabulary">onmt.Vocabulary</h2>
+<p>Vocabulary management utility functions. </p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.Generator"></a>
- * <code>onmt.Generator(rnnSize, outputSize)</code>
-<a name="onmt.Generator:updateOutput"></a>
- * <code>onmt.Generator:updateOutput(input)</code>
-<a name="onmt.Generator:updateGradInput"></a>
- * <code>onmt.Generator:updateGradInput(input, gradOutput)</code>
-<a name="onmt.Generator:accGradParameters"></a>
- * <code>onmt.Generator:accGradParameters(input, gradOutput, scale)</code></p>
+<p><a name="onmt.Vocabulary.make"></a>
+ * <code>onmt.Vocabulary.make(filename, size, validFunc)</code>
+<a name="onmt.Vocabulary.init"></a>
+ * <code>onmt.Vocabulary.init(name, dataFile, vocabFile, vocabSize, featuresVocabsFiles, validFunc)</code>
+<a name="onmt.Vocabulary.save"></a>
+ * <code>onmt.Vocabulary.save(name, vocab, file)</code>
+<a name="onmt.Vocabulary.saveFeatures"></a>
+ * <code>onmt.Vocabulary.saveFeatures(name, vocabs, prefix)</code></p>
               
             </div>
           </div>
@@ -373,10 +372,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+modules+GlobalAttention/" class="btn btn-neutral float-right" title="onmt+modules+GlobalAttention">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../modules/" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../onmt+modules+GRU/" class="btn btn-neutral" title="onmt+modules+GRU"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+data+Dataset/" class="btn btn-neutral" title="onmt+data+Dataset"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -402,10 +401,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt+modules+GRU/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+data+Dataset/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+modules+GlobalAttention/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../../modules/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

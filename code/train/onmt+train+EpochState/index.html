@@ -84,6 +84,13 @@
     </li>
 
         
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
+        
+    </li>
+
+        
     </ul>
 
         
@@ -130,6 +137,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+GRU/">onmt+modules+GRU</a>
         
     </li>
 
@@ -347,15 +361,15 @@
 <h2 id="onmtepochstate">onmt.EpochState</h2>
 <p>Class for managing the training process by logging and storing
   the state of the current epoch.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e1fd0b8d6fbf117d4336f45f6abf98f873408071/onmt/train/EpochState.lua#L7">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b47f47d9c165faf08b9291a804345c3cc092a7f1/onmt/train/EpochState.lua#L7">[src]</a>
 <a name="onmt.EpochState"></a></p>
 <h3 id="onmtepochstateepoch-numiterations-learningrate-lastvalidppl-status">onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)</h3>
 <p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e1fd0b8d6fbf117d4336f45f6abf98f873408071/onmt/train/EpochState.lua#L29">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b47f47d9c165faf08b9291a804345c3cc092a7f1/onmt/train/EpochState.lua#L29">[src]</a>
 <a name="onmt.EpochState:update"></a></p>
 <h3 id="onmtepochstateupdatebatch-loss">onmt.EpochState:update(batch, loss)</h3>
 <p>Update training status. Takes <code>batch</code> (described in data.lua) and last loss.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/e1fd0b8d6fbf117d4336f45f6abf98f873408071/onmt/train/EpochState.lua#L37">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b47f47d9c165faf08b9291a804345c3cc092a7f1/onmt/train/EpochState.lua#L44">[src]</a>
 <a name="onmt.EpochState:log"></a></p>
 <h3 id="onmtepochstatelogbatchindex-json">onmt.EpochState:log(batchIndex, json)</h3>
 <p>Log to status stdout. </p>

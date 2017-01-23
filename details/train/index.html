@@ -84,6 +84,13 @@
     </li>
 
         
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
+        
+    </li>
+
+        
     </ul>
 
         
@@ -130,6 +137,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/modules/onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+GRU/">onmt+modules+GRU</a>
         
     </li>
 
@@ -349,9 +363,11 @@
 <p><strong>Model options</strong></p>
 <dl>
 <dt>layers</dt>
-<dd>Number of layers in the LSTM encoder/decoder [2]</dd>
+<dd>Number of layers in the RNN encoder/decoder [2]</dd>
 <dt>rnn_size</dt>
-<dd>Size of LSTM hidden states [500]</dd>
+<dd>Size of RNN hidden states [500]</dd>
+<dt>rnn_type</dt>
+<dd>Type of RNN cell: LSTM, GRU [LSTM]</dd>
 <dt>word_vec_size</dt>
 <dd>Word embedding sizes [500]</dd>
 <dt>feat_merge</dt>
