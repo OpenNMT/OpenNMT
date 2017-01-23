@@ -1,34 +1,44 @@
---[[ Class for specifying how to advance one step. A hypothesis consists of a list
-   of tokens and a state. In the code, hypotheses are stored as a table of two
-   objects, a table representing tokens, and an abstract state object.
+--[[ Class for specifying how to advance one step. A beam mainly consists of
+  a list of tokens and a state. Tokens are stored as flat tensors of size
+  batchSize, while state can be either a tensor with first dimension size
+  batchSize, or an iterable object containing several such tensors.
 
   Pseudocode:
 
       finished = []
 
-      -- Initialize hypotheses
+      beams = {}
 
-      [hypotheses] <-- init()
+      -- Initialize the beam.
 
-      WHILE [hypotheses] is not empty DO
+      [ beams[1] ] <-- initBeam()
 
-        -- Update hypothesis states based on new tokens
+      FOR t = 1, ... DO
 
-        update([hypotheses])
+        -- Update beam states based on new tokens.
 
-        -- Expand hypotheses by all possible tokens and return the scores
+        update([ beams[t] ])
 
-        [ [scores] ] <-- expand([hypotheses])
+        -- Expand beams by all possible tokens and return the scores.
 
-        -- Find k best next hypotheses (maintained by BeamSearcher)
+        [ [scores] ] <-- expand([ beams[t] ])
 
-        _findKBest([hypotheses], [ [scores] ])
+        -- Find k best next beams (maintained by BeamSearcher).
 
-        -- Remove completed hypotheses (maintained by BeamSearcher)
+        _findKBest([beams], [ [scores] ])
 
-        completed <-- isComplete([hypotheses])
 
-        finished += _completeHypotheses([hypotheses], completed)
+        completed <-- isComplete([ beams[t] ])
+
+        -- Remove completed hypotheses (maintained by BeamSearcher).
+
+        finished += _completeHypotheses([beams], completed)
+
+        IF all(completed) THEN
+
+          BREAK
+
+        END
 
       ENDWHILE
 
@@ -36,56 +46,55 @@
 --]]
 local BeamSearchAdvancer = torch.class('BeamSearchAdvancer')
 
---[[Initialize function. Returns an initial beam.
+--[[Returns an initial beam.
 
-Returns: `hypotheses`, where .
+Returns:
+
+  * `beam` - an `onmt.translate.Beam` object.
 
 ]]
-function BeamSearchAdvancer:initHypotheses()
+function BeamSearchAdvancer:initBeam()
 end
 
---[[Update function. Update hypothesis states given new tokens
+--[[Updates beam states given new tokens.
 
 Parameters:
 
-  * `tokens` - a flat tensor of size `batchSize`, the selected extension indexes from the previous step.
-  * `states` - a table containing the states from the previous step.
+  * `beam` - beam with updated token list.
 
 ]]
 function BeamSearchAdvancer:update(beam)
 end
 
---[[Expand function. Given states, returns the scores of the possible
-  `extensionSize` tokens.
-        -- Expand hypotheses by all possible tokens and return the scores
+--[[Expand function. Expands beam by all possible tokens and returns the
+  scores.
 
 Parameters:
 
-  * `hypotheses` - the current states.
+  * `beam` - an `onmt.translate.Beam` object.
 
 Returns:
 
-  * `scores` - a 2D tensor of size `(batchSize, extensionSize)`.
+  * `scores` - a 2D tensor of size `(batchSize, numTokens)`.
 
 ]]
-function BeamSearchAdvancer:expand()
+function BeamSearchAdvancer:expand(beam)
 end
 
---[[Determines which hypotheses are complete.
+--[[Determines which beams are complete.
 
 Parameters:
 
-  * `hypotheses` - a table. `hypotheses[t]` is a tensor of size `(batchSize, extensionSize)`, indicating the hypotheses at step `t`.
-  * `states` - a table of current states.
+  * `beam` - an `onmt.translate.Beam` object.
 
-Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses are complete.
+Returns: a binary flat tensor of size `(batchSize)`, indicating which beams are complete.
 
 ]]
-function BeamSearchAdvancer:isComplete()
+function BeamSearchAdvancer:isComplete(beam)
 end
 
 --[[Specifies which states to keep track of. After beam search, those states
-  can be retrieved during all steps along with the predictions.
+  can be retrieved during all steps along with the tokens.
 
 Parameters:
 
@@ -96,14 +105,13 @@ function BeamSearchAdvancer:setKeptStateIndexes(indexes)
   self.keptStateIndexes = indexes
 end
 
---[[Determines which hypotheses shall be pruned.
+--[[Determines which beams shall be pruned.
 --
 Parameters:
 
-  * `hypotheses` - a table. `hypotheses[t]` is a tensor of size `(batchSize, extensionSize)`, indicating the hypotheses at step `t`.
-  * `states` - a table of current states.
+  * `beam` - an `onmt.translate.Beam` object.
 
-Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses shall be pruned.
+Returns: a binary flat tensor of size `(batchSize)`, indicating which beams shall be pruned.
 
 ]]
 function BeamSearchAdvancer:filter()

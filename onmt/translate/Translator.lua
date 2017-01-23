@@ -123,33 +123,35 @@ function Translator:translateBatch(batch)
     goldScore = self.models.decoder:computeScore(batch, encStates, context)
   end
 
-  -- Initialize function
-  local function initFunction()
-    local input = onmt.utils.Cuda.convert(torch.IntTensor(batch.size))
+  local Advancer = torch.class('Advancer', 'BeamSearchAdvancer')
+  function Advancer:initBeam()
+    local tokens = onmt.utils.Cuda.convert(torch.IntTensor(batch.size))
       :fill(onmt.Constants.BOS)
     local features = {}
     for j = 1, #self.dicts.tgt.features do
       features[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
     end
     local sourceSizes = batch.sourceSize:clone()
+
     -- Define states to be { decoder states, decoder output, context,
-    -- attentions, features, sourceSizes, step }
-    local states = {encStates, nil, context, nil, features,
+    -- attentions, features, sourceSizes, step }.
+    local state = {encStates, nil, context, nil, features,
       sourceSizes, 1}
-    return input, states
+    return onmt.translate.Beam.new(tokens, states)
   end
-  -- Forward function
-  local function forwardFunction(extensions, states)
+  function Advancer:update(beam)
+    local state = beam:state()
     local decStates, decOut, prevContext, _, features, sourceSizes, t
-        = table.unpack(states)
+        = table.unpack(state)
+    local tokens = beam:tokens()
+    local token = tokens[#tokens]
     local inputs
-    local input = extensions
     if #features == 0 then
-      inputs = input
+      inputs = token
     elseif #features == 1 then
-      inputs = { input, features[1] }
+      inputs = { token, features[1] }
     else
-      inputs = { input }
+      inputs = { token }
       table.insert(inputs, features)
     end
     self.models.decoder:maskPadding(sourceSizes, batch.sourceLength)
@@ -157,55 +159,52 @@ function Translator:translateBatch(batch)
       :forwardOne(inputs, decStates, prevContext, decOut)
     t = t + 1
     local softmaxOut = self.models.decoder.softmaxAttn.output
-    local nextStates = {decStates, decOut, prevContext, softmaxOut, nil,
+    local nextState = {decStates, decOut, prevContext, softmaxOut, nil,
       sourceSizes, t}
-    return nextStates
+    beam:setState(nextState)
   end
-  -- Expand function
-  local function expandFunction(states)
-    local decOut = states[2]
+  function Advancer:expand(beam)
+    local state = beam:state()
+    local decOut = state[2]
     local out = self.models.decoder.generator:forward(decOut)
     local features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
       features[j - 1] = best:view(-1)
     end
-    states[5] = features
+    state[5] = features
     local scores = out[1]
     return scores
   end
   -- IsComplete function
-  local function isCompleteFunction(hypotheses)
-    local seqLength = #hypotheses
-    local complete = hypotheses[#hypotheses]:eq(onmt.Constants.EOS)
+  function Advancer:isComplete(beam)
+    local tokens = beam:tokens()
+    local seqLength = #tokens
+    local complete = tokens[#tokens]:eq(onmt.Constants.EOS)
     if seqLength > self.opt.max_sent_length then
       complete:fill(1)
     end
     return complete
   end
   -- Filter function (ignore too many UNKs)
-  local function filterFunction(hypotheses)
-    local numUnks = onmt.utils.Cuda.convert(torch.zeros(hypotheses[1]:size(1)))
-    for t = 1, #hypotheses do
-      local extensions = hypotheses[t]
-      numUnks:add(onmt.utils.Cuda.convert(
-                                   extensions:eq(onmt.Constants.UNK):double()))
+  function Advancer:filter(beam)
+    local tokens = beam:tokens()
+    local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
+    for t = 1, #tokens do
+      local token = tokens[t]
+      numUnks:add(onmt.utils.Cuda.convert(token:eq(onmt.Constants.UNK):double()))
     end
     -- Disallow too many UNKs
     local unSatisfied = numUnks:gt(self.opt.max_num_unks)
     -- Disallow empty hypotheses
-    if #hypotheses == 1 then
-      unSatisfied:add(hypotheses[1]:eq(onmt.Constants.EOS))
+    if #tokens == 1 then
+      unSatisfied:add(tokens[1]:eq(onmt.Constants.EOS))
     end
     return unSatisfied
   end
 
   -- Construct BeamSearchAdvancer
-  local advancer = onmt.translate.BeamSearchAdvancer.new(initFunction,
-                                                         forwardFunction,
-                                                         expandFunction,
-                                                         isCompleteFunction,
-                                                         filterFunction)
+  local advancer = Advancer.new()
   local attnIndex, featsIndex = 4, 5
   if self.opt.replace_unk then
     advancer:setKeptStateIndexes({attnIndex, featsIndex})
