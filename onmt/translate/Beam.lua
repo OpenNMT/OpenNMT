@@ -139,9 +139,11 @@ function Beam:expandScores(scores, beamSize)
   return expandedScores
 end
 
-function Beam:next(token, backPointers, beamSize)
-  return Beam.new(self:nextTokens(token, backPointers, beamSize),
-                  self:nextState(backPointers, beamSize))
+function Beam:nextBeam(token, scores, backPointers, beamSize)
+  local newBeam = Beam.new(self:nextTokens(token, backPointers, beamSize),
+                           self:nextState(backPointers, beamSize))
+  newBeam:setScores(scores)
+  return newBeam
 end
 
 -- Select the on-beam states using the pointers

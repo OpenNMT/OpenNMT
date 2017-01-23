@@ -226,38 +226,43 @@ function BeamSearcher:_getResults(k, beamSize)
   return hypotheses, scores, states
 end
 
--- Find the top k tokens (satisfying filters)
-function BeamSearcher:_findKBest(beams, scores, t)
-  --local kMaxScores, kMaxIds, newHypotheses, newStates
-  local loop = 0
-
+-- Find the top beamSize hypotheses (satisfying filters)
+function BeamSearcher:_findKBest(beams, scores)
+  local t = #beams
   local vocabSize = scores:size(2)
   local expandedScores = beam:expandScores(scores)
-  local considered = beamSize * prevFilterFactor
-  local kMaxScores, kMaxIds = expandedScores:topk(considered, 2, true, true)
-  kMaxIds:add(-1)
-  backPointers = (kMaxIds:clone():div(extensionSize)):add(1)
-  local token = kMaxIds:fmod(extensionSize):add(1)
 
-  local newBeam = beam:nextBeam()
+  -- Find top beamSize * prevFilterFactor hypotheses
+  local considered = self.beamSize * self.prevFilterFactor
+  local consideredScores, consideredIds = expandedScores:topk(considered, 2,
+                                                              true, true)
+  consideredIds:add(-1)
+  local consideredBackPointers = (consideredIds:clone():div(vocabSize)):add(1)
+  local consideredToken = consideredIds:fmod(vocabSize):add(1):view(-1)
+
+  local newBeam = beams[t]:nextBeam(consideredToken, consideredScores,
+                                    consideredBackPointers, self.beamSize)
 
   -- Prune hypotheses if necessary
   local prune = self.advancer:filter(newBeam)
-  if not prune:any() then
-    filtersSatisfied = true
+  if prune then
+    consideredScores:view(-1):maskedFill(prune, -math.huge)
+  end
+
+  -- Find top beamSize hypotheses
+  local kBestScores, kBestIds, backPointers
+  if ( (not prune) or (not prune:any()) ) and (self.prevFilterFactor == 1) then
+    beams[t + 1] = newBeam
   else
-    local pruneIds = prune:nonzero():view(-1)
-    for b = 1, pruneIds:size(1) do
-      local pruneId = pruneIds[b]
-      local batchId = math.floor((pruneId - 1) / beamSize) + 1
-      scores:view(remaining, -1, scores:size(2))[batchId]
-                   [backPointers:view(-1)[pruneId]][kMaxIds:view(-1)[pruneId]]
-                   = -math.huge
-    end
+    local kBestScores, kBestIds = consideredScores:topk(self.beamSize, 2,
+                                                        true, true)
+    local backPointers = consideredBackPointers:gather(2, kBestIds)
+    local token = consideredToken:gather(2, kBestIds)
+    local newBeam = beams[t]:nextBeam(token, kBestScores,
+                                      backPointers, self.beamSize)
+    beams[t + 1] = newBeam
   end
 end
-
-
 
 function BeamSearcher:_completeHypotheses(beams, completed)
   local batchSize = math.floor(hypotheses[1]:size(1) / beamSize)
