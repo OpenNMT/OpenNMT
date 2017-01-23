@@ -1,11 +1,13 @@
 local Cuda = {
   gpuIds = {},
   activated = false,
-  cudnn = nil
+  cudnn = nil,
+  _cudnnModule = nil
 }
 
 function Cuda.declareOpts(cmd)
   cmd:option('-gpuid', '0', [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]])
+  cmd:option('-cudnn', nil, [[Layers, comma-separated, for which you want to use optimized cudnn routines: RNN, SoftMax, Activation.]])
 end
 
 function Cuda.init(opt, masterGPU)
@@ -23,10 +25,19 @@ function Cuda.init(opt, masterGPU)
     require('cutorch')
     require('cunn')
     local ret
-    ret, Cuda.cudnn = pcall(require, 'cudnn')
-    if not ret then
-      _G.logger:warning("For improved efficiency with GPU - install cudnn")
-      Cuda.cudnn = nil
+
+    if opt.cudnn then
+      -- first check cudnn is available
+      ret, Cuda.cudnn = pcall(require, 'cudnn')
+      if not ret then
+        _G.logger:warning("-cudnn option only works with cudnn library - library not found: disabling the option")
+        Cuda.cudnn = nil
+      else
+        local modules = onmt.utils.String.split(opt.cudnn, ",")
+        for k in modules do
+          Cuda._cudnnModule[k] = true
+        end
+      end
     end
 
     if masterGPU == nil then
@@ -57,6 +68,11 @@ function Cuda.init(opt, masterGPU)
   end
 end
 
+local function _cudnnSupportedNN(name)
+  return ((name == 'nn.SoftMax' or name == 'nn.LogSoftMax') and Cuda.cudnnSupport('Softmax'))
+         or ((name == 'nn.Sigmoid' or name == 'nn.Tanh' or name == 'nn.ReLU') and Cuda.cudnnSupport('Activation'))
+end
+
 --[[
   Recursively move all supported objects in `obj` on the GPU.
   When using CPU only, converts to float instead of the default double.
@@ -71,7 +87,7 @@ function Cuda.convert(obj)
         cudaobj:apply(function(m)
           if m.modules then
             for i, _ in ipairs(m.modules) do
-              if torch.type(m.modules[i]) == 'nn.Softmax' then
+              if _cudnnSupportedNN(torch.type(m.modules[i])) then
                 count = count + 1
                 local modules = m.modules[i].modules
                 -- disable recursivity in conversion since we are already recursing
@@ -112,6 +128,10 @@ function Cuda.freeMemory()
     return freeMemory
   end
   return 0
+end
+
+function Cuda.cudnnSupport(module)
+  return (Cuda.cudnn and Cuda._cudnnModule[module]) or nil
 end
 
 return Cuda
