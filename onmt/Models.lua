@@ -42,6 +42,11 @@ end
 local function buildEncoder(opt, dicts)
   local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
+  local RNN = onmt.LSTM
+  if opt.rnn_type == 'GRU' then
+    RNN = onmt.GRU
+  end
+
   if opt.brnn then
     -- Compute rnn hidden size depending on hidden states merge action.
     local rnnSize = opt.rnn_size
@@ -56,11 +61,11 @@ local function buildEncoder(opt, dicts)
       error('invalid merge action ' .. opt.brnn_merge)
     end
 
-    local rnn = onmt.LSTM.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
 
     return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
   else
-    local rnn = onmt.LSTM.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
     return onmt.Encoder.new(inputNetwork, rnn)
   end
@@ -68,6 +73,11 @@ end
 
 local function buildDecoder(opt, dicts, verbose)
   local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
+
+  local RNN = onmt.LSTM
+  if opt.rnn_type == 'GRU' then
+    RNN = onmt.GRU
+  end
 
   local generator
 
@@ -84,7 +94,7 @@ local function buildDecoder(opt, dicts, verbose)
     inputSize = inputSize + opt.rnn_size
   end
 
-  local rnn = onmt.LSTM.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
   return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
 end

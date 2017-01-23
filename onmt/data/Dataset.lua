@@ -46,10 +46,12 @@ function Dataset:setBatchSize(maxBatchSize)
 
     self.maxSourceLength = math.max(self.maxSourceLength, self.src[i]:size(1))
 
-    -- Target contains <s> and </s>.
-    local targetSeqLength = self.tgt[i]:size(1) - 1
-    targetLength = math.max(targetLength, targetSeqLength)
-    self.maxTargetLength = math.max(self.maxTargetLength, targetSeqLength)
+    if self.tgt ~= nil then
+      -- Target contains <s> and </s>.
+      local targetSeqLength = self.tgt[i]:size(1) - 1
+      targetLength = math.max(targetLength, targetSeqLength)
+      self.maxTargetLength = math.max(self.maxTargetLength, targetSeqLength)
+    end
   end
   -- Catch last batch.
   table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src })
@@ -73,21 +75,28 @@ function Dataset:getBatch(idx)
   local rangeEnd = self.batchRange[idx]["end"]
 
   local src = {}
-  local tgt = {}
+  local tgt
+
+  if self.tgt ~= nil then
+    tgt = {}
+  end
 
   local srcFeatures = {}
   local tgtFeatures = {}
 
   for i = rangeStart, rangeEnd do
     table.insert(src, self.src[i])
-    table.insert(tgt, self.tgt[i])
 
     if self.srcFeatures[i] then
       table.insert(srcFeatures, self.srcFeatures[i])
     end
 
-    if self.tgtFeatures[i] then
-      table.insert(tgtFeatures, self.tgtFeatures[i])
+    if self.tgt ~= nil then
+      table.insert(tgt, self.tgt[i])
+
+      if self.tgtFeatures[i] then
+        table.insert(tgtFeatures, self.tgtFeatures[i])
+      end
     end
   end
 

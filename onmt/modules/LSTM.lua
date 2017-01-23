@@ -105,7 +105,7 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
 
   -- Evaluate the input sums at once for efficiency.
   local i2h = nn.Linear(inputSize, 4 * hiddenSize)(x)
-  local h2h = nn.Linear(hiddenSize, 4 * hiddenSize, false)(prevH)
+  local h2h = nn.Linear(hiddenSize, 4 * hiddenSize)(prevH)
   local allInputSums = nn.CAddTable()({i2h, h2h})
 
   local reshaped = nn.Reshape(4, hiddenSize)(allInputSums)

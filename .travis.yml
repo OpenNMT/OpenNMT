@@ -54,6 +54,7 @@ before_script:
 - ${INSTALL_PREFIX}/bin/luarocks install tds
 - ${INSTALL_PREFIX}/bin/luarocks install bit32 || true
 - ${INSTALL_PREFIX}/bin/luarocks install luacheck
+- ${INSTALL_PREFIX}/bin/luarocks install penlight
 script:
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
 - luacheck *lua onmt/ tools/
