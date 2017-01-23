@@ -42,32 +42,37 @@ end
 local function buildEncoder(opt, dicts)
   local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
-  end
-
-  if opt.brnn then
-    -- Compute rnn hidden size depending on hidden states merge action.
-    local rnnSize = opt.rnn_size
-    if opt.brnn_merge == 'concat' then
-      if opt.rnn_size % 2 ~= 0 then
-        error('in concat mode, rnn_size must be divisible by 2')
-      end
-      rnnSize = rnnSize / 2
-    elseif opt.brnn_merge == 'sum' then
-      rnnSize = rnnSize
-    else
-      error('invalid merge action ' .. opt.brnn_merge)
-    end
-
-    local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
-
-    return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+  -- if cudnn is enabled with RNN support
+  if Cuda.cudnnSupport('RNN') then
+    print('[WIP] cudnn.RNN support')
   else
-    local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    -- otherwise use Sequential RNN
+    local RNN = onmt.LSTM
+    if opt.rnn_type == 'GRU' then
+      RNN = onmt.GRU
+    end
+    if opt.brnn then
+      -- Compute rnn hidden size depending on hidden states merge action.
+      local rnnSize = opt.rnn_size
+      if opt.brnn_merge == 'concat' then
+        if opt.rnn_size % 2 ~= 0 then
+          error('in concat mode, rnn_size must be divisible by 2')
+        end
+        rnnSize = rnnSize / 2
+      elseif opt.brnn_merge == 'sum' then
+        rnnSize = rnnSize
+      else
+        error('invalid merge action ' .. opt.brnn_merge)
+      end
 
-    return onmt.Encoder.new(inputNetwork, rnn)
+      local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
+
+      return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    else
+      local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+
+      return onmt.Encoder.new(inputNetwork, rnn)
+    end
   end
 end
 
