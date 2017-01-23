@@ -12,98 +12,6 @@ Takes care of beams, back pointers, and scores.
 --]]
 local BeamSearcher = torch.class('BeamSearcher')
 
-
-
-
---[[Helper function. Recursively convert flat `batchSize * beamSize` tensors
- to 2D `(batchSize, beamSize)` tensors.
-
-Parameters:
-
-  * `v` - flat tensor of size `batchSize * beamSize` or a table containing such tensors.
-  * `beamSize` - beam size
-
-Returns: `(batchSize, beamSize)` tensor or a table containing such tensors.
-
---]]
-local function flatToRc(v, beamSize)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
-    local batchSize = math.floor(h:size(1) / beamSize)
-    local sizes = {}
-    for j = 2, #h:size() do
-        sizes[j - 1] = h:size(j)
-    end
-    return h:view(batchSize, beamSize, table.unpack(sizes))
-  end)
-end
-
---[[Helper function. Recursively convert 2D `(batchSize, beamSize)` tensors to
- flat `batchSize * beamSize` tensors.
-
-Parameters:
-
-  * `v` - flat tensor of size `(batchSize, beamSize)` or a table containing such tensors.
-  * `beamSize` - beam size
-
-Returns: `batchSize * beamSize` tensor or a table containing such tensors.
-
---]]
-local function rcToFlat(v)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
-    local sizes = {}
-    sizes[1] = h:size(1) * h:size(2)
-    for j = 3, #h:size() do
-        sizes[j - 1] = h:size(j)
-    end
-    return h:view(table.unpack(sizes))
-  end)
-end
-
---[[Helper function. Recursively select `(batchSize, ...)` tensors by
-  specified batch indexes.
-
-Parameters:
-
-  * `v` - tensor of size `(batchSize, ...)` or a table containing such tensors
-  * `indexes` - a table of the desired batch indexes
-
-Returns: Indexed `(newBatchSize, ...)` tensor or a table containing such tensors
-
---]]
-local function selectBatch(v, remaining)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
-    if not torch.isTensor(remaining) then
-      remaining = torch.LongTensor(remaining)
-    end
-    return h:index(1, remaining)
-  end)
-end
-
---[[Helper function. Recursively select `(batchSize * beamSize, ...)` tensors by
-  specified batch index and beam index.
-
-Parameters:
-
-  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing such tensors
-  * `beamSize` - beam size
-  * `batch` - the desired batch index
-  * `beam` - the desired beam index
-
-Returns: Indexed `(...)` tensor or a table containing such tensors
-
---]]
-local function selectBatchBeam(v, beamSize, batch, beam)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
-    local batchSize = math.floor(h:size(1) / beamSize)
-    local sizes = {}
-    for j = 2, #h:size() do
-        sizes[j - 1] = h:size(j)
-    end
-    local hOut = h:view(batchSize, beamSize, table.unpack(sizes))
-    return hOut[{batch, beam}]
-  end)
-end
-
 --[[Constructor
 
 Parameters:
@@ -113,11 +21,6 @@ Parameters:
 ]]
 function BeamSearcher:__init(advancer)
   self.advancer = advancer
-  -- Other stats
-  self.stats = { extensionSize = nil,
-                 batchSize = nil,
-                 completedStep = {},
-               }
 end
 
 --[[ Performs beam search.
@@ -160,10 +63,10 @@ function BeamSearcher:search(beamSize, nBest, prevFilterFactor)
     local completed = self.advancer:isComplete(beams[t])
 
     -- Remove completed hypotheses (maintained by BeamSearcher).
-    local batchIds, hypotheses = self:_completeHypotheses(beams, completed)
+    local finishedBatches, hypotheses = self:_completeHypotheses(beams, completed)
 
-    for b = 1, #batchIds do
-      finished[batchIds[b]] = hypotheses[b]
+    for b = 1, #finishedBatches do
+      finished[finishedBatches[b]] = hypotheses[b]
     end
 
     t = t + 1
@@ -172,6 +75,19 @@ function BeamSearcher:search(beamSize, nBest, prevFilterFactor)
   return finished
 end
 
+function BeamSearcher:_trackHistory(totalScores, tokens, backPointers,
+                                    states, complete)
+  table.insert(self.history.totalScores, totalScores:clone())
+  table.insert(self.history.tokens, tokens:clone())
+  table.insert(self.history.backPointers, backPointers:clone())
+  table.insert(self.history.isComplete, complete:clone())
+  local keptStates = {}
+  local keptStateIndexes = self.advancer.keptStateIndexes or {}
+  for _, val in pairs(keptStateIndexes) do
+    keptStates[val] = states[val]
+  end
+  table.insert(self.history.states, onmt.utils.Tensor.recursiveClone(keptStates))
+end
 function BeamSearcher:_getResults(k, beamSize)
   local hypotheses = {}
   local scores = {}
@@ -264,63 +180,63 @@ function BeamSearcher:_findKBest(beams, scores)
   end
 end
 
+    --local finishedBatches, hypotheses = self:_completeHypotheses(beams, completed)
 function BeamSearcher:_completeHypotheses(beams, completed)
-  local batchSize = math.floor(hypotheses[1]:size(1) / beamSize)
-  local t = #hypotheses
-  local complete = prevComplete:view(batchSize, -1)
+  local t = #beams
+  local batchSize = math.floor(beams[t]:remaining() / self.beamSize)
+  completed = completed:view(batchSize, -1)
+  local scores = beams[t]:scores()
+
+  local remainingId = 0
   local remainingIds = {}
-  self.history.orig2Remaining[t + 1] = {}
-  self.history.remaining2Orig[t] = {}
-  local remaining = 0
   for b = 1, batchSize do
-    local orig
-    if t == 1 then
-      orig = b
-    else
-      orig = self.history.remaining2Orig[t - 1][b]
+    local prevCompleted = beams[t]:completed(b)
+    local origId = b
+    if t > 1 then
+      origId = beams[t - 1]:remaining2Orig(b)
     end
-    local done = true
+    local batchFinished = true
+    local prevId = 1
+    local currId = 1
     for k = 1, nBest do
-      if complete[b][k] == 0 then
-        done = false
+      if prevId <= #prevCompleted then
+        local prevScore = prevCompleted[prevId][1]
+        if prevScore > scores[b][currId] then
+          prevId = prevId + 1
+        else
+          if completed[b][currId] == 0 then
+            batchFinished = false
+            break
+          end
+          currId = currId + 1
+        end
       end
     end
-    if not done then
-      remaining = remaining + 1
-      self.history.orig2Remaining[t + 1][orig] = remaining
-      self.history.remaining2Orig[t][remaining] = orig
+    if not batchFinished then
+      remainingId = remainingId + 1
+      beams[t]:setOrig2Remaining(origId, remainingId)
+      beams[t]:setRemaining2Orig(remainingId, origId)
       table.insert(remainingIds, b)
+      for k = 1, self.beamSize do
+        if completed[b][k] == 1 then
+          local hypothesis = self:_getHypothesis(beams, b, k)
+          beams[t]:addCompletedHypotheses(hypothesis, origId)
+        end
+      end
     else
-      self.stats.completedStep[orig] = t
+      table.insert(finishedBatches, origId)
+      for k = 1, nBest do
+        local hypothesis = self:_getHypothesis(beams, b, k)
+        table.insert(hypotheses, hypothesis)
+      end
     end
   end
+
   -- Remove finished batches
-  if remaining < batchSize then
-    if remaining > 0 then
-      states = rcToFlat(selectBatch(
-        flatToRc(states, beamSize), remainingIds))
-      hypotheses = rcToFlat(selectBatch(
-        flatToRc(hypotheses, beamSize), remainingIds))
-      prevComplete = rcToFlat(selectBatch(
-        flatToRc(prevComplete, beamSize), remainingIds))
-      tokens = selectBatch(tokens, remainingIds)
-      totalScores = selectBatch(totalScores, remainingIds)
-    end
+  if remainingId < batchSize then
+    beams[t]:removeFinishedBatches(remainingIds)
   end
-  return prevComplete, tokens, totalScores, states, hypotheses, remaining
+  return finishedBatches, hypotheses
 end
 
-function BeamSearcher:_trackHistory(totalScores, tokens, backPointers,
-                                    states, complete)
-  table.insert(self.history.totalScores, totalScores:clone())
-  table.insert(self.history.tokens, tokens:clone())
-  table.insert(self.history.backPointers, backPointers:clone())
-  table.insert(self.history.isComplete, complete:clone())
-  local keptStates = {}
-  local keptStateIndexes = self.advancer.keptStateIndexes or {}
-  for _, val in pairs(keptStateIndexes) do
-    keptStates[val] = states[val]
-  end
-  table.insert(self.history.states, onmt.utils.Tensor.recursiveClone(keptStates))
-end
 return BeamSearcher

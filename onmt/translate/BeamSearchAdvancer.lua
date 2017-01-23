@@ -63,7 +63,7 @@ Parameters:
   * `beam` - beam with updated token list.
 
 ]]
-function BeamSearchAdvancer:update(beam)
+function BeamSearchAdvancer:update(beam) -- luacheck: no unused args
 end
 
 --[[Expand function. Expands beam by all possible tokens and returns the
@@ -78,7 +78,7 @@ Returns:
   * `scores` - a 2D tensor of size `(batchSize, numTokens)`.
 
 ]]
-function BeamSearchAdvancer:expand(beam)
+function BeamSearchAdvancer:expand(beam) -- luacheck: no unused args
 end
 
 --[[Determines which beams are complete.
@@ -90,7 +90,7 @@ Parameters:
 Returns: a binary flat tensor of size `(batchSize)`, indicating which beams are complete.
 
 ]]
-function BeamSearchAdvancer:isComplete(beam)
+function BeamSearchAdvancer:isComplete(beam) -- luacheck: no unused args
 end
 
 --[[Specifies which states to keep track of. After beam search, those states

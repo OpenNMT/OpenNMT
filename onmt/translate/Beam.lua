@@ -18,6 +18,94 @@ local function localize(v, x)
   end
 end
 
+--[[Helper function. Recursively convert flat `batchSize * beamSize` tensors
+ to 2D `(batchSize, beamSize)` tensors.
+
+Parameters:
+
+  * `v` - flat tensor of size `batchSize * beamSize` or a table containing such tensors.
+  * `beamSize` - beam size
+
+Returns: `(batchSize, beamSize)` tensor or a table containing such tensors.
+
+--]]
+local function flatToRc(v, beamSize)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local batchSize = math.floor(h:size(1) / beamSize)
+    local sizes = {}
+    for j = 2, #h:size() do
+        sizes[j - 1] = h:size(j)
+    end
+    return h:view(batchSize, beamSize, table.unpack(sizes))
+  end)
+end
+
+--[[Helper function. Recursively convert 2D `(batchSize, beamSize)` tensors to
+ flat `batchSize * beamSize` tensors.
+
+Parameters:
+
+  * `v` - flat tensor of size `(batchSize, beamSize)` or a table containing such tensors.
+  * `beamSize` - beam size
+
+Returns: `batchSize * beamSize` tensor or a table containing such tensors.
+
+--]]
+local function rcToFlat(v)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local sizes = {}
+    sizes[1] = h:size(1) * h:size(2)
+    for j = 3, #h:size() do
+        sizes[j - 1] = h:size(j)
+    end
+    return h:view(table.unpack(sizes))
+  end)
+end
+
+--[[Helper function. Recursively select `(batchSize, ...)` tensors by
+  specified batch indexes.
+
+Parameters:
+
+  * `v` - tensor of size `(batchSize, ...)` or a table containing such tensors
+  * `indexes` - a table of the desired batch indexes
+
+Returns: Indexed `(newBatchSize, ...)` tensor or a table containing such tensors
+
+--]]
+local function selectBatch(v, remaining)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    if not torch.isTensor(remaining) then
+      remaining = torch.LongTensor(remaining)
+    end
+    return h:index(1, remaining)
+  end)
+end
+
+--[[Helper function. Recursively select `(batchSize * beamSize, ...)` tensors by
+  specified batch index and beam index.
+
+Parameters:
+
+  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing such tensors
+  * `beamSize` - beam size
+  * `batch` - the desired batch index
+  * `beam` - the desired beam index
+
+Returns: Indexed `(...)` tensor or a table containing such tensors
+
+--]]
+local function selectBatchBeam(v, beamSize, batch, beam)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local batchSize = math.floor(h:size(1) / beamSize)
+    local sizes = {}
+    for j = 2, #h:size() do
+        sizes[j - 1] = h:size(j)
+    end
+    local hOut = h:view(batchSize, beamSize, table.unpack(sizes))
+    return hOut[{batch, beam}]
+  end)
+end
 --[[Helper function. Recursively index `(batchSize * beamSize, ...)`
   tensors by specified indexes.
 
@@ -146,6 +234,21 @@ function Beam:nextBeam(token, scores, backPointers, beamSize)
   return newBeam
 end
 
+function Beam:remaining2Orig(b)
+  if b then
+    return self._remaining2Orig[b]
+  else
+    return self._remaining2Orig
+  end
+end
+
+function Beam:orig2Remaining(b)
+  if b then
+    return self._orig2Remaining[b]
+  else
+    return self._orig2Remaining
+  end
+end
 -- Select the on-beam states using the pointers
 function Beam:nextState(backPointers, beamSize)
   local nextState = selectBeam(self._state, backPointers, beamSize)
@@ -157,6 +260,7 @@ function Beam:nextTokens(token, backPointers, beamSize)
   nextTokens[#nextTokens + 1] = token
   return nextTokens
 end
+
 -- binary vector
 function Beam:batchesFinished()
   return self._batchesFinished
@@ -165,4 +269,14 @@ end
 -- dict
 function Beam:addCompletedHypotheses()
   table.insert(self.completed, {}) -- batch, pointer, t, score, etc.
+end
+
+function Beam:removeFinishedBatches(remainingIds, beamSize)
+  if #remainingIds > 0 then
+    self._state = rcToFlat(selectBatch(
+      flatToRc(self._state, beamSize), remainingIds))
+    self._tokens = rcToFlat(selectBatch(
+      flatToRc(self._tokens, beamSize), remainingIds))
+    self._scores = selectBatch(self._scores, remainingIds)
+  end
 end
