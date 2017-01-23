@@ -24,8 +24,9 @@ cmd:text("")
 cmd:text("**Model options**")
 cmd:text("")
 
-cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
-cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
+cmd:option('-layers', 2, [[Number of layers in the RNN encoder/decoder]])
+cmd:option('-rnn_size', 500, [[Size of RNN hidden states]])
+cmd:option('-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
 cmd:option('-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]])
 cmd:option('-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
@@ -216,7 +217,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     optimStates = opt.optim_states
   })
 
-  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
+  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
 
   local function trainEpoch(epoch, lastValidPpl)
     local epochState
@@ -241,10 +242,10 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     opt.start_iteration = 1
 
-    local function trainNetwork()
+    local function trainNetwork(batch)
       optim:zeroGrad(_G.gradParams)
 
-      local encStates, context = _G.model.encoder:forward(_G.batch)
+      local encStates, context = _G.model.encoder:forward(batch)
       local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
 
       local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
@@ -279,7 +280,7 @@ local function trainModel(model, trainData, validData, dataset, info)
           -- Send batch data to the GPU.
           onmt.utils.Cuda.convert(_G.batch)
           _G.batch.totalSize = totalSize
-          local loss = trainNetwork()
+          local loss = trainNetwork(_G.batch)
 
           return idx, loss
         end,

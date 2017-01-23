@@ -150,8 +150,4 @@ function unicode.isNumber(u)
   return _find_codepoint(u, unidata.Number)
 end
 
-function unicode.isAlnum(u)
-  return unicode.isLetter(u) or unicode.isNumber(u) or u=='_'
-end
-
 return unicode
