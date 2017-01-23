@@ -22,7 +22,11 @@ function Checkpoint:save(filePath, info)
   }
 
   for k, v in pairs(self.model) do
-    data.models[k] = v:serialize()
+    if v.serialize then
+      data.models[k] = v:serialize()
+    else
+      data.models[k] = v
+    end
   end
 
   torch.save(filePath, data)
