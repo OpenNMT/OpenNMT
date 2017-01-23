@@ -4,6 +4,7 @@
 
 * ZeroMQ translation server
 * Advanced log management
+* GRU cell
 * Tokenization option to make the token separator an independent token
 * Tokenization can run in parallel mode
 
