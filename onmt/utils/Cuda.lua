@@ -7,7 +7,7 @@ local Cuda = {
 
 function Cuda.declareOpts(cmd)
   cmd:option('-gpuid', '0', [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]])
-  cmd:option('-cudnn', nil, [[Layers, comma-separated, for which you want to use optimized cudnn routines: RNN, SoftMax, Activation.]])
+  cmd:option('-cudnn', '', [[Layers, comma-separated, for which you want to use optimized cudnn routines: RNN, SoftMax, Activation.]])
 end
 
 function Cuda.init(opt, masterGPU)
