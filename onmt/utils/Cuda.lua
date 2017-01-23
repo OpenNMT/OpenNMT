@@ -2,7 +2,7 @@ local Cuda = {
   gpuIds = {},
   activated = false,
   cudnn = nil,
-  _cudnnModule = nil
+  _cudnnModule = {}
 }
 
 function Cuda.declareOpts(cmd)
