@@ -23,9 +23,14 @@ Parameters:
   * `rnn` - recurrent module.
 ]]
 function CudnnEncoder:__init(layers, inputSize, rnnSize, dropout, brnn, inputNetwork)
+  if brnn then
+    rnnSize = rnnSize / 2
+  end
   self.rnn = onmt.utils.Cuda.cudnn.LSTM(inputSize, rnnSize, layers, false, dropout, true)
   if brnn then
     self.rnn.bidirectional = 'CUDNN_BIDIRECTIONAL'
+    self.rnn.numDirections = 2
+    self.rnn:reset()
   end
 
   self.inputNet = inputNetwork
@@ -74,25 +79,27 @@ function CudnnEncoder:forward(batch)
   end
 
   self.rnn.hiddenOutput = onmt.utils.Tensor.reuseTensor(self.hiddenOutputProto,
-                                              { self.rnn.numLayers * self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
+                                              { self.rnn.numLayers*self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
   self.rnn.cellOutput = onmt.utils.Tensor.reuseTensor(self.cellOutputProto,
-                                            { self.rnn.numLayers * self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
+                                              { self.rnn.numLayers*self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
 
   local context = self.rnn:forward(self.inputs)
 
   -- dimension of context is seq x batch x rnn - we need it to be batch x seq x rnn
   context = context:transpose(1,2)
 
-  for i=1, self.rnn.numLayers * self.rnn.numDirections, self.rnn.numDirections do
+  if self.rnn.numDirections > 1 then
+    self.rnn.hiddenOutput = nn.JoinTable(3):forward({self.rnn.hiddenOutput:narrow(1,1,self.rnn.numLayers),
+                                                  self.rnn.hiddenOutput:narrow(1,self.rnn.numLayers,self.rnn.numLayers)})
+    self.rnn.cellOutput = nn.JoinTable(3):forward({self.rnn.cellOutput:narrow(1,1,self.rnn.numLayers),
+                                                  self.rnn.cellOutput:narrow(1,self.rnn.numLayers,self.rnn.numLayers)})
+  end
+  for i=1, self.rnn.numLayers do
     table.insert(states, self.rnn.hiddenOutput[i])
     table.insert(states, self.rnn.cellOutput[i])
-    if self.rnn.numDirections > 1 then
-      states[#states-1] = states[#states-1] + self.rnn.hiddenOutput[i+1]
-      states[#states] = states[#states] + self.rnn.cellOutput[i+1]
-    end
   end
-
   return states, context
+
 end
 
 --[[ Backward pass (only called during training)
@@ -108,16 +115,16 @@ end
 function CudnnEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
   self.rnn.gradHiddenOutput = onmt.utils.Tensor.reuseTensor(self.gradHiddenOutputProto,
-                                                 { self.rnn.numLayers * self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
+                                                 { self.rnn.numLayers*self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
   self.rnn.gradCellOutput = onmt.utils.Tensor.reuseTensor(self.cellOutputProto,
-                                                { self.rnn.numLayers * self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
+                                                 { self.rnn.numLayers*self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
 
   for i=1, self.rnn.numLayers do
-    self.rnn.gradHiddenOutput[i*self.rnn.numDirections]:copy(gradStatesOutput[2*i-1])
-    self.rnn.gradCellOutput[i*self.rnn.numDirections]:copy(gradStatesOutput[2*i])
+    self.rnn.gradHiddenOutput[i]:copy(gradStatesOutput[2*i-1]:narrow(2, 1, self.rnn.hiddenSize))
+    self.rnn.gradCellOutput[i]:copy(gradStatesOutput[2*i]:narrow(2, 1, self.rnn.hiddenSize))
     if self.rnn.numDirections > 1 then
-      self.rnn.gradHiddenOutput[i*self.rnn.numDirections+1]:copy(gradStatesOutput[2*i-1])
-      self.rnn.gradCellOutput[i*self.rnn.numDirections+1]:copy(gradStatesOutput[2*i])
+      self.rnn.gradHiddenOutput[i+self.rnn.numLayers]:copy(gradStatesOutput[2*i-1]:narrow(2, self.rnn.hiddenSize, self.rnn.hiddenSize))
+      self.rnn.gradCellOutput[i+self.rnn.numLayers]:copy(gradStatesOutput[2*i]:narrow(2, self.rnn.hiddenSize, self.rnn.hiddenSize))
     end
   end
 
@@ -128,5 +135,6 @@ function CudnnEncoder:backward(batch, gradStatesOutput, gradContextOutput)
     self:net(t):backward(batch:getSourceInput(t), gradInputs[{t, {}}])
   end
 
+  -- no need to send gradient back
   return {}
 end

@@ -40,12 +40,19 @@ local function buildInputNetwork(opt, dicts, pretrainedWords, fixWords)
 end
 
 local function buildEncoder(opt, dicts)
+  if opt.brnn and opt.brnn_merge == 'concat' and opt.rnn_size % 2 ~= 0 then
+    error('in concat mode, rnn_size must be divisible by 2')
+  end
+
   local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   -- if cudnn is enabled with RNN support
   if onmt.utils.Cuda.cudnnSupport('RNN') then
     if opt.residual then
       error('-residual is not supported in cudnn mode')
+    end
+    if opt.brnn and opt.brnn_merge == 'sum' then
+      error('-brnn_merge sum is not supported in cudnn mode')
     end
     return onmt.CudnnEncoder.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.brnn, inputNetwork)
   else
