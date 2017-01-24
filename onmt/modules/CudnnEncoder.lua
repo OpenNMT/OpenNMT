@@ -86,6 +86,10 @@ function CudnnEncoder:forward(batch)
   for i=1, self.rnn.numLayers * self.rnn.numDirections, self.rnn.numDirections do
     table.insert(states, self.rnn.hiddenOutput[i])
     table.insert(states, self.rnn.cellOutput[i])
+    if self.rnn.numDirections > 1 then
+      states[#states-1] = states[#states-1] + self.rnn.hiddenOutput[i+1]
+      states[#states] = states[#states] + self.rnn.cellOutput[i+1]
+    end
   end
 
   return states, context
@@ -109,8 +113,12 @@ function CudnnEncoder:backward(batch, gradStatesOutput, gradContextOutput)
                                                 { self.rnn.numLayers * self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
 
   for i=1, self.rnn.numLayers do
-    self.rnn.gradHiddenOutput[i]:copy(gradStatesOutput[2*i-1])
-    self.rnn.gradCellOutput[i]:copy(gradStatesOutput[2*i])
+    self.rnn.gradHiddenOutput[i*self.rnn.numDirections]:copy(gradStatesOutput[2*i-1])
+    self.rnn.gradCellOutput[i*self.rnn.numDirections]:copy(gradStatesOutput[2*i])
+    if self.rnn.numDirections > 1 then
+      self.rnn.gradHiddenOutput[i*self.rnn.numDirections+1]:copy(gradStatesOutput[2*i-1])
+      self.rnn.gradCellOutput[i*self.rnn.numDirections+1]:copy(gradStatesOutput[2*i])
+    end
   end
 
   local gradInputs = self.rnn:backward(self.inputs, gradContextOutput:transpose(1,2))
