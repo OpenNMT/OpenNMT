@@ -133,11 +133,11 @@ function Translator:translateBatch(batch)
     end
     local sourceSizes = batch.sourceSize:clone()
 
-    -- Define states to be { decoder states, decoder output, context,
+    -- Define state to be { decoder states, decoder output, context,
     -- attentions, features, sourceSizes, step }.
     local state = {encStates, nil, context, nil, features,
       sourceSizes, 1}
-    return onmt.translate.Beam.new(tokens, states)
+    return onmt.translate.Beam.new(tokens, state)
   end
   function Advancer:update(beam)
     local state = beam:state()

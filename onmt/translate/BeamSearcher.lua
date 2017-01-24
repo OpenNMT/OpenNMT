@@ -55,7 +55,7 @@ function BeamSearcher:search(beamSize, nBest, beforeFilterFactor)
 
     -- Expand beams by all possible tokens and return the scores.
     local scores = self.advancer:expand(beams[t])
-    
+
     -- Find k best next beams (maintained by BeamSearcher).
     self:_findKBest(beams, scores)
 
@@ -75,37 +75,33 @@ function BeamSearcher:search(beamSize, nBest, beforeFilterFactor)
 end
 
 function BeamSearcher:_retrieveHypothesis(beams, b, score, tok, bp, s, t)
-  local keptStates = {}
-  local keptStateIndexes = self.advancer.keptStateIndexes or {}
-  for _, val in pairs(keptStateIndexes) do
-    keptStates[val] = states[val]
-  end
-  local hypothesis = {}
+  local hypothesis
   local states = {}
   local tokens = {}
 
-  local remainingId
   states[t] = s
   tokens[t] = tok
   t = t - 1
+  local remainingId
   while t > 0 do
     if t == 1 then
       remainingId = b
     else
       remainingId = beams[t - 1]:orig2Remaining(b)
     end
-    states[t] = selectBatchBeam(beams[t]:state(), beamSize, remainingId, bp)
-    tokens[t] = beams[t]:tokens()[remainingId][bp]
-    bp = beams[t]:backPointers()[t][remainingId][bp]
+    states[t] = beams[t]:indexState(self.beamSize, remainingId, bp,
+                                     self.advancer.keptStateIndexes)
+    tokens[t] = beams[t]:indexToken(self.beamSize, remainingId, bp)
+    bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
     t = t - 1
   end
 
   -- Transpose states
   local statesTemp = {}
-    for t = 1, #states do
-      for j, _ in pairs(states[t]) do
+    for r = 1, #states do
+      for j, _ in pairs(states[r]) do
         statesTemp[j] = statesTemp[j] or {}
-        statesTemp[j][t] = states[t][j]
+        statesTemp[j][r] = states[r][j]
       end
     end
   states = statesTemp
@@ -124,11 +120,11 @@ function BeamSearcher:_findKBest(beams, scores)
   local consideredScores, consideredIds = expandedScores:topk(considered, 2,
                                                               true, true)
   consideredIds:add(-1)
-  local consideredBackPointers = (consideredIds:clone():div(vocabSize)):add(1)
+  local consideredBackPointer = (consideredIds:clone():div(vocabSize)):add(1)
   local consideredToken = consideredIds:fmod(vocabSize):add(1):view(-1)
 
   local newBeam = beams[t]:nextBeam(consideredToken, consideredScores,
-                                    consideredBackPointers, self.beamSize)
+                                    consideredBackPointer, self.beamSize)
 
   -- Prune hypotheses if necessary
   local pruned = self.advancer:filter(newBeam)
@@ -142,10 +138,10 @@ function BeamSearcher:_findKBest(beams, scores)
   else
     local kBestScores, kBestIds = consideredScores:topk(self.beamSize, 2,
                                                         true, true)
-    local backPointers = consideredBackPointers:gather(2, kBestIds)
+    local backPointer = consideredBackPointer:gather(2, kBestIds)
     local token = consideredToken:gather(2, kBestIds)
-    local newBeam = beams[t]:nextBeam(token, kBestScores,
-                                      backPointers, self.beamSize)
+    newBeam = beams[t]:nextBeam(token, kBestScores,
+                                backPointer, self.beamSize)
     beams[t + 1] = newBeam
   end
 end
@@ -155,12 +151,12 @@ function BeamSearcher:_completeHypotheses(beams, completed)
   local batchSize = beams[t]:remaining()
   completed = completed:view(batchSize, -1)
   local token = beams[t]:tokens()[t]:view(batchSize, -1)
-  local backPointers = beams[t]:backPointers():view(batchSize, -1)
+  local state = beams[t]:state()
+  local backPointer = beams[t]:backPointer():view(batchSize, -1)
   local scores = beams[t]:scores():view(batchSize, -1)
 
   local remainingId = 0
   local remainingIds = {}
-  local partiallyCompleted = {}
   local finishedBatches = {}
   local finishedHypotheses = {}
   for b = 1, batchSize do
@@ -172,7 +168,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
     local batchFinished = true
     local prevId = 1
     local currId = 1
-    for k = 1, nBest do
+    for _ = 1, self.nBest do
       if prevId <= #prevCompleted then
         local prevScore = prevCompleted[prevId][1]
         if prevScore > scores[b][currId] then
@@ -200,7 +196,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
       for k = 1, self.beamSize do
         if completed[b][k] == 1 then
           local tok = token[b][k]
-          local bp = backPointers[b][k]
+          local bp = backPointer[b][k]
           local s = self:_keptState(state, b, k)
           local score = scores[b][k]
           onmt.translate.Beam.addCompletedHypotheses(tok, bp, s, score, t, origId)
@@ -209,9 +205,9 @@ function BeamSearcher:_completeHypotheses(beams, completed)
     else
       table.insert(finishedBatches, origId)
       local hypothesis = {}
-      local prevId = 1
-      local currId = 1
-      for k = 1, nBest do
+      prevId = 1
+      currId = 1
+      for _ = 1, self.nBest do
         if prevId <= #prevCompleted then
           local prevScore = prevCompleted[prevId][1]
           if prevScore > scores[b][currId] then
@@ -222,27 +218,28 @@ function BeamSearcher:_completeHypotheses(beams, completed)
             assert( completed[b][currId] == 1 )
             local score = scores[b][currId]
             local tok = token[b][currId]
-            local bp = backPointers[b][currId]
+            local bp = backPointer[b][currId]
             local s = self:_keptState(state, b, currId)
             table.insert(hypothesis,
                          self:_retrieveHypothesis(score, tok, bp, s, t))
             currId = currId + 1
           end
-         else
-            assert( completed[b][currId] == 1 )
-            local score = scores[b][currId]
-            local tok = token[b][currId]
-            local bp = backPointers[b][currId]
-            local s = self:_keptState(state, b, currId)
-            table.insert(hypothesis,
-                         self:_retrieveHypothesis(score, tok, bp, s, t))
-            currId = currId + 1
-         end
+        else
+          assert( completed[b][currId] == 1 )
+          local score = scores[b][currId]
+          local tok = token[b][currId]
+          local bp = backPointer[b][currId]
+          local s = self:_keptState(state, b, currId)
+          table.insert(hypothesis,
+                       self:_retrieveHypothesis(score, tok, bp, s, t))
+          currId = currId + 1
         end
         table.insert(finishedHypotheses, hypothesis)
       end
     end
   end
+
+  beams[t]:scores():maskedFill(completed:view(-1), -math.huge)
 
   -- Remove finished batches
   if remainingId < batchSize then

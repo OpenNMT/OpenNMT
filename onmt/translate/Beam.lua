@@ -173,7 +173,7 @@ function Beam:__init(token, state, remaining)
   self._state = state
 
   self._scores = localize(torch.zeros(self._remaining), token)
-  self._backPointers = nil
+  self._backPointer = nil
   self._orig2Remaining = {}
   self._remaining2Orig = {}
   for b = 1, self._remaining do
@@ -202,8 +202,8 @@ function Beam:scores()
   return self._scores
 end
 
-function Beam:backPointers()
-  return self._backPointers
+function Beam:backPointer()
+  return self._backPointer
 end
 
 --[[Helper function. In the first step, if there is only 1 hypothesis per
@@ -239,10 +239,10 @@ function Beam:expandScores(scores, beamSize)
   return expandedScores
 end
 
-function Beam:nextBeam(token, scores, backPointers, beamSize)
+function Beam:nextBeam(token, scores, backPointer, beamSize)
   local remaining = math.floor(token:size(1) / beamSize)
-  local newBeam = Beam.new(self:nextTokens(token, backPointers, beamSize),
-                           self:nextState(backPointers, beamSize), remaining)
+  local newBeam = Beam.new(self:nextTokens(token, backPointer, beamSize),
+                           self:nextState(backPointer, beamSize), remaining)
   newBeam:setScores(scores)
   return newBeam
 end
@@ -263,13 +263,13 @@ function Beam:orig2Remaining(b)
   end
 end
 -- Select the on-beam states using the pointers
-function Beam:nextState(backPointers, beamSize)
-  local nextState = selectBeam(self._state, backPointers, beamSize)
+function Beam:nextState(backPointer, beamSize)
+  local nextState = selectBeam(self._state, backPointer, beamSize)
   return nextState
 end
 
-function Beam:nextTokens(token, backPointers, beamSize)
-  local nextTokens = selectBeam(self._tokens, backPointers, beamSize)
+function Beam:nextTokens(token, backPointer, beamSize)
+  local nextTokens = selectBeam(self._tokens, backPointer, beamSize)
   nextTokens[#nextTokens + 1] = token
   return nextTokens
 end
@@ -293,3 +293,23 @@ function Beam:removeFinishedBatches(remainingIds, beamSize)
     self._scores = selectBatch(self._scores, remainingIds)
   end
 end
+
+function Beam:indexState(beamSize, batchId, beamId, keptIndexes)
+  keptIndexes = keptIndexes or {}
+  local keptState = {}
+  for _, val in pairs(keptIndexes) do
+    keptState[val] = self._state[val]
+  end
+  return selectBatchBeam(keptState, beamSize, batchId, beamId)
+end
+
+function Beam:indexToken(beamSize, batchId, beamId)
+  local token = self._tokens[#self._tokens]
+  return selectBatchBeam(token, beamSize, batchId, beamId)
+end
+
+function Beam:indexBackPointer(beamSize, batchId, beamId)
+  return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
+end
+
+return Beam
