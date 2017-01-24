@@ -312,4 +312,21 @@ function Beam:indexBackPointer(beamSize, batchId, beamId)
   return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
 end
 
+function Beam.addCompletedHypotheses(tok, bp, s, score, t, batchId)
+  local hypothesis = {score, tok, bp, s, t}
+  Beam.completed = Beam.completed or {}
+  Beam.completed[batchId] = Beam.completed[batchId] or {}
+  -- Maintain a sorted list.
+  local id = #Beam.completed[batchId] + 1
+  Beam.completed[batchId][id] = hypothesis
+  while id > 1 do
+    if Beam.completed[batchId][id - 1] < score then
+      Beam.completed[batchId][id - 1], Beam.completed[batchId][id] =
+                   Beam.completed[batchId][id], Beam.completed[batchId][id - 1]
+    else
+      break
+    end
+  end
+end
+
 return Beam
