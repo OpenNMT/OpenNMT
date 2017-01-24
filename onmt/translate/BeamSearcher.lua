@@ -60,7 +60,7 @@ function BeamSearcher:search(beamSize, nBest, beforeFilterFactor)
     self:_findKBest(beams, scores)
 
     -- Determine which hypotheses are complete.
-    local completed = self.advancer:isComplete(beams[t])
+    local completed = self.advancer:isComplete(beams[t + 1])
 
     -- Remove completed hypotheses (maintained by BeamSearcher).
     local finishedBatches, finishedHypotheses = self:_completeHypotheses(beams, completed)
@@ -80,7 +80,7 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, s, t)
   local tokens = {}
 
   states[t] = s
-  tokens[t] = tok
+  tokens[t - 1] = tok
   t = t - 1
   local remainingId
   while t > 0 do
@@ -91,7 +91,7 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, s, t)
     end
     states[t] = beams[t]:indexState(self.beamSize, remainingId, bp,
                                     self.advancer.keptStateIndexes)
-    tokens[t] = beams[t]:indexToken(self.beamSize, remainingId, bp)
+    tokens[t - 1] = beams[t]:indexToken(self.beamSize, remainingId, bp)
     bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
     t = t - 1
   end
