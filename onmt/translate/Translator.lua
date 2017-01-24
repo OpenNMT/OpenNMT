@@ -123,12 +123,13 @@ function Translator:translateBatch(batch)
     goldScore = self.models.decoder:computeScore(batch, encStates, context)
   end
 
+  local translator = self
   local Advancer = torch.class('Advancer', 'BeamSearchAdvancer')
   function Advancer:initBeam()
     local tokens = onmt.utils.Cuda.convert(torch.IntTensor(batch.size))
       :fill(onmt.Constants.BOS)
     local features = {}
-    for j = 1, #self.dicts.tgt.features do
+    for j = 1, #translator.dicts.tgt.features do
       features[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
     end
     local sourceSizes = batch.sourceSize:clone()
@@ -142,7 +143,7 @@ function Translator:translateBatch(batch)
   function Advancer:update(beam)
     local state = beam:state()
     local decStates, decOut, prevContext, _, features, sourceSizes, t
-        = table.unpack(state)
+        = table.unpack(state, 1, 7)
     local tokens = beam:tokens()
     local token = tokens[#tokens]
     local inputs
@@ -154,11 +155,11 @@ function Translator:translateBatch(batch)
       inputs = { token }
       table.insert(inputs, features)
     end
-    self.models.decoder:maskPadding(sourceSizes, batch.sourceLength)
-    decOut, decStates = self.models.decoder
+    translator.models.decoder:maskPadding(sourceSizes, batch.sourceLength)
+    decOut, decStates = translator.models.decoder
       :forwardOne(inputs, decStates, prevContext, decOut)
     t = t + 1
-    local softmaxOut = self.models.decoder.softmaxAttn.output
+    local softmaxOut = translator.models.decoder.softmaxAttn.output
     local nextState = {decStates, decOut, prevContext, softmaxOut, nil,
       sourceSizes, t}
     beam:setState(nextState)
@@ -166,7 +167,7 @@ function Translator:translateBatch(batch)
   function Advancer:expand(beam)
     local state = beam:state()
     local decOut = state[2]
-    local out = self.models.decoder.generator:forward(decOut)
+    local out = translator.models.decoder.generator:forward(decOut)
     local features = {}
     for j = 2, #out do
       local _, best = out[j]:max(2)
@@ -181,7 +182,7 @@ function Translator:translateBatch(batch)
     local tokens = beam:tokens()
     local seqLength = #tokens
     local complete = tokens[#tokens]:eq(onmt.Constants.EOS)
-    if seqLength > self.opt.max_sent_length then
+    if seqLength > translator.opt.max_sent_length then
       complete:fill(1)
     end
     return complete
@@ -195,7 +196,7 @@ function Translator:translateBatch(batch)
       numUnks:add(onmt.utils.Cuda.convert(token:eq(onmt.Constants.UNK):double()))
     end
     -- Disallow too many UNKs
-    local unSatisfied = numUnks:gt(self.opt.max_num_unks)
+    local unSatisfied = numUnks:gt(translator.opt.max_num_unks)
     -- Disallow empty hypotheses
     if #tokens == 1 then
       unSatisfied:add(tokens[1]:eq(onmt.Constants.EOS))
@@ -203,7 +204,6 @@ function Translator:translateBatch(batch)
     return unSatisfied:ge(1)
   end
 
-  -- Construct BeamSearchAdvancer
   local advancer = Advancer.new()
   local attnIndex, featsIndex = 4, 5
   if self.opt.replace_unk then
@@ -211,11 +211,11 @@ function Translator:translateBatch(batch)
   else
     advancer:setKeptStateIndexes({featsIndex})
   end
-  -- Construct BeamSearcher
+
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  -- Search
   local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best)
 
+  debug.getregistry()['Advancer'] = nil
   collectgarbage()
 
   local allHyp = {}
@@ -230,21 +230,19 @@ function Translator:translateBatch(batch)
     local scoresBatch = {}
 
     for n = 1, self.opt.n_best do
-      local hypothesis = results[n].hypotheses
-      local scores = results[n].scores
-      local states = results[n].states
-      local hyp = hypothesis[b]
-      local score = scores[b]
-      local attn = states[b][attnIndex] or {}
-      local feats = states[b][featsIndex] or {}
-      table.remove(hyp)
+      local tokens = results[b][n].tokens
+      local score = results[b][n].score
+      local states = results[b][n].states
+      local attn = states[attnIndex] or {}
+      local feats = states[featsIndex] or {}
+      table.remove(tokens)
       -- Remove unnecessary values from the attention vectors
       local size = batch.sourceSize[b]
       for j = 1, #attn do
         attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
       end
 
-      table.insert(hypBatch, hyp)
+      table.insert(hypBatch, tokens)
       if #feats > 0 then
         table.insert(featsBatch, feats)
       end

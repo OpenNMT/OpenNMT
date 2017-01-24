@@ -161,7 +161,7 @@ end
 
 Parameters:
 
-  * `token` - tensor of size `(batchSize, vocabSize)` or `(batchSize * beamSize, vocabSize)`.
+  * `token` - tensor of size `(batchSize, vocabSize)` or `(batchSize * beamSize, vocabSize)`, or a list of such tensors.
   * `state` - an iteratable object, where the contained tensors should have the same first dimension as `token`.
   * `remaining` - remaining batch size. [`token:size(1)`]
 
@@ -169,17 +169,17 @@ Parameters:
 function Beam:__init(token, state, remaining)
   self._remaining = remaining or token:size(1)
 
-  self._tokens = { token }
+  if torch.type(token) == 'table' then
+    self._tokens = token
+  else
+    self._tokens = { token }
+  end
   self._state = state
 
-  self._scores = localize(torch.zeros(self._remaining), token)
+  self._scores = localize(torch.zeros(self._remaining), self._tokens[1])
   self._backPointer = nil
   self._orig2Remaining = {}
   self._remaining2Orig = {}
-  for b = 1, self._remaining do
-    self._orig2Remaining[b] = b
-    self._remaining2Orig[b] = b
-  end
 end
 
 function Beam:tokens()
@@ -196,6 +196,22 @@ end
 
 function Beam:setState(state)
   self._state = state
+end
+
+function Beam:setScores(scores)
+  self._scores = scores
+end
+
+function Beam:setBackPointer(backPointer)
+  self._backPointer = backPointer:view(-1)
+end
+
+function Beam:setOrig2Remaining(origId, remainingId)
+  self._orig2Remaining[origId] = remainingId
+end
+
+function Beam:setRemaining2Orig(remainingId, origId)
+  self._remaining2Orig[remainingId] = origId
 end
 
 function Beam:scores()
@@ -244,6 +260,7 @@ function Beam:nextBeam(token, scores, backPointer, beamSize)
   local newBeam = Beam.new(self:nextTokens(token, backPointer, beamSize),
                            self:nextState(backPointer, beamSize), remaining)
   newBeam:setScores(scores)
+  newBeam:setBackPointer(backPointer)
   return newBeam
 end
 
@@ -279,12 +296,8 @@ function Beam:batchesFinished()
   return self._batchesFinished
 end
 
--- dict
-function Beam:addCompletedHypotheses()
-  table.insert(self.completed, {}) -- batch, pointer, t, score, etc.
-end
-
 function Beam:removeFinishedBatches(remainingIds, beamSize)
+  self._remaining = #remainingIds
   if #remainingIds > 0 then
     self._state = rcToFlat(selectBatch(
       flatToRc(self._state, beamSize), remainingIds))
@@ -312,21 +325,33 @@ function Beam:indexBackPointer(beamSize, batchId, beamId)
   return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
 end
 
-function Beam.addCompletedHypotheses(tok, bp, s, score, t, batchId)
+function Beam.addCompletedHypotheses(score, tok, bp, s, t, batchId)
   local hypothesis = {score, tok, bp, s, t}
-  Beam.completed = Beam.completed or {}
-  Beam.completed[batchId] = Beam.completed[batchId] or {}
+  Beam._completed = Beam._completed or {}
+  Beam._completed[batchId] = Beam._completed[batchId] or {}
   -- Maintain a sorted list.
-  local id = #Beam.completed[batchId] + 1
-  Beam.completed[batchId][id] = hypothesis
+  local id = #Beam._completed[batchId] + 1
+  Beam._completed[batchId][id] = hypothesis
   while id > 1 do
-    if Beam.completed[batchId][id - 1] < score then
-      Beam.completed[batchId][id - 1], Beam.completed[batchId][id] =
-                   Beam.completed[batchId][id], Beam.completed[batchId][id - 1]
+    if Beam._completed[batchId][id - 1][1] < score then
+      Beam._completed[batchId][id - 1], Beam._completed[batchId][id] =
+                 Beam._completed[batchId][id], Beam._completed[batchId][id - 1]
     else
       break
     end
   end
+end
+
+function Beam.completed(batchId)
+  if Beam._completed then
+    return Beam._completed[batchId] or {}
+  else
+    return {}
+  end
+end
+
+function Beam.removeCompleted(batchId)
+  Beam._completed[batchId] = nil
 end
 
 return Beam
