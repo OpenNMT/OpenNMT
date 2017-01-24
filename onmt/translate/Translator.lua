@@ -200,7 +200,7 @@ function Translator:translateBatch(batch)
     if #tokens == 1 then
       unSatisfied:add(tokens[1]:eq(onmt.Constants.EOS))
     end
-    return unSatisfied
+    return unSatisfied:ge(1)
   end
 
   -- Construct BeamSearchAdvancer

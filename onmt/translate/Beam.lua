@@ -163,21 +163,20 @@ Parameters:
 
   * `token` - tensor of size `(batchSize, vocabSize)` or `(batchSize * beamSize, vocabSize)`.
   * `state` - an iteratable object, where the contained tensors should have the same first dimension as `token`.
-  * `batchSize` - batch size. [`token:size(1)`]
+  * `remaining` - remaining batch size. [`token:size(1)`]
 
 --]]
-function Beam:__init(token, state, batchSize)
-  batchSize = batchSize or token:size(1)
-  self._remaining = batchSize
+function Beam:__init(token, state, remaining)
+  self._remaining = remaining or token:size(1)
 
   self._tokens = { token }
   self._state = state
 
-  self._scores = localize(torch.zeros(batchSize), token)
+  self._scores = localize(torch.zeros(self._remaining), token)
   self._backPointers = nil
   self._orig2Remaining = {}
   self._remaining2Orig = {}
-  for b = 1, batchSize do
+  for b = 1, self._remaining do
     self._orig2Remaining[b] = b
     self._remaining2Orig[b] = b
   end
@@ -189,6 +188,10 @@ end
 
 function Beam:state()
   return self._state
+end
+
+function Beam:remaining()
+  return self._remaining
 end
 
 function Beam:setState(state)
@@ -237,8 +240,9 @@ function Beam:expandScores(scores, beamSize)
 end
 
 function Beam:nextBeam(token, scores, backPointers, beamSize)
+  local remaining = math.floor(token:size(1) / beamSize)
   local newBeam = Beam.new(self:nextTokens(token, backPointers, beamSize),
-                           self:nextState(backPointers, beamSize))
+                           self:nextState(backPointers, beamSize), remaining)
   newBeam:setScores(scores)
   return newBeam
 end
