@@ -8,7 +8,7 @@
       hyp3---hyp3---hyp3 -hyp3
       ========================
 
-Takes care of beams, back pointers, and scores.
+Takes care of beams.
 --]]
 local BeamSearcher = torch.class('BeamSearcher')
 
@@ -166,7 +166,6 @@ function BeamSearcher:_completeHypotheses(beams, completed)
     local origId = b
     if t > 2 then
       origId = beams[t - 1]:remaining2Orig(b)
-      assert (origId)
     end
     local prevCompleted = onmt.translate.Beam.completed(origId)
     local batchFinished = true
@@ -219,7 +218,6 @@ function BeamSearcher:_completeHypotheses(beams, completed)
                                    table.unpack(prevCompleted[prevId])))
             prevId = prevId + 1
           else
-            assert( completed[b][currId] == 1 )
             local score = scores[b][currId]
             local tok = token[b][currId]
             local bp = backPointer[b][currId]

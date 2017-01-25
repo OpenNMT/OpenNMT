@@ -1,3 +1,8 @@
+--[[ Class for maintaining statistics for each step. A beam mainly consists of
+  a list of tokens and a state. Tokens are stored as flat tensors of size
+  `batchSize`, while state can be either a tensor with first dimension size
+  `batchSize`, or an iterable object containing several such tensors.
+--]]
 local Beam = torch.class('Beam')
 
 --[[Helper function.
