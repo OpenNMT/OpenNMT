@@ -27,8 +27,7 @@
 
         _findKBest([beams], [ [scores] ])
 
-
-        completed <-- isComplete([ beams[t] ])
+        completed <-- isComplete([ beams[t + 1] ])
 
         -- Remove completed hypotheses (maintained by BeamSearcher).
 
@@ -81,13 +80,13 @@ Returns:
 function BeamSearchAdvancer:expand(beam) -- luacheck: no unused args
 end
 
---[[Determines which beams are complete.
+--[[Checks which hypotheses in the beam are already finished.
 
 Parameters:
 
   * `beam` - an `onmt.translate.Beam` object.
 
-Returns: a binary flat tensor of size `(batchSize)`, indicating which beams are complete.
+Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses are finished.
 
 ]]
 function BeamSearchAdvancer:isComplete(beam) -- luacheck: no unused args
@@ -98,14 +97,14 @@ end
 
 Parameters:
 
-  * `indexes` - a table of integers, specifying the indexes in the `states` to track.
+  * `indexes` - a table of iterators, specifying the indexes in the `states` to track.
 
 ]]
 function BeamSearchAdvancer:setKeptStateIndexes(indexes)
   self.keptStateIndexes = indexes
 end
 
---[[Determines which beams shall be pruned.
+--[[Checks which hypotheses in the beam shall be pruned.
 --
 Parameters:
 

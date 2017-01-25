@@ -193,22 +193,58 @@ function Beam:__init(token, state, remaining)
   self._remaining2Orig = {}
 end
 
+--[[
+
+Returns:
+
+  * `tokens` - a list of tokens. Note that the start-of-sequence symbols is included.
+
+--]]
 function Beam:tokens()
   return self._tokens
 end
 
+--[[
+
+Returns:
+
+  * `state` - an abstract iterable object as passed by constructor.
+
+--]]
 function Beam:state()
   return self._state
 end
 
+--[[
+
+Returns:
+
+  * `scores` - a flat tensor storing the total scores for each batch.
+
+--]]
+function Beam:scores()
+  return self._scores
+end
+
+--[[
+
+Returns:
+
+  * `remaining` - the number of not finished sequences.
+
+--]]
 function Beam:remaining()
   return self._remaining
 end
 
+--[[ Set state.
+--]]
 function Beam:setState(state)
   self._state = state
 end
 
+--[[ Set scores.
+--]]
 function Beam:setScores(scores)
   self._scores = scores:view(-1)
 end
@@ -225,24 +261,14 @@ function Beam:setRemaining2Orig(remainingId, origId)
   self._remaining2Orig[remainingId] = origId
 end
 
-function Beam:scores()
-  return self._scores
-end
-
 function Beam:backPointer()
   return self._backPointer
 end
 
---[[Helper function. In the first step, if there is only 1 hypothesis per
-  batch, then each hypothesis is replicated beamSize times to keep consistency
-  with the following beam search steps, while the scores of the auxiliary
-  hypotheses are set to -inf.
-
-Parameters:
-
-  * `beamSize` - beam size
-
---]]
+-- In the first step, if there is only 1 hypothesis per
+-- batch, then each hypothesis is replicated beamSize times to keep consistency
+-- with the following beam search steps, while the scores of the auxiliary
+-- hypotheses are set to -inf.
 function Beam:replicate(beamSize)
   assert (#self._tokens == 1, 'only the first beam may need replicating!')
   local token = self._tokens[1]
