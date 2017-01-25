@@ -341,6 +341,15 @@ function Beam:indexBackPointer(beamSize, batchId, beamId)
   end
 end
 
+function Beam:cleanUp(keptIndexes)
+  keptIndexes = keptIndexes or {}
+  local keptState = {}
+  for _, val in pairs(keptIndexes) do
+    keptState[val] = self._state[val]
+  end
+  self._state = keptState
+end
+
 function Beam.addCompletedHypotheses(score, tok, bp, t, batchId)
   local hypothesis = {score, tok, bp, t}
   Beam._completed = Beam._completed or {}

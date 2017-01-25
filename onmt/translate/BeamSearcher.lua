@@ -148,6 +148,9 @@ function BeamSearcher:_findKBest(beams, scores)
                                 backPointer, self.beamSize)
     beams[t + 1] = newBeam
   end
+
+  -- Cleanup unused memory
+  beams[t]:cleanUp(self.advancer.keptStateIndexes)
 end
 
 function BeamSearcher:_completeHypotheses(beams, completed)
