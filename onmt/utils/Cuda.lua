@@ -69,7 +69,8 @@ function Cuda.init(opt, masterGPU)
 end
 
 local function _cudnnSupportedNN(name)
-  return ((name == 'nn.SoftMax' or name == 'nn.LogSoftMax') and Cuda.cudnnSupport('SoftMax'))
+  -- do not use cudnn SoftMax for attention which is too small for getting any gain
+  return (name == 'nn.LogSoftMax' and Cuda.cudnnSupport('SoftMax'))
          or ((name == 'nn.Sigmoid' or name == 'nn.Tanh' or name == 'nn.ReLU') and Cuda.cudnnSupport('Activation'))
 end
 
@@ -93,6 +94,7 @@ function Cuda.convert(obj)
                 -- disable recursivity in conversion since we are already recursing
                 m.modules[i].modules = nil
                 m.modules[i] = Cuda.cudnn.convert(m.modules[i], Cuda.cudnn)
+                m.modules[i].algorithm = 'CUDNN_SOFTMAX_FAST'
                 m.modules[i].modules = modules
               end
             end
