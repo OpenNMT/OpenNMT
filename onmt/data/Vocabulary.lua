@@ -49,9 +49,35 @@ function Vocabulary.make(filename, size, validFunc)
 
   reader:close()
 
-  local originalSize = wordVocab:size()
-  wordVocab = wordVocab:prune(size)
-  _G.logger:info('Created dictionary of size ' .. wordVocab:size() .. ' (pruned from ' .. originalSize .. ')')
+  local originalSizes = { wordVocab:size() }
+  for i = 1, #featuresVocabs do
+    table.insert(originalSizes, featuresVocabs[i]:size())
+  end
+
+  if type(size) == 'string' then
+    local maxSizes = onmt.utils.String.split(size, ',')
+    wordVocab = wordVocab:prune(tonumber(maxSizes[1]))
+
+    for i = 1, #featuresVocabs do
+      if i + 1 > #maxSizes then
+        break
+      end
+
+      local maxFeatSize = tonumber(maxSizes[i + 1])
+      if maxFeatSize > 0 then
+        featuresVocabs[i] = featuresVocabs[i]:prune(maxFeatSize)
+      end
+    end
+  else
+    wordVocab = wordVocab:prune(size)
+  end
+
+  _G.logger:info('Created word dictionary of size '
+                   .. wordVocab:size() .. ' (pruned from ' .. originalSizes[1] .. ')')
+  for i = 1, #featuresVocabs do
+    _G.logger:info('Created feature ' .. i .. ' dictionary of size '
+                     .. featuresVocabs[i]:size() .. ' (pruned from ' .. originalSizes[i + 1] .. ')')
+  end
 
   return wordVocab, featuresVocabs
 end
