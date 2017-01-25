@@ -415,7 +415,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     validPpl = eval(model, criterion, validData)
 
     if not opt.json_log then
-      _G.logger:info('profile: %s',_G.profiler:log())
+      if not _G.profiler.disable then _G.logger:info('profile: %s',_G.profiler:log()) end
       _G.logger:info('Validation perplexity: %.2f', validPpl)
     end
 

@@ -333,7 +333,9 @@ function Decoder:backward(batch, outputs, criterion)
   for t = batch.targetLength, 1, -1 do
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
+    _G.profiler:start("generator_fwd")
     local pred = self.generator:forward(outputs[t])
+    _G.profiler:stop("generator_fwd")
     local output = batch:getTargetOutput(t)
 
     loss = loss + criterion:forward(pred, output)
@@ -345,7 +347,9 @@ function Decoder:backward(batch, outputs, criterion)
     end
 
     -- Compute the final layer gradient.
+    _G.profiler:start("generator_bwd")
     local decGradOut = self.generator:backward(outputs[t], genGradOut)
+    _G.profiler:stop("generator_bwd")
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
     -- Compute the standarad backward.
