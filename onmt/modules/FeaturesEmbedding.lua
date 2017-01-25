@@ -2,13 +2,10 @@
   A nngraph unit that maps features ids to embeddings. When using multiple
   features this can be the concatenation or the sum of each individual embedding.
 ]]
-local FeaturesEmbedding, parent = torch.class('onmt.FeaturesEmbedding', 'nn.Container')
+local FeaturesEmbedding, parent = torch.class('onmt.FeaturesEmbedding', 'onmt.Network')
 
 function FeaturesEmbedding:__init(dicts, dimExponent, dim, merge)
-  parent.__init(self)
-
-  self.net = self:_buildModel(dicts, dimExponent, dim, merge)
-  self:add(self.net)
+  parent.__init(self, self:_buildModel(dicts, dimExponent, dim, merge))
 end
 
 function FeaturesEmbedding:_buildModel(dicts, dimExponent, dim, merge)
@@ -47,17 +44,4 @@ function FeaturesEmbedding:_buildModel(dicts, dimExponent, dim, merge)
   end
 
   return nn.gModule(inputs, {output})
-end
-
-function FeaturesEmbedding:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function FeaturesEmbedding:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
-end
-
-function FeaturesEmbedding:accGradParameters(input, gradOutput, scale)
-  self.net:accGradParameters(input, gradOutput, scale)
 end

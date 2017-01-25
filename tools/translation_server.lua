@@ -17,10 +17,8 @@ cmd:option('-port', '5556', [[Port to run the server on]])
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
-cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
-cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
+onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
-
 
 local function translateMessage(translator, lines)
   local srcBatch = {}

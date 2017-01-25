@@ -24,8 +24,9 @@ cmd:text("")
 cmd:text("**Model options**")
 cmd:text("")
 
-cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
-cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
+cmd:option('-layers', 2, [[Number of layers in the RNN encoder/decoder]])
+cmd:option('-rnn_size', 500, [[Size of RNN hidden states]])
+cmd:option('-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]])
 cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
 cmd:option('-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]])
 cmd:option('-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
@@ -41,7 +42,7 @@ cmd:text("**Optimization options**")
 cmd:text("")
 
 cmd:option('-max_batch_size', 64, [[Maximum batch size]])
-cmd:option('-epochs', 13, [[Number of training epochs]])
+cmd:option('-end_epoch', 13, [[The final epoch of the training]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
@@ -70,9 +71,7 @@ cmd:text("**Other options**")
 cmd:text("")
 
 -- GPU
-cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
-cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
-                            Note: this will technically change the final batch size to max_batch_size*nparallel.]])
+onmt.utils.Cuda.declareOpts(cmd)
 cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
 cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
@@ -218,7 +217,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     optimStates = opt.optim_states
   })
 
-  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
+  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
 
   local function trainEpoch(epoch, lastValidPpl)
     local epochState
@@ -243,10 +242,10 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     opt.start_iteration = 1
 
-    local function trainNetwork()
+    local function trainNetwork(batch)
       optim:zeroGrad(_G.gradParams)
 
-      local encStates, context = _G.model.encoder:forward(_G.batch)
+      local encStates, context = _G.model.encoder:forward(batch)
       local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
 
       local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
@@ -281,7 +280,7 @@ local function trainModel(model, trainData, validData, dataset, info)
           -- Send batch data to the GPU.
           onmt.utils.Cuda.convert(_G.batch)
           _G.batch.totalSize = totalSize
-          local loss = trainNetwork()
+          local loss = trainNetwork(_G.batch)
 
           return idx, loss
         end,
@@ -315,7 +314,7 @@ local function trainModel(model, trainData, validData, dataset, info)
       -- Asynchronous parallel.
       local counter = onmt.utils.Parallel.getCounter()
       counter:set(startI)
-      local masterGPU = onmt.utils.Parallel.gpus[1]
+      local masterGPU = onmt.utils.Cuda.gpuIds[1]
       local gradBuffer = onmt.utils.Parallel.gradBuffer
       local gmutexId = onmt.utils.Parallel.gmutexId()
 
@@ -402,7 +401,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     _G.logger:info('Start training...')
   end
 
-  for epoch = opt.start_epoch, opt.epochs do
+  for epoch = opt.start_epoch, opt.end_epoch do
     if not opt.json_log then
       _G.logger:info('')
     end
@@ -412,7 +411,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     validPpl = eval(model, criterion, validData)
 
     if not opt.json_log then
-      _G.logger:info('Validation perplexity: ' .. validPpl)
+      _G.logger:info('Validation perplexity: %.2f', validPpl)
     end
 
     if opt.optim == 'sgd' then
@@ -455,11 +454,10 @@ local function main()
     opt.input_feed = checkpoint.options.input_feed
 
     -- Resume training from checkpoint
-    if opt.train_from:len() > 0 and opt.continue then
+    if opt.continue then
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
-      opt.epochs = checkpoint.options.epochs
       opt.curriculum = checkpoint.options.curriculum
 
       opt.learning_rate = checkpoint.info.learningRate
