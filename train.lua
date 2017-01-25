@@ -224,9 +224,6 @@ local function trainModel(model, trainData, validData, dataset, info)
     local epochState
     local batchOrder
 
-    -- Reset global profiler.
-    _G.profiler:reset()
-
     local startI = opt.start_iteration
 
     local numIterations = trainData:batchCount()
@@ -417,7 +414,12 @@ local function trainModel(model, trainData, validData, dataset, info)
       _G.logger:info('')
     end
 
+    -- Reset global profiler.
+    _G.profiler:reset()
+
+    _G.profiler:start("train")
     local epochState = trainEpoch(epoch, validPpl)
+    _G.profiler:stop("train")
 
     _G.profiler:start("valid")
     validPpl = eval(model, criterion, validData)

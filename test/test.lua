@@ -54,6 +54,24 @@ end
 
 tester:add(stringTest)
 
+local profileTest = torch.TestSuite()
+
+function profileTest.profiling()
+  local profiler = onmt.utils.Profiler.new({profiler=true})
+  profiler:start("main")
+  local count = 0
+  while count < 100 do count = count+1 end
+  profiler:start("a")
+  while count < 1000 do count = count+1 end
+  profiler:stop("a"):start("b")
+  while count < 10000 do count = count+1 end
+  profiler:start("c"):stop("c"):stop("b")
+  profiler:stop("main")
+  local v=profiler:log():gsub("[-0-9.e]+","*")
+  tester:eq(v, "main:[*, a:*, b:[*, c:*]]")
+end
+
+tester:add(profileTest)
 
 local tensorTest = torch.TestSuite()
 

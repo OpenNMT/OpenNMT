@@ -44,23 +44,30 @@ function Profiler:__init(opt)
   self:reset()
 end
 
+-- Reset Profiler.
 function Profiler:reset()
   self.profiles = {}
   self.timers = {}
+  self.stack = {}
 end
 
+-- Start recording a section.
 function Profiler:start(name)
   if self.disable then return self end
   self.timers[name] = torch.Timer()
+  table.insert(self.stack, name)
   return self
 end
 
+-- Stop recording a section.
 function Profiler:stop(name)
   if self.disable then return self end
-  assert(self.timers[name], 'Invalid profiler stop action: '..name)
-  if not self.profiles[name] then self.profiles[name] = 0 end
-  self.profiles[name] = self.profiles[name] + self.timers[name]:time().real
+  assert(self.stack[#self.stack] == name, 'Invalid profiler stop action: '..name)
+  local path = table.concat(self.stack, ".")
+  if not self.profiles[path] then self.profiles[path] = 0 end
+  self.profiles[path] = self.profiles[path] + self.timers[name]:time().real
   self.timers[name] = nil
+  table.remove(self.stack)
   return self
 end
 
@@ -79,11 +86,24 @@ function Profiler:add(profile)
   end
 end
 
--- Returns text string with log.
-function Profiler:log()
+-- Returns text string with log structured by sub level.
+-- train:[23,encoder_fwd:10,encoder_bwd:14]
+function Profiler:log(prefix)
+  prefix = prefix or ''
   local t = {}
   for name,v in pairs(self.profiles) do
-    t[name] = name..':'..v
+    v = string.format("%g", v)
+    if name:sub(1,#prefix) == prefix then
+      local pos = #prefix + 1
+      if not name:sub(pos):find("%.") then
+        local npref = prefix
+        local subtree = self:log(name..'.')
+        if #subtree > 0 then
+          v='['..v..', '..subtree..']'
+        end
+        table.insert(t, name:sub(pos)..':'..v)
+      end
+    end
   end
   return table.concat(t, ", ")
 end
