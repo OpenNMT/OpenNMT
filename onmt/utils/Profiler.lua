@@ -64,11 +64,13 @@ function Profiler:stop(name)
   return self
 end
 
+-- Dump profile.
 function Profiler:dump()
   if self.disable then return end
   return self.profiles
 end
 
+-- Aggregage profiles with a previous dump.
 function Profiler:add(profile)
   if self.disable then return end
   for name,v in pairs(profile) do
@@ -77,11 +79,11 @@ function Profiler:add(profile)
   end
 end
 
+-- Returns text string with log.
 function Profiler:log()
-  if self.disable then return end
   local t = {}
   for name,v in pairs(self.profiles) do
-    t[name] = t..':'..v
+    t[name] = name..':'..v
   end
   return table.concat(t, ", ")
 end

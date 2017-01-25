@@ -224,6 +224,9 @@ local function trainModel(model, trainData, validData, dataset, info)
     local epochState
     local batchOrder
 
+    -- Reset global profiler.
+    _G.profiler:reset()
+
     local startI = opt.start_iteration
 
     local numIterations = trainData:batchCount()
@@ -275,6 +278,8 @@ local function trainModel(model, trainData, validData, dataset, info)
         local losses = {}
 
         onmt.utils.Parallel.launch(function(idx)
+          -- Reset thread profiler.
+          _G.profiler:reset()
           _G.batch = batches[idx]
           if _G.batch == nil then
             return idx, 0, _G.profiler:dump()
@@ -326,6 +331,8 @@ local function trainModel(model, trainData, validData, dataset, info)
         local startCounter = counter:get()
 
         onmt.utils.Parallel.launch(function(idx)
+          -- Reset thread profiler.
+          _G.profiler:reset()
           -- First GPU is only used for master parameters.
           -- Use 1 GPU only for 1000 first batch.
           if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < opt.async_parallel_minbatch) then
@@ -412,7 +419,9 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     local epochState = trainEpoch(epoch, validPpl)
 
+    _G.profiler:start("valid")
     validPpl = eval(model, criterion, validData)
+    _G.profiler:stop("valid")
 
     if not opt.json_log then
       if not _G.profiler.disable then _G.logger:info('profile: %s',_G.profiler:log()) end
