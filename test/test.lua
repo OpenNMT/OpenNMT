@@ -68,7 +68,7 @@ function profileTest.profiling()
   profiler:stop("b.c"):start("b.d"):stop("b.d")
   profiler:stop("main")
   local v=profiler:log():gsub("[-0-9.e]+","*")
-  tester:eq(v, "main:[*, a:*, b:[*, d:*, c:*]]")
+  tester:assert(v=="main:[*, a:*, b:[*, d:*, c:*]]" or v == "main:[*, a:*, b:[*, c:*, d:*]]")
 end
 
 tester:add(profileTest)
