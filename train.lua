@@ -220,9 +220,11 @@ local function trainModel(model, trainData, validData, dataset, info)
 
   local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
 
-  local function trainEpoch(epoch, lastValidPpl)
+  local function trainEpoch(epoch, lastValidPpl, doProfile)
     local epochState
     local batchOrder
+
+    local epochProfiler = onmt.utils.Profiler.new(doProfile)
 
     local startI = opt.start_iteration
 
@@ -245,15 +247,15 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     local function trainNetwork(batch)
       optim:zeroGrad(_G.gradParams)
-      _G.profiler:start("encoder_fwd")
+      _G.profiler:start("encoder.fwd")
       local encStates, context = _G.model.encoder:forward(batch)
-      _G.profiler:stop("encoder_fwd"):start("decoder_fwd")
+      _G.profiler:stop("encoder.fwd"):start("decoder.fwd")
       local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
-      _G.profiler:stop("decoder_fwd"):start("decoder_bwd")
+      _G.profiler:stop("decoder.fwd"):start("decoder.bwd")
       local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
-      _G.profiler:stop("decoder_bwd"):start("encoder_bwd")
+      _G.profiler:stop("decoder.bwd"):start("encoder.bwd")
       _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
-      _G.profiler:stop("encoder_bwd")
+      _G.profiler:stop("encoder.bwd")
       return loss
     end
 
@@ -275,8 +277,8 @@ local function trainModel(model, trainData, validData, dataset, info)
         local losses = {}
 
         onmt.utils.Parallel.launch(function(idx)
-          -- Reset thread profiler.
-          _G.profiler:reset()
+          _G.profiler = onmt.utils.Profiler.new(doProfile)
+
           _G.batch = batches[idx]
           if _G.batch == nil then
             return idx, 0, _G.profiler:dump()
@@ -291,7 +293,7 @@ local function trainModel(model, trainData, validData, dataset, info)
         end,
         function(idx, loss, profile)
           losses[idx]=loss
-          _G.profiler:add(profile)
+          epochProfiler:add(profile)
         end)
 
         -- Accumulate the gradients from the different parallel threads.
@@ -328,8 +330,7 @@ local function trainModel(model, trainData, validData, dataset, info)
         local startCounter = counter:get()
 
         onmt.utils.Parallel.launch(function(idx)
-          -- Reset thread profiler.
-          _G.profiler:reset()
+          _G.profiler = onmt.utils.Profiler.new(doProfile)
           -- First GPU is only used for master parameters.
           -- Use 1 GPU only for 1000 first batch.
           if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < opt.async_parallel_minbatch) then
@@ -388,7 +389,7 @@ local function trainModel(model, trainData, validData, dataset, info)
           if theloss then
             epochState:update(thebatch, theloss)
           end
-          _G.profiler:add(profile)
+          epochProfiler:add(profile)
         end)
 
         if opt.report_every > 0 then
@@ -400,7 +401,7 @@ local function trainModel(model, trainData, validData, dataset, info)
       end
     end
 
-    return epochState
+    return epochState, epochProfiler:dump()
   end
 
   local validPpl = 0
@@ -414,19 +415,19 @@ local function trainModel(model, trainData, validData, dataset, info)
       _G.logger:info('')
     end
 
-    -- Reset global profiler.
-    _G.profiler:reset()
+    local globalProfiler = onmt.utils.Profiler.new(opt.profiler)
 
-    _G.profiler:start("train")
-    local epochState = trainEpoch(epoch, validPpl)
-    _G.profiler:stop("train")
+    globalProfiler:start("train")
+    local epochState, epochProfile = trainEpoch(epoch, validPpl, opt.profiler)
+    globalProfiler:add(epochProfile)
+    globalProfiler:stop("train")
 
-    _G.profiler:start("valid")
+    globalProfiler:start("valid")
     validPpl = eval(model, criterion, validData)
-    _G.profiler:stop("valid")
+    globalProfiler:stop("valid")
 
     if not opt.json_log then
-      if not _G.profiler.disable then _G.logger:info('profile: %s',_G.profiler:log()) end
+      if opt.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
       _G.logger:info('Validation perplexity: %.2f', validPpl)
     end
 
@@ -448,7 +449,7 @@ local function main()
   onmt.utils.Opt.init(opt, requiredOptions)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
-  _G.profiler = onmt.utils.Profiler.new(opt)
+  _G.profiler = onmt.utils.Profiler.new(false)
 
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)

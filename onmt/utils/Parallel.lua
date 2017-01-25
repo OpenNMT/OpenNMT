@@ -49,7 +49,6 @@ function Parallel.init(opt)
         end,
         function(threadid)
           _G.logger = globalLogger
-          _G.profiler = onmt.utils.Profiler.new(opt)
           onmt.utils.Cuda.init(opt, threadid)
         end
       ) -- dedicate threads to GPUs
