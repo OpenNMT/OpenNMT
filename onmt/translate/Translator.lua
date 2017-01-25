@@ -180,7 +180,7 @@ function Translator:translateBatch(batch)
   -- IsComplete function
   function Advancer:isComplete(beam)
     local tokens = beam:tokens()
-    local seqLength = #tokens
+    local seqLength = #tokens - 1
     local complete = tokens[#tokens]:eq(onmt.Constants.EOS)
     if seqLength > translator.opt.max_sent_length then
       complete:fill(1)

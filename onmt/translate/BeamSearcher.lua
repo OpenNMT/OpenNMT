@@ -75,7 +75,6 @@ function BeamSearcher:search(beamSize, nBest, beforeFilterFactor)
 end
 
 function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
-  local hypothesis
   local states = {}
   local tokens = {}
 
@@ -104,8 +103,7 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
       end
     end
   states = statesTemp
-  hypothesis = {tokens = tokens, states = states, score = score}
-  return hypothesis
+  return {tokens = tokens, states = states, score = score}
 end
 
 -- Find the top beamSize hypotheses (satisfying filters)
@@ -232,8 +230,8 @@ function BeamSearcher:_completeHypotheses(beams, completed)
                        self:_retrieveHypothesis(beams, origId, score, tok, bp, t))
           currId = currId + 1
         end
-        table.insert(finishedHypotheses, hypothesis)
       end
+      table.insert(finishedHypotheses, hypothesis)
       onmt.translate.Beam.removeCompleted(origId)
     end
   end
