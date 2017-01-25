@@ -201,7 +201,7 @@ function beamSearchTest.beamSearch()
   local initBeam = function()
     return onmt.translate.Beam.new(torch.LongTensor({1, 2, 3}), {})
   end
-  local update = function(beam)
+  local update = function()
   end
   local expand = function(beam)
     local tokens = beam:tokens()
