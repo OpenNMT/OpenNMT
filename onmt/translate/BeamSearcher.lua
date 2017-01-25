@@ -30,20 +30,23 @@ Parameters:
   * `beamSize` - beam size. [1]
   * `nBest` - the `nBest` top hypotheses will be returned after beam search. [1]
   * `beforeFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
+  * `beforeFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
+  * `keepInitial` - optional, whether return the initial token or not. [false]
 
 Returns: a table `finished`. `finished[b][n].score`, `finished[b][n].tokens` and `finished[b][n].states` describe the n-th best hypothesis for b-th sample in the batch.
 
 ]]
-function BeamSearcher:search(beamSize, nBest, beforeFilterFactor)
+function BeamSearcher:search(beamSize, nBest, beforeFilterFactor, keepInitial)
   self.nBest = nBest or 1
   self.beamSize = beamSize or 1
   self.beforeFilterFactor = beforeFilterFactor or 1
+  self.keepInitial = keepInitial or false
 
   local beams = {}
   local finished = {}
 
   -- Initialize the beam.
-  beams[1] = self.advancer.initBeam()
+  beams[1] = self.advancer:initBeam()
   local remaining = beams[1]:remaining()
   if beams[1]:tokens()[1]:size(1) ~= remaining * beamSize then
     beams[1]:replicate(self.beamSize)
@@ -92,6 +95,9 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
     tokens[t - 1] = beams[t]:indexToken(self.beamSize, remainingId, bp)
     bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
     t = t - 1
+  end
+  if not self.keepInitial then
+    tokens[0] = nil
   end
 
   -- Transpose states

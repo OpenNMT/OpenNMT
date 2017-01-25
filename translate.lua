@@ -150,7 +150,7 @@ local function main()
 
           if opt.n_best > 1 then
             _G.logger:info('')
-            _G.logger:info('\nBEST HYP:')
+            _G.logger:info('BEST HYP:')
             for n = 1, #info[b].nBest do
               local nBest = table.concat(info[b].nBest[n].tokens, " ")
               _G.logger:info("[%.4f] %s", info[b].nBest[n].score, nBest)
