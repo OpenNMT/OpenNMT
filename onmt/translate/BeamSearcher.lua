@@ -77,41 +77,6 @@ function BeamSearcher:search(beamSize, nBest, beforeFilterFactor, keepInitial)
   return finished
 end
 
-function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
-  local states = {}
-  local tokens = {}
-
-  tokens[t - 1] = tok
-  t = t - 1
-  local remainingId
-  while t > 0 do
-    if t == 1 then
-      remainingId = batchId
-    else
-      remainingId = beams[t]:orig2Remaining(batchId)
-    end
-    states[t] = beams[t]:indexState(self.beamSize, remainingId, bp,
-                                    self.advancer.keptStateIndexes)
-    tokens[t - 1] = beams[t]:indexToken(self.beamSize, remainingId, bp)
-    bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
-    t = t - 1
-  end
-  if not self.keepInitial then
-    tokens[0] = nil
-  end
-
-  -- Transpose states
-  local statesTemp = {}
-    for r = 1, #states do
-      for j, _ in pairs(states[r]) do
-        statesTemp[j] = statesTemp[j] or {}
-        statesTemp[j][r] = states[r][j]
-      end
-    end
-  states = statesTemp
-  return {tokens = tokens, states = states, score = score}
-end
-
 -- Find the top beamSize hypotheses (satisfying filters)
 function BeamSearcher:_findKBest(beams, scores)
   local t = #beams
@@ -151,6 +116,41 @@ function BeamSearcher:_findKBest(beams, scores)
 
   -- Cleanup unused memory
   beams[t]:cleanUp(self.advancer.keptStateIndexes)
+end
+
+function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
+  local states = {}
+  local tokens = {}
+
+  tokens[t - 1] = tok
+  t = t - 1
+  local remainingId
+  while t > 0 do
+    if t == 1 then
+      remainingId = batchId
+    else
+      remainingId = beams[t]:orig2Remaining(batchId)
+    end
+    states[t] = beams[t]:indexState(self.beamSize, remainingId, bp,
+                                    self.advancer.keptStateIndexes)
+    tokens[t - 1] = beams[t]:indexToken(self.beamSize, remainingId, bp)
+    bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
+    t = t - 1
+  end
+  if not self.keepInitial then
+    tokens[0] = nil
+  end
+
+  -- Transpose states
+  local statesTemp = {}
+    for r = 1, #states do
+      for j, _ in pairs(states[r]) do
+        statesTemp[j] = statesTemp[j] or {}
+        statesTemp[j][r] = states[r][j]
+      end
+    end
+  states = statesTemp
+  return {tokens = tokens, states = states, score = score}
 end
 
 function BeamSearcher:_completeHypotheses(beams, completed)
