@@ -18,7 +18,12 @@ function Translator.declareOpts(cmd)
   cmd:option('-phrase_table', '', [[Path to source-target dictionary to replace UNK
                                      tokens. See README.md for the format this file should be in]])
   cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
-  cmd:option('-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored during beam search]])
+  cmd:option('-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored
+                                           during beam search]])
+  cmd:option('-before_filter_factor', 1, [[Optional, set this only if filter is being used. Before
+                              applying filters, hypotheses with top `beamSize * preFilterFactor`
+                              scores will be considered. If the returned hypotheses voilate filters,
+                              then set this to a larger value to consider more.]])
 end
 
 
@@ -138,7 +143,7 @@ function Translator:translateBatch(batch)
     for j = 1, #translator.dicts.tgt.features do
       features[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
     end
-    local sourceSizes = batch.sourceSize:clone()
+    local sourceSizes = onmt.utils.Cuda.convert(batch.sourceSize)
 
     -- Define state to be { decoder states, decoder output, context,
     -- attentions, features, sourceSizes, step }.
@@ -219,7 +224,8 @@ function Translator:translateBatch(batch)
   end
 
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best)
+  local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best,
+                                      self.opt.before_filter_factor)
 
   debug.getregistry()['Advancer'] = nil
   collectgarbage()

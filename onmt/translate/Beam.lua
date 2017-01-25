@@ -124,10 +124,16 @@ local function selectBeam(v, indexes, beamSize)
     local batchSize = indexes:size(1)
     local k = indexes:size(2)
     beamSize = beamSize or k
-    return h:index(1, indexes:view(-1):long()
-                 + (torch.range(0, (batchSize - 1) * beamSize, beamSize):long())
-                 :contiguous():view(batchSize, 1)
-                 :expandAs(indexes):contiguous():view(-1))
+    local sizes = {}
+    local ones = {}
+    for j = 2, #h:size() do
+        sizes[j - 1] = h:size(j)
+        ones[j - 1] = 1
+    end
+    return h:view(batchSize, beamSize, table.unpack(sizes))
+            :gather(2, indexes:view(batchSize, k, table.unpack(ones))
+                              :expand(batchSize, k, table.unpack(sizes)))
+            :view(batchSize * k, table.unpack(sizes))
   end)
 end
 
