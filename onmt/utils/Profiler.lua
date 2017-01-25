@@ -96,7 +96,6 @@ function Profiler:log(prefix)
     if name:sub(1,#prefix) == prefix then
       local pos = #prefix + 1
       if not name:sub(pos):find("%.") then
-        local npref = prefix
         local subtree = self:log(name..'.')
         if #subtree > 0 then
           v='['..v..', '..subtree..']'
