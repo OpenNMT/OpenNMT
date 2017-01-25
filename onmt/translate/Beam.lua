@@ -5,24 +5,6 @@
 --]]
 local Beam = torch.class('Beam')
 
---[[Helper function.
-
-Parameters:
-
-  * `v` - tensor
-  * `x` - reference tensor
-
-Returns: if `x` is cuda tensor, return `v:cuda()`; otherwise, return `v`.
-
---]]
-local function localize(v, x)
-  if string.match(x:type(), 'Cuda') then
-    return v:cuda()
-  else
-    return v
-  end
-end
-
 --[[Helper function. Recursively convert flat `batchSize * beamSize` tensors
  to 2D `(batchSize, beamSize)` tensors.
 
@@ -187,7 +169,7 @@ function Beam:__init(token, state, remaining)
   end
   self._state = state
 
-  self._scores = localize(torch.zeros(self._remaining), self._tokens[1])
+  self._scores = torch.zeros(self._remaining)
   self._backPointer = nil
   self._orig2Remaining = {}
   self._remaining2Orig = {}
@@ -285,7 +267,8 @@ end
 function Beam:expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
-  local expandedScores = (scores:view(remaining, beamSize, -1)
+  self._scores = self._scores:typeAs(scores)
+  local expandedScores = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
                           + self._scores:view(remaining, beamSize, 1)
                                         :expand(remaining, beamSize, vocabSize)
                          ):view(remaining, -1)
