@@ -199,7 +199,7 @@ function Beam:setState(state)
 end
 
 function Beam:setScores(scores)
-  self._scores = scores
+  self._scores = scores:view(-1)
 end
 
 function Beam:setBackPointer(backPointer)
@@ -300,10 +300,13 @@ function Beam:removeFinishedBatches(remainingIds, beamSize)
   self._remaining = #remainingIds
   if #remainingIds > 0 then
     self._state = rcToFlat(selectBatch(
-      flatToRc(self._state, beamSize), remainingIds))
+                           flatToRc(self._state, beamSize), remainingIds))
     self._tokens = rcToFlat(selectBatch(
-      flatToRc(self._tokens, beamSize), remainingIds))
-    self._scores = selectBatch(self._scores, remainingIds)
+                           flatToRc(self._tokens, beamSize), remainingIds))
+    self._scores = rcToFlat(selectBatch(
+                           flatToRc(self._scores, beamSize), remainingIds))
+    self._backPointer = rcToFlat(selectBatch(
+                           flatToRc(self._backPointer, beamSize), remainingIds))
   end
 end
 
@@ -322,11 +325,13 @@ function Beam:indexToken(beamSize, batchId, beamId)
 end
 
 function Beam:indexBackPointer(beamSize, batchId, beamId)
-  return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
+  if self._backPointer then
+    return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
+  end
 end
 
-function Beam.addCompletedHypotheses(score, tok, bp, s, t, batchId)
-  local hypothesis = {score, tok, bp, s, t}
+function Beam.addCompletedHypotheses(score, tok, bp, t, batchId)
+  local hypothesis = {score, tok, bp, t}
   Beam._completed = Beam._completed or {}
   Beam._completed[batchId] = Beam._completed[batchId] or {}
   -- Maintain a sorted list.
@@ -336,6 +341,7 @@ function Beam.addCompletedHypotheses(score, tok, bp, s, t, batchId)
     if Beam._completed[batchId][id - 1][1] < score then
       Beam._completed[batchId][id - 1], Beam._completed[batchId][id] =
                  Beam._completed[batchId][id], Beam._completed[batchId][id - 1]
+      id = id - 1
     else
       break
     end
@@ -351,7 +357,9 @@ function Beam.completed(batchId)
 end
 
 function Beam.removeCompleted(batchId)
-  Beam._completed[batchId] = nil
+  if Beam._completed then
+    Beam._completed[batchId] = nil
+  end
 end
 
 return Beam

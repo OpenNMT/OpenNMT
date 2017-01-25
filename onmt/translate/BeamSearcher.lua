@@ -74,12 +74,11 @@ function BeamSearcher:search(beamSize, nBest, beforeFilterFactor)
   return finished
 end
 
-function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, s, t)
+function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
   local hypothesis
   local states = {}
   local tokens = {}
 
-  states[t] = s
   tokens[t - 1] = tok
   t = t - 1
   local remainingId
@@ -139,7 +138,8 @@ function BeamSearcher:_findKBest(beams, scores)
     local kBestScores, kBestIds = consideredScores:topk(self.beamSize, 2,
                                                         true, true)
     local backPointer = consideredBackPointer:gather(2, kBestIds)
-    local token = consideredToken:gather(2, kBestIds)
+    local token = consideredToken:viewAs(consideredIds)
+                                 :gather(2, kBestIds):view(-1)
     newBeam = beams[t]:nextBeam(token, kBestScores,
                                 backPointer, self.beamSize)
     beams[t + 1] = newBeam
@@ -197,9 +197,8 @@ function BeamSearcher:_completeHypotheses(beams, completed)
         if completed[b][k] == 1 then
           local tok = token[b][k]
           local bp = backPointer[b][k]
-          local s = beams[t]:indexState(self.beamSize, b, k, self.advancer.keptStateIndexes)
           local score = scores[b][k]
-          onmt.translate.Beam.addCompletedHypotheses(score, tok, bp, s, t, origId)
+          onmt.translate.Beam.addCompletedHypotheses(score, tok, bp, t, origId)
         end
       end
     else
@@ -220,9 +219,8 @@ function BeamSearcher:_completeHypotheses(beams, completed)
             local score = scores[b][currId]
             local tok = token[b][currId]
             local bp = backPointer[b][currId]
-            local s = beams[t]:indexState(self.beamSize, b, currId, self.advancer.keptStateIndexes)
             table.insert(hypothesis,
-                         self:_retrieveHypothesis(beams, origId, score, tok, bp, s, t))
+                         self:_retrieveHypothesis(beams, origId, score, tok, bp, t))
             currId = currId + 1
           end
         else
@@ -230,9 +228,8 @@ function BeamSearcher:_completeHypotheses(beams, completed)
           local score = scores[b][currId]
           local tok = token[b][currId]
           local bp = backPointer[b][currId]
-          local s = beams[t]:indexState(self.beamSize, b, currId, self.advancer.keptStateIndexes)
           table.insert(hypothesis,
-                       self:_retrieveHypothesis(beams, origId, score, tok, bp, s, t))
+                       self:_retrieveHypothesis(beams, origId, score, tok, bp, t))
           currId = currId + 1
         end
         table.insert(finishedHypotheses, hypothesis)

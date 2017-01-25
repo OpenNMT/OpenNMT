@@ -198,8 +198,8 @@ function Translator:translateBatch(batch)
     -- Disallow too many UNKs
     local unSatisfied = numUnks:gt(translator.opt.max_num_unks)
     -- Disallow empty hypotheses
-    if #tokens == 1 then
-      unSatisfied:add(tokens[1]:eq(onmt.Constants.EOS))
+    if #tokens == 2 then
+      unSatisfied:add(tokens[2]:eq(onmt.Constants.EOS))
     end
     return unSatisfied:ge(1)
   end
