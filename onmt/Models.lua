@@ -1,9 +1,15 @@
+-- Return effective embeddings size based on user options.
 local function resolveEmbSizes(opt, dicts, wordSizes)
   local wordEmbSize
   local featEmbSizes = {}
 
   wordSizes = onmt.utils.String.split(wordSizes, ',')
-  wordEmbSize = tonumber(wordSizes[1])
+
+  if opt.word_vec_size > 0 then
+    wordEmbSize = opt.word_vec_size
+  else
+    wordEmbSize = tonumber(wordSizes[1])
+  end
 
   for i = 1, #dicts.features do
     local size
@@ -17,10 +23,6 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
     end
 
     table.insert(featEmbSizes, size)
-  end
-
-  if opt.word_vec_size > 0 then
-    wordEmbSize = opt.word_vec_size
   end
 
   return wordEmbSize, featEmbSizes
