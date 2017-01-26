@@ -338,10 +338,14 @@ function Decoder:backward(batch, outputs, criterion)
     _G.profiler:stop("generator.fwd")
     local output = batch:getTargetOutput(t)
 
+    _G.profiler:start("criterion.fwd")
     loss = loss + criterion:forward(pred, output)
+    _G.profiler:stop("criterion.fwd")
 
     -- Compute the criterion gradient.
+    _G.profiler:start("criterion.bwd")
     local genGradOut = criterion:backward(pred, output)
+    _G.profiler:stop("criterion.bwd")
     for j = 1, #genGradOut do
       genGradOut[j]:div(batch.totalSize)
     end
