@@ -39,6 +39,7 @@ Returns: a table `finished`. `finished[b][n].score`, `finished[b][n].tokens` and
 function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   self.nBest = nBest or 1
   self.beamSize = beamSize or 1
+  assert (self.nBest <= self.beamSize)
   self.preFilterFactor = preFilterFactor or 1
   self.keepInitial = keepInitial or false
 
