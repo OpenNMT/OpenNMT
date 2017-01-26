@@ -117,7 +117,7 @@ local function selectBeam(v, indexes, beamSize)
         sizes[j - 1] = h:size(j)
         ones[j - 1] = 1
     end
-    return h:view(batchSize, beamSize, table.unpack(sizes))
+    return h:contiguous():view(batchSize, beamSize, table.unpack(sizes))
             :gather(2, indexes:view(batchSize, k, table.unpack(ones))
                               :expand(batchSize, k, table.unpack(sizes)))
             :view(batchSize * k, table.unpack(sizes))
