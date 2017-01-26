@@ -12,7 +12,12 @@ To avoid concurrency problem for parallel processing, each thread should have it
 Profiles can be embedded.
 
 Parameters:
-  * `opt` - access to program parameter
+  * `doProfile` - enable profiling
+
+Documentation:
+  Profile is recording/aggregating time spent in sections. Sections have hierarchical structure.
+  A section is opened with `P:start("name")` and closed with `P:close("name")`.
+  Start and Stop command can be stacked: `P:stop("b"):start("a")` or combined: `P:start("a.b")`
 
 Example:
     -- global profiler initialization
@@ -115,13 +120,13 @@ function Profiler:log(prefix)
       if not name:sub(pos):find("%.") then
         local subtree = self:log(name..'.')
         if #subtree > 0 then
-          v='{total:'..v..', '..subtree..'}'
+          v='{total:'..v..','..subtree..'}'
         end
         table.insert(t, name:sub(pos)..':'..v)
       end
     end
   end
-  return table.concat(t, ", ")
+  return table.concat(t, ",")
 end
 
 return Profiler
