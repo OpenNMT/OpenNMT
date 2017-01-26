@@ -9,18 +9,23 @@ Parameters:
 
   * `decoder` - an `onmt.Decoder` object.
   * `batch` - an `onmt.data.Batch` object.
-  * `decStates` - initial decoder states.
   * `context` - encoder output (batch x n x rnnSize).
-  * `opt` - options containing `max_sent_length` and `max_num_unks`.
+  * `max_sent_length` - optional, maximum output sentence length.
+  * `max_num_unks` - optional, maximum number of UNKs.
+  * `decStates` - optional, initial decoder states.
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, decStates, context, opt, dicts)
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts)
   self.decoder = decoder
   self.batch = batch
-  self.decStates = decStates
   self.context = context
-  self.opt = opt
+  self.max_sent_length = max_sent_length or math.huge
+  self.max_num_unks = max_num_unks or math.huge
+  self.decStates = decStates or onmt.utils.Tensor.initTensorTable(
+                                        decoder.args.numEffectiveLayers,
+                                        onmt.utils.Cuda.convert(torch.Tensor()),
+                                        { self.batch.size, decoder.args.rnnSize })
   self.dicts = dicts
 end
 
@@ -109,7 +114,7 @@ end
 
 --[[Checks which hypotheses in the beam are already finished. A hypothesis is
   complete if i) an onmt.Constants.EOS is encountered, or ii) the length of the
-  sequence is greater than or equal to `opt.max_sent_length`.
+  sequence is greater than or equal to `max_sent_length`.
 
 Parameters:
 
@@ -122,14 +127,14 @@ function DecoderAdvancer:isComplete(beam)
   local tokens = beam:tokens()
   local seqLength = #tokens - 1
   local complete = tokens[#tokens]:eq(onmt.Constants.EOS)
-  if seqLength > self.opt.max_sent_length then
+  if seqLength > self.max_sent_length then
     complete:fill(1)
   end
   return complete
 end
 
 --[[Checks which hypotheses in the beam shall be pruned. We disallow empty
- predictions, as well as predictions with more UNKs than `opt.max_num_unks`.
+ predictions, as well as predictions with more UNKs than `max_num_unks`.
 
 Parameters:
 
@@ -146,12 +151,12 @@ function DecoderAdvancer:filter(beam)
     numUnks:add(onmt.utils.Cuda.convert(token:eq(onmt.Constants.UNK):double()))
   end
   -- Disallow too many UNKs
-  local unSatisfied = numUnks:gt(self.opt.max_num_unks)
+  local pruned = numUnks:gt(self.max_num_unks)
   -- Disallow empty hypotheses
   if #tokens == 2 then
-    unSatisfied:add(tokens[2]:eq(onmt.Constants.EOS))
+    pruned:add(tokens[2]:eq(onmt.Constants.EOS))
   end
-  return unSatisfied:ge(1)
+  return pruned:ge(1)
 end
 
 return DecoderAdvancer

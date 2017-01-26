@@ -129,7 +129,7 @@ Initialize a table of tensors with the given sizes.
 
 Parameters:
 
-  * `tab` - the table of tensors
+  * `size` - the number of clones to create
   * `proto` - tensor to be clone for each index
   * `sizes` - a table of new sizes
 

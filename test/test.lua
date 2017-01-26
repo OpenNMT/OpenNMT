@@ -196,7 +196,7 @@ function beamSearchTest.beamSearch()
                }
   transitionScores = torch.Tensor(transitionScores)
 
-  local Advancer = torch.class('Advancer', 'BeamSearchAdvancer')
+  local Advancer = onmt.translate.Advancer
 
   local initBeam = function()
     return onmt.translate.Beam.new(torch.LongTensor({1, 2, 3}), {})

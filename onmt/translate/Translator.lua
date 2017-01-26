@@ -136,8 +136,9 @@ function Translator:translateBatch(batch)
   end
 
   -- Specify how to go one step forward.
-  local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder, batch,
-                                        encStates, context, self.opt, self.dicts)
+  local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder,
+                                   batch, context, self.opt.max_sent_length,
+                                   self.opt.max_num_unks, encStates, self.dicts)
   local attnIndex, featsIndex = 4, 5
   if self.opt.replace_unk then
     advancer:setKeptStateIndexes({attnIndex, featsIndex})
