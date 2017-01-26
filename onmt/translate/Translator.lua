@@ -126,6 +126,7 @@ function Translator:translateBatch(batch)
 
   local encStates, context = self.models.encoder:forward(batch)
 
+  -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
     if batch.size > 1 then
@@ -134,88 +135,9 @@ function Translator:translateBatch(batch)
     goldScore = self.models.decoder:computeScore(batch, encStates, context)
   end
 
-  local translator = self
-  local Advancer = torch.class('Advancer', 'BeamSearchAdvancer')
-  function Advancer:initBeam()
-    local tokens = onmt.utils.Cuda.convert(torch.IntTensor(batch.size))
-      :fill(onmt.Constants.BOS)
-    local features = {}
-    for j = 1, #translator.dicts.tgt.features do
-      features[j] = torch.IntTensor(batch.size):fill(onmt.Constants.EOS)
-    end
-    local sourceSizes = onmt.utils.Cuda.convert(batch.sourceSize)
-
-    -- Define state to be { decoder states, decoder output, context,
-    -- attentions, features, sourceSizes, step }.
-    local state = {encStates, nil, context, nil, features,
-      sourceSizes, 1}
-    return onmt.translate.Beam.new(tokens, state)
-  end
-  function Advancer:update(beam)
-    local state = beam:state()
-    local decStates, decOut, prevContext, _, features, sourceSizes, t
-        = table.unpack(state, 1, 7)
-    local tokens = beam:tokens()
-    local token = tokens[#tokens]
-    local inputs
-    if #features == 0 then
-      inputs = token
-    elseif #features == 1 then
-      inputs = { token, features[1] }
-    else
-      inputs = { token }
-      table.insert(inputs, features)
-    end
-    translator.models.decoder:maskPadding(sourceSizes, batch.sourceLength)
-    decOut, decStates = translator.models.decoder
-      :forwardOne(inputs, decStates, prevContext, decOut)
-    t = t + 1
-    local softmaxOut = translator.models.decoder.softmaxAttn.output
-    local nextState = {decStates, decOut, prevContext, softmaxOut, nil,
-      sourceSizes, t}
-    beam:setState(nextState)
-  end
-  function Advancer:expand(beam)
-    local state = beam:state()
-    local decOut = state[2]
-    local out = translator.models.decoder.generator:forward(decOut)
-    local features = {}
-    for j = 2, #out do
-      local _, best = out[j]:max(2)
-      features[j - 1] = best:view(-1)
-    end
-    state[5] = features
-    local scores = out[1]
-    return scores
-  end
-  -- IsComplete function
-  function Advancer:isComplete(beam)
-    local tokens = beam:tokens()
-    local seqLength = #tokens - 1
-    local complete = tokens[#tokens]:eq(onmt.Constants.EOS)
-    if seqLength > translator.opt.max_sent_length then
-      complete:fill(1)
-    end
-    return complete
-  end
-  -- Filter function (ignore too many UNKs)
-  function Advancer:filter(beam)
-    local tokens = beam:tokens()
-    local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
-    for t = 1, #tokens do
-      local token = tokens[t]
-      numUnks:add(onmt.utils.Cuda.convert(token:eq(onmt.Constants.UNK):double()))
-    end
-    -- Disallow too many UNKs
-    local unSatisfied = numUnks:gt(translator.opt.max_num_unks)
-    -- Disallow empty hypotheses
-    if #tokens == 2 then
-      unSatisfied:add(tokens[2]:eq(onmt.Constants.EOS))
-    end
-    return unSatisfied:ge(1)
-  end
-
-  local advancer = Advancer.new()
+  -- Specify how to go one step forward.
+  local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder, batch,
+                                        encStates, context, self.opt, self.dicts)
   local attnIndex, featsIndex = 4, 5
   if self.opt.replace_unk then
     advancer:setKeptStateIndexes({attnIndex, featsIndex})
@@ -223,12 +145,10 @@ function Translator:translateBatch(batch)
     advancer:setKeptStateIndexes({featsIndex})
   end
 
+  -- Conduct beam search.
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
   local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best,
                                       self.opt.before_filter_factor)
-
-  debug.getregistry()['Advancer'] = nil
-  collectgarbage()
 
   local allHyp = {}
   local allFeats = {}

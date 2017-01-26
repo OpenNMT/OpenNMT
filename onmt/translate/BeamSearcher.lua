@@ -16,7 +16,7 @@ local BeamSearcher = torch.class('BeamSearcher')
 
 Parameters:
 
-  * `advancer` - an `onmt.translate.BeamSearchAdvancer` object.
+  * `advancer` - an `onmt.translate.Advancer` object.
 
 ]]
 function BeamSearcher:__init(advancer)
