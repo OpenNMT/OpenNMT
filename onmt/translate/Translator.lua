@@ -20,7 +20,7 @@ function Translator.declareOpts(cmd)
   cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
   cmd:option('-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored
                                            during beam search]])
-  cmd:option('-before_filter_factor', 1, [[Optional, set this only if filter is being used. Before
+  cmd:option('-pre_filter_factor', 1, [[Optional, set this only if filter is being used. Before
                               applying filters, hypotheses with top `beamSize * preFilterFactor`
                               scores will be considered. If the returned hypotheses voilate filters,
                               then set this to a larger value to consider more.]])
@@ -149,7 +149,7 @@ function Translator:translateBatch(batch)
   -- Conduct beam search.
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
   local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best,
-                                      self.opt.before_filter_factor)
+                                      self.opt.pre_filter_factor)
 
   local allHyp = {}
   local allFeats = {}

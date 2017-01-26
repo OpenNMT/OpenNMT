@@ -29,17 +29,17 @@ Parameters:
 
   * `beamSize` - beam size. [1]
   * `nBest` - the `nBest` top hypotheses will be returned after beam search. [1]
-  * `beforeFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
-  * `beforeFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
+  * `preFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
+  * `preFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
   * `keepInitial` - optional, whether return the initial token or not. [false]
 
 Returns: a table `finished`. `finished[b][n].score`, `finished[b][n].tokens` and `finished[b][n].states` describe the n-th best hypothesis for b-th sample in the batch.
 
 ]]
-function BeamSearcher:search(beamSize, nBest, beforeFilterFactor, keepInitial)
+function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   self.nBest = nBest or 1
   self.beamSize = beamSize or 1
-  self.beforeFilterFactor = beforeFilterFactor or 1
+  self.preFilterFactor = preFilterFactor or 1
   self.keepInitial = keepInitial or false
 
   local beams = {}
@@ -83,8 +83,8 @@ function BeamSearcher:_findKBest(beams, scores)
   local vocabSize = scores:size(2)
   local expandedScores = beams[t]:expandScores(scores, self.beamSize)
 
-  -- Find top beamSize * beforeFilterFactor hypotheses
-  local considered = self.beamSize * self.beforeFilterFactor
+  -- Find top beamSize * preFilterFactor hypotheses
+  local considered = self.beamSize * self.preFilterFactor
   local consideredScores, consideredIds = expandedScores:topk(considered, 2,
                                                               true, true)
   consideredIds:add(-1)
@@ -101,7 +101,7 @@ function BeamSearcher:_findKBest(beams, scores)
   end
 
   -- Find top beamSize hypotheses
-  if ( (not pruned) or (not pruned:any()) ) and (self.beforeFilterFactor == 1) then
+  if ( (not pruned) or (not pruned:any()) ) and (self.preFilterFactor == 1) then
     beams[t + 1] = newBeam
   else
     local kBestScores, kBestIds = consideredScores:topk(self.beamSize, 2,
