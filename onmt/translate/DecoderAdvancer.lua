@@ -1,5 +1,5 @@
---[[ DecoderAdvancer is an implementation of Advancer for how to advance one
-  step in decoder.
+--[[ DecoderAdvancer is an implementation of the interface Advancer for
+  specifyinghow to advance one step in decoder.
 --]]
 local DecoderAdvancer = torch.class('DecoderAdvancer', 'Advancer')
 
@@ -150,8 +150,10 @@ function DecoderAdvancer:filter(beam)
     local token = tokens[t]
     numUnks:add(onmt.utils.Cuda.convert(token:eq(onmt.Constants.UNK):double()))
   end
+
   -- Disallow too many UNKs
   local pruned = numUnks:gt(self.max_num_unks)
+
   -- Disallow empty hypotheses
   if #tokens == 2 then
     pruned:add(tokens[2]:eq(onmt.Constants.EOS))
