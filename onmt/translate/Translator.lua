@@ -169,7 +169,8 @@ function Translator:translateBatch(batch)
       local attn = states[attnIndex] or {}
       local feats = states[featsIndex] or {}
       table.remove(tokens)
-      -- Remove unnecessary values from the attention vectors
+
+      -- Remove unnecessary values from the attention vectors.
       local size = batch.sourceSize[b]
       for j = 1, #attn do
         attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
