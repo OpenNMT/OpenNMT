@@ -104,7 +104,7 @@ function Profiler:add(profile)
 end
 
 -- Returns text string with log structured by sub level.
--- e.g. train:[23, encoder_fwd:10, encoder_bwd:14]
+-- e.g. train:{total:23, encoder_fwd:10, encoder_bwd:14}
 function Profiler:log(prefix)
   prefix = prefix or ''
   local t = {}
@@ -115,7 +115,7 @@ function Profiler:log(prefix)
       if not name:sub(pos):find("%.") then
         local subtree = self:log(name..'.')
         if #subtree > 0 then
-          v='['..v..', '..subtree..']'
+          v='{total:'..v..', '..subtree..'}'
         end
         table.insert(t, name:sub(pos)..':'..v)
       end
