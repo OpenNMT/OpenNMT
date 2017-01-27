@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### New features
+
+* Support individually setting features vocabulary and embedding size
+
 ### Fixes and improvements
 
 * Fix `-joiner_new` option when using BPE
