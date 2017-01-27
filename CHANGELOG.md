@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### New features
+
+* Profiler option
+
 ### Fixes and improvements
 
 * Fix `-joiner_new` option when using BPE
