@@ -1,8 +1,14 @@
 ## [Unreleased]
 
+### New features
+
+* Support hypotheses filtering during the beam search
+
 ### Fixes and improvements
 
+* Improve beam search speed (up to 90% faster)
 * Fix `-joiner_new` option when using BPE
+* Fix BLEU drop when applying beam search on certain models
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
