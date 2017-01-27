@@ -137,9 +137,15 @@ function Translator:translateBatch(batch)
 
   -- Specify how to go one step forward.
   local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder,
-                                   batch, context, self.opt.max_sent_length,
-                                   self.opt.max_num_unks, encStates, self.dicts)
-  local attnIndex, featsIndex = 4, 5
+                                                      batch,
+                                                      context,
+                                                      self.opt.max_sent_length,
+                                                      self.opt.max_num_unks,
+                                                      encStates,
+                                                      self.dicts)
+
+  local attnIndex = 4
+  local featsIndex = 5
   if self.opt.replace_unk then
     advancer:setKeptStateIndexes({attnIndex, featsIndex})
   else
@@ -148,8 +154,7 @@ function Translator:translateBatch(batch)
 
   -- Conduct beam search.
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best,
-                                      self.opt.pre_filter_factor)
+  local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best, self.opt.pre_filter_factor)
 
   local allHyp = {}
   local allFeats = {}

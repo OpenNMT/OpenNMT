@@ -23,9 +23,9 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
   self.decStates = decStates or onmt.utils.Tensor.initTensorTable(
-                                        decoder.args.numEffectiveLayers,
-                                        onmt.utils.Cuda.convert(torch.Tensor()),
-                                        { self.batch.size, decoder.args.rnnSize })
+    decoder.args.numEffectiveLayers,
+    onmt.utils.Cuda.convert(torch.Tensor()),
+    { self.batch.size, decoder.args.rnnSize })
   self.dicts = dicts
 end
 
@@ -37,8 +37,7 @@ Returns:
 
 --]]
 function DecoderAdvancer:initBeam()
-  local tokens = onmt.utils.Cuda.convert(torch.IntTensor(self.batch.size))
-    :fill(onmt.Constants.BOS)
+  local tokens = onmt.utils.Cuda.convert(torch.IntTensor(self.batch.size)):fill(onmt.Constants.BOS)
   local features = {}
   if self.dicts then
     for j = 1, #self.dicts.tgt.features do
@@ -49,8 +48,7 @@ function DecoderAdvancer:initBeam()
 
   -- Define state to be { decoder states, decoder output, context,
   -- attentions, features, sourceSizes, step }.
-  local state = {self.decStates, nil, self.context, nil, features,
-    sourceSizes, 1}
+  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1 }
   return onmt.translate.Beam.new(tokens, state)
 end
 
@@ -64,7 +62,7 @@ Parameters:
 function DecoderAdvancer:update(beam)
   local state = beam:state()
   local decStates, decOut, context, _, features, sourceSizes, t
-      = table.unpack(state, 1, 7)
+    = table.unpack(state, 1, 7)
   local tokens = beam:tokens()
   local token = tokens[#tokens]
   local inputs
@@ -77,12 +75,10 @@ function DecoderAdvancer:update(beam)
     table.insert(inputs, features)
   end
   self.decoder:maskPadding(sourceSizes, self.batch.sourceLength)
-  decOut, decStates = self.decoder
-                      :forwardOne(inputs, decStates, context, decOut)
+  decOut, decStates = self.decoder:forwardOne(inputs, decStates, context, decOut)
   t = t + 1
   local softmaxOut = self.decoder.softmaxAttn.output
-  local nextState = {decStates, decOut, context, softmaxOut, nil,
-    sourceSizes, t}
+  local nextState = {decStates, decOut, context, softmaxOut, nil, sourceSizes, t}
   beam:setState(nextState)
 end
 
