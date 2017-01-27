@@ -21,7 +21,7 @@ local function flatToRc(v, beamSize)
     local batchSize = math.floor(h:size(1) / beamSize)
     local sizes = {}
     for j = 2, #h:size() do
-        sizes[j - 1] = h:size(j)
+      sizes[j - 1] = h:size(j)
     end
     return h:view(batchSize, beamSize, table.unpack(sizes))
   end)
@@ -43,7 +43,7 @@ local function rcToFlat(v)
     local sizes = {}
     sizes[1] = h:size(1) * h:size(2)
     for j = 3, #h:size() do
-        sizes[j - 1] = h:size(j)
+      sizes[j - 1] = h:size(j)
     end
     return h:view(table.unpack(sizes))
   end)
@@ -87,7 +87,7 @@ local function selectBatchBeam(v, beamSize, batch, beam)
     local batchSize = math.floor(h:size(1) / beamSize)
     local sizes = {}
     for j = 2, #h:size() do
-        sizes[j - 1] = h:size(j)
+      sizes[j - 1] = h:size(j)
     end
     local hOut = h:view(batchSize, beamSize, table.unpack(sizes))
     return hOut[{batch, beam}]
@@ -114,13 +114,16 @@ local function selectBeam(v, indexes, beamSize)
     local sizes = {}
     local ones = {}
     for j = 2, #h:size() do
-        sizes[j - 1] = h:size(j)
-        ones[j - 1] = 1
+      sizes[j - 1] = h:size(j)
+      ones[j - 1] = 1
     end
-    return h:contiguous():view(batchSize, beamSize, table.unpack(sizes))
-            :gather(2, indexes:view(batchSize, k, table.unpack(ones))
-                              :expand(batchSize, k, table.unpack(sizes)))
-            :view(batchSize * k, table.unpack(sizes))
+    return h
+      :contiguous()
+      :view(batchSize, beamSize, table.unpack(sizes))
+      :gather(2, indexes
+                :view(batchSize, k, table.unpack(ones))
+                :expand(batchSize, k, table.unpack(sizes)))
+      :view(batchSize * k, table.unpack(sizes))
   end)
 end
 
@@ -141,11 +144,14 @@ local function replicateBeam(v, beamSize)
     local batchSize = h:size(1)
     local sizes = {}
     for j = 2, #h:size() do
-        sizes[j - 1] = h:size(j)
+      sizes[j - 1] = h:size(j)
     end
-    return h:contiguous():view(batchSize, 1, table.unpack(sizes))
-                  :expand(batchSize, beamSize, table.unpack(sizes)):contiguous()
-                  :view(batchSize * beamSize, table.unpack(sizes))
+    return h
+      :contiguous()
+      :view(batchSize, 1, table.unpack(sizes))
+      :expand(batchSize, beamSize, table.unpack(sizes))
+      :contiguous()
+      :view(batchSize * beamSize, table.unpack(sizes))
   end)
 end
 
@@ -268,17 +274,18 @@ function Beam:expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
   self._scores = self._scores:typeAs(scores)
-  local expandedScores = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
-                          + self._scores:view(remaining, beamSize, 1)
-                                        :expand(remaining, beamSize, vocabSize)
-                         ):view(remaining, -1)
+  local expandedScores
+    = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
+         + self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize)
+      ):view(remaining, -1)
   return expandedScores
 end
 
 function Beam:nextBeam(token, scores, backPointer, beamSize)
   local remaining = math.floor(token:size(1) / beamSize)
   local newBeam = Beam.new(self:nextTokens(token, backPointer, beamSize),
-                           self:nextState(backPointer, beamSize), remaining)
+                           self:nextState(backPointer, beamSize),
+                           remaining)
   newBeam:setScores(scores)
   newBeam:setBackPointer(backPointer)
   return newBeam
@@ -319,14 +326,10 @@ end
 function Beam:removeFinishedBatches(remainingIds, beamSize)
   self._remaining = #remainingIds
   if #remainingIds > 0 then
-    self._state = rcToFlat(selectBatch(
-                           flatToRc(self._state, beamSize), remainingIds))
-    self._tokens = rcToFlat(selectBatch(
-                           flatToRc(self._tokens, beamSize), remainingIds))
-    self._scores = rcToFlat(selectBatch(
-                           flatToRc(self._scores, beamSize), remainingIds))
-    self._backPointer = rcToFlat(selectBatch(
-                           flatToRc(self._backPointer, beamSize), remainingIds))
+    self._state = rcToFlat(selectBatch(flatToRc(self._state, beamSize), remainingIds))
+    self._tokens = rcToFlat(selectBatch(flatToRc(self._tokens, beamSize), remainingIds))
+    self._scores = rcToFlat(selectBatch(flatToRc(self._scores, beamSize), remainingIds))
+    self._backPointer = rcToFlat(selectBatch(flatToRc(self._backPointer, beamSize), remainingIds))
   end
 end
 
@@ -368,8 +371,8 @@ function Beam.addCompletedHypotheses(score, tok, bp, t, batchId)
   Beam._completed[batchId][id] = hypothesis
   while id > 1 do
     if Beam._completed[batchId][id - 1][1] < score then
-      Beam._completed[batchId][id - 1], Beam._completed[batchId][id] =
-                 Beam._completed[batchId][id], Beam._completed[batchId][id - 1]
+      Beam._completed[batchId][id - 1], Beam._completed[batchId][id]
+        = Beam._completed[batchId][id], Beam._completed[batchId][id - 1]
       id = id - 1
     else
       break
