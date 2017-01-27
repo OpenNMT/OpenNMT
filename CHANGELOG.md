@@ -2,6 +2,7 @@
 
 ### New features
 
+* Profiler option
 * Support hypotheses filtering during the beam search
 
 ### Fixes and improvements
