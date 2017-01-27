@@ -2,7 +2,7 @@ local unicode = require 'tools.utils.unicode'
 
 local BPE = torch.class('BPE')
 
-function BPE:__init(codesfile_path, joiner_new)
+function BPE:__init(codesfile_path, joiner_annotate, joiner_new)
   self.split = string.split
   -- to be able to run the code without torch
   if not self.split then
@@ -27,6 +27,7 @@ function BPE:__init(codesfile_path, joiner_new)
     t=f:read("*line")
   end
   self.joiner_new = joiner_new
+  self.joiner_annotate = joiner_annotate
 end
 
 local function getPairs(word)
