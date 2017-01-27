@@ -1,9 +1,16 @@
 ## [Unreleased]
 
+### Fixes and improvements
+
+* Fix `-joiner_new` option when using BPE
+
+## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
+
 ### New features
 
 * ZeroMQ translation server
 * Advanced log management
+* GRU cell
 * Tokenization option to make the token separator an independent token
 * Tokenization can run in parallel mode
 
