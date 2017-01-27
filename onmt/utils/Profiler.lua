@@ -59,6 +59,8 @@ end
 -- Start recording a section.
 function Profiler:start(name)
   if self.disable then return self end
+  -- Synchronize current operations on cuda.
+  onmt.utils.Cuda.synchronize()
   -- if section is multiple, decompose
   local pos = name:find("%.")
   if pos then
@@ -75,6 +77,8 @@ end
 -- Stop recording a section.
 function Profiler:stop(name)
   if self.disable then return self end
+  -- Synchronize current operations on cuda.
+  onmt.utils.Cuda.synchronize()
   -- if section is multiple, decompose
   local pos = name:find("%.")
   if pos then
