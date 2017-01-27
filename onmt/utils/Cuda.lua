@@ -70,10 +70,24 @@ function Cuda.convert(obj)
   return obj
 end
 
+--[[
+  Synchronize operations on current device if working on GPU.
+  Do nothing otherwise.
+]]
+function Cuda.synchronize()
+  if Cuda.activated then cutorch.synchronize() end
+end
+
+--[[
+  Number of available GPU.
+]]
 function Cuda.gpuCount()
   return #Cuda.gpuIds
 end
 
+--[[
+  Free memory on the current GPU device.
+]]
 function Cuda.freeMemory()
   if Cuda.activated then
     local freeMemory = cutorch.getMemoryUsage(cutorch.getDevice())

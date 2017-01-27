@@ -87,6 +87,7 @@ cmd:option('-seed', 3435, [[Seed for random initialization]])
 cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
 
 onmt.utils.Logger.declareOpts(cmd)
+onmt.utils.Profiler.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
@@ -220,9 +221,11 @@ local function trainModel(model, trainData, validData, dataset, info)
 
   local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
 
-  local function trainEpoch(epoch, lastValidPpl)
+  local function trainEpoch(epoch, lastValidPpl, doProfile)
     local epochState
     local batchOrder
+
+    local epochProfiler = onmt.utils.Profiler.new(doProfile)
 
     local startI = opt.start_iteration
 
@@ -245,13 +248,15 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     local function trainNetwork(batch)
       optim:zeroGrad(_G.gradParams)
-
+      _G.profiler:start("encoder.fwd")
       local encStates, context = _G.model.encoder:forward(batch)
+      _G.profiler:stop("encoder.fwd"):start("decoder.fwd")
       local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
-
+      _G.profiler:stop("decoder.fwd"):start("decoder.bwd")
       local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
+      _G.profiler:stop("decoder.bwd"):start("encoder.bwd")
       _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
-
+      _G.profiler:stop("encoder.bwd")
       return loss
     end
 
@@ -273,9 +278,11 @@ local function trainModel(model, trainData, validData, dataset, info)
         local losses = {}
 
         onmt.utils.Parallel.launch(function(idx)
+          _G.profiler = onmt.utils.Profiler.new(doProfile)
+
           _G.batch = batches[idx]
           if _G.batch == nil then
-            return idx, 0
+            return idx, 0, _G.profiler:dump()
           end
 
           -- Send batch data to the GPU.
@@ -283,10 +290,11 @@ local function trainModel(model, trainData, validData, dataset, info)
           _G.batch.totalSize = totalSize
           local loss = trainNetwork(_G.batch)
 
-          return idx, loss
+          return idx, loss, _G.profiler:dump()
         end,
-        function(idx, loss)
+        function(idx, loss, profile)
           losses[idx]=loss
+          epochProfiler:add(profile)
         end)
 
         -- Accumulate the gradients from the different parallel threads.
@@ -323,6 +331,7 @@ local function trainModel(model, trainData, validData, dataset, info)
         local startCounter = counter:get()
 
         onmt.utils.Parallel.launch(function(idx)
+          _G.profiler = onmt.utils.Profiler.new(doProfile)
           -- First GPU is only used for master parameters.
           -- Use 1 GPU only for 1000 first batch.
           if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < opt.async_parallel_minbatch) then
@@ -340,12 +349,12 @@ local function trainModel(model, trainData, validData, dataset, info)
           while true do
             -- Do not process more than 1000 batches (TODO - make option) in one shot.
             if counter:get() - startCounter >= 1000 then
-              return lossThread, batchThread
+              return lossThread, batchThread, _G.profiler:dump()
             end
 
             local i = counter:inc()
             if i > trainData:batchCount() then
-              return lossThread, batchThread
+              return lossThread, batchThread, _G.profiler:dump()
             end
 
             local batchIdx = batchOrder[i]
@@ -377,10 +386,11 @@ local function trainModel(model, trainData, validData, dataset, info)
             end
           end
         end,
-        function(theloss, thebatch)
+        function(theloss, thebatch, profile)
           if theloss then
             epochState:update(thebatch, theloss)
           end
+          epochProfiler:add(profile)
         end)
 
         if opt.report_every > 0 then
@@ -389,11 +399,10 @@ local function trainModel(model, trainData, validData, dataset, info)
         if opt.save_every > 0 then
           checkpoint:saveIteration(counter:get(), epochState, batchOrder, not opt.json_log)
         end
-
       end
     end
 
-    return epochState
+    return epochState, epochProfiler:dump()
   end
 
   local validPpl = 0
@@ -407,11 +416,19 @@ local function trainModel(model, trainData, validData, dataset, info)
       _G.logger:info('')
     end
 
-    local epochState = trainEpoch(epoch, validPpl)
+    local globalProfiler = onmt.utils.Profiler.new(opt.profiler)
 
+    globalProfiler:start("train")
+    local epochState, epochProfile = trainEpoch(epoch, validPpl, opt.profiler)
+    globalProfiler:add(epochProfile)
+    globalProfiler:stop("train")
+
+    globalProfiler:start("valid")
     validPpl = eval(model, criterion, validData)
+    globalProfiler:stop("valid")
 
     if not opt.json_log then
+      if opt.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
       _G.logger:info('Validation perplexity: %.2f', validPpl)
     end
 
@@ -433,6 +450,7 @@ local function main()
   onmt.utils.Opt.init(opt, requiredOptions)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.profiler = onmt.utils.Profiler.new(false)
 
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)

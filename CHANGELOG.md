@@ -2,6 +2,7 @@
 
 ### New features
 
+* Profiler option
 * Support individually setting features vocabulary and embedding size
 
 ### Fixes and improvements
