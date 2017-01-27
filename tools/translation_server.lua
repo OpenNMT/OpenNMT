@@ -93,8 +93,18 @@ local function main()
     _G.logger:info("Received... " .. recv)
     local message = json.decode(recv)
 
-    local translate = translateMessage(translator, message)
-    local ret = json.encode(translate)
+    local ret
+    local _, err = pcall(function ()
+      local translate = translateMessage(translator, message)
+      ret = json.encode(translate)
+    end)
+
+    if err then
+      -- Hide paths included in the error message.
+      err = err:gsub("/[^:]*/", "")
+      ret = json.encode({ error = err })
+    end
+
     s:send(ret)
     _G.logger:info("Returning... " .. ret)
     collectgarbage()

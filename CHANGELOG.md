@@ -7,6 +7,7 @@
 ### Fixes and improvements
 
 * Fix `-joiner_new` option when using BPE
+* Fix translation server crash on Lua errors
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
