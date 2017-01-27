@@ -28,7 +28,7 @@ local pool = threads.Threads(
      _G.tokenizer = require('tools.utils.tokenizer')
      _G.BPE = require ('tools.utils.BPE')
      if opt.bpe_model ~= '' then
-       _G.bpe = _G.BPE.new(opt.bpe_model, opt.joiner_new)
+       _G.bpe = _G.BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
      end
    end
 )
