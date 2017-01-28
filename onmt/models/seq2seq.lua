@@ -12,7 +12,7 @@ function seq2seq:__init(opt, datasetOrCheckpoint, verboseOrReplica)
     local dataset = datasetOrCheckpoint
     local verbose = verboseOrReplica
     self.models.encoder = onmt.Models.buildEncoder(opt, dataset.dicts.src, verbose)
-    self.models.decoder = onmt.Models.buildDecoder(opt, dataset.dicts.tgt, verbose, opt.adaptive_softmax)
+    self.models.decoder = onmt.Models.buildDecoder(opt, dataset.dicts.tgt, verbose)
   end
 end
 
@@ -23,8 +23,7 @@ end
 
 function seq2seq:buildCriterion(dataset)
   return onmt.Criterion.new(dataset.dicts.tgt.words:size(),
-                            dataset.dicts.tgt.features,
-                            self.models.decoder.adaptive_softmax_cutoff)
+                            dataset.dicts.tgt.features)
 end
 
 function seq2seq:trainNetwork(batch, gradParams, criterion, doProfile, dryRun)

@@ -139,7 +139,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
         iter = iter + 1
       end
     else
-      -- Asynchronous parallel.
+      -- Synchronous parallelism.
       local counter = onmt.utils.Parallel.getCounter()
       counter:set(startI)
       local masterGPU = onmt.utils.Cuda.gpuIds[1]
