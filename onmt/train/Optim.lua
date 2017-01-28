@@ -63,9 +63,14 @@ function Optim:__init(args)
       self.optimStates = args.optimStates
     else
       self.optimStates = {}
-      for j = 1, args.numModels do
-        self.optimStates[j] = {}
-      end
+    end
+  end
+end
+
+function Optim:setOptimStates(num)
+  if self.method ~= 'sgd' then
+    for j = 1, num do
+      self.optimStates[j] = {}
     end
   end
 end
@@ -113,22 +118,24 @@ end
 
 -- decay learning rate if val perf does not improve or we hit the startDecayAt limit
 function Optim:updateLearningRate(score, epoch)
-  self.valPerf[#self.valPerf + 1] = score
+  if self.method == 'sgd' then
+    self.valPerf[#self.valPerf + 1] = score
 
-  if epoch >= self.startDecayAt then
-    self.startDecay = true
-  end
-
-  if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
-    local currPpl = self.valPerf[#self.valPerf]
-    local prevPpl = self.valPerf[#self.valPerf-1]
-    if currPpl > prevPpl then
+    if epoch >= self.startDecayAt then
       self.startDecay = true
     end
-  end
 
-  if self.startDecay then
-    self.learningRate = self.learningRate * self.learningRateDecay
+    if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
+      local currPpl = self.valPerf[#self.valPerf]
+      local prevPpl = self.valPerf[#self.valPerf-1]
+      if currPpl > prevPpl then
+        self.startDecay = true
+      end
+    end
+
+    if self.startDecay then
+      self.learningRate = self.learningRate * self.learningRateDecay
+    end
   end
 end
 
@@ -138,6 +145,25 @@ end
 
 function Optim:getStates()
   return self.optimStates
+end
+
+function Optim.declareOpts(cmd)
+  cmd:option('-max_batch_size', 64, [[Maximum batch size]])
+  cmd:option('-end_epoch', 13, [[The final epoch of the training]])
+  cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
+  cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
+  cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
+  cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
+  cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
+                                  then this is the global learning rate. Recommended settings are: sgd = 1,
+                                  adagrad = 0.1, adadelta = 1, adam = 0.0002]])
+  cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm]])
+  cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]])
+  cmd:option('-learning_rate_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
+                                          on the validation set or (ii) epoch has gone past the start_decay_at_limit]])
+  cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
+  cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
+                               sequence length. Sometimes setting this to 1 will increase convergence speed.]])
 end
 
 return Optim
