@@ -1,17 +1,15 @@
---[[ Default decoder generator. Given RNN state, produce categorical distribution.
-
-Simply implements $$softmax(W h + b)$$.
+--[[
+  Training Criterion
 --]]
 local Criterion, parent = torch.class('onmt.Criterion', 'nn.ParallelCriterion')
 
 
 function Criterion:__init(vocabSize, features)
-  parent.__init(self, self:_buildCriterion(vocabSize, features, adaptive_softmax_cutoff))
+  parent.__init(self, false)
+  self:_buildCriterion(vocabSize, features)
 end
 
 function Criterion:_buildCriterion(vocabSize, features)
-  local criterion = nn.ParallelCriterion(false)
-
   local function addNllCriterion(size)
     -- Ignores padding value.
     local w = torch.ones(size)
@@ -21,7 +19,7 @@ function Criterion:_buildCriterion(vocabSize, features)
 
     -- Let the training code manage loss normalization.
     nll.sizeAverage = false
-    criterion:add(nll)
+    self:add(nll)
   end
 
   addNllCriterion(vocabSize)
