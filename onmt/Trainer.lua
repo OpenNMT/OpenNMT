@@ -106,8 +106,8 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
           onmt.utils.Cuda.convert(_G.batch)
           _G.batch.totalSize = totalSize
 
-          optim:zeroGrad(_G,_gradParams)
-          local loss = model:trainNetwork(_G.batch, _G.gradParams, _G.criterion, doProfile)
+          optim:zeroGrad(_G._gradParams)
+          local loss = model:trainNetwork(_G.batch, _G.criterion, doProfile)
 
           return idx, loss, _G.profiler:dump()
         end,
@@ -188,7 +188,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
             _G.batch.totalSize = _G.batch.size
 
             optim:zeroGrad(_G._gradParams)
-            local loss = model:trainNetwork(_G.batch, _G.gradParams, _G.criterion, doProfile)
+            local loss = model:trainNetwork(_G.batch, _G.criterion, doProfile)
 
             -- Update the parameters.
             optim:prepareGrad(_G.gradParams, opt.max_grad_norm)

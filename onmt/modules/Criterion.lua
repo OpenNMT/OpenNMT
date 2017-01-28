@@ -27,6 +27,4 @@ function Criterion:_buildCriterion(vocabSize, features)
   for j = 1, #features do
     addNllCriterion(features[j]:size())
   end
-
-  return criterion
 end

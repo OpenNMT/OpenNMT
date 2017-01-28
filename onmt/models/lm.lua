@@ -1,48 +1,41 @@
 --[[ seq2seq Model. ]]
 local seq2seq, parent = torch.class('onmt.Models.lm', 'onmt.Model')
 
-function seq2seq:__init(opt, datasetOrCheckpoint, verboseOrReplica)
+function seq2seq:__init(opt, datasetOrCheckpoint)
   parent.__init(self)
+  self.args.rnn_size = opt.rnn_size
   if type(datasetOrCheckpoint)=='Checkpoint' then
-    local checkpoint = datasetOrCheckpoint
-    local dataset = checkpoint.dataset
-    local replica = verbose
-    self.models.encoder = onmt.Models.loadEncoder(checkpoint.models, replica)
-    self.models.generator = onmt.Models.loadGenerator(checkpoint.models, replica)
+    error("unsupported")
   else
     local dataset = datasetOrCheckpoint
-    local verbose = verboseOrReplica
     self.models.encoder = onmt.Models.buildEncoder(opt, dataset.dicts)
-    if #data.dicts.features > 0 then
-      self.models.generator = onmt.FeaturesGenerator.new(opt.rnn_size, data.dicts.words:size(), data.dicts.features)
+    if #dataset.dicts.features > 0 then
+      self.models.generator = onmt.FeaturesGenerator.new(opt.rnn_size, dataset.dicts.words:size(), dataset.dicts.features)
     else
       self.models.generator = onmt.Generator.new(opt.rnn_size, dataset.dicts.words:size())
     end
+    self.EOS_vector_model = torch.LongTensor(opt.max_batch_size):fill(dataset.dicts.words:lookup(onmt.Constants.EOS_WORD))
   end
-  self.EOS_vector_model = torch.LongTensor(opt.max_batch_size):fill(dataset.dicts.words:lookup(onmt.Constants.EOS_WORD))
 end
 
 
 function seq2seq:forwardComputeLoss(batch, criterion)
-  for i = 1, data:batchCount() do
-    local batch = onmt.utils.Cuda.convert(data:getBatch(i))
-    local _, context = self.models.encoder:forward(batch)
-    local EOS_vector = self.EOS_vector_model:narrow(1, 1, batch.size)
-    onmt.utils.Cuda.convert(EOS_vector)
-
-    for t = 1, batch.sourceLength do
-      local genOutputs = self.models.generator:forward(context:select(2, t))
-      -- LM is supposed to predict the following word.
-      local output
-      if t ~= batch.sourceLength then
-        output = batch:getSourceInput(t + 1)
-      else
-        output = EOS_vector
-      end
-      -- Same format with and without features.
-      if torch.type(output) ~= 'table' then output = { output } end
-      loss = loss + criterion:forward(genOutputs, output)
+  local _, context = self.models.encoder:forward(batch)
+  local EOS_vector = self.EOS_vector_model:narrow(1, 1, batch.size)
+  onmt.utils.Cuda.convert(EOS_vector)
+  local loss = 0
+  for t = 1, batch.sourceLength do
+    local genOutputs = self.models.generator:forward(context:select(2, t))
+    -- LM is supposed to predict the following word.
+    local output
+    if t ~= batch.sourceLength then
+      output = batch:getSourceInput(t + 1)
+    else
+      output = EOS_vector
     end
+    -- Same format with and without features.
+    if torch.type(output) ~= 'table' then output = { output } end
+    loss = loss + criterion:forward(genOutputs, output)
   end
   return loss
 end
@@ -52,14 +45,21 @@ function seq2seq:buildCriterion(dataset)
                             dataset.dicts.src.features)
 end
 
-function seq2seq:trainNetwork(batch, gradParams, criterion, doProfile, dryRun)
+function seq2seq:trainNetwork(batch, criterion, doProfile)
   local loss = 0
+
+  if doProfile then _G.profiler:start("encoder.fwd") end
   local _, context = self.models.encoder:forward(batch)
-  local gradContexts = torch.Tensor(batch.size, batch.sourceLength, opt.rnn_size)
+  if doProfile then _G.profiler:stop("encoder.fwd") end
+
+  local gradContexts = torch.Tensor(batch.size, batch.sourceLength, self.args.rnn_size)
   gradContexts = onmt.utils.Cuda.convert(gradContexts)
   -- for each word of the sentence, generate target
   for t = 1, batch.sourceLength do
+    if doProfile then _G.profiler:start("generator.fwd") end
     local genOutputs = self.models.generator:forward(context:select(2,t))
+    if doProfile then _G.profiler:stop("generator.fwd") end
+
     -- LM is supposed to predict following word
     local output
     if t ~= batch.sourceLength then
@@ -69,15 +69,29 @@ function seq2seq:trainNetwork(batch, gradParams, criterion, doProfile, dryRun)
     end
     -- same format with and without features
     if torch.type(output) ~= 'table' then output = { output } end
+
+    if doProfile then _G.profiler:start("criterion.fwd") end
     loss = loss + criterion:forward(genOutputs, output)
+    if doProfile then _G.profiler:stop("criterion.fwd") end
+
     -- backward
+    if doProfile then _G.profiler:start("criterion.bwd") end
     local genGradOutput = criterion:backward(genOutputs, output)
+    if doProfile then _G.profiler:stop("criterion.bwd") end
     for j = 1, #genGradOutput do
       genGradOutput[j]:div(batch.totalSize)
     end
+
+    if doProfile then _G.profiler:start("generator.bwd") end
     gradContexts[{{}, t}]:copy(self.models.generator:backward(context:select(2, t), genGradOutput))
+    if doProfile then _G.profiler:stop("generator.bwd") end
+
   end
+
+  if doProfile then _G.profiler:start("encoder.bwd") end
   self.models.encoder:backward(batch, nil, gradContexts)
+  if doProfile then _G.profiler:stop("encoder.bwd") end
+
   return loss
 end
 

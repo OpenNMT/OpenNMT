@@ -174,14 +174,11 @@ local function main()
 
   _G.logger:info('Building models...')
 
+  local model
   onmt.utils.Parallel.launch(function(idx)
 
-    if checkpoint.models then
-      _G.model = onmt.Models.lm.new(opt, checkpoint, idx > 1)
-    else
-      local verbose = idx == 1 and not opt.json_log
-      _G.model = onmt.Models.lm.new(opt, dataset, verbose)
-    end
+    local verbose = idx == 1 and not opt.json_log
+    _G.model = onmt.Models.lm.new(opt, data, verbose)
 
     onmt.utils.Cuda.convert(_G.model)
 
@@ -202,7 +199,7 @@ local function main()
     optimStates = opt.optim_states
   })
 
-  onmt.Trainer.train(opt, model, optim, trainData, validData, dataset, checkpoint.info)
+  onmt.Trainer.train(opt, model, optim, trainData, validData, data)
 
   _G.logger:shutDown()
 

@@ -3,6 +3,7 @@ local Model = torch.class('onmt.Model')
 
 function Model:__init()
   self.models = {}
+  self.args = {}
 end
 
 function Model:evaluate()

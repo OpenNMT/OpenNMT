@@ -5,7 +5,7 @@ function seq2seq:__init(opt, datasetOrCheckpoint, verboseOrReplica)
   parent.__init(self)
   if type(datasetOrCheckpoint)=='Checkpoint' then
     local checkpoint = datasetOrCheckpoint
-    local replica = verbose
+    local replica = verboseOrReplica
     self.models.encoder = onmt.Models.loadEncoder(checkpoint.models, replica)
     self.models.decoder = onmt.Models.loadDecoder(checkpoint.models, replica)
   else
@@ -26,7 +26,7 @@ function seq2seq:buildCriterion(dataset)
                             dataset.dicts.tgt.features)
 end
 
-function seq2seq:trainNetwork(batch, gradParams, criterion, doProfile, dryRun)
+function seq2seq:trainNetwork(batch, criterion, doProfile, dryRun)
   if doProfile then _G.profiler:start("encoder.fwd") end
   local encStates, context = self.models.encoder:forward(batch)
   if doProfile then _G.profiler:stop("encoder.fwd") end
