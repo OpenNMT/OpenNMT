@@ -14,7 +14,9 @@ local protectInput = {
   'nn.Linear',
   'nn.JoinTable',
   'nn.CMulTable',
-  'nn.MM'
+  'nn.MM',
+  'nn.BatchNormalization',
+  'onmt.RecurrentBatchNorm',
 }
 
 local function contains(list, m)

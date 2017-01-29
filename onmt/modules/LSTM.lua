@@ -32,13 +32,25 @@ Parameters:
   * `hiddenSize` - Size of the hidden layers.
   * `dropout` - Dropout rate to use.
   * `residual` - Residual connections between layers.
+  * `batchNorm` - Whether to use batch normalization.
+  * `eps` - If using batchNorm, a small value to avoid divide-by-zero (see nn.BatchNormalization).
+  * `momentum` - If using batchNorm, the corresponding momentum (see nn.BatchNormalization).
+  * `affine` - If using batchNorm, whether to learn the scale and bias (see nn.BatchNormalization).
 --]]
-function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual)
+function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, batchNorm, eps, momentum, affine)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
+
+  if batchNorm then
+    self.batchNorm = true
+    self.eps = eps
+    self.momentum = momentum
+    self.affine = (affine == nil) or affine
+    self.recurrents = {}
+  end
 
   parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual))
 end
@@ -104,8 +116,22 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   local x = inputs[3]
 
   -- Evaluate the input sums at once for efficiency.
-  local i2h = nn.Linear(inputSize, 4 * hiddenSize)(x)
-  local h2h = nn.Linear(hiddenSize, 4 * hiddenSize)(prevH)
+  local i2h = nn.Linear(inputSize, 4 * hiddenSize, false)(x)
+  local h2h = nn.Linear(hiddenSize, 4 * hiddenSize, not self.batchNorm)(prevH)
+  if self.batchNorm then
+    local bn_Wx = onmt.RecurrentBatchNorm(4 * hiddenSize, self.eps, self.momentum, self.affine, true)
+    local bn_Wh = onmt.RecurrentBatchNorm(4 * hiddenSize, self.eps, self.momentum, self.affine, true)
+
+    table.insert(self.recurrents, bn_Wx)
+    table.insert(self.recurrents, bn_Wh)
+
+    i2h = bn_Wx(i2h)
+    h2h = bn_Wh(h2h)
+
+    -- add a separate (no batch norm) bias
+    h2h = nn.Add(4 * hiddenSize)(h2h)
+  end
+
   local allInputSums = nn.CAddTable()({i2h, h2h})
 
   local reshaped = nn.Reshape(4, hiddenSize)(allInputSums)
@@ -126,7 +152,32 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   })
 
   -- Gated cells form the output.
-  local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
+  local nextH
+  if self.batchNorm then
+    local bn_C = onmt.RecurrentBatchNorm(hiddenSize, self.eps, self.momentum, self.affine)
+    table.insert(self.recurrents, bn_C)
+    nextH = nn.CMulTable()({outGate, nn.Tanh()(bn_C(nextC))})
+  else
+    nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
+  end
 
   return nn.gModule(inputs, {nextC, nextH})
+end
+
+--[[ Let the RecurrentBatchNorm modules inside LSTM know what time step it is ]]
+function LSTM:setTimeStep(t)
+  if self.batchNorm then
+    for i=1,#self.recurrents do
+      self.recurrents[i]:setTimeStep(t)
+    end
+  end
+end
+
+--[[ Share the RecurrentBatchNorm modules between clones ]]
+function LSTM:shareRecurrents(mlp)
+  if self.batchNorm then
+    for i=1,#self.recurrents do
+      self.recurrents[i]:share(mlp.recurrents[i], 'modules')
+    end
+  end
 end

@@ -29,7 +29,7 @@ function Encoder:__init(inputNetwork, rnn)
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
 
-  parent.__init(self, self:_buildModel())
+  parent.__init(self, self:_buildModel(), torch.typename(self.rnn))
 
   self:resetPreallocation()
 end
