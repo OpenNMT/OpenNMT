@@ -9,6 +9,7 @@
 
 * Improve beam search speed (up to 90% faster)
 * Fix `-joiner_new` option when using BPE
+* Fix joiner marker generated without the option enabled
 * Fix BLEU drop when applying beam search on certain models
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
