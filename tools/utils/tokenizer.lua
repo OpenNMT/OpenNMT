@@ -124,10 +124,12 @@ local function tokenize(line, opt)
             end
             curtok = ''
           elseif other == true then
-            if opt.joiner_new then
-              table.insert(tokens, opt.joiner)
-            else
-              curtok = opt.joiner
+            if opt.joiner_annotate then
+              if opt.joiner_new then
+                table.insert(tokens, opt.joiner)
+              else
+                curtok = opt.joiner
+              end
             end
           end
           curtok = curtok .. c
