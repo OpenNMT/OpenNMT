@@ -35,9 +35,7 @@ end
 
 function RecurrentBatchNorm:__timeStepClone()
   local bn = nn.BatchNormalization(self.dim, self.eps, self.momentum, self.affine)
-  if self._type == 'torch.CudaTensor' then
-    bn = bn:cuda()
-  end
+  bn:type(self._type)
   if self.affine then
     -- initialize weights using the recommended value
     bn.weight:fill(0.1)

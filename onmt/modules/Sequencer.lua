@@ -28,31 +28,34 @@ end
 function Sequencer:_sharedClone()
   local clone = self.network:clone('weight', 'gradWeight', 'bias', 'gradBias')
 
-  local cloneRNN = onmt.utils.Tensor.findModule(clone, self.rnnClass)
-  if cloneRNN ~= nil then
-    cloneRNN:shareRecurrents(onmt.utils.Tensor.findModule(self.network, self.rnnClass))
-  end
-  function clone:setTimeStep(t)
-    if cloneRNN ~= nil and cloneRNN.setTimeStep ~= nil then
-      cloneRNN:setTimeStep(t)
-    end
-  end
-
   -- Manually share word embeddings if they are fixed as they are not declared as parameters.
   local wordEmb
+  local rnn
+  local crnn
 
   self.network:apply(function(m)
     if m.fix then
       wordEmb = m
     end
+    if m.recurrents then
+      rnn = m
+    end
   end)
 
-  if wordEmb then
-    clone:apply(function(m)
-      if m.fix then
-        m:share(wordEmb, 'weight')
-      end
-    end)
+  clone:apply(function(m)
+    if wordEmb and m.fix then
+      m:share(wordEmb, 'weight')
+    end
+    if rnn and m.recurrents then
+      m:shareRecurrents(rnn)
+      crnn = m
+    end
+  end)
+
+  function clone:setTimeStep(t)
+    if crnn ~= nil and crnn.setTimeStep ~= nil then
+      crnn:setTimeStep(t)
+    end
   end
 
   -- Share intermediate tensors if defined.
