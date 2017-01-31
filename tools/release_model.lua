@@ -10,13 +10,16 @@ onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 local opt = cmd:parse(arg)
 
-local function toCPU(model)
+local function releaseModel(model)
   for _, submodule in pairs(model.modules) do
     if torch.type(submodule) == 'table' and submodule.modules then
-      toCPU(submodule)
+      releaseModel(submodule)
     else
       submodule:float()
       submodule:clearState()
+      submodule:apply(function (m)
+        nn.utils.clear(m, 'gradWeight', 'gradBias')
+      end)
     end
   end
 end
@@ -57,7 +60,7 @@ local function main()
   _G.logger:info('Converting model...')
   checkpoint.info = nil
   for _, model in pairs(checkpoint.models) do
-    toCPU(model)
+    releaseModel(model)
   end
   _G.logger:info('... done.')
 

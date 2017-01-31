@@ -3,10 +3,15 @@
 ### New features
 
 * Profiler option
+* Support individually setting features vocabulary and embedding size
 
 ### Fixes and improvements
 
+* Reduce released model size (up to 2x smaller)
 * Fix `-joiner_new` option when using BPE
+* Fix joiner marker generated without the option enabled
+* Fix translation server crash on Lua errors
+* Fix error when loading configuration files containing the `gpuid` option
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
