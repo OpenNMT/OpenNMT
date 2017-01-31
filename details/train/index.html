@@ -369,13 +369,17 @@
 <dt>rnn_type</dt>
 <dd>Type of RNN cell: LSTM, GRU [LSTM]</dd>
 <dt>word_vec_size</dt>
-<dd>Word embedding sizes [500]</dd>
+<dd>Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]</dd>
+<dt>src_word_vec_size</dt>
+<dd>Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]</dd>
+<dt>tgt_word_vec_size</dt>
+<dd>Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]</dd>
 <dt>feat_merge</dt>
 <dd>Merge action for the features embeddings: concat or sum [concat]</dd>
 <dt>feat_vec_exponent</dt>
-<dd>When using concatenation, if the feature takes N valuesthen the embedding dimension will be set to N^exponent [0.7]</dd>
+<dd>When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]</dd>
 <dt>feat_vec_size</dt>
-<dd>When using sum, the common embedding size of the features [20]</dd>
+<dd>When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]</dd>
 <dt>input_feed</dt>
 <dd>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</dd>
 <dt>residual</dt>
