@@ -136,8 +136,6 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, featuresVocabsFil
                          .. featuresVocabs[i]:size() .. ' (pruned from ' .. originalSizes[i + 1] .. ')')
 
       end
-
-      featuresVocab = genFeaturesVocabs
     end
   end
 
