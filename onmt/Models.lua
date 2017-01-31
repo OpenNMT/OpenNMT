@@ -1,11 +1,43 @@
-local function buildInputNetwork(opt, dicts, pretrainedWords, fixWords)
+-- Return effective embeddings size based on user options.
+local function resolveEmbSizes(opt, dicts, wordSizes)
+  local wordEmbSize
+  local featEmbSizes = {}
+
+  wordSizes = onmt.utils.String.split(wordSizes, ',')
+
+  if opt.word_vec_size > 0 then
+    wordEmbSize = opt.word_vec_size
+  else
+    wordEmbSize = tonumber(wordSizes[1])
+  end
+
+  for i = 1, #dicts.features do
+    local size
+
+    if i + 1 <= #wordSizes then
+      size = tonumber(wordSizes[i + 1])
+    elseif opt.feat_merge == 'sum' then
+      size = opt.feat_vec_size
+    else
+      size = math.floor(dicts.features[i]:size() ^ opt.feat_vec_exponent)
+    end
+
+    table.insert(featEmbSizes, size)
+  end
+
+  return wordEmbSize, featEmbSizes
+end
+
+local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords)
+  local wordEmbSize, featEmbSizes = resolveEmbSizes(opt, dicts, wordSizes)
+
   local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
-                                               opt.word_vec_size,
+                                               wordEmbSize,
                                                pretrainedWords,
                                                fixWords)
 
   local inputs
-  local inputSize = opt.word_vec_size
+  local inputSize = wordEmbSize
 
   local multiInputs = #dicts.features > 0
 
@@ -18,10 +50,12 @@ local function buildInputNetwork(opt, dicts, pretrainedWords, fixWords)
 
   -- Sequence with features.
   if #dicts.features > 0 then
-    local featEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
-                                                     opt.feat_vec_exponent,
-                                                     opt.feat_vec_size,
-                                                     opt.feat_merge)
+    local vocabSizes = {}
+    for i = 1, #dicts.features do
+      table.insert(vocabSizes, dicts.features[i]:size())
+    end
+
+    local featEmbedding = onmt.FeaturesEmbedding.new(vocabSizes, featEmbSizes, opt.feat_merge)
     inputs:add(featEmbedding)
     inputSize = inputSize + featEmbedding.outputSize
   end
@@ -44,7 +78,8 @@ local function buildEncoder(opt, dicts)
     error('in concat mode, rnn_size must be divisible by 2')
   end
 
-  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
+  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.src_word_vec_size,
+                                                    opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   -- if cudnn is enabled with RNN support
   if onmt.utils.Cuda.cudnnSupport('RNN') then
@@ -87,7 +122,8 @@ local function buildEncoder(opt, dicts)
 end
 
 local function buildDecoder(opt, dicts, verbose)
-  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
+  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.tgt_word_vec_size,
+                                                    opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
   local RNN = onmt.LSTM
   if opt.rnn_type == 'GRU' then

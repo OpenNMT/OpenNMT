@@ -19,8 +19,8 @@ cmd:option('-valid_tgt', '', [[Path to the validation target data]])
 
 cmd:option('-save_data', '', [[Output file for the prepared data]])
 
-cmd:option('-src_vocab_size', 50000, [[Size of the source vocabulary]])
-cmd:option('-tgt_vocab_size', 50000, [[Size of the target vocabulary]])
+cmd:option('-src_vocab_size', '50000', [[Comma-separated list of source vocabularies size: word[,feat1,feat2,...].]])
+cmd:option('-tgt_vocab_size', '50000', [[Comma-separated list of target vocabularies size: word[,feat1,feat2,...].]])
 cmd:option('-src_vocab', '', [[Path to an existing source vocabulary]])
 cmd:option('-tgt_vocab', '', [[Path to an existing target vocabulary]])
 cmd:option('-features_vocabs_prefix', '', [[Path prefix to existing features vocabularies]])
