@@ -53,7 +53,7 @@ where the options are:
 
 ## Release model
 
-After training a model on the GPU, you may want to release it to run on the CPU with the `release_model.lua` script.
+After training a model on the GPU, you may want to release it to run on the CPU and take less space by using the `release_model.lua` script.
 
 ```
 th tools/release_model.lua -model model.t7 -gpuid 1

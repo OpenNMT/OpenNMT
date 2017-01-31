@@ -6,6 +6,7 @@
 
 ### Fixes and improvements
 
+* Reduce released model size (up to 2x smaller)
 * Fix `-joiner_new` option when using BPE
 * Fix joiner marker generated without the option enabled
 * Fix translation server crash on Lua errors
