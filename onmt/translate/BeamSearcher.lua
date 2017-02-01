@@ -48,9 +48,9 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
 
   -- Initialize the beam.
   beams[1] = self.advancer:initBeam()
-  local remaining = beams[1]:remaining()
-  if beams[1]:tokens()[1]:size(1) ~= remaining * beamSize then
-    beams[1]:replicate(self.beamSize)
+  local remaining = beams[1]:getRemaining()
+  if beams[1]:getTokens()[1]:size(1) ~= remaining * beamSize then
+    beams[1]:_replicate(self.beamSize)
   end
   local t = 1
   while remaining > 0 do
@@ -73,7 +73,7 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
       finished[finishedBatches[b]] = finishedHypotheses[b]
     end
     t = t + 1
-    remaining = beams[t]:remaining()
+    remaining = beams[t]:getRemaining()
   end
   return finished
 end
@@ -82,7 +82,7 @@ end
 function BeamSearcher:_findKBest(beams, scores)
   local t = #beams
   local vocabSize = scores:size(2)
-  local expandedScores = beams[t]:expandScores(scores, self.beamSize)
+  local expandedScores = beams[t]:_expandScores(scores, self.beamSize)
 
   -- Find top beamSize * preFilterFactor hypotheses
   local considered = self.beamSize * self.preFilterFactor
@@ -154,11 +154,11 @@ end
 
 function BeamSearcher:_completeHypotheses(beams, completed)
   local t = #beams
-  local batchSize = beams[t]:remaining()
+  local batchSize = beams[t]:getRemaining()
   completed = completed:view(batchSize, -1)
-  local token = beams[t]:tokens()[t]:view(batchSize, -1)
-  local backPointer = beams[t]:backPointer():view(batchSize, -1)
-  local scores = beams[t]:scores():view(batchSize, -1)
+  local token = beams[t]:getTokens()[t]:view(batchSize, -1)
+  local backPointer = beams[t]:getBackPointer():view(batchSize, -1)
+  local scores = beams[t]:getScores():view(batchSize, -1)
 
   local remainingId = 0
   local remainingIds = {}
@@ -239,7 +239,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
     end
   end
 
-  beams[t]:scores():maskedFill(completed:view(-1), -math.huge)
+  beams[t]:getScores():maskedFill(completed:view(-1), -math.huge)
 
   -- Remove finished batches
   if remainingId < batchSize then

@@ -161,7 +161,7 @@ end
 Parameters:
 
   * `token` - tensor of size `(batchSize, vocabSize)` or `(batchSize * beamSize, vocabSize)`, or a list of such tensors.
-  * `state` - an iteratable object, where the contained tensors should have the same first dimension as `token`.
+  * `state` - an iterable object, where the contained tensors should have the same first dimension as `token`.
   * `remaining` - remaining batch size. [`token:size(1)`]
 
 --]]
@@ -188,7 +188,7 @@ Returns:
   * `tokens` - a list of tokens. Note that the start-of-sequence symbols is included.
 
 --]]
-function Beam:tokens()
+function Beam:getTokens()
   return self._tokens
 end
 
@@ -199,7 +199,7 @@ Returns:
   * `state` - an abstract iterable object as passed by constructor.
 
 --]]
-function Beam:state()
+function Beam:getState()
   return self._state
 end
 
@@ -210,8 +210,19 @@ Returns:
   * `scores` - a flat tensor storing the total scores for each batch.
 
 --]]
-function Beam:scores()
+function Beam:getScores()
   return self._scores
+end
+
+--[[
+
+Returns:
+
+  * `backPointer` - a flat tensor storing the total scores for each batch.
+
+--]]
+function Beam:getBackPointer()
+  return self._backPointer
 end
 
 --[[
@@ -221,7 +232,7 @@ Returns:
   * `remaining` - the number of not finished sequences.
 
 --]]
-function Beam:remaining()
+function Beam:getRemaining()
   return self._remaining
 end
 
@@ -237,6 +248,8 @@ function Beam:setScores(scores)
   self._scores = scores:view(-1)
 end
 
+--[[ Set backPointer.
+--]]
 function Beam:setBackPointer(backPointer)
   self._backPointer = backPointer:view(-1)
 end
@@ -249,15 +262,12 @@ function Beam:setRemaining2Orig(remainingId, origId)
   self._remaining2Orig[remainingId] = origId
 end
 
-function Beam:backPointer()
-  return self._backPointer
-end
 
 -- In the first step, if there is only 1 hypothesis per
 -- batch, then each hypothesis is replicated beamSize times to keep consistency
 -- with the following beam search steps, while the scores of the auxiliary
 -- hypotheses are set to -inf.
-function Beam:replicate(beamSize)
+function Beam:_replicate(beamSize)
   assert (#self._tokens == 1, 'only the first beam may need replicating!')
   local token = self._tokens[1]
   local batchSize = token:size(1)
@@ -270,7 +280,7 @@ function Beam:replicate(beamSize)
   self._scores:add(maskScores:view(-1))
 end
 
-function Beam:expandScores(scores, beamSize)
+function Beam:_expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
   self._scores = self._scores:typeAs(scores)

@@ -223,13 +223,13 @@ function beamSearchTest.beamSearch()
   local update = function()
   end
   local expand = function(beam)
-    local tokens = beam:tokens()
+    local tokens = beam:getTokens()
     local token = tokens[#tokens]
     local scores = transitionScores:index(1, token)
     return scores
   end
   local isComplete = function(beam)
-    local tokens = beam:tokens()
+    local tokens = beam:getTokens()
     local completed = tokens[#tokens]:eq(4)
     if #tokens - 1 > 2 then
       completed:fill(1)
@@ -274,7 +274,7 @@ function beamSearchTest.beamSearch()
 
   -- Test filter
   local filter = function(beam)
-    local tokens = beam:tokens()
+    local tokens = beam:getTokens()
     local batchSize = tokens[1]:size(1)
     -- Disallow {3, 4}
     local prune = torch.ByteTensor(batchSize):zero()

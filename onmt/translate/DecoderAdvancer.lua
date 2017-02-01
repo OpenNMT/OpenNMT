@@ -60,10 +60,10 @@ Parameters:
 
 ]]
 function DecoderAdvancer:update(beam)
-  local state = beam:state()
+  local state = beam:getState()
   local decStates, decOut, context, _, features, sourceSizes, t
     = table.unpack(state, 1, 7)
-  local tokens = beam:tokens()
+  local tokens = beam:getTokens()
   local token = tokens[#tokens]
   local inputs
   if #features == 0 then
@@ -95,7 +95,7 @@ Returns:
 
 ]]
 function DecoderAdvancer:expand(beam)
-  local state = beam:state()
+  local state = beam:getState()
   local decOut = state[2]
   local out = self.decoder.generator:forward(decOut)
   local features = {}
@@ -120,7 +120,7 @@ Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses
 
 ]]
 function DecoderAdvancer:isComplete(beam)
-  local tokens = beam:tokens()
+  local tokens = beam:getTokens()
   local seqLength = #tokens - 1
   local complete = tokens[#tokens]:eq(onmt.Constants.EOS)
   if seqLength > self.max_sent_length then
@@ -140,7 +140,7 @@ Returns: a binary flat tensor of size `(batchSize)`, indicating which beams shal
 
 ]]
 function DecoderAdvancer:filter(beam)
-  local tokens = beam:tokens()
+  local tokens = beam:getTokens()
   local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
   for t = 1, #tokens do
     local token = tokens[t]

@@ -144,6 +144,9 @@ function Translator:translateBatch(batch)
                                                       encStates,
                                                       self.dicts)
 
+  -- Save memory by only keeping track of necessary elements in the states.
+  -- Attentions are at index 4 in the states.
+  -- Features are at index 5 in the states.
   local attnIndex = 4
   local featsIndex = 5
   if self.opt.replace_unk then
@@ -168,9 +171,10 @@ function Translator:translateBatch(batch)
     local scoresBatch = {}
 
     for n = 1, self.opt.n_best do
-      local tokens = results[b][n].tokens
-      local score = results[b][n].score
-      local states = results[b][n].states
+      local result = results[b][n]
+      local tokens = result.tokens
+      local score = result.score
+      local states = result.states
       local attn = states[attnIndex] or {}
       local feats = states[featsIndex] or {}
       table.remove(tokens)
