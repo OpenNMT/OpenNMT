@@ -72,4 +72,5 @@ function seq2seq.declareOpts(cmd)
                                        See README for specific formatting instructions.]])
   cmd:option('-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]])
   cmd:option('-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]])
+  cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]])
 end
