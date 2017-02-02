@@ -250,7 +250,28 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
@@ -367,13 +388,17 @@
 <dt>batch_size</dt>
 <dd>Batch size [30]</dd>
 <dt>max_sent_length</dt>
-<dd>Maximum sentence length. If any sequences in srcfile are longer than this then it will error out [250]</dd>
+<dd>Maximum output sentence length. [250]</dd>
 <dt>replace_unk</dt>
 <dd>Replace the generated UNK tokens with the source token thathad the highest attention weight. If phrase_table is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]</dd>
 <dt>phrase_table</dt>
 <dd>Path to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []</dd>
 <dt>n_best</dt>
 <dd>If &gt; 1, it will also output an n_best list of decoded sentences [1]</dd>
+<dt>max_num_unks</dt>
+<dd>All sequences with more unks than this will be ignoredduring beam search [inf]</dd>
+<dt>pre_filter_factor</dt>
+<dd>Optional, set this only if filter is being used. Beforeapplying filters, hypotheses with top <code>beamSize * preFilterFactor</code>scores will be considered. If the returned hypotheses voilate filters,then set this to a larger value to consider more. [1]</dd>
 </dl>
 <p><strong>Other options</strong></p>
 <dl>

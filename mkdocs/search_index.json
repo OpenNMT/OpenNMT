@@ -167,7 +167,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+Decoder/",
-            "text": "onmt.Decoder\n\n\nUnit to decode a sequence of output tokens.\n\n\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Decoder(inputNetwork, rnn, generator, inputFeed)\n\n\nConstruct a decoder layer.\n\n\nParameters:\n\n\n\n\ninputNetwork\n - input nn module.\n\n\nrnn\n - recurrent module, such as \nonmt.LSTM\n.\n\n\ngenerator\n - optional, an output \nonmt.Generator\n.\n\n\ninputFeed\n - bool, enable input feeding.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder.load(pretrained)\n\n\nReturn a new Decoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.Decoder:serialize()\n\n\nReturn data to serialize. \n\n\n[src]\n\n\n\n\nonmt.Decoder:maskPadding(sourceSizes, sourceLength, beamSize)\n\n\nMask padding means that the attention-layer is constrained to\n  give zero-weight to padding. This is done by storing a reference\n  to the softmax attention-layer.\n\n\nParameters:\n\n\n\n\nSee  \nonmt.MaskedSoftmax\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forwardOne(input, prevStates, context, prevOut, t)\n\n\nRun one step of the decoder.\n\n\nParameters:\n\n\n\n\ninput\n - input to be passed to inputNetwork.\n\n\nprevStates\n - stack of hidden states (batch x layers*model x rnnSize)\n\n\ncontext\n - encoder output (batch x n x rnnSize)\n\n\nprevOut\n - previous distribution (batch x #words)\n\n\nt\n - current timestep\n\n\n\n\nReturns:\n\n\n\n\nout\n - Top-layer hidden state.\n\n\nstates\n - All states.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forward(batch, encoderStates, context)\n\n\nCompute all forward steps.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n object.\n\n\nencoderStates\n - a batch of initial decoder states (optional) [0]\n\n\ncontext\n - the context to apply attention to.\n\n\n\n\nReturns: Table of top hidden state for each timestep.\n\n\n[src]\n\n\n\n\nonmt.Decoder:backward(batch, outputs, criterion)\n\n\nCompute the backward update.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n object\n\n\noutputs\n - expected outputs\n\n\ncriterion\n - a single target criterion object\n\n\n\n\nNote: This code runs both the standard backward and criterion forward/backward.\n  It returns both the gradInputs and the loss.\n  -- \n\n\n[src]\n\n\n\n\nonmt.Decoder:computeLoss(batch, encoderStates, context, criterion)\n\n\nCompute the loss on a batch.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n to score.\n\n\nencoderStates\n - initialization of decoder.\n\n\ncontext\n - the attention context.\n\n\ncriterion\n - a pointwise criterion.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:computeScore(batch, encoderStates, context)\n\n\nCompute the score of a batch.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n to score.\n\n\nencoderStates\n - initialization of decoder.\n\n\ncontext\n - the attention context.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Decoder:resetPreallocation()\n\n\n\n * \nonmt.Decoder:forwardAndApply(batch, encoderStates, context, func)",
+            "text": "onmt.Decoder\n\n\nUnit to decode a sequence of output tokens.\n\n\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Decoder(inputNetwork, rnn, generator, inputFeed)\n\n\nConstruct a decoder layer.\n\n\nParameters:\n\n\n\n\ninputNetwork\n - input nn module.\n\n\nrnn\n - recurrent module, such as \nonmt.LSTM\n.\n\n\ngenerator\n - optional, an output \nonmt.Generator\n.\n\n\ninputFeed\n - bool, enable input feeding.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder.load(pretrained)\n\n\nReturn a new Decoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.Decoder:serialize()\n\n\nReturn data to serialize. \n\n\n[src]\n\n\n\n\nonmt.Decoder:maskPadding(sourceSizes, sourceLength)\n\n\nMask padding means that the attention-layer is constrained to\n  give zero-weight to padding. This is done by storing a reference\n  to the softmax attention-layer.\n\n\nParameters:\n\n\n\n\nSee  \nonmt.MaskedSoftmax\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forwardOne(input, prevStates, context, prevOut, t)\n\n\nRun one step of the decoder.\n\n\nParameters:\n\n\n\n\ninput\n - input to be passed to inputNetwork.\n\n\nprevStates\n - stack of hidden states (batch x layers*model x rnnSize)\n\n\ncontext\n - encoder output (batch x n x rnnSize)\n\n\nprevOut\n - previous distribution (batch x #words)\n\n\nt\n - current timestep\n\n\n\n\nReturns:\n\n\n\n\nout\n - Top-layer hidden state.\n\n\nstates\n - All states.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:forward(batch, encoderStates, context)\n\n\nCompute all forward steps.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n object.\n\n\nencoderStates\n - a batch of initial decoder states (optional) [0]\n\n\ncontext\n - the context to apply attention to.\n\n\n\n\nReturns: Table of top hidden state for each timestep.\n\n\n[src]\n\n\n\n\nonmt.Decoder:backward(batch, outputs, criterion)\n\n\nCompute the backward update.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n object\n\n\noutputs\n - expected outputs\n\n\ncriterion\n - a single target criterion object\n\n\n\n\nNote: This code runs both the standard backward and criterion forward/backward.\n  It returns both the gradInputs and the loss.\n  -- \n\n\n[src]\n\n\n\n\nonmt.Decoder:computeLoss(batch, encoderStates, context, criterion)\n\n\nCompute the loss on a batch.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n to score.\n\n\nencoderStates\n - initialization of decoder.\n\n\ncontext\n - the attention context.\n\n\ncriterion\n - a pointwise criterion.\n\n\n\n\n[src]\n\n\n\n\nonmt.Decoder:computeScore(batch, encoderStates, context)\n\n\nCompute the score of a batch.\n\n\nParameters:\n\n\n\n\nbatch\n - a \nBatch\n to score.\n\n\nencoderStates\n - initialization of decoder.\n\n\ncontext\n - the attention context.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Decoder:resetPreallocation()\n\n\n\n * \nonmt.Decoder:forwardAndApply(batch, encoderStates, context, func)",
             "title": "onmt+modules+Decoder"
         },
         {
@@ -191,9 +191,9 @@
             "title": "onmt.Decoder:serialize()"
         },
         {
-            "location": "/code/modules/onmt+modules+Decoder/#onmtdecodermaskpaddingsourcesizes-sourcelength-beamsize",
+            "location": "/code/modules/onmt+modules+Decoder/#onmtdecodermaskpaddingsourcesizes-sourcelength",
             "text": "Mask padding means that the attention-layer is constrained to\n  give zero-weight to padding. This is done by storing a reference\n  to the softmax attention-layer.  Parameters:   See   onmt.MaskedSoftmax .   [src]",
-            "title": "onmt.Decoder:maskPadding(sourceSizes, sourceLength, beamSize)"
+            "title": "onmt.Decoder:maskPadding(sourceSizes, sourceLength)"
         },
         {
             "location": "/code/modules/onmt+modules+Decoder/#onmtdecoderforwardoneinput-prevstates-context-prevout-t",
@@ -357,7 +357,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+MaskedSoftmax/",
-            "text": "onmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nFor instance there may be a batch of instances where A is padding.\n\n\nAXXXAA\nAXXAAA\nAXXXXX\n\n\n\nMaskedSoftmax ensures that no probability is given to the A's.\n\n\nFor this example, \nbeamSize\n is 3, \nsourceLength\n is {3, 2, 5}.\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsourceSizes\n -  the true lengths (with left padding).\n\n\nsourceLength\n - the max length in the batch \nbeamSize\n.\n\n\nbeamSize\n - the batch size.",
+            "text": "onmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nFor instance there may be a batch of instances where A is padding.\n\n\nAXXXAA\nAXXAAA\nAXXXXX\n\n\n\nMaskedSoftmax ensures that no probability is given to the A's.\n\n\nFor this example, \nbeamSize\n is 3, \nsourceLength\n is {3, 2, 5}.\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(sourceSizes, sourceLength)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsourceSizes\n -  the true lengths (with left padding).\n\n\nsourceLength\n - the max length in the batch \nbeamSize\n.",
             "title": "onmt+modules+MaskedSoftmax"
         },
         {
@@ -366,9 +366,9 @@
             "title": "onmt.MaskedSoftmax"
         },
         {
-            "location": "/code/modules/onmt+modules+MaskedSoftmax/#onmtmaskedsoftmaxsourcesizes-sourcelength-beamsize",
-            "text": "A nn-style module that applies a softmax on input that gives no weight to the left padding.  Parameters:   sourceSizes  -  the true lengths (with left padding).  sourceLength  - the max length in the batch  beamSize .  beamSize  - the batch size.",
-            "title": "onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)"
+            "location": "/code/modules/onmt+modules+MaskedSoftmax/#onmtmaskedsoftmaxsourcesizes-sourcelength",
+            "text": "A nn-style module that applies a softmax on input that gives no weight to the left padding.  Parameters:   sourceSizes  -  the true lengths (with left padding).  sourceLength  - the max length in the batch  beamSize .",
+            "title": "onmt.MaskedSoftmax(sourceSizes, sourceLength)"
         },
         {
             "location": "/code/modules/onmt+modules+Network/",
@@ -516,49 +516,169 @@
             "title": "Home"
         },
         {
+            "location": "/code/translate/onmt+translate+Advancer/",
+            "text": "onmt.Advancer\n\n\nClass for specifying how to advance one step. A beam mainly consists of\n  a list of \ntokens\n and a \nstate\n. \ntokens[t]\n stores a flat tensors of size\n  \nbatchSize * beamSize\n representing tokens at step \nt\n. \nstate\n can be either\n  a tensor with first dimension size \nbatchSize * beamSize\n, or an iterable\n  object containing several such tensors.\n\n\nPseudocode:\n\n\n  finished = []\n\n  beams = {}\n\n  -- Initialize the beam.\n\n  [ beams[1] ] \n-- initBeam()\n\n  FOR t = 1, ... DO\n\n    -- Update beam states based on new tokens.\n\n    update([ beams[t] ])\n\n    -- Expand beams by all possible tokens and return the scores.\n\n    [ [scores] ] \n-- expand([ beams[t] ])\n\n    -- Find k best next beams (maintained by BeamSearcher).\n\n    _findKBest([beams], [ [scores] ])\n\n    completed \n-- isComplete([ beams[t + 1] ])\n\n    -- Remove completed hypotheses (maintained by BeamSearcher).\n\n    finished += _completeHypotheses([beams], completed)\n\n    IF all(completed) THEN\n\n      BREAK\n\n    END\n\n  ENDWHILE\n\n\n\n==================================================================\n\n\n[src]\n\n\n\n\nonmt.Advancer:initBeam()\n\n\nReturns an initial beam.\n\n\nReturns:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\n[src]\n\n\n\n\nonmt.Advancer:update(beam)\n\n\nUpdates beam states given new tokens.\n\n\nParameters:\n\n\n\n\nbeam\n - beam with updated token list.\n\n\n\n\n[src]\n\n\n\n\nonmt.Advancer:expand(beam)\n\n\nExpands beam by all possible tokens and returns the scores.\n\n\nParameters:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\nReturns:\n\n\n\n\nscores\n - a 2D tensor of size \n(batchSize * beamSize, numTokens)\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Advancer:isComplete(beam)\n\n\nChecks which hypotheses in the beam are already finished.\n\n\nParameters:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\nReturns: a binary flat tensor of size \n(batchSize * beamSize)\n, indicating\n  which hypotheses are finished.\n\n\n[src]\n\n\n\n\nonmt.Advancer:setKeptStateIndexes(indexes)\n\n\nSpecifies which states to keep track of. After beam search, those states\n  can be retrieved during all steps along with the tokens. This is used\n  for memory efficiency.\n\n\nParameters:\n\n\n\n\nindexes\n - a table of iterators, specifying the indexes in the \nstates\n to track.\n\n\n\n\n[src]\n\n\n\n\nonmt.Advancer:filter()\n\n\nChecks which hypotheses in the beam shall be pruned.\n\n\nParameters:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\nReturns: a binary flat tensor of size \n(batchSize * beamSize)\n, indicating\n  which beams shall be pruned.",
+            "title": "onmt+translate+Advancer"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Advancer/#onmtadvancer",
+            "text": "Class for specifying how to advance one step. A beam mainly consists of\n  a list of  tokens  and a  state .  tokens[t]  stores a flat tensors of size\n   batchSize * beamSize  representing tokens at step  t .  state  can be either\n  a tensor with first dimension size  batchSize * beamSize , or an iterable\n  object containing several such tensors.  Pseudocode:    finished = []\n\n  beams = {}\n\n  -- Initialize the beam.\n\n  [ beams[1] ]  -- initBeam()\n\n  FOR t = 1, ... DO\n\n    -- Update beam states based on new tokens.\n\n    update([ beams[t] ])\n\n    -- Expand beams by all possible tokens and return the scores.\n\n    [ [scores] ]  -- expand([ beams[t] ])\n\n    -- Find k best next beams (maintained by BeamSearcher).\n\n    _findKBest([beams], [ [scores] ])\n\n    completed  -- isComplete([ beams[t + 1] ])\n\n    -- Remove completed hypotheses (maintained by BeamSearcher).\n\n    finished += _completeHypotheses([beams], completed)\n\n    IF all(completed) THEN\n\n      BREAK\n\n    END\n\n  ENDWHILE  ==================================================================  [src]",
+            "title": "onmt.Advancer"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Advancer/#onmtadvancerinitbeam",
+            "text": "Returns an initial beam.  Returns:   beam  - an  onmt.translate.Beam  object.   [src]",
+            "title": "onmt.Advancer:initBeam()"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Advancer/#onmtadvancerupdatebeam",
+            "text": "Updates beam states given new tokens.  Parameters:   beam  - beam with updated token list.   [src]",
+            "title": "onmt.Advancer:update(beam)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Advancer/#onmtadvancerexpandbeam",
+            "text": "Expands beam by all possible tokens and returns the scores.  Parameters:   beam  - an  onmt.translate.Beam  object.   Returns:   scores  - a 2D tensor of size  (batchSize * beamSize, numTokens) .   [src]",
+            "title": "onmt.Advancer:expand(beam)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Advancer/#onmtadvanceriscompletebeam",
+            "text": "Checks which hypotheses in the beam are already finished.  Parameters:   beam  - an  onmt.translate.Beam  object.   Returns: a binary flat tensor of size  (batchSize * beamSize) , indicating\n  which hypotheses are finished.  [src]",
+            "title": "onmt.Advancer:isComplete(beam)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Advancer/#onmtadvancersetkeptstateindexesindexes",
+            "text": "Specifies which states to keep track of. After beam search, those states\n  can be retrieved during all steps along with the tokens. This is used\n  for memory efficiency.  Parameters:   indexes  - a table of iterators, specifying the indexes in the  states  to track.   [src]",
+            "title": "onmt.Advancer:setKeptStateIndexes(indexes)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Advancer/#onmtadvancerfilter",
+            "text": "Checks which hypotheses in the beam shall be pruned.  Parameters:   beam  - an  onmt.translate.Beam  object.   Returns: a binary flat tensor of size  (batchSize * beamSize) , indicating\n  which beams shall be pruned.",
+            "title": "onmt.Advancer:filter()"
+        },
+        {
             "location": "/code/translate/onmt+translate+Beam/",
-            "text": "onmt.Beam\n\n\nClass for managing the internals of the beam search process.\n\n\nhyp1---hyp1---hyp1 -hyp1\n    \\             /\nhyp2 \\-hyp2 /-hyp2--hyp2\n           /      \\\nhyp3---hyp3---hyp3 -hyp3\n========================\n\n\n\nTakes care of beams, back pointers, and scores.\n\n\n[src]\n\n\n\n\nonmt.Beam(size, numFeatures)\n\n\nConstructor\n\n\nParameters:\n\n\n\n\nsize\n : The beam \nK\n.\n\n\nnumFeatures\n : Number of features, (optional)\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:getCurrentState()\n\n\nGet the outputs for the current timestep.\n\n\n[src]\n\n\n\n\nonmt.Beam:getCurrentOrigin()\n\n\nGet the backpointers for the current timestep.\n\n\n[src]\n\n\n\n\nonmt.Beam:advance(wordLk, featsLk, attnOut)\n\n\nGiven prob over words for every last beam \nwordLk\n and attention\n \nattnOut\n. Compute and update the beam search.\n\n\nParameters:\n\n\n\n\nwordLk\n- probs of advancing from the last step (K x words)\n\n\nfeatsLk\n- probs of features at the last step (K x numfeatures x featsize)\n\n\nattnOut\n- attention at the last step\n\n\n\n\nReturns: true if beam search is complete.\n\n\n[src]\n\n\n\n\nonmt.Beam:getBest()\n\n\nGet the score of the best in the beam. \n\n\n[src]\n\n\n\n\nonmt.Beam:getHyp(k)\n\n\nWalk back to construct the full hypothesis.\n\n\nParameters:\n\n\n\n\nk\n - the position in the beam to construct.\n\n\n\n\nReturns:\n\n\n\n\nThe hypothesis\n\n\nThe attention at each time step.\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Beam:sortBest()",
+            "text": "onmt.Beam\n\n\nClass for maintaining statistics of each step. A beam mainly consists of\n  a list of tokens \ntokens\n and a state \nstate\n. \ntokens[t]\n stores a flat tensor\n  of size \nbatchSize * beamSize\n representing the tokens at step \nt\n, while\n  \nstate\n can be either a tensor with first dimension size \nbatchSize * beamSize\n,\n  or an iterable object containing several such tensors.\n\n\n[src]\n\n\n\n\nonmt.Beam(token, state, batchSize)\n\n\nConstructor. We allow users to either specify all initial hypotheses by\n  passing in \ntoken\n and \nstate\n with first dimension \nbatchSize * beamSize\n\n  such that there are \nbeamSize\n initial hypotheses for every sequence in the\n  batch and pass in the number of sequences \nbatchSize\n, or only specify one\n  hypothesis per sequence by passing \ntoken\n and \nstate\n with first dimension\n  \nbatchSize\n, and then \nonmt.translate.BeamSearcher\n will pad with auxiliary\n  hypotheses with scores \n-inf\n such that each sequence starts with \nbeamSize\n\n  hypotheses as in the former case.\n\n\nParameters:\n\n\n\n\ntoken\n - tensor of size \n(batchSize, vocabSize)\n (if start with one initial\n  hypothesis per sequence) or \n(batchSize * beamSize, vocabSize)\n (if start with\n  \nbeamSize\n initial hypotheses per sequence), or a list of such tensors.\n\n\nstate\n - an iterable object, where the contained tensors should have the\n  same first dimension as \ntoken\n.\n\n\nbatchSize\n - optional, number of sentences. Only necessary if\n  start with \nbeamSize\n hypotheses per sequence. [\ntoken:size(1)\n]\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:getTokens()\n\n\nReturns:\n\n\n\n\ntokens\n - a list of tokens. Note that the start-of-sequence symbols are\n  also included. \ntokens[t]\n stores the tokens at step \nt\n, which is a tensor\n  of size \nbatchSize * beamSize\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:getState()\n\n\nReturns:\n\n\n\n\nstate\n - an abstract iterable object as passed by constructor. Every tensor\n  inside the \nstate\n has first dimension \nbatchSize * beamSize\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:getScores()\n\n\nReturns:\n\n\n\n\nscores\n - a flat tensor storing the total scores for each batch. It is of\n  size \nbatchSize * beamSize\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:getBackPointer()\n\n\nReturns:\n\n\n\n\nbackPointer\n - a flat tensor storing the backpointers for each batch. It is\n  of size \nbatchSize * beamSize\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:getRemaining()\n\n\nReturns the number of unfinished sequences. The finished sequences will be\n  removed from batch.\n\n\nReturns:\n\n\n\n\nremaining\n - the number of unfinished sequences.\n\n\n\n\n[src]\n\n\n\n\nonmt.Beam:remaining2Orig(remainingId)\n\n\nSince finished sequences are being removed from the batch, this function\n  provides a way to convert the remaining batch id to the original batch id.\n\n\n[src]\n\n\n\n\nonmt.Beam:orig2Remaining(origId)\n\n\nSince finished sequences are being removed from the batch, this function\n  provides a way to convert the original batch id to the remaining batch id.\n\n\n[src]\n\n\n\n\nonmt.Beam:setState(state)\n\n\nSet state.\n\n\n[src]\n\n\n\n\nonmt.Beam:setScores(scores)\n\n\nSet scores.\n\n\n[src]\n\n\n\n\nonmt.Beam:setBackPointer(backPointer)\n\n\nSet backPointer.",
             "title": "onmt+translate+Beam"
         },
         {
             "location": "/code/translate/onmt+translate+Beam/#onmtbeam",
-            "text": "Class for managing the internals of the beam search process.  hyp1---hyp1---hyp1 -hyp1\n    \\             /\nhyp2 \\-hyp2 /-hyp2--hyp2\n           /      \\\nhyp3---hyp3---hyp3 -hyp3\n========================  Takes care of beams, back pointers, and scores.  [src]",
+            "text": "Class for maintaining statistics of each step. A beam mainly consists of\n  a list of tokens  tokens  and a state  state .  tokens[t]  stores a flat tensor\n  of size  batchSize * beamSize  representing the tokens at step  t , while\n   state  can be either a tensor with first dimension size  batchSize * beamSize ,\n  or an iterable object containing several such tensors.  [src]",
             "title": "onmt.Beam"
         },
         {
-            "location": "/code/translate/onmt+translate+Beam/#onmtbeamsize-numfeatures",
-            "text": "Constructor  Parameters:   size  : The beam  K .  numFeatures  : Number of features, (optional)   [src]",
-            "title": "onmt.Beam(size, numFeatures)"
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamtoken-state-batchsize",
+            "text": "Constructor. We allow users to either specify all initial hypotheses by\n  passing in  token  and  state  with first dimension  batchSize * beamSize \n  such that there are  beamSize  initial hypotheses for every sequence in the\n  batch and pass in the number of sequences  batchSize , or only specify one\n  hypothesis per sequence by passing  token  and  state  with first dimension\n   batchSize , and then  onmt.translate.BeamSearcher  will pad with auxiliary\n  hypotheses with scores  -inf  such that each sequence starts with  beamSize \n  hypotheses as in the former case.  Parameters:   token  - tensor of size  (batchSize, vocabSize)  (if start with one initial\n  hypothesis per sequence) or  (batchSize * beamSize, vocabSize)  (if start with\n   beamSize  initial hypotheses per sequence), or a list of such tensors.  state  - an iterable object, where the contained tensors should have the\n  same first dimension as  token .  batchSize  - optional, number of sentences. Only necessary if\n  start with  beamSize  hypotheses per sequence. [ token:size(1) ]   [src]",
+            "title": "onmt.Beam(token, state, batchSize)"
         },
         {
-            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgetcurrentstate",
-            "text": "Get the outputs for the current timestep.  [src]",
-            "title": "onmt.Beam:getCurrentState()"
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgettokens",
+            "text": "Returns:   tokens  - a list of tokens. Note that the start-of-sequence symbols are\n  also included.  tokens[t]  stores the tokens at step  t , which is a tensor\n  of size  batchSize * beamSize .   [src]",
+            "title": "onmt.Beam:getTokens()"
         },
         {
-            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgetcurrentorigin",
-            "text": "Get the backpointers for the current timestep.  [src]",
-            "title": "onmt.Beam:getCurrentOrigin()"
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgetstate",
+            "text": "Returns:   state  - an abstract iterable object as passed by constructor. Every tensor\n  inside the  state  has first dimension  batchSize * beamSize   [src]",
+            "title": "onmt.Beam:getState()"
         },
         {
-            "location": "/code/translate/onmt+translate+Beam/#onmtbeamadvancewordlk-featslk-attnout",
-            "text": "Given prob over words for every last beam  wordLk  and attention\n  attnOut . Compute and update the beam search.  Parameters:   wordLk - probs of advancing from the last step (K x words)  featsLk - probs of features at the last step (K x numfeatures x featsize)  attnOut - attention at the last step   Returns: true if beam search is complete.  [src]",
-            "title": "onmt.Beam:advance(wordLk, featsLk, attnOut)"
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgetscores",
+            "text": "Returns:   scores  - a flat tensor storing the total scores for each batch. It is of\n  size  batchSize * beamSize .   [src]",
+            "title": "onmt.Beam:getScores()"
         },
         {
-            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgetbest",
-            "text": "Get the score of the best in the beam.   [src]",
-            "title": "onmt.Beam:getBest()"
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgetbackpointer",
+            "text": "Returns:   backPointer  - a flat tensor storing the backpointers for each batch. It is\n  of size  batchSize * beamSize   [src]",
+            "title": "onmt.Beam:getBackPointer()"
         },
         {
-            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgethypk",
-            "text": "Walk back to construct the full hypothesis.  Parameters:   k  - the position in the beam to construct.   Returns:   The hypothesis  The attention at each time step.",
-            "title": "onmt.Beam:getHyp(k)"
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamgetremaining",
+            "text": "Returns the number of unfinished sequences. The finished sequences will be\n  removed from batch.  Returns:   remaining  - the number of unfinished sequences.   [src]",
+            "title": "onmt.Beam:getRemaining()"
         },
         {
-            "location": "/code/translate/onmt+translate+Beam/#undocumented-methods",
-            "text": "*  onmt.Beam:sortBest()",
-            "title": "Undocumented methods"
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamremaining2origremainingid",
+            "text": "Since finished sequences are being removed from the batch, this function\n  provides a way to convert the remaining batch id to the original batch id.  [src]",
+            "title": "onmt.Beam:remaining2Orig(remainingId)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamorig2remainingorigid",
+            "text": "Since finished sequences are being removed from the batch, this function\n  provides a way to convert the original batch id to the remaining batch id.  [src]",
+            "title": "onmt.Beam:orig2Remaining(origId)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamsetstatestate",
+            "text": "Set state.  [src]",
+            "title": "onmt.Beam:setState(state)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamsetscoresscores",
+            "text": "Set scores.  [src]",
+            "title": "onmt.Beam:setScores(scores)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+Beam/#onmtbeamsetbackpointerbackpointer",
+            "text": "Set backPointer.",
+            "title": "onmt.Beam:setBackPointer(backPointer)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+BeamSearcher/",
+            "text": "onmt.BeamSearcher\n\n\nClass for managing the internals of the beam search process.\n\n\n  hyp1---hyp1---hyp1 -hyp1\n      \\             /\n  hyp2 \\-hyp2 /-hyp2--hyp2\n             /      \\\n  hyp3---hyp3---hyp3 -hyp3\n  ========================\n\n\n\nTakes care of beams.\n\n\n[src]\n\n\n\n\nonmt.BeamSearcher(advancer)\n\n\nConstructor\n\n\nParameters:\n\n\n\n\nadvancer\n - an \nonmt.translate.Advancer\n object.\n\n\n\n\n[src]\n\n\n\n\nonmt.BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)\n\n\nPerforms beam search.\n\n\nParameters:\n\n\n\n\nbeamSize\n - beam size. [1]\n\n\nnBest\n - the \nnBest\n top hypotheses will be returned after beam search. [1]\n\n\npreFilterFactor\n - optional, set this only if filter is being used. Before\n  applying filters, hypotheses with top \nbeamSize * preFilterFactor\n scores will\n  be considered. If the returned hypotheses voilate filters, then set this to a\n  larger value to consider more. [1]\n\n\nkeepInitial\n - optional, whether return the initial token or not. [false]\n\n\n\n\nReturns: a table \nfinished\n. \nfinished[b][n].score\n, \nfinished[b][n].tokens\n\nand \nfinished[b][n].states\n describe the n-th best hypothesis for b-th sample\nin the batch.",
+            "title": "onmt+translate+BeamSearcher"
+        },
+        {
+            "location": "/code/translate/onmt+translate+BeamSearcher/#onmtbeamsearcher",
+            "text": "Class for managing the internals of the beam search process.    hyp1---hyp1---hyp1 -hyp1\n      \\             /\n  hyp2 \\-hyp2 /-hyp2--hyp2\n             /      \\\n  hyp3---hyp3---hyp3 -hyp3\n  ========================  Takes care of beams.  [src]",
+            "title": "onmt.BeamSearcher"
+        },
+        {
+            "location": "/code/translate/onmt+translate+BeamSearcher/#onmtbeamsearcheradvancer",
+            "text": "Constructor  Parameters:   advancer  - an  onmt.translate.Advancer  object.   [src]",
+            "title": "onmt.BeamSearcher(advancer)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+BeamSearcher/#onmtbeamsearchersearchbeamsize-nbest-prefilterfactor-keepinitial",
+            "text": "Performs beam search.  Parameters:   beamSize  - beam size. [1]  nBest  - the  nBest  top hypotheses will be returned after beam search. [1]  preFilterFactor  - optional, set this only if filter is being used. Before\n  applying filters, hypotheses with top  beamSize * preFilterFactor  scores will\n  be considered. If the returned hypotheses voilate filters, then set this to a\n  larger value to consider more. [1]  keepInitial  - optional, whether return the initial token or not. [false]   Returns: a table  finished .  finished[b][n].score ,  finished[b][n].tokens \nand  finished[b][n].states  describe the n-th best hypothesis for b-th sample\nin the batch.",
+            "title": "onmt.BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/",
+            "text": "onmt.DecoderAdvancer\n\n\nDecoderAdvancer is an implementation of the interface Advancer for\n  specifyinghow to advance one step in decoder.\n\n\n[src]\n\n\n\n\nonmt.DecoderAdvancer(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts)\n\n\nConstructor.\n\n\nParameters:\n\n\n\n\ndecoder\n - an \nonmt.Decoder\n object.\n\n\nbatch\n - an \nonmt.data.Batch\n object.\n\n\ncontext\n - encoder output (batch x n x rnnSize).\n\n\nmax_sent_length\n - optional, maximum output sentence length.\n\n\nmax_num_unks\n - optional, maximum number of UNKs.\n\n\ndecStates\n - optional, initial decoder states.\n\n\ndicts\n - optional, dictionary for additional features.\n\n\n\n\n[src]\n\n\n\n\nonmt.DecoderAdvancer:initBeam()\n\n\nReturns an initial beam.\n\n\nReturns:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\n[src]\n\n\n\n\nonmt.DecoderAdvancer:update(beam)\n\n\nUpdates beam states given new tokens.\n\n\nParameters:\n\n\n\n\nbeam\n - beam with updated token list.\n\n\n\n\n[src]\n\n\n\n\nonmt.DecoderAdvancer:expand(beam)\n\n\nExpand function. Expands beam by all possible tokens and returns the\n  scores.\n\n\nParameters:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\nReturns:\n\n\n\n\nscores\n - a 2D tensor of size \n(batchSize * beamSize, numTokens)\n.\n\n\n\n\n[src]\n\n\n\n\nonmt.DecoderAdvancer:isComplete(beam)\n\n\nChecks which hypotheses in the beam are already finished. A hypothesis is\n  complete if i) an onmt.Constants.EOS is encountered, or ii) the length of the\n  sequence is greater than or equal to \nmax_sent_length\n.\n\n\nParameters:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\nReturns: a binary flat tensor of size \n(batchSize * beamSize)\n, indicating\n  which hypotheses are finished.\n\n\n[src]\n\n\n\n\nonmt.DecoderAdvancer:filter(beam)\n\n\nChecks which hypotheses in the beam shall be pruned. We disallow empty\n predictions, as well as predictions with more UNKs than \nmax_num_unks\n.\n\n\nParameters:\n\n\n\n\nbeam\n - an \nonmt.translate.Beam\n object.\n\n\n\n\nReturns: a binary flat tensor of size \n(batchSize * beamSize)\n, indicating\n  which beams shall be pruned.",
+            "title": "onmt+translate+DecoderAdvancer"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/#onmtdecoderadvancer",
+            "text": "DecoderAdvancer is an implementation of the interface Advancer for\n  specifyinghow to advance one step in decoder.  [src]",
+            "title": "onmt.DecoderAdvancer"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/#onmtdecoderadvancerdecoder-batch-context-max_sent_length-max_num_unks-decstates-dicts",
+            "text": "Constructor.  Parameters:   decoder  - an  onmt.Decoder  object.  batch  - an  onmt.data.Batch  object.  context  - encoder output (batch x n x rnnSize).  max_sent_length  - optional, maximum output sentence length.  max_num_unks  - optional, maximum number of UNKs.  decStates  - optional, initial decoder states.  dicts  - optional, dictionary for additional features.   [src]",
+            "title": "onmt.DecoderAdvancer(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/#onmtdecoderadvancerinitbeam",
+            "text": "Returns an initial beam.  Returns:   beam  - an  onmt.translate.Beam  object.   [src]",
+            "title": "onmt.DecoderAdvancer:initBeam()"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/#onmtdecoderadvancerupdatebeam",
+            "text": "Updates beam states given new tokens.  Parameters:   beam  - beam with updated token list.   [src]",
+            "title": "onmt.DecoderAdvancer:update(beam)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/#onmtdecoderadvancerexpandbeam",
+            "text": "Expand function. Expands beam by all possible tokens and returns the\n  scores.  Parameters:   beam  - an  onmt.translate.Beam  object.   Returns:   scores  - a 2D tensor of size  (batchSize * beamSize, numTokens) .   [src]",
+            "title": "onmt.DecoderAdvancer:expand(beam)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/#onmtdecoderadvanceriscompletebeam",
+            "text": "Checks which hypotheses in the beam are already finished. A hypothesis is\n  complete if i) an onmt.Constants.EOS is encountered, or ii) the length of the\n  sequence is greater than or equal to  max_sent_length .  Parameters:   beam  - an  onmt.translate.Beam  object.   Returns: a binary flat tensor of size  (batchSize * beamSize) , indicating\n  which hypotheses are finished.  [src]",
+            "title": "onmt.DecoderAdvancer:isComplete(beam)"
+        },
+        {
+            "location": "/code/translate/onmt+translate+DecoderAdvancer/#onmtdecoderadvancerfilterbeam",
+            "text": "Checks which hypotheses in the beam shall be pruned. We disallow empty\n predictions, as well as predictions with more UNKs than  max_num_unks .  Parameters:   beam  - an  onmt.translate.Beam  object.   Returns: a binary flat tensor of size  (batchSize * beamSize) , indicating\n  which beams shall be pruned.",
+            "title": "onmt.DecoderAdvancer:filter(beam)"
         },
         {
             "location": "/code/translate/onmt+translate+PhraseTable/",
@@ -612,7 +732,7 @@
         },
         {
             "location": "/details/translate/",
-            "text": "onmt.translate.lua\n\n\n\n\nconfig\n\n\nRead options from this file []\n\n\n\n\nData options\n\n\n\n\nsrc\n\n\nSource sequence to decode (one line per sequence) []\n\n\ntgt\n\n\nTrue target sequence (optional) []\n\n\noutput\n\n\nPath to output the predictions (each line will be the decoded sequence [pred.txt]\n\n\nmodel\n\n\nPath to model .t7 file []\n\n\n\n\nBeam Search options\n\n\n\n\nbeam_size\n\n\nBeam size [5]\n\n\nbatch_size\n\n\nBatch size [30]\n\n\nmax_sent_length\n\n\nMaximum sentence length. If any sequences in srcfile are longer than this then it will error out [250]\n\n\nreplace_unk\n\n\nReplace the generated UNK tokens with the source token thathad the highest attention weight. If phrase_table is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]\n\n\nphrase_table\n\n\nPath to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []\n\n\nn_best\n\n\nIf \n 1, it will also output an n_best list of decoded sentences [1]\n\n\n\n\nOther options\n\n\n\n\ntime\n\n\nMeasure batch translation time [false]\n\n\ngpuid\n\n\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]",
+            "text": "onmt.translate.lua\n\n\n\n\nconfig\n\n\nRead options from this file []\n\n\n\n\nData options\n\n\n\n\nsrc\n\n\nSource sequence to decode (one line per sequence) []\n\n\ntgt\n\n\nTrue target sequence (optional) []\n\n\noutput\n\n\nPath to output the predictions (each line will be the decoded sequence [pred.txt]\n\n\nmodel\n\n\nPath to model .t7 file []\n\n\n\n\nBeam Search options\n\n\n\n\nbeam_size\n\n\nBeam size [5]\n\n\nbatch_size\n\n\nBatch size [30]\n\n\nmax_sent_length\n\n\nMaximum output sentence length. [250]\n\n\nreplace_unk\n\n\nReplace the generated UNK tokens with the source token thathad the highest attention weight. If phrase_table is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]\n\n\nphrase_table\n\n\nPath to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []\n\n\nn_best\n\n\nIf \n 1, it will also output an n_best list of decoded sentences [1]\n\n\nmax_num_unks\n\n\nAll sequences with more unks than this will be ignoredduring beam search [inf]\n\n\npre_filter_factor\n\n\nOptional, set this only if filter is being used. Beforeapplying filters, hypotheses with top \nbeamSize * preFilterFactor\nscores will be considered. If the returned hypotheses voilate filters,then set this to a larger value to consider more. [1]\n\n\n\n\nOther options\n\n\n\n\ntime\n\n\nMeasure batch translation time [false]\n\n\ngpuid\n\n\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]",
             "title": "Translate"
         }
     ]

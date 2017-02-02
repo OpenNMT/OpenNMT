@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+train+Checkpoint - OpenNMT</title>
+  <title>onmt+translate+Advancer - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+train+Checkpoint";
-    var mkdocs_page_input_path = "code/train/onmt+train+Checkpoint.md";
-    var mkdocs_page_url = "/code/train/onmt+train+Checkpoint/";
+    var mkdocs_page_name = "onmt+translate+Advancer";
+    var mkdocs_page_input_path = "code/translate/onmt+translate+Advancer.md";
+    var mkdocs_page_url = "/code/translate/onmt+translate+Advancer/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -207,37 +207,28 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+train+Checkpoint</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtcheckpoint">onmt.Checkpoint</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtcheckpointsaveiterationiteration-epochstate-batchorder-verbose">onmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../train/">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+train+EpochState/">onmt+train+EpochState</a>
+        <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+train+Optim/">onmt+train+Optim</a>
+        <a class="" href="../../train/onmt+train+EpochState/">onmt+train+EpochState</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/onmt+train+Optim/">onmt+train+Optim</a>
         
     </li>
 
@@ -252,49 +243,68 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/">Home</a>
+        <a class="" href="../">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+translate+Advancer</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtadvancer">onmt.Advancer</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtadvancerinitbeam">onmt.Advancer:initBeam()</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtadvancerupdatebeam">onmt.Advancer:update(beam)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtadvancerexpandbeam">onmt.Advancer:expand(beam)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtadvanceriscompletebeam">onmt.Advancer:isComplete(beam)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtadvancersetkeptstateindexesindexes">onmt.Advancer:setKeptStateIndexes(indexes)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtadvancerfilter">onmt.Advancer:filter()</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        <a class="" href="../onmt+translate+Beam/">onmt+translate+Beam</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        <a class="" href="../onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        <a class="" href="../onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
+        <a class="" href="../onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Translator/">onmt+translate+Translator</a>
+        <a class="" href="../onmt+translate+Translator/">onmt+translate+Translator</a>
         
     </li>
 
@@ -360,11 +370,11 @@
         
       
         
-          <li>Train &raquo;</li>
+          <li>Translate &raquo;</li>
         
       
     
-    <li>onmt+train+Checkpoint</li>
+    <li>onmt+translate+Advancer</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -374,20 +384,109 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.Checkpoint.dok"></a></p>
-<h2 id="onmtcheckpoint">onmt.Checkpoint</h2>
-<p>Class for saving and loading models during training.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/train/Checkpoint.lua#L36">[src]</a>
-<a name="onmt.Checkpoint:saveIteration"></a></p>
-<h3 id="onmtcheckpointsaveiterationiteration-epochstate-batchorder-verbose">onmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)</h3>
-<p>Save the model and data in the middle of an epoch sorting the iteration. </p>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.Checkpoint"></a>
- * <code>onmt.Checkpoint(options, model, optim, dicts)</code>
-<a name="onmt.Checkpoint:save"></a>
- * <code>onmt.Checkpoint:save(filePath, info)</code>
-<a name="onmt.Checkpoint:saveEpoch"></a>
- * <code>onmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)</code></p>
+                <p><a name="onmt.Advancer.dok"></a></p>
+<h2 id="onmtadvancer">onmt.Advancer</h2>
+<p>Class for specifying how to advance one step. A beam mainly consists of
+  a list of <code>tokens</code> and a <code>state</code>. <code>tokens[t]</code> stores a flat tensors of size
+  <code>batchSize * beamSize</code> representing tokens at step <code>t</code>. <code>state</code> can be either
+  a tensor with first dimension size <code>batchSize * beamSize</code>, or an iterable
+  object containing several such tensors.</p>
+<p>Pseudocode:</p>
+<pre><code>  finished = []
+
+  beams = {}
+
+  -- Initialize the beam.
+
+  [ beams[1] ] &lt;-- initBeam()
+
+  FOR t = 1, ... DO
+
+    -- Update beam states based on new tokens.
+
+    update([ beams[t] ])
+
+    -- Expand beams by all possible tokens and return the scores.
+
+    [ [scores] ] &lt;-- expand([ beams[t] ])
+
+    -- Find k best next beams (maintained by BeamSearcher).
+
+    _findKBest([beams], [ [scores] ])
+
+    completed &lt;-- isComplete([ beams[t + 1] ])
+
+    -- Remove completed hypotheses (maintained by BeamSearcher).
+
+    finished += _completeHypotheses([beams], completed)
+
+    IF all(completed) THEN
+
+      BREAK
+
+    END
+
+  ENDWHILE
+</code></pre>
+<p>==================================================================</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Advancer.lua#L56">[src]</a>
+<a name="onmt.Advancer:initBeam"></a></p>
+<h3 id="onmtadvancerinitbeam">onmt.Advancer:initBeam()</h3>
+<p>Returns an initial beam.</p>
+<p>Returns:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Advancer.lua#L66">[src]</a>
+<a name="onmt.Advancer:update"></a></p>
+<h3 id="onmtadvancerupdatebeam">onmt.Advancer:update(beam)</h3>
+<p>Updates beam states given new tokens.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - beam with updated token list.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Advancer.lua#L80">[src]</a>
+<a name="onmt.Advancer:expand"></a></p>
+<h3 id="onmtadvancerexpandbeam">onmt.Advancer:expand(beam)</h3>
+<p>Expands beam by all possible tokens and returns the scores.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li><code>scores</code> - a 2D tensor of size <code>(batchSize * beamSize, numTokens)</code>.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Advancer.lua#L93">[src]</a>
+<a name="onmt.Advancer:isComplete"></a></p>
+<h3 id="onmtadvanceriscompletebeam">onmt.Advancer:isComplete(beam)</h3>
+<p>Checks which hypotheses in the beam are already finished.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
+  which hypotheses are finished.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Advancer.lua#L105">[src]</a>
+<a name="onmt.Advancer:setKeptStateIndexes"></a></p>
+<h3 id="onmtadvancersetkeptstateindexesindexes">onmt.Advancer:setKeptStateIndexes(indexes)</h3>
+<p>Specifies which states to keep track of. After beam search, those states
+  can be retrieved during all steps along with the tokens. This is used
+  for memory efficiency.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>indexes</code> - a table of iterators, specifying the indexes in the <code>states</code> to track.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Advancer.lua#L119">[src]</a>
+<a name="onmt.Advancer:filter"></a></p>
+<h3 id="onmtadvancerfilter">onmt.Advancer:filter()</h3>
+<p>Checks which hypotheses in the beam shall be pruned.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
+  which beams shall be pruned.</p>
               
             </div>
           </div>
@@ -395,7 +494,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+train+EpochState/" class="btn btn-neutral float-right" title="onmt+train+EpochState">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+translate+Beam/" class="btn btn-neutral float-right" title="onmt+translate+Beam">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -427,7 +526,7 @@
         <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+train+EpochState/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+translate+Beam/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

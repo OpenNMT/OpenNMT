@@ -265,7 +265,28 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
@@ -362,20 +383,20 @@
                 <p><a name="onmt.Dataset.dok"></a></p>
 <h2 id="onmtdataset">onmt.Dataset</h2>
 <p>Data management and batch creation. Handles data created by <code>preprocess.lua</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/data/Dataset.lua#L7">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/data/Dataset.lua#L7">[src]</a>
 <a name="onmt.Dataset"></a></p>
 <h3 id="onmtdatasetsrcdata-tgtdata">onmt.Dataset(srcData, tgtData)</h3>
 <p>Initialize a data object given aligned tables of IntTensors <code>srcData</code>
   and <code>tgtData</code>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/data/Dataset.lua#L19">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/data/Dataset.lua#L19">[src]</a>
 <a name="onmt.Dataset:setBatchSize"></a></p>
 <h3 id="onmtdatasetsetbatchsizemaxbatchsize">onmt.Dataset:setBatchSize(maxBatchSize)</h3>
 <p>Setup up the training data to respect <code>maxBatchSize</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/data/Dataset.lua#L61">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/data/Dataset.lua#L61">[src]</a>
 <a name="onmt.Dataset:batchCount"></a></p>
 <h3 id="onmtdatasetbatchcount">onmt.Dataset:batchCount()</h3>
 <p>Return number of batches. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/data/Dataset.lua#L69">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/data/Dataset.lua#L69">[src]</a>
 <a name="onmt.Dataset:getBatch"></a></p>
 <h3 id="onmtdatasetgetbatchidx">onmt.Dataset:getBatch(idx)</h3>
 <p>Get <code>Batch</code> number <code>idx</code>. If nil make a batch of all the data. </p>

@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+train+Checkpoint - OpenNMT</title>
+  <title>onmt+translate+DecoderAdvancer - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+train+Checkpoint";
-    var mkdocs_page_input_path = "code/train/onmt+train+Checkpoint.md";
-    var mkdocs_page_url = "/code/train/onmt+train+Checkpoint/";
+    var mkdocs_page_name = "onmt+translate+DecoderAdvancer";
+    var mkdocs_page_input_path = "code/translate/onmt+translate+DecoderAdvancer.md";
+    var mkdocs_page_url = "/code/translate/onmt+translate+DecoderAdvancer/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -207,37 +207,28 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+train+Checkpoint</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtcheckpoint">onmt.Checkpoint</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtcheckpointsaveiterationiteration-epochstate-batchorder-verbose">onmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../train/">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+train+EpochState/">onmt+train+EpochState</a>
+        <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+train+Optim/">onmt+train+Optim</a>
+        <a class="" href="../../train/onmt+train+EpochState/">onmt+train+EpochState</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/onmt+train+Optim/">onmt+train+Optim</a>
         
     </li>
 
@@ -252,49 +243,68 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/">Home</a>
+        <a class="" href="../">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        <a class="" href="../onmt+translate+Advancer/">onmt+translate+Advancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        <a class="" href="../onmt+translate+Beam/">onmt+translate+Beam</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        <a class="" href="../onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+translate+DecoderAdvancer</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtdecoderadvancer">onmt.DecoderAdvancer</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderadvancerdecoder-batch-context-max_sent_length-max_num_unks-decstates-dicts">onmt.DecoderAdvancer(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderadvancerinitbeam">onmt.DecoderAdvancer:initBeam()</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderadvancerupdatebeam">onmt.DecoderAdvancer:update(beam)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderadvancerexpandbeam">onmt.DecoderAdvancer:expand(beam)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderadvanceriscompletebeam">onmt.DecoderAdvancer:isComplete(beam)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdecoderadvancerfilterbeam">onmt.DecoderAdvancer:filter(beam)</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
+        <a class="" href="../onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Translator/">onmt+translate+Translator</a>
+        <a class="" href="../onmt+translate+Translator/">onmt+translate+Translator</a>
         
     </li>
 
@@ -360,11 +370,11 @@
         
       
         
-          <li>Train &raquo;</li>
+          <li>Translate &raquo;</li>
         
       
     
-    <li>onmt+train+Checkpoint</li>
+    <li>onmt+translate+DecoderAdvancer</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -374,20 +384,76 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.Checkpoint.dok"></a></p>
-<h2 id="onmtcheckpoint">onmt.Checkpoint</h2>
-<p>Class for saving and loading models during training.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/train/Checkpoint.lua#L36">[src]</a>
-<a name="onmt.Checkpoint:saveIteration"></a></p>
-<h3 id="onmtcheckpointsaveiterationiteration-epochstate-batchorder-verbose">onmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)</h3>
-<p>Save the model and data in the middle of an epoch sorting the iteration. </p>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.Checkpoint"></a>
- * <code>onmt.Checkpoint(options, model, optim, dicts)</code>
-<a name="onmt.Checkpoint:save"></a>
- * <code>onmt.Checkpoint:save(filePath, info)</code>
-<a name="onmt.Checkpoint:saveEpoch"></a>
- * <code>onmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)</code></p>
+                <p><a name="onmt.DecoderAdvancer.dok"></a></p>
+<h2 id="onmtdecoderadvancer">onmt.DecoderAdvancer</h2>
+<p>DecoderAdvancer is an implementation of the interface Advancer for
+  specifyinghow to advance one step in decoder.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/DecoderAdvancer.lua#L19">[src]</a>
+<a name="onmt.DecoderAdvancer"></a></p>
+<h3 id="onmtdecoderadvancerdecoder-batch-context-max_sent_length-max_num_unks-decstates-dicts">onmt.DecoderAdvancer(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts)</h3>
+<p>Constructor.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>decoder</code> - an <code>onmt.Decoder</code> object.</li>
+<li><code>batch</code> - an <code>onmt.data.Batch</code> object.</li>
+<li><code>context</code> - encoder output (batch x n x rnnSize).</li>
+<li><code>max_sent_length</code> - optional, maximum output sentence length.</li>
+<li><code>max_num_unks</code> - optional, maximum number of UNKs.</li>
+<li><code>decStates</code> - optional, initial decoder states.</li>
+<li><code>dicts</code> - optional, dictionary for additional features.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/DecoderAdvancer.lua#L39">[src]</a>
+<a name="onmt.DecoderAdvancer:initBeam"></a></p>
+<h3 id="onmtdecoderadvancerinitbeam">onmt.DecoderAdvancer:initBeam()</h3>
+<p>Returns an initial beam.</p>
+<p>Returns:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/DecoderAdvancer.lua#L62">[src]</a>
+<a name="onmt.DecoderAdvancer:update"></a></p>
+<h3 id="onmtdecoderadvancerupdatebeam">onmt.DecoderAdvancer:update(beam)</h3>
+<p>Updates beam states given new tokens.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - beam with updated token list.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/DecoderAdvancer.lua#L97">[src]</a>
+<a name="onmt.DecoderAdvancer:expand"></a></p>
+<h3 id="onmtdecoderadvancerexpandbeam">onmt.DecoderAdvancer:expand(beam)</h3>
+<p>Expand function. Expands beam by all possible tokens and returns the
+  scores.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li><code>scores</code> - a 2D tensor of size <code>(batchSize * beamSize, numTokens)</code>.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/DecoderAdvancer.lua#L123">[src]</a>
+<a name="onmt.DecoderAdvancer:isComplete"></a></p>
+<h3 id="onmtdecoderadvanceriscompletebeam">onmt.DecoderAdvancer:isComplete(beam)</h3>
+<p>Checks which hypotheses in the beam are already finished. A hypothesis is
+  complete if i) an onmt.Constants.EOS is encountered, or ii) the length of the
+  sequence is greater than or equal to <code>max_sent_length</code>.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
+  which hypotheses are finished.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/DecoderAdvancer.lua#L144">[src]</a>
+<a name="onmt.DecoderAdvancer:filter"></a></p>
+<h3 id="onmtdecoderadvancerfilterbeam">onmt.DecoderAdvancer:filter(beam)</h3>
+<p>Checks which hypotheses in the beam shall be pruned. We disallow empty
+ predictions, as well as predictions with more UNKs than <code>max_num_unks</code>.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+<p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
+  which beams shall be pruned.</p>
               
             </div>
           </div>
@@ -395,10 +461,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+train+EpochState/" class="btn btn-neutral float-right" title="onmt+train+EpochState">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+translate+PhraseTable/" class="btn btn-neutral float-right" title="onmt+translate+PhraseTable">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+translate+BeamSearcher/" class="btn btn-neutral" title="onmt+translate+BeamSearcher"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -424,10 +490,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+translate+BeamSearcher/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+train+EpochState/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+translate+PhraseTable/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

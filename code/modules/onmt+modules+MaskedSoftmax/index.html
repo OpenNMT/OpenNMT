@@ -177,7 +177,7 @@
             
                 <li class="toctree-l3"><a href="#onmtmaskedsoftmax">onmt.MaskedSoftmax</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtmaskedsoftmaxsourcesizes-sourcelength-beamsize">onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)</a></li>
+                    <li><a class="toctree-l4" href="#onmtmaskedsoftmaxsourcesizes-sourcelength">onmt.MaskedSoftmax(sourceSizes, sourceLength)</a></li>
                 
             
             </ul>
@@ -259,7 +259,28 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
@@ -363,15 +384,14 @@ AXXXXX
 </code></pre>
 <p>MaskedSoftmax ensures that no probability is given to the A's.</p>
 <p>For this example, <code>beamSize</code> is 3, <code>sourceLength</code> is {3, 2, 5}.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/modules/MaskedSoftmax.lua#L26">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/modules/MaskedSoftmax.lua#L25">[src]</a>
 <a name="onmt.MaskedSoftmax"></a></p>
-<h3 id="onmtmaskedsoftmaxsourcesizes-sourcelength-beamsize">onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)</h3>
+<h3 id="onmtmaskedsoftmaxsourcesizes-sourcelength">onmt.MaskedSoftmax(sourceSizes, sourceLength)</h3>
 <p>A nn-style module that applies a softmax on input that gives no weight to the left padding.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>sourceSizes</code> -  the true lengths (with left padding).</li>
 <li><code>sourceLength</code> - the max length in the batch <code>beamSize</code>.</li>
-<li><code>beamSize</code> - the batch size.</li>
 </ul>
               
             </div>

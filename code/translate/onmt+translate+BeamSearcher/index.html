@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+modules+WordEmbedding - OpenNMT</title>
+  <title>onmt+translate+BeamSearcher - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+modules+WordEmbedding";
-    var mkdocs_page_input_path = "code/modules/onmt+modules+WordEmbedding.md";
-    var mkdocs_page_url = "/code/modules/onmt+modules+WordEmbedding/";
+    var mkdocs_page_name = "onmt+translate+BeamSearcher";
+    var mkdocs_page_input_path = "code/translate/onmt+translate+BeamSearcher.md";
+    var mkdocs_page_url = "/code/translate/onmt+translate+BeamSearcher/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -101,107 +101,98 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
+        <a class="" href="../../modules/">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        <a class="" href="../../modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Decoder/">onmt+modules+Decoder</a>
+        <a class="" href="../../modules/onmt+modules+Decoder/">onmt+modules+Decoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Encoder/">onmt+modules+Encoder</a>
+        <a class="" href="../../modules/onmt+modules+Encoder/">onmt+modules+Encoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
+        <a class="" href="../../modules/onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
+        <a class="" href="../../modules/onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+GRU/">onmt+modules+GRU</a>
+        <a class="" href="../../modules/onmt+modules+GRU/">onmt+modules+GRU</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Generator/">onmt+modules+Generator</a>
+        <a class="" href="../../modules/onmt+modules+Generator/">onmt+modules+Generator</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
+        <a class="" href="../../modules/onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+LSTM/">onmt+modules+LSTM</a>
+        <a class="" href="../../modules/onmt+modules+LSTM/">onmt+modules+LSTM</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
+        <a class="" href="../../modules/onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
+        <a class="" href="../../modules/onmt+modules+Network/">onmt+modules+Network</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
+        <a class="" href="../../modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
 
         
             
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+modules+WordEmbedding</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtwordembedding">onmt.WordEmbedding</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtwordembeddingvocabsize-vecsize-pretrained-fix">onmt.WordEmbedding(vocabSize, vecSize, preTrained, fix)</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+WordEmbedding/">onmt+modules+WordEmbedding</a>
         
     </li>
 
@@ -252,49 +243,60 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/">Home</a>
+        <a class="" href="../">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        <a class="" href="../onmt+translate+Advancer/">onmt+translate+Advancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
+        <a class="" href="../onmt+translate+Beam/">onmt+translate+Beam</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+translate+BeamSearcher</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtbeamsearcher">onmt.BeamSearcher</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbeamsearcheradvancer">onmt.BeamSearcher(advancer)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbeamsearchersearchbeamsize-nbest-prefilterfactor-keepinitial">onmt.BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        <a class="" href="../onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
+        <a class="" href="../onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../translate/onmt+translate+Translator/">onmt+translate+Translator</a>
+        <a class="" href="../onmt+translate+Translator/">onmt+translate+Translator</a>
         
     </li>
 
@@ -360,11 +362,11 @@
         
       
         
-          <li>Modules &raquo;</li>
+          <li>Translate &raquo;</li>
         
       
     
-    <li>onmt+modules+WordEmbedding</li>
+    <li>onmt+translate+BeamSearcher</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -374,27 +376,42 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.WordEmbedding.dok"></a></p>
-<h2 id="onmtwordembedding">onmt.WordEmbedding</h2>
-<p>nn unit. Maps from word ids to embeddings. Slim wrapper around
-nn.LookupTable to allow fixed and pretrained embeddings.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/modules/WordEmbedding.lua#L14">[src]</a>
-<a name="onmt.WordEmbedding"></a></p>
-<h3 id="onmtwordembeddingvocabsize-vecsize-pretrained-fix">onmt.WordEmbedding(vocabSize, vecSize, preTrained, fix)</h3>
+                <p><a name="onmt.BeamSearcher.dok"></a></p>
+<h2 id="onmtbeamsearcher">onmt.BeamSearcher</h2>
+<p>Class for managing the internals of the beam search process.</p>
+<pre><code>  hyp1---hyp1---hyp1 -hyp1
+      \             /
+  hyp2 \-hyp2 /-hyp2--hyp2
+             /      \
+  hyp3---hyp3---hyp3 -hyp3
+  ========================
+</code></pre>
+<p>Takes care of beams.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/BeamSearcher.lua#L22">[src]</a>
+<a name="onmt.BeamSearcher"></a></p>
+<h3 id="onmtbeamsearcheradvancer">onmt.BeamSearcher(advancer)</h3>
+<p>Constructor</p>
 <p>Parameters:</p>
 <ul>
-<li><code>vocabSize</code> - size of the vocabulary</li>
-<li><code>vecSize</code> - size of the embedding</li>
-<li><code>preTrainined</code> - path to a pretrained vector file</li>
-<li><code>fix</code> - keep the weights of the embeddings fixed.</li>
+<li><code>advancer</code> - an <code>onmt.translate.Advancer</code> object.</li>
 </ul>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.WordEmbedding:postParametersInitialization"></a>
- * <code>onmt.WordEmbedding:postParametersInitialization()</code>
-<a name="onmt.WordEmbedding:accGradParameters"></a>
- * <code>onmt.WordEmbedding:accGradParameters(input, gradOutput, scale)</code>
-<a name="onmt.WordEmbedding:parameters"></a>
- * <code>onmt.WordEmbedding:parameters()</code></p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/BeamSearcher.lua#L43">[src]</a>
+<a name="onmt.BeamSearcher:search"></a></p>
+<h3 id="onmtbeamsearchersearchbeamsize-nbest-prefilterfactor-keepinitial">onmt.BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)</h3>
+<p>Performs beam search.</p>
+<p>Parameters:</p>
+<ul>
+<li><code>beamSize</code> - beam size. [1]</li>
+<li><code>nBest</code> - the <code>nBest</code> top hypotheses will be returned after beam search. [1]</li>
+<li><code>preFilterFactor</code> - optional, set this only if filter is being used. Before
+  applying filters, hypotheses with top <code>beamSize * preFilterFactor</code> scores will
+  be considered. If the returned hypotheses voilate filters, then set this to a
+  larger value to consider more. [1]</li>
+<li><code>keepInitial</code> - optional, whether return the initial token or not. [false]</li>
+</ul>
+<p>Returns: a table <code>finished</code>. <code>finished[b][n].score</code>, <code>finished[b][n].tokens</code>
+and <code>finished[b][n].states</code> describe the n-th best hypothesis for b-th sample
+in the batch.</p>
               
             </div>
           </div>
@@ -402,10 +419,10 @@ nn.LookupTable to allow fixed and pretrained embeddings.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../train/" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+translate+DecoderAdvancer/" class="btn btn-neutral float-right" title="onmt+translate+DecoderAdvancer">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../onmt+modules+Sequencer/" class="btn btn-neutral" title="onmt+modules+Sequencer"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+translate+Beam/" class="btn btn-neutral" title="onmt+translate+Beam"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -431,10 +448,10 @@ nn.LookupTable to allow fixed and pretrained embeddings.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt+modules+Sequencer/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+translate+Beam/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../train/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+translate+DecoderAdvancer/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

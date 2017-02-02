@@ -249,6 +249,13 @@
 
         
             
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        
+    </li>
+
+        
+            
     <li class="toctree-l1 current">
         <a class="current" href="./">onmt+translate+Beam</a>
         
@@ -256,20 +263,44 @@
             
                 <li class="toctree-l3"><a href="#onmtbeam">onmt.Beam</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamsize-numfeatures">onmt.Beam(size, numFeatures)</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamtoken-state-batchsize">onmt.Beam(token, state, batchSize)</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamgetcurrentstate">onmt.Beam:getCurrentState()</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamgettokens">onmt.Beam:getTokens()</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamgetcurrentorigin">onmt.Beam:getCurrentOrigin()</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamgetstate">onmt.Beam:getState()</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamadvancewordlk-featslk-attnout">onmt.Beam:advance(wordLk, featsLk, attnOut)</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamgetscores">onmt.Beam:getScores()</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamgetbest">onmt.Beam:getBest()</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamgetbackpointer">onmt.Beam:getBackPointer()</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtbeamgethypk">onmt.Beam:getHyp(k)</a></li>
+                    <li><a class="toctree-l4" href="#onmtbeamgetremaining">onmt.Beam:getRemaining()</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbeamremaining2origremainingid">onmt.Beam:remaining2Orig(remainingId)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbeamorig2remainingorigid">onmt.Beam:orig2Remaining(origId)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbeamsetstatestate">onmt.Beam:setState(state)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbeamsetscoresscores">onmt.Beam:setScores(scores)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtbeamsetbackpointerbackpointer">onmt.Beam:setBackPointer(backPointer)</a></li>
                 
             
             </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
@@ -365,64 +396,96 @@
               
                 <p><a name="onmt.Beam.dok"></a></p>
 <h2 id="onmtbeam">onmt.Beam</h2>
-<p>Class for managing the internals of the beam search process.</p>
-<pre><code>hyp1---hyp1---hyp1 -hyp1
-    \             /
-hyp2 \-hyp2 /-hyp2--hyp2
-           /      \
-hyp3---hyp3---hyp3 -hyp3
-========================
-</code></pre>
-<p>Takes care of beams, back pointers, and scores.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/translate/Beam.lua#L36">[src]</a>
+<p>Class for maintaining statistics of each step. A beam mainly consists of
+  a list of tokens <code>tokens</code> and a state <code>state</code>. <code>tokens[t]</code> stores a flat tensor
+  of size <code>batchSize * beamSize</code> representing the tokens at step <code>t</code>, while
+  <code>state</code> can be either a tensor with first dimension size <code>batchSize * beamSize</code>,
+  or an iterable object containing several such tensors.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L184">[src]</a>
 <a name="onmt.Beam"></a></p>
-<h3 id="onmtbeamsize-numfeatures">onmt.Beam(size, numFeatures)</h3>
-<p>Constructor</p>
+<h3 id="onmtbeamtoken-state-batchsize">onmt.Beam(token, state, batchSize)</h3>
+<p>Constructor. We allow users to either specify all initial hypotheses by
+  passing in <code>token</code> and <code>state</code> with first dimension <code>batchSize * beamSize</code>
+  such that there are <code>beamSize</code> initial hypotheses for every sequence in the
+  batch and pass in the number of sequences <code>batchSize</code>, or only specify one
+  hypothesis per sequence by passing <code>token</code> and <code>state</code> with first dimension
+  <code>batchSize</code>, and then <code>onmt.translate.BeamSearcher</code> will pad with auxiliary
+  hypotheses with scores <code>-inf</code> such that each sequence starts with <code>beamSize</code>
+  hypotheses as in the former case.</p>
 <p>Parameters:</p>
 <ul>
-<li><code>size</code> : The beam <code>K</code>.</li>
-<li><code>numFeatures</code> : Number of features, (optional)</li>
+<li><code>token</code> - tensor of size <code>(batchSize, vocabSize)</code> (if start with one initial
+  hypothesis per sequence) or <code>(batchSize * beamSize, vocabSize)</code> (if start with
+  <code>beamSize</code> initial hypotheses per sequence), or a list of such tensors.</li>
+<li><code>state</code> - an iterable object, where the contained tensors should have the
+  same first dimension as <code>token</code>.</li>
+<li><code>batchSize</code> - optional, number of sentences. Only necessary if
+  start with <code>beamSize</code> hypotheses per sequence. [<code>token:size(1)</code>]</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/translate/Beam.lua#L66">[src]</a>
-<a name="onmt.Beam:getCurrentState"></a></p>
-<h3 id="onmtbeamgetcurrentstate">onmt.Beam:getCurrentState()</h3>
-<p>Get the outputs for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/translate/Beam.lua#L71">[src]</a>
-<a name="onmt.Beam:getCurrentOrigin"></a></p>
-<h3 id="onmtbeamgetcurrentorigin">onmt.Beam:getCurrentOrigin()</h3>
-<p>Get the backpointers for the current timestep.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/translate/Beam.lua#L86">[src]</a>
-<a name="onmt.Beam:advance"></a></p>
-<h3 id="onmtbeamadvancewordlk-featslk-attnout">onmt.Beam:advance(wordLk, featsLk, attnOut)</h3>
-<p>Given prob over words for every last beam <code>wordLk</code> and attention
- <code>attnOut</code>. Compute and update the beam search.</p>
-<p>Parameters:</p>
-<ul>
-<li><code>wordLk</code>- probs of advancing from the last step (K x words)</li>
-<li><code>featsLk</code>- probs of features at the last step (K x numfeatures x featsize)</li>
-<li><code>attnOut</code>- attention at the last step</li>
-</ul>
-<p>Returns: true if beam search is complete.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/translate/Beam.lua#L148">[src]</a>
-<a name="onmt.Beam:getBest"></a></p>
-<h3 id="onmtbeamgetbest">onmt.Beam:getBest()</h3>
-<p>Get the score of the best in the beam. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/c5cb4893b2c7acd3f0f92de0daa2a6aedb6a66cd/onmt/translate/Beam.lua#L164">[src]</a>
-<a name="onmt.Beam:getHyp"></a></p>
-<h3 id="onmtbeamgethypk">onmt.Beam:getHyp(k)</h3>
-<p>Walk back to construct the full hypothesis.</p>
-<p>Parameters:</p>
-<ul>
-<li><code>k</code> - the position in the beam to construct.</li>
-</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L211">[src]</a>
+<a name="onmt.Beam:getTokens"></a></p>
+<h3 id="onmtbeamgettokens">onmt.Beam:getTokens()</h3>
 <p>Returns:</p>
-<ol>
-<li>The hypothesis</li>
-<li>The attention at each time step.</li>
-</ol>
-<h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.Beam:sortBest"></a>
- * <code>onmt.Beam:sortBest()</code></p>
+<ul>
+<li><code>tokens</code> - a list of tokens. Note that the start-of-sequence symbols are
+  also included. <code>tokens[t]</code> stores the tokens at step <code>t</code>, which is a tensor
+  of size <code>batchSize * beamSize</code>.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L223">[src]</a>
+<a name="onmt.Beam:getState"></a></p>
+<h3 id="onmtbeamgetstate">onmt.Beam:getState()</h3>
+<p>Returns:</p>
+<ul>
+<li><code>state</code> - an abstract iterable object as passed by constructor. Every tensor
+  inside the <code>state</code> has first dimension <code>batchSize * beamSize</code></li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L235">[src]</a>
+<a name="onmt.Beam:getScores"></a></p>
+<h3 id="onmtbeamgetscores">onmt.Beam:getScores()</h3>
+<p>Returns:</p>
+<ul>
+<li><code>scores</code> - a flat tensor storing the total scores for each batch. It is of
+  size <code>batchSize * beamSize</code>.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L247">[src]</a>
+<a name="onmt.Beam:getBackPointer"></a></p>
+<h3 id="onmtbeamgetbackpointer">onmt.Beam:getBackPointer()</h3>
+<p>Returns:</p>
+<ul>
+<li><code>backPointer</code> - a flat tensor storing the backpointers for each batch. It is
+  of size <code>batchSize * beamSize</code></li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L259">[src]</a>
+<a name="onmt.Beam:getRemaining"></a></p>
+<h3 id="onmtbeamgetremaining">onmt.Beam:getRemaining()</h3>
+<p>Returns the number of unfinished sequences. The finished sequences will be
+  removed from batch.</p>
+<p>Returns:</p>
+<ul>
+<li><code>remaining</code> - the number of unfinished sequences.</li>
+</ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L267">[src]</a>
+<a name="onmt.Beam:remaining2Orig"></a></p>
+<h3 id="onmtbeamremaining2origremainingid">onmt.Beam:remaining2Orig(remainingId)</h3>
+<p>Since finished sequences are being removed from the batch, this function
+  provides a way to convert the remaining batch id to the original batch id.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L279">[src]</a>
+<a name="onmt.Beam:orig2Remaining"></a></p>
+<h3 id="onmtbeamorig2remainingorigid">onmt.Beam:orig2Remaining(origId)</h3>
+<p>Since finished sequences are being removed from the batch, this function
+  provides a way to convert the original batch id to the remaining batch id.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L289">[src]</a>
+<a name="onmt.Beam:setState"></a></p>
+<h3 id="onmtbeamsetstatestate">onmt.Beam:setState(state)</h3>
+<p>Set state.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L295">[src]</a>
+<a name="onmt.Beam:setScores"></a></p>
+<h3 id="onmtbeamsetscoresscores">onmt.Beam:setScores(scores)</h3>
+<p>Set scores.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/256a261adfabe261ddd18a843bcba7423a25ab48/onmt/translate/Beam.lua#L301">[src]</a>
+<a name="onmt.Beam:setBackPointer"></a></p>
+<h3 id="onmtbeamsetbackpointerbackpointer">onmt.Beam:setBackPointer(backPointer)</h3>
+<p>Set backPointer.</p>
               
             </div>
           </div>
@@ -430,10 +493,10 @@ hyp3---hyp3---hyp3 -hyp3
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+translate+PhraseTable/" class="btn btn-neutral float-right" title="onmt+translate+PhraseTable">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+translate+BeamSearcher/" class="btn btn-neutral float-right" title="onmt+translate+BeamSearcher">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+translate+Advancer/" class="btn btn-neutral" title="onmt+translate+Advancer"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -459,10 +522,10 @@ hyp3---hyp3---hyp3 -hyp3
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+translate+Advancer/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+translate+PhraseTable/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+translate+BeamSearcher/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
