@@ -12,6 +12,7 @@
 * Fix joiner marker generated without the option enabled
 * Fix translation server crash on Lua errors
 * Fix error when loading configuration files containing the `gpuid` option
+* Fix error when using asynchronous parallel mode
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
