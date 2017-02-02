@@ -167,7 +167,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
   -- For each sequence in the batch, check whether it is finished or not.
   for b = 1, batchSize do
     local batchFinished = true
-    local  hypotheses = beams[t]:_getTopHypotheses(b, self.nBest, completed)
+    local hypotheses = beams[t]:_getTopHypotheses(b, self.nBest, completed)
 
     -- Check whether the top nBest hypotheses are all finished.
     for k = 1, self.nBest do

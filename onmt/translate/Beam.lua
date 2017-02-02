@@ -399,7 +399,7 @@ function Beam:_addCompletedHypotheses(batchId, completed)
       local id = #Beam._completed[origId] + 1
       Beam._completed[origId][id] = hypothesis
       while id > 1 do
-        if Beam._completed[origId][id - 1][1] < score then
+        if Beam._completed[origId][id - 1][2] < score then
           Beam._completed[origId][id - 1], Beam._completed[origId][id]
             = Beam._completed[origId][id], Beam._completed[origId][id - 1]
           id = id - 1
@@ -450,12 +450,10 @@ function Beam:_getTopHypotheses(remainingId, nBest, completed)
   local tokens = self._tokens[#self._tokens]:view(self._remaining, -1)
   local backPointers = self._backPointer:view(self._remaining, -1)
   for _ = 1, nBest do
-    local hypothesis, onBeam, id, finished
+    local hypothesis, finished
     if prevId <= #prevCompleted and prevCompleted[prevId][2] > scores[remainingId][currId] then
       hypothesis = prevCompleted[prevId]
       finished = true
-      id = prevId
-      onBeam = false
       prevId = prevId + 1
     else
       finished = (completed[remainingId][currId] == 1)
@@ -465,11 +463,9 @@ function Beam:_getTopHypotheses(remainingId, nBest, completed)
         local backPointer = backPointers[remainingId][currId]
         hypothesis = {origId, score, token, backPointer, self._step}
       end
-      id = currId
-      onBeam = true
       currId = currId + 1
     end
-    table.insert(hypotheses, {onBeam = onBeam, hypothesis = hypothesis, id = id, finished = finished})
+    table.insert(hypotheses, {hypothesis = hypothesis, finished = finished})
   end
   return hypotheses
 end
