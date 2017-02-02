@@ -1,8 +1,8 @@
 --[[ seq2seq Model. ]]
 local seq2seq, parent = torch.class('onmt.Models.seq2seq', 'onmt.Model')
 
-function seq2seq:__init(opt, datasetOrCheckpoint, verboseOrReplica)
-  parent.__init(self)
+function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
+  parent.__init(self, args)
   if type(datasetOrCheckpoint)=='Checkpoint' then
     local checkpoint = datasetOrCheckpoint
     local replica = verboseOrReplica
@@ -11,8 +11,8 @@ function seq2seq:__init(opt, datasetOrCheckpoint, verboseOrReplica)
   else
     local dataset = datasetOrCheckpoint
     local verbose = verboseOrReplica
-    self.models.encoder = onmt.Models.buildEncoder(opt, dataset.dicts.src, verbose)
-    self.models.decoder = onmt.Models.buildDecoder(opt, dataset.dicts.tgt, verbose)
+    self.models.encoder = onmt.Models.buildEncoder(args, dataset.dicts.src, verbose)
+    self.models.decoder = onmt.Models.buildDecoder(args, dataset.dicts.tgt, verbose)
   end
 end
 

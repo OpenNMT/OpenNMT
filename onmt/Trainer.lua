@@ -1,3 +1,5 @@
+local Trainer = torch.class("Trainer")
+
 local function eval(model, criterion, data)
   local loss = 0
   local total = 0
@@ -15,16 +17,47 @@ local function eval(model, criterion, data)
   return math.exp(loss / total)
 end
 
-local function train(opt, model, optim, trainData, validData, dataset, info)
+function Trainer:__init(args)
+  self.args = {
+    json_log = args.json_log,
+    disable_mem_optimization = args.disable_mem_optimization,
+    start_iteration = args.start_iteration,
+    async_parallel = args.async_parallel,
+    curriculum = args.curriculum,
+    report_every = args.report_every,
+    save_every = args.save_every,
+    async_parallel_minbatch = args.async_parallel_minbatch,
+    start_epoch = args.start_epoch,
+    end_epoch = args.end_epoch
+  }
+  -- make a difference with options which is only used in Checkpoint
+  self.options = args
+end
+
+function Trainer.declareOpts(cmd)
+  cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
+                             If = 0, will not save models within an epoch. ]])
+  cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
+  cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
+  cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
+  cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
+  cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
+  cmd:option('-end_epoch', 13, [[The final epoch of the training]])
+  cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
+  cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
+                               sequence length. Sometimes setting this to 1 will increase convergence speed.]])
+end
+
+function Trainer:train(model, optim, trainData, validData, dataset, info)
   local params, gradParams = {}, {}
   local criterion
 
   onmt.utils.Parallel.launch(function(idx)
     -- Only logs information of the first thread.
-    local verbose = idx == 1 and not opt.json_log
+    local verbose = idx == 1 and not self.args.json_log
 
     -- Initialize and get model parameters.
-    _G.params, _G.gradParams = _G.model:initParams(opt, verbose)
+    _G.params, _G.gradParams = _G.model:initParams(verbose)
 
     -- Switch to training mode.
     _G.model:training()
@@ -33,7 +66,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
     _G.criterion = onmt.utils.Cuda.convert(_G.model:buildCriterion(dataset))
 
     -- optimize memory of the first clone
-    if not opt.disable_mem_optimization then
+    if not self.args.disable_mem_optimization then
       local batch = onmt.utils.Cuda.convert(trainData:getBatch(1))
       batch.totalSize = batch.size
       onmt.utils.Memory.optimize(_G.model, _G.criterion, batch, verbose)
@@ -48,7 +81,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
     gradParams[idx] = thegradParams
   end)
 
-  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
+  local checkpoint = onmt.train.Checkpoint.new(self.options, model, optim, dataset.dicts)
 
   optim:setOptimStates(#params[1])
 
@@ -58,11 +91,11 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
 
     local epochProfiler = onmt.utils.Profiler.new(doProfile)
 
-    local startI = opt.start_iteration
+    local startI = self.args.start_iteration
 
     local numIterations = trainData:batchCount()
     -- In parallel mode, number of iterations is reduced to reflect larger batch size.
-    if onmt.utils.Parallel.count > 1 and not opt.async_parallel then
+    if onmt.utils.Parallel.count > 1 and not self.args.async_parallel then
       numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
     end
 
@@ -75,9 +108,10 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
       batchOrder = torch.randperm(trainData:batchCount())
     end
 
-    opt.start_iteration = 1
+    self.args.start_iteration = 1
 
-    if not opt.async_parallel then
+    if not self.args.async_parallel then
+      -- synchronous parallelism or single thread
       local iter = 1
       for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
         local batches = {}
@@ -85,7 +119,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
 
         for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount() - i + 1) do
           local batchIdx = batchOrder[i + j - 1]
-          if epoch <= opt.curriculum then
+          if epoch <= self.args.curriculum then
             batchIdx = i + j - 1
           end
           table.insert(batches, trainData:getBatch(batchIdx))
@@ -106,7 +140,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
           onmt.utils.Cuda.convert(_G.batch)
           _G.batch.totalSize = totalSize
 
-          optim:zeroGrad(_G._gradParams)
+          optim:zeroGrad(_G.gradParams)
           local loss = model:trainNetwork(_G.batch, _G.criterion, doProfile)
 
           return idx, loss, _G.profiler:dump()
@@ -120,7 +154,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
         onmt.utils.Parallel.accGradParams(gradParams, batches)
 
         -- Update the parameters.
-        optim:prepareGrad(gradParams[1], opt.max_grad_norm)
+        optim:prepareGrad(gradParams[1], self.args.max_grad_norm)
         optim:updateParams(params[1], gradParams[1])
 
         -- Synchronize the parameters with the different parallel threads.
@@ -130,16 +164,16 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
           epochState:update(batches[bi], losses[bi])
         end
 
-        if iter % opt.report_every == 0 then
-          epochState:log(iter, opt.json_log)
+        if iter % self.args.report_every == 0 then
+          epochState:log(iter, self.args.json_log)
         end
-        if opt.save_every > 0 and iter % opt.save_every == 0 then
-          checkpoint:saveIteration(iter, epochState, batchOrder, not opt.json_log)
+        if self.args.save_every > 0 and iter % self.args.save_every == 0 then
+          checkpoint:saveIteration(iter, epochState, batchOrder, not self.args.json_log)
         end
         iter = iter + 1
       end
     else
-      -- Synchronous parallelism.
+      -- Asynchronous parallelism
       local counter = onmt.utils.Parallel.getCounter()
       counter:set(startI)
       local masterGPU = onmt.utils.Cuda.gpuIds[1]
@@ -153,7 +187,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
           _G.profiler = onmt.utils.Profiler.new(doProfile)
           -- First GPU is only used for master parameters.
           -- Use 1 GPU only for 1000 first batch.
-          if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < opt.async_parallel_minbatch) then
+          if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < self.args.async_parallel_minbatch) then
             return
           end
 
@@ -177,7 +211,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
             end
 
             local batchIdx = batchOrder[i]
-            if epoch <= opt.curriculum then
+            if epoch <= self.args.curriculum then
               batchIdx = i
             end
 
@@ -187,11 +221,11 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
             onmt.utils.Cuda.convert(_G.batch)
             _G.batch.totalSize = _G.batch.size
 
-            optim:zeroGrad(_G._gradParams)
+            optim:zeroGrad(_G.gradParams)
             local loss = model:trainNetwork(_G.batch, _G.criterion, doProfile)
 
             -- Update the parameters.
-            optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
+            optim:prepareGrad(_G.gradParams)
 
             -- Add up gradParams to params and synchronize back to this thread.
             onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
@@ -202,7 +236,7 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
             lossThread = lossThread + loss
 
             -- we don't have information about the other threads here - we can only report progress
-            if i % opt.report_every == 0 then
+            if i % self.args.report_every == 0 then
               _G.logger:info('Epoch %d ; ... batch %d/%d', epoch, i, trainData:batchCount())
             end
           end
@@ -214,11 +248,11 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
           epochProfiler:add(profile)
         end)
 
-        if opt.report_every > 0 then
-          epochState:log(counter:get(), opt.json_log)
+        if self.args.report_every > 0 then
+          epochState:log(counter:get(), self.args.json_log)
         end
-        if opt.save_every > 0 then
-          checkpoint:saveIteration(counter:get(), epochState, batchOrder, not opt.json_log)
+        if self.args.save_every > 0 then
+          checkpoint:saveIteration(counter:get(), epochState, batchOrder, not self.args.json_log)
         end
       end
     end
@@ -228,19 +262,19 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
 
   local validPpl = 0
 
-  if not opt.json_log then
+  if not self.args.json_log then
     _G.logger:info('Start training...')
   end
 
-  for epoch = opt.start_epoch, opt.end_epoch do
-    if not opt.json_log then
+  for epoch = self.args.start_epoch, self.args.end_epoch do
+    if not self.args.json_log then
       _G.logger:info('')
     end
 
-    local globalProfiler = onmt.utils.Profiler.new(opt.profiler)
+    local globalProfiler = onmt.utils.Profiler.new(self.args.profiler)
 
     globalProfiler:start("train")
-    local epochState, epochProfile = trainEpoch(epoch, validPpl, opt.profiler)
+    local epochState, epochProfile = trainEpoch(epoch, validPpl, self.args.profiler)
     globalProfiler:add(epochProfile)
     globalProfiler:stop("train")
 
@@ -248,15 +282,15 @@ local function train(opt, model, optim, trainData, validData, dataset, info)
     validPpl = eval(model, criterion, validData)
     globalProfiler:stop("valid")
 
-    if not opt.json_log then
-      if opt.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
+    if not self.args.json_log then
+      if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
       _G.logger:info('Validation perplexity: %.2f', validPpl)
     end
 
     optim:updateLearningRate(validPpl, epoch)
 
-    checkpoint:saveEpoch(validPpl, epochState, not opt.json_log)
+    checkpoint:saveEpoch(validPpl, epochState, not self.args.json_log)
   end
 end
 
-return { train = train }
+return Trainer

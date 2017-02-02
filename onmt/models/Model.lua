@@ -1,9 +1,17 @@
 --[[ Generic Model class. ]]
 local Model = torch.class('onmt.Model')
 
-function Model:__init()
+function Model:__init(args)
   self.models = {}
-  self.args = {}
+  self.args = {
+    param_init = args.param_init,
+    train_from = args.train_from
+  }
+end
+
+function Model.declareOpts(cmd)
+  cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
+  cmd:option('-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]])
 end
 
 function Model:evaluate()
@@ -18,7 +26,7 @@ function Model:training()
   end
 end
 
-function Model:initParams(opt, verbose)
+function Model:initParams(verbose)
   local numParams = 0
   local params = {}
   local gradParams = {}
@@ -38,8 +46,8 @@ function Model:initParams(opt, verbose)
     local mod = self.models[key]
     local p, gp = mod:getParameters()
 
-    if opt.train_from:len() == 0 then
-      p:uniform(-opt.param_init, opt.param_init)
+    if self.args.train_from:len() == 0 then
+      p:uniform(-self.args.param_init, self.args.param_init)
 
       mod:apply(function (m)
         if m.postParametersInitialization then

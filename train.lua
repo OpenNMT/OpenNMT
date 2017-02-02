@@ -17,8 +17,9 @@ cmd:text("")
 cmd:option('-data', '', [[Path to the training *-train.t7 file from preprocess.lua]])
 cmd:option('-save_model', '', [[Model filename (the model will be saved as
                               <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]])
-cmd:option('-train_from', '', [[If training from a checkpoint then this is the path to the pretrained model.]])
 cmd:option('-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]])
+-- Generic Model options.
+onmt.Model.declareOpts(cmd)
 
 cmd:text("")
 cmd:text("**Model options**")
@@ -36,21 +37,15 @@ cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
 
+-- Actual training process option
+onmt.Trainer.declareOpts(cmd)
 -- GPU
 onmt.utils.Cuda.declareOpts(cmd)
-
-cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
-cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
-cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
-
+-- Memory optimization
 onmt.utils.Memory.declareOpts(cmd)
-
--- bookkeeping
-cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
-                             If = 0, will not save models within an epoch. ]])
-cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
+-- Misc
+cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
-cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
 
 onmt.utils.Logger.declareOpts(cmd)
 onmt.utils.Profiler.declareOpts(cmd)
@@ -179,10 +174,13 @@ local function main()
     learningRate = opt.learning_rate,
     learningRateDecay = opt.learning_rate_decay,
     startDecayAt = opt.start_decay_at,
-    optimStates = opt.optim_states
+    optimStates = opt.optim_states,
+    max_grad_norm = opt.max_grad_norm
   })
 
-  onmt.Trainer.train(opt, model, optim, trainData, validData, dataset, checkpoint.info)
+  local trainer = onmt.Trainer.new(opt)
+
+  trainer:train(model, optim, trainData, validData, dataset, checkpoint.info)
 
   _G.logger:shutDown()
 end

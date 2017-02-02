@@ -53,6 +53,7 @@ function Optim:__init(args)
 
   self.method = args.method
   self.learningRate = args.learningRate
+  self.max_grad_norm = args.max_grad_norm
 
   if self.method == 'sgd' then
     self.learningRateDecay = args.learningRateDecay
@@ -81,7 +82,7 @@ function Optim:zeroGrad(gradParams)
   end
 end
 
-function Optim:prepareGrad(gradParams, maxGradNorm)
+function Optim:prepareGrad(gradParams)
   -- Compute gradients norm.
   local gradNorm = 0
   for j = 1, #gradParams do
@@ -89,7 +90,7 @@ function Optim:prepareGrad(gradParams, maxGradNorm)
   end
   gradNorm = math.sqrt(gradNorm)
 
-  local shrinkage = maxGradNorm / gradNorm
+  local shrinkage = self.max_grad_norm / gradNorm
 
   for j = 1, #gradParams do
     -- Shrink gradients if needed.
@@ -149,10 +150,6 @@ end
 
 function Optim.declareOpts(cmd)
   cmd:option('-max_batch_size', 64, [[Maximum batch size]])
-  cmd:option('-end_epoch', 13, [[The final epoch of the training]])
-  cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
-  cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
-  cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
   cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
   cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
                                   then this is the global learning rate. Recommended settings are: sgd = 1,
@@ -162,8 +159,6 @@ function Optim.declareOpts(cmd)
   cmd:option('-learning_rate_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
                                           on the validation set or (ii) epoch has gone past the start_decay_at_limit]])
   cmd:option('-start_decay_at', 9, [[Start decay after this epoch]])
-  cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
-                               sequence length. Sometimes setting this to 1 will increase convergence speed.]])
 end
 
 return Optim
