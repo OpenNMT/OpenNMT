@@ -367,7 +367,7 @@ local function trainModel(model, trainData, validData, dataset, info)
             -- Send batch data to the GPU.
             onmt.utils.Cuda.convert(_G.batch)
             _G.batch.totalSize = _G.batch.size
-            local loss = trainNetwork()
+            local loss = trainNetwork(_G.batch)
 
             -- Update the parameters.
             optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
