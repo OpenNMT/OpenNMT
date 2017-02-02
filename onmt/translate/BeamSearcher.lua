@@ -29,11 +29,15 @@ Parameters:
 
   * `beamSize` - beam size. [1]
   * `nBest` - the `nBest` top hypotheses will be returned after beam search. [1]
-  * `preFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
-  * `preFilterFactor` - optional, set this only if filter is being used. Before applying filters, hypotheses with top `beamSize * preFilterFactor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]
+  * `preFilterFactor` - optional, set this only if filter is being used. Before
+  applying filters, hypotheses with top `beamSize * preFilterFactor` scores will
+  be considered. If the returned hypotheses voilate filters, then set this to a
+  larger value to consider more. [1]
   * `keepInitial` - optional, whether return the initial token or not. [false]
 
-Returns: a table `finished`. `finished[b][n].score`, `finished[b][n].tokens` and `finished[b][n].states` describe the n-th best hypothesis for b-th sample in the batch.
+Returns: a table `finished`. `finished[b][n].score`, `finished[b][n].tokens`
+and `finished[b][n].states` describe the n-th best hypothesis for b-th sample
+in the batch.
 
 ]]
 function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
@@ -78,13 +82,13 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   return finished
 end
 
--- Find the top beamSize hypotheses (satisfying filters)
+-- Find the top beamSize hypotheses (satisfying filters).
 function BeamSearcher:_findKBest(beams, scores)
   local t = #beams
   local vocabSize = scores:size(2)
   local expandedScores = beams[t]:_expandScores(scores, self.beamSize)
 
-  -- Find top beamSize * preFilterFactor hypotheses
+  -- Find top beamSize * preFilterFactor hypotheses.
   local considered = self.beamSize * self.preFilterFactor
   local consideredScores, consideredIds = expandedScores:topk(considered, 2, true, true)
   consideredIds:add(-1)
@@ -94,13 +98,13 @@ function BeamSearcher:_findKBest(beams, scores)
   local newBeam = beams[t]:nextBeam(consideredToken, consideredScores,
                                     consideredBackPointer, self.beamSize)
 
-  -- Prune hypotheses if necessary
+  -- Prune hypotheses if necessary.
   local pruned = self.advancer:filter(newBeam)
   if pruned and pruned:any() then
     consideredScores:view(-1):maskedFill(pruned, -math.huge)
   end
 
-  -- Find top beamSize hypotheses
+  -- Find top beamSize hypotheses.
   if ((not pruned) or (not pruned:any())) and (self.preFilterFactor == 1) then
     beams[t + 1] = newBeam
   else
@@ -114,10 +118,11 @@ function BeamSearcher:_findKBest(beams, scores)
     beams[t + 1] = newBeam
   end
 
-  -- Cleanup unused memory
+  -- Cleanup unused memory.
   beams[t]:cleanUp(self.advancer.keptStateIndexes)
 end
 
+-- Do a backward pass to get the tokens and states throughout the history.
 function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
   local states = {}
   local tokens = {}
@@ -132,7 +137,7 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
       remainingId = beams[t]:orig2Remaining(batchId)
     end
     assert (remainingId)
-    states[t] = beams[t]:indexState(self.beamSize, remainingId, bp, self.advancer.keptStateIndexes)
+    states[t] = beams[t]:_indexState(self.beamSize, remainingId, bp, self.advancer.keptStateIndexes)
     tokens[t - 1] = beams[t]:indexToken(self.beamSize, remainingId, bp)
     bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
     t = t - 1
@@ -153,6 +158,7 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
   return {tokens = tokens, states = states, score = score}
 end
 
+-- Checks which sequences are finished and moves finished hypothese to a buffer.
 function BeamSearcher:_completeHypotheses(beams, completed)
   local t = #beams
   local batchSize = beams[t]:getRemaining()
@@ -169,7 +175,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
     local batchFinished = true
     local hypotheses = beams[t]:_getTopHypotheses(b, self.nBest, completed)
 
-    -- Check whether the top nBest hypotheses are all finished.
+    -- Checks whether the top nBest hypotheses are all finished.
     for k = 1, self.nBest do
       local hypothesis = hypotheses[k]
       if not hypothesis.finished then
@@ -202,7 +208,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
 
   -- Remove finished sequences from batch.
   if #remainingIds < batchSize then
-    beams[t]:removeFinishedBatches(remainingIds, self.beamSize)
+    beams[t]:_removeFinishedBatches(remainingIds, self.beamSize)
   end
   return finishedBatches, finishedHypotheses
 end

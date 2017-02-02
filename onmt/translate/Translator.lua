@@ -145,9 +145,10 @@ function Translator:translateBatch(batch)
                                                       self.dicts)
 
   -- Save memory by only keeping track of necessary elements in the states.
-  -- Attentions are at index 4 in the states.
-  -- Features are at index 5 in the states.
+  -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.
   local attnIndex = 4
+
+  -- Features are at index 5 in the states defined in onmt.translate.DecoderAdvancer.
   local featsIndex = 5
   if self.opt.replace_unk then
     advancer:setKeptStateIndexes({attnIndex, featsIndex})

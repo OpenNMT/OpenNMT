@@ -1,7 +1,8 @@
 --[[ Class for maintaining statistics of each step. A beam mainly consists of
-  a list of tokens and a state. Tokens are stored as flat int tensors of size
-  `numRemaining * beamSize`, while state can be either a tensor with first dimension size
-  `batchSize`, or an iterable object containing several such tensors.
+  a list of tokens `tokens` and a state `state`. `tokens[t]` stores a flat tensor
+  of size `batchSize * beamSize` representing the tokens at step `t`, while
+  `state` can be either a tensor with first dimension size `batchSize * beamSize`,
+  or an iterable object containing several such tensors.
 --]]
 local Beam = torch.class('Beam')
 
@@ -10,7 +11,8 @@ local Beam = torch.class('Beam')
 
 Parameters:
 
-  * `v` - flat tensor of size `batchSize * beamSize` or a table containing such tensors.
+  * `v` - flat tensor of size `batchSize * beamSize` or a table containing such
+  tensors.
   * `beamSize` - beam size
 
 Returns: `(batchSize, beamSize)` tensor or a table containing such tensors.
@@ -32,7 +34,8 @@ end
 
 Parameters:
 
-  * `v` - flat tensor of size `(batchSize, beamSize)` or a table containing such tensors.
+  * `v` - flat tensor of size `(batchSize, beamSize)` or a table containing such
+  tensors.
   * `beamSize` - beam size
 
 Returns: `batchSize * beamSize` tensor or a table containing such tensors.
@@ -74,7 +77,8 @@ end
 
 Parameters:
 
-  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing such tensors
+  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing
+  such tensors.
   * `beamSize` - beam size
   * `batch` - the desired batch index
   * `beam` - the desired beam index
@@ -99,7 +103,8 @@ end
 
 Parameters:
 
-  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing such tensors
+  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing
+  such tensors.
   * `indexes` - a tensor of size `(batchSize, k)` specifying the desired indexes
   * `beamSize` - beam size
 
@@ -167,9 +172,13 @@ end
 
 Parameters:
 
-  * `token` - tensor of size `(batchSize, vocabSize)` (if start with one initial hypothesis per sequence) or `(batchSize * beamSize, vocabSize)` (if start with `beamSize` initial hypotheses per sequence), or a list of such tensors.
-  * `state` - an iterable object, where the contained tensors should have the same first dimension as `token`.
-  * `remaining` - (optional) remaining number of sentences. Only necessary if start with `beamSize` hypotheses per sequence. [`token:size(1)`]
+  * `token` - tensor of size `(batchSize, vocabSize)` (if start with one initial
+  hypothesis per sequence) or `(batchSize * beamSize, vocabSize)` (if start with
+  `beamSize` initial hypotheses per sequence), or a list of such tensors.
+  * `state` - an iterable object, where the contained tensors should have the
+  same first dimension as `token`.
+  * `remaining` - optional, remaining number of sentences. Only necessary if
+  start with `beamSize` hypotheses per sequence. [`token:size(1)`]
 
 --]]
 function Beam:__init(token, state, remaining)
@@ -194,7 +203,9 @@ end
 
 Returns:
 
-  * `tokens` - a list of tokens. Note that the start-of-sequence symbols is included.
+  * `tokens` - a list of tokens. Note that the start-of-sequence symbols are
+  also included. `tokens[t]` stores the tokens at step `t`, which is a tensor
+  of size `batchSize * beamSize`.
 
 --]]
 function Beam:getTokens()
@@ -205,7 +216,8 @@ end
 
 Returns:
 
-  * `state` - an abstract iterable object as passed by constructor.
+  * `state` - an abstract iterable object as passed by constructor. Every tensor
+  inside the `state` has first dimension `batchSize * beamSize`
 
 --]]
 function Beam:getState()
@@ -216,7 +228,8 @@ end
 
 Returns:
 
-  * `scores` - a flat tensor storing the total scores for each batch.
+  * `scores` - a flat tensor storing the total scores for each batch. It is of
+  size `batchSize * beamSize`.
 
 --]]
 function Beam:getScores()
@@ -227,14 +240,15 @@ end
 
 Returns:
 
-  * `backPointer` - a flat tensor storing the total scores for each batch.
+  * `backPointer` - a flat tensor storing the backpointers for each batch. It is
+  of size `batchSize * beamSize`
 
 --]]
 function Beam:getBackPointer()
   return self._backPointer
 end
 
---[[ Get the number of unfinished sequences. The finished sequences will be
+--[[ Returns the number of unfinished sequences. The finished sequences will be
   removed from batch.
 
 Returns:
@@ -244,6 +258,30 @@ Returns:
 --]]
 function Beam:getRemaining()
   return self._remaining
+end
+
+--[[ Since finished sequences are being removed from the batch, this function
+  provides a way to convert the remaining batch id to the original batch id.
+
+--]]
+function Beam:remaining2Orig(remainingId)
+  if remainingId then
+    return self._remaining2Orig[remainingId]
+  else
+    return self._remaining2Orig
+  end
+end
+
+--[[ Since finished sequences are being removed from the batch, this function
+  provides a way to convert the original batch id to the remaining batch id.
+
+--]]
+function Beam:orig2Remaining(origId)
+  if origId then
+    return self._orig2Remaining[origId]
+  else
+    return self._orig2Remaining
+  end
 end
 
 --[[ Set state.
@@ -264,10 +302,10 @@ function Beam:setBackPointer(backPointer)
   self._backPointer = backPointer:view(-1)
 end
 
--- In the first step, if there is only 1 hypothesis per
--- batch, then each hypothesis is replicated beamSize times to keep consistency
--- with the following beam search steps, while the scores of the auxiliary
--- hypotheses are set to -inf.
+-- In the first step, if there is only 1 hypothesis per batch, then each
+-- hypothesis is replicated beamSize times to keep consistency with the
+-- following beam search steps, while the scores of the auxiliary hypotheses
+-- are set to -inf.
 function Beam:_replicate(beamSize)
   assert (#self._tokens == 1, 'only the first beam may need replicating!')
   local token = self._tokens[1]
@@ -281,6 +319,8 @@ function Beam:_replicate(beamSize)
   self._scores:add(maskScores:view(-1))
 end
 
+-- Given new scores, combine that with the previous total scores and find the
+-- top K hypotheses to form the next beam.
 function Beam:_expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
@@ -292,6 +332,7 @@ function Beam:_expandScores(scores, beamSize)
   return expandedScores
 end
 
+-- Create a new beam given new token, scores and backpointer.
 function Beam:nextBeam(token, scores, backPointer, beamSize)
   local remaining = math.floor(token:size(1) / beamSize)
   local newBeam = Beam.new(self:nextTokens(token, backPointer, beamSize),
@@ -304,39 +345,22 @@ function Beam:nextBeam(token, scores, backPointer, beamSize)
   return newBeam
 end
 
-function Beam:remaining2Orig(b)
-  if b then
-    return self._remaining2Orig[b]
-  else
-    return self._remaining2Orig
-  end
-end
-
-function Beam:orig2Remaining(b)
-  if b then
-    return self._orig2Remaining[b]
-  else
-    return self._orig2Remaining
-  end
-end
 -- Select the on-beam states using the pointers
 function Beam:nextState(backPointer, beamSize)
   local nextState = selectBeam(self._state, backPointer, beamSize)
   return nextState
 end
 
+-- Given backpointers, index the tokens in the history to form the next beam's
+-- token list.
 function Beam:nextTokens(token, backPointer, beamSize)
   local nextTokens = selectBeam(self._tokens, backPointer, beamSize)
   nextTokens[#nextTokens + 1] = token
   return nextTokens
 end
 
--- binary vector
-function Beam:batchesFinished()
-  return self._batchesFinished
-end
-
-function Beam:removeFinishedBatches(remainingIds, beamSize)
+-- Remove finished sequences to save computation.
+function Beam:_removeFinishedBatches(remainingIds, beamSize)
   self._remaining = #remainingIds
   if #remainingIds > 0 then
     self._state = rcToFlat(selectBatch(flatToRc(self._state, beamSize), remainingIds))
@@ -346,7 +370,8 @@ function Beam:removeFinishedBatches(remainingIds, beamSize)
   end
 end
 
-function Beam:indexState(beamSize, batchId, beamId, keptIndexes)
+-- Index the iterable state object by given batch id and beam id.
+function Beam:_indexState(beamSize, batchId, beamId, keptIndexes)
   keptIndexes = keptIndexes or {}
   local keptState = {}
   for _, val in pairs(keptIndexes) do
@@ -355,17 +380,21 @@ function Beam:indexState(beamSize, batchId, beamId, keptIndexes)
   return selectBatchBeam(keptState, beamSize, batchId, beamId)
 end
 
+-- Index the last step token by given batch id and beam id.
 function Beam:indexToken(beamSize, batchId, beamId)
   local token = self._tokens[#self._tokens]
   return selectBatchBeam(token, beamSize, batchId, beamId)
 end
 
+-- Index backpointer by given batch id and beam id.
 function Beam:indexBackPointer(beamSize, batchId, beamId)
   if self._backPointer then
     return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
   end
 end
 
+-- To save memory, only states at keptIndexes will be kept, while the rest
+-- are discarded.
 function Beam:cleanUp(keptIndexes)
   keptIndexes = keptIndexes or {}
   local keptState = {}
@@ -375,6 +404,7 @@ function Beam:cleanUp(keptIndexes)
   self._state = keptState
 end
 
+-- Add completed hypotheses to buffer.
 function Beam:_addCompletedHypotheses(batchId, completed)
   local origId = self:_getOrigId(batchId)
   self._remainingId = self._remainingId or 0
@@ -411,20 +441,14 @@ function Beam:_addCompletedHypotheses(batchId, completed)
   end
 end
 
-function Beam.completed(batchId)
-  if Beam._completed then
-    return Beam._completed[batchId] or {}
-  else
-    return {}
-  end
-end
-
+-- Free buffer when a sequence is finished.
 function Beam.removeCompleted(batchId)
   if Beam._completed then
     Beam._completed[batchId] = nil
   end
 end
 
+-- Get the original if of a sequence given its current position in the batch.
 function Beam:_getOrigId(remainingId)
   local origId
   if self._step <= 2 then
@@ -440,7 +464,12 @@ function Beam:_getTopHypotheses(remainingId, nBest, completed)
   local origId = self:_getOrigId(remainingId)
 
   -- Get previously completed hypotheses of the sequence.
-  local prevCompleted = Beam.completed(origId)
+  local prevCompleted
+  if Beam._completed then
+    prevCompleted = Beam._completed[origId] or {}
+  else
+    prevCompleted = {}
+  end
 
   local hypotheses = {}
   local prevId = 1

@@ -1,7 +1,8 @@
 --[[ Class for specifying how to advance one step. A beam mainly consists of
-  a list of tokens and a state. Tokens are stored as flat tensors of size
-  `batchSize`, while state can be either a tensor with first dimension size
-  `batchSize`, or an iterable object containing several such tensors.
+  a list of `tokens` and a `state`. `tokens[t]` stores a flat tensors of size
+  `batchSize * beamSize` representing tokens at step `t`. `state` can be either
+  a tensor with first dimension size `batchSize * beamSize`, or an iterable
+  object containing several such tensors.
 
   Pseudocode:
 
@@ -65,8 +66,7 @@ Parameters:
 function Advancer:update(beam) -- luacheck: no unused args
 end
 
---[[Expand function. Expands beam by all possible tokens and returns the
-  scores.
+--[[Expands beam by all possible tokens and returns the scores.
 
 Parameters:
 
@@ -74,7 +74,7 @@ Parameters:
 
 Returns:
 
-  * `scores` - a 2D tensor of size `(batchSize, numTokens)`.
+  * `scores` - a 2D tensor of size `(batchSize * beamSize, numTokens)`.
 
 ]]
 function Advancer:expand(beam) -- luacheck: no unused args
@@ -86,14 +86,16 @@ Parameters:
 
   * `beam` - an `onmt.translate.Beam` object.
 
-Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses are finished.
+Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
+which hypotheses are finished.
 
 ]]
 function Advancer:isComplete(beam) -- luacheck: no unused args
 end
 
 --[[Specifies which states to keep track of. After beam search, those states
-  can be retrieved during all steps along with the tokens.
+  can be retrieved during all steps along with the tokens. This is used
+  for memory efficiency.
 
 Parameters:
 
@@ -110,7 +112,8 @@ Parameters:
 
   * `beam` - an `onmt.translate.Beam` object.
 
-Returns: a binary flat tensor of size `(batchSize)`, indicating which beams shall be pruned.
+Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
+which beams shall be pruned.
 
 ]]
 function Advancer:filter()
