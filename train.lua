@@ -63,8 +63,8 @@ cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this w
 cmd:option('-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the decoder side.
                                      See README for specific formatting instructions.]])
-cmd:option('-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side.]])
-cmd:option('-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side.]])
+cmd:option('-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]])
+cmd:option('-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]])
 
 cmd:text("")
 cmd:text("**Other options**")
@@ -74,7 +74,7 @@ cmd:text("")
 onmt.utils.Cuda.declareOpts(cmd)
 cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
 cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
-cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode]])
+cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 cmd:option('-fp16', false, [[Use half-precision float on GPU]])
 
 cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
