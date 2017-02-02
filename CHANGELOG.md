@@ -17,7 +17,6 @@
 * Fix BLEU drop when applying beam search on certain models
 * Fix error when using asynchronous parallel mode
 
-
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
 ### New features
