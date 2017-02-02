@@ -156,83 +156,41 @@ function BeamSearcher:_completeHypotheses(beams, completed)
   local t = #beams
   local batchSize = beams[t]:getRemaining()
   completed = completed:view(batchSize, -1)
-  local token = beams[t]:getTokens()[t]:view(batchSize, -1)
-  local backPointer = beams[t]:getBackPointer():view(batchSize, -1)
-  local scores = beams[t]:getScores():view(batchSize, -1)
 
-  local remainingId = 0
-  local remainingIds = {}
   local finishedBatches = {}
   local finishedHypotheses = {}
+
+  -- Keep track of unfinished batch ids.
+  local remainingIds = {}
+
+  -- For each sequence in the batch, check whether it is finished or not.
   for b = 1, batchSize do
-    local origId = b
-    if t > 2 then
-      origId = beams[t - 1]:remaining2Orig(b)
-    end
-    local prevCompleted = onmt.translate.Beam.completed(origId)
     local batchFinished = true
-    local prevId = 1
-    local currId = 1
-    for _ = 1, self.nBest do
-      if prevId <= #prevCompleted then
-        local prevScore = prevCompleted[prevId][1]
-        if prevScore > scores[b][currId] then
-          prevId = prevId + 1
-        else
-          if completed[b][currId] == 0 then
-            batchFinished = false
-            break
-          end
-          currId = currId + 1
-        end
-      else
-        if completed[b][currId] == 0 then
-          batchFinished = false
-          break
-        end
-        currId = currId + 1
+    local  hypotheses = beams[t]:_getTopHypotheses(b, self.nBest, completed)
+
+    -- Check whether the top nBest hypotheses are all finished.
+    for k = 1, self.nBest do
+      local hypothesis = hypotheses[k]
+      if not hypothesis.finshed then
+        batchFinished = false
+        break
       end
     end
+
     if not batchFinished then
-      remainingId = remainingId + 1
-      beams[t]:setOrig2Remaining(origId, remainingId)
-      beams[t]:setRemaining2Orig(remainingId, origId)
+      -- For incomplete sequences, the complete hypotheses will be removed
+      -- from beam and saved to buffer.
       table.insert(remainingIds, b)
-      for k = 1, self.beamSize do
-        if completed[b][k] == 1 then
-          local tok = token[b][k]
-          local bp = backPointer[b][k]
-          local score = scores[b][k]
-          onmt.translate.Beam.addCompletedHypotheses(score, tok, bp, t, origId)
-        end
-      end
+      beams[t]:_addCompletedHypotheses(b, completed)
     else
+      -- For complete sequences, we do a backward pass to retrieve the state
+      -- values and tokens throught the history.
+      local origId = beams[t]:getOrigId(b)
       table.insert(finishedBatches, origId)
       local hypothesis = {}
-      prevId = 1
-      currId = 1
-      for _ = 1, self.nBest do
-        if prevId <= #prevCompleted then
-          local prevScore = prevCompleted[prevId][1]
-          if prevScore > scores[b][currId] then
-            table.insert(hypothesis, self:_retrieveHypothesis(beams, origId,
-                                                              table.unpack(prevCompleted[prevId])))
-            prevId = prevId + 1
-          else
-            local score = scores[b][currId]
-            local tok = token[b][currId]
-            local bp = backPointer[b][currId]
-            table.insert(hypothesis, self:_retrieveHypothesis(beams, origId, score, tok, bp, t))
-            currId = currId + 1
-          end
-        else
-          assert(completed[b][currId] == 1)
-          local score = scores[b][currId]
-          local tok = token[b][currId]
-          local bp = backPointer[b][currId]
-          table.insert(hypothesis, self:_retrieveHypothesis(beams, origId, score, tok, bp, t))
-          currId = currId + 1
-        end
+      for k = 1, self.nBest do
+        table.insert(hypothesis, self:_retrieveHypothesis(beams,
+                                                          table.unpack(hypotheses[k].hypothesis)))
       end
       table.insert(finishedHypotheses, hypothesis)
       onmt.translate.Beam.removeCompleted(origId)
@@ -241,8 +199,8 @@ function BeamSearcher:_completeHypotheses(beams, completed)
 
   beams[t]:getScores():maskedFill(completed:view(-1), -math.huge)
 
-  -- Remove finished batches
-  if remainingId < batchSize then
+  -- Remove finished sequences from batch.
+  if #remainingIds < batchSize then
     beams[t]:removeFinishedBatches(remainingIds, self.beamSize)
   end
   return finishedBatches, finishedHypotheses
