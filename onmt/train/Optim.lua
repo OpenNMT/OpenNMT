@@ -149,6 +149,10 @@ function Optim:getStates()
 end
 
 function Optim.declareOpts(cmd)
+  cmd:text("")
+  cmd:text("**Optimization options**")
+  cmd:text("")
+
   cmd:option('-max_batch_size', 64, [[Maximum batch size]])
   cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
   cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,

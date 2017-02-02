@@ -47,6 +47,10 @@ function seq2seq:trainNetwork(batch, criterion, doProfile, dryRun)
 end
 
 function seq2seq.declareOpts(cmd)
+  cmd:text("")
+  cmd:text("**Model options**")
+  cmd:text("")
+
   cmd:option('-layers', 2, [[Number of layers in the RNN encoder/decoder]])
   cmd:option('-rnn_size', 500, [[Size of RNN hidden states]])
   cmd:option('-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]])

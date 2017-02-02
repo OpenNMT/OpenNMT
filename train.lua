@@ -21,16 +21,10 @@ cmd:option('-continue', false, [[If training from a checkpoint, whether to conti
 -- Generic Model options.
 onmt.Model.declareOpts(cmd)
 
-cmd:text("")
-cmd:text("**Model options**")
-cmd:text("")
-
+-- Seq2Seq attn options.
 onmt.Models.seq2seq.declareOpts(cmd)
 
-cmd:text("")
-cmd:text("**Optimization options**")
-cmd:text("")
-
+-- Optimization options.
 onmt.train.Optim.declareOpts(cmd)
 
 cmd:text("")
@@ -46,8 +40,9 @@ onmt.utils.Memory.declareOpts(cmd)
 -- Misc
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
-
+-- Logger options
 onmt.utils.Logger.declareOpts(cmd)
+-- Profiler options
 onmt.utils.Profiler.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
