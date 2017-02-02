@@ -131,6 +131,7 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
     else
       remainingId = beams[t]:orig2Remaining(batchId)
     end
+    assert (remainingId)
     states[t] = beams[t]:indexState(self.beamSize, remainingId, bp, self.advancer.keptStateIndexes)
     tokens[t - 1] = beams[t]:indexToken(self.beamSize, remainingId, bp)
     bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
@@ -171,7 +172,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
     -- Check whether the top nBest hypotheses are all finished.
     for k = 1, self.nBest do
       local hypothesis = hypotheses[k]
-      if not hypothesis.finshed then
+      if not hypothesis.finished then
         batchFinished = false
         break
       end
@@ -184,8 +185,8 @@ function BeamSearcher:_completeHypotheses(beams, completed)
       beams[t]:_addCompletedHypotheses(b, completed)
     else
       -- For complete sequences, we do a backward pass to retrieve the state
-      -- values and tokens throught the history.
-      local origId = beams[t]:getOrigId(b)
+      -- values and tokens throughout the history.
+      local origId = beams[t]:_getOrigId(b)
       table.insert(finishedBatches, origId)
       local hypothesis = {}
       for k = 1, self.nBest do

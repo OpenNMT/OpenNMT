@@ -376,10 +376,10 @@ function Beam:cleanUp(keptIndexes)
 end
 
 function Beam:_addCompletedHypotheses(batchId, completed)
-  local origId = self:getOrigId(batchId)
+  local origId = self:_getOrigId(batchId)
   self._remainingId = self._remainingId or 0
   self._remainingId = self._remainingId + 1
-  self._orig2Remaining[origId] = self._remaingId
+  self._orig2Remaining[origId] = self._remainingId
   self._remaining2Orig[self._remainingId] = origId
   completed = completed:view(self._remaining, -1)
   local scores = self._scores:view(self._remaining, -1)
@@ -425,9 +425,9 @@ function Beam.removeCompleted(batchId)
   end
 end
 
-function Beam:getOrigId(remainingId)
+function Beam:_getOrigId(remainingId)
   local origId
-  if not self._prevBeam then
+  if self._step <= 2 then
     origId = remainingId
   else
     origId = self._prevBeam:remaining2Orig(remainingId)
@@ -437,7 +437,7 @@ end
 
 -- Get nBest hypotheses for a particular sequence in the batch.
 function Beam:_getTopHypotheses(remainingId, nBest, completed)
-  local origId = self:getOrigId(remainingId)
+  local origId = self:_getOrigId(remainingId)
 
   -- Get previously completed hypotheses of the sequence.
   local prevCompleted = Beam.completed(origId)
@@ -451,7 +451,7 @@ function Beam:_getTopHypotheses(remainingId, nBest, completed)
   local backPointers = self._backPointer:view(self._remaining, -1)
   for _ = 1, nBest do
     local hypothesis, onBeam, id, finished
-    if prevId <= #prevCompleted and prevCompleted[prevId][1] > scores[remainingId][currId] then
+    if prevId <= #prevCompleted and prevCompleted[prevId][2] > scores[remainingId][currId] then
       hypothesis = prevCompleted[prevId]
       finished = true
       id = prevId
