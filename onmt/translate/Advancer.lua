@@ -87,7 +87,7 @@ Parameters:
   * `beam` - an `onmt.translate.Beam` object.
 
 Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
-which hypotheses are finished.
+  which hypotheses are finished.
 
 ]]
 function Advancer:isComplete(beam) -- luacheck: no unused args
@@ -113,7 +113,7 @@ Parameters:
   * `beam` - an `onmt.translate.Beam` object.
 
 Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
-which beams shall be pruned.
+  which beams shall be pruned.
 
 ]]
 function Advancer:filter()

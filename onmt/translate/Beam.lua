@@ -164,7 +164,7 @@ end
 --[[Constructor. We allow users to either specify all initial hypotheses by
   passing in `token` and `state` with first dimension `batchSize * beamSize`
   such that there are `beamSize` initial hypotheses for every sequence in the
-  batch and pass in the number of sequences `remaining`, or only specify one
+  batch and pass in the number of sequences `batchSize`, or only specify one
   hypothesis per sequence by passing `token` and `state` with first dimension
   `batchSize`, and then `onmt.translate.BeamSearcher` will pad with auxiliary
   hypotheses with scores `-inf` such that each sequence starts with `beamSize`
@@ -177,12 +177,12 @@ Parameters:
   `beamSize` initial hypotheses per sequence), or a list of such tensors.
   * `state` - an iterable object, where the contained tensors should have the
   same first dimension as `token`.
-  * `remaining` - optional, remaining number of sentences. Only necessary if
+  * `batchSize` - optional, number of sentences. Only necessary if
   start with `beamSize` hypotheses per sequence. [`token:size(1)`]
 
 --]]
-function Beam:__init(token, state, remaining)
-  self._remaining = remaining or token:size(1)
+function Beam:__init(token, state, batchSize)
+  self._remaining = batchSize or token:size(1)
 
   if torch.type(token) == 'table' then
     self._tokens = token
@@ -333,10 +333,10 @@ function Beam:_expandScores(scores, beamSize)
 end
 
 -- Create a new beam given new token, scores and backpointer.
-function Beam:nextBeam(token, scores, backPointer, beamSize)
+function Beam:_nextBeam(token, scores, backPointer, beamSize)
   local remaining = math.floor(token:size(1) / beamSize)
-  local newBeam = Beam.new(self:nextTokens(token, backPointer, beamSize),
-                           self:nextState(backPointer, beamSize),
+  local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
+                           self:_nextState(backPointer, beamSize),
                            remaining)
   newBeam:setScores(scores)
   newBeam:setBackPointer(backPointer)
@@ -346,14 +346,14 @@ function Beam:nextBeam(token, scores, backPointer, beamSize)
 end
 
 -- Select the on-beam states using the pointers
-function Beam:nextState(backPointer, beamSize)
+function Beam:_nextState(backPointer, beamSize)
   local nextState = selectBeam(self._state, backPointer, beamSize)
   return nextState
 end
 
 -- Given backpointers, index the tokens in the history to form the next beam's
 -- token list.
-function Beam:nextTokens(token, backPointer, beamSize)
+function Beam:_nextTokens(token, backPointer, beamSize)
   local nextTokens = selectBeam(self._tokens, backPointer, beamSize)
   nextTokens[#nextTokens + 1] = token
   return nextTokens
@@ -381,13 +381,13 @@ function Beam:_indexState(beamSize, batchId, beamId, keptIndexes)
 end
 
 -- Index the last step token by given batch id and beam id.
-function Beam:indexToken(beamSize, batchId, beamId)
+function Beam:_indexToken(beamSize, batchId, beamId)
   local token = self._tokens[#self._tokens]
   return selectBatchBeam(token, beamSize, batchId, beamId)
 end
 
 -- Index backpointer by given batch id and beam id.
-function Beam:indexBackPointer(beamSize, batchId, beamId)
+function Beam:_indexBackPointer(beamSize, batchId, beamId)
   if self._backPointer then
     return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
   end
@@ -395,7 +395,7 @@ end
 
 -- To save memory, only states at keptIndexes will be kept, while the rest
 -- are discarded.
-function Beam:cleanUp(keptIndexes)
+function Beam:_cleanUp(keptIndexes)
   keptIndexes = keptIndexes or {}
   local keptState = {}
   for _, val in pairs(keptIndexes) do
@@ -442,7 +442,7 @@ function Beam:_addCompletedHypotheses(batchId, completed)
 end
 
 -- Free buffer when a sequence is finished.
-function Beam.removeCompleted(batchId)
+function Beam._removeCompleted(batchId)
   if Beam._completed then
     Beam._completed[batchId] = nil
   end

@@ -91,7 +91,7 @@ Parameters:
 
 Returns:
 
-  * `scores` - a 2D tensor of size `(batchSize, numTokens)`.
+  * `scores` - a 2D tensor of size `(batchSize * beamSize, numTokens)`.
 
 ]]
 function DecoderAdvancer:expand(beam)
@@ -116,7 +116,8 @@ Parameters:
 
   * `beam` - an `onmt.translate.Beam` object.
 
-Returns: a binary flat tensor of size `(batchSize)`, indicating which hypotheses are finished.
+Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
+  which hypotheses are finished.
 
 ]]
 function DecoderAdvancer:isComplete(beam)
@@ -136,7 +137,8 @@ Parameters:
 
   * `beam` - an `onmt.translate.Beam` object.
 
-Returns: a binary flat tensor of size `(batchSize)`, indicating which beams shall be pruned.
+Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
+  which beams shall be pruned.
 
 ]]
 function DecoderAdvancer:filter(beam)

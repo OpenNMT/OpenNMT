@@ -95,7 +95,7 @@ function BeamSearcher:_findKBest(beams, scores)
   local consideredBackPointer = (consideredIds:clone():div(vocabSize)):add(1)
   local consideredToken = consideredIds:fmod(vocabSize):add(1):view(-1)
 
-  local newBeam = beams[t]:nextBeam(consideredToken, consideredScores,
+  local newBeam = beams[t]:_nextBeam(consideredToken, consideredScores,
                                     consideredBackPointer, self.beamSize)
 
   -- Prune hypotheses if necessary.
@@ -114,12 +114,12 @@ function BeamSearcher:_findKBest(beams, scores)
       :viewAs(consideredIds)
       :gather(2, kBestIds)
       :view(-1)
-    newBeam = beams[t]:nextBeam(token, kBestScores, backPointer, self.beamSize)
+    newBeam = beams[t]:_nextBeam(token, kBestScores, backPointer, self.beamSize)
     beams[t + 1] = newBeam
   end
 
   -- Cleanup unused memory.
-  beams[t]:cleanUp(self.advancer.keptStateIndexes)
+  beams[t]:_cleanUp(self.advancer.keptStateIndexes)
 end
 
 -- Do a backward pass to get the tokens and states throughout the history.
@@ -138,8 +138,8 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
     end
     assert (remainingId)
     states[t] = beams[t]:_indexState(self.beamSize, remainingId, bp, self.advancer.keptStateIndexes)
-    tokens[t - 1] = beams[t]:indexToken(self.beamSize, remainingId, bp)
-    bp = beams[t]:indexBackPointer(self.beamSize, remainingId, bp)
+    tokens[t - 1] = beams[t]:_indexToken(self.beamSize, remainingId, bp)
+    bp = beams[t]:_indexBackPointer(self.beamSize, remainingId, bp)
     t = t - 1
   end
   if not self.keepInitial then
@@ -200,7 +200,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
                                                           table.unpack(hypotheses[k].hypothesis)))
       end
       table.insert(finishedHypotheses, hypothesis)
-      onmt.translate.Beam.removeCompleted(origId)
+      onmt.translate.Beam._removeCompleted(origId)
     end
   end
 
