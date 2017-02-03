@@ -28,9 +28,26 @@ onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
 local function reportScore(name, scoreTotal, wordsTotal)
-  _G.logger:info(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
+  _G.logger:info(name .. " AVG SCORE: %.2f, " .. name .. " PPL: %.2f",
                  scoreTotal / wordsTotal,
                  math.exp(-scoreTotal/wordsTotal))
+end
+
+local function extractData(tokens)
+  local words, features = onmt.utils.Features.extract(tokens)
+
+  local data = {}
+  data.words = words
+
+  if #features > 0 then
+    data.features = features
+  end
+
+  return data
+end
+
+local function buildSentence(data)
+  return table.concat(onmt.utils.Features.annotate(data.words, data.features), " ")
 end
 
 local function main()
@@ -47,21 +64,15 @@ local function main()
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
-  local srcWordsBatch = {}
-  local srcFeaturesBatch = {}
 
-  local tgtReader
-  local tgtBatch
-  local tgtWordsBatch
-  local tgtFeaturesBatch
+  local goldReader
+  local goldBatch
 
   local withGoldScore = opt.tgt:len() > 0
 
   if withGoldScore then
-    tgtReader = onmt.utils.FileReader.new(opt.tgt)
-    tgtBatch = {}
-    tgtWordsBatch = {}
-    tgtFeaturesBatch = {}
+    goldReader = onmt.utils.FileReader.new(opt.tgt)
+    goldBatch = {}
   end
 
   local translator = onmt.translate.Translator.new(opt)
@@ -85,26 +96,16 @@ local function main()
 
   while true do
     local srcTokens = srcReader:next()
-    local tgtTokens
+    local goldTokens
     if withGoldScore then
-      tgtTokens = tgtReader:next()
+      goldTokens = goldReader:next()
     end
 
     if srcTokens ~= nil then
-      local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
-      table.insert(srcBatch, srcTokens)
-      table.insert(srcWordsBatch, srcWords)
-      if #srcFeats > 0 then
-        table.insert(srcFeaturesBatch, srcFeats)
-      end
+      table.insert(srcBatch, extractData(srcTokens))
 
       if withGoldScore then
-        local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
-        table.insert(tgtBatch, tgtTokens)
-        table.insert(tgtWordsBatch, tgtWords)
-        if #tgtFeats > 0 then
-          table.insert(tgtFeaturesBatch, tgtFeats)
-        end
+        table.insert(goldBatch, extractData(goldTokens))
       end
     elseif #srcBatch == 0 then
       break
@@ -115,44 +116,44 @@ local function main()
         timer:resume()
       end
 
-      local predBatch, info = translator:translate(srcWordsBatch, srcFeaturesBatch,
-                                                   tgtWordsBatch, tgtFeaturesBatch)
+      local results = translator:translate(srcBatch, goldBatch)
 
       if opt.time then
         timer:stop()
       end
 
-      for b = 1, #predBatch do
-        local srcSent = table.concat(srcBatch[b], " ")
-        local predSent = table.concat(predBatch[b], " ")
-
-        outFile:write(predSent .. '\n')
-
-        if (#srcBatch[b] == 0) then
-          _G.logger:warning('SENT ' .. sentId .. ' is empty.')
+      for b = 1, #results do
+        if (#srcBatch[b].words == 0) then
+          _G.logger:warning('Line ' .. sentId .. ' is empty.')
         else
-          _G.logger:info('SENT ' .. sentId .. ': ' .. srcSent)
-          _G.logger:info('PRED ' .. sentId .. ': ' .. predSent)
-          _G.logger:info("PRED SCORE: %.4f", info[b].score)
-
-          predScoreTotal = predScoreTotal + info[b].score
-          predWordsTotal = predWordsTotal + #predBatch[b]
+          _G.logger:info('SENT %d: %s', sentId, buildSentence(srcBatch[b]))
 
           if withGoldScore then
-            local tgtSent = table.concat(tgtBatch[b], " ")
-
-            _G.logger:info('GOLD ' .. sentId .. ': ' .. tgtSent)
-            _G.logger:info("GOLD SCORE: %.4f", info[b].goldScore)
-
-            goldScoreTotal = goldScoreTotal + info[b].goldScore
-            goldWordsTotal = goldWordsTotal + #tgtBatch[b]
+            _G.logger:info('GOLD %d: %s', sentId, buildSentence(goldBatch[b]), results[b].goldScore)
+            _G.logger:info("GOLD SCORE: %.2f", results[b].goldScore)
+            goldScoreTotal = goldScoreTotal + results[b].goldScore
+            goldWordsTotal = goldWordsTotal + #goldBatch[b]
           end
 
-          if opt.n_best > 1 then
-            _G.logger:info('\nBEST HYP:')
-            for n = 1, #info[b].nBest do
-              local nBest = table.concat(info[b].nBest[n].tokens, " ")
-              _G.logger:info("[%.4f] %s", info[b].nBest[n].score, nBest)
+          for n = 1, #results[b].preds do
+            local sentence = buildSentence(results[b].preds[n])
+
+            if n == 1 then
+              outFile:write(sentence .. '\n')
+              predScoreTotal = predScoreTotal + results[b].preds[n].score
+              predWordsTotal = predWordsTotal + #results[b].preds[n].words
+
+              if #results[b].preds > 1 then
+                _G.logger:info('')
+                _G.logger:info('BEST HYP:')
+              end
+            end
+
+            if #results[b].preds > 1 then
+              _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
+            else
+              _G.logger:info("PRED %d: %s", sentId, sentence)
+              _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
             end
           end
         end
@@ -167,12 +168,8 @@ local function main()
 
       batchId = batchId + 1
       srcBatch = {}
-      srcWordsBatch = {}
-      srcFeaturesBatch = {}
       if withGoldScore then
-        tgtBatch = {}
-        tgtWordsBatch = {}
-        tgtFeaturesBatch = {}
+        goldBatch = {}
       end
       collectgarbage()
     end

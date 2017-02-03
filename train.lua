@@ -1,6 +1,5 @@
 require('onmt.init')
 
-local path = require('pl.path')
 require('tds')
 local cmd = onmt.ExtendedCmdLine.new()
 
@@ -63,7 +62,8 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  local checkpoint, opt = onmt.train.Checkpoint.loadFromCheckpoint(opt)
+  local checkpoint
+  checkpoint, opt = onmt.train.Checkpoint.loadFromCheckpoint(opt)
 
   -- Create the data loader class.
   _G.logger:info('Loading data from \'' .. opt.data .. '\'...')

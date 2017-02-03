@@ -20,6 +20,7 @@ end
 ------------------------------------------------------------------------------------------------------------------
 
 local extendedCmdLine, parent = torch.class('onmt.extendedCmdLine', 'torch.CmdLine')
+local path = require('pl.path')
 
 --[[
   Extended handling of command line options - provide validation methods, and utilities for handling options
