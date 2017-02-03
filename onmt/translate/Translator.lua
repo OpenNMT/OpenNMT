@@ -167,11 +167,8 @@ function Translator:translateBatch(batch)
 
   -- Features are at index 5 in the states defined in onmt.translate.DecoderAdvancer.
   local featsIndex = 5
-  if self.opt.replace_unk then
-    advancer:setKeptStateIndexes({attnIndex, featsIndex})
-  else
-    advancer:setKeptStateIndexes({featsIndex})
-  end
+
+  advancer:setKeptStateIndexes({attnIndex, featsIndex})
 
   -- Conduct beam search.
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
