@@ -11,7 +11,7 @@ function extendedCmdLine:option(key, default, help, _meta_)
 end
 
 function extendedCmdLine:parse(arg)
-  params = parent.parse(self, arg)
+  local params = parent.parse(self, arg)
   for k,v in pairs(params) do
     local meta = self.options['-'..k].meta
     if meta and meta.valid then
@@ -20,6 +20,7 @@ function extendedCmdLine:parse(arg)
       end
     end
   end
+  return params
 end
 
 function extendedCmdLine.integer(minValue, maxValue)
