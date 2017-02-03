@@ -67,6 +67,7 @@ function extendedCmdLine:help(arg)
       end
    end
 
+   local padMultiLine = pad('', optsz)
    -- second pass to print
    for _,option in ipairs(self.helplines) do
       if type(option) == 'table' then
@@ -74,8 +75,9 @@ function extendedCmdLine:help(arg)
          if option.default ~= nil then -- it is an option
             io.write(pad(option.key, optsz))
             if option.meta and option.meta.enum then
-              io.write('('..table.concat(option.meta.enum, ', ')..') ')
+              io.write(' ('..table.concat(option.meta.enum, ', ')..')')
             end
+            option.help = option.help:gsub("\n   *","\n"..padMultiLine.."   ")
             if option.help then io.write(' ' .. option.help) end
             io.write(' [' .. tostring(option.default) .. ']')
          else -- it is an argument
