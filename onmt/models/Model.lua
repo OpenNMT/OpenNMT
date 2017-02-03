@@ -1,17 +1,18 @@
 --[[ Generic Model class. ]]
 local Model = torch.class('onmt.Model')
 
-function Model:__init(args)
-  self.models = {}
-  self.args = {
-    param_init = args.param_init,
-    train_from = args.train_from
-  }
-end
+local model_options = {
+  {'-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]]},
+  {'-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]]}
+}
 
 function Model.declareOpts(cmd)
-  cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
-  cmd:option('-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]])
+  cmd:setCmdLineOptions(model_options)
+end
+
+function Model:__init(args)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, model_options)
+  self.models = {}
 end
 
 function Model:evaluate()

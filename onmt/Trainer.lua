@@ -17,35 +17,34 @@ local function eval(model, criterion, data)
   return math.exp(loss / total)
 end
 
-function Trainer:__init(args)
-  self.args = {
-    json_log = args.json_log,
-    disable_mem_optimization = args.disable_mem_optimization,
-    start_iteration = args.start_iteration,
-    async_parallel = args.async_parallel,
-    curriculum = args.curriculum,
-    report_every = args.report_every,
-    save_every = args.save_every,
-    async_parallel_minbatch = args.async_parallel_minbatch,
-    start_epoch = args.start_epoch,
-    end_epoch = args.end_epoch
-  }
-  -- make a difference with options which is only used in Checkpoint
-  self.options = args
-end
+local trainer_options = {
+  {'-save_every',              0 ,    [[Save intermediate models every this many iterations within an epoch.
+                                         If = 0, will not save models within an epoch. ]],
+                                         {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-report_every',            50,    [[Print stats every this many iterations within an epoch.]],
+                                         {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-async_parallel',          false, [[Use asynchronous parallelism training.]]},
+  {'-async_parallel_minbatch', 1000,  [[For async parallel computing, minimal number of batches before being parallel.]],
+                                         {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-start_iteration',         1,     [[If loading from a checkpoint, the iteration from which to start]],
+                                         {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
+  {'-end_epoch',               13,    [[The final epoch of the training]],
+                                         {valid=onmt.utils.ExtendedCmdLine.isInt(2)}},
+  {'-start_epoch',             1,     [[If loading from a checkpoint, the epoch from which to start]],
+                                         {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
+  {'-curriculum',              0,     [[For this many epochs, order the minibatches based on source
+                                         sequence length. Sometimes setting this to 1 will increase convergence speed.]],
+                                         {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
+}
 
 function Trainer.declareOpts(cmd)
-  cmd:option('-save_every', 0, [[Save intermediate models every this many iterations within an epoch.
-                             If = 0, will not save models within an epoch. ]])
-  cmd:option('-report_every', 50, [[Print stats every this many iterations within an epoch.]])
-  cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
-  cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
-  cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
-  cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
-  cmd:option('-end_epoch', 13, [[The final epoch of the training]])
-  cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
-  cmd:option('-curriculum', 0, [[For this many epochs, order the minibatches based on source
-                               sequence length. Sometimes setting this to 1 will increase convergence speed.]])
+  cmd:setCmdLineOptions(trainer_options, "Trainer")
+end
+
+function Trainer:__init(args)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, trainer_options)
+  -- make a difference with options which is only used in Checkpoint
+  self.options = args
 end
 
 function Trainer:train(model, optim, trainData, validData, dataset, info)
@@ -54,7 +53,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
   onmt.utils.Parallel.launch(function(idx)
     -- Only logs information of the first thread.
-    local verbose = idx == 1 and not self.args.json_log
+    local verbose = idx == 1
 
     -- Initialize and get model parameters.
     _G.params, _G.gradParams = _G.model:initParams(verbose)
@@ -165,10 +164,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         end
 
         if iter % self.args.report_every == 0 then
-          epochState:log(iter, self.args.json_log)
+          epochState:log(iter)
         end
         if self.args.save_every > 0 and iter % self.args.save_every == 0 then
-          checkpoint:saveIteration(iter, epochState, batchOrder, not self.args.json_log)
+          checkpoint:saveIteration(iter, epochState, batchOrder, true)
         end
         iter = iter + 1
       end
@@ -249,10 +248,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         end)
 
         if self.args.report_every > 0 then
-          epochState:log(counter:get(), self.args.json_log)
+          epochState:log(counter:get())
         end
         if self.args.save_every > 0 then
-          checkpoint:saveIteration(counter:get(), epochState, batchOrder, not self.args.json_log)
+          checkpoint:saveIteration(counter:get(), epochState, batchOrder, true)
         end
       end
     end
@@ -262,14 +261,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
   local validPpl = 0
 
-  if not self.args.json_log then
-    _G.logger:info('Start training...')
-  end
+  _G.logger:info('Start training...')
 
   for epoch = self.args.start_epoch, self.args.end_epoch do
-    if not self.args.json_log then
-      _G.logger:info('')
-    end
+    _G.logger:info('')
 
     local globalProfiler = onmt.utils.Profiler.new(self.args.profiler)
 
@@ -282,14 +277,12 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     validPpl = eval(model, criterion, validData)
     globalProfiler:stop("valid")
 
-    if not self.args.json_log then
-      if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
-      _G.logger:info('Validation perplexity: %.2f', validPpl)
-    end
+    if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
+    _G.logger:info('Validation perplexity: %.2f', validPpl)
 
     optim:updateLearningRate(validPpl, epoch)
 
-    checkpoint:saveEpoch(validPpl, epochState, not self.args.json_log)
+    checkpoint:saveEpoch(validPpl, epochState, true)
   end
 end
 

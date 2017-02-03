@@ -2,7 +2,7 @@ require('onmt.init')
 
 local path = require('pl.path')
 require('tds')
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new()
 
 cmd:text("")
 cmd:text("**train.lua**")
@@ -66,9 +66,7 @@ local function main()
   if opt.train_from:len() > 0 then
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
 
-    if not opt.json_log then
-      _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
-    end
+    _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
 
     checkpoint = torch.load(opt.train_from)
 
@@ -90,17 +88,13 @@ local function main()
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration
 
-      if not opt.json_log then
-        _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
+      _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
                          .. ' at iteration ' .. opt.start_iteration .. '...')
-      end
     end
   end
 
   -- Create the data loader class.
-  if not opt.json_log then
-    _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
-  end
+  _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
 
   local dataset = torch.load(opt.data, 'binary', false)
 
@@ -110,39 +104,16 @@ local function main()
   trainData:setBatchSize(opt.max_batch_size)
   validData:setBatchSize(opt.max_batch_size)
 
-  if not opt.json_log then
-    _G.logger:info(' * vocabulary size: source = %d; target = %d',
-                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
-    _G.logger:info(' * additional features: source = %d; target = %d',
-                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
-    _G.logger:info(' * maximum sequence length: source = %d; target = %d',
-                   trainData.maxSourceLength, trainData.maxTargetLength)
-    _G.logger:info(' * number of training sentences: %d', #trainData.src)
-    _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
-  else
-    local metadata = {
-      options = opt,
-      vocabSize = {
-        source = dataset.dicts.src.words:size(),
-        target = dataset.dicts.tgt.words:size()
-      },
-      additionalFeatures = {
-        source = #dataset.dicts.src.features,
-        target = #dataset.dicts.tgt.features
-      },
-      sequenceLength = {
-        source = trainData.maxSourceLength,
-        target = trainData.maxTargetLength
-      },
-      trainingSentences = #trainData.src
-    }
+  _G.logger:info(' * vocabulary size: source = %d; target = %d',
+                 dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
+  _G.logger:info(' * additional features: source = %d; target = %d',
+                 #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+  _G.logger:info(' * maximum sequence length: source = %d; target = %d',
+                 trainData.maxSourceLength, trainData.maxTargetLength)
+  _G.logger:info(' * number of training sentences: %d', #trainData.src)
+  _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
 
-    onmt.utils.Log.logJson(metadata)
-  end
-
-  if not opt.json_log then
-    _G.logger:info('Building model...')
-  end
+  _G.logger:info('Building model...')
 
   local model
 
@@ -151,7 +122,7 @@ local function main()
     if checkpoint.models then
       _G.model = onmt.Models.seq2seq.new(opt, checkpoint, idx > 1)
     else
-      local verbose = idx == 1 and not opt.json_log
+      local verbose = idx == 1
       _G.model = onmt.Models.seq2seq.new(opt, dataset, verbose)
     end
 
@@ -164,14 +135,7 @@ local function main()
     end
   end)
 
-  local optim = onmt.train.Optim.new({
-    method = opt.optim,
-    learningRate = opt.learning_rate,
-    learningRateDecay = opt.learning_rate_decay,
-    startDecayAt = opt.start_decay_at,
-    optimStates = opt.optim_states,
-    max_grad_norm = opt.max_grad_norm
-  })
+  local optim = onmt.train.Optim.new(opt, opt.optim_states)
 
   local trainer = onmt.Trainer.new(opt)
 
