@@ -124,7 +124,7 @@ function Translator:buildTargetFeatures(predFeats)
   end
 
   local feats = {}
-  for j = 1, numFeatures do
+  for _ = 1, numFeatures do
     table.insert(feats, {})
   end
 
