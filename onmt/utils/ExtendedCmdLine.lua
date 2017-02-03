@@ -1,21 +1,6 @@
-local extendedCmdLine, parent = torch.class('onmt.extendedCmdLine', 'torch.CmdLine')
-
---[[
-  Extended handling of command line options - provide validation methods, and utilities for handling options
-  at module level.
-
-  Example:
-
-    cmd = onmt.utils.ExtendedCmdLine.new()
-    local optim_options = {
-      {'-max_batch_size',     64   , 'Maximum batch size', {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
-    }
-
-    cmd:setCmdLineOptions("Optimization", optim_options)
-    local opt = cmd:parse(arg)
-
-    local optimArgs = cmd.getModuleOpts(opt, optim_options)
-]]
+------------------------------------------------------------------------------------------------------------------
+-- Local utility functions
+------------------------------------------------------------------------------------------------------------------
 
 local function pad(str, sz)
    return str .. string.rep(' ', sz-#str)
@@ -31,6 +16,27 @@ local function _hasValue(list, value)
   end
   return false
 end
+
+------------------------------------------------------------------------------------------------------------------
+
+local extendedCmdLine, parent = torch.class('onmt.extendedCmdLine', 'torch.CmdLine')
+
+--[[
+  Extended handling of command line options - provide validation methods, and utilities for handling options
+  at module level.
+
+  Example:
+
+    cmd = onmt.utils.ExtendedCmdLine.new()
+    local optim_options = {
+      {'-max_batch_size',     64   , 'Maximum batch size', {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
+    }
+
+    cmd:setCmdLineOptions(optim_options, 'Optimization')
+    local opt = cmd:parse(arg)
+
+    local optimArgs = cmd.getModuleOpts(opt, optim_options)
+]]
 
 function extendedCmdLine:__init()
   parent.__init(self)

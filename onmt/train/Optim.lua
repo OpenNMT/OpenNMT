@@ -1,3 +1,7 @@
+------------------------------------------------------------------------------------------------------------------
+-- Local utility functions
+------------------------------------------------------------------------------------------------------------------
+
 local function adagradStep(dfdx, lr, state)
   if not state.var then
     state.var = torch.Tensor():typeAs(dfdx):resizeAs(dfdx):zero()
@@ -45,19 +49,24 @@ local function adadeltaStep(dfdx, lr, state)
   state.accDelta:mul(rho):addcmul(1-rho, state.delta, state.delta)
 end
 
+------------------------------------------------------------------------------------------------------------------
 
 local Optim = torch.class("Optim")
 
 local optim_options = {
-  {'-max_batch_size',     64   , [[Maximum batch size]], {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-optim',              'sgd', [[Optimization method.]], {enum={'sgd', 'adagrad', 'adadelta', 'adam'}}},
+  {'-max_batch_size',     64   , [[Maximum batch size]],
+                                 {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-optim',              'sgd', [[Optimization method.]],
+                                 {enum={'sgd', 'adagrad', 'adadelta', 'adam'}}},
   {'-learning_rate',       1   , [[Starting learning rate. If adagrad/adadelta/adam is used,
                                   then this is the global learning rate. Recommended settings are: sgd = 1,
                                   adagrad = 0.1, adadelta = 1, adam = 0.0002]]},
-  {'-max_grad_norm',       5   , [[If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm]]},
+  {'-max_grad_norm',       5   , [[If the norm of the gradient vector exceeds this renormalize it to have
+                                   the norm equal to max_grad_norm]]},
   {'-learning_rate_decay', 0.5 , [[Decay learning rate by this much if (i) perplexity does not decrease
-                                          on the validation set or (ii) epoch has gone past the start_decay_at_limit]]},
-  {'-start_decay_at',      9   , [[Start decay after this epoch]], {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
+                                   on the validation set or (ii) epoch has gone past the start_decay_at_limit]]},
+  {'-start_decay_at',      9   , [[Start decay after this epoch]],
+                                 {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
 }
 
 function Optim.declareOpts(cmd)
