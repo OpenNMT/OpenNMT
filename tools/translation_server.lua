@@ -66,7 +66,7 @@ local function translateMessage(translator, lines)
 
       local attnTable = {}
       for j = 1, #results[b].preds[i].attention do
-        table.insert(attnTable, #results[b].preds[i].attention[j]:totable())
+        table.insert(attnTable, results[b].preds[i].attention[j]:totable())
       end
 
       table.insert(ret, {
