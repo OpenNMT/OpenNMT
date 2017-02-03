@@ -92,16 +92,13 @@ local function main()
 
   -- build or load model from checkpoint and copy to GPUs
   onmt.utils.Parallel.launch(function(idx)
-
     if checkpoint.models then
       _G.model = onmt.Models.seq2seq.new(opt, checkpoint, idx > 1)
     else
       local verbose = idx == 1
       _G.model = onmt.Models.seq2seq.new(opt, dataset, verbose)
     end
-
     onmt.utils.Cuda.convert(_G.model)
-
     return idx, _G.model
   end, function(idx, themodel)
     if idx == 1 then
@@ -109,11 +106,15 @@ local function main()
     end
   end)
 
+  -- Define optimization method.
   local optim = onmt.train.Optim.new(opt, opt.optim_states)
+  -- Initialize trainer.
   local trainer = onmt.Trainer.new(opt)
 
+  -- Launch train
   trainer:train(model, optim, trainData, validData, dataset, checkpoint.info)
 
+  -- turn off logger
   _G.logger:shutDown()
 end
 
