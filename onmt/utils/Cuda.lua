@@ -14,7 +14,7 @@ function Cuda.declareOpts(cmd)
 end
 
 function Cuda.init(opt, masterGPU)
-  for _, val in ipairs(onmt.utils.String.split(opt.gpuid, ',')) do
+  for _, val in ipairs(onmt.utils.String.split(tostring(opt.gpuid), ',')) do
     local id = tonumber(val)
     assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. val)
     if id > 0 then

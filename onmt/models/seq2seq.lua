@@ -11,10 +11,8 @@ local seq2seq_options = {
                      {enum={'LSTM','GRU'}}},
   {'-word_vec_size', 0, [[Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size.]],
                      {valid=onmt.ExtendedCmdLine.isUInt()}},
-  {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]],
-                     {valid=onmt.ExtendedCmdLine.isUInt()}},
-  {'-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]],
-                     {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]]},
+  {'-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]]},
   {'-feat_merge', 'concat', [[Merge action for the features embeddings]],
                      {enum={'concat','sum'}}},
   {'-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension
