@@ -2,8 +2,12 @@
 --]]
 local Profiler = torch.class('Profiler')
 
+local profiler_options = {
+  {'-profiler', false, [[Generate profiling logs.]]}
+}
+
 function Profiler.declareOpts(cmd)
-  cmd:option('-profiler', false, [[Generate profiling logs]])
+  cmd:setCmdLineOptions(profiler_options)
 end
 
 --[[ Profiler object
@@ -42,8 +46,9 @@ Example:
     Logger:info(globalProfiler:log())
 
 ]]
-function Profiler:__init(doProfile)
-  if not doProfile then
+function Profiler:__init(opt)
+  if type(opt) == 'table' then opt=opt.profiler end
+  if not opt then
     self.disable = true
   end
   self:reset()

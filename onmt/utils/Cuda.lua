@@ -3,8 +3,14 @@ local Cuda = {
   activated = false
 }
 
+local cuda_options = {
+  {'-gpuid',     0,   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
+                                 {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
+}
+
 function Cuda.declareOpts(cmd)
-  cmd:option('-gpuid', '0', [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]])
+  cmd:setCmdLineOptions(cuda_options)
 end
 
 function Cuda.init(opt, masterGPU)

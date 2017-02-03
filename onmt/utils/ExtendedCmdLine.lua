@@ -142,4 +142,13 @@ function extendedCmdLine.isUInt(maxValue)
   return extendedCmdLine.isInt(0, maxValue)
 end
 
+function extendedCmdLine.nonEmpty(v)
+  return v and v ~= ''
+end
+
+function extendedCmdLine.fileNullOrExists(v)
+  if v == '' then return true end
+  return path.exists(v)
+end
+
 return extendedCmdLine

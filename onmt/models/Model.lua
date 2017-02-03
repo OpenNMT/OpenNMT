@@ -3,8 +3,7 @@ local Model = torch.class('onmt.Model')
 
 local model_options = {
   {'-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]],
-                       {valid=function(v) return v>=0 and v<=1 end}},
-  {'-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]]}
+                       {valid=function(v) return v>=0 and v<=1 end}}
 }
 
 function Model.declareOpts(cmd)
@@ -12,7 +11,7 @@ function Model.declareOpts(cmd)
 end
 
 function Model:__init(args)
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, model_options)
+  self.args = onmt.ExtendedCmdLine.getModuleOpts(args, model_options)
   self.models = {}
 end
 

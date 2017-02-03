@@ -2,22 +2,25 @@ require('onmt.init')
 
 local path = require('pl.path')
 require('tds')
-local cmd = onmt.utils.ExtendedCmdLine.new()
+local cmd = onmt.ExtendedCmdLine.new()
 
+-------------- Options declaration
 cmd:text("")
 cmd:text("**train.lua**")
 cmd:text("")
 
 cmd:option('-config', '', [[Read options from this file]])
 
-cmd:text("")
-cmd:text("**Data options**")
-cmd:text("")
+local data_options = {
+  {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
+                      {valid=onmt.ExtendedCmdLine.nonEmpty}},
+  {'-save_model', '', [[Model filename (the model will be saved as
+                            <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]],
+                      {valid=onmt.ExtendedCmdLine.nonEmpty}}
+}
 
-cmd:option('-data', '', [[Path to the training *-train.t7 file from preprocess.lua]])
-cmd:option('-save_model', '', [[Model filename (the model will be saved as
-                              <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]])
-cmd:option('-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]])
+cmd:setCmdLineOptions(data_options, "Data")
+
 -- Generic Model options.
 onmt.Model.declareOpts(cmd)
 
@@ -27,18 +30,21 @@ onmt.Models.seq2seq.declareOpts(cmd)
 -- Optimization options.
 onmt.train.Optim.declareOpts(cmd)
 
+-- Training process options.
+onmt.Trainer.declareOpts(cmd)
+
+-- Checkpoints options.
+onmt.train.Checkpoint.declareOpts(cmd)
+
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
 
--- Actual training process option
-onmt.Trainer.declareOpts(cmd)
 -- GPU
 onmt.utils.Cuda.declareOpts(cmd)
 -- Memory optimization
 onmt.utils.Memory.declareOpts(cmd)
 -- Misc
-cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 -- Logger options
 onmt.utils.Logger.declareOpts(cmd)
@@ -48,12 +54,8 @@ onmt.utils.Profiler.declareOpts(cmd)
 local opt = cmd:parse(arg)
 
 local function main()
-  local requiredOptions = {
-    "data",
-    "save_model"
-  }
 
-  onmt.utils.Opt.init(opt, requiredOptions)
+  onmt.utils.Opt.init(opt)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   _G.profiler = onmt.utils.Profiler.new(false)
@@ -61,37 +63,7 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  local checkpoint = {}
-
-  if opt.train_from:len() > 0 then
-    assert(path.exists(opt.train_from), 'checkpoint path invalid')
-
-    _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
-
-    checkpoint = torch.load(opt.train_from)
-
-    opt.layers = checkpoint.options.layers
-    opt.rnn_size = checkpoint.options.rnn_size
-    opt.brnn = checkpoint.options.brnn
-    opt.brnn_merge = checkpoint.options.brnn_merge
-    opt.input_feed = checkpoint.options.input_feed
-
-    -- Resume training from checkpoint
-    if opt.continue then
-      opt.optim = checkpoint.options.optim
-      opt.learning_rate_decay = checkpoint.options.learning_rate_decay
-      opt.start_decay_at = checkpoint.options.start_decay_at
-      opt.curriculum = checkpoint.options.curriculum
-
-      opt.learning_rate = checkpoint.info.learningRate
-      opt.optim_states = checkpoint.info.optimStates
-      opt.start_epoch = checkpoint.info.epoch
-      opt.start_iteration = checkpoint.info.iteration
-
-      _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
-                         .. ' at iteration ' .. opt.start_iteration .. '...')
-    end
-  end
+  local checkpoint, opt = onmt.train.Checkpoint.loadFromCheckpoint(opt)
 
   -- Create the data loader class.
   _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
@@ -115,8 +87,10 @@ local function main()
 
   _G.logger:info('Building model...')
 
+  -- main model
   local model
 
+  -- build or load model from checkpoint and copy to GPUs
   onmt.utils.Parallel.launch(function(idx)
 
     if checkpoint.models then
@@ -136,7 +110,6 @@ local function main()
   end)
 
   local optim = onmt.train.Optim.new(opt, opt.optim_states)
-
   local trainer = onmt.Trainer.new(opt)
 
   trainer:train(model, optim, trainData, validData, dataset, checkpoint.info)

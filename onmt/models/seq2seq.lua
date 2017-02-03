@@ -1,6 +1,49 @@
 --[[ seq2seq Model. ]]
 local seq2seq, parent = torch.class('onmt.Models.seq2seq', 'onmt.Model')
 
+
+local seq2seq_options = {
+  {'-layers', 2, [[Number of layers in the RNN encoder/decoder]],
+                     {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-rnn_size', 500, [[Size of RNN hidden states]],
+                     {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-rnn_type', 'LSTM', [[Type of RNN cell]],
+                     {enum={'LSTM','GRU'}}},
+  {'-word_vec_size', 0, [[Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size.]],
+                     {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]],
+                     {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]],
+                     {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-feat_merge', 'concat', [[Merge action for the features embeddings]],
+                     {enum={'concat','sum'}}},
+  {'-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension
+                                will be set to N^exponent where N is the number of values the feature takes.]]},
+  {'-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]],
+                     {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
+                     {enum={0,1}}},
+  {'-residual', false, [[Add residual connections between RNN layers.]]},
+  {'-brnn', false, [[Use a bidirectional encoder]]},
+  {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],
+                     {enum={'concat','sum'}}},
+  {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
+                                     pretrained word embeddings on the encoder side.
+                                     See README for specific formatting instructions.]],
+                         {valid=onmt.ExtendedCmdLine.fileNullOrExists}},
+  {'-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
+                                       pretrained word embeddings on the decoder side.
+                                       See README for specific formatting instructions.]],
+                         {valid=onmt.ExtendedCmdLine.fileNullOrExists}},
+  {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
+  {'-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]]},
+  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
+}
+
+function seq2seq.declareOpts(cmd)
+  cmd:setCmdLineOptions(seq2seq_options, "Sequence to Sequence Attention")
+end
+
 function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
   parent.__init(self, args)
   if type(datasetOrCheckpoint)=='Checkpoint' then
@@ -44,33 +87,4 @@ function seq2seq:trainNetwork(batch, criterion, doProfile, dryRun)
   self.models.encoder:backward(batch, encGradStatesOut, gradContext)
   if doProfile then _G.profiler:stop("encoder.bwd") end
   return loss
-end
-
-function seq2seq.declareOpts(cmd)
-  cmd:text("")
-  cmd:text("**Model options**")
-  cmd:text("")
-
-  cmd:option('-layers', 2, [[Number of layers in the RNN encoder/decoder]])
-  cmd:option('-rnn_size', 500, [[Size of RNN hidden states]])
-  cmd:option('-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]])
-  cmd:option('-word_vec_size', 0, [[Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size.]])
-  cmd:option('-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]])
-  cmd:option('-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]])
-  cmd:option('-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]])
-  cmd:option('-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes.]])
-  cmd:option('-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]])
-  cmd:option('-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
-  cmd:option('-residual', false, [[Add residual connections between RNN layers.]])
-  cmd:option('-brnn', false, [[Use a bidirectional encoder]])
-  cmd:option('-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states: concat or sum]])
-  cmd:option('-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
-                                     pretrained word embeddings on the encoder side.
-                                     See README for specific formatting instructions.]])
-  cmd:option('-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
-                                       pretrained word embeddings on the decoder side.
-                                       See README for specific formatting instructions.]])
-  cmd:option('-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]])
-  cmd:option('-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]])
-  cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]])
 end
