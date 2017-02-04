@@ -9,8 +9,6 @@ cmd:text("")
 cmd:text("**train.lua**")
 cmd:text("")
 
-cmd:option('-config', '', [[Read options from this file]])
-
 local data_options = {
   {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
                       {valid=onmt.ExtendedCmdLine.nonEmpty}},
@@ -55,7 +53,9 @@ local opt = cmd:parse(arg)
 
 local function main()
 
-  onmt.utils.Opt.init(opt)
+  if opt.seed then
+    torch.manualSeed(opt.seed)
+  end
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   _G.profiler = onmt.utils.Profiler.new(false)
