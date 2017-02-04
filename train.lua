@@ -53,9 +53,7 @@ local opt = cmd:parse(arg)
 
 local function main()
 
-  if opt.seed then
-    torch.manualSeed(opt.seed)
-  end
+  torch.manualSeed(opt.seed)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   _G.profiler = onmt.utils.Profiler.new(false)
