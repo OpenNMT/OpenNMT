@@ -40,7 +40,7 @@ local function main()
   local Vocabulary = onmt.data.Vocabulary
   local Preprocessor = onmt.data.Preprocessor.new(opt, mode)
 
-  local data = {}
+  local data = { mode=mode }
 
   if mode == 'MONO' then
     data.dicts = Vocabulary.init('train', opt.train, opt.vocab, opt.vocab_size,
