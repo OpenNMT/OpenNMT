@@ -155,7 +155,7 @@ function Optim:updateLearningRate(score, epoch)
     end
 
     if self.startDecay then
-      self.args.learning_rate = self.args.learning_rate * self.args.learning_rateDecay
+      self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
     end
   end
 end

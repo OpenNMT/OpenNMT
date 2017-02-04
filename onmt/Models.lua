@@ -3,7 +3,7 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
   local wordEmbSize
   local featEmbSizes = {}
 
-  wordSizes = onmt.utils.String.split(wordSizes, ',')
+  wordSizes = onmt.utils.String.split(tostring(wordSizes), ',')
 
   if opt.word_vec_size > 0 then
     wordEmbSize = opt.word_vec_size
@@ -74,7 +74,7 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
 end
 
 local function buildEncoder(opt, dicts)
-  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.src_word_vec_size,
+  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.src_word_vec_size or opt.word_vec_size,
                                                     opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   local RNN = onmt.LSTM

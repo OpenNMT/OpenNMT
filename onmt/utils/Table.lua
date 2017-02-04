@@ -7,6 +7,13 @@ local function append(dst, src)
   end
 end
 
+--[[ Merge dict `src` to `dst`. ]]
+local function merge(dst, src)
+  for k,v in pairs(src) do
+    dst[k] = v
+  end
+end
+
 --[[ Reorder table `tab` based on the `index` array. ]]
 local function reorder(tab, index, cdata)
   local newTab
@@ -36,5 +43,6 @@ end
 return {
   reorder = reorder,
   append = append,
+  merge = merge,
   hasValue = hasValue
 }

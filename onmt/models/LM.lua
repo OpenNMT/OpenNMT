@@ -1,22 +1,27 @@
 --[[ Language Model. ]]
+require 'onmt.models.Model'
 local LM, parent = torch.class('onmt.Models.LM', 'onmt.Model')
 
 local LM_options = {
+  {'LM',      false,  [[(seq2seq,LM) Language Model training [seq2seq] ]]},
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
   {'-rnn_size', 500, [[Size of RNN hidden states]]},
   {'-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]]},
-  {'-word_vec_size', 500, [[Word embedding sizes]]},
-  {'-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]]},
+  {'-word_vec_size', '500', [[Comma-separated list of embedding sizes: word[,feat1,feat2,...].]]},
+  {'-feat_merge', 'concat', [[Merge action for the features embeddings.]],
+                     {enum={'concat','sum'}}},
   {'-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
                                         then the embedding dimension will be set to N^exponent]]},
   {'-feat_vec_size', 20, [[When using sum, the common embedding size of the features]]},
   {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]]},
   {'-residual', false, [[Add residual connections between RNN layers.]]},
   {'-brnn', false, [[Use a bidirectional encoder]]},
-  {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states: concat or sum]]},
+  {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states.]],
+                     {enum={'concat','sum'}}},
   {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the encoder side.
-                                     See README for specific formatting instructions.]]},
+                                     See README for specific formatting instructions.]],
+                         {valid=onmt.ExtendedCmdLine.fileNullOrExists}},
   {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]}
 }
 
@@ -25,20 +30,33 @@ function LM.declareOpts(cmd)
 end
 
 function LM:__init(args, datasetOrCheckpoint)
-  self.args = onmt.ExtendedCmdLine.getModuleOpts(args, LM_options)
-  parent.__init(self)
+  parent.__init(self, args)
+  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, LM_options))
+  -- encoder word_vec_size is in src_word_vec_size
+  self.args.src_word_vec_size = args.word_vec_size
+  self.args.word_vec_size = 0
   if type(datasetOrCheckpoint)=='Checkpoint' then
     error("unsupported")
   else
     local dataset = datasetOrCheckpoint
-    self.models.encoder = onmt.Models.buildEncoder(self.args, dataset.dicts)
-    if #dataset.dicts.features > 0 then
-      self.models.generator = onmt.FeaturesGenerator.new(self.args.rnn_size, dataset.dicts.words:size(), dataset.dicts.features)
+    self.models.encoder = onmt.Models.buildEncoder(self.args, dataset.dicts.src)
+    if #dataset.dicts.src.features > 0 then
+      self.models.generator = onmt.FeaturesGenerator.new(self.args.rnn_size, dataset.dicts.src.words:size(), dataset.dicts.src.features)
     else
-      self.models.generator = onmt.Generator.new(self.args.rnn_size, dataset.dicts.words:size())
+      self.models.generator = onmt.Generator.new(self.args.rnn_size, dataset.dicts.src.words:size())
     end
-    self.EOS_vector_model = torch.LongTensor(args.max_batch_size):fill(dataset.dicts.words:lookup(onmt.Constants.EOS_WORD))
+    self.EOS_vector_model = torch.LongTensor(args.max_batch_size):fill(dataset.dicts.src.words:lookup(onmt.Constants.EOS_WORD))
   end
+end
+
+-- Returns model name.
+function LM.modelName()
+  return "Language"
+end
+
+-- Returns expected dataMode.
+function LM.dataType()
+  return "MONO"
 end
 
 function LM:forwardComputeLoss(batch, criterion)

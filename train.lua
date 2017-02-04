@@ -1,8 +1,21 @@
 require('onmt.init')
-require('onmt.models.seq2seq')
 
-require('tds')
 local cmd = onmt.ExtendedCmdLine.new("train.lua")
+
+-- first argument define the model type: seq2seq/LM - default is seq2seq
+local mtype = 'seq2seq'
+if #arg>0 and arg[1]=='LM' then
+  mtype = 'LM'
+end
+
+local modelClass
+if mtype == 'seq2seq' then
+  require('onmt.Models.seq2seq')
+  modelClass = onmt.Models.seq2seq
+else
+  require('onmt.Models.LM')
+  modelClass = onmt.Models.LM
+end
 
 -------------- Options declaration
 local data_options = {
@@ -19,7 +32,7 @@ cmd:setCmdLineOptions(data_options, "Data")
 onmt.Model.declareOpts(cmd)
 
 -- Seq2Seq attn options.
-onmt.Models.seq2seq.declareOpts(cmd)
+modelClass.declareOpts(cmd)
 
 -- Optimization options.
 onmt.train.Optim.declareOpts(cmd)
@@ -60,10 +73,21 @@ local function main()
   local checkpoint
   checkpoint, opt = onmt.train.Checkpoint.loadFromCheckpoint(opt)
 
+  _G.logger:info('Training '..modelClass.modelName()..' model')
+
   -- Create the data loader class.
   _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
 
   local dataset = torch.load(opt.data, 'binary', false)
+
+  -- keep backward compatibility
+  dataset.dataType = dataset.dataType or "BITEXT"
+
+  -- check if data matching the model
+  if dataset.dataType ~= modelClass.dataType() then
+    _G.logger:error("Data type: '"..dataset.dataType.."' does not match model type: '"..modelClass.dataType().."'")
+    os.exit(0)
+  end
 
   local trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
@@ -71,10 +95,15 @@ local function main()
   trainData:setBatchSize(opt.max_batch_size)
   validData:setBatchSize(opt.max_batch_size)
 
-  _G.logger:info(' * vocabulary size: source = %d; target = %d',
-                 dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
-  _G.logger:info(' * additional features: source = %d; target = %d',
-                 #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+  if dataset.dataType == 'BITEXT' then
+    _G.logger:info(' * vocabulary size: source = %d; target = %d',
+                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
+    _G.logger:info(' * additional features: source = %d; target = %d',
+                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+  else
+    _G.logger:info(' * vocabulary size: %d', dataset.dicts.src.words:size())
+    _G.logger:info(' * additional features: %d', #dataset.dicts.src.features)
+  end
   _G.logger:info(' * maximum sequence length: source = %d; target = %d',
                  trainData.maxSourceLength, trainData.maxTargetLength)
   _G.logger:info(' * number of training sentences: %d', #trainData.src)
@@ -88,10 +117,10 @@ local function main()
   -- build or load model from checkpoint and copy to GPUs
   onmt.utils.Parallel.launch(function(idx)
     if checkpoint.models then
-      _G.model = onmt.Models.seq2seq.new(opt, checkpoint, idx > 1)
+      _G.model = modelClass.new(opt, checkpoint, idx > 1)
     else
       local verbose = idx == 1
-      _G.model = onmt.Models.seq2seq.new(opt, dataset, verbose)
+      _G.model = modelClass.new(opt, dataset, verbose)
     end
     onmt.utils.Cuda.convert(_G.model)
     return idx, _G.model

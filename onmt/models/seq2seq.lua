@@ -3,7 +3,8 @@ require 'onmt.models.Model'
 local seq2seq, parent = torch.class('onmt.Models.seq2seq', 'onmt.Model')
 
 local seq2seq_options = {
-  {'-layers', 2, [[Number of layers in the RNN encoder/decoder]],
+  {'seq2seq',      false,  [[(seq2seq,LM) Sequence to sequence model training [seq2seq] ]]},
+  {'-layers', 2,           [[Number of layers in the RNN encoder/decoder]],
                      {valid=onmt.ExtendedCmdLine.isUInt()}},
   {'-rnn_size', 500, [[Size of RNN hidden states]],
                      {valid=onmt.ExtendedCmdLine.isUInt()}},
@@ -44,6 +45,7 @@ end
 
 function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
   parent.__init(self, args)
+  table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, seq2seq_options))
   if type(datasetOrCheckpoint)=='Checkpoint' then
     local checkpoint = datasetOrCheckpoint
     local replica = verboseOrReplica
@@ -55,6 +57,16 @@ function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
     self.models.encoder = onmt.Models.buildEncoder(args, dataset.dicts.src, verbose)
     self.models.decoder = onmt.Models.buildDecoder(args, dataset.dicts.tgt, verbose)
   end
+end
+
+-- Returns model name.
+function seq2seq.modelName()
+  return "Sequence to Sequence Attention"
+end
+
+-- Returns expected dataMode.
+function seq2seq.dataType()
+  return "BITEXT"
 end
 
 function seq2seq:forwardComputeLoss(batch, criterion)
