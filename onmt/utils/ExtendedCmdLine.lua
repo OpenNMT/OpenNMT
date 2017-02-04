@@ -260,6 +260,11 @@ function extendedCmdLine.getModuleOpts(args, moduleOptions)
   return moduleArgs
 end
 
+------------------------------------------------------------------------------------------------------------------
+-- Validators
+------------------------------------------------------------------------------------------------------------------
+
+-- Check if is integer between minValue and maxValue.
 function extendedCmdLine.isInt(minValue, maxValue)
   return function(v)
     return (math.floor(v) == v and
@@ -268,14 +273,17 @@ function extendedCmdLine.isInt(minValue, maxValue)
     end
 end
 
+-- Check if is positive integer.
 function extendedCmdLine.isUInt(maxValue)
   return extendedCmdLine.isInt(0, maxValue)
 end
 
+-- Check if non empty.
 function extendedCmdLine.nonEmpty(v)
   return v and v ~= ''
 end
 
+-- Check non set or if the corresponding file exists.
 function extendedCmdLine.fileNullOrExists(v)
   if v == '' then return true end
   return path.exists(v)
