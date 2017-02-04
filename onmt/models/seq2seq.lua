@@ -79,6 +79,10 @@ function seq2seq:buildCriterion(dataset)
                             dataset.dicts.tgt.features)
 end
 
+function seq2seq:countTokens(batch)
+  return batch.targetNonZeros
+end
+
 function seq2seq:trainNetwork(batch, criterion, doProfile, dryRun)
   if doProfile then _G.profiler:start("encoder.fwd") end
   local encStates, context = self.models.encoder:forward(batch)

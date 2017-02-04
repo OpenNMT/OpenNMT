@@ -11,7 +11,7 @@ local function eval(model, criterion, data)
   for i = 1, data:batchCount() do
     local batch = onmt.utils.Cuda.convert(data:getBatch(i))
     loss = loss + model:forwardComputeLoss(batch, criterion)
-    total = total + batch.targetNonZeros
+    total = total + model:countTokens(batch)
   end
 
   model:training()
@@ -49,6 +49,8 @@ end
 
 function Trainer:__init(args)
   self.args = onmt.ExtendedCmdLine.getModuleOpts(args, trainer_options)
+  -- use profiler in Trainer
+  self.args.profiler = args.profiler
   -- make a difference with options which is only used in Checkpoint
   self.options = args
 end
@@ -236,8 +238,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
 
             batchThread.sourceLength = batchThread.sourceLength + _G.batch.sourceLength * _G.batch.size
-            batchThread.targetLength = batchThread.targetLength + _G.batch.targetLength * _G.batch.size
-            batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
+            if _G.batch.targetLength then
+              batchThread.targetLength = batchThread.targetLength + _G.batch.targetLength * _G.batch.size
+              batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
+            end
             lossThread = lossThread + loss
 
             -- we don't have information about the other threads here - we can only report progress

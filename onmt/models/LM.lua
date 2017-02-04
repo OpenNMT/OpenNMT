@@ -85,6 +85,10 @@ function LM:buildCriterion(dataset)
                             dataset.dicts.src.features)
 end
 
+function LM:countTokens(batch)
+  return batch.sourceLength*batch.size
+end
+
 function LM:trainNetwork(batch, criterion, doProfile)
   local loss = 0
 
