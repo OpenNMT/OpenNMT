@@ -1,6 +1,6 @@
---[[ seq2seq Model. ]]
+--[[ sequence to sequence attention Model. ]]
+require 'onmt.models.Model'
 local seq2seq, parent = torch.class('onmt.Models.seq2seq', 'onmt.Model')
-
 
 local seq2seq_options = {
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]],

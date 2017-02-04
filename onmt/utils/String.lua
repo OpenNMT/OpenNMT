@@ -32,6 +32,16 @@ local function strip(s)
   return s:gsub("^%s+",""):gsub("%s+$","")
 end
 
+--[[ Remove initial hyphen(s). ]]
+local function stripHyphens(str)
+   return string.match(str, '%-*(.*)')
+end
+
+--[[ Right pad a strip with spaces. ]]
+local function pad(str, sz)
+   return str .. string.rep(' ', sz-#str)
+end
+
 --[[ Convenience function to test `s` for emptiness. ]]
 local function isEmpty(s)
   return s == nil or s == ''
@@ -40,5 +50,7 @@ end
 return {
   split = split,
   strip = strip,
-  isEmpty = isEmpty
+  isEmpty = isEmpty,
+  pad = pad,
+  stripHyphens = stripHyphen
 }

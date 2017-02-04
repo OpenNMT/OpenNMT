@@ -1,24 +1,3 @@
-------------------------------------------------------------------------------------------------------------------
--- Local utility functions
-------------------------------------------------------------------------------------------------------------------
-
-local function pad(str, sz)
-   return str .. string.rep(' ', sz-#str)
-end
-
-local function strip(str)
-   return string.match(str, '%-*(.*)')
-end
-
-local function _hasValue(list, value)
-  for _,v in ipairs(list) do
-    if v == value then return true end
-  end
-  return false
-end
-
-------------------------------------------------------------------------------------------------------------------
-
 local extendedCmdLine, parent = torch.class('onmt.extendedCmdLine', 'torch.CmdLine')
 local path = require('pl.path')
 
@@ -48,7 +27,7 @@ function extendedCmdLine:help(arg)
    if arg then io.write(arg[0] .. ' ') end
    io.write('[options] ')
    for i=1,#self.arguments do
-      io.write('<' .. strip(self.arguments[i].key) .. '>')
+      io.write('<' .. onmt.utils.String.stripHyphens(self.arguments[i].key) .. '>')
    end
    io.write('\n')
 
@@ -61,20 +40,21 @@ function extendedCmdLine:help(arg)
                optsz = #option.key
             end
          else -- it is an argument
-            if #strip(option.key)+2 > optsz then
-               optsz = #strip(option.key)+2
+            local stripOptionKey = onmt.utils.String.stripHyphens(option.key)
+            if #stripOptionKey+2 > optsz then
+               optsz = #stripOptionKey+2
             end
          end
       end
    end
 
-   local padMultiLine = pad('', optsz)
+   local padMultiLine = onmt.utils.String.pad('', optsz)
    -- second pass to print
    for _,option in ipairs(self.helplines) do
       if type(option) == 'table' then
          io.write('  ')
          if option.default ~= nil then -- it is an option
-            io.write(pad(option.key, optsz))
+            io.write(onmt.utils.String.pad(option.key, optsz))
             if option.meta and option.meta.enum then
               io.write(' ('..table.concat(option.meta.enum, ', ')..')')
             end
@@ -82,7 +62,7 @@ function extendedCmdLine:help(arg)
             if option.help then io.write(' ' .. option.help) end
             io.write(' [' .. tostring(option.default) .. ']')
          else -- it is an argument
-            io.write(pad('<' .. strip(option.key) .. '>', optsz))
+            io.write(onmt.utils.String.pad('<' .. onmt.utils.String.stripHyphens(option.key) .. '>', optsz))
             if option.help then io.write(' ' .. option.help) end
          end
       else
@@ -105,7 +85,7 @@ function extendedCmdLine:parse(arg)
       if meta.valid and not meta.valid(v) then
           self:error("option '"..k.."' value is not valid")
       end
-      if meta.enum and not _hasValue(meta.enum, v) then
+      if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
           self:error("option '"..k.."' value is not in possible values")
       end
     end

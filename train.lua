@@ -1,4 +1,5 @@
 require('onmt.init')
+require('onmt.models.seq2seq')
 
 require('tds')
 local cmd = onmt.ExtendedCmdLine.new()
