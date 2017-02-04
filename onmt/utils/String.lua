@@ -52,5 +52,5 @@ return {
   strip = strip,
   isEmpty = isEmpty,
   pad = pad,
-  stripHyphens = stripHyphen
+  stripHyphens = stripHyphens
 }

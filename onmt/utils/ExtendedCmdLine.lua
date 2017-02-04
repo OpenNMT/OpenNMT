@@ -22,7 +22,30 @@ function extendedCmdLine:__init()
   parent.__init(self)
 end
 
-function extendedCmdLine:help(arg)
+function extendedCmdLine:help(arg, doMd)
+  if doMd then
+   for _,option in ipairs(self.helplines) do
+      if type(option) == 'table' then
+         io.write('* ')
+         if option.default ~= nil then -- it is an option
+            io.write("`"..option.key.."`: ")
+            if option.meta and option.meta.enum then
+              io.write(' ('..table.concat(option.meta.enum, ', ')..') ')
+            end
+            option.help = option.help:gsub(" *\n   *"," ")
+            if option.help then io.write(option.help) end
+            io.write(' [' .. tostring(option.default) .. ']')
+         else -- it is an argument
+            io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
+            if option.help then io.write(' ' .. option.help) end
+         end
+      else
+         local display = option:gsub("%*","-")
+         io.write(display) -- just some additional help
+      end
+      io.write('\n')
+    end
+  else
    io.write('Usage: ')
    if arg then io.write(arg[0] .. ' ') end
    io.write('[options] ')
@@ -70,6 +93,7 @@ function extendedCmdLine:help(arg)
       end
       io.write('\n')
    end
+  end
 end
 
 function extendedCmdLine:option(key, default, help, _meta_)
@@ -78,7 +102,39 @@ function extendedCmdLine:option(key, default, help, _meta_)
 end
 
 function extendedCmdLine:parse(arg)
-  local params = parent.parse(self, arg)
+   local i = 1
+   local params = self:default()
+
+   local nArgument = 0
+
+   local doHelp = false
+   local doMd = false
+   while i <= #arg do
+      if arg[i] == '-help' or arg[i] == '-h' or arg[i] == '--help' then
+        doHelp = true
+        i = i + 1
+      elseif arg[i] == '-md' then
+        doMd = true
+        i = i + 1
+      else
+        if self.options[arg[i]] then
+           i = i + self:__readOption__(params, arg, i)
+        else
+           nArgument = nArgument + 1
+           i = i + self:__readArgument__(params, arg, i, nArgument)
+        end
+      end
+   end
+
+   if doHelp then
+    self:help(arg, doMd)
+    os.exit(0)
+   end
+
+   if nArgument ~= #self.arguments then
+      self:error('not enough arguments')
+   end
+
   for k,v in pairs(params) do
     local meta = self.options['-'..k].meta
     if meta then
