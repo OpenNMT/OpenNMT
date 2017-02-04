@@ -50,6 +50,7 @@ build = {
     ["onmt.data.init"] = "onmt/data/init.lua",
     ["onmt.data.Batch"] = "onmt/data/Batch.lua",
     ["onmt.data.Dataset"] = "onmt/data/Dataset.lua",
+    ["onmt.data.Preprocessor"] = "onmt/data/Preprocessor.lua",
     ["onmt.data.Vocabulary"] = "onmt/data/Vocabulary.lua",
     ["onmt.train.init"] = "onmt/train/init.lua",
     ["onmt.train.Checkpoint"] = "onmt/train/Checkpoint.lua",

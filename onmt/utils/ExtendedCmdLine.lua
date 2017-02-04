@@ -57,7 +57,8 @@ end
     local optimArgs = cmd.getModuleOpts(opt, optim_options)
 ]]
 
-function extendedCmdLine:__init()
+function extendedCmdLine:__init(script)
+  self.script = script
   parent.__init(self)
 end
 
@@ -89,13 +90,15 @@ function extendedCmdLine:help(arg, doMd)
     io.write('* `-config`: read options from config file.\n')
     io.write('* `-save_config`: save options to config file.\n')
   else
-    io.write('Usage: ')
-    if arg then io.write(arg[0] .. ' ') end
-    io.write('[options] ')
-    for i=1,#self.arguments do
-      io.write('<' .. onmt.utils.String.stripHyphens(self.arguments[i].key) .. '>')
+    if arg then
+      io.write('Usage: ')
+      io.write(arg[0]..' ' .. self.script .. ' ')
+      io.write('[options] ')
+      for i=1,#self.arguments do
+        io.write('<' .. onmt.utils.String.stripHyphens(self.arguments[i].key) .. '>')
+      end
+      io.write('\n')
     end
-    io.write('\n')
 
     -- first pass to compute max length
     local optsz = 0
@@ -137,9 +140,9 @@ function extendedCmdLine:help(arg, doMd)
       io.write('\n')
     end
     io.write('\n')
-    io.write('  '..onmt.utils.String.pad('-h', optsz)..'this help file.\n')
-    io.write('  '..onmt.utils.String.pad('-config', optsz)..'read options from config file.\n')
-    io.write('  '..onmt.utils.String.pad('-save_config', optsz)..'save options to config file.\n')
+    io.write('  '..onmt.utils.String.pad('-h', optsz)..' this help file.\n')
+    io.write('  '..onmt.utils.String.pad('-config', optsz)..' read options from config file.\n')
+    io.write('  '..onmt.utils.String.pad('-save_config', optsz)..' save options to config file.\n')
   end
 end
 
@@ -232,7 +235,9 @@ function extendedCmdLine:parse(arg)
   end
 
   for k,v in pairs(params) do
-    local meta = self.options['-'..k].meta
+    local K = '-'..k
+    if not self.options[K] and self.options[k] then K=k end
+    local meta = self.options[K].meta
     if meta then
       if meta.valid and not meta.valid(v) then
         self:error("option '"..k.."' value is not valid")
@@ -253,14 +258,19 @@ function extendedCmdLine:setCmdLineOptions(moduleOptions, group)
     self:text("")
   end
   for i=1,#moduleOptions do
-    self:option(table.unpack(moduleOptions[i]))
+    if type(moduleOptions[i])=='table' then
+      self:option(table.unpack(moduleOptions[i]))
+    else
+      self:argument(moduleOptions[i])
+    end
   end
 end
 
 function extendedCmdLine.getModuleOpts(args, moduleOptions)
   local moduleArgs = {}
   for i=1,#moduleOptions do
-    local optname = moduleOptions[i][1]:sub(2)
+    local optname = moduleOptions[i][1]
+    if optname:sub(1,1)=='-' then optname = optname:sub(2) end
     moduleArgs[optname] = args[optname]
   end
   return moduleArgs
@@ -284,15 +294,32 @@ function extendedCmdLine.isUInt(maxValue)
   return extendedCmdLine.isInt(0, maxValue)
 end
 
+-- Check if list of positive integers.
+function extendedCmdLine.listUInt(v)
+  local sv = tostring(v)
+  local p = 1
+  while true do
+    local q
+    p, q = sv:find("%d+",p)
+    if q == #sv then return true end
+    if not p or sv:sub(q+1,q+1) ~= ',' then return false end
+    p = q+2
+  end
+end
+
 -- Check if non empty.
 function extendedCmdLine.nonEmpty(v)
   return v and v ~= ''
 end
 
+-- Check if the corresponding file exists.
+function extendedCmdLine.fileExists(v)
+  return path.exists(v)
+end
+
 -- Check non set or if the corresponding file exists.
 function extendedCmdLine.fileNullOrExists(v)
-  if v == '' then return true end
-  return path.exists(v)
+  return v == '' or extendedCmdLine.fileExists(v)
 end
 
 return extendedCmdLine

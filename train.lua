@@ -2,13 +2,9 @@ require('onmt.init')
 require('onmt.models.seq2seq')
 
 require('tds')
-local cmd = onmt.ExtendedCmdLine.new()
+local cmd = onmt.ExtendedCmdLine.new("train.lua")
 
 -------------- Options declaration
-cmd:text("")
-cmd:text("**train.lua**")
-cmd:text("")
-
 local data_options = {
   {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
                       {valid=onmt.ExtendedCmdLine.nonEmpty}},
@@ -43,7 +39,7 @@ onmt.utils.Cuda.declareOpts(cmd)
 -- Memory optimization
 onmt.utils.Memory.declareOpts(cmd)
 -- Misc
-cmd:option('-seed', 3435, [[Seed for random initialization]])
+cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.ExtendedCmdLine.isUInt()})
 -- Logger options
 onmt.utils.Logger.declareOpts(cmd)
 -- Profiler options
