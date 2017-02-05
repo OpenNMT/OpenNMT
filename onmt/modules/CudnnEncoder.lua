@@ -119,12 +119,15 @@ function CudnnEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   self.rnn.gradCellOutput = onmt.utils.Tensor.reuseTensor(self.cellOutputProto,
                                                  { self.rnn.numLayers*self.rnn.numDirections, batch.size, self.rnn.hiddenSize })
 
-  for i=1, self.rnn.numLayers do
-    self.rnn.gradHiddenOutput[i]:copy(gradStatesOutput[2*i-1]:narrow(2, 1, self.rnn.hiddenSize))
-    self.rnn.gradCellOutput[i]:copy(gradStatesOutput[2*i]:narrow(2, 1, self.rnn.hiddenSize))
-    if self.rnn.numDirections > 1 then
-      self.rnn.gradHiddenOutput[i+self.rnn.numLayers]:copy(gradStatesOutput[2*i-1]:narrow(2, self.rnn.hiddenSize, self.rnn.hiddenSize))
-      self.rnn.gradCellOutput[i+self.rnn.numLayers]:copy(gradStatesOutput[2*i]:narrow(2, self.rnn.hiddenSize, self.rnn.hiddenSize))
+  -- gradStatesOutput is nil for instance when using in LanguageModel
+  if gradStatesOutput then
+    for i=1, self.rnn.numLayers do
+      self.rnn.gradHiddenOutput[i]:copy(gradStatesOutput[2*i-1]:narrow(2, 1, self.rnn.hiddenSize))
+      self.rnn.gradCellOutput[i]:copy(gradStatesOutput[2*i]:narrow(2, 1, self.rnn.hiddenSize))
+      if self.rnn.numDirections > 1 then
+        self.rnn.gradHiddenOutput[i+self.rnn.numLayers]:copy(gradStatesOutput[2*i-1]:narrow(2, self.rnn.hiddenSize, self.rnn.hiddenSize))
+        self.rnn.gradCellOutput[i+self.rnn.numLayers]:copy(gradStatesOutput[2*i]:narrow(2, self.rnn.hiddenSize, self.rnn.hiddenSize))
+      end
     end
   end
 
