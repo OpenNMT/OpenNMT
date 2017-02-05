@@ -1,6 +1,7 @@
 onmt = onmt or {}
 
 require('onmt.modules.Sequencer')
+require('onmt.modules.CudnnEncoder')
 require('onmt.modules.Encoder')
 require('onmt.modules.BiEncoder')
 require('onmt.modules.Decoder')

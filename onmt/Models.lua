@@ -74,35 +74,50 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
 end
 
 local function buildEncoder(opt, dicts)
+  if opt.brnn and opt.brnn_merge == 'concat' and opt.rnn_size % 2 ~= 0 then
+    error('in concat mode, rnn_size must be divisible by 2')
+  end
+
   local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.src_word_vec_size or opt.word_vec_size,
                                                     opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
-  end
-
-  if opt.brnn then
-    -- Compute rnn hidden size depending on hidden states merge action.
-    local rnnSize = opt.rnn_size
-    if opt.brnn_merge == 'concat' then
-      if opt.rnn_size % 2 ~= 0 then
-        error('in concat mode, rnn_size must be divisible by 2')
-      end
-      rnnSize = rnnSize / 2
-    elseif opt.brnn_merge == 'sum' then
-      rnnSize = rnnSize
-    else
-      error('invalid merge action ' .. opt.brnn_merge)
+  -- if cudnn is enabled with RNN support
+  if onmt.utils.Cuda.cudnnSupport('RNN') then
+    if opt.residual then
+      error('-residual is not supported in cudnn mode')
     end
-
-    local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
-
-    return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    if opt.brnn and opt.brnn_merge == 'sum' then
+      error('-brnn_merge sum is not supported in cudnn mode')
+    end
+    return onmt.CudnnEncoder.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.brnn, inputNetwork)
   else
-    local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    -- otherwise use Sequential RNN
+    local RNN = onmt.LSTM
+    if opt.rnn_type == 'GRU' then
+      RNN = onmt.GRU
+    end
+    if opt.brnn then
+      -- Compute rnn hidden size depending on hidden states merge action.
+      local rnnSize = opt.rnn_size
+      if opt.brnn_merge == 'concat' then
+        if opt.rnn_size % 2 ~= 0 then
+          error('in concat mode, rnn_size must be divisible by 2')
+        end
+        rnnSize = rnnSize / 2
+      elseif opt.brnn_merge == 'sum' then
+        rnnSize = rnnSize
+      else
+        error('invalid merge action ' .. opt.brnn_merge)
+      end
 
-    return onmt.Encoder.new(inputNetwork, rnn)
+      local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
+
+      return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    else
+      local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+
+      return onmt.Encoder.new(inputNetwork, rnn)
+    end
   end
 end
 
