@@ -10,10 +10,10 @@ end
 
 local modelClass
 if mtype == 'seq2seq' then
-  require('onmt.Models.seq2seq')
+  require('onmt.models.seq2seq')
   modelClass = onmt.Models.seq2seq
 else
-  require('onmt.Models.LM')
+  require('onmt.models.LM')
   modelClass = onmt.Models.LM
 end
 
