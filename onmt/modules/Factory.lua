@@ -1,3 +1,7 @@
+--[[
+  This module provides building/loading function for input networks, encoders, and decoders
+]]
+
 local Factory = torch.class("onmt.Factory")
 
 -- Return effective embeddings size based on user options.
@@ -88,9 +92,8 @@ function Factory.buildEncoder(opt, inputNetwork)
     if opt.brnn and opt.brnn_merge == 'sum' then
       error('-brnn_merge sum is not supported in cudnn mode')
     end
-    encoder = onmt.CudnnEncoder.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.brnn, inputNetwork)
+    encoder = onmt.CudnnEncoder.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.brnn, inputNetwork)
     encoder.name = "CudnnEncoder"
-    return
   else
     -- otherwise use Sequential RNN
     local RNN = onmt.LSTM
@@ -111,15 +114,16 @@ function Factory.buildEncoder(opt, inputNetwork)
         error('invalid merge action ' .. opt.brnn_merge)
       end
 
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
+      local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
 
-    encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
-    encoder.name = "BiEncoder"
-  else
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
+      encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+      encoder.name = "BiEncoder"
+    else
+      local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
-    encoder = onmt.Encoder.new(inputNetwork, rnn)
-    encoder.name = "Encoder"
+      encoder = onmt.Encoder.new(inputNetwork, rnn)
+      encoder.name = "Encoder"
+    end
   end
   return encoder
 end
