@@ -27,6 +27,7 @@ function CudnnEncoder:__init(layers, inputSize, rnnSize, dropout, brnn, inputNet
     rnnSize = rnnSize / 2
   end
   self.rnn = onmt.utils.Cuda.cudnn.LSTM(inputSize, rnnSize, layers, false, dropout, true)
+  self.rnn.name = "LSTM"
   if brnn then
     self.rnn.bidirectional = 'CUDNN_BIDIRECTIONAL'
     self.rnn.numDirections = 2
