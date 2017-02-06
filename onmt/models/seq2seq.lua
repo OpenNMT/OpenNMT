@@ -1,6 +1,6 @@
 --[[ sequence to sequence attention Model. ]]
 require 'onmt.models.Model'
-local seq2seq, parent = torch.class('onmt.Models.seq2seq', 'onmt.Model')
+local seq2seq, parent = torch.class('onmt.Model.seq2seq', 'onmt.Model')
 
 local seq2seq_options = {
   {'-layers', 2,           [[Number of layers in the RNN encoder/decoder]],
@@ -48,13 +48,13 @@ function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
   if type(datasetOrCheckpoint)=='Checkpoint' then
     local checkpoint = datasetOrCheckpoint
     local replica = verboseOrReplica
-    self.models.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder, replica)
-    self.models.decoder = onmt.Models.loadDecoder(checkpoint.models.decoder, replica)
+    self.models.encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder, replica)
+    self.models.decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder, replica)
   else
     local dataset = datasetOrCheckpoint
     local verbose = verboseOrReplica
-    self.models.encoder = onmt.Models.buildEncoder(args, dataset.dicts.src, verbose)
-    self.models.decoder = onmt.Models.buildDecoder(args, dataset.dicts.tgt, verbose)
+    self.models.encoder = onmt.Factory.buildWordEncoder(args, dataset.dicts.src, verbose)
+    self.models.decoder = onmt.Factory.buildWordDecoder(args, dataset.dicts.tgt, verbose)
   end
 end
 

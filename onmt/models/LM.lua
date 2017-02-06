@@ -1,6 +1,6 @@
 --[[ Language Model. ]]
 require 'onmt.models.Model'
-local LM, parent = torch.class('onmt.Models.LM', 'onmt.Model')
+local LM, parent = torch.class('onmt.Model.LM', 'onmt.Model')
 
 local LM_options = {
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
@@ -39,7 +39,7 @@ function LM:__init(args, datasetOrCheckpoint)
     error("unsupported")
   else
     local dataset = datasetOrCheckpoint
-    self.models.encoder = onmt.Models.buildEncoder(self.args, dataset.dicts.src)
+    self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dataset.dicts.src)
     if #dataset.dicts.src.features > 0 then
       self.models.generator = onmt.FeaturesGenerator.new(self.args.rnn_size, dataset.dicts.src.words:size(), dataset.dicts.src.features)
     else

@@ -21,4 +21,6 @@ require('onmt.modules.FeaturesGenerator')
 
 require('onmt.modules.Criterion')
 
+onmt.modules = { Factory = require('onmt.modules.Factory') }
+
 return onmt
