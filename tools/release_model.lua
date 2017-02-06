@@ -2,13 +2,15 @@ require('onmt.init')
 
 local path = require('pl.path')
 
-local cmd = torch.CmdLine()
+local cmd = onmt.extendedCmdLine()
 cmd:option('-model', '', 'trained model file')
 cmd:option('-output_model', '', 'released model file')
 cmd:option('-force', false, 'force output model creation')
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 local opt = cmd:parse(arg)
+-- does not need seed
+opt.seed = 0
 
 local function releaseModel(model)
   for _, submodule in pairs(model.modules) do

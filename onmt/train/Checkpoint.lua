@@ -31,7 +31,7 @@ function Checkpoint:save(filePath, info)
     dicts = self.dicts
   }
 
-  for k, v in pairs(self.model) do
+  for k, v in pairs(self.model.models) do
     if v.serialize then
       data.models[k] = v:serialize()
     else

@@ -48,8 +48,8 @@ function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
   if type(datasetOrCheckpoint)=='Checkpoint' then
     local checkpoint = datasetOrCheckpoint
     local replica = verboseOrReplica
-    self.models.encoder = onmt.Models.loadEncoder(checkpoint.models, replica)
-    self.models.decoder = onmt.Models.loadDecoder(checkpoint.models, replica)
+    self.models.encoder = onmt.Models.loadEncoder(checkpoint.models.encoder, replica)
+    self.models.decoder = onmt.Models.loadDecoder(checkpoint.models.decoder, replica)
   else
     local dataset = datasetOrCheckpoint
     local verbose = verboseOrReplica
