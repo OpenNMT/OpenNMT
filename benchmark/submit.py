@@ -2,7 +2,7 @@ import requests
 import argparse
 import sys
 
-url = 'http://localhost:3000'
+url = 'http://scorer.nmt-benchmark.net'
 
 def main(args):
     parser = argparse.ArgumentParser(description='Benchmark system submission')
