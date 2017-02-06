@@ -42,6 +42,7 @@ function CudnnEncoder:__init(layers, inputSize, rnnSize, dropout, brnn, inputNet
   parent.__init(self, inputNetwork)
 
   self:resetPreallocation()
+  table.insert(self.modules, self.rnn)
 end
 
 function CudnnEncoder:resetPreallocation()
