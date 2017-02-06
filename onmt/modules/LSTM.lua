@@ -89,7 +89,10 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
     table.insert(outputs, nextH)
   end
 
-  return nn.gModule(inputs, outputs)
+  -- LSTM module
+  local mod = nn.gModule(inputs, outputs)
+  mod.name = "LSTM"
+  return mod
 end
 
 --[[ Build a single LSTM unit layer. ]]
@@ -128,9 +131,5 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   -- Gated cells form the output.
   local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
 
-  -- LSTM module
-  mod = nn.gModule(inputs, {nextC, nextH})
-  mod.name = "LSTM"
-
-  return mod
+  return nn.gModule(inputs, {nextC, nextH})
 end
