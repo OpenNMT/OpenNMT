@@ -95,8 +95,8 @@ function CudnnEncoder:forward(batch)
                                                   self.rnn.cellOutput:narrow(1,self.rnn.numLayers,self.rnn.numLayers)})
   end
   for i=1, self.rnn.numLayers do
-    table.insert(states, self.rnn.hiddenOutput[i])
     table.insert(states, self.rnn.cellOutput[i])
+    table.insert(states, self.rnn.hiddenOutput[i])
   end
   return states, context
 
