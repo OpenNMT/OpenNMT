@@ -4,12 +4,18 @@ local cmd = onmt.ExtendedCmdLine.new("preprocess.lua")
 
 -- first argument define the dataType: BITEXT/MONO - default is BITEXT
 local dataType = 'BITEXT'
-if #arg>0 and arg[1]=='MONO' then
-  dataType = 'MONO'
+for i=1,#arg do
+  if arg[i]=='-data_type' and i<#arg then
+    dataType = arg[i+1]
+    break
+  end
 end
 
 -------------- Options declaration
 local preprocess_options = {
+  {'-data_type',         'BITEXT',  [[Type of text to preprocess. Use 'MONO' for monolingual text.
+                                    This option impacts all options choices.]],
+                                    {enum={'BITEXT','MONO'}}},
   {'-save_data',               '',     [[Output file for the prepared data]]}
 }
 

@@ -12,7 +12,6 @@ local Preprocessor = torch.class("Preprocessor")
 local tds = require('tds')
 
 local bitext_preprocess_options = {
-  {'BITEXT',                   false,  [[Preprocess bitext (default), use 'MONO' for monolingual text.]]},
   {'-train_src',               '',     [[Path to the training source data]],
                                        {valid=onmt.ExtendedCmdLine.fileExists}},
   {'-train_tgt',               '',     [[Path to the training target data]],

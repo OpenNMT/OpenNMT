@@ -3,7 +3,6 @@ require 'onmt.models.Model'
 local LM, parent = torch.class('onmt.Models.LM', 'onmt.Model')
 
 local LM_options = {
-  {'LM',      false,  [[(seq2seq,LM) Language Model training [seq2seq] ]]},
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
   {'-rnn_size', 500, [[Size of RNN hidden states]]},
   {'-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]]},
