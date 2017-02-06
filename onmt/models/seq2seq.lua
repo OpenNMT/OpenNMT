@@ -3,7 +3,6 @@ require 'onmt.models.Model'
 local seq2seq, parent = torch.class('onmt.Models.seq2seq', 'onmt.Model')
 
 local seq2seq_options = {
-  {'seq2seq',      false,  [[(seq2seq,LM) Sequence to sequence model training [seq2seq] ]]},
   {'-layers', 2,           [[Number of layers in the RNN encoder/decoder]],
                      {valid=onmt.ExtendedCmdLine.isUInt()}},
   {'-rnn_size', 500, [[Size of RNN hidden states]],
@@ -45,7 +44,7 @@ end
 
 function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
   parent.__init(self, args)
-  table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, seq2seq_options))
+  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, seq2seq_options))
   if type(datasetOrCheckpoint)=='Checkpoint' then
     local checkpoint = datasetOrCheckpoint
     local replica = verboseOrReplica

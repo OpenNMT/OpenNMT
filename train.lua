@@ -4,8 +4,11 @@ local cmd = onmt.ExtendedCmdLine.new("train.lua")
 
 -- first argument define the model type: seq2seq/LM - default is seq2seq
 local mtype = 'seq2seq'
-if #arg>0 and arg[1]=='LM' then
-  mtype = 'LM'
+for i=1,#arg do
+  if arg[i]=='-model_type' and i<#arg then
+    mtype = arg[i+1]
+    break
+  end
 end
 
 local modelClass
