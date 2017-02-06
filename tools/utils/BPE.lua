@@ -1,8 +1,9 @@
 local unicode = require 'tools.utils.unicode'
+local separators = require('tools.utils.separators')
 
 local BPE = torch.class('BPE')
 
-function BPE:__init(codesfile_path, joiner_annotate, joiner_new)
+function BPE:__init(opt)
   self.split = string.split
   -- to be able to run the code without torch
   if not self.split then
@@ -14,7 +15,16 @@ function BPE:__init(codesfile_path, joiner_annotate, joiner_new)
     end
   end
   self.codes = {}
-  local f = assert(io.open(codesfile_path, "r"))
+  local f = assert(io.open(opt.bpe_model, "r"))
+
+  local options = {}
+  for i in string.gmatch(f:read("*line"), "[^;]+") do table.insert(options, i) end
+  self.prefix = options[1] == "true" and true or false
+  self.suffix = options[2] == "true" and true or false
+  self.case_insensitive = options[3] == "true" and true or false
+  self.joiner_new = opt.joiner_new
+  self.joiner_annotate = opt.joiner_annotate
+
   local t = f:read("*line")
   local i = 1
 
@@ -26,8 +36,28 @@ function BPE:__init(codesfile_path, joiner_annotate, joiner_new)
     end
     t=f:read("*line")
   end
-  self.joiner_new = joiner_new
-  self.joiner_annotate = joiner_annotate
+end
+
+local function utf8len (s)
+  local length = 0
+  for _, _ in unicode.utf8_iter(s) do
+    length = length + 1
+  end
+  return length
+end
+
+local function utf8substr (s, begin_idx, end_idx)
+  local substr = {}
+  local idx = 1
+  for _, c in unicode.utf8_iter(s) do
+    if begin_idx <= idx and idx <= end_idx then
+      table.insert(substr, c)
+    elseif idx > end_idx then
+      break
+    end
+    idx = idx + 1
+  end
+  return table.concat(substr, "")
 end
 
 local function getPairs(word)
@@ -38,9 +68,15 @@ local function getPairs(word)
   return pairs
 end
 
-local function str2word(l)
+local function str2word(l, case_insensitive)
   local word = {}
-  for _, c in unicode.utf8_iter(l) do
+  for v, c in unicode.utf8_iter(l) do
+    if (case_insensitive) then
+        local lu, lc = unicode.getLower(v)
+        if lu then
+          c = lc
+        end
+    end
     table.insert(word, c)
   end
   return word
@@ -63,11 +99,13 @@ function BPE:minPair(pairsTable)
 end
 
 function BPE:encode(l)
-  local word = str2word(l)
+  local word = str2word(l, self.case_insensitive)
   if #word == 1 then
+    word[1] = l
     return word
   end
-  table.insert(word, '</w>')
+  if self.prefix then table.insert(word, 1, separators.BOT) end
+  if self.suffix then table.insert(word, separators.EOT) end
   local pairs = getPairs(word)
   while true do
     local bigram = self:minPair(pairs)
@@ -103,12 +141,32 @@ function BPE:encode(l)
     end
   end
 
-  if word[#word] == '</w>' then
-    table.remove(word, #word)
-  elseif string.sub(word[#word],-string.len('</w>')) == '</w>' then
-    word[#word] = string.sub(word[#word], 1, -string.len('</w>')-1)
+  if self.suffix then
+    if word[#word] == separators.EOT then
+      table.remove(word, #word)
+    elseif string.sub(word[#word],-string.len(separators.EOT)) == separators.EOT then
+      word[#word] = string.sub(word[#word], 1, -string.len(separators.EOT)-1)
+    end
   end
 
+  if self.prefix then
+    if word[1] == separators.BOT then
+      table.remove(word, 1)
+    elseif string.sub(word[1], 1, string.len(separators.BOT)) == separators.BOT then
+      word[1] = string.sub(word[1], string.len(separators.BOT)+1)
+    end
+  end
+
+  if (self.case_insensitive) then
+    local tcword = {}
+    local prev_idx = 1
+    for i = 1, #word do
+      local curr_idx = prev_idx+utf8len(word[i])
+      table.insert(tcword, utf8substr(l, prev_idx, curr_idx - 1))
+      prev_idx = curr_idx
+    end
+    word = tcword
+  end
   return word
 end
 

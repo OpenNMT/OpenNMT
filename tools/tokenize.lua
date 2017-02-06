@@ -15,7 +15,10 @@ cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner'
 cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners]])
 cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token]])
 cmd:option('-case_feature', false, [[Generate case feature]])
-cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
+cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given. If the option is used, 'mode' will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
+cmd:option('-bpe_case_insensitive', false, [[Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
+cmd:option('-bpe_prefix', false, [[Append '﹤' to the begining of each word to apply prefix-orientated pair statistics. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
+cmd:option('-bpe_suffix', true, [[Append '﹥' to the end of each word to apply suffix-orientated pair statistics. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
@@ -28,7 +31,11 @@ local pool = threads.Threads(
      _G.tokenizer = require('tools.utils.tokenizer')
      _G.BPE = require ('tools.utils.BPE')
      if opt.bpe_model ~= '' then
-       _G.bpe = _G.BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
+       local f = assert(io.open(opt.bpe_model, "r"))
+       local options = {}
+       for i in string.gmatch(f:read("*line"), "[^;]+") do table.insert(options, i) end
+       if #options == 4 then opt.mode = options[4] end  -- overriding 'mode' from cmd by options from bpe_model for BPE compatibility
+       _G.bpe = _G.BPE.new(opt)
      end
    end
 )
