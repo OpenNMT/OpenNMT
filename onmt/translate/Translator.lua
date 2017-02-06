@@ -220,20 +220,21 @@ end
 --[[ Translate a batch of source sequences.
 
 Parameters:
+
   * `src` - a batch of tables containing:
-      - `words`: the table of source words
-      - `features`: the table of feaures sequences (`src.features[i][j]` is the value of
-                    the ith feature of the jth token)
+    - `words`: the table of source words
+    - `features`: the table of feaures sequences (`src.features[i][j]` is the value of the ith feature of the jth token)
   * `gold` - gold data to compute confidence score (same format as `src`)
 
 Returns:
+
   * `results` - a batch of tables containing:
-      - `goldScore`: if `gold` was given, this is the confidence score
-      - `preds`: an array of `opt.n_best` tables containing:
-          - `words`: the table of target words
-          - `features`: the table of target features sequences
-          - `attention`: the attention vectors of each target word over the source words
-          - `score`: the confidence score of the prediction
+    - `goldScore`: if `gold` was given, this is the confidence score
+    - `preds`: an array of `opt.n_best` tables containing:
+      - `words`: the table of target words
+      - `features`: the table of target features sequences
+      - `attention`: the attention vectors of each target word over the source words
+      - `score`: the confidence score of the prediction
 ]]
 function Translator:translate(src, gold)
   local data, ignored = self:buildData(src, gold)
