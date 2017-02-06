@@ -1,3 +1,5 @@
+local Factory = torch.class("onmt.Factory")
+
 -- Return effective embeddings size based on user options.
 local function resolveEmbSizes(opt, dicts, wordSizes)
   local wordEmbSize
@@ -70,12 +72,13 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
     inputNetwork = inputs
   end
 
-  return inputNetwork, inputSize
+  inputNetwork.inputSize = inputSize
+
+  return inputNetwork
 end
 
-local function buildEncoder(opt, dicts)
-  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.src_word_vec_size or opt.word_vec_size,
-                                                    opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
+function Factory.buildEncoder(opt, inputNetwork)
+  local encoder
 
   local RNN = onmt.LSTM
   if opt.rnn_type == 'GRU' then
@@ -96,24 +99,75 @@ local function buildEncoder(opt, dicts)
       error('invalid merge action ' .. opt.brnn_merge)
     end
 
-    local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
 
-    return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    encoder.name = "BiEncoder"
   else
-    local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
-    return onmt.Encoder.new(inputNetwork, rnn)
+    encoder = onmt.Encoder.new(inputNetwork, rnn)
+    encoder.name = "Encoder"
+  end
+  return encoder
+end
+
+function Factory.loadEncoder(pretrained, clone)
+  if clone then
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
+  end
+  if pretrained.name then
+    if pretrained.name == "Encoder" then return onmt.Encoder.load(pretrained) end
+    if pretrained.name == "BiEncoder" then return onmt.BiEncoder.load(pretrained) end
+  end
+
+  -- keep for backward compatibility
+  local brnn = #pretrained.modules == 2
+  if brnn then
+    return onmt.BiEncoder.load(pretrained)
+  else
+    return onmt.Encoder.load(pretrained)
   end
 end
 
-local function buildDecoder(opt, dicts, verbose)
-  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.tgt_word_vec_size,
-                                                    opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
+function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
+  local inputSize = inputNetwork.inputSize
+
+  if opt.input_feed == 1 then
+    if verbose then
+      _G.logger:info(" * using input feeding")
+    end
+    inputSize = inputSize + opt.rnn_size
+  end
 
   local RNN = onmt.LSTM
   if opt.rnn_type == 'GRU' then
     RNN = onmt.GRU
   end
+  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+
+  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
+end
+
+function Factory.loadDecoder(pretrained, clone)
+  if clone then
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
+  end
+
+  return onmt.Decoder.load(pretrained)
+end
+
+
+function Factory.buildWordEncoder(opt, dicts)
+  local inputNetwork = buildInputNetwork(opt, dicts, opt.src_word_vec_size or opt.word_vec_size,
+                                                    opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
+
+  return onmt.Factory.buildEncoder(opt, inputNetwork)
+end
+
+function Factory.buildWordDecoder(opt, dicts, verbose)
+  local inputNetwork = buildInputNetwork(opt, dicts, opt.tgt_word_vec_size,
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
   local generator
 
@@ -123,43 +177,8 @@ local function buildDecoder(opt, dicts, verbose)
     generator = onmt.Generator.new(opt.rnn_size, dicts.words:size())
   end
 
-  if opt.input_feed == 1 then
-    if verbose then
-      _G.logger:info(" * using input feeding")
-    end
-    inputSize = inputSize + opt.rnn_size
-  end
-
-  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
-
-  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
+  return onmt.Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 end
 
-local function loadEncoder(pretrained, clone)
-  local brnn = #pretrained.modules == 2
 
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
-  if brnn then
-    return onmt.BiEncoder.load(pretrained)
-  else
-    return onmt.Encoder.load(pretrained)
-  end
-end
-
-local function loadDecoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
-  return onmt.Decoder.load(pretrained)
-end
-
-return {
-  buildEncoder = buildEncoder,
-  buildDecoder = buildDecoder,
-  loadEncoder = loadEncoder,
-  loadDecoder = loadDecoder
-}
+return Factory
