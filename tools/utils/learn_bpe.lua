@@ -12,7 +12,7 @@ cmd:text("**learn_bpe.lua**")
 cmd:text("")
 
 cmd:option('-prefix', false, [[Append '﹤' to the begining of each word to learn prefix-orientated pair statistics]])
-cmd:option('-suffix', true, [[Append '﹥' to the end of each word to learn suffix-orientated pair statistics]])
+cmd:option('-suffix', false, [[Append '﹥' to the end of each word to learn suffix-orientated pair statistics]])
 cmd:option('-input', '', [[Input file for bpe learning]])
 cmd:option('-size', '30000', [[The number of merge operations to learn]])
 cmd:option('-t', false, [[tokenize the input with tokenizer, the same options as tokenize.lua, but only '-mode' is taken into account for BPE training]])

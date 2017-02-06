@@ -18,7 +18,7 @@ cmd:option('-case_feature', false, [[Generate case feature]])
 cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given. If the option is used, 'mode' will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
 cmd:option('-bpe_case_insensitive', false, [[Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
 cmd:option('-bpe_prefix', false, [[Append '﹤' to the begining of each word to apply prefix-orientated pair statistics. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
-cmd:option('-bpe_suffix', true, [[Append '﹥' to the end of each word to apply suffix-orientated pair statistics. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
+cmd:option('-bpe_suffix', false, [[Append '﹥' to the end of each word to apply suffix-orientated pair statistics. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
