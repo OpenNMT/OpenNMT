@@ -8,8 +8,8 @@ cmd:option('-save_data', '', 'JSON metadata file')
 
 cmd:option('-name', '', 'name of the submitted system')
 cmd:option('-language_pair', '', 'language pair')
-cmd:option('-version', '', 'version of OpenNMT used for training')
 
+cmd:option('-version', '', 'version of OpenNMT used for training')
 cmd:option('-features', '', 'side features used')
 cmd:option('-tokenization', '', 'side features used')
 cmd:option('-encoder', '', 'encoder details')
@@ -37,8 +37,7 @@ local function main()
     'model',
     'save_data',
     'name',
-    'language_pair',
-    'version',
+    'language_pair'
   })
   onmt.utils.Cuda.init(opt)
 
@@ -55,7 +54,6 @@ local function main()
   addField('systemName', 'System name', opt.name)
   addField('constraint', 'Constrainted system', 'true')
   addField('framework', 'Framework', 'OpenNMT')
-  addField('version', 'OpenNMT version', opt.version)
   addField('sourceLanguage', 'Source Language', opt.language_pair:sub(1, 2))
   addField('targetLanguage', 'Target Language', opt.language_pair:sub(3))
   addField('type', 'Type', 'NMT')
