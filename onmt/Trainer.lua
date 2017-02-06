@@ -35,7 +35,7 @@ local trainer_options = {
   {'-start_iteration',         1,     [[If loading from a checkpoint, the iteration from which to start]],
                                          {valid=onmt.ExtendedCmdLine.isInt(1)}},
   {'-end_epoch',               13,    [[The final epoch of the training]],
-                                      {valid=onmt.ExtendedCmdLine.isInt(2)}},
+                                      {valid=onmt.ExtendedCmdLine.isInt(1)}},
   {'-start_epoch',             1,     [[If loading from a checkpoint, the epoch from which to start]],
                                       {valid=onmt.ExtendedCmdLine.isInt(1)}},
   {'-curriculum',              0,     [[For this many epochs, order the minibatches based on source
