@@ -21,9 +21,9 @@ onmt.utils.Cuda.declareOpts(cmd)
 
 local function getLayerName(model, pattern)
   model:apply(function (m)
-      if torch.typename(m):find(pattern) then
-        return torch.typename(m)
-      end
+    if torch.typename(m):find(pattern) then
+      return torch.typename(m)
+    end
   end)
 end
 
