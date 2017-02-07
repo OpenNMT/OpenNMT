@@ -16,6 +16,7 @@ cmd:option('-encoder', '', 'encoder details')
 cmd:option('-decoder', '', 'decoder details')
 cmd:option('-oov', '', 'unknown replacement procedure')
 
+onmt.utils.Logger.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
 
 local function getLayerName(model, pattern)
@@ -39,6 +40,9 @@ local function main()
     'name',
     'language_pair'
   })
+
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
   onmt.utils.Cuda.init(opt)
 
   local checkpoint = torch.load(opt.model)
