@@ -376,24 +376,31 @@
               
                 <p><a name="onmt.Translator.dok"></a></p>
 <h2 id="onmttranslator">onmt.Translator</h2>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/25b5e70b916a59bca464669cef962c1d798f08e1/onmt/translate/Translator.lua#L238">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/cad7dfb593d1dbee0e99d37e01cef1f1d929464f/onmt/translate/Translator.lua#L239">[src]</a>
 <a name="onmt.Translator:translate"></a></p>
 <h3 id="onmttranslatortranslatesrc-gold">onmt.Translator:translate(src, gold)</h3>
 <p>Translate a batch of source sequences.</p>
-<p>Parameters:
-  * <code>src</code> - a batch of tables containing:
-      - <code>words</code>: the table of source words
-      - <code>features</code>: the table of feaures sequences (<code>src.features[i][j]</code> is the value of
-                    the ith feature of the jth token)
-  * <code>gold</code> - gold data to compute confidence score (same format as <code>src</code>)</p>
-<p>Returns:
-  * <code>results</code> - a batch of tables containing:
-      - <code>goldScore</code>: if <code>gold</code> was given, this is the confidence score
-      - <code>preds</code>: an array of <code>opt.n_best</code> tables containing:
-          - <code>words</code>: the table of target words
-          - <code>features</code>: the table of target features sequences
-          - <code>attention</code>: the attention vectors of each target word over the source words
-          - <code>score</code>: the confidence score of the prediction</p>
+<p>Parameters:</p>
+<ul>
+<li><code>src</code> - a batch of tables containing:<ul>
+<li><code>words</code>: the table of source words</li>
+<li><code>features</code>: the table of feaures sequences (<code>src.features[i][j]</code> is the value of the ith feature of the jth token)</li>
+</ul>
+</li>
+<li><code>gold</code> - gold data to compute confidence score (same format as <code>src</code>)</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li><code>results</code> - a batch of tables containing:<ul>
+<li><code>goldScore</code>: if <code>gold</code> was given, this is the confidence score</li>
+<li><code>preds</code>: an array of <code>opt.n_best</code> tables containing:</li>
+<li><code>words</code>: the table of target words</li>
+<li><code>features</code>: the table of target features sequences</li>
+<li><code>attention</code>: the attention vectors of each target word over the source words</li>
+<li><code>score</code>: the confidence score of the prediction</li>
+</ul>
+</li>
+</ul>
 <h4 id="undocumented-methods">Undocumented methods</h4>
 <p><a name="onmt.Translator.declareOpts"></a>
  * <code>onmt.Translator.declareOpts(cmd)</code>
