@@ -17,6 +17,7 @@
 * Fix error when loading configuration files containing the `gpuid` option
 * Fix BLEU drop when applying beam search on some models
 * Fix error when using asynchronous parallel mode
+* Fix non SGD model serialization after retraining
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
