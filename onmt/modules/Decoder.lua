@@ -163,7 +163,7 @@ end
 
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
-function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
+function Decoder:maskPadding(sourceSizes, sourceLength)
   if not self.decoderAttn then
     self.network:apply(function (layer)
       if layer.name == 'decoderAttn' then
@@ -176,7 +176,7 @@ function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
     if module.name == 'softmaxAttn' then
       local mod
       if sourceSizes ~= nil then
-        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)
+        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength)
       else
         mod = nn.SoftMax()
       end
@@ -235,6 +235,10 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   end
 
   local outputs = self:net(t):forward(inputs)
+
+  -- Make sure decoder always returns table.
+  if type(outputs) ~= "table" then outputs = { outputs } end
+
   local out = outputs[#outputs]
   local states = {}
   for i = 1, #outputs - 1 do
@@ -258,7 +262,7 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(#encoderStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.rnnSize })
   end
@@ -329,19 +333,27 @@ function Decoder:backward(batch, outputs, criterion)
   for t = batch.targetLength, 1, -1 do
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
+    _G.profiler:start("generator.fwd")
     local pred = self.generator:forward(outputs[t])
+    _G.profiler:stop("generator.fwd")
     local output = batch:getTargetOutput(t)
 
+    _G.profiler:start("criterion.fwd")
     loss = loss + criterion:forward(pred, output)
+    _G.profiler:stop("criterion.fwd")
 
     -- Compute the criterion gradient.
+    _G.profiler:start("criterion.bwd")
     local genGradOut = criterion:backward(pred, output)
+    _G.profiler:stop("criterion.bwd")
     for j = 1, #genGradOut do
       genGradOut[j]:div(batch.totalSize)
     end
 
     -- Compute the final layer gradient.
+    _G.profiler:start("generator.bwd")
     local decGradOut = self.generator:backward(outputs[t], genGradOut)
+    _G.profiler:stop("generator.bwd")
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
     -- Compute the standarad backward.

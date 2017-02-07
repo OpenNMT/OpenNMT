@@ -6,34 +6,37 @@ local tester = torch.Tester()
 local stringTest = torch.TestSuite()
 
 function stringTest.noSplit()
-  tester:eq(onmt.utils.String.split('foo-foo', '\\|'), { 'foo-foo' })
+  tester:eq(onmt.utils.String.split('foo-foo', '￨'), { 'foo-foo' })
 end
 function stringTest.emptySplit2()
-  tester:eq(onmt.utils.String.split('\\|', '\\|'), { '', '' })
+  tester:eq(onmt.utils.String.split('￨', '￨'), { '', '' })
 end
 function stringTest.emptySplit1Right()
-  tester:eq(onmt.utils.String.split('foo\\|', '\\|'), { 'foo', '' })
+  tester:eq(onmt.utils.String.split('foo￨', '￨'), { 'foo', '' })
 end
 function stringTest.emptySplit1Middle()
-  tester:eq(onmt.utils.String.split('foo\\|\\|bar', '\\|'), { 'foo', '', 'bar' })
+  tester:eq(onmt.utils.String.split('foo￨￨bar', '￨'), { 'foo', '', 'bar' })
 end
 function stringTest.emptySplit1Left()
-  tester:eq(onmt.utils.String.split('\\|foo', '\\|'), { '', 'foo' })
+  tester:eq(onmt.utils.String.split('￨foo', '￨'), { '', 'foo' })
 end
 function stringTest.split2()
-  tester:eq(onmt.utils.String.split('foo\\|bar', '\\|'), { 'foo', 'bar' })
+  tester:eq(onmt.utils.String.split('foo￨bar', '￨'), { 'foo', 'bar' })
 end
 function stringTest.split3()
-  tester:eq(onmt.utils.String.split('foo\\|bar\\|foobar', '\\|'), { 'foo', 'bar', 'foobar' })
+  tester:eq(onmt.utils.String.split('foo￨bar￨foobar', '￨'), { 'foo', 'bar', 'foobar' })
 end
-function stringTest.doNotSplitEscaped1()
-  tester:eq(onmt.utils.String.split('foo\\\\|bar', '\\|'), { 'foo\\\\|bar' })
+function stringTest.ignoreEscaping1()
+  tester:eq(onmt.utils.String.split('foo\\￨bar', '￨'), { 'foo\\', 'bar' })
 end
-function stringTest.doNotSplitEscaped2()
-  tester:eq(onmt.utils.String.split('foo\\\\|bar\\|foobar', '\\|'), { 'foo\\\\|bar', 'foobar' })
+function stringTest.ignoreEscaping2()
+  tester:eq(onmt.utils.String.split('foo\\￨bar￨foobar', '￨'), { 'foo\\', 'bar', 'foobar' })
 end
-function stringTest.doNotSplitEscaped3()
-  tester:eq(onmt.utils.String.split('\\\\|', '\\|'), { '\\\\|' })
+function stringTest.ignoreEscaping3()
+  tester:eq(onmt.utils.String.split('\\￨', '￨'), { '\\', '' })
+end
+function stringTest.ignoreEscaping4()
+  tester:eq(onmt.utils.String.split('\\\\￨N', '￨'), { '\\\\', 'N' })
 end
 
 function stringTest.noStrip()
@@ -51,6 +54,25 @@ end
 
 tester:add(stringTest)
 
+local profileTest = torch.TestSuite()
+
+function profileTest.profiling()
+  local profiler = onmt.utils.Profiler.new({profiler=true})
+  profiler:start("main")
+  local count = 0
+  while count < 100 do count = count+1 end
+  profiler:start("a")
+  while count < 1000 do count = count+1 end
+  profiler:stop("a"):start("b.c")
+  while count < 10000 do count = count+1 end
+  profiler:stop("b.c"):start("b.d"):stop("b.d")
+  profiler:stop("main")
+  local v=profiler:log():gsub("[-0-9.e]+","*")
+  tester:assert(v=="main:{total:*,a:*,b:{total:*,d:*,c:*}}" or v == "main:{total:*,a:*,b:{total:*,c:*,d:*}}"
+                or v == "main:{total:*,b:{total:*,c:*,d:*},a:*}" or v == "main:{total:*,b:{total:*,d:*,c:*},a:*}")
+end
+
+tester:add(profileTest)
 
 local tensorTest = torch.TestSuite()
 
@@ -184,36 +206,112 @@ end
 
 tester:add(dictTest)
 
+local beamSearchTest = torch.TestSuite()
+function beamSearchTest.beamSearch()
+  local transitionScores = { {-math.huge, math.log(.6), math.log(.4), -math.huge},
+                   {math.log(.6), -math.huge, math.log(.4), -math.huge},
+                   {-math.huge, -math.huge, math.log(.1), math.log(.9)},
+                   {-math.huge, -math.huge, -math.huge, -math.huge}
+               }
+  transitionScores = torch.Tensor(transitionScores)
 
-local nmttest = torch.TestSuite()
+  local Advancer = onmt.translate.Advancer
 
--- local function equal(t1, t2, msg)
---    if (torch.type(t1) == "table") then
---       for k, _ in pairs(t2) do
---          equal(t1[k], t2[k], msg)
---       end
---    else
---       tester:eq(t1, t2, 0.00001, msg)
---    end
--- end
+  local initBeam = function()
+    return onmt.translate.Beam.new(torch.LongTensor({1, 2, 3}), {})
+  end
+  local update = function()
+  end
+  local expand = function(beam)
+    local tokens = beam:getTokens()
+    local token = tokens[#tokens]
+    local scores = transitionScores:index(1, token)
+    return scores
+  end
+  local isComplete = function(beam)
+    local tokens = beam:getTokens()
+    local completed = tokens[#tokens]:eq(4)
+    if #tokens - 1 > 2 then
+      completed:fill(1)
+    end
+    return completed
+  end
 
+  Advancer.initBeam = function() return initBeam() end
+  Advancer.update = function(_, beam) update(beam) end
+  Advancer.expand = function(_, beam) return expand(beam) end
+  Advancer.isComplete = function(_, beam) return isComplete(beam) end
+  local beamSize, nBest, advancer, beamSearcher, results
+  advancer = Advancer.new()
+  -- Test different beam sizes
+  nBest = 1
+  -- Beam size 2
+  beamSize = 2
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)}},
+                       {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
+  -- Beam size 1
+  beamSize = 1
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {2, 1, 2}, states = {}, score = math.log(.6*.6*.6)}},
+                       {{tokens = {1, 2, 1}, states = {}, score = math.log(.6*.6*.6)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
 
-function nmttest.Data()
+  -- Test nBest = 2
+  nBest = 2
+  beamSize = 3
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)},
+                        {tokens = {2, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)},
+                        {tokens = {1, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)},
+                       {tokens = {3, 4}, states = {}, score = math.log(.1*.9)}} }, 1e-6)
+
+  -- Test filter
+  local filter = function(beam)
+    local tokens = beam:getTokens()
+    local batchSize = tokens[1]:size(1)
+    -- Disallow {3, 4}
+    local prune = torch.ByteTensor(batchSize):zero()
+    for b = 1, batchSize do
+      if #tokens >= 3 then
+        if tokens[2][b] == 3 and tokens[3][b] == 4 then
+          prune[b] = 1
+        end
+      end
+    end
+    return prune
+  end
+  Advancer.filter = function(_, beam) return filter(beam) end
+  advancer = Advancer.new()
+  nBest = 1
+  beamSize = 3
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {2, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {1, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
 end
 
-tester:add(nmttest)
+tester:add(beamSearchTest)
 
-function onmt.test(tests, fixedSeed)
+local function main()
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()
   torch.setnumthreads(1)
 
-   -- Randomize stuff
-  local seed = fixedSeed or (1e5 * torch.tic())
-  print('Seed: ', seed)
-  math.randomseed(seed)
-  torch.manualSeed(seed)
-  tester:run(tests)
+  tester:run()
+
   torch.setnumthreads(nThreads)
-  return tester
+
+  if tester.errors[1] then
+    os.exit(1)
+  end
 end
+
+main()

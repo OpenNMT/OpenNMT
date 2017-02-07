@@ -1,184 +1,106 @@
-local unicode = require './utils/unicode'
+require('torch')
+
+local threads = require 'threads'
+local separators = require('tools.utils.separators')
 
 local cmd = torch.CmdLine()
-
-local sep_marker = '\\@'
-local feat_marker = '\\|'
-local protect_char = '\\'
 
 cmd:text("")
 cmd:text("**tokenize.lua**")
 cmd:text("")
 
 cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers,
-                                    'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-sep_annotate', 'marker', [[Include separator annotation using sep_marker (marker), or feature (feature), or nothing (none)]])
+  'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
+cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner' character]])
+cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners]])
+cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token]])
 cmd:option('-case_feature', false, [[Generate case feature]])
+cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
+cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
+cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
 local opt = cmd:parse(arg)
 
-local function combineCase(feat, case)
-  if feat == 'N' then
-    if case == 'lower' then feat = 'L' end
-    if case == 'upper' then feat = 'C1' end
-  elseif feat == 'L' then
-    if case == 'upper' then feat = 'M' end
-  elseif feat == 'C1' then
-    if case == 'upper' then feat = 'U' end
-    if case == 'lower' then feat = 'C' end
-  elseif feat == 'C' then
-    if case == 'upper' then feat = 'M' end
-  end
-  return feat
-end
-
-local function appendMarker(l)
-  if opt.case_feature then
-    local p=l:find(feat_marker, -4)
-    return l:sub(1,p-1)..sep_marker..l:sub(p)
-  end
-  return l..sep_marker
-end
-
--- minimalistic tokenization
--- - remove utf-8 BOM character
--- - turn sequences of separators into single space
--- - skip any other non control character [U+0001-U+002F]
--- - keep sequence of letters/numbers and tokenize everything else
-
-local function tokenize(line)
-  local nline = ""
-  local spacefeat = 'N'
-  local casefeat = 'N'
-  local space = true
-  local letter = false
-  local number = false
-  local other = false
-  for v, c, nextv in unicode.utf8_iter(line) do
-    if unicode.isSeparator(v) then
-      if space == false then
-        if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
-        if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
-        nline = nline..' '
-      end
-      number = false
-      letter = false
-      space = true
-      other = false
-      spacefeat = 'S'
-      casefeat = 'N'
-    else
-      if v > 32 and not(v == 0xFEFF) then
-        if c == protect_char then c = protect_char..c end
-        local is_letter, case = unicode.isLetter(v)
-        if is_letter and opt.case_feature then
-          local lu, lc = unicode.getLower(v)
-          if lu then c = lc end
-        end
-        local is_number = unicode.isNumber(v)
-        if opt.mode == 'conservative' then
-          if is_number or (c == '-' and letter == true) or c == '_' or
-             (letter == true and (c == '.' or c == ',') and (unicode.isNumber(nextv) or unicode.isLetter(nextv))) then
-            is_letter = true
-            case = "other"
-          end
-        end
-        if is_letter then
-          if not(letter == true or space == true) then
-            if opt.sep_annotate == 'marker' then
-              nline = appendMarker(nline)
-            end
-            if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
-            if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
-            nline = nline..' '
-            spacefeat = 'N'
-            casefeat = 'N'
-          elseif other == true then
-            if opt.sep_annotate == 'marker' then
-              nline = appendMarker(nline)
-            end
-          end
-          casefeat = combineCase(casefeat, case)
-          nline = nline..c
-          space = false
-          number = false
-          other = false
-          letter = true
-        elseif is_number then
-          if not(number == true or space == true) then
-            if opt.sep_annotate == 'marker' then
-              if not(letter) then
-                nline = appendMarker(nline)
-              else
-                c = sep_marker..c
-              end
-            end
-            if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
-            if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
-            nline = nline..' '
-            spacefeat = 'N'
-            casefeat = 'N'
-          elseif other == true then
-            if opt.sep_annotate == 'marker' then
-              nline = appendMarker(nline)
-            end
-          end
-          nline = nline..c
-          space = false
-          letter = false
-          other = false
-          number = true
-        else
-          if not space == true then
-            if opt.sep_annotate == 'marker' then
-              c = sep_marker..c
-            end
-            if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
-            if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
-            nline = nline .. ' '
-            spacefeat = 'N'
-            casefeat = 'N'
-          elseif other == true then
-            if opt.sep_annotate == 'marker' then
-              c = sep_marker..c
-            end
-          end
-          nline = nline..c
-          if opt.sep_annotate=='feature' then nline = nline..feat_marker..spacefeat end
-          if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
-          nline = nline..' '
-          number = false
-          letter = false
-          other = true
-          space = true
-        end
-      end
-    end
-  end
-
-  -- remove final space
-  if space == true then
-    nline = string.sub(nline, 1, -2)
-  else
-    if opt.sep_feature then nline = nline..feat_marker..spacefeat end
-    if opt.case_feature then nline = nline..feat_marker..string.sub(casefeat,1,1) end
-  end
-
-  return nline
-end
+local pool = threads.Threads(
+   opt.nparallel,
+   function()
+     _G.separators = require('tools.utils.separators')
+     _G.tokenizer = require('tools.utils.tokenizer')
+     _G.BPE = require ('tools.utils.BPE')
+     if opt.bpe_model ~= '' then
+       _G.bpe = _G.BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
+     end
+   end
+)
+pool:specific(true)
 
 local timer = torch.Timer()
-local idx = 1
-for line in io.lines() do
-  local res, err = pcall(function() io.write(tokenize(line) .. '\n') end)
-  if not res then
-    if string.find(err,"interrupted") then
-      error("interrupted")
-    else
-      error("unicode error in line "..idx..": "..line..'-'..err)
+local idx = 0
+
+while true do
+  local batches_input = {}
+  local batches_output = {}
+  local cidx = 0
+  local line
+
+  for i = 1, opt.nparallel do
+    batches_input[i] = {}
+    for _ = 1, opt.batchsize do
+      line = io.read()
+      if not line then break end
+      cidx = cidx + 1
+      table.insert(batches_input[i], line)
+    end
+    if not line then break end
+  end
+
+  if cidx == 0 then break end
+
+  for i = 1, #batches_input do
+    pool:addjob(
+      i,
+      function()
+        local output = {}
+        for b = 1,#batches_input[i] do
+          local res
+          local err
+
+          local tokens
+
+          res, err = pcall(function() tokens = _G.tokenizer.tokenize(opt, batches_input[i][b], _G.bpe) end)
+
+          -- it can generate an exception if there are utf-8 issues in the text
+          if not res then
+            if string.find(err, "interrupted") then
+              error("interrupted")
+            else
+              error("unicode error in line " .. idx+b*(i-1)*opt.batchsize .. ": " .. line .. '-' .. err)
+            end
+          end
+
+          table.insert(output, table.concat(tokens, ' '))
+        end
+        return output
+      end,
+      function(output)
+        batches_output[i] = output
+      end
+    )
+  end
+
+  pool:synchronize()
+
+  -- output the tokenized and featurized string
+  for i = 1, opt.nparallel do
+    if not batches_output[i] then break end
+    for b = 1, #batches_output[i] do
+      io.write(batches_output[i][b] .. '\n')
+      idx = idx + 1
     end
   end
-  idx = idx + 1
+
+  if not line then break end
+
 end
 
-io.stderr:write(string.format('Tokenization completed in %0.3f seconds - %d sentences\n',timer:time().real,idx-1))
+io.stderr:write(string.format('Tokenization completed in %0.3f seconds - %d sentences\n', timer:time().real, idx))

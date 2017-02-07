@@ -22,16 +22,21 @@ function EpochState:__init(epoch, numIterations, learningRate, lastValidPpl, sta
   self.numWordsSource = 0
   self.numWordsTarget = 0
 
-  self.minFreeMemory = 100000000000
+  self.minFreeMemory = -1
 end
 
---[[ Update training status. Takes `batch` (described in data.lua) and last losses.]]
-function EpochState:update(batches, losses)
-  for i = 1,#batches do
-    self.numWordsSource = self.numWordsSource + batches[i].size * batches[i].sourceLength
-    self.numWordsTarget = self.numWordsTarget + batches[i].size * batches[i].targetLength
-    self.status.trainLoss = self.status.trainLoss + losses[i]
-    self.status.trainNonzeros = self.status.trainNonzeros + batches[i].targetNonZeros
+--[[ Update training status. Takes `batch` (described in data.lua) and last loss.]]
+function EpochState:update(batch, loss)
+  self.numWordsSource = self.numWordsSource + batch.size * batch.sourceLength
+  if batch.targetLength then
+    self.numWordsTarget = self.numWordsTarget + batch.size * batch.targetLength
+  end
+  self.status.trainLoss = self.status.trainLoss + loss
+  if batch.targetNonZeros then
+    self.status.trainNonzeros = self.status.trainNonzeros + batch.targetNonZeros
+  else
+    -- if training on monolingual data - divider is number of source words
+    self.status.trainNonzeros = self.status.trainNonzeros + batch.size * batch.sourceLength
   end
 end
 
@@ -39,7 +44,7 @@ end
 function EpochState:log(batchIndex, json)
   if json then
     local freeMemory = onmt.utils.Cuda.freeMemory()
-    if freeMemory < self.minFreeMemory then
+    if self.minFreeMemory == -1 or freeMemory < self.minFreeMemory then
       self.minFreeMemory = freeMemory
     end
 
@@ -68,7 +73,7 @@ function EpochState:log(batchIndex, json)
     stats = stats .. string.format('Learning rate %.4f ; ', self.learningRate)
     stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
     stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
-    print(stats)
+    _G.logger:info(stats)
   end
 end
 

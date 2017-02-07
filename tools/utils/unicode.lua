@@ -1,10 +1,10 @@
 -- for lua < 5.3 compatibility
 local bit32 = nil
 if not bit32 then
-  bit32 = require 'bit32'
+  bit32 = require('bit32')
 end
 
-local unidata = require './unidata'
+local unidata = require('tools.utils.unidata')
 
 local unicode = {}
 
@@ -65,13 +65,13 @@ function unicode.utf8_iter(s)
     if p > L then
       if nextc then
         nextc = nil
-        return v, c, nil
+        return v, c
       end
       return
     end
     nextv, nextc = unicode._utf8_to_cp(s, p)
     p = p + #nextc
-    return v, c, nextv
+    return v, c, nextv, nextc
   end
 end
 
@@ -101,7 +101,9 @@ function unicode.isLetter(u)
   if ((u>=0x4E00 and u<=0x9FD5) -- CJK Unified Ideograph
       or (u>=0x2F00 and u<=0x2FD5) -- Kangxi Radicals
       or (u>=0x2E80 and u<=0x2EFF) -- CJK Radicals Supplement
-      or (u>=0x3040 and u<=0x319F) -- Hiragana, Katakana, Bopomofo, Hangul, Kanbun
+      or (u>=0x3040 and u<=0x319F) -- Hiragana, Katakana, Bopomofo, Hangul Compatibility Jamo, Kanbun
+      or (u>=0x1100 and u<=0x11FF) -- Hangul Jamo
+      or (u>=0xAC00 and u<=0xD7AF) -- Hangul Syllables
       or _find_codepoint(u, unidata.LetterOther)
       ) then
     return true, "other"
@@ -128,9 +130,12 @@ end
 -- dynamically reverse maplower if necessary
 function unicode.getUpper(l)
   if not unicode.mapupper then
+    -- make sure that reversing, we keep the smallest codepoint because we have İ>i, and I>i
     unidata.mapupper = {}
     for uidx,lidx in pairs(unidata.maplower) do
-      unidata.mapupper[lidx] = uidx
+      if not unidata.mapupper[lidx] or unidata.mapupper[lidx] > uidx then
+        unidata.mapupper[lidx] = uidx
+      end
     end
   end
   local u = unidata.mapupper[l]
@@ -143,10 +148,6 @@ end
 function unicode.isNumber(u)
   if not u then return false end
   return _find_codepoint(u, unidata.Number)
-end
-
-function unicode.isAlnum(u)
-  return unicode.isLetter(u) or unicode.isNumber(u) or u=='_'
 end
 
 return unicode

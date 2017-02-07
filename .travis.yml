@@ -51,11 +51,15 @@ before_script:
 - ${INSTALL_PREFIX}/bin/luarocks install torch
 - ${INSTALL_PREFIX}/bin/luarocks install nn
 - ${INSTALL_PREFIX}/bin/luarocks install nngraph
+- ${INSTALL_PREFIX}/bin/luarocks install tds
+- ${INSTALL_PREFIX}/bin/luarocks install bit32 || true
 - ${INSTALL_PREFIX}/bin/luarocks install luacheck
+- ${INSTALL_PREFIX}/bin/luarocks install penlight
 script:
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
 - luacheck *lua onmt/ tools/
 - ${INSTALL_PREFIX}/bin/luarocks make rocks/opennmt-scm-1.rockspec
 - echo ${ROOT_TRAVIS_DIR}
 - export TESTLUA=$(which luajit lua | head -n 1)
-- ${TESTLUA} -ltest.test -e "t=onmt.test(); if t.errors[1] then os.exit(1) end"
+- ${TESTLUA} test/test.lua
+- sh test/tokenization/test.sh

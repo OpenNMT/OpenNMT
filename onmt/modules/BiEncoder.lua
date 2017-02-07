@@ -86,8 +86,13 @@ end
 
 --[[ Return data to serialize. ]]
 function BiEncoder:serialize()
+  local modulesData = {}
+  for i = 1, #self.modules do
+    table.insert(modulesData, self.modules[i]:serialize())
+  end
+
   return {
-    modules = self.modules,
+    modules = modulesData,
     args = self.args
   }
 end
@@ -192,14 +197,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   local gradInputBwd = self.bwd:backward(batch, gradStatesOutputBwd, gradContextBwd)
 
   for t = 1, batch.sourceLength do
-    local revIndex = batch.sourceLength - t + 1
-    if torch.isTensor(gradInputFwd[t]) then
-      gradInputFwd[t]:add(gradInputBwd[revIndex])
-    else
-      for i = 1, #gradInputFwd[t] do
-        gradInputFwd[t][i]:add(gradInputBwd[revIndex][i])
-      end
-    end
+    onmt.utils.Tensor.recursiveAdd(gradInputFwd[t], gradInputBwd[batch.sourceLength - t + 1])
   end
 
   return gradInputFwd

@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT) [![Gitter chat](https://badges.gitter.im/OpenNMT/support.png)](https://gitter.im/OpenNMT/support) 
+[![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT) 
 
 
 # OpenNMT: Open-Source Neural Machine Translation
@@ -15,13 +15,28 @@ accuracy. Features include:
 
 * Speed and memory optimizations for high-performance GPU training.
 * Simple general-purpose interface, only requires and source/target data files.
-* C-only decoder implementation for easy deployment.
+* [C++ implementation of the translator](https://github.com/OpenNMT/CTranslate) for easy deployment.
 * Extensions to allow other sequence generation tasks such as summarization and image captioning.
 
 ## Installation
 
-OpenNMT only requires a vanilla torch/cutorch install. It uses `nn`, `nngraph`, and `cunn`. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
+OpenNMT only requires a vanilla Torch install with few dependencies. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
 
+### Dependencies
+
+* `nn`
+* `nngraph`
+* `tds`
+* `penlight`
+
+GPU training requires:
+
+* `cunn`
+* `cutorch`
+
+Multi-GPU training additionally requires:
+
+* `threads`
 
 ## Quickstart
 
@@ -41,11 +56,26 @@ OpenNMT consists of three commands:
 
 See the <a href="http://opennmt.github.io/Guide">guide</a> for more details.
 
+## Citation
+
+A <a href="https://arxiv.org/abs/1701.02810">technical report</a> on OpenNMT is available. If you use the system for academic work, please cite:
+
+```
+    @ARTICLE{2017opennmt,
+         author = { {Klein}, G. and {Kim}, Y. and {Deng}, Y. 
+                    and {Senellart}, J. and {Rush}, A.~M.},
+         title = "{OpenNMT: Open-Source Toolkit 
+                   for Neural Machine Translation}",
+         journal = {ArXiv e-prints},
+         eprint = {1701.02810} }
+```
+
 ## Documentation
 
 * <a href="http://opennmt.github.io/Guide">Options and Features</a> 
 * <a href="http://opennmt.github.io/OpenNMT">Documentation</a> 
 * <a href="http://opennmt.github.io/Models">Example Models</a>
-* <a href="http://demo-pnmt.systran.net">Live Demo</a>
+* <a href="http://forum.opennmt.net">Forum</a>
+* <a href="https://demo-pnmt.systran.net">Live Demo</a>
 * <a href="http://opennmt.github.io/about">Bibliography</a>
 

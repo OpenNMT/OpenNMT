@@ -1,7 +1,7 @@
 require('onmt.init')
 
 local path = require('pl.path')
-
+require('tds')
 local cmd = torch.CmdLine()
 
 cmd:text("")
@@ -24,13 +24,15 @@ cmd:text("")
 cmd:text("**Model options**")
 cmd:text("")
 
-cmd:option('-layers', 2, [[Number of layers in the LSTM encoder/decoder]])
-cmd:option('-rnn_size', 500, [[Size of LSTM hidden states]])
-cmd:option('-word_vec_size', 500, [[Word embedding sizes]])
+cmd:option('-layers', 2, [[Number of layers in the RNN encoder/decoder]])
+cmd:option('-rnn_size', 500, [[Size of RNN hidden states]])
+cmd:option('-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]])
+cmd:option('-word_vec_size', 0, [[Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size.]])
+cmd:option('-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]])
+cmd:option('-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]])
 cmd:option('-feat_merge', 'concat', [[Merge action for the features embeddings: concat or sum]])
-cmd:option('-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
-                                      then the embedding dimension will be set to N^exponent]])
-cmd:option('-feat_vec_size', 20, [[When using sum, the common embedding size of the features]])
+cmd:option('-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes.]])
+cmd:option('-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]])
 cmd:option('-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]])
 cmd:option('-residual', false, [[Add residual connections between RNN layers.]])
 cmd:option('-brnn', false, [[Use a bidirectional encoder]])
@@ -41,14 +43,14 @@ cmd:text("**Optimization options**")
 cmd:text("")
 
 cmd:option('-max_batch_size', 64, [[Maximum batch size]])
-cmd:option('-epochs', 13, [[Number of training epochs]])
+cmd:option('-end_epoch', 13, [[The final epoch of the training]])
 cmd:option('-start_epoch', 1, [[If loading from a checkpoint, the epoch from which to start]])
 cmd:option('-start_iteration', 1, [[If loading from a checkpoint, the iteration from which to start]])
 cmd:option('-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]])
 cmd:option('-optim', 'sgd', [[Optimization method. Possible options are: sgd, adagrad, adadelta, adam]])
 cmd:option('-learning_rate', 1, [[Starting learning rate. If adagrad/adadelta/adam is used,
-                                then this is the global learning rate. Recommended settings: sgd =1,
-                                adagrad = 0.1, adadelta = 1, adam = 0.1]])
+                                then this is the global learning rate. Recommended settings are: sgd = 1,
+                                adagrad = 0.1, adadelta = 1, adam = 0.0002]])
 cmd:option('-max_grad_norm', 5, [[If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm]])
 cmd:option('-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]])
 cmd:option('-learning_rate_decay', 0.5, [[Decay learning rate by this much if (i) perplexity does not decrease
@@ -70,9 +72,9 @@ cmd:text("**Other options**")
 cmd:text("")
 
 -- GPU
-cmd:option('-gpuid', -1, [[Which gpu to use (1-indexed). < 1 = use CPU]])
-cmd:option('-nparallel', 1, [[When using GPUs, how many batches to execute in parallel.
-                            Note: this will technically change the final batch size to max_batch_size*nparallel.]])
+onmt.utils.Cuda.declareOpts(cmd)
+cmd:option('-async_parallel', false, [[Use asynchronous parallelism training.]])
+cmd:option('-async_parallel_minbatch', 1000, [[For async parallel computing, minimal number of batches before being parallel.]])
 cmd:option('-no_nccl', false, [[Disable usage of nccl in parallel mode.]])
 cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
                                                 except if you want to look inside clones for visualization purpose for instance.]])
@@ -84,6 +86,9 @@ cmd:option('-report_every', 50, [[Print stats every this many iterations within 
 cmd:option('-seed', 3435, [[Seed for random initialization]])
 cmd:option('-json_log', false, [[Outputs logs in JSON format.]])
 
+onmt.utils.Logger.declareOpts(cmd)
+onmt.utils.Profiler.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
 local function initParams(model, verbose)
@@ -92,14 +97,28 @@ local function initParams(model, verbose)
   local gradParams = {}
 
   if verbose then
-    print('Initializing parameters...')
+    _G.logger:info('Initializing parameters...')
   end
 
-  for _, mod in pairs(model) do
+  -- Order the model table because we need all replicas to have the same order.
+  local orderedIndex = {}
+  for key in pairs(model) do
+    table.insert(orderedIndex, key)
+  end
+  table.sort(orderedIndex)
+
+  for _, key in ipairs(orderedIndex) do
+    local mod = model[key]
     local p, gp = mod:getParameters()
 
     if opt.train_from:len() == 0 then
       p:uniform(-opt.param_init, opt.param_init)
+
+      mod:apply(function (m)
+        if m.postParametersInitialization then
+          m:postParametersInitialization()
+        end
+      end)
     end
 
     numParams = numParams + p:size(1)
@@ -108,7 +127,7 @@ local function initParams(model, verbose)
   end
 
   if verbose then
-    print(" * number of parameters: " .. numParams)
+    _G.logger:info(" * number of parameters: " .. numParams)
   end
 
   return params, gradParams
@@ -162,7 +181,7 @@ local function trainModel(model, trainData, validData, dataset, info)
   local params, gradParams = {}, {}
   local criterion
 
-  onmt.utils.Parallel.launch(nil, function(idx)
+  onmt.utils.Parallel.launch(function(idx)
     -- Only logs information of the first thread.
     local verbose = idx == 1 and not opt.json_log
 
@@ -184,7 +203,9 @@ local function trainModel(model, trainData, validData, dataset, info)
 
     return idx, _G.criterion, _G.params, _G.gradParams
   end, function(idx, thecriterion, theparams, thegradParams)
-    if idx == 1 then criterion = thecriterion end
+    if idx == 1 then
+      criterion = thecriterion
+    end
     params[idx] = theparams
     gradParams[idx] = thegradParams
   end)
@@ -195,103 +216,220 @@ local function trainModel(model, trainData, validData, dataset, info)
     learningRate = opt.learning_rate,
     learningRateDecay = opt.learning_rate_decay,
     startDecayAt = opt.start_decay_at,
-    optimStates = opt.optim_states
+    optimStates = (info and info.optimStates) or nil
   })
 
-  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset)
+  local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
 
-  local function trainEpoch(epoch, lastValidPpl)
+  local function trainEpoch(epoch, lastValidPpl, doProfile)
     local epochState
     local batchOrder
 
+    local epochProfiler = onmt.utils.Profiler.new(doProfile)
+
     local startI = opt.start_iteration
-    local numIterations = math.ceil(trainData:batchCount() / onmt.utils.Parallel.count)
+
+    local numIterations = trainData:batchCount()
+    -- In parallel mode, number of iterations is reduced to reflect larger batch size.
+    if onmt.utils.Parallel.count > 1 and not opt.async_parallel then
+      numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
+    end
 
     if startI > 1 and info ~= nil then
       epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate(), lastValidPpl, info.epochStatus)
       batchOrder = info.batchOrder
     else
       epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate(), lastValidPpl)
-      -- shuffle mini batch order
+      -- Shuffle mini batch order.
       batchOrder = torch.randperm(trainData:batchCount())
     end
 
     opt.start_iteration = 1
-    local iter = 1
 
-    for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
-      local batches = {}
-      local totalSize = 0
-
-      for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount()-i+1) do
-        local batchIdx = batchOrder[i+j-1]
-        if epoch <= opt.curriculum then
-          batchIdx = i+j-1
-        end
-        table.insert(batches, trainData:getBatch(batchIdx))
-        totalSize = totalSize + batches[#batches].size
-      end
-
-      local losses = {}
-
-      onmt.utils.Parallel.launch(nil, function(idx)
-        _G.batch = batches[idx]
-        if _G.batch == nil then
-          return idx, 0
-        end
-
-        -- send batch data to GPU
-        onmt.utils.Cuda.convert(_G.batch)
-        _G.batch.totalSize = totalSize
-
-        optim:zeroGrad(_G.gradParams)
-
-        local encStates, context = _G.model.encoder:forward(_G.batch)
-        local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
-
-        local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
-        _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
-        return idx, loss
-      end,
-      function(idx, loss) losses[idx]=loss end)
-
-      -- accumulate the gradients from the different parallel threads
-      onmt.utils.Parallel.accGradParams(gradParams, batches)
-
-      -- update the parameters
-      optim:prepareGrad(gradParams[1], opt.max_grad_norm)
-      optim:updateParams(params[1], gradParams[1])
-
-      -- sync the paramaters with the different parallel threads
-      onmt.utils.Parallel.syncParams(params)
-
-      epochState:update(batches, losses)
-
-      if iter % opt.report_every == 0 then
-        epochState:log(iter, opt.json_log)
-      end
-      if opt.save_every > 0 and iter % opt.save_every == 0 then
-        checkpoint:saveIteration(iter, epochState, batchOrder, not opt.json_log)
-      end
-      iter = iter + 1
+    local function trainNetwork(batch)
+      optim:zeroGrad(_G.gradParams)
+      _G.profiler:start("encoder.fwd")
+      local encStates, context = _G.model.encoder:forward(batch)
+      _G.profiler:stop("encoder.fwd"):start("decoder.fwd")
+      local decOutputs = _G.model.decoder:forward(_G.batch, encStates, context)
+      _G.profiler:stop("decoder.fwd"):start("decoder.bwd")
+      local encGradStatesOut, gradContext, loss = _G.model.decoder:backward(_G.batch, decOutputs, _G.criterion)
+      _G.profiler:stop("decoder.bwd"):start("encoder.bwd")
+      _G.model.encoder:backward(_G.batch, encGradStatesOut, gradContext)
+      _G.profiler:stop("encoder.bwd")
+      return loss
     end
 
-    return epochState
+    if not opt.async_parallel then
+      local iter = 1
+      for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
+        local batches = {}
+        local totalSize = 0
+
+        for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount() - i + 1) do
+          local batchIdx = batchOrder[i + j - 1]
+          if epoch <= opt.curriculum then
+            batchIdx = i + j - 1
+          end
+          table.insert(batches, trainData:getBatch(batchIdx))
+          totalSize = totalSize + batches[#batches].size
+        end
+
+        local losses = {}
+
+        onmt.utils.Parallel.launch(function(idx)
+          _G.profiler = onmt.utils.Profiler.new(doProfile)
+
+          _G.batch = batches[idx]
+          if _G.batch == nil then
+            return idx, 0, _G.profiler:dump()
+          end
+
+          -- Send batch data to the GPU.
+          onmt.utils.Cuda.convert(_G.batch)
+          _G.batch.totalSize = totalSize
+          local loss = trainNetwork(_G.batch)
+
+          return idx, loss, _G.profiler:dump()
+        end,
+        function(idx, loss, profile)
+          losses[idx]=loss
+          epochProfiler:add(profile)
+        end)
+
+        -- Accumulate the gradients from the different parallel threads.
+        onmt.utils.Parallel.accGradParams(gradParams, batches)
+
+        -- Update the parameters.
+        optim:prepareGrad(gradParams[1], opt.max_grad_norm)
+        optim:updateParams(params[1], gradParams[1])
+
+        -- Synchronize the parameters with the different parallel threads.
+        onmt.utils.Parallel.syncParams(params)
+
+        for bi = 1, #batches do
+          epochState:update(batches[bi], losses[bi])
+        end
+
+        if iter % opt.report_every == 0 then
+          epochState:log(iter, opt.json_log)
+        end
+        if opt.save_every > 0 and iter % opt.save_every == 0 then
+          checkpoint:saveIteration(iter, epochState, batchOrder, not opt.json_log)
+        end
+        iter = iter + 1
+      end
+    else
+      -- Asynchronous parallel.
+      local counter = onmt.utils.Parallel.getCounter()
+      counter:set(startI)
+      local masterGPU = onmt.utils.Cuda.gpuIds[1]
+      local gradBuffer = onmt.utils.Parallel.gradBuffer
+      local gmutexId = onmt.utils.Parallel.gmutexId()
+
+      while counter:get() <= trainData:batchCount() do
+        local startCounter = counter:get()
+
+        onmt.utils.Parallel.launch(function(idx)
+          _G.profiler = onmt.utils.Profiler.new(doProfile)
+          -- First GPU is only used for master parameters.
+          -- Use 1 GPU only for 1000 first batch.
+          if idx == 1 or (idx > 2 and epoch == 1 and counter:get() < opt.async_parallel_minbatch) then
+            return
+          end
+
+          local lossThread = 0
+          local batchThread = {
+            size = 1,
+            sourceLength = 0,
+            targetLength = 0,
+            targetNonZeros = 0
+          }
+
+          while true do
+            -- Do not process more than 1000 batches (TODO - make option) in one shot.
+            if counter:get() - startCounter >= 1000 then
+              return lossThread, batchThread, _G.profiler:dump()
+            end
+
+            local i = counter:inc()
+            if i > trainData:batchCount() then
+              return lossThread, batchThread, _G.profiler:dump()
+            end
+
+            local batchIdx = batchOrder[i]
+            if epoch <= opt.curriculum then
+              batchIdx = i
+            end
+
+            _G.batch = trainData:getBatch(batchIdx)
+
+            -- Send batch data to the GPU.
+            onmt.utils.Cuda.convert(_G.batch)
+            _G.batch.totalSize = _G.batch.size
+            local loss = trainNetwork(_G.batch)
+
+            -- Update the parameters.
+            optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
+
+            -- Add up gradParams to params and synchronize back to this thread.
+            onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
+
+            batchThread.sourceLength = batchThread.sourceLength + _G.batch.sourceLength * _G.batch.size
+            batchThread.targetLength = batchThread.targetLength + _G.batch.targetLength * _G.batch.size
+            batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
+            lossThread = lossThread + loss
+
+            -- we don't have information about the other threads here - we can only report progress
+            if i % opt.report_every == 0 then
+              _G.logger:info('Epoch %d ; ... batch %d/%d', epoch, i, trainData:batchCount())
+            end
+          end
+        end,
+        function(theloss, thebatch, profile)
+          if theloss then
+            epochState:update(thebatch, theloss)
+          end
+          epochProfiler:add(profile)
+        end)
+
+        if opt.report_every > 0 then
+          epochState:log(counter:get(), opt.json_log)
+        end
+        if opt.save_every > 0 then
+          checkpoint:saveIteration(counter:get(), epochState, batchOrder, not opt.json_log)
+        end
+      end
+    end
+
+    return epochState, epochProfiler:dump()
   end
 
   local validPpl = 0
 
-  for epoch = opt.start_epoch, opt.epochs do
+  if not opt.json_log then
+    _G.logger:info('Start training...')
+  end
+
+  for epoch = opt.start_epoch, opt.end_epoch do
     if not opt.json_log then
-      print('')
+      _G.logger:info('')
     end
 
-    local epochState = trainEpoch(epoch, validPpl)
+    local globalProfiler = onmt.utils.Profiler.new(opt.profiler)
 
+    globalProfiler:start("train")
+    local epochState, epochProfile = trainEpoch(epoch, validPpl, opt.profiler)
+    globalProfiler:add(epochProfile)
+    globalProfiler:stop("train")
+
+    globalProfiler:start("valid")
     validPpl = eval(model, criterion, validData)
+    globalProfiler:stop("valid")
 
     if not opt.json_log then
-      print('Validation perplexity: ' .. validPpl)
+      if opt.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
+      _G.logger:info('Validation perplexity: %.2f', validPpl)
     end
 
     if opt.optim == 'sgd' then
@@ -310,6 +448,10 @@ local function main()
   }
 
   onmt.utils.Opt.init(opt, requiredOptions)
+
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.profiler = onmt.utils.Profiler.new(false)
+
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
@@ -319,7 +461,7 @@ local function main()
     assert(path.exists(opt.train_from), 'checkpoint path invalid')
 
     if not opt.json_log then
-      print('Loading checkpoint \'' .. opt.train_from .. '\'...')
+      _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
     end
 
     checkpoint = torch.load(opt.train_from)
@@ -331,31 +473,29 @@ local function main()
     opt.input_feed = checkpoint.options.input_feed
 
     -- Resume training from checkpoint
-    if opt.train_from:len() > 0 and opt.continue then
+    if opt.continue then
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
-      opt.epochs = checkpoint.options.epochs
       opt.curriculum = checkpoint.options.curriculum
 
-      opt.learning_rate = checkpoint.info.learning_rate
-      opt.optim_states = checkpoint.info.optim_states
+      opt.learning_rate = checkpoint.info.learningRate
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration
 
       if not opt.json_log then
-        print('Resuming training from epoch ' .. opt.start_epoch
-                .. ' at iteration ' .. opt.start_iteration .. '...')
+        _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
+                         .. ' at iteration ' .. opt.start_iteration .. '...')
       end
     end
   end
 
   -- Create the data loader class.
   if not opt.json_log then
-    print('Loading data from \'' .. opt.data .. '\'...')
+    _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
   end
 
-  local dataset = torch.load(opt.data)
+  local dataset = torch.load(opt.data, 'binary', false)
 
   local trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
@@ -364,14 +504,14 @@ local function main()
   validData:setBatchSize(opt.max_batch_size)
 
   if not opt.json_log then
-    print(string.format(' * vocabulary size: source = %d; target = %d',
-                        dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size()))
-    print(string.format(' * additional features: source = %d; target = %d',
-                        #dataset.dicts.src.features, #dataset.dicts.tgt.features))
-    print(string.format(' * maximum sequence length: source = %d; target = %d',
-                        trainData.maxSourceLength, trainData.maxTargetLength))
-    print(string.format(' * number of training sentences: %d', #trainData.src))
-    print(string.format(' * maximum batch size: %d', opt.max_batch_size * onmt.utils.Parallel.count))
+    _G.logger:info(' * vocabulary size: source = %d; target = %d',
+                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
+    _G.logger:info(' * additional features: source = %d; target = %d',
+                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+    _G.logger:info(' * maximum sequence length: source = %d; target = %d',
+                   trainData.maxSourceLength, trainData.maxTargetLength)
+    _G.logger:info(' * number of training sentences: %d', #trainData.src)
+    _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
   else
     local metadata = {
       options = opt,
@@ -394,12 +534,12 @@ local function main()
   end
 
   if not opt.json_log then
-    print('Building model...')
+    _G.logger:info('Building model...')
   end
 
   local model
 
-  onmt.utils.Parallel.launch(nil, function(idx)
+  onmt.utils.Parallel.launch(function(idx)
 
     _G.model = {}
 
@@ -424,6 +564,8 @@ local function main()
   end)
 
   trainModel(model, trainData, validData, dataset, checkpoint.info)
+
+  _G.logger:shutDown()
 end
 
 main()

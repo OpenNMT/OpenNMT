@@ -17,45 +17,47 @@ local function requireOptions(opt, names)
 end
 
 --[[ Convert `val` string to its actual type (boolean, number or string). ]]
-local function convert(val)
-  if val == 'true' then
-    return true
-  elseif val == 'false' then
-    return false
-  else
-    return tonumber(val) or val
+local function convert(key, val, ref)
+  local new
+
+  if type(val) == type(ref) then
+    new = val
+  elseif type(ref) == 'boolean' then
+    if val == 'true' then
+      new = true
+    elseif val == 'false' then
+      new = false
+    else
+      error('option ' .. key .. ' expects a boolean value [true, false]')
+    end
+  elseif type(ref) == 'number' then
+    new = tonumber(val)
+    assert(new ~= nil, 'option ' .. key .. ' expects a number value')
   end
+
+  return new
 end
 
---[[ Return options set in the file `filename`. ]]
-local function loadFile(filename)
+--[[ Override `opt` with option values set in file `filename`. ]]
+local function loadConfig(filename, opt)
   local file = assert(io.open(filename, "r"))
-  local opt = {}
 
   for line in file:lines() do
     -- Ignore empty or commented out lines.
     if line:len() > 0 and string.sub(line, 1, 1) ~= '#' then
       local field = line:split('=')
       assert(#field == 2, 'badly formatted config file')
+
       local key = onmt.utils.String.strip(field[1])
       local val = onmt.utils.String.strip(field[2])
-      opt[key] = convert(val)
+
+      assert(opt[key] ~= nil, 'unkown option ' .. key)
+
+      opt[key] = convert(key, val, opt[key])
     end
   end
 
   file:close()
-  return opt
-end
-
---[[ Override `opt` with option values set in file `filename`. ]]
-local function loadConfig(filename, opt)
-  local config = loadFile(filename)
-
-  for key, val in pairs(config) do
-    assert(opt[key] ~= nil, 'unkown option ' .. key)
-    opt[key] = val
-  end
-
   return opt
 end
 

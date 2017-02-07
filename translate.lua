@@ -13,39 +13,41 @@ cmd:text("")
 cmd:text("**Data options**")
 cmd:text("")
 
-cmd:option('-model', '', [[Path to model .t7 file]])
 cmd:option('-src', '', [[Source sequence to decode (one line per sequence)]])
 cmd:option('-tgt', '', [[True target sequence (optional)]])
 cmd:option('-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
 
--- beam search options
-cmd:text("")
-cmd:text("**Beam Search options**")
-cmd:text("")
-cmd:option('-beam_size', 5,[[Beam size]])
-cmd:option('-batch_size', 30, [[Batch size]])
-cmd:option('-max_sent_length', 250, [[Maximum sentence length. If any sequences in srcfile are longer than this then it will error out]])
-cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the source token that
-                              had the highest attention weight. If phrase_table is provided,
-                              it will lookup the identified source token and give the corresponding
-                              target token. If it is not provided (or the identified source token
-                              does not exist in the table) then it will copy the source token]])
-cmd:option('-phrase_table', '', [[Path to source-target dictionary to replace UNK
-                                     tokens. See README.md for the format this file should be in]])
-cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
+onmt.translate.Translator.declareOpts(cmd)
 
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
-cmd:option('-gpuid', -1, [[ID of the GPU to use (-1 = use CPU, 0 = let cuda choose between available GPUs)]])
-cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
 cmd:option('-time', false, [[Measure batch translation time]])
 
+onmt.utils.Cuda.declareOpts(cmd)
+onmt.utils.Logger.declareOpts(cmd)
 
 local function reportScore(name, scoreTotal, wordsTotal)
-  print(string.format(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
-                      scoreTotal / wordsTotal,
-                      math.exp(-scoreTotal/wordsTotal)))
+  _G.logger:info(name .. " AVG SCORE: %.2f, " .. name .. " PPL: %.2f",
+                 scoreTotal / wordsTotal,
+                 math.exp(-scoreTotal/wordsTotal))
+end
+
+local function extractData(tokens)
+  local words, features = onmt.utils.Features.extract(tokens)
+
+  local data = {}
+  data.words = words
+
+  if #features > 0 then
+    data.features = features
+  end
+
+  return data
+end
+
+local function buildSentence(data)
+  return table.concat(onmt.utils.Features.annotate(data.words, data.features), " ")
 end
 
 local function main()
@@ -58,26 +60,22 @@ local function main()
 
   onmt.utils.Opt.init(opt, requiredOptions)
 
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
-  local srcWordsBatch = {}
-  local srcFeaturesBatch = {}
 
-  local tgtReader
-  local tgtBatch
-  local tgtWordsBatch
-  local tgtFeaturesBatch
+  local goldReader
+  local goldBatch
 
   local withGoldScore = opt.tgt:len() > 0
 
   if withGoldScore then
-    tgtReader = onmt.utils.FileReader.new(opt.tgt)
-    tgtBatch = {}
-    tgtWordsBatch = {}
-    tgtFeaturesBatch = {}
+    goldReader = onmt.utils.FileReader.new(opt.tgt)
+    goldBatch = {}
   end
 
-  onmt.translate.Translator.init(opt)
+  local translator = onmt.translate.Translator.new(opt)
 
   local outFile = io.open(opt.output, 'w')
 
@@ -98,26 +96,16 @@ local function main()
 
   while true do
     local srcTokens = srcReader:next()
-    local tgtTokens
+    local goldTokens
     if withGoldScore then
-      tgtTokens = tgtReader:next()
+      goldTokens = goldReader:next()
     end
 
     if srcTokens ~= nil then
-      local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
-      table.insert(srcBatch, srcTokens)
-      table.insert(srcWordsBatch, srcWords)
-      if #srcFeats > 0 then
-        table.insert(srcFeaturesBatch, srcFeats)
-      end
+      table.insert(srcBatch, extractData(srcTokens))
 
       if withGoldScore then
-        local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
-        table.insert(tgtBatch, tgtTokens)
-        table.insert(tgtWordsBatch, tgtWords)
-        if #tgtFeats > 0 then
-          table.insert(tgtFeaturesBatch, tgtFeats)
-        end
+        table.insert(goldBatch, extractData(goldTokens))
       end
     elseif #srcBatch == 0 then
       break
@@ -128,45 +116,49 @@ local function main()
         timer:resume()
       end
 
-      local predBatch, info = onmt.translate.Translator.translate(srcWordsBatch, srcFeaturesBatch,
-                                                                  tgtWordsBatch, tgtFeaturesBatch)
+      local results = translator:translate(srcBatch, goldBatch)
 
       if opt.time then
         timer:stop()
       end
 
-      for b = 1, #predBatch do
-        local srcSent = table.concat(srcBatch[b], " ")
-        local predSent = table.concat(predBatch[b], " ")
+      for b = 1, #results do
+        if (#srcBatch[b].words == 0) then
+          _G.logger:warning('Line ' .. sentId .. ' is empty.')
+        else
+          _G.logger:info('SENT %d: %s', sentId, buildSentence(srcBatch[b]))
 
-        outFile:write(predSent .. '\n')
+          if withGoldScore then
+            _G.logger:info('GOLD %d: %s', sentId, buildSentence(goldBatch[b]), results[b].goldScore)
+            _G.logger:info("GOLD SCORE: %.2f", results[b].goldScore)
+            goldScoreTotal = goldScoreTotal + results[b].goldScore
+            goldWordsTotal = goldWordsTotal + #goldBatch[b]
+          end
 
-        print('SENT ' .. sentId .. ': ' .. srcSent)
-        print('PRED ' .. sentId .. ': ' .. predSent)
-        print(string.format("PRED SCORE: %.4f", info[b].score))
+          for n = 1, #results[b].preds do
+            local sentence = buildSentence(results[b].preds[n])
 
-        predScoreTotal = predScoreTotal + info[b].score
-        predWordsTotal = predWordsTotal + #predBatch[b]
+            if n == 1 then
+              outFile:write(sentence .. '\n')
+              predScoreTotal = predScoreTotal + results[b].preds[n].score
+              predWordsTotal = predWordsTotal + #results[b].preds[n].words
 
-        if withGoldScore then
-          local tgtSent = table.concat(tgtBatch[b], " ")
+              if #results[b].preds > 1 then
+                _G.logger:info('')
+                _G.logger:info('BEST HYP:')
+              end
+            end
 
-          print('GOLD ' .. sentId .. ': ' .. tgtSent)
-          print(string.format("GOLD SCORE: %.4f", info[b].goldScore))
-
-          goldScoreTotal = goldScoreTotal + info[b].goldScore
-          goldWordsTotal = goldWordsTotal + #tgtBatch[b]
-        end
-
-        if opt.n_best > 1 then
-          print('\nBEST HYP:')
-          for n = 1, #info[b].nBest do
-            local nBest = table.concat(info[b].nBest[n].tokens, " ")
-            print(string.format("[%.4f] %s", info[b].nBest[n].score, nBest))
+            if #results[b].preds > 1 then
+              _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
+            else
+              _G.logger:info("PRED %d: %s", sentId, sentence)
+              _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
+            end
           end
         end
 
-        print('')
+        _G.logger:info('')
         sentId = sentId + 1
       end
 
@@ -176,12 +168,8 @@ local function main()
 
       batchId = batchId + 1
       srcBatch = {}
-      srcWordsBatch = {}
-      srcFeaturesBatch = {}
       if withGoldScore then
-        tgtBatch = {}
-        tgtWordsBatch = {}
-        tgtFeaturesBatch = {}
+        goldBatch = {}
       end
       collectgarbage()
     end
@@ -190,10 +178,10 @@ local function main()
   if opt.time then
     local time = timer:time()
     local sentenceCount = sentId-1
-    io.stderr:write("Average sentence translation time (in seconds):\n")
-    io.stderr:write("avg real\t" .. time.real / sentenceCount .. "\n")
-    io.stderr:write("avg user\t" .. time.user / sentenceCount .. "\n")
-    io.stderr:write("avg sys\t" .. time.sys / sentenceCount .. "\n")
+    _G.logger:info("Average sentence translation time (in seconds):\n")
+    _G.logger:info("avg real\t" .. time.real / sentenceCount .. "\n")
+    _G.logger:info("avg user\t" .. time.user / sentenceCount .. "\n")
+    _G.logger:info("avg sys\t" .. time.sys / sentenceCount .. "\n")
   end
 
   reportScore('PRED', predScoreTotal, predWordsTotal)
@@ -203,6 +191,7 @@ local function main()
   end
 
   outFile:close()
+  _G.logger:shutDown()
 end
 
 main()

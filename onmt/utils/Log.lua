@@ -1,31 +1,31 @@
 local function logJsonRecursive(obj)
   if type(obj) == 'string' then
-    io.write('"' .. obj .. '"')
+    _G.logger:writeMsg('"' .. obj .. '"')
   elseif type(obj) == 'table' then
     local first = true
 
-    io.write('{')
+    _G.logger:writeMsg('{')
 
     for key, val in pairs(obj) do
       if not first then
-        io.write(',')
+        _G.logger:writeMsg(',')
       else
         first = false
       end
-      io.write('"' .. key .. '":')
+      _G.logger:writeMsg('"' .. key .. '":')
       logJsonRecursive(val)
     end
 
-    io.write('}')
+    _G.logger:writeMsg('}')
   else
-    io.write(tostring(obj))
+    _G.logger:writeMsg(tostring(obj))
   end
 end
 
 --[[ Recursively outputs a Lua object to a JSON objects followed by a new line. ]]
 local function logJson(obj)
   logJsonRecursive(obj)
-  io.write('\n')
+  _G.logger:writeMsg('\n')
 end
 
 return {

@@ -3,9 +3,7 @@ tokens and features.
 
   Implements $$[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] $$.
 --]]
-
-
-local FeaturesGenerator, parent = torch.class('onmt.FeaturesGenerator', 'nn.Container')
+local FeaturesGenerator, parent = torch.class('onmt.FeaturesGenerator', 'onmt.Network')
 
 --[[
 Parameters:
@@ -15,9 +13,7 @@ Parameters:
   * `features` - table of feature sizes.
 --]]
 function FeaturesGenerator:__init(rnnSize, outputSize, features)
-  parent.__init(self)
-  self.net = self:_buildGenerator(rnnSize, outputSize, features)
-  self:add(self.net)
+  parent.__init(self, self:_buildGenerator(rnnSize, outputSize, features))
 end
 
 function FeaturesGenerator:_buildGenerator(rnnSize, outputSize, features)
@@ -36,18 +32,4 @@ function FeaturesGenerator:_buildGenerator(rnnSize, outputSize, features)
   end
 
   return generator
-end
-
-function FeaturesGenerator:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function FeaturesGenerator:updateGradInput(input, gradOutput)
-  self.gradInput = self.net:updateGradInput(input, gradOutput)
-  return self.gradInput
-end
-
-function FeaturesGenerator:accGradParameters(input, gradOutput, scale)
-  self.net:accGradParameters(input, gradOutput, scale)
 end

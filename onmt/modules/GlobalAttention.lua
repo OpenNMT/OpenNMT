@@ -20,7 +20,7 @@ Constructs a unit mapping:
   The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.
 
 --]]
-local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'nn.Container')
+local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'onmt.Network')
 
 --[[A nn-style module computing attention.
 
@@ -29,9 +29,7 @@ local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'nn.Containe
   * `dim` - dimension of the context vectors.
 --]]
 function GlobalAttention:__init(dim)
-  parent.__init(self)
-  self.net = self:_buildModel(dim)
-  self:add(self.net)
+  parent.__init(self, self:_buildModel(dim))
 end
 
 function GlobalAttention:_buildModel(dim)
@@ -57,18 +55,4 @@ function GlobalAttention:_buildModel(dim)
   local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
 
   return nn.gModule(inputs, {contextOutput})
-end
-
-function GlobalAttention:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function GlobalAttention:updateGradInput(input, gradOutput)
-  self.gradInput = self.net:updateGradInput(input, gradOutput)
-  return self.gradInput
-end
-
-function GlobalAttention:accGradParameters(input, gradOutput, scale)
-  return self.net:accGradParameters(input, gradOutput, scale)
 end

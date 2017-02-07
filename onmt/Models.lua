@@ -1,25 +1,85 @@
-local function buildEncoder(opt, dicts)
-  local inputNetwork = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
-                                              opt.word_vec_size,
-                                              opt.pre_word_vecs_enc,
-                                              opt.fix_word_vecs_enc)
+-- Return effective embeddings size based on user options.
+local function resolveEmbSizes(opt, dicts, wordSizes)
+  local wordEmbSize
+  local featEmbSizes = {}
 
-  local inputSize = opt.word_vec_size
+  wordSizes = onmt.utils.String.split(wordSizes, ',')
 
-  -- Sequences with features.
+  if opt.word_vec_size > 0 then
+    wordEmbSize = opt.word_vec_size
+  else
+    wordEmbSize = tonumber(wordSizes[1])
+  end
+
+  for i = 1, #dicts.features do
+    local size
+
+    if i + 1 <= #wordSizes then
+      size = tonumber(wordSizes[i + 1])
+    elseif opt.feat_merge == 'sum' then
+      size = opt.feat_vec_size
+    else
+      size = math.floor(dicts.features[i]:size() ^ opt.feat_vec_exponent)
+    end
+
+    table.insert(featEmbSizes, size)
+  end
+
+  return wordEmbSize, featEmbSizes
+end
+
+local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords)
+  local wordEmbSize, featEmbSizes = resolveEmbSizes(opt, dicts, wordSizes)
+
+  local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
+                                               wordEmbSize,
+                                               pretrainedWords,
+                                               fixWords)
+
+  local inputs
+  local inputSize = wordEmbSize
+
+  local multiInputs = #dicts.features > 0
+
+  if multiInputs then
+    inputs = nn.ParallelTable()
+      :add(wordEmbedding)
+  else
+    inputs = wordEmbedding
+  end
+
+  -- Sequence with features.
   if #dicts.features > 0 then
-    local srcFeatEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
-                                                        opt.feat_vec_exponent,
-                                                        opt.feat_vec_size,
-                                                        opt.feat_merge)
+    local vocabSizes = {}
+    for i = 1, #dicts.features do
+      table.insert(vocabSizes, dicts.features[i]:size())
+    end
 
+    local featEmbedding = onmt.FeaturesEmbedding.new(vocabSizes, featEmbSizes, opt.feat_merge)
+    inputs:add(featEmbedding)
+    inputSize = inputSize + featEmbedding.outputSize
+  end
+
+  local inputNetwork
+
+  if multiInputs then
     inputNetwork = nn.Sequential()
-      :add(nn.ParallelTable()
-             :add(inputNetwork)
-             :add(srcFeatEmbedding))
+      :add(inputs)
       :add(nn.JoinTable(2))
+  else
+    inputNetwork = inputs
+  end
 
-    inputSize = inputSize + srcFeatEmbedding.outputSize
+  return inputNetwork, inputSize
+end
+
+local function buildEncoder(opt, dicts)
+  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.src_word_vec_size,
+                                                    opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
+
+  local RNN = onmt.LSTM
+  if opt.rnn_type == 'GRU' then
+    RNN = onmt.GRU
   end
 
   if opt.brnn then
@@ -36,41 +96,28 @@ local function buildEncoder(opt, dicts)
       error('invalid merge action ' .. opt.brnn_merge)
     end
 
-    local rnn = onmt.LSTM.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
 
     return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
   else
-    local rnn = onmt.LSTM.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
     return onmt.Encoder.new(inputNetwork, rnn)
   end
 end
 
 local function buildDecoder(opt, dicts, verbose)
-  local inputNetwork = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
-                                              opt.word_vec_size,
-                                              opt.pre_word_vecs_dec,
-                                              opt.fix_word_vecs_dec)
+  local inputNetwork, inputSize = buildInputNetwork(opt, dicts, opt.tgt_word_vec_size,
+                                                    opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
-  local inputSize = opt.word_vec_size
+  local RNN = onmt.LSTM
+  if opt.rnn_type == 'GRU' then
+    RNN = onmt.GRU
+  end
 
   local generator
 
-  -- Sequences with features.
   if #dicts.features > 0 then
-    local tgtFeatEmbedding = onmt.FeaturesEmbedding.new(dicts.features,
-                                                        opt.feat_vec_exponent,
-                                                        opt.feat_vec_size,
-                                                        opt.feat_merge)
-
-    inputNetwork = nn.Sequential()
-      :add(nn.ParallelTable()
-             :add(inputNetwork)
-             :add(tgtFeatEmbedding))
-      :add(nn.JoinTable(2))
-
-    inputSize = inputSize + tgtFeatEmbedding.outputSize
-
     generator = onmt.FeaturesGenerator.new(opt.rnn_size, dicts.words:size(), dicts.features)
   else
     generator = onmt.Generator.new(opt.rnn_size, dicts.words:size())
@@ -78,39 +125,21 @@ local function buildDecoder(opt, dicts, verbose)
 
   if opt.input_feed == 1 then
     if verbose then
-      print(" * using input feeding")
+      _G.logger:info(" * using input feeding")
     end
     inputSize = inputSize + opt.rnn_size
   end
 
-  local rnn = onmt.LSTM.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
   return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
-end
-
---[[ This is useful when training from a model in parallel mode: each thread must own its model. ]]
-local function clonePretrained(model)
-  local clone = {}
-
-  for k, v in pairs(model) do
-    if k == 'modules' then
-      clone.modules = {}
-      for i = 1, #v do
-        table.insert(clone.modules, onmt.utils.Tensor.deepClone(v[i]))
-      end
-    else
-      clone[k] = v
-    end
-  end
-
-  return clone
 end
 
 local function loadEncoder(pretrained, clone)
   local brnn = #pretrained.modules == 2
 
   if clone then
-    pretrained = clonePretrained(pretrained)
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
   if brnn then
@@ -122,7 +151,7 @@ end
 
 local function loadDecoder(pretrained, clone)
   if clone then
-    pretrained = clonePretrained(pretrained)
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
   return onmt.Decoder.load(pretrained)

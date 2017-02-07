@@ -2,13 +2,11 @@
 
 Simply implements $$softmax(W h + b)$$.
 --]]
-local Generator, parent = torch.class('onmt.Generator', 'nn.Container')
+local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
 
 
 function Generator:__init(rnnSize, outputSize)
-  parent.__init(self)
-  self.net = self:_buildGenerator(rnnSize, outputSize)
-  self:add(self.net)
+  parent.__init(self, self:_buildGenerator(rnnSize, outputSize))
 end
 
 function Generator:_buildGenerator(rnnSize, outputSize)

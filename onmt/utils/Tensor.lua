@@ -1,14 +1,36 @@
---[[ Recursively call `clone()` on all tensors within `out`. ]]
-local function recursiveClone(out)
-  if torch.isTensor(out) then
-    return out:clone()
-  else
-    local res = {}
-    for k, v in ipairs(out) do
-      res[k] = recursiveClone(v)
+--[[ Recursively call `func()` on all tensors within `out`. ]]
+local function recursiveApply(out, func, ...)
+  local res
+  if torch.type(out) == 'table' then
+    res = {}
+    for k, v in pairs(out) do
+      res[k] = recursiveApply(v, func, ...)
     end
     return res
   end
+  if torch.isTensor(out) then
+    res = func(out, ...)
+  else
+    res = out
+  end
+  return res
+end
+
+--[[ Recursively call `clone()` on all tensors within `out`. ]]
+local function recursiveClone(out)
+  return recursiveApply(out, function (h) return h:clone() end)
+end
+
+--[[ Recursively add `b` tensors into `a`'s. ]]
+local function recursiveAdd(a, b)
+  if torch.isTensor(a) then
+    a:add(b)
+  else
+    for i = 1, #a do
+      recursiveAdd(a[i], b[i])
+    end
+  end
+  return a
 end
 
 local function recursiveSet(dst, src)
@@ -23,15 +45,11 @@ end
 
 --[[ Clone any serializable Torch object. ]]
 local function deepClone(obj)
-  local mem = torch.MemoryFile("w"):binary()
+  local mem = torch.MemoryFile("rw"):binary()
   mem:writeObject(obj)
-
-  local reader = torch.MemoryFile(mem:storage(), "r"):binary()
-  local clone = reader:readObject()
-
-  reader:close()
+  mem:seek(1)
+  local clone = mem:readObject()
   mem:close()
-
   return clone
 end
 
@@ -111,7 +129,7 @@ Initialize a table of tensors with the given sizes.
 
 Parameters:
 
-  * `tab` - the table of tensors
+  * `size` - the number of clones to create
   * `proto` - tensor to be clone for each index
   * `sizes` - a table of new sizes
 
@@ -152,7 +170,9 @@ local function copyTensorTable(proto, src)
 end
 
 return {
+  recursiveApply = recursiveApply,
   recursiveClone = recursiveClone,
+  recursiveAdd = recursiveAdd,
   recursiveSet = recursiveSet,
   deepClone = deepClone,
   reuseTensor = reuseTensor,
