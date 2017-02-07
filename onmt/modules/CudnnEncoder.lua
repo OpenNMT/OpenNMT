@@ -143,25 +143,3 @@ function CudnnEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   -- no need to send gradient back
   return {}
 end
-
-function CudnnEncoder:type(type, tensorCache)
-   if not type then
-      return self._type
-   end
-
-  print('conversion..................')
-
-   tensorCache = tensorCache or {}
-
-   -- find all tensors and convert them
-   for key,param in pairs(self) do
-      self[key] = nn.utils.recursiveType(param, type, tensorCache)
-   end
-
-   self._type = type
-   return self
-end
-
-function CudnnEncoder:float(...)
-   return self:type('torch.FloatTensor',...)
-end

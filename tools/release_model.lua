@@ -13,17 +13,11 @@ local opt = cmd:parse(arg)
 opt.seed = 0
 
 local function releaseModel(model)
-  for _, submodule in pairs(model.modules) do
-    if torch.type(submodule) == 'table' and submodule.modules then
-      releaseModel(submodule)
-    else
-      submodule:float()
-      submodule:clearState()
-      submodule:apply(function (m)
-        nn.utils.clear(m, 'gradWeight', 'gradBias')
-      end)
-    end
-  end
+  model:float()
+  model:apply(function (m)
+    m:clearState()
+    nn.utils.clear(m, 'gradWeight', 'gradBias')
+  end)
 end
 
 local function main()

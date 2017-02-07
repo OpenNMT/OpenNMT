@@ -125,6 +125,8 @@ function Factory.buildEncoder(opt, inputNetwork)
       encoder.name = "Encoder"
     end
   end
+  encoder.inputNetwork = inputNetwork
+  encoder.opt = opt
   return encoder
 end
 
@@ -180,6 +182,17 @@ function Factory.buildWordEncoder(opt, dicts)
                                                     opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   return onmt.Factory.buildEncoder(opt, inputNetwork)
+end
+
+-- transform cudnn encoder to regular encoder
+function Factory.convertWordEncoder(encoder)
+  local opt = encoder.opt
+  opt.cudnn = ''
+  local newEncoder = Factory.buildEncoder(encoder.opt, encoder.inputNetwork)
+  -- convert parameters
+  params = {}
+  encoder:apply(function(m) print(m.name) end)
+  return newEncoder
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
