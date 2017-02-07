@@ -134,7 +134,8 @@ local function main()
   end)
 
   -- Define optimization method.
-  local optim = onmt.train.Optim.new(opt, opt.optim_states)
+  local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
+  local optim = onmt.train.Optim.new(opt, optimStates)
   -- Initialize trainer.
   local trainer = onmt.Trainer.new(opt)
 

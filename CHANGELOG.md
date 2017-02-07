@@ -8,14 +8,16 @@
 
 ### Fixes and improvements
 
+* [*Breaking, new API*] Improve translator API consistency
 * Improve beam search speed (up to 90% faster)
 * Reduce released model size (up to 2x smaller)
 * Fix `-joiner_new` option when using BPE
 * Fix joiner marker generated without the option enabled
 * Fix translation server crash on Lua errors
 * Fix error when loading configuration files containing the `gpuid` option
-* Fix BLEU drop when applying beam search on certain models
+* Fix BLEU drop when applying beam search on some models
 * Fix error when using asynchronous parallel mode
+* Fix non SGD model serialization after retraining
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
