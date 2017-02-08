@@ -79,6 +79,10 @@ build = {
     ["onmt.utils.Table"] = "onmt/utils/Table.lua",
     ["onmt.utils.Tensor"] = "onmt/utils/Tensor.lua",
     ["onmt.Constants"] = "onmt/Constants.lua",
-    ["onmt.modules.Factory"] = "onmt/modules/Factory.lua"
+    ["onmt.modules.Factory"] = "onmt/modules/Factory.lua",
+    ["onmt.models.selector"] = "onmt/models/selector.lua",
+    ["onmt.models.LM"] = "onmt/models/LM.lua",
+    ["onmt.models.seq2seq"] = "onmt/models/seq2seq.lua",
+    ["onmt.models.Model"] = "onmt/models/Model.lua"
   }
 }
