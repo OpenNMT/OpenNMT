@@ -52,9 +52,10 @@ end
   When using CPU only, converts to float instead of the default double.
 ]]
 function Cuda.convert(obj)
-  if torch.typename(obj) then
+  local objtype = torch.typename(obj)
+  if objtype then
     if Cuda.activated and obj.cuda ~= nil then
-      if torch.typename(obj):find('torch%..*LongTensor') then
+      if objtype:find('torch%..*LongTensor') then
         return obj:cudaLong()
       else
         return obj:cuda()
@@ -63,11 +64,11 @@ function Cuda.convert(obj)
       -- Defaults to float instead of double.
       return obj:float()
     end
-  end
-
-  if torch.typename(obj) or type(obj) == 'table' then
-    for k, v in pairs(obj) do
-      obj[k] = Cuda.convert(v)
+  else
+    if type(obj) == 'table' then
+      for k, v in pairs(obj) do
+        obj[k] = Cuda.convert(v)
+      end
     end
   end
 
