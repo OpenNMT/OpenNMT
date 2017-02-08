@@ -60,7 +60,7 @@ function Cuda.convert(obj)
       else
         return obj:cuda()
       end
-    elseif not Cuda.activated and obj.float ~= nil and not objtype:find('torch%..*LongTensor') then
+    elseif not Cuda.activated and obj.float ~= nil and objtype ~= 'torch.LongTensor' then
       -- Defaults to float instead of double.
       return obj:float()
     end
