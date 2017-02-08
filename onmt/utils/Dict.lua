@@ -146,7 +146,7 @@ function Dict:convertToIdx(labels, unkWord, bosWord, eosWord)
     table.insert(vec, self:lookup(eosWord))
   end
 
-  return torch.LongTensor(vec)
+  return torch.IntTensor(vec)
 end
 
 --[[ Convert `idx` to labels. If index `stop` is reached, convert it and return. ]]
