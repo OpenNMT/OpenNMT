@@ -11,14 +11,8 @@ for i=1,#arg do
   end
 end
 
-local modelClass
-if mtype == 'seq2seq' then
-  require('onmt.models.seq2seq')
-  modelClass = onmt.Model.seq2seq
-else
-  require('onmt.models.LM')
-  modelClass = onmt.Model.LM
-end
+local selector = require('onmt.models.selector')
+local modelClass = selector(mtype)
 
 -------------- Options declaration
 local data_options = {
@@ -119,6 +113,8 @@ local function main()
 
   -- build or load model from checkpoint and copy to GPUs
   onmt.utils.Parallel.launch(function(idx)
+    local selector = require('onmt.models.selector')
+    local modelClass = selector(mtype)
     if checkpoint.models then
       _G.model = modelClass.new(opt, checkpoint, idx > 1)
     else
