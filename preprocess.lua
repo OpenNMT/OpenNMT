@@ -50,11 +50,11 @@ local function main()
   local data = { dataType=dataType }
 
   data.dicts = {}
-  data.dicts.src = Vocabulary.init('train', opt.train, opt.vocab, opt.vocab_size,
-                                   opt.features_vocabs_prefix, function(s) return isValid(s, opt.seq_length) end)
+  data.dicts.src = Vocabulary.init('train', opt.train_src or opt.train, opt.src_vocab or opt.vocab, opt.src_vocab_size or opt.vocab_size,
+                                   opt.features_vocabs_prefix, function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
   if dataType ~= 'MONO' then
     data.dicts.tgt = Vocabulary.init('target', opt.train_tgt, opt.tgt_vocab, opt.tgt_vocab_size,
-                                     opt.features_vocabs_prefix, function(s) return isValid(s, opt.src_seq_length) end)
+                                     opt.features_vocabs_prefix, function(s) return isValid(s, opt.tgt_seq_length) end)
   end
 
   _G.logger:info('Preparing training data...')
