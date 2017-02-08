@@ -79,6 +79,6 @@ build = {
     ["onmt.utils.Table"] = "onmt/utils/Table.lua",
     ["onmt.utils.Tensor"] = "onmt/utils/Tensor.lua",
     ["onmt.Constants"] = "onmt/Constants.lua",
-    ["onmt.Models"] = "onmt/Models.lua"
+    ["onmt.modules.Factory"] = "onmt/modules/Factory.lua"
   }
 }
