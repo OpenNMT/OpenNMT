@@ -113,10 +113,10 @@ local function main()
 
   -- build or load model from checkpoint and copy to GPUs
   onmt.utils.Parallel.launch(function(idx)
-    local selector = require('onmt.models.selector')
-    local modelClass = selector(mtype)
+    local _selector = require('onmt.models.selector')
+    local _modelClass = _selector(mtype)
     if checkpoint.models then
-      _G.model = modelClass.new(opt, checkpoint, idx > 1)
+      _G.model = _modelClass.new(opt, checkpoint, idx > 1)
     else
       local verbose = idx == 1
       _G.model = modelClass.new(opt, dataset, verbose)
