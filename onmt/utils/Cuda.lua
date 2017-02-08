@@ -66,7 +66,7 @@ function Cuda.convert(obj)
     end
   end
 
-  if torch.typename(obj) or type(obj) == 'table' then
+  if objtype or type(obj) == 'table' then
     for k, v in pairs(obj) do
       obj[k] = Cuda.convert(v)
     end
