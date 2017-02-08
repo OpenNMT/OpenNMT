@@ -64,11 +64,16 @@ function Translator:buildData(src, gold)
   end
 
   local ignored = {}
+  local indexMap = {}
+  local index = 1
 
   for b = 1, #src do
     if #src[b].words == 0 then
       table.insert(ignored, b)
     else
+      indexMap[index] = b
+      index = index + 1
+
       table.insert(srcData.words,
                    self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD))
 
@@ -92,7 +97,7 @@ function Translator:buildData(src, gold)
     end
   end
 
-  return onmt.data.Dataset.new(srcData, goldData), ignored
+  return onmt.data.Dataset.new(srcData, goldData), ignored, indexMap
 end
 
 function Translator:buildTargetWords(pred, src, attn)
@@ -237,27 +242,30 @@ Returns:
       - `score`: the confidence score of the prediction
 ]]
 function Translator:translate(src, gold)
-  local data, ignored = self:buildData(src, gold)
-  local batch = data:getBatch()
-
-  local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
+  local data, ignored, indexMap = self:buildData(src, gold)
 
   local results = {}
 
-  for b = 1, batch.size do
-    results[b] = {}
+  if data:batchCount() > 0 then
+    local batch = data:getBatch()
 
-    results[b].preds = {}
-    for n = 1, self.opt.n_best do
-      results[b].preds[n] = {}
-      results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[b].words, attn[b][n])
-      results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
-      results[b].preds[n].attention = attn[b][n]
-      results[b].preds[n].score = predScore[b][n]
-    end
+    local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
 
-    if goldScore ~= nil then
-      results[b].goldScore = goldScore[b]
+    for b = 1, batch.size do
+      results[b] = {}
+
+      results[b].preds = {}
+      for n = 1, self.opt.n_best do
+        results[b].preds[n] = {}
+        results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
+        results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
+        results[b].preds[n].attention = attn[b][n]
+        results[b].preds[n].score = predScore[b][n]
+      end
+
+      if goldScore ~= nil then
+        results[b].goldScore = goldScore[b]
+      end
     end
   end
 
