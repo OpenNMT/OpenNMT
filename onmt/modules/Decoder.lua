@@ -356,7 +356,7 @@ function Decoder:backward(batch, outputs, criterion)
     _G.profiler:stop("generator.bwd")
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
-    -- Compute the standarad backward.
+    -- Compute the standard backward.
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
     -- Accumulate encoder output gradients.
