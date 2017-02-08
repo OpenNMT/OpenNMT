@@ -148,7 +148,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           _G.batch.totalSize = totalSize
 
           optim:zeroGrad(_G.gradParams)
-          local loss = model:trainNetwork(_G.batch, _G.criterion, doProfile)
+          local loss = _G.model:trainNetwork(_G.batch, _G.criterion, doProfile)
 
           return idx, loss, _G.profiler:dump()
         end,
