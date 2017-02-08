@@ -19,6 +19,7 @@
 * Fix error when using asynchronous parallel mode
 * Fix non SGD model serialization after retraining
 * Fix error when using `-replace_unk` with empty sentences in the batch
+* Fix error when translating empty batch
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
