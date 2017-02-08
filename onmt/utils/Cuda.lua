@@ -54,7 +54,11 @@ end
 function Cuda.convert(obj)
   if torch.typename(obj) then
     if Cuda.activated and obj.cuda ~= nil then
-      return obj:cuda()
+      if torch.typename(obj):find('torch%..*LongTensor') then
+        return obj:cudaLong()
+      else
+        return obj:cuda()
+      end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
       return obj:float()
