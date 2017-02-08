@@ -64,11 +64,11 @@ function Cuda.convert(obj)
       -- Defaults to float instead of double.
       return obj:float()
     end
-  else
-    if type(obj) == 'table' then
-      for k, v in pairs(obj) do
-        obj[k] = Cuda.convert(v)
-      end
+  end
+
+  if torch.typename(obj) or type(obj) == 'table' then
+    for k, v in pairs(obj) do
+      obj[k] = Cuda.convert(v)
     end
   end
 
