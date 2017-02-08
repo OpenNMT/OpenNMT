@@ -58,6 +58,19 @@ function LM.dataType()
   return "MONO"
 end
 
+-- batch fields for language model
+function LM.batchInit()
+  return {
+           size = 1,
+           sourceLength = 0
+         }
+end
+
+function LM.batchAggregate(batchA, batch)
+  batchA.sourceLength = batchA.sourceLength + batch.sourceLength * batch.size
+  return batchA
+end
+
 function LM:forwardComputeLoss(batch, criterion)
   local _, context = self.models.encoder:forward(batch)
   local EOS_vector = self.EOS_vector_model:narrow(1, 1, batch.size)

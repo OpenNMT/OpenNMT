@@ -68,6 +68,23 @@ function seq2seq.dataType()
   return "BITEXT"
 end
 
+-- batch fields for seq2seq model
+function seq2seq.batchInit()
+  return {
+           size = 1,
+           sourceLength = 0,
+           targetLength = 0,
+           targetNonZeros = 0
+         }
+end
+
+function seq2seq.batchAggregate(batchA, batch)
+  batchA.sourceLength = batchA.sourceLength + batch.sourceLength * batch.size
+  batchA.targetLength = batchA.targetLength + batch.targetLength * batch.size
+  batchA.targetNonZeros = batchA.targetNonZeros + batch.targetNonZeros
+  return batchA
+end
+
 function seq2seq:forwardComputeLoss(batch, criterion)
   local encoderStates, context = self.models.encoder:forward(batch)
   return self.models.decoder:computeLoss(batch, encoderStates, context, criterion)
