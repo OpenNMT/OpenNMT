@@ -116,10 +116,10 @@ local function main()
     local _selector = require('onmt.models.selector')
     local _modelClass = _selector(mtype)
     if checkpoint.models then
-      _G.model = _modelClass.new(opt, checkpoint, idx > 1)
+      _G.model = _modelClass.load(opt, checkpoint.models, idx > 1)
     else
       local verbose = idx == 1
-      _G.model = modelClass.new(opt, dataset, verbose)
+      _G.model = _modelClass.new(opt, dataset.dicts, verbose)
     end
     onmt.utils.Cuda.convert(_G.model)
     return idx, _G.model

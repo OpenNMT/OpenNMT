@@ -35,8 +35,8 @@ function Translator:__init(args)
   self.checkpoint = torch.load(self.opt.model)
 
   self.models = {}
-  self.models.encoder = onmt.Models.loadEncoder(self.checkpoint.models.encoder)
-  self.models.decoder = onmt.Models.loadDecoder(self.checkpoint.models.decoder)
+  self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
+  self.models.decoder = onmt.Factory.loadDecoder(self.checkpoint.models.decoder)
 
   self.models.encoder:evaluate()
   self.models.decoder:evaluate()

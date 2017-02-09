@@ -28,24 +28,29 @@ function LM.declareOpts(cmd)
   cmd:setCmdLineOptions(LM_options, "Language Model")
 end
 
-function LM:__init(args, datasetOrCheckpoint)
+function LM:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, LM_options))
+
   -- encoder word_vec_size is in src_word_vec_size
   self.args.src_word_vec_size = args.word_vec_size
   self.args.word_vec_size = 0
-  if type(datasetOrCheckpoint)=='Checkpoint' then
-    error("unsupported")
+
+  self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
+
+  if #dicts.src.features > 0 then
+    self.models.generator = onmt.FeaturesGenerator.new(self.args.rnn_size,
+                                                       dicts.src.words:size(),
+                                                       dicts.src.features)
   else
-    local dataset = datasetOrCheckpoint
-    self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dataset.dicts.src)
-    if #dataset.dicts.src.features > 0 then
-      self.models.generator = onmt.FeaturesGenerator.new(self.args.rnn_size, dataset.dicts.src.words:size(), dataset.dicts.src.features)
-    else
-      self.models.generator = onmt.Generator.new(self.args.rnn_size, dataset.dicts.src.words:size())
-    end
-    self.EOS_vector_model = torch.LongTensor(args.max_batch_size):fill(dataset.dicts.src.words:lookup(onmt.Constants.EOS_WORD))
+    self.models.generator = onmt.Generator.new(self.args.rnn_size, dicts.src.words:size())
   end
+
+  self.EOS_vector_model = torch.LongTensor(args.max_batch_size):fill(onmt.Constants.EOS)
+end
+
+function LM.load()
+  error("loading a language model is not yet supported")
 end
 
 -- Returns model name.
