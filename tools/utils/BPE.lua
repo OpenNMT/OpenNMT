@@ -15,17 +15,23 @@ function BPE:__init(opt)
   self.codes = {}
   local f = assert(io.open(opt.bpe_model, "r"))
 
-  local options = {}
-  for i in string.gmatch(f:read("*line"), "[^;]+") do table.insert(options, i) end
-  self.prefix = options[1] == "true" and true or false
-  self.suffix = options[2] == "true" and true or false
-  self.case_insensitive = options[3] == "true" and true or false
   self.EOT_marker = opt.EOT_marker
   self.BOT_marker = opt.BOT_marker
   self.joiner_new = opt.joiner_new
   self.joiner_annotate = opt.joiner_annotate
 
   local t = f:read("*line")
+  local options = self.split(t, ";")
+  if (#options == 4) then
+    self.prefix = options[1] == "true" and true or false
+    self.suffix = options[2] == "true" and true or false
+    self.case_insensitive = options[3] == "true" and true or false
+    t = f:read("*line")
+  else
+    self.prefix = opt.bpe_prefix
+    self.suffix = opt.bpe_suffix
+    self.case_insensitive = opt.bpe_case_insensitive
+  end
   local i = 1
 
   while not(t == nil) do
@@ -72,7 +78,7 @@ local function str2word(l, case_insensitive)
   local word = {}
   for v, c in unicode.utf8_iter(l) do
     if (case_insensitive) then
-        local lu, lc = unicode.getLower(v)
+      local lu, lc = unicode.getLower(v)
         if lu then
           c = lc
         end
