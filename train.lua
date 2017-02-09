@@ -119,7 +119,7 @@ local function main()
       _G.model = _modelClass.new(opt, checkpoint, idx > 1)
     else
       local verbose = idx == 1
-      _G.model = modelClass.new(opt, dataset, verbose)
+      _G.model = _modelClass.new(opt, dataset, verbose)
     end
     onmt.utils.Cuda.convert(_G.model)
     return idx, _G.model
