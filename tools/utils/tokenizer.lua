@@ -46,7 +46,7 @@ local function tokenize(line, opt)
       -- skip special characters and BOM and
       if v > 32 and not(v == 0xFEFF) then
         -- normalize the separator marker and feat separator
-        if c == separators.joiner_marker then c = separators.joiner_substitute end
+        if c == separators.joiner_marker then c = separators.joiner_marker_substitute end
         if c == separators.feat_marker then c = separators.feat_marker_substitute end
 
         local is_letter = unicode.isLetter(v)

@@ -11,6 +11,8 @@ import re
 url = 'http://scorer.nmt-benchmark.net'
 
 def main(args):
+    scriptpath=os.path.dirname(os.path.realpath(__file__))
+
     parser = argparse.ArgumentParser(description='Benchmark test download')
     parser.add_argument('--apikey', help='Your API key',required=True)
     parser.add_argument('--src', help='Source language',required=True)
@@ -57,7 +59,7 @@ def main(args):
             test.write(response.content)
         testtxt = open(os.path.join(pathtestdir,r['source']['fileName']+".txt"), "wb")
         if re.search(r"\.(sgm|sgml|xml)$",r['source']['fileName']):
-            p = subprocess.Popen(["perl","3rdParty/input-from-sgm.perl"],stdin=subprocess.PIPE,stdout=testtxt)
+            p = subprocess.Popen(["perl",scriptpath+"/3rdParty/input-from-sgm.perl"],stdin=subprocess.PIPE,stdout=testtxt)
             p.stdin.write(response.content)
             p.stdin.close()
             p.communicate()

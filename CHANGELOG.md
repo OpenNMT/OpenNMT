@@ -13,6 +13,7 @@
 * [*Breaking, new API*] Improve translator API consistency
 * Improve beam search speed (up to 90% faster)
 * Reduce released model size (up to 2x smaller)
+* Fix tokenization of text using joiner marker character
 * Fix `-joiner_new` option when using BPE
 * Fix joiner marker generated without the option enabled
 * Fix translation server crash on Lua errors
