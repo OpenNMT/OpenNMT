@@ -7,7 +7,7 @@
 
 ## Generate the model metadata
 
-```
+```lua
 th benchmark/generate_metadata.lua -model ende_model.t7 -save_data ende_model.json -name ende-baseline-20170206 -language_pair ende
 ```
 
@@ -16,13 +16,13 @@ th benchmark/generate_metadata.lua -model ende_model.t7 -save_data ende_model.js
 
 ## Submit the model
 
-```
+```python
 python benchmark/submitSystem.py --apikey <YOUR API KEY> ende_model.json
 ```
 
 ## Get test files for a given language pair
 
-```
+```python
 python benchmark/getTests.py --apikey <YOUR API KEY> --src <SOURCE LANGUAGE> --tgt <TARGET LANGUAGE> [--basedir .]
 ```
 
@@ -30,3 +30,6 @@ generates a directory named `benchmark-nmt-test-SRCTGT-YYYY-MM-DD` in `basedir` 
 
 ## Submit translation output and get scores
 
+```python
+python benchmark/submitOutput.py --systemId <SYSTEM ID> --apikey <YOUR API KEY> --info FILE.info --output FILE.out
+```
