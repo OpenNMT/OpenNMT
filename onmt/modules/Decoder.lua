@@ -163,7 +163,7 @@ end
 
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
-function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
+function Decoder:maskPadding(sourceSizes, sourceLength)
   if not self.decoderAttn then
     self.network:apply(function (layer)
       if layer.name == 'decoderAttn' then
@@ -176,7 +176,7 @@ function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
     if module.name == 'softmaxAttn' then
       local mod
       if sourceSizes ~= nil then
-        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)
+        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength)
       else
         mod = nn.SoftMax()
       end

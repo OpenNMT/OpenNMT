@@ -21,52 +21,32 @@ Parameters:
 
   * `sourceSizes` -  the true lengths (with left padding).
   * `sourceLength` - the max length in the batch `beamSize`.
-  * `beamSize` - the batch size.
 --]]
-function MaskedSoftmax:__init(sourceSizes, sourceLength, beamSize)
-  --TODO: better names for these variables. Beam size =? batchSize?
-  parent.__init(self, self:_buildModel(sourceSizes, sourceLength, beamSize))
+function MaskedSoftmax:__init(sourceSizes, sourceLength)
+  parent.__init(self, self:_buildModel(sourceSizes, sourceLength))
 end
 
-function MaskedSoftmax:_buildModel(sourceSizes, sourceLength, beamSize)
-
+function MaskedSoftmax:_buildModel(sourceSizes, sourceLength)
   local numSents = sourceSizes:size(1)
   local input = nn.Identity()()
-  local softmax = nn.SoftMax()(input) -- beamSize*numSents x State.sourceLength
+  local softmax = nn.SoftMax()(input) -- numSents x State.sourceLength
 
   -- Now we are masking the part of the output we don't need
-  local tab
-  if beamSize ~= nil then
-    tab = nn.SplitTable(2)(nn.View(beamSize, numSents, sourceLength)(softmax))
-    -- numSents x { beamSize x State.sourceLength }
-  else
-    tab = nn.SplitTable(1)(softmax) -- numSents x { State.sourceLength }
-  end
-
+  local tab = nn.SplitTable(1)(softmax) -- numSents x { State.sourceLength }
   local par = nn.ParallelTable()
 
   for b = 1, numSents do
     local padLength = sourceLength - sourceSizes[b]
-    local dim = 2
-    if beamSize == nil then
-      dim = 1
-    end
 
     local seq = nn.Sequential()
-    seq:add(nn.Narrow(dim, padLength + 1, sourceSizes[b]))
+    seq:add(nn.Narrow(1, padLength + 1, sourceSizes[b]))
     seq:add(nn.Padding(1, -padLength, 1, 0))
     par:add(seq)
   end
 
-  local outTab = par(tab) -- numSents x { beamSize x State.sourceLength }
-  local output = nn.JoinTable(1)(outTab) -- numSents*beamSize x State.sourceLength
-  if beamSize ~= nil then
-    output = nn.View(numSents, beamSize, sourceLength)(output)
-    output = nn.Transpose({1,2})(output) -- beamSize x numSents x State.sourceLength
-    output = nn.View(beamSize*numSents, sourceLength)(output)
-  else
-    output = nn.View(numSents, sourceLength)(output)
-  end
+  local outTab = par(tab) -- numSents x { State.sourceLength }
+  local output = nn.JoinTable(1)(outTab) -- numSents x State.sourceLength
+  output = nn.View(numSents, sourceLength)(output)
 
   -- Make sure the vector sums to 1 (softmax output)
   output = nn.Normalize(1)(output)

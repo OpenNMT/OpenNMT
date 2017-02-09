@@ -1,190 +1,501 @@
---[[Helper function convert a `flatIndex` to a row-column tuple
-
-Parameters:
-
-  * `v` - matrix.
-  * `flatIndex` - index
-
-Returns: row/column.
+--[[ Class for maintaining statistics of each step. A beam mainly consists of
+  a list of tokens `tokens` and a state `state`. `tokens[t]` stores a flat tensor
+  of size `batchSize * beamSize` representing the tokens at step `t`, while
+  `state` can be either a tensor with first dimension size `batchSize * beamSize`,
+  or an iterable object containing several such tensors.
 --]]
-local function flatToRc(v, flatIndex)
-  local row = math.floor((flatIndex - 1) / v:size(2)) + 1
-  return row, (flatIndex - 1) % v:size(2) + 1
-end
-
---[[ Class for managing the internals of the beam search process.
-
-
-    hyp1---hyp1---hyp1 -hyp1
-        \             /
-    hyp2 \-hyp2 /-hyp2--hyp2
-               /      \
-    hyp3---hyp3---hyp3 -hyp3
-    ========================
-
-Takes care of beams, back pointers, and scores.
-]]
 local Beam = torch.class('Beam')
 
---[[Constructor
+--[[Helper function. Recursively convert flat `batchSize * beamSize` tensors
+ to 2D `(batchSize, beamSize)` tensors.
 
 Parameters:
 
-  * `size` : The beam `K`.
-  * `numFeatures` : Number of features, (optional)
+  * `v` - flat tensor of size `batchSize * beamSize` or a table containing such
+  tensors.
+  * `beamSize` - beam size
+
+Returns: `(batchSize, beamSize)` tensor or a table containing such tensors.
+
 --]]
-function Beam:__init(size, numFeatures)
-
-  self.size = size
-  self.numFeatures = numFeatures
-  self.done = false
-
-  -- The score for each translation on the beam.
-  self.scores = torch.FloatTensor(size):zero()
-
-  -- The backpointers at each time-step.
-  self.prevKs = { torch.LongTensor(size):fill(1) }
-
-  -- The outputs at each time-step.
-  self.nextYs = { torch.LongTensor(size):fill(onmt.Constants.PAD) }
-  self.nextYs[1][1] = onmt.Constants.BOS
-
-  -- The features output at each time-step
-  self.nextFeatures = { {} }
-  for j = 1, numFeatures do
-    self.nextFeatures[1][j] = torch.LongTensor(size):fill(onmt.Constants.PAD)
-
-    -- EOS is used as a placeholder to shift the features target sequence.
-    self.nextFeatures[1][j][1] = onmt.Constants.EOS
-  end
-
-  -- The attentions (matrix) for each time.
-  self.attn = {}
-end
-
---[[ Get the outputs for the current timestep.]]
-function Beam:getCurrentState()
-  return self.nextYs[#self.nextYs], self.nextFeatures[#self.nextFeatures]
-end
-
---[[ Get the backpointers for the current timestep.]]
-function Beam:getCurrentOrigin()
-  return self.prevKs[#self.prevKs]
-end
-
---[[ Given prob over words for every last beam `wordLk` and attention
- `attnOut`. Compute and update the beam search.
-
-Parameters:
-
-  * `wordLk`- probs of advancing from the last step (K x words)
-  * `featsLk`- probs of features at the last step (K x numfeatures x featsize)
-  * `attnOut`- attention at the last step
-
-Returns: true if beam search is complete.
---]]
-function Beam:advance(wordLk, featsLk, attnOut)
-
-  -- The flattened scores.
-  local flatWordLk
-
-  if #self.prevKs > 1 then
-    -- Sum the previous scores.
-    for k = 1, self.size do
-      wordLk[k]:add(self.scores[k])
+local function flatToRc(v, beamSize)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local batchSize = math.floor(h:size(1) / beamSize)
+    local sizes = {}
+    for j = 2, #h:size() do
+      sizes[j - 1] = h:size(j)
     end
-    flatWordLk = wordLk:view(-1)
+    return h:view(batchSize, beamSize, table.unpack(sizes))
+  end)
+end
+
+--[[Helper function. Recursively convert 2D `(batchSize, beamSize)` tensors to
+ flat `batchSize * beamSize` tensors.
+
+Parameters:
+
+  * `v` - flat tensor of size `(batchSize, beamSize)` or a table containing such
+  tensors.
+  * `beamSize` - beam size
+
+Returns: `batchSize * beamSize` tensor or a table containing such tensors.
+
+--]]
+local function rcToFlat(v)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local sizes = {}
+    sizes[1] = h:size(1) * h:size(2)
+    for j = 3, #h:size() do
+      sizes[j - 1] = h:size(j)
+    end
+    return h:view(table.unpack(sizes))
+  end)
+end
+
+--[[Helper function. Recursively select `(batchSize, ...)` tensors by
+  specified batch indexes.
+
+Parameters:
+
+  * `v` - tensor of size `(batchSize, ...)` or a table containing such tensors
+  * `indexes` - a table of the desired batch indexes
+
+Returns: Indexed `(newBatchSize, ...)` tensor or a table containing such tensors
+
+--]]
+local function selectBatch(v, remaining)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    if not torch.isTensor(remaining) then
+      remaining = torch.LongTensor(remaining)
+    end
+    return h:index(1, remaining)
+  end)
+end
+
+--[[Helper function. Recursively select `(batchSize * beamSize, ...)` tensors by
+  specified batch index and beam index.
+
+Parameters:
+
+  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing
+  such tensors.
+  * `beamSize` - beam size
+  * `batch` - the desired batch index
+  * `beam` - the desired beam index
+
+Returns: Indexed `(...)` tensor or a table containing such tensors
+
+--]]
+local function selectBatchBeam(v, beamSize, batch, beam)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local batchSize = math.floor(h:size(1) / beamSize)
+    local sizes = {}
+    for j = 2, #h:size() do
+      sizes[j - 1] = h:size(j)
+    end
+    local hOut = h:view(batchSize, beamSize, table.unpack(sizes))
+    return hOut[{batch, beam}]
+  end)
+end
+
+--[[Helper function. Recursively index `(batchSize * beamSize, ...)`
+  tensors by specified indexes.
+
+Parameters:
+
+  * `v` - tensor of size `(batchSize * beamSize, ...)` or a table containing
+  such tensors.
+  * `indexes` - a tensor of size `(batchSize, k)` specifying the desired indexes
+  * `beamSize` - beam size
+
+Returns: Indexed `(batchSize * k, ...)` tensor or a table containing such tensors
+
+--]]
+local function selectBeam(v, indexes, beamSize)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local batchSize = indexes:size(1)
+    local k = indexes:size(2)
+    beamSize = beamSize or k
+    local sizes = {}
+    local ones = {}
+    for j = 2, #h:size() do
+      sizes[j - 1] = h:size(j)
+      ones[j - 1] = 1
+    end
+    return h
+      :contiguous()
+      :view(batchSize, beamSize, table.unpack(sizes))
+      :gather(2, indexes
+                :view(batchSize, k, table.unpack(ones))
+                :expand(batchSize, k, table.unpack(sizes)))
+      :view(batchSize * k, table.unpack(sizes))
+  end)
+end
+
+--[[Helper function. Recursively expand `(batchSize, ...)` tensors
+  to `(batchSize * beamSize, ...)` tensors.
+
+Parameters:
+
+  * `v` - tensor of size `(batchSize, ...)` or a table containing such tensors
+  * `beamSize` - beam size
+
+Returns: Expanded `(batchSize * beamSize, ...)` tensor or a table containing
+  such tensors
+
+--]]
+local function replicateBeam(v, beamSize)
+  return onmt.utils.Tensor.recursiveApply(v, function (h)
+    local batchSize = h:size(1)
+    local sizes = {}
+    for j = 2, #h:size() do
+      sizes[j - 1] = h:size(j)
+    end
+    return h
+      :contiguous()
+      :view(batchSize, 1, table.unpack(sizes))
+      :expand(batchSize, beamSize, table.unpack(sizes))
+      :contiguous()
+      :view(batchSize * beamSize, table.unpack(sizes))
+  end)
+end
+
+
+--[[Constructor. We allow users to either specify all initial hypotheses by
+  passing in `token` and `state` with first dimension `batchSize * beamSize`
+  such that there are `beamSize` initial hypotheses for every sequence in the
+  batch and pass in the number of sequences `batchSize`, or only specify one
+  hypothesis per sequence by passing `token` and `state` with first dimension
+  `batchSize`, and then `onmt.translate.BeamSearcher` will pad with auxiliary
+  hypotheses with scores `-inf` such that each sequence starts with `beamSize`
+  hypotheses as in the former case.
+
+Parameters:
+
+  * `token` - tensor of size `(batchSize, vocabSize)` (if start with one initial
+  hypothesis per sequence) or `(batchSize * beamSize, vocabSize)` (if start with
+  `beamSize` initial hypotheses per sequence), or a list of such tensors.
+  * `state` - an iterable object, where the contained tensors should have the
+  same first dimension as `token`.
+  * `batchSize` - optional, number of sentences. Only necessary if
+  start with `beamSize` hypotheses per sequence. [`token:size(1)`]
+
+--]]
+function Beam:__init(token, state, batchSize)
+  self._remaining = batchSize or token:size(1)
+
+  if torch.type(token) == 'table' then
+    self._tokens = token
   else
-    flatWordLk = wordLk[1]:view(-1)
+    self._tokens = { token }
   end
+  self._state = state
 
-
-  -- Find the top-k elements in flatWordLk and backpointers.
-  local prevK = torch.LongTensor(self.size)
-  local nextY = torch.LongTensor(self.size)
-  local nextFeat = {}
-  local attn = {}
-
-  for j = 1, #featsLk do
-    nextFeat[j] = torch.LongTensor(self.size)
-  end
-
-  local bestScores, bestScoresId = flatWordLk:topk(self.size, 1, true, true)
-
-  for k = 1, self.size do
-    self.scores[k] = bestScores[k]
-
-    local fromBeam, bestScoreId = flatToRc(wordLk, bestScoresId[k])
-
-    prevK[k] = fromBeam
-    nextY[k] = bestScoreId
-    table.insert(attn, attnOut[fromBeam]:clone())
-
-    -- For features, just store predictions for each beam.
-    for j = 1, #featsLk do
-      local _, best = featsLk[j]:max(2)
-      nextFeat[j]:copy(best)
-    end
-  end
-
-  -- End condition is when top-of-beam is EOS.
-  if nextY[1] == onmt.Constants.EOS then
-    self.done = true
-  end
-
-  table.insert(self.prevKs, prevK)
-  table.insert(self.nextYs, nextY)
-  table.insert(self.nextFeatures, nextFeat)
-  table.insert(self.attn, attn)
-
-  return self.done
+  self._scores = torch.zeros(self._remaining)
+  self._backPointer = nil
+  self._prevBeam = nil
+  self._orig2Remaining = {}
+  self._remaining2Orig = {}
+  self._step = 1
 end
 
-function Beam:sortBest()
-  return torch.sort(self.scores, 1, true)
-end
-
---[[ Get the score of the best in the beam. ]]
-function Beam:getBest()
-  local scores, ids = self:sortBest()
-  return scores[1], ids[1]
-end
-
---[[ Walk back to construct the full hypothesis.
-
-Parameters:
-
-  * `k` - the position in the beam to construct.
+--[[
 
 Returns:
 
-  1. The hypothesis
-  2. The attention at each time step.
+  * `tokens` - a list of tokens. Note that the start-of-sequence symbols are
+  also included. `tokens[t]` stores the tokens at step `t`, which is a tensor
+  of size `batchSize * beamSize`.
+
 --]]
-function Beam:getHyp(k)
-  local hyp = {}
-  local feats = {}
-  local attn = {}
-
-  for _ = 1, #self.prevKs - 1 do
-    table.insert(hyp, {})
-    table.insert(attn, {})
-
-    if self.numFeatures > 0 then
-      table.insert(feats, {})
-    end
-  end
-
-  for j = #self.prevKs, 2, -1 do
-    hyp[j - 1] = self.nextYs[j][k]
-    for i = 1, self.numFeatures do
-      feats[j - 1][i] = self.nextFeatures[j][i][k]
-    end
-    attn[j - 1] = self.attn[j - 1][k]
-    k = self.prevKs[j][k]
-  end
-
-  return hyp, feats, attn
+function Beam:getTokens()
+  return self._tokens
 end
 
+--[[
+
+Returns:
+
+  * `state` - an abstract iterable object as passed by constructor. Every tensor
+  inside the `state` has first dimension `batchSize * beamSize`
+
+--]]
+function Beam:getState()
+  return self._state
+end
+
+--[[
+
+Returns:
+
+  * `scores` - a flat tensor storing the total scores for each batch. It is of
+  size `batchSize * beamSize`.
+
+--]]
+function Beam:getScores()
+  return self._scores
+end
+
+--[[
+
+Returns:
+
+  * `backPointer` - a flat tensor storing the backpointers for each batch. It is
+  of size `batchSize * beamSize`
+
+--]]
+function Beam:getBackPointer()
+  return self._backPointer
+end
+
+--[[ Returns the number of unfinished sequences. The finished sequences will be
+  removed from batch.
+
+Returns:
+
+  * `remaining` - the number of unfinished sequences.
+
+--]]
+function Beam:getRemaining()
+  return self._remaining
+end
+
+--[[ Since finished sequences are being removed from the batch, this function
+  provides a way to convert the remaining batch id to the original batch id.
+
+--]]
+function Beam:remaining2Orig(remainingId)
+  if remainingId then
+    return self._remaining2Orig[remainingId]
+  else
+    return self._remaining2Orig
+  end
+end
+
+--[[ Since finished sequences are being removed from the batch, this function
+  provides a way to convert the original batch id to the remaining batch id.
+
+--]]
+function Beam:orig2Remaining(origId)
+  if origId then
+    return self._orig2Remaining[origId]
+  else
+    return self._orig2Remaining
+  end
+end
+
+--[[ Set state.
+--]]
+function Beam:setState(state)
+  self._state = state
+end
+
+--[[ Set scores.
+--]]
+function Beam:setScores(scores)
+  self._scores = scores:view(-1)
+end
+
+--[[ Set backPointer.
+--]]
+function Beam:setBackPointer(backPointer)
+  self._backPointer = backPointer:view(-1)
+end
+
+-- In the first step, if there is only 1 hypothesis per batch, then each
+-- hypothesis is replicated beamSize times to keep consistency with the
+-- following beam search steps, while the scores of the auxiliary hypotheses
+-- are set to -inf.
+function Beam:_replicate(beamSize)
+  assert (#self._tokens == 1, 'only the first beam may need replicating!')
+  local token = self._tokens[1]
+  local batchSize = token:size(1)
+  self._tokens[1] = replicateBeam(token, beamSize)
+  self._state = replicateBeam(self._state, beamSize)
+  self._scores = replicateBeam(self._scores, beamSize)
+  local maskScores = self._scores.new():resize(batchSize, beamSize)
+  maskScores:fill(-math.huge)
+  maskScores:select(2,1):fill(0)
+  self._scores:add(maskScores:view(-1))
+end
+
+-- Given new scores, combine that with the previous total scores and find the
+-- top K hypotheses to form the next beam.
+function Beam:_expandScores(scores, beamSize)
+  local remaining = math.floor(scores:size(1) / beamSize)
+  local vocabSize = scores:size(2)
+  self._scores = self._scores:typeAs(scores)
+  local expandedScores
+    = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
+         + self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize)
+      ):view(remaining, -1)
+  return expandedScores
+end
+
+-- Create a new beam given new token, scores and backpointer.
+function Beam:_nextBeam(token, scores, backPointer, beamSize)
+  local remaining = math.floor(token:size(1) / beamSize)
+  local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
+                           self:_nextState(backPointer, beamSize),
+                           remaining)
+  newBeam:setScores(scores)
+  newBeam:setBackPointer(backPointer)
+  newBeam._prevBeam = self
+  newBeam._step = self._step + 1
+  return newBeam
+end
+
+-- Select the on-beam states using the pointers
+function Beam:_nextState(backPointer, beamSize)
+  local nextState = selectBeam(self._state, backPointer, beamSize)
+  return nextState
+end
+
+-- Given backpointers, index the tokens in the history to form the next beam's
+-- token list.
+function Beam:_nextTokens(token, backPointer, beamSize)
+  local nextTokens = selectBeam(self._tokens, backPointer, beamSize)
+  nextTokens[#nextTokens + 1] = token
+  return nextTokens
+end
+
+-- Remove finished sequences to save computation.
+function Beam:_removeFinishedBatches(remainingIds, beamSize)
+  self._remaining = #remainingIds
+  if #remainingIds > 0 then
+    self._state = rcToFlat(selectBatch(flatToRc(self._state, beamSize), remainingIds))
+    self._tokens = rcToFlat(selectBatch(flatToRc(self._tokens, beamSize), remainingIds))
+    self._scores = rcToFlat(selectBatch(flatToRc(self._scores, beamSize), remainingIds))
+    self._backPointer = rcToFlat(selectBatch(flatToRc(self._backPointer, beamSize), remainingIds))
+  end
+end
+
+-- Index the iterable state object by given batch id and beam id.
+function Beam:_indexState(beamSize, batchId, beamId, keptIndexes)
+  keptIndexes = keptIndexes or {}
+  local keptState = {}
+  for _, val in pairs(keptIndexes) do
+    keptState[val] = self._state[val]
+  end
+  return selectBatchBeam(keptState, beamSize, batchId, beamId)
+end
+
+-- Index the last step token by given batch id and beam id.
+function Beam:_indexToken(beamSize, batchId, beamId)
+  local token = self._tokens[#self._tokens]
+  return selectBatchBeam(token, beamSize, batchId, beamId)
+end
+
+-- Index backpointer by given batch id and beam id.
+function Beam:_indexBackPointer(beamSize, batchId, beamId)
+  if self._backPointer then
+    return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
+  end
+end
+
+-- To save memory, only states at keptIndexes will be kept, while the rest
+-- are discarded.
+function Beam:_cleanUp(keptIndexes)
+  keptIndexes = keptIndexes or {}
+  local keptState = {}
+  for _, val in pairs(keptIndexes) do
+    keptState[val] = self._state[val]
+  end
+  self._state = keptState
+end
+
+-- Add completed hypotheses to buffer.
+function Beam:_addCompletedHypotheses(batchId, completed)
+  local origId = self:_getOrigId(batchId)
+  self._remainingId = self._remainingId or 0
+  self._remainingId = self._remainingId + 1
+  self._orig2Remaining[origId] = self._remainingId
+  self._remaining2Orig[self._remainingId] = origId
+  completed = completed:view(self._remaining, -1)
+  local scores = self._scores:view(self._remaining, -1)
+  local tokens = self._tokens[#self._tokens]:view(self._remaining, -1)
+  local backPointers = self._backPointer:view(self._remaining, -1)
+
+  Beam._completed = Beam._completed or {}
+  Beam._completed[origId] = Beam._completed[origId] or {}
+  for k = 1, completed:size(2) do
+    if completed[batchId][k] == 1 then
+      local token = tokens[batchId][k]
+      local backPointer = backPointers[batchId][k]
+      local score = scores[batchId][k]
+      local hypothesis = {origId, score, token, backPointer, self._step}
+
+      -- Maintain a sorted list.
+      local id = #Beam._completed[origId] + 1
+      Beam._completed[origId][id] = hypothesis
+      while id > 1 do
+        if Beam._completed[origId][id - 1][2] < score then
+          Beam._completed[origId][id - 1], Beam._completed[origId][id]
+            = Beam._completed[origId][id], Beam._completed[origId][id - 1]
+          id = id - 1
+        else
+          break
+        end
+      end
+    end
+  end
+end
+
+-- Free buffer when a sequence is finished.
+function Beam._removeCompleted(batchId)
+  if Beam._completed then
+    Beam._completed[batchId] = nil
+  end
+end
+
+-- Get the original if of a sequence given its current position in the batch.
+function Beam:_getOrigId(remainingId)
+  local origId
+  if self._step <= 2 then
+    origId = remainingId
+  else
+    origId = self._prevBeam:remaining2Orig(remainingId)
+  end
+  return origId
+end
+
+-- Get nBest hypotheses for a particular sequence in the batch.
+function Beam:_getTopHypotheses(remainingId, nBest, completed)
+  local origId = self:_getOrigId(remainingId)
+
+  -- Get previously completed hypotheses of the sequence.
+  local prevCompleted
+  if Beam._completed then
+    prevCompleted = Beam._completed[origId] or {}
+  else
+    prevCompleted = {}
+  end
+
+  local hypotheses = {}
+  local prevId = 1
+  local currId = 1
+  completed = completed:view(self._remaining, -1)
+  local scores = self._scores:view(self._remaining, -1)
+  local tokens = self._tokens[#self._tokens]:view(self._remaining, -1)
+  local backPointers = self._backPointer:view(self._remaining, -1)
+  for _ = 1, nBest do
+    local hypothesis, finished
+    if prevId <= #prevCompleted and prevCompleted[prevId][2] > scores[remainingId][currId] then
+      hypothesis = prevCompleted[prevId]
+      finished = true
+      prevId = prevId + 1
+    else
+      finished = (completed[remainingId][currId] == 1)
+      if finished then
+        local score = scores[remainingId][currId]
+        local token = tokens[remainingId][currId]
+        local backPointer = backPointers[remainingId][currId]
+        hypothesis = {origId, score, token, backPointer, self._step}
+      end
+      currId = currId + 1
+    end
+    table.insert(hypotheses, {hypothesis = hypothesis, finished = finished})
+  end
+  return hypotheses
+end
 return Beam

@@ -20,10 +20,25 @@ cmd:text("")
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
+local function extractData(tokens)
+  local words, features = onmt.utils.Features.extract(tokens)
+
+  local data = {}
+  data.words = words
+
+  if #features > 0 then
+    data.features = features
+  end
+
+  return data
+end
+
+local function buildSentence(data)
+  return table.concat(onmt.utils.Features.annotate(data.words, data.features), " ")
+end
+
 local function translateMessage(translator, lines)
-  local srcBatch = {}
-  local srcWordsBatch = {}
-  local srcFeaturesBatch = {}
+  local batch = {}
 
   -- Extract from the line.
   for i = 1, #lines do
@@ -31,40 +46,41 @@ local function translateMessage(translator, lines)
     for word in lines[i].src:gmatch'([^%s]+)' do
       table.insert(srcTokens, word)
     end
-    local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
 
     -- Currently just a single batch.
-    table.insert(srcBatch, srcTokens)
-    table.insert(srcWordsBatch, srcWords)
-    if #srcFeats > 0 then
-      table.insert(srcFeaturesBatch, srcFeats)
-    end
+    table.insert(batch, extractData(srcTokens))
   end
 
   -- Translate
-  local data = translator:buildData(srcWordsBatch, srcFeaturesBatch,
-                                    nil, nil)
-  local batch = data:getBatch()
-  local pred, predFeats, predScore, attn = translator:translateBatch(batch)
+  local results = translator:translate(batch)
 
   -- Return the nbest translations for each in the batch.
   local translations = {}
+
   for b = 1, #lines do
     local ret = {}
+
     for i = 1, translator.opt.n_best do
-      local predBatch = translator:buildTargetTokens(pred[b][i], predFeats[b][i],
-                                                     srcBatch[b], attn[b][i])
-      local predSent = predBatch
+      local srcSent = buildSentence(batch[b])
+      local predSent = buildSentence(results[b].preds[i])
+
       local attnTable = {}
-      for j = 1, #attn[b][i] do
-        table.insert(attnTable, attn[b][i][j]:totable())
+      for j = 1, #results[b].preds[i].attention do
+        table.insert(attnTable, results[b].preds[i].attention[j]:totable())
       end
-      local srcSent = srcBatch[b]
-      table.insert(ret, {tgt = predSent, attn = attnTable, src=srcSent, n_best=i,
-                         pred_score=predScore[b][i]})
+
+      table.insert(ret, {
+        tgt = predSent,
+        attn = attnTable,
+        src = srcSent,
+        n_best = i,
+        pred_score = results[b].preds[i].score
+      })
     end
+
     table.insert(translations, ret)
   end
+
   return translations
 end
 

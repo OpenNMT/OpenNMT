@@ -216,7 +216,7 @@ local function trainModel(model, trainData, validData, dataset, info)
     learningRate = opt.learning_rate,
     learningRateDecay = opt.learning_rate_decay,
     startDecayAt = opt.start_decay_at,
-    optimStates = opt.optim_states
+    optimStates = (info and info.optimStates) or nil
   })
 
   local checkpoint = onmt.train.Checkpoint.new(opt, model, optim, dataset.dicts)
@@ -367,7 +367,7 @@ local function trainModel(model, trainData, validData, dataset, info)
             -- Send batch data to the GPU.
             onmt.utils.Cuda.convert(_G.batch)
             _G.batch.totalSize = _G.batch.size
-            local loss = trainNetwork()
+            local loss = trainNetwork(_G.batch)
 
             -- Update the parameters.
             optim:prepareGrad(_G.gradParams, opt.max_grad_norm)
@@ -480,7 +480,6 @@ local function main()
       opt.curriculum = checkpoint.options.curriculum
 
       opt.learning_rate = checkpoint.info.learningRate
-      opt.optim_states = checkpoint.info.optimStates
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration
 

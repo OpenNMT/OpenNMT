@@ -76,39 +76,48 @@ end
   When using CPU only, converts to float instead of the default double.
 ]]
 function Cuda.convert(obj)
-  if torch.typename(obj) then
+  local objtype = torch.typename(obj)
+  if objtype then
     if Cuda.activated and obj.cuda ~= nil then
-      local cudaobj = obj:cuda()
-      if Cuda.cudnn and obj.modules then
-        local count = 0
-        -- recursively goes through the graph
-        cudaobj:apply(function(m)
-          if m.modules then
-            for i, _ in ipairs(m.modules) do
-              if _cudnnSupportedNN(torch.type(m.modules[i])) then
-                count = count + 1
-                local modules = m.modules[i].modules
-                -- disable recursivity in conversion since we are already recursing
-                m.modules[i].modules = nil
-                m.modules[i] = Cuda.cudnn.convert(m.modules[i], Cuda.cudnn)
-                m.modules[i].algorithm = 'CUDNN_SOFTMAX_FAST'
-                m.modules[i].modules = modules
+      if objtype:find('torch%..*LongTensor') then
+        return obj:cudaLong()
+      else
+        local cudaobj = obj:cuda()
+        if Cuda.cudnn and obj.modules then
+          local count = 0
+          -- recursively goes through the graph
+          cudaobj:apply(function(m)
+            if m.modules then
+              for i, _ in ipairs(m.modules) do
+                if _cudnnSupportedNN(torch.type(m.modules[i])) then
+                  count = count + 1
+                  local modules = m.modules[i].modules
+                  -- disable recursivity in conversion since we are already recursing
+                  m.modules[i].modules = nil
+                  m.modules[i] = Cuda.cudnn.convert(m.modules[i], Cuda.cudnn)
+                  m.modules[i].algorithm = 'CUDNN_SOFTMAX_FAST'
+                  m.modules[i].modules = modules
+                end
               end
             end
+          end)
+          if count > 0 then
+            _G.logger:info('Using cudnn modules for ...'..torch.typename(obj)..' ('..count..')')
           end
-        end)
-        if count > 0 then
-          _G.logger:info('Using cudnn modules for ...'..torch.typename(obj)..' ('..count..')')
         end
+        return cudaobj
       end
-      return cudaobj
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
-      return obj:float()
+      if objtype:find('torch%..*LongTensor') then
+        return obj:long()
+      else
+        return obj:float()
+      end
     end
   end
 
-  if torch.typename(obj) or type(obj) == 'table' then
+  if objtype or type(obj) == 'table' then
     for k, v in pairs(obj) do
       obj[k] = Cuda.convert(v)
     end
