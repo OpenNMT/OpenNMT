@@ -61,7 +61,6 @@ def main(args):
         if re.search(r"\.(sgm|sgml|xml)$",r['source']['fileName']):
             p = subprocess.Popen(["perl",scriptpath+"/3rdParty/input-from-sgm.perl"],stdin=subprocess.PIPE,stdout=testtxt)
             p.stdin.write(response.content)
-            p.stdin.close()
             p.communicate()
         else:
             testtxt.write(response.content)
