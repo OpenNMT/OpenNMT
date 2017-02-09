@@ -102,12 +102,10 @@ function Factory.buildEncoder(opt, inputNetwork)
     local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
 
     encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
-    encoder.name = "BiEncoder"
   else
     local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
     encoder = onmt.Encoder.new(inputNetwork, rnn)
-    encoder.name = "Encoder"
   end
   return encoder
 end
@@ -116,12 +114,15 @@ function Factory.loadEncoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
-  if pretrained.name then
-    if pretrained.name == "Encoder" then return onmt.Encoder.load(pretrained) end
-    if pretrained.name == "BiEncoder" then return onmt.BiEncoder.load(pretrained) end
+
+  if pretrained.name == 'Encoder' then
+    return onmt.Encoder.load(pretrained)
+  end
+  if pretrained.name == 'BiEncoder' then
+    return onmt.BiEncoder.load(pretrained)
   end
 
-  -- keep for backward compatibility
+  -- Keep for backward compatibility.
   local brnn = #pretrained.modules == 2
   if brnn then
     return onmt.BiEncoder.load(pretrained)

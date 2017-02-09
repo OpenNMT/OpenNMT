@@ -42,20 +42,24 @@ function seq2seq.declareOpts(cmd)
   cmd:setCmdLineOptions(seq2seq_options, "Sequence to Sequence Attention")
 end
 
-function seq2seq:__init(args, datasetOrCheckpoint, verboseOrReplica)
+function seq2seq:__init(args, dicts, verbose)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, seq2seq_options))
-  if type(datasetOrCheckpoint)=='Checkpoint' then
-    local checkpoint = datasetOrCheckpoint
-    local replica = verboseOrReplica
-    self.models.encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder, replica)
-    self.models.decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder, replica)
-  else
-    local dataset = datasetOrCheckpoint
-    local verbose = verboseOrReplica
-    self.models.encoder = onmt.Factory.buildWordEncoder(args, dataset.dicts.src, verbose)
-    self.models.decoder = onmt.Factory.buildWordDecoder(args, dataset.dicts.tgt, verbose)
-  end
+
+  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
+  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
+end
+
+function seq2seq.load(args, models, isReplica)
+  local self = torch.factory('onmt.Model.seq2seq')()
+
+  parent.__init(self, args)
+  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, seq2seq_options))
+
+  self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
+  self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
+
+  return self
 end
 
 -- Returns model name.
