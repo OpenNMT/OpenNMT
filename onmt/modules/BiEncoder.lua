@@ -92,6 +92,7 @@ function BiEncoder:serialize()
   end
 
   return {
+    name = 'BiEncoder',
     modules = modulesData,
     args = self.args
   }

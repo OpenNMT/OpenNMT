@@ -135,12 +135,18 @@ function Factory.loadEncoder(pretrained, clone)
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
   if pretrained.name then
-    if pretrained.name == "Encoder" then return onmt.Encoder.load(pretrained) end
-    if pretrained.name == "BiEncoder" then return onmt.BiEncoder.load(pretrained) end
-    if pretrained.name == "CudnnEncoder" then return onmt.CudnnEncoder.load(pretrained) end
+    if pretrained.name == "Encoder" then
+      return onmt.Encoder.load(pretrained)
+    end
+    if pretrained.name == "BiEncoder" then
+      return onmt.BiEncoder.load(pretrained)
+    end
+    if pretrained.name == "CudnnEncoder" then
+      return onmt.CudnnEncoder.load(pretrained)
+    end
   end
 
-  -- keep for backward compatibility
+  -- Keep for backward compatibility.
   local brnn = #pretrained.modules == 2
   if brnn then
     return onmt.BiEncoder.load(pretrained)

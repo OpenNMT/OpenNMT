@@ -2,8 +2,8 @@ require('onmt.init')
 
 local cmd = onmt.ExtendedCmdLine.new("preprocess.lua")
 
--- first argument define the dataType: BITEXT/MONO - default is BITEXT
-local dataType = 'BITEXT'
+-- first argument define the dataType: bitext/monotext - default is bitext
+local dataType = 'bitext'
 for i=1,#arg do
   if arg[i]=='-data_type' and i<#arg then
     dataType = arg[i+1]
@@ -13,9 +13,9 @@ end
 
 -------------- Options declaration
 local preprocess_options = {
-  {'-data_type',         'BITEXT',  [[Type of text to preprocess. Use 'MONO' for monolingual text.
+  {'-data_type',         'bitext',  [[Type of text to preprocess. Use 'monotext' for monolingual text.
                                     This option impacts all options choices.]],
-                                    {enum={'BITEXT','MONO'}}},
+                                    {enum={'bitext','monotext'}}},
   {'-save_data',               '',     [[Output file for the prepared data]]}
 }
 
@@ -50,16 +50,16 @@ local function main()
   local data = { dataType=dataType }
 
   data.dicts = {}
-  data.dicts.src = Vocabulary.init('train', opt.train, opt.vocab, opt.vocab_size,
-                                   opt.features_vocabs_prefix, function(s) return isValid(s, opt.seq_length) end)
-  if dataType ~= 'MONO' then
+  data.dicts.src = Vocabulary.init('train', opt.train_src or opt.train, opt.src_vocab or opt.vocab, opt.src_vocab_size or opt.vocab_size,
+                                   opt.features_vocabs_prefix, function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
+  if dataType ~= 'monotext' then
     data.dicts.tgt = Vocabulary.init('target', opt.train_tgt, opt.tgt_vocab, opt.tgt_vocab_size,
-                                     opt.features_vocabs_prefix, function(s) return isValid(s, opt.src_seq_length) end)
+                                     opt.features_vocabs_prefix, function(s) return isValid(s, opt.tgt_seq_length) end)
   end
 
   _G.logger:info('Preparing training data...')
   data.train = {}
-  if dataType == 'MONO' then
+  if dataType == 'monotext' then
     data.train.src = Preprocessor:makeMonolingualData(opt.train, data.dicts.src, isValid)
   else
     data.train.src, data.train.tgt = Preprocessor:makeBilingualData(opt.train_src, opt.train_tgt,
@@ -71,7 +71,7 @@ local function main()
 
   _G.logger:info('Preparing validation data...')
   data.valid = {}
-  if dataType == 'MONO' then
+  if dataType == 'monotext' then
     data.valid.src = Preprocessor:makeMonolingualData(opt.valid, data.dicts.src, isValid)
   else
     data.valid.src, data.valid.tgt = Preprocessor:makeBilingualData(opt.valid_src, opt.valid_tgt,
@@ -81,7 +81,7 @@ local function main()
 
   _G.logger:info('')
 
-  if dataType == 'MONO' then
+  if dataType == 'monotext' then
     if opt.vocab:len() == 0 then
       Vocabulary.save('source', data.dicts.src.words, opt.save_data .. '.dict')
     end

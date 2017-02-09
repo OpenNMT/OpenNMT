@@ -6,8 +6,8 @@ local Cuda = {
 }
 
 local cuda_options = {
-  {'-gpuid',     0,   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
-                                 {valid=onmt.ExtendedCmdLine.isUInt()}},
+  {'-gpuid',     '0',   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
+                                 {valid=onmt.ExtendedCmdLine.listUInt}},
   {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]},
   {'-cudnn', '', [[Layers, comma-separated, for which you want to use optimized cudnn routines]],
                                  {enum={'', 'RNN', 'SoftMax', 'Sigmoid'}}}
@@ -18,7 +18,7 @@ function Cuda.declareOpts(cmd)
 end
 
 function Cuda.init(opt, masterGPU)
-  for _, val in ipairs(onmt.utils.String.split(tostring(opt.gpuid), ',')) do
+  for _, val in ipairs(onmt.utils.String.split(opt.gpuid, ',')) do
     local id = tonumber(val)
     assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. val)
     if id > 0 then

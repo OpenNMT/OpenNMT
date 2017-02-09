@@ -148,7 +148,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           _G.batch.totalSize = totalSize
 
           optim:zeroGrad(_G.gradParams)
-          local loss = model:trainNetwork(_G.batch, _G.criterion, doProfile)
+          local loss = _G.model:trainNetwork(_G.batch, _G.criterion, doProfile)
 
           return idx, loss, _G.profiler:dump()
         end,
@@ -199,12 +199,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           end
 
           local lossThread = 0
-          local batchThread = {
-            size = 1,
-            sourceLength = 0,
-            targetLength = 0,
-            targetNonZeros = 0
-          }
+          -- Aggregate batch information.
+          local batchThread = model.batchInit()
+          -- Since we will be adding batches of multiple size, do as if we have a aggregated batch of size 1,
+          batchThread.size = 1
 
           while true do
             -- Do not process more than 1000 batches (TODO - make option) in one shot.
@@ -237,11 +235,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             -- Add up gradParams to params and synchronize back to this thread.
             onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
 
-            batchThread.sourceLength = batchThread.sourceLength + _G.batch.sourceLength * _G.batch.size
-            if _G.batch.targetLength then
-              batchThread.targetLength = batchThread.targetLength + _G.batch.targetLength * _G.batch.size
-              batchThread.targetNonZeros = batchThread.targetNonZeros + _G.batch.targetNonZeros
-            end
+            batchThread = model.batchAggregate(_G.batch)
             lossThread = lossThread + loss
 
             -- we don't have information about the other threads here - we can only report progress

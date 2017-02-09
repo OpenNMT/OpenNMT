@@ -60,6 +60,12 @@ end
 function extendedCmdLine:__init(script)
   self.script = script
   parent.__init(self)
+
+  self:text("")
+  self:option('-h', false, 'this help file')
+  self:option('-config', '', 'read options from config file.', {valid=extendedCmdLine.fileNullOrExists})
+  self:option('-save_config', '', 'save options from config file.')
+
 end
 
 function extendedCmdLine:help(arg, doMd)
@@ -86,9 +92,6 @@ function extendedCmdLine:help(arg, doMd)
       io.write('\n')
     end
     io.write('\n')
-    io.write('* `-h`: this help file.\n')
-    io.write('* `-config`: read options from config file.\n')
-    io.write('* `-save_config`: save options to config file.\n')
   else
     if arg then
       io.write('Usage: ')
@@ -140,9 +143,6 @@ function extendedCmdLine:help(arg, doMd)
       io.write('\n')
     end
     io.write('\n')
-    io.write('  '..onmt.utils.String.pad('-h', optsz)..' this help file.\n')
-    io.write('  '..onmt.utils.String.pad('-config', optsz)..' read options from config file.\n')
-    io.write('  '..onmt.utils.String.pad('-save_config', optsz)..' save options to config file.\n')
   end
 end
 

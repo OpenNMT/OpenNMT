@@ -11,14 +11,8 @@ for i=1,#arg do
   end
 end
 
-local modelClass
-if mtype == 'seq2seq' then
-  require('onmt.models.seq2seq')
-  modelClass = onmt.Model.seq2seq
-else
-  require('onmt.models.LM')
-  modelClass = onmt.Model.LM
-end
+local selector = require('onmt.models.selector')
+local modelClass = selector(mtype)
 
 -------------- Options declaration
 local data_options = {
@@ -84,7 +78,7 @@ local function main()
   local dataset = torch.load(opt.data, 'binary', false)
 
   -- keep backward compatibility
-  dataset.dataType = dataset.dataType or "BITEXT"
+  dataset.dataType = dataset.dataType or "bitext"
 
   -- check if data matching the model
   if dataset.dataType ~= modelClass.dataType() then
@@ -98,7 +92,7 @@ local function main()
   trainData:setBatchSize(opt.max_batch_size)
   validData:setBatchSize(opt.max_batch_size)
 
-  if dataset.dataType == 'BITEXT' then
+  if dataset.dataType == 'bitext' then
     _G.logger:info(' * vocabulary size: source = %d; target = %d',
                    dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
     _G.logger:info(' * additional features: source = %d; target = %d',
@@ -119,11 +113,13 @@ local function main()
 
   -- build or load model from checkpoint and copy to GPUs
   onmt.utils.Parallel.launch(function(idx)
+    local _selector = require('onmt.models.selector')
+    local _modelClass = _selector(mtype)
     if checkpoint.models then
-      _G.model = modelClass.new(opt, checkpoint, idx > 1)
+      _G.model = _modelClass.load(opt, checkpoint.models, idx > 1)
     else
       local verbose = idx == 1
-      _G.model = modelClass.new(opt, dataset, verbose)
+      _G.model = _modelClass.new(opt, dataset.dicts, verbose)
     end
     onmt.utils.Cuda.convert(_G.model)
     return idx, _G.model
@@ -134,7 +130,8 @@ local function main()
   end)
 
   -- Define optimization method.
-  local optim = onmt.train.Optim.new(opt, opt.optim_states)
+  local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
+  local optim = onmt.train.Optim.new(opt, optimStates)
   -- Initialize trainer.
   local trainer = onmt.Trainer.new(opt)
 

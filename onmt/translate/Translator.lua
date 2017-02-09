@@ -35,8 +35,8 @@ function Translator:__init(args)
   self.checkpoint = torch.load(self.opt.model)
 
   self.models = {}
-  self.models.encoder = onmt.Models.loadEncoder(self.checkpoint.models.encoder)
-  self.models.decoder = onmt.Models.loadDecoder(self.checkpoint.models.decoder)
+  self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
+  self.models.decoder = onmt.Factory.loadDecoder(self.checkpoint.models.decoder)
 
   self.models.encoder:evaluate()
   self.models.decoder:evaluate()
@@ -217,6 +217,25 @@ function Translator:translateBatch(batch)
   return allHyp, allFeats, allScores, allAttn, goldScore
 end
 
+--[[ Translate a batch of source sequences.
+
+Parameters:
+
+  * `src` - a batch of tables containing:
+    - `words`: the table of source words
+    - `features`: the table of feaures sequences (`src.features[i][j]` is the value of the ith feature of the jth token)
+  * `gold` - gold data to compute confidence score (same format as `src`)
+
+Returns:
+
+  * `results` - a batch of tables containing:
+    - `goldScore`: if `gold` was given, this is the confidence score
+    - `preds`: an array of `opt.n_best` tables containing:
+      - `words`: the table of target words
+      - `features`: the table of target features sequences
+      - `attention`: the attention vectors of each target word over the source words
+      - `score`: the confidence score of the prediction
+]]
 function Translator:translate(src, gold)
   local data, ignored = self:buildData(src, gold)
   local batch = data:getBatch()
