@@ -1,6 +1,4 @@
 local unicode = require 'tools.utils.unicode'
-local separators = require('tools.utils.separators')
-
 local BPE = torch.class('BPE')
 
 function BPE:__init(opt)
@@ -22,6 +20,8 @@ function BPE:__init(opt)
   self.prefix = options[1] == "true" and true or false
   self.suffix = options[2] == "true" and true or false
   self.case_insensitive = options[3] == "true" and true or false
+  self.EOT_marker = opt.EOT_marker
+  self.BOT_marker = opt.BOT_marker
   self.joiner_new = opt.joiner_new
   self.joiner_annotate = opt.joiner_annotate
 
@@ -104,8 +104,8 @@ function BPE:encode(l)
     word[1] = l
     return word
   end
-  if self.prefix then table.insert(word, 1, separators.BOT) end
-  if self.suffix then table.insert(word, separators.EOT) end
+  if self.prefix then table.insert(word, 1, self.BOT_marker) end
+  if self.suffix then table.insert(word, self.EOT_marker) end
   local pairs = getPairs(word)
   while true do
     local bigram = self:minPair(pairs)
@@ -142,18 +142,18 @@ function BPE:encode(l)
   end
 
   if self.suffix then
-    if word[#word] == separators.EOT then
+    if word[#word] == self.EOT_marker then
       table.remove(word, #word)
-    elseif string.sub(word[#word],-string.len(separators.EOT)) == separators.EOT then
-      word[#word] = string.sub(word[#word], 1, -string.len(separators.EOT)-1)
+    elseif string.sub(word[#word],-string.len(self.EOT_marker)) == self.EOT_marker then
+      word[#word] = string.sub(word[#word], 1, -string.len(self.EOT_marker)-1)
     end
   end
 
   if self.prefix then
-    if word[1] == separators.BOT then
+    if word[1] == self.BOT_marker then
       table.remove(word, 1)
-    elseif string.sub(word[1], 1, string.len(separators.BOT)) == separators.BOT then
-      word[1] = string.sub(word[1], string.len(separators.BOT)+1)
+    elseif string.sub(word[1], 1, string.len(self.BOT_marker)) == self.BOT_marker then
+      word[1] = string.sub(word[1], string.len(self.BOT_marker)+1)
     end
   end
 

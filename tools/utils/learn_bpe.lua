@@ -11,13 +11,13 @@ cmd:text("")
 cmd:text("**learn_bpe.lua**")
 cmd:text("")
 
-cmd:option('-prefix', false, [[Append '﹤' to the begining of each word to learn prefix-orientated pair statistics]])
-cmd:option('-suffix', false, [[Append '﹥' to the end of each word to learn suffix-orientated pair statistics]])
 cmd:option('-input', '', [[Input file for bpe learning]])
 cmd:option('-size', '30000', [[The number of merge operations to learn]])
 cmd:option('-t', false, [[tokenize the input with tokenizer, the same options as tokenize.lua, but only '-mode' is taken into account for BPE training]])
 cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
 cmd:option('-lc', false, [[lowercase the output from the tokenizer before BPE learning]])
+cmd:option('-prefix', false, [[Append '﹤' to the begining of each word to learn prefix-orientated pair statistics]])
+cmd:option('-suffix', false, [[Append '﹥' to the end of each word to learn suffix-orientated pair statistics]])
 
 local opt = cmd:parse(arg)
 
@@ -33,18 +33,30 @@ local function string2word(s)
   return table.concat(t, " ")
 end
 
-local function escapePattern(s)
-  s = string.gsub(s, "[%(%[%.%-%+%*%?%^%$%%%]%)]", function (c)
-                    return string.format("%%%s", c)
-  end)
-  return s
-end
-
-local function escapeString(s)
-  s = string.gsub(s, "%%", function (c)
-                    return string.format("%%%s", c)
-  end)
-  return s
+local function replace(word, bigram)
+  local new_word = {}
+  local merge = false
+  for i = 1, #word do
+    if (merge) then
+      if word[i] == bigram[2] then
+        table.insert(new_word, bigram[1] .. bigram[2])
+        merge = false
+      elseif word[i] == bigram[1] then
+        table.insert(new_word, bigram[1])
+      else
+        table.insert(new_word, bigram[1])
+        table.insert(new_word, word[i])
+        merge = false
+      end
+    else
+      if bigram[1] == word[i] then
+        merge = true
+      else
+        table.insert(new_word, word[i])
+      end
+    end
+  end
+  return table.concat(new_word, " ")
 end
 
 local function defaultdict(dvalue)
@@ -117,20 +129,14 @@ end
 
 local function replace_pair(pair, vocab, indices)
   local changed = {}
-
   local bigram = string.split (pair, " ")
-  local first = bigram[1]
-  local second = bigram[2]
-  local new_pair = first .. second
 
   for idx, ifreq in pairs (indices[pair]) do
-    local pattern = string.format ("( ?)%s( ?)", escapePattern(pair))
-    local replacement = string.format ("%%1%s%%2", escapeString(new_pair))
     if not (ifreq < 1) then
       local word_freq = vocab[idx]
       local word = word_freq[1]
       local freq = word_freq[2]
-      local new_word = string.gsub(word, pattern, replacement)
+      local new_word = replace(string.split(word, ' '), bigram)
       vocab[idx] = {new_word, freq}
       table.insert(changed, {idx, new_word, word, freq})
     end
