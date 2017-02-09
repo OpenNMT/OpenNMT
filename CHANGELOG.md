@@ -6,6 +6,7 @@
 * Support hypotheses filtering during the beam search
 * Support individually setting features vocabulary and embedding size
 * Scripts to interact with the [benchmark platform](http://scorer.nmt-benchmark.net/)
+* Language modeling example
 
 ### Fixes and improvements
 
