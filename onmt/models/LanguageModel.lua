@@ -1,8 +1,8 @@
 --[[ Language Model. ]]
 require 'onmt.models.Model'
-local LM, parent = torch.class('onmt.Model.LM', 'onmt.Model')
+local LanguageModel, parent = torch.class('onmt.Model.LanguageModel', 'onmt.Model')
 
-local LM_options = {
+local LanguageModel_options = {
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
   {'-rnn_size', 500, [[Size of RNN hidden states]]},
   {'-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]]},
@@ -25,13 +25,13 @@ local LM_options = {
   {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
 }
 
-function LM.declareOpts(cmd)
-  cmd:setCmdLineOptions(LM_options, "Language Model")
+function LanguageModel.declareOpts(cmd)
+  cmd:setCmdLineOptions(LanguageModel_options, "Language Model")
 end
 
-function LM:__init(args, dicts)
+function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, LM_options))
+  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, LanguageModel_options))
 
   -- encoder word_vec_size is in src_word_vec_size
   self.args.src_word_vec_size = args.word_vec_size
@@ -50,41 +50,41 @@ function LM:__init(args, dicts)
   self.EOS_vector_model = torch.LongTensor(args.max_batch_size):fill(onmt.Constants.EOS)
 end
 
-function LM.load()
+function LanguageModel.load()
   error("loading a language model is not yet supported")
 end
 
 -- Returns model name.
-function LM.modelName()
+function LanguageModel.modelName()
   return "Language"
 end
 
 -- Returns expected dataMode.
-function LM.dataType()
+function LanguageModel.dataType()
   return "monotext"
 end
 
 -- batch fields for language model
-function LM.batchInit()
+function LanguageModel.batchInit()
   return {
            size = 1,
            sourceLength = 0
          }
 end
 
-function LM.batchAggregate(batchA, batch)
+function LanguageModel.batchAggregate(batchA, batch)
   batchA.sourceLength = batchA.sourceLength + batch.sourceLength * batch.size
   return batchA
 end
 
-function LM:forwardComputeLoss(batch, criterion)
+function LanguageModel:forwardComputeLoss(batch, criterion)
   local _, context = self.models.encoder:forward(batch)
   local EOS_vector = self.EOS_vector_model:narrow(1, 1, batch.size)
   onmt.utils.Cuda.convert(EOS_vector)
   local loss = 0
   for t = 1, batch.sourceLength do
     local genOutputs = self.models.generator:forward(context:select(2, t))
-    -- LM is supposed to predict the following word.
+    -- LanguageModel is supposed to predict the following word.
     local output
     if t ~= batch.sourceLength then
       output = batch:getSourceInput(t + 1)
@@ -98,16 +98,16 @@ function LM:forwardComputeLoss(batch, criterion)
   return loss
 end
 
-function LM:buildCriterion(dataset)
+function LanguageModel:buildCriterion(dataset)
   return onmt.Criterion.new(dataset.dicts.src.words:size(),
                             dataset.dicts.src.features)
 end
 
-function LM:countTokens(batch)
+function LanguageModel:countTokens(batch)
   return batch.sourceLength*batch.size
 end
 
-function LM:trainNetwork(batch, criterion, doProfile)
+function LanguageModel:trainNetwork(batch, criterion, doProfile)
   local loss = 0
 
   if doProfile then _G.profiler:start("encoder.fwd") end
@@ -122,7 +122,7 @@ function LM:trainNetwork(batch, criterion, doProfile)
     local genOutputs = self.models.generator:forward(context:select(2,t))
     if doProfile then _G.profiler:stop("generator.fwd") end
 
-    -- LM is supposed to predict following word
+    -- LanguageModel is supposed to predict following word
     local output
     if t ~= batch.sourceLength then
       output = batch:getSourceInput(t + 1)

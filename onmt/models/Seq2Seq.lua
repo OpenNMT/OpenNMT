@@ -1,8 +1,8 @@
 --[[ sequence to sequence attention Model. ]]
 require 'onmt.models.Model'
-local seq2seq, parent = torch.class('onmt.Model.seq2seq', 'onmt.Model')
+local Seq2Seq, parent = torch.class('onmt.Model.Seq2Seq', 'onmt.Model')
 
-local seq2seq_options = {
+local Seq2Seq_options = {
   {'-layers', 2,           [[Number of layers in the RNN encoder/decoder]],
                      {valid=onmt.ExtendedCmdLine.isUInt()}},
   {'-rnn_size', 500, [[Size of RNN hidden states]],
@@ -38,23 +38,23 @@ local seq2seq_options = {
   {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
 }
 
-function seq2seq.declareOpts(cmd)
-  cmd:setCmdLineOptions(seq2seq_options, "Sequence to Sequence Attention")
+function Seq2Seq.declareOpts(cmd)
+  cmd:setCmdLineOptions(Seq2Seq_options, "Sequence to Sequence Attention")
 end
 
-function seq2seq:__init(args, dicts, verbose)
+function Seq2Seq:__init(args, dicts, verbose)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, seq2seq_options))
+  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, Seq2Seq_options))
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
 end
 
-function seq2seq.load(args, models, isReplica)
-  local self = torch.factory('onmt.Model.seq2seq')()
+function Seq2Seq.load(args, models, isReplica)
+  local self = torch.factory('onmt.Model.Seq2Seq')()
 
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, seq2seq_options))
+  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, Seq2Seq_options))
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
@@ -63,17 +63,17 @@ function seq2seq.load(args, models, isReplica)
 end
 
 -- Returns model name.
-function seq2seq.modelName()
+function Seq2Seq.modelName()
   return "Sequence to Sequence Attention"
 end
 
 -- Returns expected dataMode.
-function seq2seq.dataType()
+function Seq2Seq.dataType()
   return "bitext"
 end
 
--- batch fields for seq2seq model
-function seq2seq.batchInit()
+-- batch fields for Seq2Seq model
+function Seq2Seq.batchInit()
   return {
            size = 1,
            sourceLength = 0,
@@ -82,28 +82,28 @@ function seq2seq.batchInit()
          }
 end
 
-function seq2seq.batchAggregate(batchA, batch)
+function Seq2Seq.batchAggregate(batchA, batch)
   batchA.sourceLength = batchA.sourceLength + batch.sourceLength * batch.size
   batchA.targetLength = batchA.targetLength + batch.targetLength * batch.size
   batchA.targetNonZeros = batchA.targetNonZeros + batch.targetNonZeros
   return batchA
 end
 
-function seq2seq:forwardComputeLoss(batch, criterion)
+function Seq2Seq:forwardComputeLoss(batch, criterion)
   local encoderStates, context = self.models.encoder:forward(batch)
   return self.models.decoder:computeLoss(batch, encoderStates, context, criterion)
 end
 
-function seq2seq:buildCriterion(dataset)
+function Seq2Seq:buildCriterion(dataset)
   return onmt.Criterion.new(dataset.dicts.tgt.words:size(),
                             dataset.dicts.tgt.features)
 end
 
-function seq2seq:countTokens(batch)
+function Seq2Seq:countTokens(batch)
   return batch.targetNonZeros
 end
 
-function seq2seq:trainNetwork(batch, criterion, doProfile, dryRun)
+function Seq2Seq:trainNetwork(batch, criterion, doProfile, dryRun)
   if doProfile then _G.profiler:start("encoder.fwd") end
   local encStates, context = self.models.encoder:forward(batch)
   if doProfile then _G.profiler:stop("encoder.fwd") end
