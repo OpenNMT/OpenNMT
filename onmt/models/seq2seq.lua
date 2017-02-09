@@ -69,7 +69,7 @@ end
 
 -- Returns expected dataMode.
 function seq2seq.dataType()
-  return "BITEXT"
+  return "bitext"
 end
 
 -- batch fields for seq2seq model

@@ -35,7 +35,6 @@ local bitext_preprocess_options = {
 }
 
 local monolingual_preprocess_options = {
-  {'MONO',                     false,  [[Preprocess monolingual text, use 'BITEXT' for bitext.]]},
   {'-train',                   '',     [[Path to the training source data]],
                                        {valid=onmt.ExtendedCmdLine.fileExists}},
   {'-valid',                   '',     [[Path to the validation source data]],
@@ -55,9 +54,9 @@ local common_preprocess_options = {
 }
 
 function Preprocessor.declareOpts(cmd, mode)
-  mode = mode or 'BITEXT'
+  mode = mode or 'bitext'
   local preprocess_options
-  if mode == 'BITEXT' then
+  if mode == 'bitext' then
     preprocess_options = bitext_preprocess_options
   else
     preprocess_options = monolingual_preprocess_options
@@ -69,9 +68,9 @@ function Preprocessor.declareOpts(cmd, mode)
 end
 
 function Preprocessor:__init(args, mode)
-  mode = mode or 'BITEXT'
+  mode = mode or 'bitext'
   local preprocess_options
-  if mode == 'BITEXT' then
+  if mode == 'bitext' then
     preprocess_options = bitext_preprocess_options
   else
     preprocess_options = monolingual_preprocess_options

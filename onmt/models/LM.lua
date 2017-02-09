@@ -60,7 +60,7 @@ end
 
 -- Returns expected dataMode.
 function LM.dataType()
-  return "MONO"
+  return "monotext"
 end
 
 -- batch fields for language model

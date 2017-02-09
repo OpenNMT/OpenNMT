@@ -78,7 +78,7 @@ local function main()
   local dataset = torch.load(opt.data, 'binary', false)
 
   -- keep backward compatibility
-  dataset.dataType = dataset.dataType or "BITEXT"
+  dataset.dataType = dataset.dataType or "bitext"
 
   -- check if data matching the model
   if dataset.dataType ~= modelClass.dataType() then
@@ -92,7 +92,7 @@ local function main()
   trainData:setBatchSize(opt.max_batch_size)
   validData:setBatchSize(opt.max_batch_size)
 
-  if dataset.dataType == 'BITEXT' then
+  if dataset.dataType == 'bitext' then
     _G.logger:info(' * vocabulary size: source = %d; target = %d',
                    dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
     _G.logger:info(' * additional features: source = %d; target = %d',
