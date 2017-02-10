@@ -401,7 +401,7 @@
   of size <code>batchSize * beamSize</code> representing the tokens at step <code>t</code>, while
   <code>state</code> can be either a tensor with first dimension size <code>batchSize * beamSize</code>,
   or an iterable object containing several such tensors.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L184">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L184">[src]</a>
 <a name="onmt.Beam"></a></p>
 <h3 id="onmtbeamtoken-state-batchsize">onmt.Beam(token, state, batchSize)</h3>
 <p>Constructor. We allow users to either specify all initial hypotheses by
@@ -422,7 +422,7 @@
 <li><code>batchSize</code> - optional, number of sentences. Only necessary if
   start with <code>beamSize</code> hypotheses per sequence. [<code>token:size(1)</code>]</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L211">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L211">[src]</a>
 <a name="onmt.Beam:getTokens"></a></p>
 <h3 id="onmtbeamgettokens">onmt.Beam:getTokens()</h3>
 <p>Returns:</p>
@@ -431,7 +431,7 @@
   also included. <code>tokens[t]</code> stores the tokens at step <code>t</code>, which is a tensor
   of size <code>batchSize * beamSize</code>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L223">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L223">[src]</a>
 <a name="onmt.Beam:getState"></a></p>
 <h3 id="onmtbeamgetstate">onmt.Beam:getState()</h3>
 <p>Returns:</p>
@@ -439,7 +439,7 @@
 <li><code>state</code> - an abstract iterable object as passed by constructor. Every tensor
   inside the <code>state</code> has first dimension <code>batchSize * beamSize</code></li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L235">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L235">[src]</a>
 <a name="onmt.Beam:getScores"></a></p>
 <h3 id="onmtbeamgetscores">onmt.Beam:getScores()</h3>
 <p>Returns:</p>
@@ -447,7 +447,7 @@
 <li><code>scores</code> - a flat tensor storing the total scores for each batch. It is of
   size <code>batchSize * beamSize</code>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L247">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L247">[src]</a>
 <a name="onmt.Beam:getBackPointer"></a></p>
 <h3 id="onmtbeamgetbackpointer">onmt.Beam:getBackPointer()</h3>
 <p>Returns:</p>
@@ -455,7 +455,7 @@
 <li><code>backPointer</code> - a flat tensor storing the backpointers for each batch. It is
   of size <code>batchSize * beamSize</code></li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L259">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L259">[src]</a>
 <a name="onmt.Beam:getRemaining"></a></p>
 <h3 id="onmtbeamgetremaining">onmt.Beam:getRemaining()</h3>
 <p>Returns the number of unfinished sequences. The finished sequences will be
@@ -464,25 +464,25 @@
 <ul>
 <li><code>remaining</code> - the number of unfinished sequences.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L267">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L267">[src]</a>
 <a name="onmt.Beam:remaining2Orig"></a></p>
 <h3 id="onmtbeamremaining2origremainingid">onmt.Beam:remaining2Orig(remainingId)</h3>
 <p>Since finished sequences are being removed from the batch, this function
   provides a way to convert the remaining batch id to the original batch id.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L279">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L279">[src]</a>
 <a name="onmt.Beam:orig2Remaining"></a></p>
 <h3 id="onmtbeamorig2remainingorigid">onmt.Beam:orig2Remaining(origId)</h3>
 <p>Since finished sequences are being removed from the batch, this function
   provides a way to convert the original batch id to the remaining batch id.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L289">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L289">[src]</a>
 <a name="onmt.Beam:setState"></a></p>
 <h3 id="onmtbeamsetstatestate">onmt.Beam:setState(state)</h3>
 <p>Set state.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L295">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L295">[src]</a>
 <a name="onmt.Beam:setScores"></a></p>
 <h3 id="onmtbeamsetscoresscores">onmt.Beam:setScores(scores)</h3>
 <p>Set scores.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/9dbde9f76abafd107bdde06feddc8560da9bb416/onmt/translate/Beam.lua#L301">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/79b9b700db9b9f321fca13b4fd693e439c2723cb/onmt/translate/Beam.lua#L301">[src]</a>
 <a name="onmt.Beam:setBackPointer"></a></p>
 <h3 id="onmtbeamsetbackpointerbackpointer">onmt.Beam:setBackPointer(backPointer)</h3>
 <p>Set backPointer.</p>
