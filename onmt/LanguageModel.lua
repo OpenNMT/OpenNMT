@@ -97,7 +97,7 @@ function LanguageModel:forwardComputeLoss(batch, criterion)
   return loss
 end
 
-function LanguageModel:buildCriterion(dataset)
+function LanguageModel:buildCriterion(dicts)
   local outputSizes = { dicts.tgt.words:size() }
   for j = 1, #dicts.tgt.features do
     table.insert(outputSizes, dicts.tgt.features[j]:size())
