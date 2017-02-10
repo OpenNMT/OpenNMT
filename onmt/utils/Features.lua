@@ -1,4 +1,5 @@
-local tds = require('tds')
+-- tds is lazy loaded.
+local tds
 
 --[[ Separate words and features (if any). ]]
 local function extract(tokens)
@@ -65,6 +66,9 @@ local function generateSource(dicts, src, cdata)
 
   local srcId
   if cdata then
+    if not tds then
+      tds = require('tds')
+    end
     srcId = tds.Vec()
   else
     srcId = {}
@@ -83,6 +87,9 @@ local function generateTarget(dicts, tgt, cdata)
 
   local tgtId
   if cdata then
+    if not tds then
+      tds = require('tds')
+    end
     tgtId = tds.Vec()
   else
     tgtId = {}
