@@ -1,6 +1,5 @@
---[[ sequence to sequence attention Model. ]]
-require 'onmt.models.Model'
-local Seq2Seq, parent = torch.class('onmt.Model.Seq2Seq', 'onmt.Model')
+--[[ Sequence to sequence model with attention. ]]
+local Seq2Seq, parent = torch.class('Seq2Seq', 'Model')
 
 local Seq2Seq_options = {
   {'-layers', 2,           [[Number of layers in the RNN encoder/decoder]],
@@ -51,7 +50,7 @@ function Seq2Seq:__init(args, dicts, verbose)
 end
 
 function Seq2Seq.load(args, models, isReplica)
-  local self = torch.factory('onmt.Model.Seq2Seq')()
+  local self = torch.factory('Seq2Seq')()
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, Seq2Seq_options))
@@ -122,3 +121,5 @@ function Seq2Seq:trainNetwork(batch, criterion, doProfile, dryRun)
   if doProfile then _G.profiler:stop("encoder.bwd") end
   return loss
 end
+
+return Seq2Seq

@@ -1,6 +1,5 @@
 --[[ Language Model. ]]
-require 'onmt.models.Model'
-local LanguageModel, parent = torch.class('onmt.Model.LanguageModel', 'onmt.Model')
+local LanguageModel, parent = torch.class('LanguageModel', 'Model')
 
 local LanguageModel_options = {
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
@@ -156,3 +155,5 @@ function LanguageModel:trainNetwork(batch, criterion, doProfile)
 
   return loss
 end
+
+return LanguageModel

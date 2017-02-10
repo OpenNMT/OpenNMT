@@ -11,8 +11,7 @@ for i=1,#arg do
   end
 end
 
-local selector = require('onmt.models.Selector')
-local modelClass = selector(mtype)
+local modelClass = onmt.ModelSelector(mtype)
 
 -------------- Options declaration
 local data_options = {
@@ -113,8 +112,7 @@ local function main()
 
   -- build or load model from checkpoint and copy to GPUs
   onmt.utils.Parallel.launch(function(idx)
-    local _selector = require('onmt.models.Selector')
-    local _modelClass = _selector(mtype)
+    local _modelClass = onmt.ModelSelector(mtype)
     if checkpoint.models then
       _G.model = _modelClass.load(opt, checkpoint.models, idx > 1)
     else

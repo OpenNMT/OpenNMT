@@ -1,5 +1,5 @@
 --[[ Generic Model class. ]]
-local Model = torch.class('onmt.Model')
+local Model = torch.class('Model')
 
 local model_options = {
   {'-model_type', 'seq2seq',  [[Type of the model to train.
@@ -72,3 +72,5 @@ function Model:initParams(verbose)
 
   return params, gradParams
 end
+
+return Model
