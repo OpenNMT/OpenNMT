@@ -117,8 +117,8 @@ function LanguageModel:trainNetwork(batch, criterion, doProfile)
   local _, context = self.models.encoder:forward(batch)
   if doProfile then _G.profiler:stop("encoder.fwd") end
 
-  local gradContexts = torch.Tensor(batch.size, batch.sourceLength, self.args.rnn_size)
-  gradContexts = onmt.utils.Cuda.convert(gradContexts)
+  local gradContexts = context:clone():zero()
+
   -- for each word of the sentence, generate target
   for t = 1, batch.sourceLength do
     if doProfile then _G.profiler:start("generator.fwd") end
