@@ -68,7 +68,6 @@ build = {
     ["onmt.utils.Dict"] = "onmt/utils/Dict.lua",
     ["onmt.utils.Features"] = "onmt/utils/Features.lua",
     ["onmt.utils.FileReader"] = "onmt/utils/FileReader.lua",
-    ["onmt.utils.Log"] = "onmt/utils/Log.lua",
     ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",
     ["onmt.utils.Profiler"] = "onmt/utils/Profiler.lua",
     ["onmt.utils.Memory"] = "onmt/utils/Memory.lua",
