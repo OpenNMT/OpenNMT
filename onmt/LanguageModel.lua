@@ -46,7 +46,10 @@ function LanguageModel:__init(args, dicts)
     self.models.generator = onmt.Generator.new(self.args.rnn_size, dicts.src.words:size())
   end
 
-  self.EOS_vector_model = torch.LongTensor(args.max_batch_size):fill(onmt.Constants.EOS)
+  self.eosProto = {}
+  for i = 1, #dicts.src.features + 1 do
+    table.insert(self.eosProto, torch.LongTensor())
+  end
 end
 
 function LanguageModel.load()
@@ -78,8 +81,11 @@ end
 
 function LanguageModel:forwardComputeLoss(batch, criterion)
   local _, context = self.models.encoder:forward(batch)
-  local EOS_vector = self.EOS_vector_model:narrow(1, 1, batch.size)
-  onmt.utils.Cuda.convert(EOS_vector)
+  local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
+  for i = 1, #eos do
+    eos[i]:fill(onmt.Constants.EOS)
+  end
+
   local loss = 0
   for t = 1, batch.sourceLength do
     local genOutputs = self.models.generator:forward(context:select(2, t))
@@ -88,7 +94,7 @@ function LanguageModel:forwardComputeLoss(batch, criterion)
     if t ~= batch.sourceLength then
       output = batch:getSourceInput(t + 1)
     else
-      output = EOS_vector
+      output = eos
     end
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
@@ -118,6 +124,10 @@ function LanguageModel:trainNetwork(batch, criterion, doProfile)
   if doProfile then _G.profiler:stop("encoder.fwd") end
 
   local gradContexts = context:clone():zero()
+  local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
+  for i = 1, #eos do
+    eos[i]:fill(onmt.Constants.EOS)
+  end
 
   -- for each word of the sentence, generate target
   for t = 1, batch.sourceLength do
@@ -130,7 +140,7 @@ function LanguageModel:trainNetwork(batch, criterion, doProfile)
     if t ~= batch.sourceLength then
       output = batch:getSourceInput(t + 1)
     else
-      output = self.EOS_vector_model:narrow(1, 1, batch.size)
+      output = eos
     end
     -- same format with and without features
     if torch.type(output) ~= 'table' then output = { output } end
