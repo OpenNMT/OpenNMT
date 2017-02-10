@@ -46,7 +46,8 @@ build = {
     ["onmt.modules.GRU"] = "onmt/modules/GRU.lua",
     ["onmt.modules.MaskedSoftmax"] = "onmt/modules/MaskedSoftmax.lua",
     ["onmt.modules.Sequencer"] = "onmt/modules/Sequencer.lua",
-    ["onmt.modules.WordEmbedding"] = "onmt/modules/WordEmbedding.lua",
+    ["onmt.modules.WordEmbedding"] = "onmt/modules/WordEmbedding.lua", 
+    ["onmt.modules.Factory"] = "onmt/modules/Factory.lua",
     ["onmt.data.init"] = "onmt/data/init.lua",
     ["onmt.data.Batch"] = "onmt/data/Batch.lua",
     ["onmt.data.Dataset"] = "onmt/data/Dataset.lua",
@@ -78,10 +79,9 @@ build = {
     ["onmt.utils.Table"] = "onmt/utils/Table.lua",
     ["onmt.utils.Tensor"] = "onmt/utils/Tensor.lua",
     ["onmt.Constants"] = "onmt/Constants.lua",
-    ["onmt.modules.Factory"] = "onmt/modules/Factory.lua",
-    ["onmt.models.selector"] = "onmt/models/selector.lua",
-    ["onmt.models.LM"] = "onmt/models/LM.lua",
-    ["onmt.models.seq2seq"] = "onmt/models/seq2seq.lua",
-    ["onmt.models.Model"] = "onmt/models/Model.lua"
+    ["onmt.ModelSelector"] = "onmt/ModelSelector.lua",
+    ["onmt.LanguageModel"] = "onmt/LanguageModel.lua",
+    ["onmt.Seq2Seq"] = "onmt/Seq2Seq.lua",
+    ["onmt.Model"] = "onmt/Model.lua"
   }
 }
