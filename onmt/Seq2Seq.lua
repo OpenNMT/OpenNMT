@@ -93,9 +93,13 @@ function Seq2Seq:forwardComputeLoss(batch, criterion)
   return self.models.decoder:computeLoss(batch, encoderStates, context, criterion)
 end
 
-function Seq2Seq:buildCriterion(dataset)
-  return onmt.Criterion.new(dataset.dicts.tgt.words:size(),
-                            dataset.dicts.tgt.features)
+function Seq2Seq:buildCriterion(dicts)
+  local outputSizes = { dicts.tgt.words:size() }
+  for j = 1, #dicts.tgt.features do
+    table.insert(outputSizes, dicts.tgt.features[j]:size())
+  end
+
+  return onmt.ParallelClassNLLCriterion(outputSizes)
 end
 
 function Seq2Seq:countTokens(batch)

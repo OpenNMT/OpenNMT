@@ -18,7 +18,7 @@ require('onmt.modules.GlobalAttention')
 require('onmt.modules.Generator')
 require('onmt.modules.FeaturesGenerator')
 
-require('onmt.modules.Criterion')
+require('onmt.modules.ParallelClassNLLCriterion')
 
 onmt.modules = { Factory = require('onmt.modules.Factory') }
 

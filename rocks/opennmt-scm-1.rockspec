@@ -47,6 +47,7 @@ build = {
     ["onmt.modules.MaskedSoftmax"] = "onmt/modules/MaskedSoftmax.lua",
     ["onmt.modules.Sequencer"] = "onmt/modules/Sequencer.lua",
     ["onmt.modules.WordEmbedding"] = "onmt/modules/WordEmbedding.lua",
+    ["onmt.modules.ParallelClassNLLCriterion"] = "onmt/modules/ParallelClassNLLCriterion.lua",
     ["onmt.modules.Factory"] = "onmt/modules/Factory.lua",
     ["onmt.data.init"] = "onmt/data/init.lua",
     ["onmt.data.Batch"] = "onmt/data/Batch.lua",

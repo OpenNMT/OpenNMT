@@ -98,8 +98,12 @@ function LanguageModel:forwardComputeLoss(batch, criterion)
 end
 
 function LanguageModel:buildCriterion(dataset)
-  return onmt.Criterion.new(dataset.dicts.src.words:size(),
-                            dataset.dicts.src.features)
+  local outputSizes = { dicts.tgt.words:size() }
+  for j = 1, #dicts.tgt.features do
+    table.insert(outputSizes, dicts.tgt.features[j]:size())
+  end
+
+  return onmt.ParallelClassNLLCriterion(outputSizes)
 end
 
 function LanguageModel:countTokens(batch)

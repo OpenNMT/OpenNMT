@@ -70,7 +70,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     _G.model:training()
 
     -- define criterion
-    _G.criterion = onmt.utils.Cuda.convert(_G.model:buildCriterion(dataset))
+    _G.criterion = onmt.utils.Cuda.convert(_G.model:buildCriterion(dataset.dicts))
 
     -- optimize memory of the first clone
     if not self.args.disable_mem_optimization then
