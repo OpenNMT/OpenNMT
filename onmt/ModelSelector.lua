@@ -1,9 +1,9 @@
-return function(mtype)
-  local modelClass
-  if mtype == 'seq2seq' then
-    modelClass = onmt.Seq2Seq
+return function(modelType)
+  if modelType == 'seq2seq' then
+    return onmt.Seq2Seq
+  elseif modelType == 'lm' then
+    return onmt.LanguageModel
   else
-    modelClass = onmt.LanguageModel
+    error('invalid model type ' .. modelType)
   end
-  return modelClass
 end
