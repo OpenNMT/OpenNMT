@@ -1,5 +1,6 @@
 require('torch')
 
+local Logger = require('onmt.utils.Logger')
 local unicode = require 'tools.utils.unicode'
 local tokenizer = require('tools.utils.tokenizer')
 local case = require ('tools.utils.case')
@@ -11,25 +12,28 @@ cmd:text("")
 cmd:text("**learn_bpe.lua**")
 cmd:text("")
 
-cmd:option('-input', '', [[Input file for bpe learning]])
 cmd:option('-size', '30000', [[The number of merge operations to learn]])
 cmd:option('-t', false, [[tokenize the input with tokenizer, the same options as tokenize.lua, but only '-mode' is taken into account for BPE training]])
 cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
 cmd:option('-lc', false, [[lowercase the output from the tokenizer before BPE learning]])
-cmd:option('-prefix', false, [[Append '﹤' to the begining of each word to learn prefix-orientated pair statistics]])
-cmd:option('-suffix', false, [[Append '﹥' to the end of each word to learn suffix-orientated pair statistics]])
+cmd:option('-bpe_mode', 'suffix', [[Define the mode for bpe - 'prefix': Append '﹤' to the begining of each word to learn prefix-oriented pair statistics;
+'suffix': Append '﹥' to the end of each word to learn suffix-oriented pair statistics, as in the original python script;
+'both': suffix and prefix; 'none': no suffix nor prefix]])
+cmd:option('-save_bpe', '', [[Path to save the output model]])
+
+--Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
 local function string2word(s)
   local t = {}
-  if opt.prefix then table.insert(t, separators.BOT) end
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, separators.BOT) end
   for _, c in unicode.utf8_iter(s) do
     if c == separators.BOT then c = separators.BOT_substitute end
     if c == separators.EOT then c = separators.EOT_substitute end
     table.insert(t, c)
   end
-  if opt.suffix then table.insert(t, separators.EOT) end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, separators.EOT) end
   return table.concat(t, " ")
 end
 
@@ -82,10 +86,9 @@ local function updatedict(d, key1, key2, value)
   end
 end
 
-local function get_vocabulary(input_path)
+local function get_vocabulary()
   local vocab = defaultdict(0)
-  local f = assert(io.open(input_path, "r"))
-  local l = f:read("*line")
+  local l = io.read()
 
   local segmentor = function (a) return string.split(a, " ") end
   if opt.t then
@@ -93,14 +96,20 @@ local function get_vocabulary(input_path)
     if opt.lc then
       segmentor = function (a) return case.lowerCase(tokenizer.tokenize(opt, a)) end
     end
+  elseif opt.lc or opt.mode == 'aggressive' then
+    _G.logger:warning('The tokenization options -lc or -mode are disabled, add -t to cmd to enable these options')
   end
+  _G.logger:info('Building vocabulary from STDIN')
+  local count = 1
   while not(l == nil) do
     local toks = segmentor(l)
     for i = 1, #toks do
       local word = toks[i]
       vocab[word] = vocab[word] + 1
     end
-    l=f:read("*line")
+    l=io.read()
+    count = count + 1
+    if count % 100000 == 0 then _G.logger:info('... ' .. count .. ' sentences processed') end
   end
   local vocabreal = {}
   for k, v in pairs(vocab) do
@@ -221,19 +230,30 @@ local function maxKey(map)
   return max_key[1]
 end
 
-if opt.input ~= '' then
+local function main()
+
+  _G.logger = Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
   local bpe_options = {}
-  if opt.prefix then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  if opt.suffix then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  if opt.lc then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.lc and opt.t then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
   table.insert(bpe_options, opt.mode)
-  io.write(table.concat(bpe_options, ";") .. "\n")
-  local vocab = get_vocabulary(opt.input)
+
+  local vocab = get_vocabulary()
   local sorted_vocab = {}
   for k, v in pairs(vocab) do sorted_vocab[#sorted_vocab+1] = {k, v} end
   table.sort(sorted_vocab, function(a, b) return a[2] > b[2] end)
+
+  _G.logger:info('Geting pair statistics from vocabulary')
   local stats, indices = get_pair_statistics (sorted_vocab)
-  for _ = 1, opt.size do
+
+  _G.logger:info('Generating merge operations to output')
+
+  local f = assert(io.open(opt.save_bpe, 'w'))
+  f:write(table.concat(bpe_options, ";") .. "\n")
+
+  for i = 1, opt.size do
     local most_frequent = maxKey(stats)
     if stats[most_frequent] < 2 then
       io.stderr:write("No pair has frequency > 1. Stopping\n")
@@ -242,6 +262,10 @@ if opt.input ~= '' then
     local changed = replace_pair(most_frequent, sorted_vocab, indices)
     update_pair_statistics(most_frequent, changed, stats, indices)
     stats[most_frequent] = 0
-    io.write(most_frequent .. "\n")
-   end
+    f:write(most_frequent .. "\n")
+    if i % 1000 == 0 then _G.logger:info('... ' .. i .. ' merge operations generated') end
+  end
+  f:close()
 end
+
+main()

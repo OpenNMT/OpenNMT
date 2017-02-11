@@ -23,9 +23,9 @@ function BPE:__init(opt)
   local t = f:read("*line")
   local options = self.split(t, ";")
   if (#options == 4) then
-    self.prefix = options[1] == "true" and true or false
-    self.suffix = options[2] == "true" and true or false
-    self.case_insensitive = options[3] == "true" and true or false
+    self.prefix = options[1] == "true"
+    self.suffix = options[2] == "true"
+    self.case_insensitive = options[3] == "true"
     t = f:read("*line")
   else
     self.prefix = opt.bpe_prefix
@@ -42,28 +42,6 @@ function BPE:__init(opt)
     end
     t=f:read("*line")
   end
-end
-
-local function utf8len (s)
-  local length = 0
-  for _, _ in unicode.utf8_iter(s) do
-    length = length + 1
-  end
-  return length
-end
-
-local function utf8substr (s, begin_idx, end_idx)
-  local substr = {}
-  local idx = 1
-  for _, c in unicode.utf8_iter(s) do
-    if begin_idx <= idx and idx <= end_idx then
-      table.insert(substr, c)
-    elseif idx > end_idx then
-      break
-    end
-    idx = idx + 1
-  end
-  return table.concat(substr, "")
 end
 
 local function getPairs(word)
@@ -167,8 +145,8 @@ function BPE:encode(l)
     local tcword = {}
     local prev_idx = 1
     for i = 1, #word do
-      local curr_idx = prev_idx+utf8len(word[i])
-      table.insert(tcword, utf8substr(l, prev_idx, curr_idx - 1))
+      local curr_idx = prev_idx+unicode.utf8len(word[i])
+      table.insert(tcword, unicode.utf8substr(l, prev_idx, curr_idx - 1))
       prev_idx = curr_idx
     end
     word = tcword
