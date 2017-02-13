@@ -1,4 +1,5 @@
-local tds = require('tds')
+-- tds is lazy loaded.
+local tds
 
 --[[ Append table `src` to `dst`. ]]
 local function append(dst, src)
@@ -18,6 +19,9 @@ end
 local function reorder(tab, index, cdata)
   local newTab
   if cdata then
+    if not tds then
+      tds = require('tds')
+    end
     newTab = tds.Vec()
     newTab:resize(#tab)
   else

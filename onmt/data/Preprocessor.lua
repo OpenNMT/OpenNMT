@@ -160,7 +160,7 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
   end
 
   _G.logger:info('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes), true)
+  local _, perm = torch.sort(vecToTensor(sizes))
   reorderData(perm)
 
   _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
@@ -234,7 +234,7 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
   end
 
   _G.logger:info('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes), true)
+  local _, perm = torch.sort(vecToTensor(sizes))
   reorderData(perm)
 
   _G.logger:info('Prepared ' .. #dataset .. ' sentences (' .. ignored
