@@ -126,7 +126,7 @@ local function makeData(srcFile, tgtFile, srcDicts, tgtDicts)
   end
 
   _G.logger:info('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes), true)
+  local _, perm = torch.sort(vecToTensor(sizes))
   reorderData(perm)
 
   _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
