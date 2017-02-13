@@ -47,7 +47,7 @@ function LanguageModel:__init(args, dicts)
   end
 
   self.eosProto = {}
-  for i = 1, #dicts.src.features + 1 do
+  for _ = 1, #dicts.src.features + 1 do
     table.insert(self.eosProto, torch.LongTensor())
   end
 end
