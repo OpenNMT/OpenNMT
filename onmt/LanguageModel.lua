@@ -11,7 +11,6 @@ local LanguageModel_options = {
   {'-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
                                         then the embedding dimension will be set to N^exponent]]},
   {'-feat_vec_size', 20, [[When using sum, the common embedding size of the features]]},
-  {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]]},
   {'-residual', false, [[Add residual connections between RNN layers.]]},
   {'-brnn', false, [[Use a bidirectional encoder]]},
   {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states.]],
