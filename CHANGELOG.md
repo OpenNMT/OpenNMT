@@ -1,3 +1,13 @@
+## [Unreleased]
+
+### New features
+
+* Training code is now part of the library
+
+### Fixes and improvements
+
+* Reported metrics are no longer averaged on the entire epoch
+
 ## [v0.4.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.0) (2017-02-10)
 
 ### New features
