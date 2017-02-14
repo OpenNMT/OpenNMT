@@ -707,7 +707,7 @@
         },
         {
             "location": "/code/translate/onmt+translate+Translator/",
-            "text": "onmt.Translator\n\n\n[src]\n\n\n\n\nonmt.Translator:translate(src, gold)\n\n\nTranslate a batch of source sequences.\n\n\nParameters:\n\n\n\n\nsrc\n - a batch of tables containing:\n\n\nwords\n: the table of source words\n\n\nfeatures\n: the table of feaures sequences (\nsrc.features[i][j]\n is the value of the ith feature of the jth token)\n\n\n\n\n\n\ngold\n - gold data to compute confidence score (same format as \nsrc\n)\n\n\n\n\nReturns:\n\n\n\n\nresults\n - a batch of tables containing:\n\n\ngoldScore\n: if \ngold\n was given, this is the confidence score\n\n\npreds\n: an array of \nopt.n_best\n tables containing:\n\n\nwords\n: the table of target words\n\n\nfeatures\n: the table of target features sequences\n\n\nattention\n: the attention vectors of each target word over the source words\n\n\nscore\n: the confidence score of the prediction\n\n\n\n\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Translator.declareOpts(cmd)\n\n\n\n * \nonmt.Translator(args)\n\n\n\n * \nonmt.Translator:buildData(src, gold)\n\n\n\n * \nonmt.Translator:buildTargetWords(pred, src, attn)\n\n\n\n * \nonmt.Translator:buildTargetFeatures(predFeats)\n\n\n\n * \nonmt.Translator:translateBatch(batch)",
+            "text": "onmt.Translator\n\n\n[src]\n\n\n\n\nonmt.Translator:translate(src, gold)\n\n\nTranslate a batch of source sequences.\n\n\nParameters:\n\n\n\n\nsrc\n - a batch of tables containing:\n\n\nwords\n: the table of source words\n\n\nfeatures\n: the table of feaures sequences (\nsrc.features[i][j]\n is the value of the ith feature of the jth token)\n\n\n\n\n\n\ngold\n - gold data to compute confidence score (same format as \nsrc\n)\n\n\n\n\nReturns:\n\n\n\n\nresults\n - a batch of tables containing:\n\n\ngoldScore\n: if \ngold\n was given, this is the confidence score\n\n\npreds\n: an array of \nopt.n_best\n tables containing:\n\n\nwords\n: the table of target words\n\n\nfeatures\n: the table of target features sequences\n\n\nattention\n: the attention vectors of each target word over the source words\n\n\nscore\n: the confidence score of the prediction\n\n\n\n\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Translator.declareOpts(cmd)\n\n\n\n * \nonmt.Translator(args)\n\n\n\n * \nonmt.Translator:buildInput(tokens)\n\n\n\n * \nonmt.Translator:buildOutput(data)\n\n\n\n * \nonmt.Translator:buildData(src, gold)\n\n\n\n * \nonmt.Translator:buildTargetWords(pred, src, attn)\n\n\n\n * \nonmt.Translator:buildTargetFeatures(predFeats)\n\n\n\n * \nonmt.Translator:translateBatch(batch)",
             "title": "onmt+translate+Translator"
         },
         {
@@ -722,7 +722,7 @@
         },
         {
             "location": "/code/translate/onmt+translate+Translator/#undocumented-methods",
-            "text": "*  onmt.Translator.declareOpts(cmd)  \n *  onmt.Translator(args)  \n *  onmt.Translator:buildData(src, gold)  \n *  onmt.Translator:buildTargetWords(pred, src, attn)  \n *  onmt.Translator:buildTargetFeatures(predFeats)  \n *  onmt.Translator:translateBatch(batch)",
+            "text": "*  onmt.Translator.declareOpts(cmd)  \n *  onmt.Translator(args)  \n *  onmt.Translator:buildInput(tokens)  \n *  onmt.Translator:buildOutput(data)  \n *  onmt.Translator:buildData(src, gold)  \n *  onmt.Translator:buildTargetWords(pred, src, attn)  \n *  onmt.Translator:buildTargetFeatures(predFeats)  \n *  onmt.Translator:translateBatch(batch)",
             "title": "Undocumented methods"
         },
         {
