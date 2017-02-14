@@ -51,6 +51,23 @@ function Translator:__init(args)
   end
 end
 
+function Translator:buildInput(tokens)
+  local words, features = onmt.utils.Features.extract(tokens)
+
+  local data = {}
+  data.words = words
+
+  if #features > 0 then
+    data.features = features
+  end
+
+  return data
+end
+
+function Translator:buildOutput(data)
+  return table.concat(onmt.utils.Features.annotate(data.words, data.features), ' ')
+end
+
 function Translator:buildData(src, gold)
   local srcData = {}
   srcData.words = {}
