@@ -110,6 +110,13 @@ function Factory.buildEncoder(opt, inputNetwork)
   return encoder
 end
 
+function Factory.buildWordEncoder(opt, dicts)
+  local inputNetwork = buildInputNetwork(opt, dicts, opt.src_word_vec_size,
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
+
+  return onmt.Factory.buildEncoder(opt, inputNetwork)
+end
+
 function Factory.loadEncoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
@@ -150,22 +157,6 @@ function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
   return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
 end
 
-function Factory.loadDecoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
-  return onmt.Decoder.load(pretrained)
-end
-
-
-function Factory.buildWordEncoder(opt, dicts)
-  local inputNetwork = buildInputNetwork(opt, dicts, opt.src_word_vec_size or opt.word_vec_size,
-                                                    opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
-
-  return onmt.Factory.buildEncoder(opt, inputNetwork)
-end
-
 function Factory.buildWordDecoder(opt, dicts, verbose)
   local inputNetwork = buildInputNetwork(opt, dicts, opt.tgt_word_vec_size,
                                          opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
@@ -181,5 +172,12 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   return onmt.Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 end
 
+function Factory.loadDecoder(pretrained, clone)
+  if clone then
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
+  end
+
+  return onmt.Decoder.load(pretrained)
+end
 
 return Factory
