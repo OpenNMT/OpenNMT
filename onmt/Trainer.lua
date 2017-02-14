@@ -92,10 +92,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
   optim:setOptimStates(#params[1])
 
-  local function trainEpoch(epoch, lastValidPpl, doProfile)
-    local epochState
-    local batchOrder
-
+  local function trainEpoch(epoch, doProfile)
     local epochProfiler = onmt.utils.Profiler.new(doProfile)
 
     local startI = self.args.start_iteration
@@ -106,11 +103,12 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
     end
 
+    local epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate())
+    local batchOrder
+
     if startI > 1 and info ~= nil then
-      epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate(), lastValidPpl, info.epochStatus)
       batchOrder = info.batchOrder
     else
-      epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate(), lastValidPpl)
       -- Shuffle mini batch order.
       batchOrder = torch.randperm(trainData:batchCount())
     end
@@ -263,8 +261,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     return epochState, epochProfiler:dump()
   end
 
-  local validPpl = 0
-
   _G.logger:info('Start training...')
 
   for epoch = self.args.start_epoch, self.args.end_epoch do
@@ -273,12 +269,12 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     local globalProfiler = onmt.utils.Profiler.new(self.args.profiler)
 
     globalProfiler:start("train")
-    local epochState, epochProfile = trainEpoch(epoch, validPpl, self.args.profiler)
+    local epochState, epochProfile = trainEpoch(epoch, self.args.profiler)
     globalProfiler:add(epochProfile)
     globalProfiler:stop("train")
 
     globalProfiler:start("valid")
-    validPpl = eval(model, criterion, validData)
+    local validPpl = eval(model, criterion, validData)
     globalProfiler:stop("valid")
 
     if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end

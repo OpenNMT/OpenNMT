@@ -3,64 +3,52 @@
 ]]
 local EpochState = torch.class("EpochState")
 
---[[ Initialize for epoch `epoch` and training `status` (current loss)]]
-function EpochState:__init(epoch, numIterations, learningRate, lastValidPpl, status)
+--[[ Initialize for epoch `epoch`]]
+function EpochState:__init(epoch, numIterations, learningRate)
   self.epoch = epoch
   self.numIterations = numIterations
   self.learningRate = learningRate
-  self.lastValidPpl = lastValidPpl
 
-  if status ~= nil then
-    self.status = status
-  else
-    self.status = {}
-    self.status.trainNonzeros = 0
-    self.status.trainLoss = 0
-  end
+  self.globalTimer = torch.Timer()
+
+  self:reset()
+end
+
+function EpochState:reset()
+  self.trainLoss = 0
+  self.sourceWords = 0
+  self.targetWordsNonZeros = 0
 
   self.timer = torch.Timer()
-  self.numWordsSource = 0
-  self.numWordsTarget = 0
 end
 
 --[[ Update training status. Takes `batch` (described in data.lua) and last loss.]]
 function EpochState:update(batch, loss)
-  self.numWordsSource = self.numWordsSource + batch.size * batch.sourceLength
-  if batch.targetLength then
-    self.numWordsTarget = self.numWordsTarget + batch.size * batch.targetLength
-  end
-  self.status.trainLoss = self.status.trainLoss + loss
+  self.trainLoss = self.trainLoss + loss
+  self.sourceWords = self.sourceWords + batch.size * batch.sourceLength
+
   if batch.targetNonZeros then
-    self.status.trainNonzeros = self.status.trainNonzeros + batch.targetNonZeros
+    self.targetWordsNonZeros = self.targetWordsNonZeros + batch.targetNonZeros
   else
-    -- if training on monolingual data - divider is number of source words
-    self.status.trainNonzeros = self.status.trainNonzeros + batch.size * batch.sourceLength
+    -- If training on monolingual data, loss is normalized by the number of source words.
+    self.targetWordsNonZeros = self.sourceWords
   end
 end
 
 --[[ Log to status stdout. ]]
 function EpochState:log(batchIndex)
-  local timeTaken = self:getTime()
+  _G.logger:info('Epoch %d ; Iteration %d/%d ; Learning rate %.4f ; Source tokens/s %d ; Perplexity %.2f',
+                 self.epoch,
+                 batchIndex, self.numIterations,
+                 self.learningRate,
+                 self.sourceWords / self.timer:time().real,
+                 math.exp(self.trainLoss / self.targetWordsNonZeros))
 
-  local stats = ''
-  stats = stats .. string.format('Epoch %d ; ', self.epoch)
-  stats = stats .. string.format('Iteration %d/%d ; ', batchIndex, self.numIterations)
-  stats = stats .. string.format('Learning rate %.4f ; ', self.learningRate)
-  stats = stats .. string.format('Source tokens/s %d ; ', self.numWordsSource / timeTaken)
-  stats = stats .. string.format('Perplexity %.2f', self:getTrainPpl())
-  _G.logger:info(stats)
-end
-
-function EpochState:getTrainPpl()
-  return math.exp(self.status.trainLoss / self.status.trainNonzeros)
+  self:reset()
 end
 
 function EpochState:getTime()
-  return self.timer:time().real
-end
-
-function EpochState:getStatus()
-  return self.status
+  return self.globalTimer:time().real
 end
 
 return EpochState

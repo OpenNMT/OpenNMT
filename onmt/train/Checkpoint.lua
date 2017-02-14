@@ -47,7 +47,6 @@ function Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)
   local info = {}
   info.iteration = iteration + 1
   info.epoch = epochState.epoch
-  info.epochStatus = epochState:getStatus()
   info.batchOrder = batchOrder
 
   local filePath = string.format('%s_checkpoint.t7', self.savePath)
