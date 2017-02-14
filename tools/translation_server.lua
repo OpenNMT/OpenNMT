@@ -1,5 +1,5 @@
 local zmq = require("zmq")
-local json = require("json")
+local json = require("dkjson")
 
 require('onmt.init')
 
