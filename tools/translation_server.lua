@@ -1,5 +1,5 @@
 local zmq = require("zmq")
-local json = require("json")
+local json = require("dkjson")
 
 require('onmt.init')
 
@@ -20,23 +20,6 @@ cmd:text("")
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
-local function extractData(tokens)
-  local words, features = onmt.utils.Features.extract(tokens)
-
-  local data = {}
-  data.words = words
-
-  if #features > 0 then
-    data.features = features
-  end
-
-  return data
-end
-
-local function buildSentence(data)
-  return table.concat(onmt.utils.Features.annotate(data.words, data.features), " ")
-end
-
 local function translateMessage(translator, lines)
   local batch = {}
 
@@ -48,7 +31,7 @@ local function translateMessage(translator, lines)
     end
 
     -- Currently just a single batch.
-    table.insert(batch, extractData(srcTokens))
+    table.insert(batch, translator:buildInput(srcTokens))
   end
 
   -- Translate
@@ -61,8 +44,8 @@ local function translateMessage(translator, lines)
     local ret = {}
 
     for i = 1, translator.opt.n_best do
-      local srcSent = buildSentence(batch[b])
-      local predSent = buildSentence(results[b].preds[i])
+      local srcSent = translator:buildOutput(batch[b])
+      local predSent = translator:buildOutput(results[b].preds[i])
 
       local attnTable = {}
       for j = 1, #results[b].preds[i].attention do

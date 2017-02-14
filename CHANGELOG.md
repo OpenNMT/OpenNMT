@@ -6,6 +6,7 @@
 
 ### Fixes and improvements
 
+* Fix translation server error when clients send escaped unicode sequences
 * Reported metrics are no longer averaged on the entire epoch
 
 ## [v0.4.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.0) (2017-02-10)

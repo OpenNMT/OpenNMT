@@ -69,7 +69,7 @@ easy way to use models from other languages such as Java and Python.
 ### Dependencies
 
 * `lua-zmq`
-* `json`
+* `dkjson`
 
 ### Installation
 
@@ -77,7 +77,7 @@ The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubu
 
 ```
 sudo apt-get install libzmq-dev
-luarocks install json
+luarocks install dkjson
 luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
 ```
 

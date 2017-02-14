@@ -33,23 +33,6 @@ local function reportScore(name, scoreTotal, wordsTotal)
                  math.exp(-scoreTotal/wordsTotal))
 end
 
-local function extractData(tokens)
-  local words, features = onmt.utils.Features.extract(tokens)
-
-  local data = {}
-  data.words = words
-
-  if #features > 0 then
-    data.features = features
-  end
-
-  return data
-end
-
-local function buildSentence(data)
-  return table.concat(onmt.utils.Features.annotate(data.words, data.features), " ")
-end
-
 local function main()
   local opt = cmd:parse(arg)
 
@@ -102,10 +85,10 @@ local function main()
     end
 
     if srcTokens ~= nil then
-      table.insert(srcBatch, extractData(srcTokens))
+      table.insert(srcBatch, translator:buildInput(srcTokens))
 
       if withGoldScore then
-        table.insert(goldBatch, extractData(goldTokens))
+        table.insert(goldBatch, translator:buildInput(goldTokens))
       end
     elseif #srcBatch == 0 then
       break
@@ -127,17 +110,17 @@ local function main()
           _G.logger:warning('Line ' .. sentId .. ' is empty.')
           outFile:write('\n')
         else
-          _G.logger:info('SENT %d: %s', sentId, buildSentence(srcBatch[b]))
+          _G.logger:info('SENT %d: %s', sentId, translator:buildOutput(srcBatch[b]))
 
           if withGoldScore then
-            _G.logger:info('GOLD %d: %s', sentId, buildSentence(goldBatch[b]), results[b].goldScore)
+            _G.logger:info('GOLD %d: %s', sentId, translator:buildOutput(goldBatch[b]), results[b].goldScore)
             _G.logger:info("GOLD SCORE: %.2f", results[b].goldScore)
             goldScoreTotal = goldScoreTotal + results[b].goldScore
             goldWordsTotal = goldWordsTotal + #goldBatch[b]
           end
 
           for n = 1, #results[b].preds do
-            local sentence = buildSentence(results[b].preds[n])
+            local sentence = translator:buildOutput(results[b].preds[n])
 
             if n == 1 then
               outFile:write(sentence .. '\n')
