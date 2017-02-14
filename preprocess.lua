@@ -16,7 +16,8 @@ local preprocess_options = {
   {'-data_type',         'bitext',  [[Type of text to preprocess. Use 'monotext' for monolingual text.
                                     This option impacts all options choices.]],
                                     {enum={'bitext','monotext'}}},
-  {'-save_data',               '',     [[Output file for the prepared data]]}
+  {'-save_data',               '',  [[Output file for the prepared data]],
+                                    {valid=onmt.ExtendedCmdLine.nonEmpty}}
 }
 
 cmd:setCmdLineOptions(preprocess_options, "Preprocess")
