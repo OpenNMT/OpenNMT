@@ -8,7 +8,7 @@ curl -v -H "Content-Type: application/json" -X POST -d '{ "src" : "international
 ]]
 
 require('onmt.init')
-require('threads')
+
 local separators = require('tools.utils.separators')
 local tokenizer = require('tools.utils.tokenizer')
 
@@ -51,7 +51,7 @@ local function translateMessage(translator, lines)
     local res
     local err
     local tokens
-    BPE = require ('tools.utils.BPE')
+    local BPE = require ('tools.utils.BPE')
     if opt.bpe_model ~= '' then
        bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
     end
@@ -115,6 +115,8 @@ end
 local restserver = require("restserver")
 
 local server = restserver:new():port(opt.port)
+
+local translator
 
 server:add_resource("translator", {
    {
