@@ -58,6 +58,7 @@ build = {
     ["onmt.train.Checkpoint"] = "onmt/train/Checkpoint.lua",
     ["onmt.train.EpochState"] = "onmt/train/EpochState.lua",
     ["onmt.train.Optim"] = "onmt/train/Optim.lua",
+    ["onmt.train.Trainer"] = "onmt/train/Trainer.lua",
     ["onmt.translate.init"] = "onmt/translate/init.lua",
     ["onmt.translate.Beam"] = "onmt/translate/Beam.lua",
     ["onmt.translate.Advancer"] = "onmt/translate/Advancer.lua",
