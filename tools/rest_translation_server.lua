@@ -9,7 +9,7 @@ curl -v -H "Content-Type: application/json" -X POST -d '{ "src" : "international
 
 require('onmt.init')
 
-local threads = require 'threads'
+local threads = require('threads')
 local separators = require('tools.utils.separators')
 local tokenizer = require('tools.utils.tokenizer')
 
@@ -41,6 +41,7 @@ cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
+local opt = cmd:parse(arg)
 
 local function translateMessage(translator, lines)
   local batch = {}
@@ -54,6 +55,7 @@ local function translateMessage(translator, lines)
     BPE = require ('tools.utils.BPE')
     if opt.bpe_model ~= '' then
        bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
+    end
     res, err = pcall(function() tokens = tokenizer.tokenize(opt, lines.src, bpe) end)
        -- it can generate an exception if there are utf-8 issues in the text
        if not res then
@@ -111,21 +113,6 @@ local function translateMessage(translator, lines)
   return translations
 end
 
-local function main()
-  local opt = cmd:parse(arg)
-  local requiredOptions = {
-    "model"
-  }
-
-  onmt.utils.Opt.init(opt, requiredOptions)
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
-  _G.logger:info("Loading model")
-  translator = onmt.translate.Translator.new(opt)
-
-  -- This loads the restserver.xavante plugin
-  server:enable("restserver.xavante"):start()
-end
-
 local restserver = require("restserver")
 
 local server = restserver:new():port(opt.port)
@@ -150,7 +137,20 @@ server:add_resource("translator", {
    },
 })
 
+local function main()
+
+  local requiredOptions = {
+    "model"
+  }
+
+  onmt.utils.Opt.init(opt, requiredOptions)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger:info("Loading model")
+  translator = onmt.translate.Translator.new(opt)
+
+  -- This loads the restserver.xavante plugin
+  server:enable("restserver.xavante"):start()
+end
+
 main()
-
-
 
