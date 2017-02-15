@@ -71,23 +71,6 @@ function Seq2Seq.dataType()
   return "bitext"
 end
 
--- batch fields for Seq2Seq model
-function Seq2Seq.batchInit()
-  return {
-           size = 1,
-           sourceLength = 0,
-           targetLength = 0,
-           targetNonZeros = 0
-         }
-end
-
-function Seq2Seq.batchAggregate(batchA, batch)
-  batchA.sourceLength = batchA.sourceLength + batch.sourceLength * batch.size
-  batchA.targetLength = batchA.targetLength + batch.targetLength * batch.size
-  batchA.targetNonZeros = batchA.targetNonZeros + batch.targetNonZeros
-  return batchA
-end
-
 function Seq2Seq:forwardComputeLoss(batch, criterion)
   local encoderStates, context = self.models.encoder:forward(batch)
   return self.models.decoder:computeLoss(batch, encoderStates, context, criterion)

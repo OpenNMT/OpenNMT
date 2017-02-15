@@ -180,10 +180,13 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     else
       -- Asynchronous parallelism
       local counter = onmt.utils.Parallel.getCounter()
-      counter:set(startI)
       local masterGPU = onmt.utils.Cuda.gpuIds[1]
       local gradBuffer = onmt.utils.Parallel.gradBuffer
       local gmutexId = onmt.utils.Parallel.gmutexId()
+
+      local iter = 0
+
+      counter:set(startI)
 
       while counter:get() <= trainData:batchCount() do
         local startCounter = counter:get()
@@ -196,21 +199,14 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             return
           end
 
-          local lossThread = 0
-          -- Aggregate batch information.
-          local batchThread = model.batchInit()
-          -- Since we will be adding batches of multiple size, do as if we have a aggregated batch of size 1,
-          batchThread.size = 1
+          local batches = {}
+          local losses = {}
 
           while true do
             -- Do not process more than 1000 batches (TODO - make option) in one shot.
-            if counter:get() - startCounter >= 1000 then
-              return lossThread, batchThread, _G.profiler:dump()
-            end
-
             local i = counter:inc()
-            if i > trainData:batchCount() then
-              return lossThread, batchThread, _G.profiler:dump()
+            if i - startCounter > 1000 or i > trainData:batchCount() then
+              return batches, losses, _G.profiler:dump()
             end
 
             local batchIdx = batchOrder[i]
@@ -219,13 +215,13 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             end
 
             _G.batch = trainData:getBatch(batchIdx)
-
-            -- Send batch data to the GPU.
-            onmt.utils.Cuda.convert(_G.batch)
             _G.batch.totalSize = _G.batch.size
+            onmt.utils.Cuda.convert(_G.batch)
+            table.insert(batches, _G.batch)
 
             optim:zeroGrad(_G.gradParams)
             local loss = _G.model:trainNetwork(_G.batch, _G.criterion)
+            table.insert(losses, loss)
 
             -- Update the parameters.
             optim:prepareGrad(_G.gradParams)
@@ -233,27 +229,27 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             -- Add up gradParams to params and synchronize back to this thread.
             onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
 
-            batchThread = model.batchAggregate(batchThread, _G.batch)
-            lossThread = lossThread + loss
-
             -- we don't have information about the other threads here - we can only report progress
             if i % self.args.report_every == 0 then
               _G.logger:info('Epoch %d ; ... batch %d/%d', epoch, i, trainData:batchCount())
             end
           end
         end,
-        function(theloss, thebatch, profile)
-          if theloss then
-            epochState:update(thebatch, theloss)
+        function(batches, losses, profile)
+          if batches then
+            iter = iter + #batches
+            for i = 1, #batches do
+              epochState:update(batches[i], losses[i])
+            end
+            epochProfiler:add(profile)
           end
-          epochProfiler:add(profile)
         end)
 
         if self.args.report_every > 0 then
-          epochState:log(counter:get())
+          epochState:log(iter)
         end
         if self.args.save_every > 0 then
-          checkpoint:saveIteration(counter:get(), epochState, batchOrder, true)
+          checkpoint:saveIteration(iter, epochState, batchOrder, true)
         end
       end
     end

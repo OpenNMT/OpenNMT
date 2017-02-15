@@ -65,19 +65,6 @@ function LanguageModel.dataType()
   return "monotext"
 end
 
--- batch fields for language model
-function LanguageModel.batchInit()
-  return {
-           size = 1,
-           sourceLength = 0
-         }
-end
-
-function LanguageModel.batchAggregate(batchA, batch)
-  batchA.sourceLength = batchA.sourceLength + batch.sourceLength * batch.size
-  return batchA
-end
-
 function LanguageModel:forwardComputeLoss(batch, criterion)
   local _, context = self.models.encoder:forward(batch)
   local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
