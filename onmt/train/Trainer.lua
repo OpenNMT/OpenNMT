@@ -225,7 +225,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             _G.batch.totalSize = _G.batch.size
 
             optim:zeroGrad(_G.gradParams)
-            local loss = model:trainNetwork(_G.batch, _G.criterion)
+            local loss = _G.model:trainNetwork(_G.batch, _G.criterion)
 
             -- Update the parameters.
             optim:prepareGrad(_G.gradParams)
@@ -233,7 +233,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             -- Add up gradParams to params and synchronize back to this thread.
             onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
 
-            batchThread = model.batchAggregate(_G.batch)
+            batchThread = model.batchAggregate(batchThread, _G.batch)
             lossThread = lossThread + loss
 
             -- we don't have information about the other threads here - we can only report progress
