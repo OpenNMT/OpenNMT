@@ -19,14 +19,6 @@ function Model:__init(args)
   self.models = {}
 end
 
-function Model:getInputLabelsCount(batch)
-  return batch.sourceInput:ne(onmt.Constants.PAD):sum()
-end
-
-function Model:getOutputLabelsCount(batch)
-  return self:getOutput(batch):ne(onmt.Constants.PAD):sum()
-end
-
 function Model:evaluate()
   for _,m in pairs(self.models) do
     m:evaluate()

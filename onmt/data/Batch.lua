@@ -31,6 +31,7 @@ Batch interface reference [size]:
   * sourceInputRevFeatures: table of reversed source features sequences
   * targetLength: max length in source batch [1]
   * targetSize: lengths of each source [batch x 1]
+  * targetNonZeros: number of non-ignored words in batch [1]
   * targetInput: input idx's of target (SABCDEPPPPPP) [batch x max]
   * targetInputFeatures: table of target input features sequences
   * targetOutput: expected output idx's of target (ABCDESPPPPPP) [batch x max]
@@ -84,7 +85,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   end
 
   if tgt ~= nil then
-    self.targetLength, self.targetSize = getLength(tgt, 1)
+    self.targetLength, self.targetSize, self.targetNonZeros = getLength(tgt, 1)
 
     local targetSeq = torch.LongTensor(self.targetLength, self.size):fill(onmt.Constants.PAD)
     self.targetInput = targetSeq:clone()
