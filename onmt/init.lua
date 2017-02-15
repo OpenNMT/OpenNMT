@@ -1,8 +1,5 @@
 onmt = {}
 
--- this needs to be loaded first
-onmt.ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
-
 require('onmt.modules.init')
 
 onmt.utils = require('onmt.utils.init')

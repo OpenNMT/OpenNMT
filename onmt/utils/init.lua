@@ -12,5 +12,6 @@ utils.Parallel = require('onmt.utils.Parallel')
 utils.Features = require('onmt.utils.Features')
 utils.Logger = require('onmt.utils.Logger')
 utils.Profiler = require('onmt.utils.Profiler')
+utils.ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
 
 return utils

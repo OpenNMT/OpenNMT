@@ -1,3 +1,5 @@
+local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
+
 local Cuda = {
   gpuIds = {},
   activated = false
@@ -5,7 +7,7 @@ local Cuda = {
 
 local cuda_options = {
   {'-gpuid',     '0',   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
-                                 {valid=onmt.ExtendedCmdLine.listUInt}},
+                                 {valid=ExtendedCmdLine.listUInt}},
   {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
 }
 

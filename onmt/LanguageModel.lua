@@ -18,7 +18,7 @@ local LanguageModel_options = {
   {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the encoder side.
                                      See README for specific formatting instructions.]],
-                         {valid=onmt.ExtendedCmdLine.fileNullOrExists}},
+                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
   {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
 }
@@ -29,7 +29,7 @@ end
 
 function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.ExtendedCmdLine.getModuleOpts(args, LanguageModel_options))
+  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, LanguageModel_options))
 
   -- Encoder word_vec_size is in src_word_vec_size.
   self.args.src_word_vec_size = args.word_vec_size

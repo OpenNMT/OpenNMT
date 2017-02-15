@@ -1,6 +1,6 @@
 require('onmt.init')
 
-local cmd = onmt.ExtendedCmdLine.new("train.lua")
+local cmd = onmt.utils.ExtendedCmdLine.new("train.lua")
 
 -- first argument define the model type: seq2seq/LM - default is seq2seq
 local mtype = 'seq2seq'
@@ -16,10 +16,10 @@ local modelClass = onmt.ModelSelector(mtype)
 -------------- Options declaration
 local data_options = {
   {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
-                      {valid=onmt.ExtendedCmdLine.nonEmpty}},
+                      {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
   {'-save_model', '', [[Model filename (the model will be saved as
                             <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]],
-                      {valid=onmt.ExtendedCmdLine.nonEmpty}}
+                      {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
 }
 
 cmd:setCmdLineOptions(data_options, "Data")
@@ -48,7 +48,7 @@ onmt.utils.Cuda.declareOpts(cmd)
 -- Memory optimization
 onmt.utils.Memory.declareOpts(cmd)
 -- Misc
-cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.ExtendedCmdLine.isUInt()})
+cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 -- Logger options
 onmt.utils.Logger.declareOpts(cmd)
 -- Profiler options

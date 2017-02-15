@@ -3,7 +3,7 @@ local Checkpoint = torch.class("Checkpoint")
 
 local checkpoint_options = {
   {'-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]],
-                         {valid=onmt.ExtendedCmdLine.fileNullOrExists}},
+                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]]}
 }
 

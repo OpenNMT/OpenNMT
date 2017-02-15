@@ -14,7 +14,7 @@ function Model.declareOpts(cmd)
 end
 
 function Model:__init(args)
-  self.args = onmt.ExtendedCmdLine.getModuleOpts(args, model_options)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, model_options)
   self.args.train_from = args.train_from
   self.models = {}
 end

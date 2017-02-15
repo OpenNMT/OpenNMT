@@ -26,21 +26,21 @@ local Trainer = torch.class("Trainer")
 local trainer_options = {
   {'-save_every',              0 ,    [[Save intermediate models every this many iterations within an epoch.
                                             If = 0, will not save models within an epoch. ]],
-                                      {valid=onmt.ExtendedCmdLine.isUInt()}},
+                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',            50,    [[Print stats every this many iterations within an epoch.]],
-                                      {valid=onmt.ExtendedCmdLine.isUInt()}},
+                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-async_parallel',          false, [[Use asynchronous parallelism training.]]},
   {'-async_parallel_minbatch', 1000,  [[For async parallel computing, minimal number of batches before being parallel.]],
-                                      {valid=onmt.ExtendedCmdLine.isUInt()}},
+                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-start_iteration',         1,     [[If loading from a checkpoint, the iteration from which to start]],
-                                         {valid=onmt.ExtendedCmdLine.isInt(1)}},
+                                         {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
   {'-end_epoch',               13,    [[The final epoch of the training]],
-                                      {valid=onmt.ExtendedCmdLine.isInt(1)}},
+                                      {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
   {'-start_epoch',             1,     [[If loading from a checkpoint, the epoch from which to start]],
-                                      {valid=onmt.ExtendedCmdLine.isInt(1)}},
+                                      {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
   {'-curriculum',              0,     [[For this many epochs, order the minibatches based on source
                                             sequence length. Sometimes setting this to 1 will increase convergence speed.]],
-                                      {valid=onmt.ExtendedCmdLine.isUInt()}}
+                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
 }
 
 function Trainer.declareOpts(cmd)
@@ -48,7 +48,7 @@ function Trainer.declareOpts(cmd)
 end
 
 function Trainer:__init(args)
-  self.args = onmt.ExtendedCmdLine.getModuleOpts(args, trainer_options)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, trainer_options)
   -- use profiler in Trainer
   self.args.profiler = args.profiler
   -- make a difference with options which is only used in Checkpoint

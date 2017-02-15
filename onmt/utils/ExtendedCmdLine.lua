@@ -26,13 +26,13 @@ end
 
 ------------------------------------------------------------------------------------------------------------------
 
-local extendedCmdLine, parent, path
+local ExtendedCmdLine, parent, path
 -- the utils function can be run without torch
 if torch then
-  extendedCmdLine, parent = torch.class('onmt.extendedCmdLine', 'torch.CmdLine')
+  ExtendedCmdLine, parent = torch.class('ExtendedCmdLine', 'torch.CmdLine')
   path = require('pl.path')
 else
-  extendedCmdLine = {}
+  ExtendedCmdLine = {}
 end
 
 --[[
@@ -57,18 +57,18 @@ end
     local optimArgs = cmd.getModuleOpts(opt, optim_options)
 ]]
 
-function extendedCmdLine:__init(script)
+function ExtendedCmdLine:__init(script)
   self.script = script
   parent.__init(self)
 
   self:text("")
   self:option('-h', false, 'this help file')
-  self:option('-config', '', 'read options from config file.', {valid=extendedCmdLine.fileNullOrExists})
+  self:option('-config', '', 'read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
   self:option('-save_config', '', 'save options from config file.')
 
 end
 
-function extendedCmdLine:help(arg, doMd)
+function ExtendedCmdLine:help(arg, doMd)
   if doMd then
     for _,option in ipairs(self.helplines) do
       if type(option) == 'table' then
@@ -146,13 +146,13 @@ function extendedCmdLine:help(arg, doMd)
   end
 end
 
-function extendedCmdLine:option(key, default, help, _meta_)
+function ExtendedCmdLine:option(key, default, help, _meta_)
  parent.option(self, key, default, help)
  self.options[key].meta = _meta_
 end
 
 --[[ Override options with option values set in file `filename`. ]]
-function extendedCmdLine:loadConfig(filename, opt)
+function ExtendedCmdLine:loadConfig(filename, opt)
   local file = assert(io.open(filename, "r"))
 
   for line in file:lines() do
@@ -174,7 +174,7 @@ function extendedCmdLine:loadConfig(filename, opt)
   return opt
 end
 
-function extendedCmdLine:dumpConfig(opt, filename)
+function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 
   for key, val in pairs(opt) do
@@ -184,7 +184,7 @@ function extendedCmdLine:dumpConfig(opt, filename)
   file:close()
 end
 
-function extendedCmdLine:parse(arg)
+function ExtendedCmdLine:parse(arg)
   local i = 1
   local params = self:default()
 
@@ -251,7 +251,7 @@ function extendedCmdLine:parse(arg)
   return params
 end
 
-function extendedCmdLine:setCmdLineOptions(moduleOptions, group)
+function ExtendedCmdLine:setCmdLineOptions(moduleOptions, group)
   if group then
     self:text("")
     self:text("**"..group.." options**")
@@ -266,7 +266,7 @@ function extendedCmdLine:setCmdLineOptions(moduleOptions, group)
   end
 end
 
-function extendedCmdLine.getModuleOpts(args, moduleOptions)
+function ExtendedCmdLine.getModuleOpts(args, moduleOptions)
   local moduleArgs = {}
   for i=1,#moduleOptions do
     local optname = moduleOptions[i][1]
@@ -281,7 +281,7 @@ end
 ------------------------------------------------------------------------------------------------------------------
 
 -- Check if is integer between minValue and maxValue.
-function extendedCmdLine.isInt(minValue, maxValue)
+function ExtendedCmdLine.isInt(minValue, maxValue)
   return function(v)
     return (math.floor(v) == v and
       (not minValue or v >= minValue) and
@@ -290,12 +290,12 @@ function extendedCmdLine.isInt(minValue, maxValue)
 end
 
 -- Check if is positive integer.
-function extendedCmdLine.isUInt(maxValue)
-  return extendedCmdLine.isInt(0, maxValue)
+function ExtendedCmdLine.isUInt(maxValue)
+  return ExtendedCmdLine.isInt(0, maxValue)
 end
 
 -- Check if list of positive integers.
-function extendedCmdLine.listUInt(v)
+function ExtendedCmdLine.listUInt(v)
   local sv = tostring(v)
   local p = 1
   while true do
@@ -308,18 +308,18 @@ function extendedCmdLine.listUInt(v)
 end
 
 -- Check if non empty.
-function extendedCmdLine.nonEmpty(v)
+function ExtendedCmdLine.nonEmpty(v)
   return v and v ~= ''
 end
 
 -- Check if the corresponding file exists.
-function extendedCmdLine.fileExists(v)
+function ExtendedCmdLine.fileExists(v)
   return path.exists(v)
 end
 
 -- Check non set or if the corresponding file exists.
-function extendedCmdLine.fileNullOrExists(v)
-  return v == '' or extendedCmdLine.fileExists(v)
+function ExtendedCmdLine.fileNullOrExists(v)
+  return v == '' or ExtendedCmdLine.fileExists(v)
 end
 
-return extendedCmdLine
+return ExtendedCmdLine

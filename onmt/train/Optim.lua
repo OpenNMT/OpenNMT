@@ -55,7 +55,7 @@ local Optim = torch.class("Optim")
 
 local optim_options = {
   {'-max_batch_size',     64   , [[Maximum batch size]],
-                                 {valid=onmt.ExtendedCmdLine.isUInt()}},
+                                 {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-optim',              'sgd', [[Optimization method.]],
                                  {enum={'sgd', 'adagrad', 'adadelta', 'adam'}}},
   {'-learning_rate',       1   , [[Starting learning rate. If adagrad/adadelta/adam is used,
@@ -66,7 +66,7 @@ local optim_options = {
   {'-learning_rate_decay', 0.5 , [[Decay learning rate by this much if (i) perplexity does not decrease
                                        on the validation set or (ii) epoch has gone past the start_decay_at_limit]]},
   {'-start_decay_at',      9   , [[Start decay after this epoch]],
-                                 {valid=onmt.ExtendedCmdLine.isUInt()}}
+                                 {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
 }
 
 function Optim.declareOpts(cmd)
@@ -74,7 +74,7 @@ function Optim.declareOpts(cmd)
 end
 
 function Optim:__init(args, optimStates)
-  self.args = onmt.ExtendedCmdLine.getModuleOpts(args, optim_options)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, optim_options)
   self.valPerf = {}
 
   if self.args.optim == 'sgd' then

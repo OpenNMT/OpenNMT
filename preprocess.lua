@@ -1,6 +1,6 @@
 require('onmt.init')
 
-local cmd = onmt.ExtendedCmdLine.new("preprocess.lua")
+local cmd = onmt.utils.ExtendedCmdLine.new("preprocess.lua")
 
 -- first argument define the dataType: bitext/monotext - default is bitext
 local dataType = 'bitext'
@@ -17,7 +17,7 @@ local preprocess_options = {
                                     This option impacts all options choices.]],
                                     {enum={'bitext','monotext'}}},
   {'-save_data',               '',  [[Output file for the prepared data]],
-                                    {valid=onmt.ExtendedCmdLine.nonEmpty}}
+                                    {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
 }
 
 cmd:setCmdLineOptions(preprocess_options, "Preprocess")
@@ -26,9 +26,9 @@ onmt.data.Preprocessor.declareOpts(cmd, dataType)
 
 local misc_options = {
   {'-seed',                   3425,    [[Random seed]],
-                                   {valid=onmt.ExtendedCmdLine.isUInt()}},
+                                   {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',           100000,  [[Report status every this many sentences]],
-                                   {valid=onmt.ExtendedCmdLine.isUInt()}}
+                                   {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
 }
 cmd:setCmdLineOptions(misc_options, "Other")
 onmt.utils.Logger.declareOpts(cmd)
