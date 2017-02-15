@@ -34,7 +34,7 @@ modelClass.declareOpts(cmd)
 onmt.train.Optim.declareOpts(cmd)
 
 -- Training process options.
-onmt.Trainer.declareOpts(cmd)
+onmt.train.Trainer.declareOpts(cmd)
 
 -- Checkpoints options.
 onmt.train.Checkpoint.declareOpts(cmd)
@@ -131,7 +131,7 @@ local function main()
   local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
   local optim = onmt.train.Optim.new(opt, optimStates)
   -- Initialize trainer.
-  local trainer = onmt.Trainer.new(opt)
+  local trainer = onmt.train.Trainer.new(opt)
 
   -- Launch train
   trainer:train(model, optim, trainData, validData, dataset, checkpoint.info)
