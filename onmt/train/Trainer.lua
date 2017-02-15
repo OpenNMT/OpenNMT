@@ -4,19 +4,19 @@
 
 local function eval(model, criterion, data)
   local loss = 0
-  local total = 0
+  local totalWords = 0
 
   model:evaluate()
 
   for i = 1, data:batchCount() do
     local batch = onmt.utils.Cuda.convert(data:getBatch(i))
     loss = loss + model:forwardComputeLoss(batch, criterion)
-    total = total + model:countTokens(batch)
+    totalWords = totalWords + model:getOutputLabelsCount(batch)
   end
 
   model:training()
 
-  return math.exp(loss / total)
+  return math.exp(loss / totalWords)
 end
 
 ------------------------------------------------------------------------------------------------------------------
@@ -166,7 +166,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         onmt.utils.Parallel.syncParams(params)
 
         for bi = 1, #batches do
-          epochState:update(batches[bi], losses[bi])
+          epochState:update(model, batches[bi], losses[bi])
         end
 
         if iter % self.args.report_every == 0 then
@@ -244,7 +244,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         end,
         function(theloss, thebatch, profile)
           if theloss then
-            epochState:update(thebatch, theloss)
+            epochState:update(model, thebatch, theloss)
           end
           epochProfiler:add(profile)
         end)

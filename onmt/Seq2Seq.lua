@@ -76,16 +76,18 @@ function Seq2Seq.batchInit()
   return {
            size = 1,
            sourceLength = 0,
-           targetLength = 0,
-           targetNonZeros = 0
+           targetLength = 0
          }
 end
 
 function Seq2Seq.batchAggregate(batchA, batch)
   batchA.sourceLength = batchA.sourceLength + batch.sourceLength * batch.size
   batchA.targetLength = batchA.targetLength + batch.targetLength * batch.size
-  batchA.targetNonZeros = batchA.targetNonZeros + batch.targetNonZeros
   return batchA
+end
+
+function Seq2Seq:getOutput(batch)
+  return batch.targetOutput
 end
 
 function Seq2Seq:forwardComputeLoss(batch, criterion)
@@ -100,10 +102,6 @@ function Seq2Seq:buildCriterion(dicts)
   end
 
   return onmt.ParallelClassNLLCriterion(outputSizes)
-end
-
-function Seq2Seq:countTokens(batch)
-  return batch.targetNonZeros
 end
 
 function Seq2Seq:trainNetwork(batch, criterion, dryRun)
