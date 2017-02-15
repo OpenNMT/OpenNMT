@@ -31,7 +31,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   batch.sourceLength = 1
   batch.targetLength = 1
 
-  model:trainNetwork(batch, criterion, nil, true)
+  model:trainNetwork(batch, criterion, true)
 
   -- mark shared tensors
   local sharedSize, totSize = memoryOptimizer:optimize()

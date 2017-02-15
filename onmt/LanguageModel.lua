@@ -115,12 +115,10 @@ function LanguageModel:countTokens(batch)
   return batch.sourceLength*batch.size
 end
 
-function LanguageModel:trainNetwork(batch, criterion, doProfile)
+function LanguageModel:trainNetwork(batch, criterion)
   local loss = 0
 
-  if doProfile then _G.profiler:start("encoder.fwd") end
   local _, context = self.models.encoder:forward(batch)
-  if doProfile then _G.profiler:stop("encoder.fwd") end
 
   local gradContexts = context:clone():zero()
   local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
@@ -130,9 +128,7 @@ function LanguageModel:trainNetwork(batch, criterion, doProfile)
 
   -- for each word of the sentence, generate target
   for t = 1, batch.sourceLength do
-    if doProfile then _G.profiler:start("generator.fwd") end
     local genOutputs = self.models.generator:forward(context:select(2,t))
-    if doProfile then _G.profiler:stop("generator.fwd") end
 
     -- LanguageModel is supposed to predict following word
     local output
@@ -144,27 +140,18 @@ function LanguageModel:trainNetwork(batch, criterion, doProfile)
     -- same format with and without features
     if torch.type(output) ~= 'table' then output = { output } end
 
-    if doProfile then _G.profiler:start("criterion.fwd") end
     loss = loss + criterion:forward(genOutputs, output)
-    if doProfile then _G.profiler:stop("criterion.fwd") end
 
     -- backward
-    if doProfile then _G.profiler:start("criterion.bwd") end
     local genGradOutput = criterion:backward(genOutputs, output)
-    if doProfile then _G.profiler:stop("criterion.bwd") end
     for j = 1, #genGradOutput do
       genGradOutput[j]:div(batch.totalSize)
     end
 
-    if doProfile then _G.profiler:start("generator.bwd") end
     gradContexts[{{}, t}]:copy(self.models.generator:backward(context:select(2, t), genGradOutput))
-    if doProfile then _G.profiler:stop("generator.bwd") end
-
   end
 
-  if doProfile then _G.profiler:start("encoder.bwd") end
   self.models.encoder:backward(batch, nil, gradContexts)
-  if doProfile then _G.profiler:stop("encoder.bwd") end
 
   return loss
 end

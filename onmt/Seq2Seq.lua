@@ -106,23 +106,18 @@ function Seq2Seq:countTokens(batch)
   return batch.targetNonZeros
 end
 
-function Seq2Seq:trainNetwork(batch, criterion, doProfile, dryRun)
-  if doProfile then _G.profiler:start("encoder.fwd") end
+function Seq2Seq:trainNetwork(batch, criterion, dryRun)
   local encStates, context = self.models.encoder:forward(batch)
-  if doProfile then _G.profiler:stop("encoder.fwd") end
 
-  if doProfile then _G.profiler:start("decoder.fwd") end
   local decOutputs = self.models.decoder:forward(batch, encStates, context)
-  if dryRun then decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs) end
-  if doProfile then _G.profiler:stop("decoder.fwd") end
 
-  if doProfile then _G.profiler:start("decoder.bwd") end
+  if dryRun then
+    decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
+  end
+
   local encGradStatesOut, gradContext, loss = self.models.decoder:backward(batch, decOutputs, criterion)
-  if doProfile then _G.profiler:stop("decoder.bwd") end
-
-  if doProfile then _G.profiler:start("encoder.bwd") end
   self.models.encoder:backward(batch, encGradStatesOut, gradContext)
-  if doProfile then _G.profiler:stop("encoder.bwd") end
+
   return loss
 end
 
