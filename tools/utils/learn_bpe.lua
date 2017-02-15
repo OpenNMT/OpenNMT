@@ -60,6 +60,7 @@ local function replace(word, bigram)
       end
     end
   end
+  if merge then table.insert(new_word, word[#word]) end
   return table.concat(new_word, " ")
 end
 
