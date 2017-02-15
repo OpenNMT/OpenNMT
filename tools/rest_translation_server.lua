@@ -8,8 +8,7 @@ curl -v -H "Content-Type: application/json" -X POST -d '{ "src" : "international
 ]]
 
 require('onmt.init')
-
-local threads = require('threads')
+require('threads')
 local separators = require('tools.utils.separators')
 local tokenizer = require('tools.utils.tokenizer')
 
