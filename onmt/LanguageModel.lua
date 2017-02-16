@@ -33,13 +33,7 @@ function LanguageModel:__init(args, dicts)
   self.args.profiler = args.profiler
 
   self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
-
-  if #dicts.src.features > 0 then
-    self.models.generator = onmt.FeaturesGenerator(self.args.rnn_size,
-                                                   onmt.Factory.getOutputSizes(dicts.src))
-  else
-    self.models.generator = onmt.Generator(self.args.rnn_size, dicts.src.words:size())
-  end
+  self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.src)
 
   self.eosProto = {}
   for _ = 1, #dicts.src.features + 1 do

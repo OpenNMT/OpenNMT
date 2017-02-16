@@ -123,7 +123,7 @@ function Factory.buildWordEncoder(opt, dicts)
                                          opt.src_word_vec_size or opt.word_vec_size,
                                          opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
-  return onmt.Factory.buildEncoder(opt, inputNetwork)
+  return Factory.buildEncoder(opt, inputNetwork)
 end
 
 function Factory.loadEncoder(pretrained, clone)
@@ -171,15 +171,9 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
                                          opt.tgt_word_vec_size or opt.word_vec_size,
                                          opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
-  local generator
+  local generator = Factory.buildGenerator(opt.rnn_size, dicts)
 
-  if #dicts.features > 0 then
-    generator = onmt.FeaturesGenerator(opt.rnn_size, Factory.getOutputSizes(dicts))
-  else
-    generator = onmt.Generator(opt.rnn_size, dicts.words:size())
-  end
-
-  return onmt.Factory.buildDecoder(opt, inputNetwork, generator, verbose)
+  return Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 end
 
 function Factory.loadDecoder(pretrained, clone)
@@ -188,6 +182,14 @@ function Factory.loadDecoder(pretrained, clone)
   end
 
   return onmt.Decoder.load(pretrained)
+end
+
+function Factory.buildGenerator(rnnSize, dicts)
+  if #dicts.features > 0 then
+    return onmt.FeaturesGenerator(rnnSize, Factory.getOutputSizes(dicts))
+  else
+    return onmt.Generator(rnnSize, dicts.words:size())
+  end
 end
 
 return Factory
