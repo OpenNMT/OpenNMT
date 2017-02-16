@@ -35,11 +35,10 @@ function LanguageModel:__init(args, dicts)
   self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
 
   if #dicts.src.features > 0 then
-    self.models.generator = onmt.FeaturesGenerator.new(self.args.rnn_size,
-                                                       dicts.src.words:size(),
-                                                       dicts.src.features)
+    self.models.generator = onmt.FeaturesGenerator(self.args.rnn_size,
+                                                   onmt.Factory.getOutputSizes(dicts.src))
   else
-    self.models.generator = onmt.Generator.new(self.args.rnn_size, dicts.src.words:size())
+    self.models.generator = onmt.Generator(self.args.rnn_size, dicts.src.words:size())
   end
 
   self.eosProto = {}
@@ -96,12 +95,7 @@ function LanguageModel:forwardComputeLoss(batch, criterion)
 end
 
 function LanguageModel:buildCriterion(dicts)
-  local outputSizes = { dicts.src.words:size() }
-  for j = 1, #dicts.src.features do
-    table.insert(outputSizes, dicts.src.features[j]:size())
-  end
-
-  local criterion = onmt.ParallelClassNLLCriterion(outputSizes)
+  local criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
   if self.args.profiler then
     _G.profiler:addHook(criterion, "criterion")
   end

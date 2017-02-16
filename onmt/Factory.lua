@@ -77,6 +77,14 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   return inputNetwork
 end
 
+function Factory.getOutputSizes(dicts)
+  local outputSizes = { dicts.words:size() }
+  for i = 1, #dicts.features do
+    table.insert(outputSizes, dicts.features[i]:size())
+  end
+  return outputSizes
+end
+
 function Factory.buildEncoder(opt, inputNetwork)
   local encoder
 
@@ -166,9 +174,9 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   local generator
 
   if #dicts.features > 0 then
-    generator = onmt.FeaturesGenerator.new(opt.rnn_size, dicts.words:size(), dicts.features)
+    generator = onmt.FeaturesGenerator(opt.rnn_size, Factory.getOutputSizes(dicts))
   else
-    generator = onmt.Generator.new(opt.rnn_size, dicts.words:size())
+    generator = onmt.Generator(opt.rnn_size, dicts.words:size())
   end
 
   return onmt.Factory.buildDecoder(opt, inputNetwork, generator, verbose)

@@ -81,12 +81,7 @@ function Seq2Seq:forwardComputeLoss(batch, criterion)
 end
 
 function Seq2Seq:buildCriterion(dicts)
-  local outputSizes = { dicts.tgt.words:size() }
-  for j = 1, #dicts.tgt.features do
-    table.insert(outputSizes, dicts.tgt.features[j]:size())
-  end
-
-  return onmt.ParallelClassNLLCriterion(outputSizes)
+  return onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
 function Seq2Seq:trainNetwork(batch, criterion, dryRun)
