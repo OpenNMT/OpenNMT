@@ -96,11 +96,11 @@ local function buildEncoder(opt, dicts)
       error('invalid merge action ' .. opt.brnn_merge)
     end
 
-    local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputSize, rnnSize, opt.dropout, opt.residual, opt.batch_norm)
 
     return onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
   else
-    local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.batch_norm)
 
     return onmt.Encoder.new(inputNetwork, rnn)
   end
@@ -130,7 +130,7 @@ local function buildDecoder(opt, dicts, verbose)
     inputSize = inputSize + opt.rnn_size
   end
 
-  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.batch_norm)
 
   return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
 end

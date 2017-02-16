@@ -42,7 +42,7 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   -- previous step.
   self.args.inputFeed = inputFeed
 
-  parent.__init(self, self:_buildModel())
+  parent.__init(self, self:_buildModel(), torch.typename(self.rnn))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.

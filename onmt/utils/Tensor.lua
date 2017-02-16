@@ -53,6 +53,16 @@ local function deepClone(obj)
   return clone
 end
 
+--[[ Find a nn.Module inside an nn.gModule based on class name ]]
+local function findModule(mlp, className)
+  for _, v in ipairs(mlp.modules) do
+    if torch.typename(v) == className then
+      return v
+    end
+  end
+  return nil
+end
+
 --[[
 Reuse Tensor storage and avoid new allocation unless any dimension
 has a larger size.
@@ -175,6 +185,7 @@ return {
   recursiveAdd = recursiveAdd,
   recursiveSet = recursiveSet,
   deepClone = deepClone,
+  findModule = findModule,
   reuseTensor = reuseTensor,
   reuseTensorTable = reuseTensorTable,
   initTensorTable = initTensorTable,

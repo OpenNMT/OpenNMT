@@ -13,11 +13,13 @@ local Sequencer, parent = torch.class('onmt.Sequencer', 'nn.Container')
 Parameters:
 
   * `network` - recurrent step template.
+  * `rnnClass` - (optional) the class name of the underlying RNN (e.g. 'onmt.LSTM')
 --]]
-function Sequencer:__init(network)
+function Sequencer:__init(network, rnnClass)
   parent.__init(self)
 
   self.network = network
+  self.rnnClass = rnnClass
   self:add(self.network)
 
   self.networkClones = {}
@@ -28,19 +30,32 @@ function Sequencer:_sharedClone()
 
   -- Manually share word embeddings if they are fixed as they are not declared as parameters.
   local wordEmb
+  local rnn
+  local crnn
 
   self.network:apply(function(m)
     if m.fix then
       wordEmb = m
     end
+    if m.recurrents then
+      rnn = m
+    end
   end)
 
-  if wordEmb then
-    clone:apply(function(m)
-      if m.fix then
-        m:share(wordEmb, 'weight')
-      end
-    end)
+  clone:apply(function(m)
+    if wordEmb and m.fix then
+      m:share(wordEmb, 'weight')
+    end
+    if rnn and m.recurrents then
+      m:shareRecurrents(rnn)
+      crnn = m
+    end
+  end)
+
+  function clone:setTimeStep(t)
+    if crnn ~= nil and crnn.setTimeStep ~= nil then
+      crnn:setTimeStep(t)
+    end
   end
 
   -- Share intermediate tensors if defined.
@@ -88,11 +103,14 @@ function Sequencer:net(t)
       clone:training()
       self.networkClones[t] = clone
     end
+    self.networkClones[t]:setTimeStep(t)
     return self.networkClones[t]
   else
     if #self.networkClones > 0 then
+      self.networkClones[1]:setTimeStep(t)
       return self.networkClones[1]
     else
+      self.network:setTimeStep(t)
       return self.network
     end
   end

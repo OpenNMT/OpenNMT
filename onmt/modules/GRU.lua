@@ -30,13 +30,25 @@ Parameters:
   * `hiddenSize` - Size of the hidden layers
   * `dropout` - Dropout rate to use (should be in $$[0,1]$$ range.
   * `residual` - Residual connections between layers (boolean)
+  * `batchNorm` - Whether to use batch normalization.
+  * `eps` - If using batchNorm, a small value to avoid divide-by-zero (see nn.BatchNormalization).
+  * `momentum` - If using batchNorm, the corresponding momentum (see nn.BatchNormalization).
+  * `affine` - If using batchNorm, whether to learn the scale and bias (see nn.BatchNormalization).
 --]]
-function GRU:__init(layers, inputSize, hiddenSize, dropout, residual)
+function GRU:__init(layers, inputSize, hiddenSize, dropout, residual, batchNorm, eps, momentum, affine)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = layers
   self.outputSize = hiddenSize
+
+  if batchNorm then
+    self.batchNorm = true
+    self.eps = eps
+    self.momentum = momentum
+    self.affine = (affine == nil) or affine
+    self.recurrents = {}
+  end
 
   parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual))
 end
@@ -95,7 +107,7 @@ end
             \begin{array}{ll}
             r_t = sigmoid(W_{xr} x_t + b_{xr} + W_{hr} h_{(t-1)} + b_{hr}) \\
             i_t = sigmoid(W_{xi} x_t + b_{xi} + W_hi h_{(t-1)} + b_{hi}) \\
-            n_t = \tanh(W_{xn} x_t + b_{xn} + r_t * (W_{hn} h_{(t-1)} + b_{hn}) \\
+            n_t = \tanh(W_{xn} x_t + b_{xn} + r_t * (W_{hn} h_{(t-1)} + b_{hn})) \\
             h_t = (1 - i_t) * n_t + i_t * h_{(t-1)} = n_t + i_t * (h_{(t-1) - n}) \\
             \end{array}
 
@@ -126,6 +138,17 @@ function GRU:_buildLayer(inputSize, hiddenSize)
   local x2h = nn.Linear(inputSize, 3 * hiddenSize)(x)
   local h2h = nn.Linear(hiddenSize, 3 * hiddenSize)(prevH)
 
+  if self.batchNorm then
+    local bn_Wx = onmt.RecurrentBatchNorm(3 * hiddenSize, self.eps, self.momentum, self.affine, false)
+    local bn_Wh = onmt.RecurrentBatchNorm(3 * hiddenSize, self.eps, self.momentum, self.affine, false)
+
+    table.insert(self.recurrents, bn_Wx)
+    table.insert(self.recurrents, bn_Wh)
+
+    x2h = bn_Wx(x2h)
+    h2h = bn_Wh(h2h)
+  end
+
   -- Extract Wxr.x+bir, Wxi.x+bxi, Wxn.x+bin.
   local x2h_reshaped = nn.Reshape(3, hiddenSize)(x2h)
   local x2h_r, x2h_i, x2h_n = nn.SplitTable(2)(x2h_reshaped):split(3)
@@ -148,4 +171,22 @@ function GRU:_buildLayer(inputSize, hiddenSize)
   })
 
   return nn.gModule(inputs, {nextH})
+end
+
+--[[ Let the RecurrentBatchNorm modules inside GRU know what time step it is ]]
+function GRU:setTimeStep(t)
+  if self.batchNorm then
+    for i=1,#self.recurrents do
+      self.recurrents[i]:setTimeStep(t)
+    end
+  end
+end
+
+--[[ Share the RecurrentBatchNorm modules between clones ]]
+function GRU:shareRecurrents(mlp)
+  if self.batchNorm then
+    for i=1,#self.recurrents do
+      self.recurrents[i]:share(mlp.recurrents[i], 'modules')
+    end
+  end
 end
