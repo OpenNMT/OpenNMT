@@ -158,7 +158,7 @@ function ExtendedCmdLine:loadConfig(filename, opt)
   for line in file:lines() do
     -- Ignore empty or commented out lines.
     if line:len() > 0 and string.sub(line, 1, 1) ~= '#' then
-      local field = line:split('=')
+      local field = onmt.utils.String.split(line, '=')
       assert(#field == 2, 'badly formatted config file')
 
       local key = onmt.utils.String.strip(field[1])

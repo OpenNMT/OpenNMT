@@ -20,6 +20,4 @@ require('onmt.modules.FeaturesGenerator')
 
 require('onmt.modules.ParallelClassNLLCriterion')
 
-onmt.modules = { Factory = require('onmt.modules.Factory') }
-
 return onmt

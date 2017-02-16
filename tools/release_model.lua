@@ -2,7 +2,7 @@ require('onmt.init')
 
 local path = require('pl.path')
 
-local cmd = onmt.extendedCmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new()
 cmd:option('-model', '', 'trained model file')
 cmd:option('-output_model', '', 'released model file')
 cmd:option('-force', false, 'force output model creation')

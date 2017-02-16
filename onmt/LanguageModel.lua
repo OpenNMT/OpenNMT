@@ -30,10 +30,6 @@ end
 function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, LanguageModel_options))
-
-  -- Encoder word_vec_size is in src_word_vec_size.
-  self.args.src_word_vec_size = args.word_vec_size
-  self.args.word_vec_size = 0
   self.args.profiler = args.profiler
 
   self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
