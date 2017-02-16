@@ -34,6 +34,7 @@ function LanguageModel:__init(args, dicts)
   -- Encoder word_vec_size is in src_word_vec_size.
   self.args.src_word_vec_size = args.word_vec_size
   self.args.word_vec_size = 0
+  self.args.profiler = args.profiler
 
   self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
 
@@ -48,6 +49,11 @@ function LanguageModel:__init(args, dicts)
   self.eosProto = {}
   for _ = 1, #dicts.src.features + 1 do
     table.insert(self.eosProto, torch.LongTensor())
+  end
+
+  if self.args.profiler then
+    _G.profiler.addHook(self.models.encoder, "encoder")
+    _G.profiler.addHook(self.models.generator, "generator")
   end
 end
 
@@ -99,7 +105,11 @@ function LanguageModel:buildCriterion(dicts)
     table.insert(outputSizes, dicts.src.features[j]:size())
   end
 
-  return onmt.ParallelClassNLLCriterion(outputSizes)
+  local criterion = onmt.ParallelClassNLLCriterion(outputSizes)
+  if self.args.profiler then
+    _G.profiler:addHook(criterion, "criterion")
+  end
+  return criterion
 end
 
 function LanguageModel:trainNetwork(batch, criterion)
