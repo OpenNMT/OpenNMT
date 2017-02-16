@@ -141,7 +141,6 @@ end
 function Profiler.addHook(module, name)
   module.fwdFunc = module.forward
   module.bwdFunc = module.backward
-  local profiler = self
   function module:forward(...)
     _G.profiler:start(name..".fwd")
     local res, context = self:fwdFunc(...)
