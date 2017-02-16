@@ -6,6 +6,7 @@ local EpochState = torch.class("EpochState")
 --[[ Initialize for epoch `epoch`]]
 function EpochState:__init(epoch, numIterations, learningRate)
   self.epoch = epoch
+  self.iterations = 0
   self.numIterations = numIterations
   self.learningRate = learningRate
 
@@ -24,16 +25,17 @@ end
 
 --[[ Update training status. Takes `batch` (described in data.lua) and last loss.]]
 function EpochState:update(model, batch, loss)
+  self.iterations = self.iterations + 1
   self.trainLoss = self.trainLoss + loss
   self.sourceWords = self.sourceWords + model:getInputLabelsCount(batch)
   self.targetWords = self.targetWords + model:getOutputLabelsCount(batch)
 end
 
 --[[ Log to status stdout. ]]
-function EpochState:log(batchIndex)
+function EpochState:log()
   _G.logger:info('Epoch %d ; Iteration %d/%d ; Learning rate %.4f ; Source tokens/s %d ; Perplexity %.2f',
                  self.epoch,
-                 batchIndex, self.numIterations,
+                 self.iterations, self.numIterations,
                  self.learningRate,
                  self.sourceWords / self.timer:time().real,
                  math.exp(self.trainLoss / self.targetWords))
