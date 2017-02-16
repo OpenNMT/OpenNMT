@@ -5,7 +5,7 @@ MAINTAINER Kai Arulkumaran <design@kaixhin.com>
 # Restore Torch7 installation script
 RUN sed -i 's/path_to_nvcc=$(which no_nvcc)/path_to_nvcc=$(which nvcc)/g' install.sh
 
-RUN sudo apt-get install libzmq-dev
+RUN sudo apt-get install -y libzmq-dev
 
 # Install CUDA libraries
 RUN luarocks install cutorch && \
