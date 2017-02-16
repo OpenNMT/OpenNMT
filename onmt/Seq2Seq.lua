@@ -50,7 +50,7 @@ function Seq2Seq:__init(args, dicts, verbose)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
-function Seq2Seq.load(args, models, isReplica)
+function Seq2Seq.load(args, models, dicts, isReplica)
   local self = torch.factory('Seq2Seq')()
 
   parent.__init(self, args)

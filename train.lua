@@ -114,7 +114,7 @@ local function main()
   onmt.utils.Parallel.launch(function(idx)
     local _modelClass = onmt.ModelSelector(mtype)
     if checkpoint.models then
-      _G.model = _modelClass.load(opt, checkpoint.models, idx > 1)
+      _G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
     else
       local verbose = idx == 1
       _G.model = _modelClass.new(opt, dataset.dicts, verbose)
