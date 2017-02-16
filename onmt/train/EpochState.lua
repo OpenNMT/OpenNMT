@@ -17,22 +17,16 @@ end
 function EpochState:reset()
   self.trainLoss = 0
   self.sourceWords = 0
-  self.targetWordsNonZeros = 0
+  self.targetWords = 0
 
   self.timer = torch.Timer()
 end
 
 --[[ Update training status. Takes `batch` (described in data.lua) and last loss.]]
-function EpochState:update(batch, loss)
+function EpochState:update(model, batch, loss)
   self.trainLoss = self.trainLoss + loss
-  self.sourceWords = self.sourceWords + batch.size * batch.sourceLength
-
-  if batch.targetNonZeros then
-    self.targetWordsNonZeros = self.targetWordsNonZeros + batch.targetNonZeros
-  else
-    -- If training on monolingual data, loss is normalized by the number of source words.
-    self.targetWordsNonZeros = self.sourceWords
-  end
+  self.sourceWords = self.sourceWords + model:getInputLabelsCount(batch)
+  self.targetWords = self.targetWords + model:getOutputLabelsCount(batch)
 end
 
 --[[ Log to status stdout. ]]
@@ -42,7 +36,7 @@ function EpochState:log(batchIndex)
                  batchIndex, self.numIterations,
                  self.learningRate,
                  self.sourceWords / self.timer:time().real,
-                 math.exp(self.trainLoss / self.targetWordsNonZeros))
+                 math.exp(self.trainLoss / self.targetWords))
 
   self:reset()
 end

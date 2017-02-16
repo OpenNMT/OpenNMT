@@ -65,6 +65,10 @@ function LanguageModel.dataType()
   return "monotext"
 end
 
+function LanguageModel:getOutput(batch)
+  return batch.sourceInput
+end
+
 function LanguageModel:forwardComputeLoss(batch, criterion)
   local _, context = self.models.encoder:forward(batch)
   local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
@@ -96,10 +100,6 @@ function LanguageModel:buildCriterion(dicts)
   end
 
   return onmt.ParallelClassNLLCriterion(outputSizes)
-end
-
-function LanguageModel:countTokens(batch)
-  return batch.sourceLength*batch.size
 end
 
 function LanguageModel:trainNetwork(batch, criterion)

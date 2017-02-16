@@ -71,6 +71,10 @@ function Seq2Seq.dataType()
   return "bitext"
 end
 
+function Seq2Seq:getOutput(batch)
+  return batch.targetOutput
+end
+
 function Seq2Seq:forwardComputeLoss(batch, criterion)
   local encoderStates, context = self.models.encoder:forward(batch)
   return self.models.decoder:computeLoss(batch, encoderStates, context, criterion)
@@ -83,10 +87,6 @@ function Seq2Seq:buildCriterion(dicts)
   end
 
   return onmt.ParallelClassNLLCriterion(outputSizes)
-end
-
-function Seq2Seq:countTokens(batch)
-  return batch.targetNonZeros
 end
 
 function Seq2Seq:trainNetwork(batch, criterion, dryRun)
