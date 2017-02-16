@@ -47,6 +47,7 @@ function Seq2Seq:__init(args, dicts, verbose)
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
+  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
 function Seq2Seq.load(args, models, isReplica)
@@ -57,6 +58,7 @@ function Seq2Seq.load(args, models, isReplica)
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
+  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 
   return self
 end
@@ -71,20 +73,19 @@ function Seq2Seq.dataType()
   return "bitext"
 end
 
+function Seq2Seq:enableProfiling()
+end
+
 function Seq2Seq:getOutput(batch)
   return batch.targetOutput
 end
 
-function Seq2Seq:forwardComputeLoss(batch, criterion)
+function Seq2Seq:forwardComputeLoss(batch)
   local encoderStates, context = self.models.encoder:forward(batch)
-  return self.models.decoder:computeLoss(batch, encoderStates, context, criterion)
+  return self.models.decoder:computeLoss(batch, encoderStates, context, self.criterion)
 end
 
-function Seq2Seq:buildCriterion(dicts)
-  return onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
-end
-
-function Seq2Seq:trainNetwork(batch, criterion, dryRun)
+function Seq2Seq:trainNetwork(batch, dryRun)
   local encStates, context = self.models.encoder:forward(batch)
 
   local decOutputs = self.models.decoder:forward(batch, encStates, context)
@@ -93,7 +94,7 @@ function Seq2Seq:trainNetwork(batch, criterion, dryRun)
     decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
   end
 
-  local encGradStatesOut, gradContext, loss = self.models.decoder:backward(batch, decOutputs, criterion)
+  local encGradStatesOut, gradContext, loss = self.models.decoder:backward(batch, decOutputs, self.criterion)
   self.models.encoder:backward(batch, encGradStatesOut, gradContext)
 
   return loss

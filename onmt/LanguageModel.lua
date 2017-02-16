@@ -30,19 +30,14 @@ end
 function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, LanguageModel_options))
-  self.args.profiler = args.profiler
 
   self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
   self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.src)
+  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
   self.eosProto = {}
   for _ = 1, #dicts.src.features + 1 do
     table.insert(self.eosProto, torch.LongTensor())
-  end
-
-  if self.args.profiler then
-    _G.profiler.addHook(self.models.encoder, "encoder")
-    _G.profiler.addHook(self.models.generator, "generator")
   end
 end
 
@@ -60,11 +55,17 @@ function LanguageModel.dataType()
   return "monotext"
 end
 
+function LanguageModel:enableProfiling()
+  _G.profiler.addHook(self.models.encoder, "encoder")
+  _G.profiler.addHook(self.models.generator, "generator")
+  _G.profiler.addHook(self.criterion, "criterion")
+end
+
 function LanguageModel:getOutput(batch)
   return batch.sourceInput
 end
 
-function LanguageModel:forwardComputeLoss(batch, criterion)
+function LanguageModel:forwardComputeLoss(batch)
   local _, context = self.models.encoder:forward(batch)
   local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
   for i = 1, #eos do
@@ -83,20 +84,12 @@ function LanguageModel:forwardComputeLoss(batch, criterion)
     end
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
-    loss = loss + criterion:forward(genOutputs, output)
+    loss = loss + self.criterion:forward(genOutputs, output)
   end
   return loss
 end
 
-function LanguageModel:buildCriterion(dicts)
-  local criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
-  if self.args.profiler then
-    _G.profiler:addHook(criterion, "criterion")
-  end
-  return criterion
-end
-
-function LanguageModel:trainNetwork(batch, criterion)
+function LanguageModel:trainNetwork(batch)
   local loss = 0
 
   local _, context = self.models.encoder:forward(batch)
@@ -121,10 +114,10 @@ function LanguageModel:trainNetwork(batch, criterion)
     -- same format with and without features
     if torch.type(output) ~= 'table' then output = { output } end
 
-    loss = loss + criterion:forward(genOutputs, output)
+    loss = loss + self.criterion:forward(genOutputs, output)
 
     -- backward
-    local genGradOutput = criterion:backward(genOutputs, output)
+    local genGradOutput = self.criterion:backward(genOutputs, output)
     for j = 1, #genGradOutput do
       genGradOutput[j]:div(batch.totalSize)
     end

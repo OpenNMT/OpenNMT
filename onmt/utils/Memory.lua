@@ -4,7 +4,6 @@ local Memory = {}
 
 Parameters:
   * `model` - a table containing encoder and decoder
-  * `criterion` - a single target criterion object
   * `batch` - a Batch object
   * `verbose` - produce output or not
 
@@ -13,10 +12,10 @@ Example:
   local model = {}
   model.encoder = onmt.Models.buildEncoder(...)
   model.decoder = onmt.Models.buildDecoder(...)
-  Memory.optimize(model, criterion, batch, verbose)
+  Memory.optimize(model, batch, verbose)
 
 ]]
-function Memory.optimize(model, criterion, batch, verbose)
+function Memory.optimize(model, batch, verbose)
 
   if verbose then
     _G.logger:info('Preparing memory optimization...')
@@ -31,7 +30,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   batch.sourceLength = 1
   batch.targetLength = 1
 
-  model:trainNetwork(batch, criterion, true)
+  model:trainNetwork(batch, true)
 
   -- mark shared tensors
   local sharedSize, totSize = memoryOptimizer:optimize()

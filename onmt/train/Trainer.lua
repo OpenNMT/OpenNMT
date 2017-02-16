@@ -2,7 +2,7 @@
 -- Local utility functions
 ------------------------------------------------------------------------------------------------------------------
 
-local function eval(model, criterion, data)
+local function eval(model, data)
   local loss = 0
   local totalWords = 0
 
@@ -10,7 +10,7 @@ local function eval(model, criterion, data)
 
   for i = 1, data:batchCount() do
     local batch = onmt.utils.Cuda.convert(data:getBatch(i))
-    loss = loss + model:forwardComputeLoss(batch, criterion)
+    loss = loss + model:forwardComputeLoss(batch)
     totalWords = totalWords + model:getOutputLabelsCount(batch)
   end
 
@@ -57,7 +57,6 @@ end
 
 function Trainer:train(model, optim, trainData, validData, dataset, info)
   local params, gradParams = {}, {}
-  local criterion
 
   onmt.utils.Parallel.launch(function(idx)
     -- Only logs information of the first thread.
@@ -69,21 +68,19 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     -- Switch to training mode.
     _G.model:training()
 
-    -- define criterion
-    _G.criterion = onmt.utils.Cuda.convert(_G.model:buildCriterion(dataset.dicts))
+    if self.args.profiler then
+      _G.model:enableProfiling()
+    end
 
     -- optimize memory of the first clone
     if not self.args.disable_mem_optimization then
       local batch = onmt.utils.Cuda.convert(trainData:getBatch(1))
       batch.totalSize = batch.size
-      onmt.utils.Memory.optimize(_G.model, _G.criterion, batch, verbose)
+      onmt.utils.Memory.optimize(_G.model, batch, verbose)
     end
 
-    return idx, _G.criterion, _G.params, _G.gradParams
-  end, function(idx, thecriterion, theparams, thegradParams)
-    if idx == 1 then
-      criterion = thecriterion
-    end
+    return idx, _G.params, _G.gradParams
+  end, function(idx, theparams, thegradParams)
     params[idx] = theparams
     gradParams[idx] = thegradParams
   end)
@@ -146,7 +143,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           _G.batch.totalSize = totalSize
 
           optim:zeroGrad(_G.gradParams)
-          local loss = _G.model:trainNetwork(_G.batch, _G.criterion)
+          local loss = _G.model:trainNetwork(_G.batch)
 
           return idx, loss, _G.profiler:dump()
         end,
@@ -223,7 +220,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             onmt.utils.Cuda.convert(_G.batch)
 
             optim:zeroGrad(_G.gradParams)
-            local loss = _G.model:trainNetwork(_G.batch, _G.criterion)
+            local loss = _G.model:trainNetwork(_G.batch)
             table.insert(losses, loss)
 
             -- Update the parameters.
@@ -270,7 +267,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     globalProfiler:stop("train")
 
     globalProfiler:start("valid")
-    local validPpl = eval(model, criterion, validData)
+    local validPpl = eval(model, validData)
     globalProfiler:stop("valid")
 
     if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
