@@ -167,7 +167,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         end
 
         if iter % self.args.report_every == 0 then
-          epochState:log()
+          epochState:log(iter)
         end
         if self.args.save_every > 0 and iter % self.args.save_every == 0 then
           checkpoint:saveIteration(iter, epochState, batchOrder, true)

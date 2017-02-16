@@ -32,10 +32,10 @@ function EpochState:update(model, batch, loss)
 end
 
 --[[ Log to status stdout. ]]
-function EpochState:log()
+function EpochState:log(iteration)
   _G.logger:info('Epoch %d ; Iteration %d/%d ; Learning rate %.4f ; Source tokens/s %d ; Perplexity %.2f',
                  self.epoch,
-                 self.iterations, self.numIterations,
+                 iteration or self.iterations, self.numIterations,
                  self.learningRate,
                  self.sourceWords / self.timer:time().real,
                  math.exp(self.trainLoss / self.targetWords))
