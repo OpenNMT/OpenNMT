@@ -7,7 +7,7 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
 
   wordSizes = onmt.utils.String.split(tostring(wordSizes), ',')
 
-  if opt.word_vec_size > 0 then
+  if type(opt.word_vec_size) == 'number' and opt.word_vec_size > 0 then
     wordEmbSize = opt.word_vec_size
   else
     wordEmbSize = tonumber(wordSizes[1])
@@ -111,7 +111,8 @@ function Factory.buildEncoder(opt, inputNetwork)
 end
 
 function Factory.buildWordEncoder(opt, dicts)
-  local inputNetwork = buildInputNetwork(opt, dicts, opt.src_word_vec_size,
+  local inputNetwork = buildInputNetwork(opt, dicts,
+                                         opt.src_word_vec_size or opt.word_vec_size,
                                          opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   return onmt.Factory.buildEncoder(opt, inputNetwork)
@@ -158,7 +159,8 @@ function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
-  local inputNetwork = buildInputNetwork(opt, dicts, opt.tgt_word_vec_size,
+  local inputNetwork = buildInputNetwork(opt, dicts,
+                                         opt.tgt_word_vec_size or opt.word_vec_size,
                                          opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
   local generator
