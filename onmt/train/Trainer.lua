@@ -184,6 +184,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       local gradBuffer = onmt.utils.Parallel.gradBuffer
       local gmutexId = onmt.utils.Parallel.gmutexId()
 
+      local maxConcurrentIter = self.args.report_every
+      if self.args.save_every > 0 and self.args.save_every < maxConcurrentIter then
+        maxConcurrentIter = self.args.save_every
+      end
       local iter = 0
 
       counter:set(startI)
@@ -203,9 +207,8 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           local losses = {}
 
           while true do
-            -- Do not process more than 1000 batches (TODO - make option) in one shot.
             local i = counter:inc()
-            if i - startCounter > 1000 or i > trainData:batchCount() then
+            if i - startCounter >= maxConcurrentIter or i > trainData:batchCount() then
               return batches, losses, _G.profiler:dump()
             end
 
@@ -228,11 +231,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
             -- Add up gradParams to params and synchronize back to this thread.
             onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
-
-            -- we don't have information about the other threads here - we can only report progress
-            if i % self.args.report_every == 0 then
-              _G.logger:info('Epoch %d ; ... batch %d/%d', epoch, i, trainData:batchCount())
-            end
           end
         end,
         function(batches, losses, profile)
@@ -245,10 +243,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           end
         end)
 
-        if self.args.report_every > 0 then
+        if iter % self.args.report_every == 0 then
           epochState:log(iter)
         end
-        if self.args.save_every > 0 then
+        if iter % self.args.save_every == 0 then
           checkpoint:saveIteration(iter, epochState, batchOrder, true)
         end
       end
