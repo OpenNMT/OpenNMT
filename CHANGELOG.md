@@ -6,6 +6,12 @@
 
 ### Fixes and improvements
 
+* Make sure released model does not contain any serialized function
+
+## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)
+
+### Fixes and improvements
+
 * Fix translation server error when clients send escaped unicode sequences
 * Fix compatibility issue with the `:split()` function
 * Reported metrics are no longer averaged on the entire epoch

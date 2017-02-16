@@ -21,6 +21,11 @@ local function releaseModel(model)
       submodule:clearState()
       submodule:apply(function (m)
         nn.utils.clear(m, 'gradWeight', 'gradBias')
+        for k, v in pairs(m) do
+          if type(v) == 'function' then
+            m[k] = nil
+          end
+        end
       end)
     end
   end
