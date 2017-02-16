@@ -1,6 +1,5 @@
 --[[
   Split `str` on string or pattern separator `sep`.
-  Compared to the standard Lua split function, this one does not drop empty fragment.
 ]]
 local function split(str, sep)
   local res = {}

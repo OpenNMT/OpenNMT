@@ -3,6 +3,7 @@
 ### Fixes and improvements
 
 * Fix translation server error when clients send escaped unicode sequences
+* Fix compatibility issue with the `:split()` function
 
 ## [v0.4.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.0) (2017-02-10)
 
