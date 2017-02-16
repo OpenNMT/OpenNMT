@@ -1,4 +1,4 @@
-local Factory = torch.class("onmt.Factory")
+local Factory = torch.class('Factory')
 
 -- Return effective embeddings size based on user options.
 local function resolveEmbSizes(opt, dicts, wordSizes)
