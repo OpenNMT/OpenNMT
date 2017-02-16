@@ -1,10 +1,13 @@
 local Cuda = {
   gpuIds = {},
-  activated = false
+  activated = false,
+  cudnn = nil,
+  _cudnnModule = {}
 }
 
 function Cuda.declareOpts(cmd)
   cmd:option('-gpuid', '0', [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]])
+  cmd:option('-cudnn', '', [[Layers, comma-separated, for which you want to use optimized cudnn routines: RNN, SoftMax, Activation.]])
 end
 
 function Cuda.init(opt, masterGPU)
@@ -21,6 +24,21 @@ function Cuda.init(opt, masterGPU)
   if Cuda.activated then
     require('cutorch')
     require('cunn')
+    local ret
+
+    if opt.cudnn ~= '' then
+      -- first check cudnn is available
+      ret, Cuda.cudnn = pcall(require, 'cudnn')
+      if not ret then
+        _G.logger:warning("-cudnn option only works with cudnn library - library not found: disabling the option")
+        Cuda.cudnn = nil
+      else
+        local modules = onmt.utils.String.split(opt.cudnn, ",")
+        for _,k in ipairs(modules) do
+          Cuda._cudnnModule[k] = true
+        end
+      end
+    end
 
     if masterGPU == nil then
       masterGPU = 1
@@ -47,6 +65,12 @@ function Cuda.init(opt, masterGPU)
   end
 end
 
+local function _cudnnSupportedNN(name)
+  -- do not use cudnn SoftMax for attention which is too small for getting any gain
+  return (name == 'nn.LogSoftMax' and Cuda.cudnnSupport('SoftMax'))
+         or ((name == 'nn.Sigmoid' or name == 'nn.Tanh' or name == 'nn.ReLU') and Cuda.cudnnSupport('Activation'))
+end
+
 --[[
   Recursively move all supported objects in `obj` on the GPU.
   When using CPU only, converts to float instead of the default double.
@@ -58,7 +82,30 @@ function Cuda.convert(obj)
       if objtype:find('torch%..*LongTensor') then
         return obj:cudaLong()
       else
-        return obj:cuda()
+        local cudaobj = obj:cuda()
+        if Cuda.cudnn and obj.modules then
+          local count = 0
+          -- recursively goes through the graph
+          cudaobj:apply(function(m)
+            if m.modules then
+              for i, _ in ipairs(m.modules) do
+                if _cudnnSupportedNN(torch.type(m.modules[i])) then
+                  count = count + 1
+                  local modules = m.modules[i].modules
+                  -- disable recursivity in conversion since we are already recursing
+                  m.modules[i].modules = nil
+                  m.modules[i] = Cuda.cudnn.convert(m.modules[i], Cuda.cudnn)
+                  m.modules[i].algorithm = 'CUDNN_SOFTMAX_FAST'
+                  m.modules[i].modules = modules
+                end
+              end
+            end
+          end)
+          if count > 0 then
+            _G.logger:info('Using cudnn modules for ...'..torch.typename(obj)..' ('..count..')')
+          end
+        end
+        return cudaobj
       end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
@@ -103,6 +150,10 @@ function Cuda.freeMemory()
     return freeMemory
   end
   return 0
+end
+
+function Cuda.cudnnSupport(module)
+  return (Cuda.cudnn and Cuda._cudnnModule[module]) or nil
 end
 
 return Cuda
