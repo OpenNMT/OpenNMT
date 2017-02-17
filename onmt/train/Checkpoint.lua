@@ -1,14 +1,14 @@
 -- Class for saving and loading models during training.
-local Checkpoint = torch.class("Checkpoint")
+local Checkpoint = torch.class('Checkpoint')
 
-local checkpoint_options = {
+local options = {
   {'-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]],
                          {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]]}
 }
 
 function Checkpoint.declareOpts(cmd)
-  cmd:setCmdLineOptions(checkpoint_options, "Checkpoint")
+  cmd:setCmdLineOptions(options, 'Checkpoint')
 end
 
 function Checkpoint:__init(options, model, optim, dicts)

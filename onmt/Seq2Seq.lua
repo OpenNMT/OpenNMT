@@ -1,7 +1,7 @@
 --[[ Sequence to sequence model with attention. ]]
 local Seq2Seq, parent = torch.class('Seq2Seq', 'Model')
 
-local Seq2Seq_options = {
+local options = {
   {'-layers', 2,           [[Number of layers in the RNN encoder/decoder]],
                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-rnn_size', 500, [[Size of RNN hidden states]],
@@ -38,12 +38,12 @@ local Seq2Seq_options = {
 }
 
 function Seq2Seq.declareOpts(cmd)
-  cmd:setCmdLineOptions(Seq2Seq_options, "Sequence to Sequence Attention")
+  cmd:setCmdLineOptions(options, Seq2Seq.modelName())
 end
 
 function Seq2Seq:__init(args, dicts, verbose)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, Seq2Seq_options))
+  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
@@ -54,7 +54,7 @@ function Seq2Seq.load(args, models, dicts, isReplica)
   local self = torch.factory('Seq2Seq')()
 
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, Seq2Seq_options))
+  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
@@ -65,12 +65,12 @@ end
 
 -- Returns model name.
 function Seq2Seq.modelName()
-  return "Sequence to Sequence Attention"
+  return 'Sequence to Sequence with Attention'
 end
 
 -- Returns expected dataMode.
 function Seq2Seq.dataType()
-  return "bitext"
+  return 'bitext'
 end
 
 function Seq2Seq:enableProfiling()

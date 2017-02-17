@@ -28,7 +28,7 @@ end
 
 --[[ Remove whitespaces at the start and end of the string `s`. ]]
 local function strip(s)
-  return s:gsub("^%s+",""):gsub("%s+$","")
+  return s:gsub('^%s+', ''):gsub('%s+$', '')
 end
 
 --[[ Remove initial hyphen(s). ]]
@@ -38,7 +38,7 @@ end
 
 --[[ Right pad a strip with spaces. ]]
 local function pad(str, sz)
-   return str .. string.rep(' ', sz-#str)
+   return str .. string.rep(' ', sz - #str)
 end
 
 --[[ Convenience function to test `s` for emptiness. ]]

@@ -1,13 +1,13 @@
 --[[ Language Model. ]]
 local LanguageModel, parent = torch.class('LanguageModel', 'Model')
 
-local LanguageModel_options = {
+local options = {
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
   {'-rnn_size', 500, [[Size of RNN hidden states]]},
   {'-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]]},
   {'-word_vec_size', '500', [[Comma-separated list of embedding sizes: word[,feat1,feat2,...].]]},
   {'-feat_merge', 'concat', [[Merge action for the features embeddings.]],
-                     {enum={'concat','sum'}}},
+                     {enum={'concat', 'sum'}}},
   {'-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
                                         then the embedding dimension will be set to N^exponent]]},
   {'-feat_vec_size', 20, [[When using sum, the common embedding size of the features]]},
@@ -24,12 +24,12 @@ local LanguageModel_options = {
 }
 
 function LanguageModel.declareOpts(cmd)
-  cmd:setCmdLineOptions(LanguageModel_options, "Language Model")
+  cmd:setCmdLineOptions(options, 'Language Model')
 end
 
 function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, LanguageModel_options))
+  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
   self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.src)
@@ -42,23 +42,23 @@ function LanguageModel:__init(args, dicts)
 end
 
 function LanguageModel.load()
-  error("loading a language model is not yet supported")
+  error('loading a language model is not yet supported')
 end
 
 -- Returns model name.
 function LanguageModel.modelName()
-  return "Language"
+  return 'Language'
 end
 
 -- Returns expected dataMode.
 function LanguageModel.dataType()
-  return "monotext"
+  return 'monotext'
 end
 
 function LanguageModel:enableProfiling()
-  _G.profiler.addHook(self.models.encoder, "encoder")
-  _G.profiler.addHook(self.models.generator, "generator")
-  _G.profiler.addHook(self.criterion, "criterion")
+  _G.profiler.addHook(self.models.encoder, 'encoder')
+  _G.profiler.addHook(self.models.generator, 'generator')
+  _G.profiler.addHook(self.criterion, 'criterion')
 end
 
 function LanguageModel:getOutput(batch)
@@ -73,8 +73,10 @@ function LanguageModel:forwardComputeLoss(batch)
   end
 
   local loss = 0
+
   for t = 1, batch.sourceLength do
     local genOutputs = self.models.generator:forward(context:select(2, t))
+
     -- LanguageModel is supposed to predict the following word.
     local output
     if t ~= batch.sourceLength then
@@ -82,10 +84,13 @@ function LanguageModel:forwardComputeLoss(batch)
     else
       output = eos
     end
+
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
+
     loss = loss + self.criterion:forward(genOutputs, output)
   end
+
   return loss
 end
 
@@ -100,23 +105,23 @@ function LanguageModel:trainNetwork(batch)
     eos[i]:fill(onmt.Constants.EOS)
   end
 
-  -- for each word of the sentence, generate target
+  -- For each word of the sentence, generate target.
   for t = 1, batch.sourceLength do
-    local genOutputs = self.models.generator:forward(context:select(2,t))
+    local genOutputs = self.models.generator:forward(context:select(2, t))
 
-    -- LanguageModel is supposed to predict following word
+    -- LanguageModel is supposed to predict following word.
     local output
     if t ~= batch.sourceLength then
       output = batch:getSourceInput(t + 1)
     else
       output = eos
     end
-    -- same format with and without features
+
+    -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
 
     loss = loss + self.criterion:forward(genOutputs, output)
 
-    -- backward
     local genGradOutput = self.criterion:backward(genOutputs, output)
     for j = 1, #genGradOutput do
       genGradOutput[j]:div(batch.totalSize)

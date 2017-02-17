@@ -2,12 +2,12 @@
 --]]
 local Profiler = torch.class('Profiler')
 
-local profiler_options = {
+local options = {
   {'-profiler', false, [[Generate profiling logs.]]}
 }
 
 function Profiler.declareOpts(cmd)
-  cmd:setCmdLineOptions(profiler_options)
+  cmd:setCmdLineOptions(options)
 end
 
 --[[ Profiler object

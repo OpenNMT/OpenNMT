@@ -1,20 +1,20 @@
 --[[ Generic Model class. ]]
 local Model = torch.class('Model')
 
-local model_options = {
+local options = {
   {'-model_type', 'seq2seq',  [[Type of the model to train.
                               This option impacts all options choices]],
                      {enum={'lm','seq2seq'}}},
   {'-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]],
-                       {valid=function(v) return v>=0 and v<=1 end}}
+                       {valid=function(v) return v >= 0 and v <= 1 end}}
 }
 
 function Model.declareOpts(cmd)
-  cmd:setCmdLineOptions(model_options)
+  cmd:setCmdLineOptions(options)
 end
 
 function Model:__init(args)
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, model_options)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.train_from = args.train_from
   self.models = {}
 end
@@ -28,13 +28,13 @@ function Model:getOutputLabelsCount(batch)
 end
 
 function Model:evaluate()
-  for _,m in pairs(self.models) do
+  for _, m in pairs(self.models) do
     m:evaluate()
   end
 end
 
 function Model:training()
-  for _,m in pairs(self.models) do
+  for _, m in pairs(self.models) do
     m:training()
   end
 end
@@ -75,7 +75,7 @@ function Model:initParams(verbose)
   end
 
   if verbose then
-    _G.logger:info(" * number of parameters: " .. numParams)
+    _G.logger:info(' * number of parameters: ' .. numParams)
   end
 
   return params, gradParams

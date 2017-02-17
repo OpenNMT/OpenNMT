@@ -1,6 +1,6 @@
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 -- Local utility functions
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 local function adagradStep(dfdx, lr, state)
   if not state.var then
@@ -49,11 +49,11 @@ local function adadeltaStep(dfdx, lr, state)
   state.accDelta:mul(rho):addcmul(1-rho, state.delta, state.delta)
 end
 
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
-local Optim = torch.class("Optim")
+local Optim = torch.class('Optim')
 
-local optim_options = {
+local options = {
   {'-max_batch_size',     64   , [[Maximum batch size]],
                                  {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-optim',              'sgd', [[Optimization method.]],
@@ -70,11 +70,11 @@ local optim_options = {
 }
 
 function Optim.declareOpts(cmd)
-  cmd:setCmdLineOptions(optim_options, "Optimization")
+  cmd:setCmdLineOptions(options, 'Optimization')
 end
 
 function Optim:__init(args, optimStates)
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, optim_options)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.valPerf = {}
 
   if self.args.optim == 'sgd' then

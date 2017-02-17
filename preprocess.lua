@@ -1,18 +1,12 @@
 require('onmt.init')
 
-local cmd = onmt.utils.ExtendedCmdLine.new("preprocess.lua")
+local cmd = onmt.utils.ExtendedCmdLine.new('preprocess.lua')
 
--- first argument define the dataType: bitext/monotext - default is bitext
-local dataType = 'bitext'
-for i=1,#arg do
-  if arg[i]=='-data_type' and i<#arg then
-    dataType = arg[i+1]
-    break
-  end
-end
+-- First argument define the dataType: bitext/monotext - default is bitext.
+local dataType = cmd.getArgument(arg, '-data_type') or 'bitext'
 
--------------- Options declaration
-local preprocess_options = {
+-- Options declaration
+local options = {
   {'-data_type',         'bitext',  [[Type of text to preprocess. Use 'monotext' for monolingual text.
                                     This option impacts all options choices.]],
                                     {enum={'bitext','monotext'}}},
@@ -20,17 +14,17 @@ local preprocess_options = {
                                     {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
 }
 
-cmd:setCmdLineOptions(preprocess_options, "Preprocess")
+cmd:setCmdLineOptions(options, 'Preprocess')
 
 onmt.data.Preprocessor.declareOpts(cmd, dataType)
 
-local misc_options = {
+local otherOptions = {
   {'-seed',                   3425,    [[Random seed]],
                                    {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',           100000,  [[Report status every this many sentences]],
                                    {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
 }
-cmd:setCmdLineOptions(misc_options, "Other")
+cmd:setCmdLineOptions(otherOptions, 'Other')
 onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
@@ -51,11 +45,19 @@ local function main()
   local data = { dataType=dataType }
 
   data.dicts = {}
-  data.dicts.src = Vocabulary.init('train', opt.train_src or opt.train, opt.src_vocab or opt.vocab, opt.src_vocab_size or opt.vocab_size,
-                                   opt.features_vocabs_prefix, function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
+  data.dicts.src = Vocabulary.init('train',
+                                   opt.train_src or opt.train,
+                                   opt.src_vocab or opt.vocab,
+                                   opt.src_vocab_size or opt.vocab_size,
+                                   opt.features_vocabs_prefix,
+                                   function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
   if dataType ~= 'monotext' then
-    data.dicts.tgt = Vocabulary.init('target', opt.train_tgt, opt.tgt_vocab, opt.tgt_vocab_size,
-                                     opt.features_vocabs_prefix, function(s) return isValid(s, opt.tgt_seq_length) end)
+    data.dicts.tgt = Vocabulary.init('target',
+                                     opt.train_tgt,
+                                     opt.tgt_vocab,
+                                     opt.tgt_vocab_size,
+                                     opt.features_vocabs_prefix,
+                                     function(s) return isValid(s, opt.tgt_seq_length) end)
   end
 
   _G.logger:info('Preparing training data...')

@@ -152,7 +152,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 
   if opt.input_feed == 1 then
     if verbose then
-      _G.logger:info(" * using input feeding")
+      _G.logger:info(' * using input feeding')
     end
     inputSize = inputSize + opt.rnn_size
   end

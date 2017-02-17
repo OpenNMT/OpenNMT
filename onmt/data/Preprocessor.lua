@@ -8,10 +8,10 @@ local function vecToTensor(vec)
   return t
 end
 
-local Preprocessor = torch.class("Preprocessor")
+local Preprocessor = torch.class('Preprocessor')
 local tds = require('tds')
 
-local bitext_preprocess_options = {
+local bitextOptions = {
   {'-train_src',               '',     [[Path to the training source data]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
   {'-train_tgt',               '',     [[Path to the training target data]],
@@ -34,7 +34,7 @@ local bitext_preprocess_options = {
                                        {valid=onmt.utils.ExtendedCmdLine.isUInt}}
 }
 
-local monolingual_preprocess_options = {
+local monotextOptions = {
   {'-train',                   '',     [[Path to the training source data]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
   {'-valid',                   '',     [[Path to the validation source data]],
@@ -47,7 +47,7 @@ local monolingual_preprocess_options = {
                                        {valid=onmt.utils.ExtendedCmdLine.isUInt}}
 }
 
-local common_preprocess_options = {
+local commonOptions = {
   {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-shuffle',                1,       [[Shuffle data]]}
@@ -55,30 +55,30 @@ local common_preprocess_options = {
 
 function Preprocessor.declareOpts(cmd, mode)
   mode = mode or 'bitext'
-  local preprocess_options
+  local options
   if mode == 'bitext' then
-    preprocess_options = bitext_preprocess_options
+    options = bitextOptions
   else
-    preprocess_options = monolingual_preprocess_options
+    options = monotextOptions
   end
-  for _,v in ipairs(common_preprocess_options) do
-    table.insert(preprocess_options, v)
+  for _, v in ipairs(commonOptions) do
+    table.insert(options, v)
   end
-  cmd:setCmdLineOptions(preprocess_options, "Preprocess")
+  cmd:setCmdLineOptions(options, 'Preprocess')
 end
 
 function Preprocessor:__init(args, mode)
   mode = mode or 'bitext'
-  local preprocess_options
+  local options
   if mode == 'bitext' then
-    preprocess_options = bitext_preprocess_options
+    options = bitextOptions
   else
-    preprocess_options = monolingual_preprocess_options
+    options = monotextOptions
   end
-  for _,v in ipairs(common_preprocess_options) do
-    table.insert(preprocess_options, v)
+  for _, v in ipairs(commonOptions) do
+    table.insert(options, v)
   end
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, preprocess_options)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.report_every = args.report_every
 end
 

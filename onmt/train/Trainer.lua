@@ -1,6 +1,6 @@
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 -- Local utility functions
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 local function eval(model, data)
   local loss = 0
@@ -21,9 +21,9 @@ end
 
 ------------------------------------------------------------------------------------------------------------------
 
-local Trainer = torch.class("Trainer")
+local Trainer = torch.class('Trainer')
 
-local trainer_options = {
+local options = {
   {'-save_every',              0 ,    [[Save intermediate models every this many iterations within an epoch.
                                             If = 0, will not save models within an epoch. ]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
@@ -44,14 +44,14 @@ local trainer_options = {
 }
 
 function Trainer.declareOpts(cmd)
-  cmd:setCmdLineOptions(trainer_options, "Trainer")
+  cmd:setCmdLineOptions(options, 'Trainer')
 end
 
 function Trainer:__init(args)
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, trainer_options)
-  -- use profiler in Trainer
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+  -- Use profiler in Trainer.
   self.args.profiler = args.profiler
-  -- make a difference with options which is only used in Checkpoint
+  -- Make a difference with options which is only used in Checkpoint.
   self.options = args
 end
 
@@ -113,7 +113,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     self.args.start_iteration = 1
 
     if not self.args.async_parallel then
-      -- synchronous parallelism or single thread
+      -- Synchronous training.
       local iter = 1
       for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
         local batches = {}
@@ -175,7 +175,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         iter = iter + 1
       end
     else
-      -- Asynchronous parallelism
+      -- Asynchronous training.
       local counter = onmt.utils.Parallel.getCounter()
       local masterGPU = onmt.utils.Cuda.gpuIds[1]
       local gradBuffer = onmt.utils.Parallel.gradBuffer
@@ -261,14 +261,14 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     local globalProfiler = onmt.utils.Profiler.new(self.args.profiler)
 
-    globalProfiler:start("train")
+    globalProfiler:start('train')
     local epochState, epochProfile = trainEpoch(epoch, self.args.profiler)
     globalProfiler:add(epochProfile)
-    globalProfiler:stop("train")
+    globalProfiler:stop('train')
 
-    globalProfiler:start("valid")
+    globalProfiler:start('valid')
     local validPpl = eval(model, validData)
-    globalProfiler:stop("valid")
+    globalProfiler:stop('valid')
 
     if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
     _G.logger:info('Validation perplexity: %.2f', validPpl)

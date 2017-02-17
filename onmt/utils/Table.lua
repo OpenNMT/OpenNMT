@@ -10,7 +10,7 @@ end
 
 --[[ Merge dict `src` to `dst`. ]]
 local function merge(dst, src)
-  for k,v in pairs(src) do
+  for k, v in pairs(src) do
     dst[k] = v
   end
 end
@@ -37,8 +37,10 @@ end
 
 --[[ Check if value is part of list/table. ]]
 local function hasValue(tab, value)
-  for _,v in ipairs(tab) do
-    if v == value then return true end
+  for _, v in ipairs(tab) do
+    if v == value then
+      return true
+    end
   end
   return false
 end

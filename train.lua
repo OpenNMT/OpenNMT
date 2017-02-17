@@ -1,20 +1,14 @@
 require('onmt.init')
 
-local cmd = onmt.utils.ExtendedCmdLine.new("train.lua")
+local cmd = onmt.utils.ExtendedCmdLine.new('train.lua')
 
--- first argument define the model type: seq2seq/LM - default is seq2seq
-local mtype = 'seq2seq'
-for i=1,#arg do
-  if arg[i]=='-model_type' and i<#arg then
-    mtype = arg[i+1]
-    break
-  end
-end
+-- First argument define the model type: seq2seq/lm - default is seq2seq.
+local modelType = cmd.getArgument(arg, '-model_type') or 'seq2seq'
 
-local modelClass = onmt.ModelSelector(mtype)
+local modelClass = onmt.ModelSelector(modelType)
 
--------------- Options declaration
-local data_options = {
+-- Options declaration.
+local options = {
   {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
                       {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
   {'-save_model', '', [[Model filename (the model will be saved as
@@ -22,37 +16,24 @@ local data_options = {
                       {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
 }
 
-cmd:setCmdLineOptions(data_options, "Data")
+cmd:setCmdLineOptions(options, 'Data')
 
--- Generic Model options.
 onmt.Model.declareOpts(cmd)
-
--- Seq2Seq attn options.
 modelClass.declareOpts(cmd)
-
--- Optimization options.
 onmt.train.Optim.declareOpts(cmd)
-
--- Training process options.
 onmt.train.Trainer.declareOpts(cmd)
-
--- Checkpoints options.
 onmt.train.Checkpoint.declareOpts(cmd)
 
-cmd:text("")
-cmd:text("**Other options**")
-cmd:text("")
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
 
--- GPU
 onmt.utils.Cuda.declareOpts(cmd)
--- Memory optimization
 onmt.utils.Memory.declareOpts(cmd)
--- Misc
-cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
--- Logger options
 onmt.utils.Logger.declareOpts(cmd)
--- Profiler options
 onmt.utils.Profiler.declareOpts(cmd)
+
+cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 
 local opt = cmd:parse(arg)
 
@@ -76,12 +57,12 @@ local function main()
 
   local dataset = torch.load(opt.data, 'binary', false)
 
-  -- keep backward compatibility
-  dataset.dataType = dataset.dataType or "bitext"
+  -- Keep backward compatibility.
+  dataset.dataType = dataset.dataType or 'bitext'
 
-  -- check if data matching the model
+  -- Check if data type matches the model.
   if dataset.dataType ~= modelClass.dataType() then
-    _G.logger:error("Data type: '"..dataset.dataType.."' does not match model type: '"..modelClass.dataType().."'")
+    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.dataType() .. '\'')
     os.exit(0)
   end
 
@@ -107,12 +88,11 @@ local function main()
 
   _G.logger:info('Building model...')
 
-  -- main model
   local model
 
-  -- build or load model from checkpoint and copy to GPUs
+  -- Build or load model from checkpoint and copy to GPUs.
   onmt.utils.Parallel.launch(function(idx)
-    local _modelClass = onmt.ModelSelector(mtype)
+    local _modelClass = onmt.ModelSelector(modelType)
     if checkpoint.models then
       _G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
     else
@@ -130,13 +110,13 @@ local function main()
   -- Define optimization method.
   local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
   local optim = onmt.train.Optim.new(opt, optimStates)
+
   -- Initialize trainer.
   local trainer = onmt.train.Trainer.new(opt)
 
-  -- Launch train
+  -- Launch training.
   trainer:train(model, optim, trainData, validData, dataset, checkpoint.info)
 
-  -- turn off logger
   _G.logger:shutDown()
 end
 

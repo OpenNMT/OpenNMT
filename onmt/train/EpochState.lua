@@ -1,7 +1,7 @@
 --[[ Class for managing the training process by logging and storing
   the state of the current epoch.
 ]]
-local EpochState = torch.class("EpochState")
+local EpochState = torch.class('EpochState')
 
 --[[ Initialize for epoch `epoch`]]
 function EpochState:__init(epoch, numIterations, learningRate)

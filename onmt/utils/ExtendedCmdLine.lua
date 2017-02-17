@@ -1,6 +1,6 @@
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 -- Local utility functions
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 --[[ Convert `val` string to its actual type (boolean, number or string). ]]
 local function convert(key, val, ref)
@@ -24,7 +24,7 @@ local function convert(key, val, ref)
   return new
 end
 
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 local ExtendedCmdLine, parent, path
 -- the utils function can be run without torch
@@ -47,21 +47,21 @@ end
   Example:
 
     cmd = onmt.utils.ExtendedCmdLine.new()
-    local optim_options = {
+    local options = {
       {'-max_batch_size',     64   , 'Maximum batch size', {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
     }
 
-    cmd:setCmdLineOptions(optim_options, 'Optimization')
+    cmd:setCmdLineOptions(options, 'Optimization')
     local opt = cmd:parse(arg)
 
-    local optimArgs = cmd.getModuleOpts(opt, optim_options)
+    local optimArgs = cmd.getModuleOpts(opt, options)
 ]]
 
 function ExtendedCmdLine:__init(script)
   self.script = script
   parent.__init(self)
 
-  self:text("")
+  self:text('')
   self:option('-h', false, 'this help file')
   self:option('-config', '', 'read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
   self:option('-save_config', '', 'save options from config file.')
@@ -70,24 +70,28 @@ end
 
 function ExtendedCmdLine:help(arg, doMd)
   if doMd then
-    for _,option in ipairs(self.helplines) do
+    for _, option in ipairs(self.helplines) do
       if type(option) == 'table' then
         io.write('* ')
-        if option.default ~= nil then -- it is an option
-          io.write("`"..option.key.."`: ")
+        if option.default ~= nil then -- It is an option.
+          io.write('`' .. option.key .. '`: ')
           if option.meta and option.meta.enum then
-            io.write(' ('..table.concat(option.meta.enum, ', ')..') ')
+            io.write(' (' .. table.concat(option.meta.enum, ', ') .. ') ')
           end
-          option.help = option.help:gsub(" *\n   *"," ")
-          if option.help then io.write(option.help) end
+          option.help = option.help:gsub(' *\n   *', ' ')
+          if option.help then
+            io.write(option.help)
+          end
           io.write(' [' .. tostring(option.default) .. ']')
-        else -- it is an argument
+        else -- It is an argument.
           io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
-          if option.help then io.write(' ' .. option.help) end
+          if option.help then
+            io.write(' ' .. option.help)
+          end
         end
       else
-        local display = option:gsub("%*","-")
-        io.write(display) -- just some additional help
+        local display = option:gsub('%*', '-')
+        io.write(display) -- Just some additional help.
       end
       io.write('\n')
     end
@@ -95,50 +99,54 @@ function ExtendedCmdLine:help(arg, doMd)
   else
     if arg then
       io.write('Usage: ')
-      io.write(arg[0]..' ' .. self.script .. ' ')
+      io.write(arg[0] .. ' ' .. self.script .. ' ')
       io.write('[options] ')
-      for i=1,#self.arguments do
+      for i = 1, #self.arguments do
         io.write('<' .. onmt.utils.String.stripHyphens(self.arguments[i].key) .. '>')
       end
       io.write('\n')
     end
 
-    -- first pass to compute max length
+    -- First pass to compute max length.
     local optsz = 0
-    for _,option in ipairs(self.helplines) do
+    for _, option in ipairs(self.helplines) do
       if type(option) == 'table' then
-        if option.default ~= nil then -- it is an option
+        if option.default ~= nil then -- It is an option.
           if #option.key > optsz then
             optsz = #option.key
           end
-        else -- it is an argument
+        else -- It is an argument.
           local stripOptionKey = onmt.utils.String.stripHyphens(option.key)
-          if #stripOptionKey+2 > optsz then
-            optsz = #stripOptionKey+2
+          if #stripOptionKey + 2 > optsz then
+            optsz = #stripOptionKey + 2
           end
         end
       end
     end
 
     local padMultiLine = onmt.utils.String.pad('', optsz)
-    -- second pass to print
-    for _,option in ipairs(self.helplines) do
+    -- Second pass to print.
+    for _, option in ipairs(self.helplines) do
       if type(option) == 'table' then
         io.write('  ')
-        if option.default ~= nil then -- it is an option
+        if option.default ~= nil then -- It is an option.
           io.write(onmt.utils.String.pad(option.key, optsz))
           if option.meta and option.meta.enum then
-            io.write(' ('..table.concat(option.meta.enum, ', ')..')')
+            io.write(' (' .. table.concat(option.meta.enum, ', ') .. ')')
           end
-          option.help = option.help:gsub("\n   *","\n"..padMultiLine.."   ")
-          if option.help then io.write(' ' .. option.help) end
+          option.help = option.help:gsub('\n   *', '\n' .. padMultiLine .. '   ')
+          if option.help then
+            io.write(' ' .. option.help)
+          end
           io.write(' [' .. tostring(option.default) .. ']')
-        else -- it is an argument
+        else -- It is an argument.
           io.write(onmt.utils.String.pad('<' .. onmt.utils.String.stripHyphens(option.key) .. '>', optsz))
-          if option.help then io.write(' ' .. option.help) end
+          if option.help then
+            io.write(' ' .. option.help)
+          end
         end
       else
-        io.write(option) -- just some additional help
+        io.write(option) -- Just some additional help.
       end
       io.write('\n')
     end
@@ -153,7 +161,7 @@ end
 
 --[[ Override options with option values set in file `filename`. ]]
 function ExtendedCmdLine:loadConfig(filename, opt)
-  local file = assert(io.open(filename, "r"))
+  local file = assert(io.open(filename, 'r'))
 
   for line in file:lines() do
     -- Ignore empty or commented out lines.
@@ -194,6 +202,7 @@ function ExtendedCmdLine:parse(arg)
   local doMd = false
   local readConfig
   local saveConfig
+
   while i <= #arg do
     if arg[i] == '-help' or arg[i] == '-h' or arg[i] == '--help' then
       doHelp = true
@@ -202,10 +211,10 @@ function ExtendedCmdLine:parse(arg)
       doMd = true
       i = i + 1
     elseif arg[i] == '-config' then
-      readConfig = arg[i+1]
+      readConfig = arg[i + 1]
       i = i + 2
     elseif arg[i] == '-save_config' then
-      saveConfig = arg[i+1]
+      saveConfig = arg[i + 1]
       i = i + 2
     else
       if self.options[arg[i]] then
@@ -234,16 +243,18 @@ function ExtendedCmdLine:parse(arg)
     self:dumpConfig(params, saveConfig)
   end
 
-  for k,v in pairs(params) do
-    local K = '-'..k
-    if not self.options[K] and self.options[k] then K=k end
+  for k, v in pairs(params) do
+    local K = '-' .. k
+    if not self.options[K] and self.options[k] then
+      K = k
+    end
     local meta = self.options[K].meta
     if meta then
       if meta.valid and not meta.valid(v) then
-        self:error("option '"..k.."' value is not valid")
+        self:error('option \'' .. k .. '\' value is not valid')
       end
       if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-        self:error("option '"..k.."' value is not in possible values")
+        self:error('option \'' .. k.. '\' value is not in possible values')
       end
     end
   end
@@ -253,12 +264,13 @@ end
 
 function ExtendedCmdLine:setCmdLineOptions(moduleOptions, group)
   if group then
-    self:text("")
-    self:text("**"..group.." options**")
-    self:text("")
+    self:text('')
+    self:text('**' .. group .. ' options**')
+    self:text('')
   end
-  for i=1,#moduleOptions do
-    if type(moduleOptions[i])=='table' then
+
+  for i = 1, #moduleOptions do
+    if type(moduleOptions[i]) == 'table' then
       self:option(table.unpack(moduleOptions[i]))
     else
       self:argument(moduleOptions[i])
@@ -268,17 +280,28 @@ end
 
 function ExtendedCmdLine.getModuleOpts(args, moduleOptions)
   local moduleArgs = {}
-  for i=1,#moduleOptions do
+  for i = 1, #moduleOptions do
     local optname = moduleOptions[i][1]
-    if optname:sub(1,1)=='-' then optname = optname:sub(2) end
+    if optname:sub(1, 1) == '-' then
+      optname = optname:sub(2)
+    end
     moduleArgs[optname] = args[optname]
   end
   return moduleArgs
 end
 
-------------------------------------------------------------------------------------------------------------------
+function ExtendedCmdLine.getArgument(args, optName)
+  for i = 1, #args do
+    if args[i] == optName and i < #args then
+      return args[i + 1]
+    end
+  end
+  return nil
+end
+
+---------------------------------------------------------------------------------
 -- Validators
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 -- Check if is integer between minValue and maxValue.
 function ExtendedCmdLine.isInt(minValue, maxValue)
@@ -298,11 +321,16 @@ end
 function ExtendedCmdLine.listUInt(v)
   local sv = tostring(v)
   local p = 1
+
   while true do
     local q
-    p, q = sv:find("%d+",p)
-    if q == #sv then return true end
-    if not p or sv:sub(q+1,q+1) ~= ',' then return false end
+    p, q = sv:find('%d+',p)
+    if q == #sv then
+      return true
+    end
+    if not p or sv:sub(q+1,q+1) ~= ',' then
+      return false
+    end
     p = q+2
   end
 end
