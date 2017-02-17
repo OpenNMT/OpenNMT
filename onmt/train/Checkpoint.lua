@@ -11,8 +11,8 @@ function Checkpoint.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Checkpoint')
 end
 
-function Checkpoint:__init(options, model, optim, dicts)
-  self.options = options
+function Checkpoint:__init(opt, model, optim, dicts)
+  self.options = opt
   self.model = model
   self.optim = optim
   self.dicts = dicts
