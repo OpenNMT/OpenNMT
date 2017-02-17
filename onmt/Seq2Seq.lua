@@ -74,6 +74,10 @@ function Seq2Seq.dataType()
 end
 
 function Seq2Seq:enableProfiling()
+  _G.profiler.addHook(self.models.encoder, 'encoder')
+  _G.profiler.addHook(self.models.decoder, 'decoder')
+  _G.profiler.addHook(self.models.decoder.modules[2], 'generator')
+  _G.profiler.addHook(self.criterion, 'criterion')
 end
 
 function Seq2Seq:getOutput(batch)
