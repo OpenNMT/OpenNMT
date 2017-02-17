@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
         
     </li>
@@ -185,6 +192,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -229,6 +243,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/train/onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/onmt+train+Trainer/">onmt+train+Trainer</a>
         
     </li>
 
@@ -365,10 +386,23 @@
           <div role="main">
             <div class="section">
               
-                <p><strong>Preprocess Options</strong></p>
-<dl>
+                <dl>
+<dt>h</dt>
+<dd>this help file [false]</dd>
 <dt>config</dt>
-<dd>Read options from this file []</dd>
+<dd>read options from config file. []</dd>
+<dt>save_config</dt>
+<dd>save options from config file. []</dd>
+</dl>
+<p><strong>Preprocess options</strong></p>
+<dl>
+<dt>data_type</dt>
+<dd>(bitext, monotext) Type of text to preprocess. Use 'monotext' for monolingual text.This option impacts all options choices. [bitext]</dd>
+<dt>save_data</dt>
+<dd>Output file for the prepared data []</dd>
+</dl>
+<p><strong>Preprocess options</strong></p>
+<dl>
 <dt>train_src</dt>
 <dd>Path to the training source data []</dd>
 <dt>train_tgt</dt>
@@ -377,26 +411,27 @@
 <dd>Path to the validation source data []</dd>
 <dt>valid_tgt</dt>
 <dd>Path to the validation target data []</dd>
-<dt>save_data</dt>
-<dd>Output file for the prepared data []</dd>
-<dt>src_vocab_size</dt>
-<dd>Comma-separated list of source vocabularies size: word[,feat1,feat2,...]. [50000]</dd>
-<dt>tgt_vocab_size</dt>
-<dd>Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. [50000]</dd>
 <dt>src_vocab</dt>
 <dd>Path to an existing source vocabulary []</dd>
 <dt>tgt_vocab</dt>
 <dd>Path to an existing target vocabulary []</dd>
-<dt>features_vocabs_prefix</dt>
-<dd>Path prefix to existing features vocabularies []</dd>
+<dt>src_vocab_size</dt>
+<dd>Comma-separated list of source vocabularies size: word[,feat1,feat2,...]. [50000]</dd>
+<dt>tgt_vocab_size</dt>
+<dd>Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. [50000]</dd>
 <dt>src_seq_length</dt>
 <dd>Maximum source sequence length [50]</dd>
 <dt>tgt_seq_length</dt>
 <dd>Maximum target sequence length [50]</dd>
+<dt>features_vocabs_prefix</dt>
+<dd>Path prefix to existing features vocabularies []</dd>
 <dt>shuffle</dt>
 <dd>Shuffle data [1]</dd>
+</dl>
+<p><strong>Other options</strong></p>
+<dl>
 <dt>seed</dt>
-<dd>Random seed [3435]</dd>
+<dd>Random seed [3425]</dd>
 <dt>report_every</dt>
 <dd>Report status every this many sentences [100000]</dd>
 <dt>log_file</dt>

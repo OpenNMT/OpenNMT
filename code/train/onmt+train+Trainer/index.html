@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+translate+PhraseTable - OpenNMT</title>
+  <title>onmt+train+Trainer - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+translate+PhraseTable";
-    var mkdocs_page_input_path = "code/translate/onmt+translate+PhraseTable.md";
-    var mkdocs_page_url = "/code/translate/onmt+translate+PhraseTable/";
+    var mkdocs_page_name = "onmt+train+Trainer";
+    var mkdocs_page_input_path = "code/train/onmt+train+Trainer.md";
+    var mkdocs_page_url = "/code/train/onmt+train+Trainer/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -221,35 +221,44 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../train/">Home</a>
+        <a class="" href="../">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../train/onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
+        <a class="" href="../onmt+train+Checkpoint/">onmt+train+Checkpoint</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../train/onmt+train+EpochState/">onmt+train+EpochState</a>
+        <a class="" href="../onmt+train+EpochState/">onmt+train+EpochState</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../train/onmt+train+Optim/">onmt+train+Optim</a>
+        <a class="" href="../onmt+train+Optim/">onmt+train+Optim</a>
         
     </li>
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../../train/onmt+train+Trainer/">onmt+train+Trainer</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+train+Trainer</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmttrainer">onmt.Trainer</a></li>
+                
+                    <li><a class="toctree-l4" href="#undocumented-methods">Undocumented methods</a></li>
+                
+            
+            </ul>
         
     </li>
 
@@ -264,60 +273,49 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
+        <a class="" href="../../translate/">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        <a class="" href="../../translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+Beam/">onmt+translate+Beam</a>
+        <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        <a class="" href="../../translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+translate+PhraseTable</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtphrasetable">onmt.PhraseTable</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtphrasetablelookupword">onmt.PhraseTable:lookup(word)</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtphrasetablecontainsword">onmt.PhraseTable:contains(word)</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+Translator/">onmt+translate+Translator</a>
+        <a class="" href="../../translate/onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+Translator/">onmt+translate+Translator</a>
         
     </li>
 
@@ -383,11 +381,11 @@
         
       
         
-          <li>Translate &raquo;</li>
+          <li>Train &raquo;</li>
         
       
     
-    <li>onmt+translate+PhraseTable</li>
+    <li>onmt+train+Trainer</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -397,20 +395,16 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.PhraseTable.dok"></a></p>
-<h2 id="onmtphrasetable">onmt.PhraseTable</h2>
-<p>Parse and lookup a words from a phrase table.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/translate/PhraseTable.lua#L20">[src]</a>
-<a name="onmt.PhraseTable:lookup"></a></p>
-<h3 id="onmtphrasetablelookupword">onmt.PhraseTable:lookup(word)</h3>
-<p>Return the phrase table match for <code>word</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/translate/PhraseTable.lua#L25">[src]</a>
-<a name="onmt.PhraseTable:contains"></a></p>
-<h3 id="onmtphrasetablecontainsword">onmt.PhraseTable:contains(word)</h3>
-<p>Return true if the phrase table contains the source word <code>word</code>. </p>
+                <p><a name="onmt.Trainer.dok"></a></p>
+<h2 id="onmttrainer">onmt.Trainer</h2>
+<hr />
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.PhraseTable"></a>
- * <code>onmt.PhraseTable(filePath)</code></p>
+<p><a name="onmt.Trainer.declareOpts"></a>
+ * <code>onmt.Trainer.declareOpts(cmd)</code>
+<a name="onmt.Trainer"></a>
+ * <code>onmt.Trainer(args)</code>
+<a name="onmt.Trainer:train"></a>
+ * <code>onmt.Trainer:train(model, optim, trainData, validData, dataset, info)</code></p>
               
             </div>
           </div>
@@ -418,10 +412,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+translate+Translator/" class="btn btn-neutral float-right" title="onmt+translate+Translator">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../translate/" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../onmt+translate+DecoderAdvancer/" class="btn btn-neutral" title="onmt+translate+DecoderAdvancer"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+train+Optim/" class="btn btn-neutral" title="onmt+train+Optim"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -447,10 +441,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt+translate+DecoderAdvancer/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+train+Optim/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+translate+Translator/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../../translate/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

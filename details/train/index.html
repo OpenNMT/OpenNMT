@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
         
     </li>
@@ -185,6 +192,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -229,6 +243,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/train/onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/onmt+train+Trainer/">onmt+train+Trainer</a>
         
     </li>
 
@@ -365,10 +386,13 @@
           <div role="main">
             <div class="section">
               
-                <p><strong>train.lua</strong></p>
-<dl>
+                <dl>
+<dt>h</dt>
+<dd>this help file [false]</dd>
 <dt>config</dt>
-<dd>Read options from this file []</dd>
+<dd>read options from config file. []</dd>
+<dt>save_config</dt>
+<dd>save options from config file. []</dd>
 </dl>
 <p><strong>Data options</strong></p>
 <dl>
@@ -376,19 +400,19 @@
 <dd>Path to the training *-train.t7 file from preprocess.lua []</dd>
 <dt>save_model</dt>
 <dd>Model filename (the model will be saved as<save_model>_epochN_PPL.t7 where PPL is the validation perplexity []</dd>
-<dt>train_from</dt>
-<dd>If training from a checkpoint then this is the path to the pretrained model. []</dd>
-<dt>continue</dt>
-<dd>If training from a checkpoint, whether to continue the training in the same configuration or not. [false]</dd>
+<dt>model_type</dt>
+<dd>(lm, seq2seq) Type of the model to train.This option impacts all options choices [seq2seq]</dd>
+<dt>param_init</dt>
+<dd>Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</dd>
 </dl>
-<p><strong>Model options</strong></p>
+<p><strong>Sequence to Sequence with Attention options</strong></p>
 <dl>
 <dt>layers</dt>
 <dd>Number of layers in the RNN encoder/decoder [2]</dd>
 <dt>rnn_size</dt>
 <dd>Size of RNN hidden states [500]</dd>
 <dt>rnn_type</dt>
-<dd>Type of RNN cell: LSTM, GRU [LSTM]</dd>
+<dd>(LSTM, GRU) Type of RNN cell [LSTM]</dd>
 <dt>word_vec_size</dt>
 <dd>Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]</dd>
 <dt>src_word_vec_size</dt>
@@ -396,46 +420,19 @@
 <dt>tgt_word_vec_size</dt>
 <dd>Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]</dd>
 <dt>feat_merge</dt>
-<dd>Merge action for the features embeddings: concat or sum [concat]</dd>
+<dd>(concat, sum) Merge action for the features embeddings [concat]</dd>
 <dt>feat_vec_exponent</dt>
-<dd>When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]</dd>
+<dd>When features embedding sizes are not set and using -feat_merge concat, their dimensionwill be set to N^exponent where N is the number of values the feature takes. [0.7]</dd>
 <dt>feat_vec_size</dt>
 <dd>When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]</dd>
 <dt>input_feed</dt>
-<dd>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</dd>
+<dd>(0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</dd>
 <dt>residual</dt>
 <dd>Add residual connections between RNN layers. [false]</dd>
 <dt>brnn</dt>
 <dd>Use a bidirectional encoder [false]</dd>
 <dt>brnn_merge</dt>
-<dd>Merge action for the bidirectional hidden states: concat or sum [sum]</dd>
-</dl>
-<p><strong>Optimization options</strong></p>
-<dl>
-<dt>max_batch_size</dt>
-<dd>Maximum batch size [64]</dd>
-<dt>end_epoch</dt>
-<dd>The final epoch of the training [13]</dd>
-<dt>start_epoch</dt>
-<dd>If loading from a checkpoint, the epoch from which to start [1]</dd>
-<dt>start_iteration</dt>
-<dd>If loading from a checkpoint, the iteration from which to start [1]</dd>
-<dt>param_init</dt>
-<dd>Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</dd>
-<dt>optim</dt>
-<dd>Optimization method. Possible options are: sgd, adagrad, adadelta, adam [sgd]</dd>
-<dt>learning_rate</dt>
-<dd>Starting learning rate. If adagrad/adadelta/adam is used,then this is the global learning rate. Recommended settings are: sgd = 1,adagrad = 0.1, adadelta = 1, adam = 0.0002 [1]</dd>
-<dt>max_grad_norm</dt>
-<dd>If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]</dd>
-<dt>dropout</dt>
-<dd>Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</dd>
-<dt>learning_rate_decay</dt>
-<dd>Decay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</dd>
-<dt>start_decay_at</dt>
-<dd>Start decay after this epoch [9]</dd>
-<dt>curriculum</dt>
-<dd>For this many epochs, order the minibatches based on sourcesequence length. Sometimes setting this to 1 will increase convergence speed. [0]</dd>
+<dd>(concat, sum) Merge action for the bidirectional hidden states [sum]</dd>
 <dt>pre_word_vecs_enc</dt>
 <dd>If a valid path is specified, then this will loadpretrained word embeddings on the encoder side.See README for specific formatting instructions. []</dd>
 <dt>pre_word_vecs_dec</dt>
@@ -444,33 +441,66 @@
 <dd>Fix word embeddings on the encoder side [false]</dd>
 <dt>fix_word_vecs_dec</dt>
 <dd>Fix word embeddings on the decoder side [false]</dd>
+<dt>dropout</dt>
+<dd>Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</dd>
+</dl>
+<p><strong>Optimization options</strong></p>
+<dl>
+<dt>max_batch_size</dt>
+<dd>Maximum batch size [64]</dd>
+<dt>optim</dt>
+<dd>(sgd, adagrad, adadelta, adam) Optimization method. [sgd]</dd>
+<dt>learning_rate</dt>
+<dd>Starting learning rate. If adagrad/adadelta/adam is used,then this is the global learning rate. Recommended settings are: sgd = 1,adagrad = 0.1, adadelta = 1, adam = 0.0002 [1]</dd>
+<dt>max_grad_norm</dt>
+<dd>If the norm of the gradient vector exceeds this renormalize it to havethe norm equal to max_grad_norm [5]</dd>
+<dt>learning_rate_decay</dt>
+<dd>Decay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</dd>
+<dt>start_decay_at</dt>
+<dd>Start decay after this epoch [9]</dd>
+</dl>
+<p><strong>Trainer options</strong></p>
+<dl>
+<dt>save_every</dt>
+<dd>Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]</dd>
+<dt>report_every</dt>
+<dd>Print stats every this many iterations within an epoch. [50]</dd>
+<dt>async_parallel</dt>
+<dd>Use asynchronous parallelism training. [false]</dd>
+<dt>async_parallel_minbatch</dt>
+<dd>For async parallel computing, minimal number of batches before being parallel. [1000]</dd>
+<dt>start_iteration</dt>
+<dd>If loading from a checkpoint, the iteration from which to start [1]</dd>
+<dt>end_epoch</dt>
+<dd>The final epoch of the training [13]</dd>
+<dt>start_epoch</dt>
+<dd>If loading from a checkpoint, the epoch from which to start [1]</dd>
+<dt>curriculum</dt>
+<dd>For this many epochs, order the minibatches based on sourcesequence length. Sometimes setting this to 1 will increase convergence speed. [0]</dd>
+</dl>
+<p><strong>Checkpoint options</strong></p>
+<dl>
+<dt>train_from</dt>
+<dd>If training from a checkpoint then this is the path to the pretrained model. []</dd>
+<dt>continue</dt>
+<dd>If training from a checkpoint, whether to continue the training in the same configuration or not. [false]</dd>
 </dl>
 <p><strong>Other options</strong></p>
 <dl>
 <dt>gpuid</dt>
 <dd>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]</dd>
-<dt>async_parallel</dt>
-<dd>Use asynchronous parallelism training. [false]</dd>
-<dt>async_parallel_minbatch</dt>
-<dd>For async parallel computing, minimal number of batches before being parallel. [1000]</dd>
 <dt>no_nccl</dt>
 <dd>Disable usage of nccl in parallel mode. [false]</dd>
 <dt>disable_mem_optimization</dt>
 <dd>Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]</dd>
-<dt>save_every</dt>
-<dd>Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]</dd>
-<dt>report_every</dt>
-<dd>Print stats every this many iterations within an epoch. [50]</dd>
-<dt>seed</dt>
-<dd>Seed for random initialization [3435]</dd>
-<dt>json_log</dt>
-<dd>Outputs logs in JSON format. [false]</dd>
 <dt>log_file</dt>
 <dd>Outputs logs to a file under this path instead of stdout. []</dd>
 <dt>disable_logs</dt>
 <dd>If = true, output nothing. [false]</dd>
 <dt>log_level</dt>
-<dd>Outputs logs at this level and above. Possible options are: DEBUG, INFO, WARNING and ERROR. [INFO]</dd>
+<dd>(DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]</dd>
+<dt>profiler</dt>
+<dd>Generate profiling logs. [false]</dd>
 </dl>
               
             </div>

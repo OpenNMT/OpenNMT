@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+translate+PhraseTable - OpenNMT</title>
+  <title>onmt+modules+ParallelClassNLLCriterion - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+translate+PhraseTable";
-    var mkdocs_page_input_path = "code/translate/onmt+translate+PhraseTable.md";
-    var mkdocs_page_url = "/code/translate/onmt+translate+PhraseTable/";
+    var mkdocs_page_name = "onmt+modules+ParallelClassNLLCriterion";
+    var mkdocs_page_input_path = "code/modules/onmt+modules+ParallelClassNLLCriterion.md";
+    var mkdocs_page_url = "/code/modules/onmt+modules+ParallelClassNLLCriterion/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -108,105 +108,114 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/">Home</a>
+        <a class="" href="../">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        <a class="" href="../onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+Decoder/">onmt+modules+Decoder</a>
+        <a class="" href="../onmt+modules+Decoder/">onmt+modules+Decoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+Encoder/">onmt+modules+Encoder</a>
+        <a class="" href="../onmt+modules+Encoder/">onmt+modules+Encoder</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
+        <a class="" href="../onmt+modules+FeaturesEmbedding/">onmt+modules+FeaturesEmbedding</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
+        <a class="" href="../onmt+modules+FeaturesGenerator/">onmt+modules+FeaturesGenerator</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+GRU/">onmt+modules+GRU</a>
+        <a class="" href="../onmt+modules+GRU/">onmt+modules+GRU</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+Generator/">onmt+modules+Generator</a>
+        <a class="" href="../onmt+modules+Generator/">onmt+modules+Generator</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
+        <a class="" href="../onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+LSTM/">onmt+modules+LSTM</a>
+        <a class="" href="../onmt+modules+LSTM/">onmt+modules+LSTM</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
+        <a class="" href="../onmt+modules+MaskedSoftmax/">onmt+modules+MaskedSoftmax</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+Network/">onmt+modules+Network</a>
+        <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+modules+ParallelClassNLLCriterion</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtparallelclassnllcriterion">onmt.ParallelClassNLLCriterion</a></li>
+                
+                    <li><a class="toctree-l4" href="#undocumented-methods">Undocumented methods</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        <a class="" href="../onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../modules/onmt+modules+WordEmbedding/">onmt+modules+WordEmbedding</a>
+        <a class="" href="../onmt+modules+WordEmbedding/">onmt+modules+WordEmbedding</a>
         
     </li>
 
@@ -264,60 +273,49 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Home</a>
+        <a class="" href="../../translate/">Home</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+Advancer/">onmt+translate+Advancer</a>
+        <a class="" href="../../translate/onmt+translate+Advancer/">onmt+translate+Advancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+Beam/">onmt+translate+Beam</a>
+        <a class="" href="../../translate/onmt+translate+Beam/">onmt+translate+Beam</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
+        <a class="" href="../../translate/onmt+translate+BeamSearcher/">onmt+translate+BeamSearcher</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+translate+PhraseTable</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtphrasetable">onmt.PhraseTable</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtphrasetablelookupword">onmt.PhraseTable:lookup(word)</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtphrasetablecontainsword">onmt.PhraseTable:contains(word)</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../translate/onmt+translate+DecoderAdvancer/">onmt+translate+DecoderAdvancer</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../onmt+translate+Translator/">onmt+translate+Translator</a>
+        <a class="" href="../../translate/onmt+translate+PhraseTable/">onmt+translate+PhraseTable</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../translate/onmt+translate+Translator/">onmt+translate+Translator</a>
         
     </li>
 
@@ -383,11 +381,11 @@
         
       
         
-          <li>Translate &raquo;</li>
+          <li>Modules &raquo;</li>
         
       
     
-    <li>onmt+translate+PhraseTable</li>
+    <li>onmt+modules+ParallelClassNLLCriterion</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -397,20 +395,12 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.PhraseTable.dok"></a></p>
-<h2 id="onmtphrasetable">onmt.PhraseTable</h2>
-<p>Parse and lookup a words from a phrase table.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/translate/PhraseTable.lua#L20">[src]</a>
-<a name="onmt.PhraseTable:lookup"></a></p>
-<h3 id="onmtphrasetablelookupword">onmt.PhraseTable:lookup(word)</h3>
-<p>Return the phrase table match for <code>word</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/translate/PhraseTable.lua#L25">[src]</a>
-<a name="onmt.PhraseTable:contains"></a></p>
-<h3 id="onmtphrasetablecontainsword">onmt.PhraseTable:contains(word)</h3>
-<p>Return true if the phrase table contains the source word <code>word</code>. </p>
+                <p><a name="onmt.ParallelClassNLLCriterion.dok"></a></p>
+<h2 id="onmtparallelclassnllcriterion">onmt.ParallelClassNLLCriterion</h2>
+<p>Define parallel ClassNLLCriterion.</p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.PhraseTable"></a>
- * <code>onmt.PhraseTable(filePath)</code></p>
+<p><a name="onmt.ParallelClassNLLCriterion"></a>
+ * <code>onmt.ParallelClassNLLCriterion(outputSizes)</code></p>
               
             </div>
           </div>
@@ -418,10 +408,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+translate+Translator/" class="btn btn-neutral float-right" title="onmt+translate+Translator">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+modules+Sequencer/" class="btn btn-neutral float-right" title="onmt+modules+Sequencer">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../onmt+translate+DecoderAdvancer/" class="btn btn-neutral" title="onmt+translate+DecoderAdvancer"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+modules+Network/" class="btn btn-neutral" title="onmt+modules+Network"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -447,10 +437,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt+translate+DecoderAdvancer/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+modules+Network/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+translate+Translator/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+modules+Sequencer/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

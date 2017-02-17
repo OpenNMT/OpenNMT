@@ -116,6 +116,26 @@
             "title": "onmt.Dataset:getBatch(idx)"
         },
         {
+            "location": "/code/data/onmt+data+Preprocessor/",
+            "text": "Preprocessor.lua\n\n\nData Preparation functions.\n\n\n\n\nonmt.Preprocessor\n\n\nUndocumented methods\n\n\n\n * \nonmt.Preprocessor.declareOpts(cmd, mode)\n\n\n\n * \nonmt.Preprocessor(args, mode)\n\n\n\n * \nonmt.Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid)\n\n\n\n * \nonmt.Preprocessor:makeMonolingualData(file, dicts, isValid)",
+            "title": "onmt+data+Preprocessor"
+        },
+        {
+            "location": "/code/data/onmt+data+Preprocessor/#preprocessorlua",
+            "text": "Data Preparation functions.",
+            "title": "Preprocessor.lua"
+        },
+        {
+            "location": "/code/data/onmt+data+Preprocessor/#onmtpreprocessor",
+            "text": "",
+            "title": "onmt.Preprocessor"
+        },
+        {
+            "location": "/code/data/onmt+data+Preprocessor/#undocumented-methods",
+            "text": "*  onmt.Preprocessor.declareOpts(cmd, mode)  \n *  onmt.Preprocessor(args, mode)  \n *  onmt.Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid)  \n *  onmt.Preprocessor:makeMonolingualData(file, dicts, isValid)",
+            "title": "Undocumented methods"
+        },
+        {
             "location": "/code/data/onmt+data+Vocabulary/",
             "text": "onmt.Vocabulary\n\n\nVocabulary management utility functions. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Vocabulary.make(filename, validFunc)\n\n\n\n * \nonmt.Vocabulary.init(name, dataFile, vocabFile, vocabSize, featuresVocabsFiles, validFunc)\n\n\n\n * \nonmt.Vocabulary.save(name, vocab, file)\n\n\n\n * \nonmt.Vocabulary.saveFeatures(name, vocabs, prefix)",
             "title": "onmt+data+Vocabulary"
@@ -282,7 +302,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+FeaturesGenerator/",
-            "text": "onmt.FeaturesGenerator\n\n\nFeature decoder generator. Given RNN state, produce categorical distribution over\ntokens and features.\n\n\nImplements \n[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] \n.\n\n\n[src]\n\n\n\n\nonmt.FeaturesGenerator(rnnSize, outputSize, features)\n\n\nParameters:\n\n\n\n\nrnnSize\n - Input rnn size.\n\n\noutputSize\n - Output size (number of tokens).\n\n\nfeatures\n - table of feature sizes.",
+            "text": "onmt.FeaturesGenerator\n\n\nFeature decoder generator. Given RNN state, produce categorical distribution over\ntokens and features.\n\n\nImplements \n[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] \n.\n\n\n[src]\n\n\n\n\nonmt.FeaturesGenerator(rnnSize, outputSizes)\n\n\nParameters:\n\n\n\n\nrnnSize\n - Input rnn size.\n\n\noutputSizes\n - Table of each output size.",
             "title": "onmt+modules+FeaturesGenerator"
         },
         {
@@ -291,9 +311,9 @@
             "title": "onmt.FeaturesGenerator"
         },
         {
-            "location": "/code/modules/onmt+modules+FeaturesGenerator/#onmtfeaturesgeneratorrnnsize-outputsize-features",
-            "text": "Parameters:   rnnSize  - Input rnn size.  outputSize  - Output size (number of tokens).  features  - table of feature sizes.",
-            "title": "onmt.FeaturesGenerator(rnnSize, outputSize, features)"
+            "location": "/code/modules/onmt+modules+FeaturesGenerator/#onmtfeaturesgeneratorrnnsize-outputsizes",
+            "text": "Parameters:   rnnSize  - Input rnn size.  outputSizes  - Table of each output size.",
+            "title": "onmt.FeaturesGenerator(rnnSize, outputSizes)"
         },
         {
             "location": "/code/modules/onmt+modules+GRU/",
@@ -386,6 +406,21 @@
             "title": "Undocumented methods"
         },
         {
+            "location": "/code/modules/onmt+modules+ParallelClassNLLCriterion/",
+            "text": "onmt.ParallelClassNLLCriterion\n\n\nDefine parallel ClassNLLCriterion.\n\n\nUndocumented methods\n\n\n\n * \nonmt.ParallelClassNLLCriterion(outputSizes)",
+            "title": "onmt+modules+ParallelClassNLLCriterion"
+        },
+        {
+            "location": "/code/modules/onmt+modules+ParallelClassNLLCriterion/#onmtparallelclassnllcriterion",
+            "text": "Define parallel ClassNLLCriterion.",
+            "title": "onmt.ParallelClassNLLCriterion"
+        },
+        {
+            "location": "/code/modules/onmt+modules+ParallelClassNLLCriterion/#undocumented-methods",
+            "text": "*  onmt.ParallelClassNLLCriterion(outputSizes)",
+            "title": "Undocumented methods"
+        },
+        {
             "location": "/code/modules/onmt+modules+Sequencer/",
             "text": "onmt.Sequencer\n\n\nSequencer is the base class for encoder and decoder models.\n  Main task is to manage \nself.net(t)\n, the unrolled network\n  used during training.\n\n\n :net(1) =\n :net(2) =\n ... =\n :net(n-1) =\n :net(n)\n\n\n\n[src]\n\n\n\n\nonmt.Sequencer(network)\n\n\nParameters:\n\n\n\n\nnetwork\n - recurrent step template.\n\n\n\n\n[src]\n\n\n\n\nonmt.Sequencer:net(t)\n\n\nGet access to the recurrent unit at a timestep.\n\n\nParameters:\n  * \nt\n - timestep.\n\n\nReturns: The raw network clone at timestep t.\n  When \nevaluate()\n has been called, cheat and return t=1.\n\n\n[src]\n\n\n\n\nonmt.Sequencer:training()\n\n\nMove the network to train mode. \n\n\n[src]\n\n\n\n\nonmt.Sequencer:evaluate()\n\n\nMove the network to evaluation mode.",
             "title": "onmt+modules+Sequencer"
@@ -442,7 +477,7 @@
         },
         {
             "location": "/code/train/onmt+train+Checkpoint/",
-            "text": "onmt.Checkpoint\n\n\nClass for saving and loading models during training.\n\n\n[src]\n\n\n\n\nonmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)\n\n\nSave the model and data in the middle of an epoch sorting the iteration. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Checkpoint(options, model, optim, dicts)\n\n\n\n * \nonmt.Checkpoint:save(filePath, info)\n\n\n\n * \nonmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)",
+            "text": "onmt.Checkpoint\n\n\nClass for saving and loading models during training.\n\n\n[src]\n\n\n\n\nonmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)\n\n\nSave the model and data in the middle of an epoch sorting the iteration. \n\n\nUndocumented methods\n\n\n\n * \nonmt.Checkpoint.declareOpts(cmd)\n\n\n\n * \nonmt.Checkpoint(opt, model, optim, dicts)\n\n\n\n * \nonmt.Checkpoint:save(filePath, info)\n\n\n\n * \nonmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)\n\n\n\n * \nonmt.Checkpoint.loadFromCheckpoint(opt)",
             "title": "onmt+train+Checkpoint"
         },
         {
@@ -457,12 +492,12 @@
         },
         {
             "location": "/code/train/onmt+train+Checkpoint/#undocumented-methods",
-            "text": "*  onmt.Checkpoint(options, model, optim, dicts)  \n *  onmt.Checkpoint:save(filePath, info)  \n *  onmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)",
+            "text": "*  onmt.Checkpoint.declareOpts(cmd)  \n *  onmt.Checkpoint(opt, model, optim, dicts)  \n *  onmt.Checkpoint:save(filePath, info)  \n *  onmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)  \n *  onmt.Checkpoint.loadFromCheckpoint(opt)",
             "title": "Undocumented methods"
         },
         {
             "location": "/code/train/onmt+train+EpochState/",
-            "text": "onmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)\n\n\nInitialize for epoch \nepoch\n and training \nstatus\n (current loss)\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(batch, loss)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last loss.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(batchIndex, json)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:getTrainPpl()\n\n\n\n * \nonmt.EpochState:getTime()\n\n\n\n * \nonmt.EpochState:getStatus()\n\n\n\n * \nonmt.EpochState:getMinFreememory()",
+            "text": "onmt.EpochState\n\n\nClass for managing the training process by logging and storing\n  the state of the current epoch.\n\n\n[src]\n\n\n\n\nonmt.EpochState(epoch, numIterations, learningRate)\n\n\nInitialize for epoch \nepoch\n\n\n[src]\n\n\n\n\nonmt.EpochState:update(model, batch, loss)\n\n\nUpdate training status. Takes \nbatch\n (described in data.lua) and last loss.\n\n\n[src]\n\n\n\n\nonmt.EpochState:log(iteration)\n\n\nLog to status stdout. \n\n\nUndocumented methods\n\n\n\n * \nonmt.EpochState:reset()\n\n\n\n * \nonmt.EpochState:getTime()",
             "title": "onmt+train+EpochState"
         },
         {
@@ -471,28 +506,28 @@
             "title": "onmt.EpochState"
         },
         {
-            "location": "/code/train/onmt+train+EpochState/#onmtepochstateepoch-numiterations-learningrate-lastvalidppl-status",
-            "text": "Initialize for epoch  epoch  and training  status  (current loss)  [src]",
-            "title": "onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)"
+            "location": "/code/train/onmt+train+EpochState/#onmtepochstateepoch-numiterations-learningrate",
+            "text": "Initialize for epoch  epoch  [src]",
+            "title": "onmt.EpochState(epoch, numIterations, learningRate)"
         },
         {
-            "location": "/code/train/onmt+train+EpochState/#onmtepochstateupdatebatch-loss",
+            "location": "/code/train/onmt+train+EpochState/#onmtepochstateupdatemodel-batch-loss",
             "text": "Update training status. Takes  batch  (described in data.lua) and last loss.  [src]",
-            "title": "onmt.EpochState:update(batch, loss)"
+            "title": "onmt.EpochState:update(model, batch, loss)"
         },
         {
-            "location": "/code/train/onmt+train+EpochState/#onmtepochstatelogbatchindex-json",
+            "location": "/code/train/onmt+train+EpochState/#onmtepochstatelogiteration",
             "text": "Log to status stdout.",
-            "title": "onmt.EpochState:log(batchIndex, json)"
+            "title": "onmt.EpochState:log(iteration)"
         },
         {
             "location": "/code/train/onmt+train+EpochState/#undocumented-methods",
-            "text": "*  onmt.EpochState:getTrainPpl()  \n *  onmt.EpochState:getTime()  \n *  onmt.EpochState:getStatus()  \n *  onmt.EpochState:getMinFreememory()",
+            "text": "*  onmt.EpochState:reset()  \n *  onmt.EpochState:getTime()",
             "title": "Undocumented methods"
         },
         {
             "location": "/code/train/onmt+train+Optim/",
-            "text": "onmt.Optim\n\n\n[src]\n\n\n\n\nonmt.Optim:updateLearningRate(score, epoch)\n\n\ndecay learning rate if val perf does not improve or we hit the startDecayAt limit\n\n\nUndocumented methods\n\n\n\n * \nonmt.Optim(args)\n\n\n\n * \nonmt.Optim:zeroGrad(gradParams)\n\n\n\n * \nonmt.Optim:prepareGrad(gradParams, maxGradNorm)\n\n\n\n * \nonmt.Optim:updateParams(params, gradParams)\n\n\n\n * \nonmt.Optim:getLearningRate()\n\n\n\n * \nonmt.Optim:getStates()",
+            "text": "onmt.Optim\n\n\n\n\n[src]\n\n\n\n\nonmt.Optim:updateLearningRate(score, epoch)\n\n\ndecay learning rate if val perf does not improve or we hit the startDecayAt limit\n\n\nUndocumented methods\n\n\n\n * \nonmt.Optim.declareOpts(cmd)\n\n\n\n * \nonmt.Optim(args, optimStates)\n\n\n\n * \nonmt.Optim:setOptimStates(num)\n\n\n\n * \nonmt.Optim:zeroGrad(gradParams)\n\n\n\n * \nonmt.Optim:prepareGrad(gradParams)\n\n\n\n * \nonmt.Optim:updateParams(params, gradParams)\n\n\n\n * \nonmt.Optim:getLearningRate()\n\n\n\n * \nonmt.Optim:getStates()",
             "title": "onmt+train+Optim"
         },
         {
@@ -507,7 +542,22 @@
         },
         {
             "location": "/code/train/onmt+train+Optim/#undocumented-methods",
-            "text": "*  onmt.Optim(args)  \n *  onmt.Optim:zeroGrad(gradParams)  \n *  onmt.Optim:prepareGrad(gradParams, maxGradNorm)  \n *  onmt.Optim:updateParams(params, gradParams)  \n *  onmt.Optim:getLearningRate()  \n *  onmt.Optim:getStates()",
+            "text": "*  onmt.Optim.declareOpts(cmd)  \n *  onmt.Optim(args, optimStates)  \n *  onmt.Optim:setOptimStates(num)  \n *  onmt.Optim:zeroGrad(gradParams)  \n *  onmt.Optim:prepareGrad(gradParams)  \n *  onmt.Optim:updateParams(params, gradParams)  \n *  onmt.Optim:getLearningRate()  \n *  onmt.Optim:getStates()",
+            "title": "Undocumented methods"
+        },
+        {
+            "location": "/code/train/onmt+train+Trainer/",
+            "text": "onmt.Trainer\n\n\n\n\nUndocumented methods\n\n\n\n * \nonmt.Trainer.declareOpts(cmd)\n\n\n\n * \nonmt.Trainer(args)\n\n\n\n * \nonmt.Trainer:train(model, optim, trainData, validData, dataset, info)",
+            "title": "onmt+train+Trainer"
+        },
+        {
+            "location": "/code/train/onmt+train+Trainer/#onmttrainer",
+            "text": "",
+            "title": "onmt.Trainer"
+        },
+        {
+            "location": "/code/train/onmt+train+Trainer/#undocumented-methods",
+            "text": "*  onmt.Trainer.declareOpts(cmd)  \n *  onmt.Trainer(args)  \n *  onmt.Trainer:train(model, optim, trainData, validData, dataset, info)",
             "title": "Undocumented methods"
         },
         {
@@ -727,17 +777,17 @@
         },
         {
             "location": "/details/preprocess/",
-            "text": "Preprocess Options\n\n\n\n\nconfig\n\n\nRead options from this file []\n\n\ntrain_src\n\n\nPath to the training source data []\n\n\ntrain_tgt\n\n\nPath to the training target data []\n\n\nvalid_src\n\n\nPath to the validation source data []\n\n\nvalid_tgt\n\n\nPath to the validation target data []\n\n\nsave_data\n\n\nOutput file for the prepared data []\n\n\nsrc_vocab_size\n\n\nComma-separated list of source vocabularies size: word[,feat1,feat2,...]. [50000]\n\n\ntgt_vocab_size\n\n\nComma-separated list of target vocabularies size: word[,feat1,feat2,...]. [50000]\n\n\nsrc_vocab\n\n\nPath to an existing source vocabulary []\n\n\ntgt_vocab\n\n\nPath to an existing target vocabulary []\n\n\nfeatures_vocabs_prefix\n\n\nPath prefix to existing features vocabularies []\n\n\nsrc_seq_length\n\n\nMaximum source sequence length [50]\n\n\ntgt_seq_length\n\n\nMaximum target sequence length [50]\n\n\nshuffle\n\n\nShuffle data [1]\n\n\nseed\n\n\nRandom seed [3435]\n\n\nreport_every\n\n\nReport status every this many sentences [100000]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]",
+            "text": "h\n\n\nthis help file [false]\n\n\nconfig\n\n\nread options from config file. []\n\n\nsave_config\n\n\nsave options from config file. []\n\n\n\n\nPreprocess options\n\n\n\n\ndata_type\n\n\n(bitext, monotext) Type of text to preprocess. Use 'monotext' for monolingual text.This option impacts all options choices. [bitext]\n\n\nsave_data\n\n\nOutput file for the prepared data []\n\n\n\n\nPreprocess options\n\n\n\n\ntrain_src\n\n\nPath to the training source data []\n\n\ntrain_tgt\n\n\nPath to the training target data []\n\n\nvalid_src\n\n\nPath to the validation source data []\n\n\nvalid_tgt\n\n\nPath to the validation target data []\n\n\nsrc_vocab\n\n\nPath to an existing source vocabulary []\n\n\ntgt_vocab\n\n\nPath to an existing target vocabulary []\n\n\nsrc_vocab_size\n\n\nComma-separated list of source vocabularies size: word[,feat1,feat2,...]. [50000]\n\n\ntgt_vocab_size\n\n\nComma-separated list of target vocabularies size: word[,feat1,feat2,...]. [50000]\n\n\nsrc_seq_length\n\n\nMaximum source sequence length [50]\n\n\ntgt_seq_length\n\n\nMaximum target sequence length [50]\n\n\nfeatures_vocabs_prefix\n\n\nPath prefix to existing features vocabularies []\n\n\nshuffle\n\n\nShuffle data [1]\n\n\n\n\nOther options\n\n\n\n\nseed\n\n\nRandom seed [3425]\n\n\nreport_every\n\n\nReport status every this many sentences [100000]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]",
             "title": "Preprocess"
         },
         {
             "location": "/details/train/",
-            "text": "train.lua\n\n\n\n\nconfig\n\n\nRead options from this file []\n\n\n\n\nData options\n\n\n\n\ndata\n\n\nPath to the training *-train.t7 file from preprocess.lua []\n\n\nsave_model\n\n\nModel filename (the model will be saved as\n_epochN_PPL.t7 where PPL is the validation perplexity []\n\n\ntrain_from\n\n\nIf training from a checkpoint then this is the path to the pretrained model. []\n\n\ncontinue\n\n\nIf training from a checkpoint, whether to continue the training in the same configuration or not. [false]\n\n\n\n\nModel options\n\n\n\n\nlayers\n\n\nNumber of layers in the RNN encoder/decoder [2]\n\n\nrnn_size\n\n\nSize of RNN hidden states [500]\n\n\nrnn_type\n\n\nType of RNN cell: LSTM, GRU [LSTM]\n\n\nword_vec_size\n\n\nCommon word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]\n\n\nsrc_word_vec_size\n\n\nComma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]\n\n\ntgt_word_vec_size\n\n\nComma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]\n\n\nfeat_merge\n\n\nMerge action for the features embeddings: concat or sum [concat]\n\n\nfeat_vec_exponent\n\n\nWhen features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]\n\n\nfeat_vec_size\n\n\nWhen features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]\n\n\ninput_feed\n\n\nFeed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]\n\n\nresidual\n\n\nAdd residual connections between RNN layers. [false]\n\n\nbrnn\n\n\nUse a bidirectional encoder [false]\n\n\nbrnn_merge\n\n\nMerge action for the bidirectional hidden states: concat or sum [sum]\n\n\n\n\nOptimization options\n\n\n\n\nmax_batch_size\n\n\nMaximum batch size [64]\n\n\nend_epoch\n\n\nThe final epoch of the training [13]\n\n\nstart_epoch\n\n\nIf loading from a checkpoint, the epoch from which to start [1]\n\n\nstart_iteration\n\n\nIf loading from a checkpoint, the iteration from which to start [1]\n\n\nparam_init\n\n\nParameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]\n\n\noptim\n\n\nOptimization method. Possible options are: sgd, adagrad, adadelta, adam [sgd]\n\n\nlearning_rate\n\n\nStarting learning rate. If adagrad/adadelta/adam is used,then this is the global learning rate. Recommended settings are: sgd = 1,adagrad = 0.1, adadelta = 1, adam = 0.0002 [1]\n\n\nmax_grad_norm\n\n\nIf the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]\n\n\ndropout\n\n\nDropout probability. Dropout is applied between vertical LSTM stacks. [0.3]\n\n\nlearning_rate_decay\n\n\nDecay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]\n\n\nstart_decay_at\n\n\nStart decay after this epoch [9]\n\n\ncurriculum\n\n\nFor this many epochs, order the minibatches based on sourcesequence length. Sometimes setting this to 1 will increase convergence speed. [0]\n\n\npre_word_vecs_enc\n\n\nIf a valid path is specified, then this will loadpretrained word embeddings on the encoder side.See README for specific formatting instructions. []\n\n\npre_word_vecs_dec\n\n\nIf a valid path is specified, then this will loadpretrained word embeddings on the decoder side.See README for specific formatting instructions. []\n\n\nfix_word_vecs_enc\n\n\nFix word embeddings on the encoder side [false]\n\n\nfix_word_vecs_dec\n\n\nFix word embeddings on the decoder side [false]\n\n\n\n\nOther options\n\n\n\n\ngpuid\n\n\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\nasync_parallel\n\n\nUse asynchronous parallelism training. [false]\n\n\nasync_parallel_minbatch\n\n\nFor async parallel computing, minimal number of batches before being parallel. [1000]\n\n\nno_nccl\n\n\nDisable usage of nccl in parallel mode. [false]\n\n\ndisable_mem_optimization\n\n\nDisable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]\n\n\nsave_every\n\n\nSave intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]\n\n\nreport_every\n\n\nPrint stats every this many iterations within an epoch. [50]\n\n\nseed\n\n\nSeed for random initialization [3435]\n\n\njson_log\n\n\nOutputs logs in JSON format. [false]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]\n\n\nlog_level\n\n\nOutputs logs at this level and above. Possible options are: DEBUG, INFO, WARNING and ERROR. [INFO]",
+            "text": "h\n\n\nthis help file [false]\n\n\nconfig\n\n\nread options from config file. []\n\n\nsave_config\n\n\nsave options from config file. []\n\n\n\n\nData options\n\n\n\n\ndata\n\n\nPath to the training *-train.t7 file from preprocess.lua []\n\n\nsave_model\n\n\nModel filename (the model will be saved as\n_epochN_PPL.t7 where PPL is the validation perplexity []\n\n\nmodel_type\n\n\n(lm, seq2seq) Type of the model to train.This option impacts all options choices [seq2seq]\n\n\nparam_init\n\n\nParameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]\n\n\n\n\nSequence to Sequence with Attention options\n\n\n\n\nlayers\n\n\nNumber of layers in the RNN encoder/decoder [2]\n\n\nrnn_size\n\n\nSize of RNN hidden states [500]\n\n\nrnn_type\n\n\n(LSTM, GRU) Type of RNN cell [LSTM]\n\n\nword_vec_size\n\n\nCommon word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]\n\n\nsrc_word_vec_size\n\n\nComma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]\n\n\ntgt_word_vec_size\n\n\nComma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]\n\n\nfeat_merge\n\n\n(concat, sum) Merge action for the features embeddings [concat]\n\n\nfeat_vec_exponent\n\n\nWhen features embedding sizes are not set and using -feat_merge concat, their dimensionwill be set to N^exponent where N is the number of values the feature takes. [0.7]\n\n\nfeat_vec_size\n\n\nWhen features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]\n\n\ninput_feed\n\n\n(0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]\n\n\nresidual\n\n\nAdd residual connections between RNN layers. [false]\n\n\nbrnn\n\n\nUse a bidirectional encoder [false]\n\n\nbrnn_merge\n\n\n(concat, sum) Merge action for the bidirectional hidden states [sum]\n\n\npre_word_vecs_enc\n\n\nIf a valid path is specified, then this will loadpretrained word embeddings on the encoder side.See README for specific formatting instructions. []\n\n\npre_word_vecs_dec\n\n\nIf a valid path is specified, then this will loadpretrained word embeddings on the decoder side.See README for specific formatting instructions. []\n\n\nfix_word_vecs_enc\n\n\nFix word embeddings on the encoder side [false]\n\n\nfix_word_vecs_dec\n\n\nFix word embeddings on the decoder side [false]\n\n\ndropout\n\n\nDropout probability. Dropout is applied between vertical LSTM stacks. [0.3]\n\n\n\n\nOptimization options\n\n\n\n\nmax_batch_size\n\n\nMaximum batch size [64]\n\n\noptim\n\n\n(sgd, adagrad, adadelta, adam) Optimization method. [sgd]\n\n\nlearning_rate\n\n\nStarting learning rate. If adagrad/adadelta/adam is used,then this is the global learning rate. Recommended settings are: sgd = 1,adagrad = 0.1, adadelta = 1, adam = 0.0002 [1]\n\n\nmax_grad_norm\n\n\nIf the norm of the gradient vector exceeds this renormalize it to havethe norm equal to max_grad_norm [5]\n\n\nlearning_rate_decay\n\n\nDecay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]\n\n\nstart_decay_at\n\n\nStart decay after this epoch [9]\n\n\n\n\nTrainer options\n\n\n\n\nsave_every\n\n\nSave intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]\n\n\nreport_every\n\n\nPrint stats every this many iterations within an epoch. [50]\n\n\nasync_parallel\n\n\nUse asynchronous parallelism training. [false]\n\n\nasync_parallel_minbatch\n\n\nFor async parallel computing, minimal number of batches before being parallel. [1000]\n\n\nstart_iteration\n\n\nIf loading from a checkpoint, the iteration from which to start [1]\n\n\nend_epoch\n\n\nThe final epoch of the training [13]\n\n\nstart_epoch\n\n\nIf loading from a checkpoint, the epoch from which to start [1]\n\n\ncurriculum\n\n\nFor this many epochs, order the minibatches based on sourcesequence length. Sometimes setting this to 1 will increase convergence speed. [0]\n\n\n\n\nCheckpoint options\n\n\n\n\ntrain_from\n\n\nIf training from a checkpoint then this is the path to the pretrained model. []\n\n\ncontinue\n\n\nIf training from a checkpoint, whether to continue the training in the same configuration or not. [false]\n\n\n\n\nOther options\n\n\n\n\ngpuid\n\n\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\nno_nccl\n\n\nDisable usage of nccl in parallel mode. [false]\n\n\ndisable_mem_optimization\n\n\nDisable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]\n\n\nlog_level\n\n\n(DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]\n\n\nprofiler\n\n\nGenerate profiling logs. [false]",
             "title": "Train"
         },
         {
             "location": "/details/translate/",
-            "text": "onmt.translate.lua\n\n\n\n\nconfig\n\n\nRead options from this file []\n\n\n\n\nData options\n\n\n\n\nsrc\n\n\nSource sequence to decode (one line per sequence) []\n\n\ntgt\n\n\nTrue target sequence (optional) []\n\n\noutput\n\n\nPath to output the predictions (each line will be the decoded sequence [pred.txt]\n\n\nmodel\n\n\nPath to model .t7 file []\n\n\n\n\nBeam Search options\n\n\n\n\nbeam_size\n\n\nBeam size [5]\n\n\nbatch_size\n\n\nBatch size [30]\n\n\nmax_sent_length\n\n\nMaximum output sentence length. [250]\n\n\nreplace_unk\n\n\nReplace the generated UNK tokens with the source token thathad the highest attention weight. If phrase_table is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]\n\n\nphrase_table\n\n\nPath to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []\n\n\nn_best\n\n\nIf \n 1, it will also output an n_best list of decoded sentences [1]\n\n\nmax_num_unks\n\n\nAll sequences with more unks than this will be ignoredduring beam search [inf]\n\n\npre_filter_factor\n\n\nOptional, set this only if filter is being used. Beforeapplying filters, hypotheses with top \nbeamSize * preFilterFactor\nscores will be considered. If the returned hypotheses voilate filters,then set this to a larger value to consider more. [1]\n\n\n\n\nOther options\n\n\n\n\ntime\n\n\nMeasure batch translation time [false]\n\n\ngpuid\n\n\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]",
+            "text": "h\n\n\nthis help file [false]\n\n\nconfig\n\n\nread options from config file. []\n\n\nsave_config\n\n\nsave options from config file. []\n\n\n\n\nData options\n\n\n\n\nsrc\n\n\nSource sequence to decode (one line per sequence) []\n\n\ntgt\n\n\nTrue target sequence (optional) []\n\n\noutput\n\n\nPath to output the predictions (each line will be the decoded sequence) [pred.txt]\n\n\n\n\nTranslator options\n\n\n\n\nmodel\n\n\nPath to model .t7 file []\n\n\nbeam_size\n\n\nBeam size [5]\n\n\nbatch_size\n\n\nBatch size [30]\n\n\nmax_sent_length\n\n\nMaximum output sentence length. [250]\n\n\nreplace_unk\n\n\nReplace the generated UNK tokens with the source token thathad the highest attention weight. If phrase_table is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]\n\n\nphrase_table\n\n\nPath to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []\n\n\nn_best\n\n\nIf \n 1, it will also output an n_best list of decoded sentences [1]\n\n\nmax_num_unks\n\n\nAll sequences with more unks than this will be ignoredduring beam search [inf]\n\n\npre_filter_factor\n\n\nOptional, set this only if filter is being used. Beforeapplying filters, hypotheses with top \nbeamSize * preFilterFactor\nscores will be considered. If the returned hypotheses voilate filters,then set this to a larger value to consider more. [1]\n\n\n\n\nOther options\n\n\n\n\ntime\n\n\nMeasure batch translation time [false]\n\n\ngpuid\n\n\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\nno_nccl\n\n\nDisable usage of nccl in parallel mode. [false]\n\n\nlog_file\n\n\nOutputs logs to a file under this path instead of stdout. []\n\n\ndisable_logs\n\n\nIf = true, output nothing. [false]",
             "title": "Translate"
         }
     ]

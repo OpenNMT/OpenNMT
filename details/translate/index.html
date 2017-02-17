@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
         
     </li>
@@ -185,6 +192,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -229,6 +243,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/train/onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/train/onmt+train+Trainer/">onmt+train+Trainer</a>
         
     </li>
 
@@ -365,10 +386,13 @@
           <div role="main">
             <div class="section">
               
-                <p><strong>onmt.translate.lua</strong></p>
-<dl>
+                <dl>
+<dt>h</dt>
+<dd>this help file [false]</dd>
 <dt>config</dt>
-<dd>Read options from this file []</dd>
+<dd>read options from config file. []</dd>
+<dt>save_config</dt>
+<dd>save options from config file. []</dd>
 </dl>
 <p><strong>Data options</strong></p>
 <dl>
@@ -377,12 +401,12 @@
 <dt>tgt</dt>
 <dd>True target sequence (optional) []</dd>
 <dt>output</dt>
-<dd>Path to output the predictions (each line will be the decoded sequence [pred.txt]</dd>
+<dd>Path to output the predictions (each line will be the decoded sequence) [pred.txt]</dd>
+</dl>
+<p><strong>Translator options</strong></p>
+<dl>
 <dt>model</dt>
 <dd>Path to model .t7 file []</dd>
-</dl>
-<p><strong>Beam Search options</strong></p>
-<dl>
 <dt>beam_size</dt>
 <dd>Beam size [5]</dd>
 <dt>batch_size</dt>
@@ -406,6 +430,8 @@
 <dd>Measure batch translation time [false]</dd>
 <dt>gpuid</dt>
 <dd>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]</dd>
+<dt>no_nccl</dt>
+<dd>Disable usage of nccl in parallel mode. [false]</dd>
 <dt>log_file</dt>
 <dd>Outputs logs to a file under this path instead of stdout. []</dd>
 <dt>disable_logs</dt>

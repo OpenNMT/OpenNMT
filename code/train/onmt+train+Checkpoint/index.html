@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
         
     </li>
@@ -185,6 +192,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -238,6 +252,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+train+Trainer/">onmt+train+Trainer</a>
         
     </li>
 
@@ -377,17 +398,21 @@
                 <p><a name="onmt.Checkpoint.dok"></a></p>
 <h2 id="onmtcheckpoint">onmt.Checkpoint</h2>
 <p>Class for saving and loading models during training.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2e3fc667c765f6382c329c664318c9e27fa4f997/onmt/train/Checkpoint.lua#L36">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/train/Checkpoint.lua#L46">[src]</a>
 <a name="onmt.Checkpoint:saveIteration"></a></p>
 <h3 id="onmtcheckpointsaveiterationiteration-epochstate-batchorder-verbose">onmt.Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)</h3>
 <p>Save the model and data in the middle of an epoch sorting the iteration. </p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.Checkpoint"></a>
- * <code>onmt.Checkpoint(options, model, optim, dicts)</code>
+<p><a name="onmt.Checkpoint.declareOpts"></a>
+ * <code>onmt.Checkpoint.declareOpts(cmd)</code>
+<a name="onmt.Checkpoint"></a>
+ * <code>onmt.Checkpoint(opt, model, optim, dicts)</code>
 <a name="onmt.Checkpoint:save"></a>
  * <code>onmt.Checkpoint:save(filePath, info)</code>
 <a name="onmt.Checkpoint:saveEpoch"></a>
- * <code>onmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)</code></p>
+ * <code>onmt.Checkpoint:saveEpoch(validPpl, epochState, verbose)</code>
+<a name="onmt.Checkpoint.loadFromCheckpoint"></a>
+ * <code>onmt.Checkpoint.loadFromCheckpoint(opt)</code></p>
               
             </div>
           </div>

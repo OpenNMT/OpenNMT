@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
         
     </li>
@@ -185,6 +192,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -227,11 +241,11 @@
             
                 <li class="toctree-l3"><a href="#onmtepochstate">onmt.EpochState</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtepochstateepoch-numiterations-learningrate-lastvalidppl-status">onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)</a></li>
+                    <li><a class="toctree-l4" href="#onmtepochstateepoch-numiterations-learningrate">onmt.EpochState(epoch, numIterations, learningRate)</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtepochstateupdatebatch-loss">onmt.EpochState:update(batch, loss)</a></li>
+                    <li><a class="toctree-l4" href="#onmtepochstateupdatemodel-batch-loss">onmt.EpochState:update(model, batch, loss)</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtepochstatelogbatchindex-json">onmt.EpochState:log(batchIndex, json)</a></li>
+                    <li><a class="toctree-l4" href="#onmtepochstatelogiteration">onmt.EpochState:log(iteration)</a></li>
                 
             
             </ul>
@@ -242,6 +256,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+train+Trainer/">onmt+train+Trainer</a>
         
     </li>
 
@@ -382,27 +403,23 @@
 <h2 id="onmtepochstate">onmt.EpochState</h2>
 <p>Class for managing the training process by logging and storing
   the state of the current epoch.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2e3fc667c765f6382c329c664318c9e27fa4f997/onmt/train/EpochState.lua#L7">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/train/EpochState.lua#L7">[src]</a>
 <a name="onmt.EpochState"></a></p>
-<h3 id="onmtepochstateepoch-numiterations-learningrate-lastvalidppl-status">onmt.EpochState(epoch, numIterations, learningRate, lastValidPpl, status)</h3>
-<p>Initialize for epoch <code>epoch</code> and training <code>status</code> (current loss)</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2e3fc667c765f6382c329c664318c9e27fa4f997/onmt/train/EpochState.lua#L29">[src]</a>
+<h3 id="onmtepochstateepoch-numiterations-learningrate">onmt.EpochState(epoch, numIterations, learningRate)</h3>
+<p>Initialize for epoch <code>epoch</code></p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/train/EpochState.lua#L27">[src]</a>
 <a name="onmt.EpochState:update"></a></p>
-<h3 id="onmtepochstateupdatebatch-loss">onmt.EpochState:update(batch, loss)</h3>
+<h3 id="onmtepochstateupdatemodel-batch-loss">onmt.EpochState:update(model, batch, loss)</h3>
 <p>Update training status. Takes <code>batch</code> (described in data.lua) and last loss.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2e3fc667c765f6382c329c664318c9e27fa4f997/onmt/train/EpochState.lua#L44">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/train/EpochState.lua#L35">[src]</a>
 <a name="onmt.EpochState:log"></a></p>
-<h3 id="onmtepochstatelogbatchindex-json">onmt.EpochState:log(batchIndex, json)</h3>
+<h3 id="onmtepochstatelogiteration">onmt.EpochState:log(iteration)</h3>
 <p>Log to status stdout. </p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.EpochState:getTrainPpl"></a>
- * <code>onmt.EpochState:getTrainPpl()</code>
+<p><a name="onmt.EpochState:reset"></a>
+ * <code>onmt.EpochState:reset()</code>
 <a name="onmt.EpochState:getTime"></a>
- * <code>onmt.EpochState:getTime()</code>
-<a name="onmt.EpochState:getStatus"></a>
- * <code>onmt.EpochState:getStatus()</code>
-<a name="onmt.EpochState:getMinFreememory"></a>
- * <code>onmt.EpochState:getMinFreememory()</code></p>
+ * <code>onmt.EpochState:getTime()</code></p>
               
             </div>
           </div>

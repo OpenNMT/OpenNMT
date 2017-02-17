@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
         
     </li>
@@ -142,7 +149,7 @@
             
                 <li class="toctree-l3"><a href="#onmtfeaturesgenerator">onmt.FeaturesGenerator</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtfeaturesgeneratorrnnsize-outputsize-features">onmt.FeaturesGenerator(rnnSize, outputSize, features)</a></li>
+                    <li><a class="toctree-l4" href="#onmtfeaturesgeneratorrnnsize-outputsizes">onmt.FeaturesGenerator(rnnSize, outputSizes)</a></li>
                 
             
             </ul>
@@ -194,6 +201,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -238,6 +252,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../train/onmt+train+Optim/">onmt+train+Optim</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../train/onmt+train+Trainer/">onmt+train+Trainer</a>
         
     </li>
 
@@ -379,14 +400,13 @@
 <p>Feature decoder generator. Given RNN state, produce categorical distribution over
 tokens and features.</p>
 <p>Implements <script type="math/tex; mode=display">[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] </script>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2e3fc667c765f6382c329c664318c9e27fa4f997/onmt/modules/FeaturesGenerator.lua#L15">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/modules/FeaturesGenerator.lua#L14">[src]</a>
 <a name="onmt.FeaturesGenerator"></a></p>
-<h3 id="onmtfeaturesgeneratorrnnsize-outputsize-features">onmt.FeaturesGenerator(rnnSize, outputSize, features)</h3>
+<h3 id="onmtfeaturesgeneratorrnnsize-outputsizes">onmt.FeaturesGenerator(rnnSize, outputSizes)</h3>
 <p>Parameters:</p>
 <ul>
 <li><code>rnnSize</code> - Input rnn size.</li>
-<li><code>outputSize</code> - Output size (number of tokens).</li>
-<li><code>features</code> - table of feature sizes.</li>
+<li><code>outputSizes</code> - Table of each output size.</li>
 </ul>
               
             </div>

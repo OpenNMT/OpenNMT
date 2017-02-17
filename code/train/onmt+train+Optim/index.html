@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../data/onmt+data+Vocabulary/">onmt+data+Vocabulary</a>
         
     </li>
@@ -185,6 +192,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+ParallelClassNLLCriterion/">onmt+modules+ParallelClassNLLCriterion</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+Sequencer/">onmt+modules+Sequencer</a>
         
     </li>
@@ -238,6 +252,13 @@
                 
             
             </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+train+Trainer/">onmt+train+Trainer</a>
         
     </li>
 
@@ -376,17 +397,22 @@
               
                 <p><a name="onmt.Optim.dok"></a></p>
 <h2 id="onmtoptim">onmt.Optim</h2>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2e3fc667c765f6382c329c664318c9e27fa4f997/onmt/train/Optim.lua#L115">[src]</a>
+<hr />
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b02a4a7dac4dd3ee0fdb57a48f017941990384a8/onmt/train/Optim.lua#L141">[src]</a>
 <a name="onmt.Optim:updateLearningRate"></a></p>
 <h3 id="onmtoptimupdatelearningratescore-epoch">onmt.Optim:updateLearningRate(score, epoch)</h3>
 <p>decay learning rate if val perf does not improve or we hit the startDecayAt limit</p>
 <h4 id="undocumented-methods">Undocumented methods</h4>
-<p><a name="onmt.Optim"></a>
- * <code>onmt.Optim(args)</code>
+<p><a name="onmt.Optim.declareOpts"></a>
+ * <code>onmt.Optim.declareOpts(cmd)</code>
+<a name="onmt.Optim"></a>
+ * <code>onmt.Optim(args, optimStates)</code>
+<a name="onmt.Optim:setOptimStates"></a>
+ * <code>onmt.Optim:setOptimStates(num)</code>
 <a name="onmt.Optim:zeroGrad"></a>
  * <code>onmt.Optim:zeroGrad(gradParams)</code>
 <a name="onmt.Optim:prepareGrad"></a>
- * <code>onmt.Optim:prepareGrad(gradParams, maxGradNorm)</code>
+ * <code>onmt.Optim:prepareGrad(gradParams)</code>
 <a name="onmt.Optim:updateParams"></a>
  * <code>onmt.Optim:updateParams(params, gradParams)</code>
 <a name="onmt.Optim:getLearningRate"></a>
@@ -400,7 +426,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../translate/" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+train+Trainer/" class="btn btn-neutral float-right" title="onmt+train+Trainer">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../onmt+train+EpochState/" class="btn btn-neutral" title="onmt+train+EpochState"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -432,7 +458,7 @@
         <span><a href="../onmt+train+EpochState/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../translate/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+train+Trainer/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
