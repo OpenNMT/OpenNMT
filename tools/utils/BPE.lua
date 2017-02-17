@@ -117,6 +117,7 @@ function BPE:encode(l)
         end
       end
     end
+    if merge then table.insert(new_word, bigram[1]) end
     word = new_word
     if #word == 1 then
       break
