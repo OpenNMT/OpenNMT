@@ -8,6 +8,7 @@ local Cuda = {
 local options = {
   {'-gpuid',     '0',   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
                                  {valid=ExtendedCmdLine.listUInt}},
+  {'-fallback_to_cpu', false, [[If GPU can't be use, rollback on the CPU.]]},
   {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
 }
 
@@ -27,28 +28,39 @@ function Cuda.init(opt, masterGPU)
   Cuda.activated = #Cuda.gpuIds > 0
 
   if Cuda.activated then
-    require('cutorch')
-    require('cunn')
+    local _, err = pcall(function()
+      require('cutorch')
+      require('cunn')
 
-    if masterGPU == nil then
-      masterGPU = 1
+      if masterGPU == nil then
+        masterGPU = 1
 
-      -- Validate GPU identifiers.
-      for i = 1, #Cuda.gpuIds do
-        assert(Cuda.gpuIds[i] <= cutorch.getDeviceCount(),
-               'GPU ' .. Cuda.gpuIds[i] .. ' is requested but only '
-                 .. cutorch.getDeviceCount() .. ' GPUs are available')
+        -- Validate GPU identifiers.
+        for i = 1, #Cuda.gpuIds do
+          assert(Cuda.gpuIds[i] <= cutorch.getDeviceCount(),
+                 'GPU ' .. Cuda.gpuIds[i] .. ' is requested but only '
+                   .. cutorch.getDeviceCount() .. ' GPUs are available')
+        end
+
+        _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
+
+        cutorch.manualSeedAll(opt.seed)
       end
 
-      _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
+      cutorch.setDevice(Cuda.gpuIds[masterGPU])
 
-      cutorch.manualSeedAll(opt.seed)
-    end
+      if opt.seed then
+        cutorch.manualSeed(opt.seed)
+      end
+    end)
 
-    cutorch.setDevice(Cuda.gpuIds[masterGPU])
-
-    if opt.seed then
-      cutorch.manualSeed(opt.seed)
+    if err then
+      if opt.fallback_to_cpu then
+        _G.logger:warning('Falling back to CPU')
+        Cuda.activated = false
+      else
+        error(err)
+      end
     end
   end
 end
