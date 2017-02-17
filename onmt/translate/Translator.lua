@@ -1,29 +1,28 @@
 local Translator = torch.class('Translator')
 
-function Translator.declareOpts(cmd)
-  cmd:option('-model', '', [[Path to model .t7 file]])
+local options = {
+  {'-model', '', [[Path to model .t7 file]], {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+  {'-beam_size', 5, [[Beam size]]},
+  {'-batch_size', 30, [[Batch size]]},
+  {'-max_sent_length', 250, [[Maximum output sentence length.]]},
+  {'-replace_unk', false, [[Replace the generated UNK tokens with the source token that
+                          had the highest attention weight. If phrase_table is provided,
+                          it will lookup the identified source token and give the corresponding
+                          target token. If it is not provided (or the identified source token
+                          does not exist in the table) then it will copy the source token]]},
+  {'-phrase_table', '', [[Path to source-target dictionary to replace UNK
+                        tokens. See README.md for the format this file should be in]]},
+  {'-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]]},
+  {'-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored
+                               during beam search]]},
+  {'-pre_filter_factor', 1, [[Optional, set this only if filter is being used. Before
+                            applying filters, hypotheses with top `beamSize * preFilterFactor`
+                            scores will be considered. If the returned hypotheses voilate filters,
+                            then set this to a larger value to consider more.]]}
+}
 
-  -- beam search options
-  cmd:text("")
-  cmd:text("**Beam Search options**")
-  cmd:text("")
-  cmd:option('-beam_size', 5,[[Beam size]])
-  cmd:option('-batch_size', 30, [[Batch size]])
-  cmd:option('-max_sent_length', 250, [[Maximum output sentence length.]])
-  cmd:option('-replace_unk', false, [[Replace the generated UNK tokens with the source token that
-                              had the highest attention weight. If phrase_table is provided,
-                              it will lookup the identified source token and give the corresponding
-                              target token. If it is not provided (or the identified source token
-                              does not exist in the table) then it will copy the source token]])
-  cmd:option('-phrase_table', '', [[Path to source-target dictionary to replace UNK
-                                     tokens. See README.md for the format this file should be in]])
-  cmd:option('-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]])
-  cmd:option('-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored
-                                           during beam search]])
-  cmd:option('-pre_filter_factor', 1, [[Optional, set this only if filter is being used. Before
-                              applying filters, hypotheses with top `beamSize * preFilterFactor`
-                              scores will be considered. If the returned hypotheses voilate filters,
-                              then set this to a larger value to consider more.]])
+function Translator.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Translator')
 end
 
 
@@ -35,8 +34,8 @@ function Translator:__init(args)
   self.checkpoint = torch.load(self.opt.model)
 
   self.models = {}
-  self.models.encoder = onmt.Models.loadEncoder(self.checkpoint.models.encoder)
-  self.models.decoder = onmt.Models.loadDecoder(self.checkpoint.models.decoder)
+  self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
+  self.models.decoder = onmt.Factory.loadDecoder(self.checkpoint.models.decoder)
 
   self.models.encoder:evaluate()
   self.models.decoder:evaluate()

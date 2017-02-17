@@ -1,8 +1,14 @@
 ## [Unreleased]
 
+### New features
+
+* Training code is now part of the library
+
 ### Fixes and improvements
 
 * Make sure released model does not contain any serialized function
+* Reported metrics are no longer averaged on the entire epoch
+* Improve logging in asynchronous training
 
 ## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)
 

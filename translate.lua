@@ -1,27 +1,22 @@
 require('onmt.init')
 
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
 
-cmd:text("")
-cmd:text("**onmt.translate.lua**")
-cmd:text("")
+local options = {
+  {'-src', '', [[Source sequence to decode (one line per sequence)]],
+               {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+  {'-tgt', '', [[True target sequence (optional)]]},
+  {'-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence)]]}
+}
 
-
-cmd:option('-config', '', [[Read options from this file]])
-
-cmd:text("")
-cmd:text("**Data options**")
-cmd:text("")
-
-cmd:option('-src', '', [[Source sequence to decode (one line per sequence)]])
-cmd:option('-tgt', '', [[True target sequence (optional)]])
-cmd:option('-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
+cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
 
-cmd:text("")
-cmd:text("**Other options**")
-cmd:text("")
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
+
 cmd:option('-time', false, [[Measure batch translation time]])
 
 onmt.utils.Cuda.declareOpts(cmd)
@@ -35,13 +30,6 @@ end
 
 local function main()
   local opt = cmd:parse(arg)
-
-  local requiredOptions = {
-    "model",
-    "src"
-  }
-
-  onmt.utils.Opt.init(opt, requiredOptions)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 

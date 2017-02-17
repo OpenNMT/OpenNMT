@@ -1,20 +1,25 @@
 require('onmt.init')
 
-local cmd = torch.CmdLine()
-cmd:option('-config', '', [[Read options from this file]])
+local cmd = onmt.utils.ExtendedCmdLine.new('generate_metadata.lua')
 
-cmd:option('-model', '', 'trained model file')
-cmd:option('-save_data', '', 'JSON metadata file')
+local options = {
+  {'-model', '', 'trained model file', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+  {'-save_data', '', 'JSON metadata file', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+  {'-name', '', 'name of the submitted system', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}};
+  {'-language_pair', '', 'language pair', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+  {'-version', '', 'version of OpenNMT used for training'},
+  {'-features', '', 'side features used'},
+  {'-tokenization', '', 'side features used'},
+  {'-encoder', '', 'encoder details'},
+  {'-decoder', '', 'decoder details'},
+  {'-oov', '', 'unknown replacement procedure'}
+}
 
-cmd:option('-name', '', 'name of the submitted system')
-cmd:option('-language_pair', '', 'language pair')
+cmd:setCmdLineOptions(options, 'Model')
 
-cmd:option('-version', '', 'version of OpenNMT used for training')
-cmd:option('-features', '', 'side features used')
-cmd:option('-tokenization', '', 'side features used')
-cmd:option('-encoder', '', 'encoder details')
-cmd:option('-decoder', '', 'decoder details')
-cmd:option('-oov', '', 'unknown replacement procedure')
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
 
 onmt.utils.Logger.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
@@ -33,13 +38,6 @@ end
 
 local function main()
   local opt = cmd:parse(arg)
-
-  onmt.utils.Opt.init(opt, {
-    'model',
-    'save_data',
-    'name',
-    'language_pair'
-  })
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 

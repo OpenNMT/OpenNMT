@@ -8,6 +8,13 @@ local function append(dst, src)
   end
 end
 
+--[[ Merge dict `src` to `dst`. ]]
+local function merge(dst, src)
+  for k, v in pairs(src) do
+    dst[k] = v
+  end
+end
+
 --[[ Reorder table `tab` based on the `index` array. ]]
 local function reorder(tab, index, cdata)
   local newTab
@@ -28,7 +35,20 @@ local function reorder(tab, index, cdata)
   return newTab
 end
 
+--[[ Check if value is part of list/table. ]]
+local function hasValue(tab, value)
+  for _, v in ipairs(tab) do
+    if v == value then
+      return true
+    end
+  end
+  return false
+end
+
+
 return {
   reorder = reorder,
-  append = append
+  append = append,
+  merge = merge,
+  hasValue = hasValue
 }

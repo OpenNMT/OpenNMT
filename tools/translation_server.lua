@@ -3,20 +3,21 @@ local json = require("dkjson")
 
 require('onmt.init')
 
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new('translation_server.lua')
 
-cmd:text("")
-cmd:text("**onmt.translation_server**")
-cmd:text("")
+local options = {
+  {'-host', '127.0.0.1', [[Host to run the server on]]},
+  {'-port', '5556', [[Port to run the server on]]}
+}
 
-cmd:option('-config', '', [[Read options from this file]])
+cmd:setCmdLineOptions(options, 'Server')
+
 onmt.translate.Translator.declareOpts(cmd)
 
-cmd:option('-host', '127.0.0.1', [[Host to run the server on]])
-cmd:option('-port', '5556', [[Port to run the server on]])
-cmd:text("")
-cmd:text("**Other options**")
-cmd:text("")
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
+
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
@@ -69,11 +70,6 @@ end
 
 local function main()
   local opt = cmd:parse(arg)
-  local requiredOptions = {
-    "model"
-  }
-
-  onmt.utils.Opt.init(opt, requiredOptions)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
