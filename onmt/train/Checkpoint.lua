@@ -1,8 +1,18 @@
 -- Class for saving and loading models during training.
-local Checkpoint = torch.class("Checkpoint")
+local Checkpoint = torch.class('Checkpoint')
 
-function Checkpoint:__init(options, model, optim, dicts)
-  self.options = options
+local options = {
+  {'-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]],
+                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
+  {'-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]]}
+}
+
+function Checkpoint.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Checkpoint')
+end
+
+function Checkpoint:__init(opt, model, optim, dicts)
+  self.options = opt
   self.model = model
   self.optim = optim
   self.dicts = dicts
@@ -21,7 +31,7 @@ function Checkpoint:save(filePath, info)
     dicts = self.dicts
   }
 
-  for k, v in pairs(self.model) do
+  for k, v in pairs(self.model.models) do
     if v.serialize then
       data.models[k] = v:serialize()
     else
@@ -37,7 +47,6 @@ function Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)
   local info = {}
   info.iteration = iteration + 1
   info.epoch = epochState.epoch
-  info.epochStatus = epochState:getStatus()
   info.batchOrder = batchOrder
 
   local filePath = string.format('%s_checkpoint.t7', self.savePath)
@@ -65,6 +74,39 @@ function Checkpoint:saveEpoch(validPpl, epochState, verbose)
   end
 
   self:save(filePath, info)
+end
+
+function Checkpoint.loadFromCheckpoint(opt)
+  local checkpoint = {}
+  if opt.train_from:len() > 0 then
+    _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
+
+    checkpoint = torch.load(opt.train_from)
+
+    opt.layers = checkpoint.options.layers
+    opt.rnn_size = checkpoint.options.rnn_size
+    opt.brnn = checkpoint.options.brnn
+    opt.brnn_merge = checkpoint.options.brnn_merge
+    opt.input_feed = checkpoint.options.input_feed
+
+    -- Resume training from checkpoint
+    if opt.continue then
+      opt.optim = checkpoint.options.optim
+      opt.learning_rate_decay = checkpoint.options.learning_rate_decay
+      opt.start_decay_at = checkpoint.options.start_decay_at
+      opt.curriculum = checkpoint.options.curriculum
+      opt.fix_word_vecs_enc = checkpoint.options.fix_word_vecs_enc
+      opt.fix_word_vecs_dec = checkpoint.options.fix_word_vecs_dec
+
+      opt.learning_rate = checkpoint.info.learningRate
+      opt.start_epoch = checkpoint.info.epoch
+      opt.start_iteration = checkpoint.info.iteration
+
+      _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
+                         .. ' at iteration ' .. opt.start_iteration .. '...')
+    end
+  end
+  return checkpoint, opt
 end
 
 return Checkpoint

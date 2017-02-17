@@ -92,6 +92,7 @@ function BiEncoder:serialize()
   end
 
   return {
+    name = 'BiEncoder',
     modules = modulesData,
     args = self.args
   }
@@ -158,7 +159,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   gradStatesOutput = gradStatesOutput
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
-                                         { batch.size, self.args.rnnSize*2 })
+                                         { batch.size, self.args.hiddenSize })
 
   local gradContextOutputFwd
   local gradContextOutputBwd

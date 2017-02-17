@@ -2,14 +2,13 @@
 --]]
 local PhraseTable = torch.class('PhraseTable')
 
-
 function PhraseTable:__init(filePath)
   local f = assert(io.open(filePath, 'r'))
 
   self.table = {}
 
   for line in f:lines() do
-    local c = line:split("|||")
+    local c = onmt.utils.String.split(line, '|||')
     assert(#c == 2, 'badly formatted phrase table: ' .. line)
     self.table[onmt.utils.String.strip(c[1])] = onmt.utils.String.strip(c[2])
   end

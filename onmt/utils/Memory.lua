@@ -4,7 +4,6 @@ local Memory = {}
 
 Parameters:
   * `model` - a table containing encoder and decoder
-  * `criterion` - a single target criterion object
   * `batch` - a Batch object
   * `verbose` - produce output or not
 
@@ -13,17 +12,17 @@ Example:
   local model = {}
   model.encoder = onmt.Models.buildEncoder(...)
   model.decoder = onmt.Models.buildDecoder(...)
-  Memory.optimize(model, criterion, batch, verbose)
+  Memory.optimize(model, batch, verbose)
 
 ]]
-function Memory.optimize(model, criterion, batch, verbose)
+function Memory.optimize(model, batch, verbose)
 
   if verbose then
     _G.logger:info('Preparing memory optimization...')
   end
 
   -- Prepare memory optimization
-  local memoryOptimizer = onmt.utils.MemoryOptimizer.new({model.encoder, model.decoder})
+  local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model.models)
 
   -- Batch of one single word since we optimize the first clone.
   local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength }
@@ -31,12 +30,7 @@ function Memory.optimize(model, criterion, batch, verbose)
   batch.sourceLength = 1
   batch.targetLength = 1
 
-  -- Initialize all intermediate tensors with a first batch.
-  local encStates, context = model.encoder:forward(batch)
-  local decOutputs = model.decoder:forward(batch, encStates, context)
-  decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
-  local encGradStatesOut, gradContext, _ = model.decoder:backward(batch, decOutputs, criterion)
-  model.encoder:backward(batch, encGradStatesOut, gradContext)
+  model:trainNetwork(batch, true)
 
   -- mark shared tensors
   local sharedSize, totSize = memoryOptimizer:optimize()
@@ -48,6 +42,11 @@ function Memory.optimize(model, criterion, batch, verbose)
   -- Restore batch to be transparent for the calling code.
   batch.sourceLength = realSizes.sourceLength
   batch.targetLength = realSizes.targetLength
+end
+
+function Memory.declareOpts(cmd)
+  cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
+                                                   except if you want to look inside clones for visualization purpose for instance.]])
 end
 
 return Memory

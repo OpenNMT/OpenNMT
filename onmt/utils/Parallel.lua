@@ -19,9 +19,7 @@ local function waitForDevice(dst, src)
 end
 
 function Parallel.getCounter()
-  local atomic = Parallel._tds.AtomicCounter()
-  atomic:inc()
-  return atomic
+  return Parallel._tds.AtomicCounter()
 end
 
 function Parallel.gmutexId()

@@ -2,18 +2,39 @@
 
 ### New features
 
+* Training code is now part of the library
+
+### Fixes and improvements
+
+* Make sure released model does not contain any serialized function
+* Reported metrics are no longer averaged on the entire epoch
+* Improve logging in asynchronous training
+* Allow fixing word embeddings without providing pre-trained embeddings
+* Keep word embeddings fixed when continuing a training with fixed embeddings
+
+## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)
+
+### Fixes and improvements
+
+* Fix translation server error when clients send escaped unicode sequences
+* Fix compatibility issue with the `:split()` function
+
+## [v0.4.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.0) (2017-02-10)
+
+### New features
+
 * Profiler option
 * Support hypotheses filtering during the beam search
 * Support individually setting features vocabulary and embedding size
-* Scripts to interact with the [benchmark platform](http://scorer.nmt-benchmark.net/)
-* Language modeling example
+* [*experimental*] Scripts to interact with the [benchmark platform](http://scorer.nmt-benchmark.net/)
+* [*experimental*] Language modeling example
 
 ### Fixes and improvements
 
 * [*Breaking, new API*] Improve translator API consistency
 * Improve beam search speed (up to 90% faster)
 * Reduce released model size (up to 2x smaller)
-* Fix tokenization of text using joiner marker character
+* Fix tokenization of text containing the joiner marker character
 * Fix `-joiner_new` option when using BPE
 * Fix joiner marker generated without the option enabled
 * Fix translation server crash on Lua errors

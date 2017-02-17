@@ -1,10 +1,18 @@
+local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
+
 local Cuda = {
   gpuIds = {},
   activated = false
 }
 
+local options = {
+  {'-gpuid',     '0',   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
+                                 {valid=ExtendedCmdLine.listUInt}},
+  {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
+}
+
 function Cuda.declareOpts(cmd)
-  cmd:option('-gpuid', '0', [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]])
+  cmd:setCmdLineOptions(options)
 end
 
 function Cuda.init(opt, masterGPU)
@@ -34,9 +42,7 @@ function Cuda.init(opt, masterGPU)
 
       _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
 
-      if opt.seed then
-        cutorch.manualSeedAll(opt.seed)
-      end
+      cutorch.manualSeedAll(opt.seed)
     end
 
     cutorch.setDevice(Cuda.gpuIds[masterGPU])

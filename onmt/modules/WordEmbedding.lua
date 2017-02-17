@@ -19,11 +19,11 @@ function WordEmbedding:__init(vocabSize, vecSize, preTrained, fix)
   if preTrained and preTrained:len() > 0 then
     local vecs = torch.load(preTrained)
     self.net.weight:copy(vecs)
+  end
 
-    self.fix = fix
-    if self.fix then
-      self.net.gradWeight = nil
-    end
+  self.fix = fix
+  if self.fix then
+    self.net.gradWeight = nil
   end
 end
 

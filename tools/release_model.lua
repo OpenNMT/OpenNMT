@@ -2,13 +2,26 @@ require('onmt.init')
 
 local path = require('pl.path')
 
-local cmd = torch.CmdLine()
-cmd:option('-model', '', 'trained model file')
-cmd:option('-output_model', '', 'released model file')
-cmd:option('-force', false, 'force output model creation')
+local cmd = onmt.utils.ExtendedCmdLine.new('release_model.lua')
+
+local options = {
+  {'-model', '', 'trained model file'},
+  {'-output_model', '', 'released model file'},
+  {'-force', false, 'force output model creation'}
+}
+
+cmd:setCmdLineOptions(options, 'Model')
+
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
+
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
+-- does not need seed
+opt.seed = 0
 
 local function releaseModel(model)
   for _, submodule in pairs(model.modules) do
@@ -19,6 +32,11 @@ local function releaseModel(model)
       submodule:clearState()
       submodule:apply(function (m)
         nn.utils.clear(m, 'gradWeight', 'gradBias')
+        for k, v in pairs(m) do
+          if type(v) == 'function' then
+            m[k] = nil
+          end
+        end
       end)
     end
   end
