@@ -10,6 +10,7 @@
 * Reported metrics are no longer averaged on the entire epoch
 * Improve logging in asynchronous training
 * Allow fixing word embeddings without providing pre-trained embeddings
+* Keep word embeddings fixed when continuing a training with fixed embeddings
 
 ## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)
 

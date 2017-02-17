@@ -95,6 +95,8 @@ function Checkpoint.loadFromCheckpoint(opt)
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
       opt.curriculum = checkpoint.options.curriculum
+      opt.fix_word_vecs_enc = checkpoint.options.fix_word_vecs_enc
+      opt.fix_word_vecs_dec = checkpoint.options.fix_word_vecs_dec
 
       opt.learning_rate = checkpoint.info.learningRate
       opt.start_epoch = checkpoint.info.epoch
