@@ -70,7 +70,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
 
   self.sourceLength, self.sourceSize = getLength(src)
 
-  local sourceSeq = torch.IntTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
+  local sourceSeq = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
   self.sourceInput = sourceSeq:clone()
   self.sourceInputRev = sourceSeq:clone()
 
@@ -87,7 +87,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   if tgt ~= nil then
     self.targetLength, self.targetSize, self.targetNonZeros = getLength(tgt, 1)
 
-    local targetSeq = torch.IntTensor(self.targetLength, self.size):fill(onmt.Constants.PAD)
+    local targetSeq = torch.LongTensor(self.targetLength, self.size):fill(onmt.Constants.PAD)
     self.targetInput = targetSeq:clone()
     self.targetOutput = targetSeq:clone()
 

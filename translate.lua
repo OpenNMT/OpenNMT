@@ -125,6 +125,7 @@ local function main()
       for b = 1, #results do
         if (#srcBatch[b].words == 0) then
           _G.logger:warning('Line ' .. sentId .. ' is empty.')
+          outFile:write('\n')
         else
           _G.logger:info('SENT %d: %s', sentId, buildSentence(srcBatch[b]))
 
