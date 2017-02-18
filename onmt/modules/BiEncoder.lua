@@ -1,8 +1,14 @@
+---------------------------------------------------------------------------------
+-- Local utility functions
+---------------------------------------------------------------------------------
+
 local function reverseInput(batch)
   batch.sourceInput, batch.sourceInputRev = batch.sourceInputRev, batch.sourceInput
   batch.sourceInputFeatures, batch.sourceInputRevFeatures = batch.sourceInputRevFeatures, batch.sourceInputFeatures
   batch.sourceInputPadLeft, batch.sourceInputRevPadLeft = batch.sourceInputRevPadLeft, batch.sourceInputPadLeft
 end
+
+---------------------------------------------------------------------------------
 
 --[[ BiEncoder is a bidirectional Sequencer used for the source language.
 
@@ -32,7 +38,18 @@ end
 Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 
 --]]
-local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
+local BiEncoder, parent = torch.class('onmt.BiEncoder', 'onmt.ComplexEncoder')
+
+local options = {
+  {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],
+                     {enum={'concat','sum'}}}
+}
+
+function BiEncoder.declareOpts(cmd)
+  onmt.SimpleEncoder.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+end
+
 
 --[[ Create a bi-encoder.
 
@@ -42,26 +59,31 @@ Parameters:
   * `rnn` - recurrent template module.
   * `merge` - fwd/bwd merge operation {"concat", "sum"}
 ]]
-function BiEncoder:__init(input, rnn, merge)
-  parent.__init(self)
+function BiEncoder:__init(args, input)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
 
-  self.fwd = onmt.Encoder.new(input, rnn)
-  self.bwd = onmt.Encoder.new(input:clone('weight', 'bias', 'gradWeight', 'gradBias'), rnn:clone())
-
-  self.args = {}
-  self.args.merge = merge
-
-  self.args.rnnSize = rnn.outputSize
-  self.args.numEffectiveLayers = rnn.numEffectiveLayers
-
-  if self.args.merge == 'concat' then
-    self.args.hiddenSize = self.args.rnnSize * 2
-  else
-    self.args.hiddenSize = self.args.rnnSize
+  -- Compute rnn hidden size depending on hidden states merge action.
+  if self.args.brnn_merge == 'concat' then
+    if args.rnn_size % 2 ~= 0 then
+      error('in concat mode, rnn_size must be divisible by 2')
+    end
+    args.rnn_size = args.rnn_size / 2
   end
 
-  self:add(self.fwd)
-  self:add(self.bwd)
+  self.args.rnn_size = args.rnn_size
+
+  self.fwd = onmt.SimpleEncoder.new(args, input)
+  self.bwd = onmt.SimpleEncoder.new(args, input:clone('weight', 'bias', 'gradWeight', 'gradBias'))
+
+  self.args.numEffectiveLayers = self.fwd.args.numEffectiveLayers
+
+  if self.args.brnn_merge == 'concat' then
+    self.args.hiddenSize = self.args.rnn_size * 2
+  else
+    self.args.hiddenSize = self.args.rnn_size
+  end
+
+  parent.__init(self, {self.fwd, self.bwd})
 
   self:resetPreallocation()
 end
@@ -130,18 +152,18 @@ function BiEncoder:forward(batch)
   local bwdStates, bwdContext = self.bwd:forward(batch)
   reverseInput(batch)
 
-  if self.args.merge == 'concat' then
+  if self.args.brnn_merge == 'concat' then
     for i = 1, #fwdStates do
-      states[i]:narrow(2, 1, self.args.rnnSize):copy(fwdStates[i])
-      states[i]:narrow(2, self.args.rnnSize + 1, self.args.rnnSize):copy(bwdStates[i])
+      states[i]:narrow(2, 1, self.args.rnn_size):copy(fwdStates[i])
+      states[i]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwdStates[i])
     end
     for t = 1, batch.sourceLength do
-      context[{{}, t}]:narrow(2, 1, self.args.rnnSize)
+      context[{{}, t}]:narrow(2, 1, self.args.rnn_size)
         :copy(fwdContext[{{}, t}])
-      context[{{}, t}]:narrow(2, self.args.rnnSize + 1, self.args.rnnSize)
+      context[{{}, t}]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size)
         :copy(bwdContext[{{}, batch.sourceLength - t + 1}])
     end
-  elseif self.args.merge == 'sum' then
+  elseif self.args.brnn_merge == 'sum' then
     for i = 1, #states do
       states[i]:copy(fwdStates[i])
       states[i]:add(bwdStates[i])
@@ -167,7 +189,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   local gradStatesOutputFwd = {}
   local gradStatesOutputBwd = {}
 
-  if self.args.merge == 'concat' then
+  if self.args.brnn_merge == 'concat' then
     local gradContextOutputSplit = gradContextOutput:chunk(2, 3)
     gradContextOutputFwd = gradContextOutputSplit[1]
     gradContextOutputBwd = gradContextOutputSplit[2]
@@ -177,7 +199,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
       table.insert(gradStatesOutputFwd, statesSplit[1])
       table.insert(gradStatesOutputBwd, statesSplit[2])
     end
-  elseif self.args.merge == 'sum' then
+  elseif self.args.brnn_merge == 'sum' then
     gradContextOutputFwd = gradContextOutput
     gradContextOutputBwd = gradContextOutput
 
@@ -189,7 +211,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
   -- reverse gradients of the backward context
   local gradContextBwd = onmt.utils.Tensor.reuseTensor(self.gradContextBwdProto,
-                                                       { batch.size, batch.sourceLength, self.args.rnnSize })
+                                                       { batch.size, batch.sourceLength, self.args.rnn_size })
 
   for t = 1, batch.sourceLength do
     gradContextBwd[{{}, t}]:copy(gradContextOutputBwd[{{}, batch.sourceLength - t + 1}])

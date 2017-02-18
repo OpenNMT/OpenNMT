@@ -2,12 +2,6 @@
 local Seq2Seq, parent = torch.class('Seq2Seq', 'Model')
 
 local options = {
-  {'-layers', 2,           [[Number of layers in the RNN encoder/decoder]],
-                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-rnn_size', 500, [[Size of RNN hidden states]],
-                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-rnn_type', 'LSTM', [[Type of RNN cell]],
-                     {enum={'LSTM','GRU'}}},
   {'-word_vec_size', 0, [[Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size.]],
                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]]},
