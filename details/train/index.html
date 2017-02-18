@@ -335,6 +335,21 @@
         
             <ul>
             
+                <li class="toctree-l3"><a href="#trainlua">train.lua</a></li>
+                
+                    <li><a class="toctree-l4" href="#data-options">Data options</a></li>
+                
+                    <li><a class="toctree-l4" href="#sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options</a></li>
+                
+                    <li><a class="toctree-l4" href="#optimization-options">Optimization options</a></li>
+                
+                    <li><a class="toctree-l4" href="#trainer-options">Trainer options</a></li>
+                
+                    <li><a class="toctree-l4" href="#checkpoint-options">Checkpoint options</a></li>
+                
+                    <li><a class="toctree-l4" href="#other-options">Other options</a></li>
+                
+            
             </ul>
         
     </li>
@@ -386,122 +401,78 @@
           <div role="main">
             <div class="section">
               
-                <dl>
-<dt>h</dt>
-<dd>this help file [false]</dd>
-<dt>config</dt>
-<dd>read options from config file. []</dd>
-<dt>save_config</dt>
-<dd>save options from config file. []</dd>
-</dl>
-<p><strong>Data options</strong></p>
-<dl>
-<dt>data</dt>
-<dd>Path to the training *-train.t7 file from preprocess.lua []</dd>
-<dt>save_model</dt>
-<dd>Model filename (the model will be saved as<save_model>_epochN_PPL.t7 where PPL is the validation perplexity []</dd>
-<dt>model_type</dt>
-<dd>(lm, seq2seq) Type of the model to train.This option impacts all options choices [seq2seq]</dd>
-<dt>param_init</dt>
-<dd>Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</dd>
-</dl>
-<p><strong>Sequence to Sequence with Attention options</strong></p>
-<dl>
-<dt>layers</dt>
-<dd>Number of layers in the RNN encoder/decoder [2]</dd>
-<dt>rnn_size</dt>
-<dd>Size of RNN hidden states [500]</dd>
-<dt>rnn_type</dt>
-<dd>(LSTM, GRU) Type of RNN cell [LSTM]</dd>
-<dt>word_vec_size</dt>
-<dd>Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]</dd>
-<dt>src_word_vec_size</dt>
-<dd>Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]</dd>
-<dt>tgt_word_vec_size</dt>
-<dd>Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]</dd>
-<dt>feat_merge</dt>
-<dd>(concat, sum) Merge action for the features embeddings [concat]</dd>
-<dt>feat_vec_exponent</dt>
-<dd>When features embedding sizes are not set and using -feat_merge concat, their dimensionwill be set to N^exponent where N is the number of values the feature takes. [0.7]</dd>
-<dt>feat_vec_size</dt>
-<dd>When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]</dd>
-<dt>input_feed</dt>
-<dd>(0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</dd>
-<dt>residual</dt>
-<dd>Add residual connections between RNN layers. [false]</dd>
-<dt>brnn</dt>
-<dd>Use a bidirectional encoder [false]</dd>
-<dt>brnn_merge</dt>
-<dd>(concat, sum) Merge action for the bidirectional hidden states [sum]</dd>
-<dt>pre_word_vecs_enc</dt>
-<dd>If a valid path is specified, then this will loadpretrained word embeddings on the encoder side.See README for specific formatting instructions. []</dd>
-<dt>pre_word_vecs_dec</dt>
-<dd>If a valid path is specified, then this will loadpretrained word embeddings on the decoder side.See README for specific formatting instructions. []</dd>
-<dt>fix_word_vecs_enc</dt>
-<dd>Fix word embeddings on the encoder side [false]</dd>
-<dt>fix_word_vecs_dec</dt>
-<dd>Fix word embeddings on the decoder side [false]</dd>
-<dt>dropout</dt>
-<dd>Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</dd>
-</dl>
-<p><strong>Optimization options</strong></p>
-<dl>
-<dt>max_batch_size</dt>
-<dd>Maximum batch size [64]</dd>
-<dt>optim</dt>
-<dd>(sgd, adagrad, adadelta, adam) Optimization method. [sgd]</dd>
-<dt>learning_rate</dt>
-<dd>Starting learning rate. If adagrad/adadelta/adam is used,then this is the global learning rate. Recommended settings are: sgd = 1,adagrad = 0.1, adadelta = 1, adam = 0.0002 [1]</dd>
-<dt>max_grad_norm</dt>
-<dd>If the norm of the gradient vector exceeds this renormalize it to havethe norm equal to max_grad_norm [5]</dd>
-<dt>learning_rate_decay</dt>
-<dd>Decay learning rate by this much if (i) perplexity does not decreaseon the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</dd>
-<dt>start_decay_at</dt>
-<dd>Start decay after this epoch [9]</dd>
-</dl>
-<p><strong>Trainer options</strong></p>
-<dl>
-<dt>save_every</dt>
-<dd>Save intermediate models every this many iterations within an epoch.If = 0, will not save models within an epoch.  [0]</dd>
-<dt>report_every</dt>
-<dd>Print stats every this many iterations within an epoch. [50]</dd>
-<dt>async_parallel</dt>
-<dd>Use asynchronous parallelism training. [false]</dd>
-<dt>async_parallel_minbatch</dt>
-<dd>For async parallel computing, minimal number of batches before being parallel. [1000]</dd>
-<dt>start_iteration</dt>
-<dd>If loading from a checkpoint, the iteration from which to start [1]</dd>
-<dt>end_epoch</dt>
-<dd>The final epoch of the training [13]</dd>
-<dt>start_epoch</dt>
-<dd>If loading from a checkpoint, the epoch from which to start [1]</dd>
-<dt>curriculum</dt>
-<dd>For this many epochs, order the minibatches based on sourcesequence length. Sometimes setting this to 1 will increase convergence speed. [0]</dd>
-</dl>
-<p><strong>Checkpoint options</strong></p>
-<dl>
-<dt>train_from</dt>
-<dd>If training from a checkpoint then this is the path to the pretrained model. []</dd>
-<dt>continue</dt>
-<dd>If training from a checkpoint, whether to continue the training in the same configuration or not. [false]</dd>
-</dl>
-<p><strong>Other options</strong></p>
-<dl>
-<dt>gpuid</dt>
-<dd>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]</dd>
-<dt>no_nccl</dt>
-<dd>Disable usage of nccl in parallel mode. [false]</dd>
-<dt>disable_mem_optimization</dt>
-<dd>Disable sharing internal of internal buffers between clones - which is in general safe,except if you want to look inside clones for visualization purpose for instance. [false]</dd>
-<dt>log_file</dt>
-<dd>Outputs logs to a file under this path instead of stdout. []</dd>
-<dt>disable_logs</dt>
-<dd>If = true, output nothing. [false]</dd>
-<dt>log_level</dt>
-<dd>(DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]</dd>
-<dt>profiler</dt>
-<dd>Generate profiling logs. [false]</dd>
-</dl>
+                <h1 id="trainlua">train.lua</h1>
+<ul>
+<li><code>-h</code>: this help [false]</li>
+<li><code>-md</code>: Dump help in Markdown format [false]</li>
+<li><code>-config</code>: read options from config file. []</li>
+<li><code>-save_config</code>: save options from config file. []</li>
+</ul>
+<h2 id="data-options">Data options</h2>
+<ul>
+<li><code>-data</code>: Path to the training *-train.t7 file from preprocess.lua []</li>
+<li><code>-save_model</code>: Model filename (the model will be saved as <save_model>_epochN_PPL.t7 where PPL is the validation perplexity []</li>
+<li><code>-model_type</code>: (lm, seq2seq) Type of the model to train. This option impacts all options choices [seq2seq]</li>
+<li><code>-param_init</code>: Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</li>
+</ul>
+<h2 id="sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options</h2>
+<ul>
+<li><code>-layers</code>: Number of layers in the RNN encoder/decoder [2]</li>
+<li><code>-rnn_size</code>: Size of RNN hidden states [500]</li>
+<li><code>-rnn_type</code>: (LSTM, GRU) Type of RNN cell [LSTM]</li>
+<li><code>-word_vec_size</code>: Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]</li>
+<li><code>-src_word_vec_size</code>: Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]</li>
+<li><code>-tgt_word_vec_size</code>: Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]</li>
+<li><code>-feat_merge</code>: (concat, sum) Merge action for the features embeddings [concat]</li>
+<li><code>-feat_vec_exponent</code>: When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]</li>
+<li><code>-feat_vec_size</code>: When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]</li>
+<li><code>-input_feed</code>: (0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</li>
+<li><code>-residual</code>: Add residual connections between RNN layers. [false]</li>
+<li><code>-brnn</code>: Use a bidirectional encoder [false]</li>
+<li><code>-brnn_merge</code>: (concat, sum) Merge action for the bidirectional hidden states [sum]</li>
+<li><code>-pre_word_vecs_enc</code>: If a valid path is specified, then this will load pretrained word embeddings on the encoder side. See README for specific formatting instructions. []</li>
+<li><code>-pre_word_vecs_dec</code>: If a valid path is specified, then this will load pretrained word embeddings on the decoder side. See README for specific formatting instructions. []</li>
+<li><code>-fix_word_vecs_enc</code>: Fix word embeddings on the encoder side [false]</li>
+<li><code>-fix_word_vecs_dec</code>: Fix word embeddings on the decoder side [false]</li>
+<li><code>-dropout</code>: Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</li>
+</ul>
+<h2 id="optimization-options">Optimization options</h2>
+<ul>
+<li><code>-max_batch_size</code>: Maximum batch size [64]</li>
+<li><code>-optim</code>: (sgd, adagrad, adadelta, adam) Optimization method. [sgd]</li>
+<li><code>-learning_rate</code>: Starting learning rate. If adagrad/adadelta/adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adadelta = 1, adam = 0.0002 [1]</li>
+<li><code>-max_grad_norm</code>: If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]</li>
+<li><code>-learning_rate_decay</code>: Decay learning rate by this much if (i) perplexity does not decrease on the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</li>
+<li><code>-start_decay_at</code>: Start decay after this epoch [9]</li>
+</ul>
+<h2 id="trainer-options">Trainer options</h2>
+<ul>
+<li><code>-save_every</code>: Save intermediate models every this many iterations within an epoch. If = 0, will not save models within an epoch.  [0]</li>
+<li><code>-report_every</code>: Print stats every this many iterations within an epoch. [50]</li>
+<li><code>-async_parallel</code>: Use asynchronous parallelism training. [false]</li>
+<li><code>-async_parallel_minbatch</code>: For async parallel computing, minimal number of batches before being parallel. [1000]</li>
+<li><code>-start_iteration</code>: If loading from a checkpoint, the iteration from which to start [1]</li>
+<li><code>-end_epoch</code>: The final epoch of the training [13]</li>
+<li><code>-start_epoch</code>: If loading from a checkpoint, the epoch from which to start [1]</li>
+<li><code>-curriculum</code>: For this many epochs, order the minibatches based on source sequence length. Sometimes setting this to 1 will increase convergence speed. [0]</li>
+</ul>
+<h2 id="checkpoint-options">Checkpoint options</h2>
+<ul>
+<li><code>-train_from</code>: If training from a checkpoint then this is the path to the pretrained model. []</li>
+<li><code>-continue</code>: If training from a checkpoint, whether to continue the training in the same configuration or not. [false]</li>
+</ul>
+<h2 id="other-options">Other options</h2>
+<ul>
+<li><code>-gpuid</code>: List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]</li>
+<li><code>-fallback_to_cpu</code>: If GPU can't be use, rollback on the CPU. [false]</li>
+<li><code>-no_nccl</code>: Disable usage of nccl in parallel mode. [false]</li>
+<li><code>-disable_mem_optimization</code>: Disable sharing internal of internal buffers between clones - which is in general safe, except if you want to look inside clones for visualization purpose for instance. [false]</li>
+<li><code>-log_file</code>: Outputs logs to a file under this path instead of stdout. []</li>
+<li><code>-disable_logs</code>: If = true, output nothing. [false]</li>
+<li><code>-log_level</code>: (DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]</li>
+<li><code>-profiler</code>: Generate profiling logs. [false]</li>
+<li><code>-seed</code>: Seed for random initialization [3435]</li>
+</ul>
               
             </div>
           </div>

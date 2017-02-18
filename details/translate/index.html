@@ -342,6 +342,15 @@
         
             <ul>
             
+                <li class="toctree-l3"><a href="#translatelua">translate.lua</a></li>
+                
+                    <li><a class="toctree-l4" href="#data-options">Data options</a></li>
+                
+                    <li><a class="toctree-l4" href="#translator-options">Translator options</a></li>
+                
+                    <li><a class="toctree-l4" href="#other-options">Other options</a></li>
+                
+            
             </ul>
         
     </li>
@@ -386,57 +395,41 @@
           <div role="main">
             <div class="section">
               
-                <dl>
-<dt>h</dt>
-<dd>this help file [false]</dd>
-<dt>config</dt>
-<dd>read options from config file. []</dd>
-<dt>save_config</dt>
-<dd>save options from config file. []</dd>
-</dl>
-<p><strong>Data options</strong></p>
-<dl>
-<dt>src</dt>
-<dd>Source sequence to decode (one line per sequence) []</dd>
-<dt>tgt</dt>
-<dd>True target sequence (optional) []</dd>
-<dt>output</dt>
-<dd>Path to output the predictions (each line will be the decoded sequence) [pred.txt]</dd>
-</dl>
-<p><strong>Translator options</strong></p>
-<dl>
-<dt>model</dt>
-<dd>Path to model .t7 file []</dd>
-<dt>beam_size</dt>
-<dd>Beam size [5]</dd>
-<dt>batch_size</dt>
-<dd>Batch size [30]</dd>
-<dt>max_sent_length</dt>
-<dd>Maximum output sentence length. [250]</dd>
-<dt>replace_unk</dt>
-<dd>Replace the generated UNK tokens with the source token thathad the highest attention weight. If phrase_table is provided,it will lookup the identified source token and give the correspondingtarget token. If it is not provided (or the identified source tokendoes not exist in the table) then it will copy the source token [false]</dd>
-<dt>phrase_table</dt>
-<dd>Path to source-target dictionary to replace UNKtokens. See README.md for the format this file should be in []</dd>
-<dt>n_best</dt>
-<dd>If &gt; 1, it will also output an n_best list of decoded sentences [1]</dd>
-<dt>max_num_unks</dt>
-<dd>All sequences with more unks than this will be ignoredduring beam search [inf]</dd>
-<dt>pre_filter_factor</dt>
-<dd>Optional, set this only if filter is being used. Beforeapplying filters, hypotheses with top <code>beamSize * preFilterFactor</code>scores will be considered. If the returned hypotheses voilate filters,then set this to a larger value to consider more. [1]</dd>
-</dl>
-<p><strong>Other options</strong></p>
-<dl>
-<dt>time</dt>
-<dd>Measure batch translation time [false]</dd>
-<dt>gpuid</dt>
-<dd>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]</dd>
-<dt>no_nccl</dt>
-<dd>Disable usage of nccl in parallel mode. [false]</dd>
-<dt>log_file</dt>
-<dd>Outputs logs to a file under this path instead of stdout. []</dd>
-<dt>disable_logs</dt>
-<dd>If = true, output nothing. [false]</dd>
-</dl>
+                <h1 id="translatelua">translate.lua</h1>
+<ul>
+<li><code>-h</code>: this help [false]</li>
+<li><code>-md</code>: Dump help in Markdown format [false]</li>
+<li><code>-config</code>: read options from config file. []</li>
+<li><code>-save_config</code>: save options from config file. []</li>
+</ul>
+<h2 id="data-options">Data options</h2>
+<ul>
+<li><code>-src</code>: Source sequence to decode (one line per sequence) []</li>
+<li><code>-tgt</code>: True target sequence (optional) []</li>
+<li><code>-output</code>: Path to output the predictions (each line will be the decoded sequence) [pred.txt]</li>
+</ul>
+<h2 id="translator-options">Translator options</h2>
+<ul>
+<li><code>-model</code>: Path to model .t7 file []</li>
+<li><code>-beam_size</code>: Beam size [5]</li>
+<li><code>-batch_size</code>: Batch size [30]</li>
+<li><code>-max_sent_length</code>: Maximum output sentence length. [250]</li>
+<li><code>-replace_unk</code>: Replace the generated UNK tokens with the source token that had the highest attention weight. If phrase_table is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token [false]</li>
+<li><code>-phrase_table</code>: Path to source-target dictionary to replace UNK tokens. See README.md for the format this file should be in []</li>
+<li><code>-n_best</code>: If &gt; 1, it will also output an n_best list of decoded sentences [1]</li>
+<li><code>-max_num_unks</code>: All sequences with more unks than this will be ignored during beam search [inf]</li>
+<li><code>-pre_filter_factor</code>: Optional, set this only if filter is being used. Before applying filters, hypotheses with top <code>beamSize * preFilterFactor</code> scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more. [1]</li>
+</ul>
+<h2 id="other-options">Other options</h2>
+<ul>
+<li><code>-time</code>: Measure batch translation time [false]</li>
+<li><code>-gpuid</code>: List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]</li>
+<li><code>-fallback_to_cpu</code>: If GPU can't be use, rollback on the CPU. [false]</li>
+<li><code>-no_nccl</code>: Disable usage of nccl in parallel mode. [false]</li>
+<li><code>-log_file</code>: Outputs logs to a file under this path instead of stdout. []</li>
+<li><code>-disable_logs</code>: If = true, output nothing. [false]</li>
+<li><code>-log_level</code>: (DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]</li>
+</ul>
               
             </div>
           </div>
