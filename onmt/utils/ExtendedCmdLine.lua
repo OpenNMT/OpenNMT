@@ -155,8 +155,13 @@ function ExtendedCmdLine:help(arg, doMd)
 end
 
 function ExtendedCmdLine:option(key, default, help, _meta_)
- parent.option(self, key, default, help)
- self.options[key].meta = _meta_
+  for _,v in ipairs(self.helplines) do
+    if v.key == key then
+      return
+    end
+  end
+  parent.option(self, key, default, help)
+  self.options[key].meta = _meta_
 end
 
 --[[ Override options with option values set in file `filename`. ]]

@@ -2,37 +2,31 @@
 local LanguageModel, parent = torch.class('LanguageModel', 'Model')
 
 local options = {
-  {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
-  {'-rnn_size', 500, [[Size of RNN hidden states]]},
-  {'-rnn_type', 'LSTM', [[Type of RNN cell: LSTM, GRU]]},
   {'-word_vec_size', '500', [[Comma-separated list of embedding sizes: word[,feat1,feat2,...].]]},
-  {'-feat_merge', 'concat', [[Merge action for the features embeddings.]],
-                     {enum={'concat', 'sum'}}},
-  {'-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
-                                        then the embedding dimension will be set to N^exponent]]},
-  {'-feat_vec_size', 20, [[When using sum, the common embedding size of the features]]},
-  {'-residual', false, [[Add residual connections between RNN layers.]]},
-  {'-brnn', false, [[Use a bidirectional encoder]]},
-  {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states.]],
-                     {enum={'concat','sum'}}},
   {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the encoder side.
                                      See README for specific formatting instructions.]],
                          {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
-  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
+  {'-feat_merge', 'concat', [[Merge action for the features embeddings.]],
+                     {enum={'concat', 'sum'}}},
+  {'-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
+                                        then the embedding dimension will be set to N^exponent]]},
+  {'-feat_vec_size', 20, [[When using sum, the common embedding size of the features]]}
 }
 
 function LanguageModel.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Language Model')
+  onmt.SimpleEncoder.declareOpts(cmd)
+  onmt.Factory.declareOpts(cmd)
 end
 
 function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
-  self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src)
-  self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.src)
+  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
+  self.models.generator = onmt.Factory.buildGenerator(args.rnn_size, dicts.src)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
   self.eosProto = {}
