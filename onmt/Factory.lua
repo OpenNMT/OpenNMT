@@ -1,13 +1,16 @@
 local Factory = torch.class('Factory')
 
 local options = {
-  {'-brnn', false, [[Use a bidirectional encoder]]},
-  {'-dbrnn', false, [[Use a deep bidirectional encoder]]}
+  {'-brnn', false, [[Use a bidirectional encoder.]]},
+  {'-dbrnn', false, [[Use a deep bidirectional encoder.]]},
+  {'-pdbrnn', false, [[Use pyramidal deep bidirectional encoder.]]}
 }
 
 function Factory.declareOpts(cmd)
   cmd:setCmdLineOptions(options)
   onmt.BiEncoder.declareOpts(cmd)
+  onmt.DBiEncoder.declareOpts(cmd)
+  onmt.PDBiEncoder.declareOpts(cmd)
 end
 
 -- Return effective embeddings size based on user options.
@@ -109,6 +112,8 @@ function Factory.buildEncoder(opt, inputNetwork)
     return onmt.BiEncoder.new(opt, inputNetwork)
   elseif opt.dbrnn then
     return onmt.DBiEncoder.new(opt, inputNetwork)
+  elseif opt.pdbrnn then
+    return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
     return onmt.SimpleEncoder.new(opt, inputNetwork)
   end

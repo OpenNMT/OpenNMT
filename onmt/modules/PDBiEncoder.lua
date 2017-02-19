@@ -1,25 +1,27 @@
---[[ DBiEncoder is a deep bidirectional Sequencer used for the source language.
+--[[ PDBiEncoder is a pyramidal deep bidirectional Sequencer used for the source language.
 
 
 --]]
-local DBiEncoder, parent = torch.class('onmt.DBiEncoder', 'nn.Container')
+local PDBiEncoder, parent = torch.class('onmt.PDBiEncoder', 'nn.Container')
 
-local options = {}
+local options = {
+  {'-pdbrnn_reduction', 2, [[Time-Reduction factor at each layer.]]}
+}
 
-function DBiEncoder.declareOpts(cmd)
+function PDBiEncoder.declareOpts(cmd)
   onmt.BiEncoder.declareOpts(cmd)
   cmd:setCmdLineOptions(options)
 end
 
 
---[[ Create a deep bidirectional encoder - each layers reconnect before starting another bidirectional layer
+--[[ Create a pyrimal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer
 
 Parameters:
 
   * `args` - global arguments
   * `input` - input neural network.
 ]]
-function DBiEncoder:__init(args, input)
+function PDBiEncoder:__init(args, input)
   parent.__init(self)
 
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
@@ -29,12 +31,16 @@ function DBiEncoder:__init(args, input)
 
   args.layers = 1
   args.brnn_merge = 'sum'
-  for _=1,self.args.layers do
+  self.args.multiplier = 1
+  for _ = 1,self.args.layers do
     table.insert(self.layers, onmt.BiEncoder(args, input))
     local identity = nn.Identity()
     identity.inputSize = args.rnn_size
     input = identity
     self:add(self.layers[#self.layers])
+    if #self.layers ~= 1 then
+      self.args.multiplier = self.args.multiplier * self.args.pdbrnn_reduction
+    end
   end
   args.layers = self.args.layers
   self.args.numEffectiveLayers = self.layers[1].args.numEffectiveLayers * self.args.layers
@@ -43,9 +49,9 @@ function DBiEncoder:__init(args, input)
   self:resetPreallocation()
 end
 
---[[ Return a new DBiEncoder using the serialized data `pretrained`. ]]
-function DBiEncoder.load(pretrained)
-  local self = torch.factory('onmt.DBiEncoder')()
+--[[ Return a new PDBiEncoder using the serialized data `pretrained`. ]]
+function PDBiEncoder.load(pretrained)
+  local self = torch.factory('onmt.PDBiEncoder')()
   parent.__init(self)
 
   for i=1, #pretrained.modules do
@@ -59,20 +65,20 @@ function DBiEncoder.load(pretrained)
 end
 
 --[[ Return data to serialize. ]]
-function DBiEncoder:serialize()
+function PDBiEncoder:serialize()
   local modulesData = {}
   for i = 1, #self.modules do
     table.insert(modulesData, self.modules[i]:serialize())
   end
 
   return {
-    name = 'DBiEncoder',
+    name = 'PDBiEncoder',
     modules = modulesData,
     args = self.args
   }
 end
 
-function DBiEncoder:resetPreallocation()
+function PDBiEncoder:resetPreallocation()
   -- Prototype for preallocated full context vector.
   self.contextProto = torch.Tensor()
 
@@ -83,11 +89,16 @@ function DBiEncoder:resetPreallocation()
   self.gradContextProto = torch.Tensor()
 end
 
-function DBiEncoder:maskPadding()
+function PDBiEncoder:maskPadding()
   self.layers[1]:maskPadding()
 end
 
-function DBiEncoder:forward(batch)
+function PDBiEncoder:forward(batch)
+  -- adjust batch length so that it can be divided
+  local batch_length = batch.sourceLength
+  batch_length = math.ceil(batch_length/self.args.multiplier)*self.args.multiplier
+  batch.sourceLength = batch_length
+
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                                          self.stateProto,
@@ -95,8 +106,7 @@ function DBiEncoder:forward(batch)
   end
 
   local states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, self.args.hiddenSize })
-  local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
-                                                { batch.size, batch.sourceLength, self.args.hiddenSize })
+  local context
 
   local stateIdx = 1
   self.inputs = { batch }
@@ -104,8 +114,24 @@ function DBiEncoder:forward(batch)
   for i = 1,#self.layers do
     local layerStates, layerContext = self.layers[i]:forward(self.inputs[i])
     if i ~= #self.layers then
-      table.insert(self.inputs, onmt.data.BatchTensor.new(layerContext))
+      -- compress the layer Context along time dimension
+      local storageOffset = layerContext:storageOffset()
+      local strideReduced = layerContext:stride()
+      strideReduced[2] = strideReduced[2] * self.args.pdbrnn_reduction
+      local sizeReduced = layerContext:size()
+      sizeReduced[2] = math.floor(sizeReduced[2] / self.args.pdbrnn_reduction)
+      local reducedContext = layerContext
+      reducedContext:set(layerContext:storage(), storageOffset, sizeReduced, strideReduced)
+      for j = 1, self.args.pdbrnn_reduction-1 do
+        local to_add = layerContext
+        to_add:set(layerContext:storage(), storageOffset+j, sizeReduced, strideReduced)
+        reducedContext:add(to_add)
+      end
+      table.insert(self.inputs, onmt.data.BatchTensor.new(reducedContext))
+      -- record what is the size of the last reduction
+      batch.encoderOutputLength = sizeReduced[2]
     else
+      context = onmt.utils.Tensor.reuseTensor(self.contextProto, layerContext:size())
       context:copy(layerContext)
     end
     table.insert(self.lranges, {stateIdx, #layerStates})
@@ -117,18 +143,20 @@ function DBiEncoder:forward(batch)
   return states, context
 end
 
-function DBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
+function PDBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   for i = #self.layers, 1, -1 do
     local lrange_gradStatesOutput
     if gradStatesOutput then
-      lrange_gradStatesOutput = gradStatesOutput[{}]
+      lrange_gradStatesOutput = onmt.utils.Table.subrange(gradStatesOutput, self.lranges[i][1], self.lranges[i][2])
     end
     local gradContextInput = self.layers[i]:backward(self.inputs[i], lrange_gradStatesOutput, gradContextOutput)
     if i ~= 1 then
       gradContextOutput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
-                                              { batch.size, #gradContextInput, self.args.hiddenSize })
+                                              { batch.size, #gradContextInput*self.args.pdbrnn_reduction, self.args.hiddenSize })
       for t = 1, #gradContextInput do
-        gradContextOutput[{{},t,{}}]:copy(gradContextInput[t])
+        for j = 1, self.args.pdbrnn_reduction do
+          gradContextOutput[{{},self.args.pdbrnn_reduction*(t-1)+j,{}}]:copy(gradContextInput[t])
+        end
       end
     end
   end
