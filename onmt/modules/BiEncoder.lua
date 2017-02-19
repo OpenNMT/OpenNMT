@@ -38,7 +38,7 @@ end
 Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 
 --]]
-local BiEncoder, parent = torch.class('onmt.BiEncoder', 'onmt.ComplexEncoder')
+local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 
 local options = {
   {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],
@@ -60,7 +60,11 @@ Parameters:
   * `merge` - fwd/bwd merge operation {"concat", "sum"}
 ]]
 function BiEncoder:__init(args, input)
+  parent.__init(self)
+
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+
+  local orgRNNSize = args.rnn_size
 
   -- Compute rnn hidden size depending on hidden states merge action.
   if self.args.brnn_merge == 'concat' then
@@ -83,7 +87,10 @@ function BiEncoder:__init(args, input)
     self.args.hiddenSize = self.args.rnn_size
   end
 
-  parent.__init(self, {self.fwd, self.bwd})
+  self:add(self.fwd)
+  self:add(self.bwd)
+
+  args.rnn_size = orgRNNSize
 
   self:resetPreallocation()
 end
