@@ -6,18 +6,6 @@ local options = {
                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]]},
   {'-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]]},
-  {'-feat_merge', 'concat', [[Merge action for the features embeddings]],
-                     {enum={'concat','sum'}}},
-  {'-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension
-                                will be set to N^exponent where N is the number of values the feature takes.]]},
-  {'-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]],
-                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
-                     {enum={0,1}}},
-  {'-residual', false, [[Add residual connections between RNN layers.]]},
-  {'-brnn', false, [[Use a bidirectional encoder]]},
-  {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],
-                     {enum={'concat','sum'}}},
   {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the encoder side.
                                      See README for specific formatting instructions.]],
@@ -28,11 +16,20 @@ local options = {
                          {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
   {'-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]]},
-  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
+  {'-feat_merge', 'concat', [[Merge action for the features embeddings]],
+                     {enum={'concat','sum'}}},
+  {'-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension
+                                will be set to N^exponent where N is the number of values the feature takes.]]},
+  {'-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]],
+                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
+                     {enum={0,1}}}
 }
 
 function Seq2Seq.declareOpts(cmd)
   cmd:setCmdLineOptions(options, Seq2Seq.modelName())
+  onmt.SimpleEncoder.declareOpts(cmd)
+  onmt.Factory.declareOpts(cmd)
 end
 
 function Seq2Seq:__init(args, dicts, verbose)
