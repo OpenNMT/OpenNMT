@@ -56,7 +56,6 @@ function DBiEncoder.load(pretrained)
   parent.__init(self, self.layers)
 
   self:resetPreallocation()
-
   return self
 end
 
