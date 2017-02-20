@@ -11,6 +11,7 @@
 * Reported metrics are no longer averaged on the entire epoch
 * Improve logging in asynchronous training
 * Allow fixing word embeddings without providing pre-trained embeddings
+* Fix error when using translation server with GPU model
 
 ## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)
 

@@ -20,8 +20,6 @@ onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
--- does not need seed
-opt.seed = 0
 
 local function releaseModel(model)
   for _, submodule in pairs(model.modules) do
