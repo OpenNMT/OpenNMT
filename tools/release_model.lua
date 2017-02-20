@@ -21,12 +21,13 @@ onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
-local function releaseModel(model)
+local function releaseModel(model, tensorCache)
+  tensorCache = tensorCache or {}
   for _, submodule in pairs(model.modules) do
     if torch.type(submodule) == 'table' and submodule.modules then
-      releaseModel(submodule)
+      releaseModel(submodule, tensorCache)
     else
-      submodule:float()
+      submodule:float(tensorCache)
       submodule:clearState()
       submodule:apply(function (m)
         nn.utils.clear(m, 'gradWeight', 'gradBias')
