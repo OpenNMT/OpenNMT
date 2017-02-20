@@ -17,10 +17,10 @@ local function main()
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
-  local vocab = Vocabulary.init('source', opt.data, '', opt.vocab_size, '')
+  local vocab = onmt.data.Vocabulary.init('source', opt.data, '', opt.vocab_size, '')
 
-  Vocabulary.save('source', vocab.words, opt.save_dict .. '.dict')
-  Vocabulary.saveFeatures('source', vocab.features, opt.save_dict)
+  onmt.data.Vocabulary.save('source', vocab.words, opt.save_dict .. '.dict')
+  onmt.data.Vocabulary.saveFeatures('source', vocab.features, opt.save_dict)
 
   _G.logger:shutDown()
 end
