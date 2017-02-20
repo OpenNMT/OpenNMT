@@ -23,7 +23,7 @@ function Vocabulary.make(filename, validFunc)
       break
     end
 
-    if validFunc(sent) then
+    if not validFunc or validFunc(sent) then
       local words, features, numFeatures = onmt.utils.Features.extract(sent)
 
       if #featuresVocabs == 0 and numFeatures > 0 then
