@@ -409,7 +409,7 @@
 <h2 id="onmtdecoderadvancer">onmt.DecoderAdvancer</h2>
 <p>DecoderAdvancer is an implementation of the interface Advancer for
   specifyinghow to advance one step in decoder.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ed903cdeecaa264a578025e096e1abafceabc15e/onmt/translate/DecoderAdvancer.lua#L19">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2464956cde8033cfc22bad473d93d879b099cc7b/onmt/translate/DecoderAdvancer.lua#L19">[src]</a>
 <a name="onmt.DecoderAdvancer"></a></p>
 <h3 id="onmtdecoderadvancerdecoder-batch-context-max_sent_length-max_num_unks-decstates-dicts">onmt.DecoderAdvancer(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts)</h3>
 <p>Constructor.</p>
@@ -423,7 +423,7 @@
 <li><code>decStates</code> - optional, initial decoder states.</li>
 <li><code>dicts</code> - optional, dictionary for additional features.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ed903cdeecaa264a578025e096e1abafceabc15e/onmt/translate/DecoderAdvancer.lua#L39">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2464956cde8033cfc22bad473d93d879b099cc7b/onmt/translate/DecoderAdvancer.lua#L39">[src]</a>
 <a name="onmt.DecoderAdvancer:initBeam"></a></p>
 <h3 id="onmtdecoderadvancerinitbeam">onmt.DecoderAdvancer:initBeam()</h3>
 <p>Returns an initial beam.</p>
@@ -431,7 +431,7 @@
 <ul>
 <li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ed903cdeecaa264a578025e096e1abafceabc15e/onmt/translate/DecoderAdvancer.lua#L62">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2464956cde8033cfc22bad473d93d879b099cc7b/onmt/translate/DecoderAdvancer.lua#L62">[src]</a>
 <a name="onmt.DecoderAdvancer:update"></a></p>
 <h3 id="onmtdecoderadvancerupdatebeam">onmt.DecoderAdvancer:update(beam)</h3>
 <p>Updates beam states given new tokens.</p>
@@ -439,7 +439,7 @@
 <ul>
 <li><code>beam</code> - beam with updated token list.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ed903cdeecaa264a578025e096e1abafceabc15e/onmt/translate/DecoderAdvancer.lua#L97">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2464956cde8033cfc22bad473d93d879b099cc7b/onmt/translate/DecoderAdvancer.lua#L97">[src]</a>
 <a name="onmt.DecoderAdvancer:expand"></a></p>
 <h3 id="onmtdecoderadvancerexpandbeam">onmt.DecoderAdvancer:expand(beam)</h3>
 <p>Expand function. Expands beam by all possible tokens and returns the
@@ -452,7 +452,7 @@
 <ul>
 <li><code>scores</code> - a 2D tensor of size <code>(batchSize * beamSize, numTokens)</code>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ed903cdeecaa264a578025e096e1abafceabc15e/onmt/translate/DecoderAdvancer.lua#L123">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2464956cde8033cfc22bad473d93d879b099cc7b/onmt/translate/DecoderAdvancer.lua#L123">[src]</a>
 <a name="onmt.DecoderAdvancer:isComplete"></a></p>
 <h3 id="onmtdecoderadvanceriscompletebeam">onmt.DecoderAdvancer:isComplete(beam)</h3>
 <p>Checks which hypotheses in the beam are already finished. A hypothesis is
@@ -464,7 +464,7 @@
 </ul>
 <p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
   which hypotheses are finished.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ed903cdeecaa264a578025e096e1abafceabc15e/onmt/translate/DecoderAdvancer.lua#L144">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/2464956cde8033cfc22bad473d93d879b099cc7b/onmt/translate/DecoderAdvancer.lua#L144">[src]</a>
 <a name="onmt.DecoderAdvancer:filter"></a></p>
 <h3 id="onmtdecoderadvancerfilterbeam">onmt.DecoderAdvancer:filter(beam)</h3>
 <p>Checks which hypotheses in the beam shall be pruned. We disallow empty
