@@ -26,7 +26,7 @@ function Vocabulary.make(filename, validFunc)
 
     lineId = lineId + 1
 
-    if not validFunc or validFunc(sent) then
+    if validFunc(sent) then
       local words, features, numFeatures
       local _, err = pcall(function ()
         words, features, numFeatures = onmt.utils.Features.extract(sent)
