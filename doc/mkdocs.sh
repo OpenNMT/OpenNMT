@@ -25,6 +25,6 @@ mv tree/code/translate/onmt+translate+init.md tree/code/translate/index.md
 rm -fr tree/details
 mkdir tree/details/
 cd ../
-th preprocess.lua --help | python doc/format.py >> doc/tree/details/preprocess.md
-th train.lua --help | python doc/format.py >> doc/tree/details/train.md
-th translate.lua --help | python doc/format.py >> doc/tree/details/translate.md
+th preprocess.lua -h -md >> doc/tree/details/preprocess.md
+th train.lua -h -md >> doc/tree/details/train.md
+th translate.lua -h -md >> doc/tree/details/translate.md
