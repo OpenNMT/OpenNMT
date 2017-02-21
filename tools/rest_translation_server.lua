@@ -19,6 +19,8 @@ local options = {
    {'-port', '8080', [[Port to run the server on]]}
 }
 
+cmd:setCmdLineOptions(options, 'Server')
+
 onmt.translate.Translator.declareOpts(cmd)
 
 cmd:text("")
@@ -27,12 +29,11 @@ cmd:text("")
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
-cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers,
-  'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-joiner_annotate', true, [[Include joiner annotation using 'joiner' character]])
+cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
+cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner' character]])
 cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners]])
 cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token]])
-cmd:option('-case_feature', true, [[Generate case feature]])
+cmd:option('-case_feature', false, [[Generate case feature]])
 cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
