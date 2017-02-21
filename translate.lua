@@ -104,7 +104,7 @@ local function main()
             _G.logger:info('GOLD %d: %s', sentId, translator:buildOutput(goldBatch[b]), results[b].goldScore)
             _G.logger:info("GOLD SCORE: %.2f", results[b].goldScore)
             goldScoreTotal = goldScoreTotal + results[b].goldScore
-            goldWordsTotal = goldWordsTotal + #goldBatch[b]
+            goldWordsTotal = goldWordsTotal + #goldBatch[b].words
           end
 
           for n = 1, #results[b].preds do
