@@ -440,7 +440,7 @@
 <ul>
 <li><code>-max_batch_size</code>: Maximum batch size [64]</li>
 <li><code>-optim</code>: (sgd, adagrad, adadelta, adam) Optimization method. [sgd]</li>
-<li><code>-learning_rate</code>: Starting learning rate. If adagrad/adadelta/adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adadelta = 1, adam = 0.0002 [1]</li>
+<li><code>-learning_rate</code>: Starting learning rate. If adagrad or adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002 [1]</li>
 <li><code>-max_grad_norm</code>: If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]</li>
 <li><code>-learning_rate_decay</code>: Decay learning rate by this much if (i) perplexity does not decrease on the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</li>
 <li><code>-start_decay_at</code>: Start decay after this epoch [9]</li>
