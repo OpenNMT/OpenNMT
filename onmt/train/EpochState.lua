@@ -4,9 +4,9 @@
 local EpochState = torch.class('EpochState')
 
 --[[ Initialize for epoch `epoch`]]
-function EpochState:__init(epoch, numIterations, learningRate)
+function EpochState:__init(epoch, startIterations, numIterations, learningRate)
   self.epoch = epoch
-  self.iterations = 0
+  self.iterations = startIterations - 1
   self.numIterations = numIterations
   self.learningRate = learningRate
 
