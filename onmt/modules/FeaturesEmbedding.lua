@@ -37,7 +37,7 @@ function FeaturesEmbedding:_buildModel(vocabSizes, vecSizes, merge)
     elseif merge == 'sum' then
       output = nn.CAddTable()({output, emb})
     else
-      output = nn.JoinTable(2)({output, emb})
+      output = nn.JoinTable(2, 2)({output, emb})
     end
   end
 
