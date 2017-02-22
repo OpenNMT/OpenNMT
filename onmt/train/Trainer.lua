@@ -156,7 +156,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         onmt.utils.Parallel.accGradParams(gradParams, batches)
 
         -- Update the parameters.
-        optim:prepareGrad(gradParams[1], self.args.max_grad_norm)
+        optim:prepareGrad(gradParams[1])
         optim:updateParams(params[1], gradParams[1])
 
         -- Synchronize the parameters with the different parallel threads.

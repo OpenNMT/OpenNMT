@@ -16,6 +16,7 @@ function Vocabulary.make(filename, validFunc)
   local featuresVocabs = {}
 
   local reader = onmt.utils.FileReader.new(filename)
+  local lineId = 0
 
   while true do
     local sent = reader:next()
@@ -23,8 +24,17 @@ function Vocabulary.make(filename, validFunc)
       break
     end
 
+    lineId = lineId + 1
+
     if validFunc(sent) then
-      local words, features, numFeatures = onmt.utils.Features.extract(sent)
+      local words, features, numFeatures
+      local _, err = pcall(function ()
+        words, features, numFeatures = onmt.utils.Features.extract(sent)
+      end)
+
+      if err then
+        error(err .. ' (' .. filename .. ':' .. lineId .. ')')
+      end
 
       if #featuresVocabs == 0 and numFeatures > 0 then
         for j = 1, numFeatures do
@@ -33,7 +43,7 @@ function Vocabulary.make(filename, validFunc)
         end
       else
         assert(#featuresVocabs == numFeatures,
-               'all sentences must have the same numbers of additional features')
+               'all sentences must have the same numbers of additional features (' .. filename .. ':' .. lineId .. ')')
       end
 
       for i = 1, #words do

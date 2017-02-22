@@ -43,8 +43,6 @@ function Cuda.init(opt, masterGPU)
         end
 
         _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
-
-        cutorch.manualSeedAll(opt.seed)
       end
 
       cutorch.setDevice(Cuda.gpuIds[masterGPU])
