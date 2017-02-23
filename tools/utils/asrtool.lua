@@ -8,22 +8,22 @@ local audio = require 'audio'
 
 -- Options declaration.
 local options = {
-  { 'feats',  'mfcc', [[Features to extract]], { enum={'mfcc','mfsc'}}},
-  { 'winlen', 0.025, [[The length of the analysis window in seconds.]] },
-  { 'winstep', 0.01, [[the step between successive windows in seconds.]] },
+  { 'feats',   'mfcc', [[Features to extract]], { enum={'mfcc','mfsc'}} },
+  { 'winlen',   0.025, [[The length of the analysis window in seconds.]] },
+  { 'winstep',   0.01, [[the step between successive windows in seconds.]] },
   { 'wintype', 'rect', [[Windows type.]],
-          { enum={'rect', 'hamming', 'hann', 'bartlett'}}},
-  { 'numcep', 13, [[The number of cepstrum to return.]] },
-  { 'nfilt', 26, [[The number of filters in the filterbank.]] },
-  { 'lowfreq', 0, [[Lowest band edge of mel filters in herz.]] },
-  { 'highfreq', -1, [[Highest band edge of mel filters in Hz, if negative default to samplerate/2]] },
-  { 'preemph', 0.97, [[Apply preemphasis filter with preemph as coefficient. 0 is no filter.]] },
-  { 'ceplifter', 22, [[Apply a lifter to final cepstral coefficients. 0 is no lifter. ]] },
+                  { enum={'rect', 'hamming', 'hann', 'bartlett'}} },
+  { 'numcep',      13, [[The number of cepstrum to return.]] },
+  { 'nfilt',       26, [[The number of filters in the filterbank.]] },
+  { 'lowfreq',      0, [[Lowest band edge of mel filters in herz.]] },
+  { 'highfreq',    -1, [[Highest band edge of mel filters in Hz, if negative default to samplerate/2]] },
+  { 'preemph',   0.97, [[Apply preemphasis filter with preemph as coefficient. 0 is no filter.]] },
+  { 'ceplifter',   22, [[Apply a lifter to final cepstral coefficients. 0 is no lifter. ]] },
   { 'appendEnergy', 1, [[If non zeoro, the zeroth cepstral coefficient is replaced
-                         with the log of the total frame energy.]] },
-  { 'cmvn', 1, [[If non zero, apply cepstral mean and variance normalization.]]},
+                              with the log of the total frame energy.]] },
+  { 'cmvn',         1, [[If non zero, apply cepstral mean and variance normalization.]]},
   { 'delta_step',   5, [[Value of N in delta calculation, 0 to disable delta calculation.]],
-          { valid=onmt.utils.ExtendedCmdLine.isInt(0)}}
+                  { valid=onmt.utils.ExtendedCmdLine.isInt(0)} }
 }
 
 function asrtool.declareOpts(cmd)
@@ -31,9 +31,10 @@ function asrtool.declareOpts(cmd)
 end
 
 function asrtool:__init(args)
-  self.args = args
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
 end
 
+-- herz to mel conversion
 local function herz2mel(f)
   if torch.isTensor(f) then
     return 1127*torch.log(1+f/700)
@@ -42,6 +43,7 @@ local function herz2mel(f)
   end
 end
 
+-- mel to herz conversion
 local function mel2herz(m)
   if torch.isTensor(m) then
     return 700*(torch.exp(m/1127)-1)
