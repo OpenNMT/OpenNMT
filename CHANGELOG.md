@@ -3,6 +3,8 @@
 ### New features
 
 * Training code is now part of the library
+* Add `-fallback_to_cpu` option to continue execution on CPU if GPU can't be used
+* Add standalone script to generate vocabularies
 
 ### Fixes and improvements
 
@@ -10,7 +12,9 @@
 * Reported metrics are no longer averaged on the entire epoch
 * Improve logging in asynchronous training
 * Allow fixing word embeddings without providing pre-trained embeddings
-* Keep word embeddings fixed when continuing a training with fixed embeddings
+* Fix error when using translation server with GPU model
+* Reduce size of released BRNN models (up to 2x smaller)
+* Fix gold data perplexity reporting during translation
 
 ## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)
 

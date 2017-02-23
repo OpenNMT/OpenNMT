@@ -62,7 +62,8 @@ function ExtendedCmdLine:__init(script)
   parent.__init(self)
 
   self:text('')
-  self:option('-h', false, 'this help file')
+  self:option('-h', false, 'this help')
+  self:option('-md', false, 'Dump help in Markdown format')
   self:option('-config', '', 'read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
   self:option('-save_config', '', 'save options from config file.')
 
@@ -70,13 +71,14 @@ end
 
 function ExtendedCmdLine:help(arg, doMd)
   if doMd then
+    io.write('# ' .. self.script .. '\n')
     for _, option in ipairs(self.helplines) do
       if type(option) == 'table' then
         io.write('* ')
         if option.default ~= nil then -- It is an option.
           io.write('`' .. option.key .. '`: ')
           if option.meta and option.meta.enum then
-            io.write(' (' .. table.concat(option.meta.enum, ', ') .. ') ')
+            io.write('(' .. table.concat(option.meta.enum, ', ') .. ') ')
           end
           option.help = option.help:gsub(' *\n   *', ' ')
           if option.help then
@@ -90,7 +92,10 @@ function ExtendedCmdLine:help(arg, doMd)
           end
         end
       else
-        local display = option:gsub('%*', '-')
+        local display = option:gsub('%*', '')
+        if display:len() > 0 then
+          io.write('## ')
+        end
         io.write(display) -- Just some additional help.
       end
       io.write('\n')

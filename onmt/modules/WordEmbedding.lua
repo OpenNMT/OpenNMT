@@ -32,14 +32,14 @@ function WordEmbedding:postParametersInitialization()
 end
 
 function WordEmbedding:accGradParameters(input, gradOutput, scale)
-  if not self.fix then
+  if self.net.gradWeight then
     self.net:accGradParameters(input, gradOutput, scale)
     self.net.gradWeight[onmt.Constants.PAD]:zero()
   end
 end
 
 function WordEmbedding:parameters()
-  if not self.fix then
+  if self.net.gradWeight then
     return parent.parameters(self)
   end
 end

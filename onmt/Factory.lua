@@ -67,7 +67,7 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   if multiInputs then
     inputNetwork = nn.Sequential()
       :add(inputs)
-      :add(nn.JoinTable(2))
+      :add(nn.JoinTable(2, 2))
   else
     inputNetwork = inputs
   end
