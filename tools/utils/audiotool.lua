@@ -1,4 +1,4 @@
-local asrtool = torch.class('asrtool')
+local audiotool = torch.class('audiotool')
 local signal = require 'signal'
 local audio = require 'audio'
 
@@ -10,7 +10,7 @@ local audio = require 'audio'
 local options = {
   { 'feats',   'mfcc', [[Features to extract]], { enum={'mfcc','mfsc'}} },
   { 'winlen',   0.025, [[The length of the analysis window in seconds.]] },
-  { 'winstep',   0.01, [[the step between successive windows in seconds.]] },
+  { 'winstep',  0.010, [[the step between successive windows in seconds.]] },
   { 'wintype', 'rect', [[Windows type.]],
                   { enum={'rect', 'hamming', 'hann', 'bartlett'}} },
   { 'numcep',      13, [[The number of cepstrum to return.]] },
@@ -26,11 +26,11 @@ local options = {
                   { valid=onmt.utils.ExtendedCmdLine.isInt(0)} }
 }
 
-function asrtool.declareOpts(cmd)
-  cmd:setCmdLineOptions(options, 'MFCC Conversion')
+function audiotool.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Audio')
 end
 
-function asrtool:__init(args)
+function audiotool:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
 end
 
@@ -140,7 +140,7 @@ end
   * samplerate: the samplerate of the signal we are working with.
   * returns a tensor of size N*numcep
 ]]
-function asrtool:mfcc(saudio, samplerate)
+function audiotool:mfcc(saudio, samplerate)
   local energy, feats = self:mfsc(saudio, samplerate)
 
   feats = signal.dct2(torch.log(feats)):narrow(2,1,self.args.numcep)
@@ -172,7 +172,7 @@ end
   * samplerate: the samplerate of the signal we are working with.
   * returns energy, a tensor of size N*nfilt
 ]]
-function asrtool:mfsc(saudio, samplerate)
+function audiotool:mfsc(saudio, samplerate)
   assert(saudio:dim()==1 or (saudio:dim()==2 and saudio:size(2)==1))
   if self.args.highfreq == -1 then
     self.args.highfreq = samplerate/2
@@ -201,7 +201,7 @@ function asrtool:mfsc(saudio, samplerate)
   return energy, feat
 end
 
-function asrtool:extractFeats(saudio, samplerate)
+function audiotool:extractFeats(saudio, samplerate)
   if self.args.feats == 'mfcc' then
     return self:mfcc(saudio, samplerate)
   else
@@ -209,4 +209,4 @@ function asrtool:extractFeats(saudio, samplerate)
   end
 end
 
-return asrtool
+return audiotool
