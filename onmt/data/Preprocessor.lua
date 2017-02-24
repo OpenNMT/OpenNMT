@@ -48,8 +48,7 @@ local monotextOptions = {
 }
 
 local commonOptions = {
-  {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
+  {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies]]},
   {'-shuffle',                1,       [[Shuffle data]]}
 }
 
