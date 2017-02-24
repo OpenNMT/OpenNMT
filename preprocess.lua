@@ -7,10 +7,10 @@ local dataType = cmd.getArgument(arg, '-data_type') or 'bitext'
 
 -- Options declaration
 local options = {
-  {'-data_type',         'bitext',  [[Type of text to preprocess. Use 'monotext' for monolingual text.
-                                    This option impacts all options choices.]],
+  {'-data_type',         'bitext',    [[Type of text to preprocess. Use 'monotext' for monolingual text.
+                                        This option impacts all options choices.]],
                                     {enum={'bitext', 'monotext', 'audiotext'}}},
-  {'-save_data',               '',  [[Output file for the prepared data]],
+  {'-save_data',               '',    [[Output file for the prepared data]],
                                     {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
 }
 
@@ -46,6 +46,7 @@ local function main()
 
   data.dicts = {}
 
+  _G.logger:info('Preparing vocabulary...')
   if dataType ~= 'audiotext' then
     local src_file = opt.train_src
     if dataType == 'monotext' then
@@ -60,21 +61,35 @@ local function main()
   end
   if dataType ~= 'monotext' then
     local tgt_file = opt.train_tgt
+    local filterText
     if dataType == 'audiotext' then
-      tgt_file = opt.kaldi_data .. '/local/lexicon.txt'
+      tgt_file = opt.kaldi_data .. '/train/text.tok'
+      filterText = function(s)
+        if not s then
+          return nil
+        end
+        local p = s:find(" ")
+        return s:sub(p+1, #s)
+      end
     end
     data.dicts.tgt = Vocabulary.init('target',
                                      tgt_file,
                                      opt.tgt_vocab,
                                      opt.tgt_vocab_size,
                                      opt.features_vocabs_prefix,
-                                     function(s) return isValid(s, opt.tgt_seq_length) end)
+                                     function(s) return isValid(s, opt.tgt_seq_length) end,
+                                     filterText)
   end
 
   _G.logger:info('Preparing training data...')
   data.train = {}
   if dataType == 'monotext' then
     data.train.src = Preprocessor:makeMonolingualData(opt.train, data.dicts.src, isValid)
+  elseif dataType == 'audiotext' then
+    data.train.src, data.train.tgt = Preprocessor:makeAudioTextData(opt.kaldi_data..'/train/wav.scp',
+                                                                    opt.kaldi_data..'/train/text.tok',
+                                                                    data.dicts.tgt,
+                                                                    isValid)
   else
     data.train.src, data.train.tgt = Preprocessor:makeBilingualData(opt.train_src, opt.train_tgt,
                                                                     data.dicts.src, data.dicts.tgt,
@@ -87,6 +102,11 @@ local function main()
   data.valid = {}
   if dataType == 'monotext' then
     data.valid.src = Preprocessor:makeMonolingualData(opt.valid, data.dicts.src, isValid)
+  elseif dataType == 'audiotext' then
+    data.valid.src, data.valid.tgt = Preprocessor:makeAudioTextData(opt.kaldi_data..'/dev/wav.scp',
+                                                                    opt.kaldi_data..'/dev/text.tok',
+                                                                    data.dicts.tgt,
+                                                                    isValid)
   else
     data.valid.src, data.valid.tgt = Preprocessor:makeBilingualData(opt.valid_src, opt.valid_tgt,
                                                                     data.dicts.src, data.dicts.tgt,
@@ -101,6 +121,13 @@ local function main()
     end
     if opt.features_vocabs_prefix:len() == 0 then
       Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data)
+    end
+  elseif dataType == 'audiotext' then
+    if opt.tgt_vocab:len() == 0 then
+      Vocabulary.save('target', data.dicts.tgt.words, opt.save_data .. '.tgt.dict')
+    end
+    if opt.features_vocabs_prefix:len() == 0 then
+      Vocabulary.saveFeatures('target', data.dicts.tgt.features, opt.save_data)
     end
   else
     if opt.src_vocab:len() == 0 then

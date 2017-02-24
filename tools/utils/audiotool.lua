@@ -15,15 +15,15 @@ local options = {
                   { enum={'rect', 'hamming', 'hann', 'bartlett'}} },
   { '-numcep',      13, [[The number of cepstrum to return.]] },
   { '-nfilt',       26, [[The number of filters in the filterbank.]] },
-  { '-lowfreq',      0, [[Lowest band edge of mel filters in herz.]] },
-  { '-highfreq',    -1, [[Highest band edge of mel filters in Hz, if negative default to samplerate/2.]] },
+  { '-lowfreq',      0, [[Lowest band edge of mel filters in Herz.]] },
+  { '-highfreq',    -1, [[Highest band edge of mel filters in Herz, if -1 default to samplerate/2.]] },
   { '-preemph',   0.97, [[Apply preemphasis filter with preemph as coefficient. 0 is no filter.]] },
   { '-ceplifter',   22, [[Apply a lifter to final cepstral coefficients. 0 is no lifter. ]] },
-  { '-appendEnergy', 1, [[If non zero, the zeroth cepstral coefficient is replaced
+  { '-appendEnergy', 1, [[If non zero, the first cepstral coefficient is replaced
                               with the log of the total frame energy.]] },
   { '-cmvn',         1, [[If non zero, apply cepstral mean and variance normalization.]],
                   { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
-  { '-delta_step',   5, [[Value of N in delta calculation, 0 to disable delta calculation.]],
+  { '-delta_step',   5, [[Value of N in delta calculation for mfcc, 0 to disable delta calculation.]],
                   { valid=onmt.utils.ExtendedCmdLine.isInt(0)} }
 }
 

@@ -1,12 +1,13 @@
 local FileReader = torch.class("FileReader")
 
-function FileReader:__init(filename)
+function FileReader:__init(filename, filterFunc)
   self.file = assert(io.open(filename, "r"))
+  self.filterFunc = filterFunc or function(s) return s end
 end
 
 --[[ Read next line in the file and split it on spaces. If EOF is reached, returns nil. ]]
 function FileReader:next()
-  local line = self.file:read()
+  local line = self.filterFunc(self.file:read())
 
   if line == nil then
     return nil

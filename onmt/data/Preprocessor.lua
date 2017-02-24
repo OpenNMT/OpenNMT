@@ -10,6 +10,7 @@ end
 
 local Preprocessor = torch.class('Preprocessor')
 local tds = require('tds')
+local paths = require('paths')
 
 local bitextOptions = {
   {'-train_src',               '',     [[Path to the training source data.]],
@@ -50,13 +51,13 @@ local monotextOptions = {
 local audiotextOptions = {
   {'-kaldi_data',               '',    [[Directory with a kaldi-type prepared data. Mandatory files are {train,dev}/{text,wav.scp},
                                          local/lexicon.txt.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.dirStructure({"train/text", "dev/text", "train/wav.scp",
-                                        "dev/wav.scp", "local/lexicon.txt"})}},
-  {'-tgt_vocab',               '',     [[Path to an existing target vocabulary]],
+                                       {valid=onmt.utils.ExtendedCmdLine.dirStructure({"train/text.tok", "dev/text.tok", "train/wav.scp",
+                                        "dev/wav.scp"})}},
+  {'-tgt_vocab',               '',     [[Path to an existing target vocabulary.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-tgt_vocab_size',          '50000',[[Comma-separated list of target vocabularies size: word[,feat1,feat2,...].]],
                                        {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-tgt_seq_length',          50,     [[Maximum target sequence length]],
+  {'-tgt_seq_length',          50,     [[Maximum target sequence length.]],
                                        {valid=onmt.utils.ExtendedCmdLine.isUInt}}
 }
 
@@ -66,12 +67,19 @@ local commonOptions = {
                                        { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} }
 }
 
+local audiolib
+local audiotool
+
 function Preprocessor.declareOpts(cmd, mode)
   mode = mode or 'bitext'
   cmd:setCmdLineOptions(commonOptions, 'Preprocess')
   if mode == 'bitext' then
     cmd:setCmdLineOptions(bitextOptions, 'BiText')
   elseif mode == 'audiotext' then
+    -- load appropriate library
+    audiolib = require 'audio'
+    audiotool = require 'tools.utils.audiotool'
+
     cmd:setCmdLineOptions(audiotextOptions, 'AudioText')
     onmt.audiotool.declareOpts(cmd)
   else
@@ -83,7 +91,8 @@ function Preprocessor:__init(args, mode)
   mode = mode or 'bitext'
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, commonOptions)
   if mode == 'audiotext' then
-    onmt.utils.Table.concat(self.args, onmt.audiotool.getModuleOpts(args))
+    onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, audiotextOptions))
+    onmt.utils.Table.merge(self.args, onmt.audiotool.getModuleOpts(args))
   else
     local options
     if mode == 'bitext' then
@@ -117,7 +126,8 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
 
     if srcTokens == nil or tgtTokens == nil then
       if srcTokens == nil and tgtTokens ~= nil or srcTokens ~= nil and tgtTokens == nil then
-        _G.logger:warning('source and target do not have the same number of sentences')
+        _G.logger:error('source and target do not have the same number of sentences')
+        os.exit(1)
       end
       break
     end
@@ -184,6 +194,92 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
   local srcData = {
     words = src,
     features = srcFeatures
+  }
+
+  local tgtData = {
+    words = tgt,
+    features = tgtFeatures
+  }
+
+  return srcData, tgtData
+end
+
+function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
+  local src = tds.Vec()
+
+  local tgt = tds.Vec()
+  local tgtFeatures = tds.Vec()
+
+  local sizes = tds.Vec()
+
+  local count = 0
+  local ignored = 0
+
+  local scpReader = onmt.utils.FileReader.new(scpFile)
+  local tgtReader = onmt.utils.FileReader.new(tgtFile)
+
+  local audio = audiotool.new(self.args)
+
+  while true do
+    local scpEntry = scpReader:next()
+    local tgtTokens = tgtReader:next()
+    if scpEntry == nil or tgtTokens == nil then
+      if scpEntry == nil and tgtTokens ~= nil or scpEntry ~= nil and tgtTokens == nil then
+        _G.logger:error('source and target do not have the same number of sentences')
+        os.exit(1)
+      end
+      break
+    end
+
+    -- first token is the utterance id
+    if tgtTokens[1] ~= scpEntry[1] then
+      _G.logger:error("scp and text file not aligned")
+      os.exit(1)
+    end
+    table.remove(tgtTokens, 1)
+
+    -- read audio file
+    local wavFile = scpEntry[2]
+    if wavFile:sub(1,1) ~= '/' then
+      -- relative file
+      wavFile = paths.concat(paths.dirname(scpFile), wavFile)
+    end
+    local saudio, samplerate = audiolib.load(wavFile)
+    local srcFeats = audio:extractFeats(saudio, samplerate)
+
+    if isValid(tgtTokens, self.args.tgt_seq_length) then
+      local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
+
+      src:insert(srcFeats)
+      tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
+                                             onmt.Constants.UNK_WORD,
+                                             onmt.Constants.BOS_WORD,
+                                             onmt.Constants.EOS_WORD))
+
+      if #tgtDicts.features > 0 then
+        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
+      end
+
+      sizes:insert(srcFeats:size(1))
+    else
+      ignored = ignored + 1
+    end
+
+    count = count + 1
+
+    if count % self.args.report_every == 0 then
+      _G.logger:info('... ' .. count .. ' sentences prepared')
+    end
+  end
+
+  scpReader:close()
+  tgtReader:close()
+
+  _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
+                   .. ' ignored due to target length > ' .. self.args.tgt_seq_length .. ')')
+
+  local srcData = {
+    audio = src,
   }
 
   local tgtData = {
