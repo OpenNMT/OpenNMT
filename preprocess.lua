@@ -44,6 +44,9 @@ local function main()
 
   local data = { dataType=dataType }
 
+  -- keep processing options in the structure for further traceability
+  data.opt = opt
+
   data.dicts = {}
 
   _G.logger:info('Preparing vocabulary...')
