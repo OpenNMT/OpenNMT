@@ -74,10 +74,10 @@ function ExtendedCmdLine:__init(script)
   parent.__init(self)
 
   self:text('')
-  self:option('-h', false, 'this help')
-  self:option('-md', false, 'Dump help in Markdown format')
-  self:option('-config', '', 'read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
-  self:option('-save_config', '', 'save options from config file.')
+  self:option('-h', false, 'This help.')
+  self:option('-md', false, 'Dump help in Markdown format.')
+  self:option('-config', '', 'Read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
+  self:option('-save_config', '', 'Save options from config file.')
 
 end
 
@@ -152,9 +152,11 @@ function ExtendedCmdLine:help(arg, doMd)
           if option.meta and option.meta.enum then
             msg = '(' .. table.concat(option.meta.enum, ', ') .. ') '
           end
-          msg = msg .. option.help:gsub('\n  *', ' '):gsub('  *', ' ')
-                    .. ' Default [' .. tostring(option.default) .. ']'
-          io.write(' ' .. wrapIndent(msg,60,padMultiLine..'     '))
+          msg = msg .. option.help:gsub('\n', ' ')
+          if type(option.default) ~= "boolean" and option.default ~= '' then
+            msg = msg .. ' Default [' .. tostring(option.default) .. ']'
+          end
+          io.write(' ' .. wrapIndent(msg:gsub('  *', ' '),60,padMultiLine..'     '))
         else -- It is an argument.
           io.write(onmt.utils.String.pad('<' .. onmt.utils.String.stripHyphens(option.key) .. '>', optsz))
           if option.help then
