@@ -26,7 +26,7 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
+function Decoder:__init(inputNetwork, rnn, generator, inputFeed, indvLoss)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -41,6 +41,7 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
+  self.args.indvLoss = indvLoss
 
   parent.__init(self, self:_buildModel())
 
@@ -329,6 +330,7 @@ function Decoder:backward(batch, outputs, criterion)
                                                          { batch.size, batch.sourceLength, self.args.rnnSize })
 
   local loss = 0
+  local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
   for t = batch.targetLength, 1, -1 do
     -- Compute decoder output gradients.
@@ -336,7 +338,20 @@ function Decoder:backward(batch, outputs, criterion)
     local pred = self.generator:forward(outputs[t])
     local output = batch:getTargetOutput(t)
 
-    loss = loss + criterion:forward(pred, output)
+    if self.args.indvLoss then
+      local curLossSum = 0
+      for i=1, pred[1]:size(1) do
+        local tmpLoss = criterion:forward({pred[1][i]},{output[1][i]})
+        if indvAvgLoss[i] == nil then
+          indvAvgLoss[i] = 0
+        end
+        indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
+        curLossSum = curLossSum + tmpLoss
+      end
+      loss = loss + curLossSum
+    else
+      loss = loss + criterion:forward(pred, output)
+    end
 
     -- Compute the criterion gradient.
     local genGradOut = criterion:backward(pred, output)
@@ -365,8 +380,12 @@ function Decoder:backward(batch, outputs, criterion)
       gradStatesInput[i]:copy(gradInput[i])
     end
   end
+  
+  if self.args.indvLoss then
+    indvAvgLoss:div(batch.targetLength)
+  end
 
-  return gradStatesInput, gradContextInput, loss
+  return gradStatesInput, gradContextInput, loss, indvAvgLoss
 end
 
 --[[ Compute the loss on a batch.

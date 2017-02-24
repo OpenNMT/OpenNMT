@@ -20,6 +20,7 @@ local options = {
                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
                      {enum={0,1}}},
+
   {'-residual', false, [[Add residual connections between RNN layers.]]},
   {'-brnn', false, [[Use a bidirectional encoder]]},
   {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],
@@ -98,10 +99,10 @@ function Seq2Seq:trainNetwork(batch, dryRun)
     decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
   end
 
-  local encGradStatesOut, gradContext, loss = self.models.decoder:backward(batch, decOutputs, self.criterion)
+  local encGradStatesOut, gradContext, loss, indvLoss = self.models.decoder:backward(batch, decOutputs, self.criterion)
   self.models.encoder:backward(batch, encGradStatesOut, gradContext)
 
-  return loss
+  return loss, indvLoss
 end
 
 return Seq2Seq

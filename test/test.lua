@@ -300,6 +300,52 @@ end
 
 tester:add(beamSearchTest)
 
+
+local SampledDatasetTest = torch.TestSuite()
+function SampledDatasetTest.Sample()
+  local dataSize = 1234
+  local samplingSize = 100
+  local batchSize = 16
+  local sample_w_ppl = false
+  local sample_w_ppl_begin = 100
+  local sample_w_ppl_max = 1000
+
+  local tds = require('tds')
+  local srcData = {words = tds.Vec(), features = tds.Vec()}
+  local tgtData = {words = tds.Vec(), features = tds.Vec()}
+  for i = 1, dataSize do
+    srcData.words:insert(torch.Tensor(5))
+    srcData.features:insert(tds.Vec())
+    srcData.features[1]:insert(torch.Tensor(5))
+    tgtData.words:insert(torch.Tensor(5))
+    tgtData.features:insert(tds.Vec())
+    tgtData.features[1]:insert(torch.Tensor(5))
+  end
+
+  tester:eq(#srcData.words, dataSize)
+
+  local dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_begin, sample_w_ppl_max)
+  dataset:setBatchSize(batchSize)
+
+  tester:eq(dataset:getBatch(1).size, 16)
+  tester:eq(dataset:batchCount(), 7)
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+
+  sample_w_ppl = true
+  dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_begin, sample_w_ppl_max)
+  dataset:setBatchSize(batchSize)
+
+  tester:eq(dataset:getBatch(1).size, 16)
+  tester:eq(dataset:batchCount(), 7)
+
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+end
+tester:add(SampledDatasetTest)
+
 local function main()
   -- Limit number of threads since everything is small
   local nThreads = torch.getnumthreads()

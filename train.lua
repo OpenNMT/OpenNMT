@@ -11,6 +11,12 @@ local modelClass = onmt.ModelSelector(modelType)
 local options = {
   {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
                       {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+
+  {'-sample',               0, [[Number of instances to sample from train data in each epoch]]},
+  {'-sample_w_ppl',     false, [[use ppl as probability distribution when sampling]]},
+  {'-sample_w_ppl_init',  500, [[start perplexity-based sampling when average perplexity per batch falls below this value]]},
+  {'-sample_w_ppl_max',  1000, [[max ppl value allowed (instances with perplexity above this value will be considered as noise and ignored)]]},
+
   {'-save_model', '', [[Model filename (the model will be saved as
                             <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]],
                       {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
@@ -66,7 +72,12 @@ local function main()
     os.exit(0)
   end
 
-  local trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
+  local trainData
+  if opt.sample > 0 then
+     trainData = onmt.data.SampledDataset.new(dataset.train.src, dataset.train.tgt, opt.sample, opt.sample_w_ppl, opt.sample_w_ppl_init, opt.sample_w_ppl_max)
+  else
+     trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
+  end
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
   trainData:setBatchSize(opt.max_batch_size)
@@ -85,6 +96,15 @@ local function main()
                  trainData.maxSourceLength, trainData.maxTargetLength)
   _G.logger:info(' * number of training sentences: %d', #trainData.src)
   _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
+
+  if opt.sample > 0 then
+    _G.logger:info(' * sampling ' .. opt.sample .. ' instances at each epoch')
+    if opt.sample_w_ppl then
+      _G.logger:info(' * using train data perplexity as probability distribution when sampling')
+      _G.logger:info(' * sample_w_ppl_init: ' .. opt.sample_w_ppl_init .. ' (start perplexity-based sampling when average perplexity per batch falls below this value)')
+      _G.logger:info(' * sample_w_ppl_max: ' .. opt.sample_w_ppl_max .. ' (instances with perplexity above this value will be considered outlier and will have perplexity 1 while sampling)')
+    end
+  end
 
   _G.logger:info('Building model...')
 
