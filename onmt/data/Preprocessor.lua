@@ -279,7 +279,7 @@ function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
                    .. ' ignored due to target length > ' .. self.args.tgt_seq_length .. ')')
 
   local srcData = {
-    audio = src,
+    feats = src,
   }
 
   local tgtData = {
