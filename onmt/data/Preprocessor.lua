@@ -47,6 +47,10 @@ local monotextOptions = {
                                        {valid=onmt.utils.ExtendedCmdLine.isUInt}}
 }
 
+local audiotextOptions = {
+  {'-kaldi_data',               '',    [[Directory with a kaldi-type prepared data. Mandatory files are {train,dev}/{text,wav.scp}, local/lexicon.txt.]]}
+}
+
 local commonOptions = {
   {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies]]},
   {'-shuffle',                1,       [[Shuffle data]]}
@@ -58,9 +62,10 @@ function Preprocessor.declareOpts(cmd, mode)
   if mode == 'bitext' then
     cmd:setCmdLineOptions(bitextOptions, 'BiText')
   elseif mode == 'audiotext' then
+    cmd:setCmdLineOptions(audiotextOptions, 'AudioText')
     onmt.audiotool.declareOpts(cmd)
   else
-    cmd:setCmdLineOptions(monotextOptions, 'MonotText')
+    cmd:setCmdLineOptions(monotextOptions, 'MonoText')
   end
 end
 

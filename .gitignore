@@ -1,3 +1,4 @@
 *.t7
 *.dict
 doc/tree
+data/asr
