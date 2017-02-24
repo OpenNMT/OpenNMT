@@ -55,30 +55,30 @@ local commonOptions = {
 
 function Preprocessor.declareOpts(cmd, mode)
   mode = mode or 'bitext'
-  local options
+  cmd:setCmdLineOptions(commonOptions, 'Preprocess')
   if mode == 'bitext' then
-    options = bitextOptions
+    cmd:setCmdLineOptions(bitextOptions, 'BiText')
+  elseif mode == 'audiotext' then
+    onmt.audiotool.declareOpts(cmd)
   else
-    options = monotextOptions
+    cmd:setCmdLineOptions(monotextOptions, 'MonotText')
   end
-  for _, v in ipairs(commonOptions) do
-    table.insert(options, v)
-  end
-  cmd:setCmdLineOptions(options, 'Preprocess')
 end
 
 function Preprocessor:__init(args, mode)
   mode = mode or 'bitext'
-  local options
-  if mode == 'bitext' then
-    options = bitextOptions
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, commonOptions)
+  if mode == 'audiotext' then
+    onmt.utils.Table.concat(self.args, onmt.audiotool.getModuleOpts(args))
   else
-    options = monotextOptions
+    local options
+    if mode == 'bitext' then
+      options = bitextOptions
+    else
+      options = monotextOptions
+    end
+    onmt.utils.Table.concat(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
   end
-  for _, v in ipairs(commonOptions) do
-    table.insert(options, v)
-  end
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.report_every = args.report_every
 end
 

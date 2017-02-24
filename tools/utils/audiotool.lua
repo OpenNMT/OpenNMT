@@ -30,6 +30,10 @@ function audiotool.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Audio')
 end
 
+function audiotool.getModuleOpts(args)
+  return onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+end
+
 function audiotool:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
 end

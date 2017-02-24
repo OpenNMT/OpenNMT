@@ -9,7 +9,7 @@ local dataType = cmd.getArgument(arg, '-data_type') or 'bitext'
 local options = {
   {'-data_type',         'bitext',  [[Type of text to preprocess. Use 'monotext' for monolingual text.
                                     This option impacts all options choices.]],
-                                    {enum={'bitext','monotext'}}},
+                                    {enum={'bitext', 'monotext', 'audiotext'}}},
   {'-save_data',               '',  [[Output file for the prepared data]],
                                     {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
 }
@@ -19,7 +19,7 @@ cmd:setCmdLineOptions(options, 'Preprocess')
 onmt.data.Preprocessor.declareOpts(cmd, dataType)
 
 local otherOptions = {
-  {'-seed',                   3425,    [[Random seed]],
+  {'-seed',                     3425,  [[Random seed]],
                                    {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',           100000,  [[Report status every this many sentences]],
                                    {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
@@ -45,12 +45,15 @@ local function main()
   local data = { dataType=dataType }
 
   data.dicts = {}
-  data.dicts.src = Vocabulary.init('train',
-                                   opt.train_src or opt.train,
-                                   opt.src_vocab or opt.vocab,
-                                   opt.src_vocab_size or opt.vocab_size,
-                                   opt.features_vocabs_prefix,
-                                   function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
+
+  if dataType ~= 'audiotext' then
+    data.dicts.src = Vocabulary.init('train',
+                                     opt.train_src or opt.train,
+                                     opt.src_vocab or opt.vocab,
+                                     opt.src_vocab_size or opt.vocab_size,
+                                     opt.features_vocabs_prefix,
+                                     function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
+  end
   if dataType ~= 'monotext' then
     data.dicts.tgt = Vocabulary.init('target',
                                      opt.train_tgt,
