@@ -1,6 +1,7 @@
 local audiotool = torch.class('audiotool')
-local signal = require 'signal'
-local audio = require 'audio'
+-- will only load the lib if the module is selectd
+local signal
+local audio
 
 -- MFSC and MFCC calculation inspired from
 -- https://github.com/jameslyons/python_speech_features
@@ -28,6 +29,8 @@ local options = {
 }
 
 function audiotool.declareOpts(cmd)
+  signal = require 'signal'
+  audio = require 'audio'
   cmd:setCmdLineOptions(options, 'Audio')
 end
 
