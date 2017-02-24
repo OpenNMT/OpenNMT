@@ -100,7 +100,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
     end
 
-    local epochState = onmt.train.EpochState.new(epoch, numIterations, optim:getLearningRate())
+    local epochState = onmt.train.EpochState.new(epoch, startI, numIterations, optim:getLearningRate())
     local batchOrder
 
     if startI > 1 and info ~= nil then
@@ -114,7 +114,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     if not self.args.async_parallel then
       -- Synchronous training.
-      local iter = 1
+      local iter = startI
       for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
         local batches = {}
         local totalSize = 0
