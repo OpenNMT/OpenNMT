@@ -30,7 +30,7 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
   return wordEmbSize, featEmbSizes
 end
 
-local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords)
+local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords, verbose)
   local wordEmbSize, featEmbSizes = resolveEmbSizes(opt, dicts, wordSizes)
 
   local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
@@ -50,8 +50,16 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
     inputs = wordEmbedding
   end
 
+  if verbose then
+    _G.logger:info('   - with word embeddings size: ' .. wordEmbSize)
+  end
+
   -- Sequence with features.
   if #dicts.features > 0 then
+    if verbose then
+      _G.logger:info('   - with features embeddings sizes: ' .. table.concat(featEmbSizes, ', '))
+    end
+
     local vocabSizes = {}
     for i = 1, #dicts.features do
       table.insert(vocabSizes, dicts.features[i]:size())
@@ -118,10 +126,15 @@ function Factory.buildEncoder(opt, inputNetwork)
   return encoder
 end
 
-function Factory.buildWordEncoder(opt, dicts)
+function Factory.buildWordEncoder(opt, dicts, verbose)
+  if verbose then
+    _G.logger:info(' * Encoder:')
+  end
+
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
+                                         verbose)
 
   return Factory.buildEncoder(opt, inputNetwork)
 end
@@ -147,13 +160,10 @@ function Factory.loadEncoder(pretrained, clone)
   end
 end
 
-function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
+function Factory.buildDecoder(opt, inputNetwork, generator)
   local inputSize = inputNetwork.inputSize
 
   if opt.input_feed == 1 then
-    if verbose then
-      _G.logger:info(' * using input feeding')
-    end
     inputSize = inputSize + opt.rnn_size
   end
 
@@ -167,13 +177,18 @@ function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
+  if verbose then
+    _G.logger:info(' * Decoder:')
+  end
+
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.tgt_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec,
+                                         verbose)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
 
-  return Factory.buildDecoder(opt, inputNetwork, generator, verbose)
+  return Factory.buildDecoder(opt, inputNetwork, generator)
 end
 
 function Factory.loadDecoder(pretrained, clone)
