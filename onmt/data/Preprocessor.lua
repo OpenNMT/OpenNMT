@@ -48,7 +48,10 @@ local monotextOptions = {
 }
 
 local audiotextOptions = {
-  {'-kaldi_data',               '',    [[Directory with a kaldi-type prepared data. Mandatory files are {train,dev}/{text,wav.scp}, local/lexicon.txt.]]}
+  {'-kaldi_data',               '',    [[Directory with a kaldi-type prepared data. Mandatory files are {train,dev}/{text,wav.scp},
+                                         local/lexicon.txt.]],
+                                       {valid=onmt.utils.ExtendedCmdLine.dirStructure({"train/text", "dev/text", "train/wav.scp",
+                                        "dev/wav.scp", "local/lexicon.txt"})}}
 }
 
 local commonOptions = {
