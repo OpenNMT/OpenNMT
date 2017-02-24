@@ -24,7 +24,7 @@ local function convert(key, val, ref)
   return new
 end
 
-function wrapIndent(text, size, pad)
+local function wrapIndent(text, size, pad)
   local p = 0
   while true do
     local q = text:find(" ", size+p)
