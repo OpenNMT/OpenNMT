@@ -51,7 +51,13 @@ local audiotextOptions = {
   {'-kaldi_data',               '',    [[Directory with a kaldi-type prepared data. Mandatory files are {train,dev}/{text,wav.scp},
                                          local/lexicon.txt.]],
                                        {valid=onmt.utils.ExtendedCmdLine.dirStructure({"train/text", "dev/text", "train/wav.scp",
-                                        "dev/wav.scp", "local/lexicon.txt"})}}
+                                        "dev/wav.scp", "local/lexicon.txt"})}},
+  {'-tgt_vocab',               '',     [[Path to an existing target vocabulary]],
+                                       {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
+  {'-tgt_vocab_size',          '50000',[[Comma-separated list of target vocabularies size: word[,feat1,feat2,...].]],
+                                       {valid=onmt.utils.ExtendedCmdLine.listUInt}},
+  {'-tgt_seq_length',          50,     [[Maximum target sequence length]],
+                                       {valid=onmt.utils.ExtendedCmdLine.isUInt}}
 }
 
 local commonOptions = {

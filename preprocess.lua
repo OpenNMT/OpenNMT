@@ -47,16 +47,24 @@ local function main()
   data.dicts = {}
 
   if dataType ~= 'audiotext' then
+    local src_file = opt.train_src
+    if dataType == 'monotext' then
+      src_file = opt.train
+    end
     data.dicts.src = Vocabulary.init('train',
-                                     opt.train_src or opt.train,
+                                     src_file,
                                      opt.src_vocab or opt.vocab,
                                      opt.src_vocab_size or opt.vocab_size,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
   end
   if dataType ~= 'monotext' then
+    local tgt_file = opt.train_tgt
+    if dataType == 'audiotext' then
+      tgt_file = opt.kaldi_data .. '/local/lexicon.txt'
+    end
     data.dicts.tgt = Vocabulary.init('target',
-                                     opt.train_tgt,
+                                     tgt_file,
                                      opt.tgt_vocab,
                                      opt.tgt_vocab_size,
                                      opt.features_vocabs_prefix,
