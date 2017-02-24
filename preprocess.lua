@@ -19,9 +19,9 @@ cmd:setCmdLineOptions(options, 'Preprocess')
 onmt.data.Preprocessor.declareOpts(cmd, dataType)
 
 local otherOptions = {
-  {'-seed',                     3425,  [[Random seed]],
+  {'-seed',                   3425,    [[Random seed.]],
                                    {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-report_every',           100000,  [[Report status every this many sentences]],
+  {'-report_every',           100000,  [[Report status every this many sentences.]],
                                    {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
 }
 cmd:setCmdLineOptions(otherOptions, 'Other')
