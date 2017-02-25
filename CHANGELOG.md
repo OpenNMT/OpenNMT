@@ -15,6 +15,7 @@
 * Fix error when using translation server with GPU model
 * Reduce size of released BRNN models (up to 2x smaller)
 * Fix gold data perplexity reporting during translation
+* Fix pretrained word embeddings that were overriden by parameters initialization
 
 ## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)
 

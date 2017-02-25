@@ -21,12 +21,12 @@ function LanguageModel.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 
-function LanguageModel:__init(args, dicts)
+function LanguageModel:__init(args, dicts, verbose)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
-  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
-  self.models.generator = onmt.Factory.buildGenerator(args.rnn_size, dicts.src)
+  self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src, verbose)
+  self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.src)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
   self.eosProto = {}
