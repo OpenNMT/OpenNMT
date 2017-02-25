@@ -1,4 +1,6 @@
 --[[ Data management and batch creation. Handles data created by `preprocess.lua`. ]]
+require 'torchx'
+
 local SampledDataset = torch.class("SampledDataset")
 
 --[[ Initialize a data object given aligned tables of IntTensors `srcData`
@@ -36,6 +38,7 @@ end
 
 --[[ initiate sampling ]]
 function SampledDataset:sample(avgPpl)
+  _G.logger:info('Sampling...')
 
   -- populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init
   if avgPpl == nil and self.sample_w_ppl then
@@ -59,11 +62,18 @@ function SampledDataset:sample(avgPpl)
     end
   end
 
-  local sampled = torch.multinomial(self.samplingProb:view(1,#self.src), self.samplingSize, --[[replacement]] false)
+--  local sampled = torch.multinomial(self.samplingProb:view(1,#self.src), self.samplingSize, --[[replacement]] false)
+-- Faster sampling
+-- https://github.com/nicholas-leonard/torchx/blob/master/AliasMultinomial.lua
+  local sampler = torch.AliasMultinomial(self.samplingProb)
+  _G.logger:info('Created sampler...')
+  local sampled = torch.LongTensor(self.samplingSize)
+  sampled = sampler:batchdraw(sampled)
+  _G.logger:info('Sampled...')
 
   self.isSampled:zero()
-  for i=1, sampled:size(2) do
-    self.isSampled[sampled[1][i]] = 1
+  for i=1, sampled:size(1) do
+    self.isSampled[sampled[i]] = 1
   end
 
   -- Prepares batches in terms of range within self.src and self.tgt.
@@ -81,7 +91,7 @@ function SampledDataset:sample(avgPpl)
           table.insert(self.batchRange, { ["begin"] = offset, ["end"] = i - 1 })
 --          print('Batch ' .. #self.batchRange .. ' (' .. offset .. ', ' .. (i-1) .. '): ' .. batchSize)
         end
-  
+
         offset = i
         batchSize = 1
         sourceLength = self.src[i]:size(1)
@@ -94,7 +104,6 @@ function SampledDataset:sample(avgPpl)
   -- Catch last batch.
   table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src })
 --  print('Batch ' .. #self.batchRange .. ' (' .. offset .. ', ' .. #self.src .. '): ' .. batchSize)
-
 end
 
 --[[ get ppl ]]
