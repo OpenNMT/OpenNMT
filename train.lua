@@ -33,7 +33,7 @@ onmt.utils.Memory.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 onmt.utils.Profiler.declareOpts(cmd)
 
-cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
+cmd:option('-seed', 3435, [[Seed for random initialization.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 
 local opt = cmd:parse(arg)
 
