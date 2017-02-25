@@ -1,4 +1,4 @@
---[[ Encoder is a unidirectional Sequencer used for the source language.
+--[[ SimpleEncoder is a unidirectional Sequencer used for the source language.
 
     h_1 => h_2 => h_3 => ... => h_n
      |      |      |             |
@@ -12,16 +12,38 @@
 
 Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
-local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
+local SimpleEncoder, parent = torch.class('onmt.SimpleEncoder', 'onmt.Sequencer')
 
---[[ Construct an encoder layer.
+local options = {
+  {'-layers', 2,         [[Number of layers in the RNN SimpleEncoder/decoder]],
+                            {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-rnn_size', 500,     [[Size of RNN hidden states]],
+                            {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-rnn_type', 'LSTM', [[Type of RNN cell]],
+                            {enum={'LSTM','GRU'}}},
+  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]},
+  {'-residual', false, [[Add residual connections between RNN layers.]]}
+}
+
+function SimpleEncoder.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+end
+
+--[[ Construct an SimpleEncoder layer.
 
 Parameters:
 
   * `inputNetwork` - input module.
   * `rnn` - recurrent module.
 ]]
-function Encoder:__init(inputNetwork, rnn)
+function SimpleEncoder:__init(args, inputNetwork)
+  local RNN = onmt.LSTM
+  if args.rnn_type == 'GRU' then
+    RNN = onmt.GRU
+  end
+
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual)
+
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -34,9 +56,9 @@ function Encoder:__init(inputNetwork, rnn)
   self:resetPreallocation()
 end
 
---[[ Return a new Encoder using the serialized data `pretrained`. ]]
-function Encoder.load(pretrained)
-  local self = torch.factory('onmt.Encoder')()
+--[[ Return a new SimpleEncoder using the serialized data `pretrained`. ]]
+function SimpleEncoder.load(pretrained)
+  local self = torch.factory('onmt.SimpleEncoder')()
 
   self.args = pretrained.args
   parent.__init(self, pretrained.modules[1])
@@ -47,15 +69,15 @@ function Encoder.load(pretrained)
 end
 
 --[[ Return data to serialize. ]]
-function Encoder:serialize()
+function SimpleEncoder:serialize()
   return {
-    name = 'Encoder',
+    name = 'SimpleEncoder',
     modules = self.modules,
     args = self.args
   }
 end
 
-function Encoder:resetPreallocation()
+function SimpleEncoder:resetPreallocation()
   -- Prototype for preallocated hidden and cell states.
   self.stateProto = torch.Tensor()
 
@@ -66,11 +88,11 @@ function Encoder:resetPreallocation()
   self.contextProto = torch.Tensor()
 end
 
-function Encoder:maskPadding()
+function SimpleEncoder:maskPadding()
   self.maskPad = true
 end
 
---[[ Build one time-step of an encoder
+--[[ Build one time-step of an SimpleEncoder
 
 Returns: An nn-graph mapping
 
@@ -80,7 +102,7 @@ Returns: An nn-graph mapping
   Where $$c^l$$ and $$h^l$$ are the hidden and cell states at each layer,
   $$x_t$$ is a sparse word to lookup.
 --]]
-function Encoder:_buildModel()
+function SimpleEncoder:_buildModel()
   local inputs = {}
   local states = {}
 
@@ -115,7 +137,7 @@ Returns:
   1. - final hidden states
   2. - context matrix H
 --]]
-function Encoder:forward(batch)
+function SimpleEncoder:forward(batch)
 
   -- TODO: Change `batch` to `input`.
 
@@ -196,7 +218,7 @@ end
 
   Returns: `gradInputs` of input network.
 --]]
-function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
+function SimpleEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   -- TODO: change this to (input, gradOutput) as in nngraph.
   local outputSize = self.args.rnnSize
   if self.gradOutputsProto == nil then
@@ -221,7 +243,7 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
 
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
-    -- Prepare next encoder output gradients.
+    -- Prepare next SimpleEncoder output gradients.
     for i = 1, #gradStatesInput do
       gradStatesInput[i]:copy(gradInput[i])
     end
