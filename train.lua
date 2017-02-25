@@ -61,8 +61,8 @@ local function main()
   dataset.dataType = dataset.dataType or 'bitext'
 
   -- Check if data type matches the model.
-  if dataset.dataType ~= modelClass.dataType() then
-    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.dataType() .. '\'')
+  if not modelClass.dataType(dataset.dataType) then
+    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.modelName() .. '\'')
     os.exit(0)
   end
 
@@ -72,11 +72,23 @@ local function main()
   trainData:setBatchSize(opt.max_batch_size)
   validData:setBatchSize(opt.max_batch_size)
 
-  if dataset.dataType == 'bitext' then
-    _G.logger:info(' * vocabulary size: source = %d; target = %d',
-                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
-    _G.logger:info(' * additional features: source = %d; target = %d',
-                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+  if dataset.dataType ~= 'monotext' then
+    local srcVocSize = '-'
+    local srcFeatSize = '-'
+    if dataset.dicts.src then
+      srcVocSize = dataset.dicts.src.words:size()
+      srcFeatSize = #dataset.dicts.src.features
+    end
+    local tgtVocSize = '-'
+    local tgtFeatSize = '-'
+    if dataset.dicts.tgt then
+      tgtVocSize = dataset.dicts.tgt.words:size()
+      tgtFeatSize = #dataset.dicts.tgt.features
+    end
+    _G.logger:info(' * vocabulary size: source = %s; target = %s',
+                   srcVocSize, tgtVocSize)
+    _G.logger:info(' * additional features: source = %s; target = %s',
+                   srcFeatSize, tgtFeatSize)
   else
     _G.logger:info(' * vocabulary size: %d', dataset.dicts.src.words:size())
     _G.logger:info(' * additional features: %d', #dataset.dicts.src.features)

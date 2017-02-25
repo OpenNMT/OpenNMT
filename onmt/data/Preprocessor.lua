@@ -100,7 +100,7 @@ function Preprocessor:__init(args, mode)
     else
       options = monotextOptions
     end
-    onmt.utils.Table.concat(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
+    onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
   end
   self.args.report_every = args.report_every
 end
@@ -206,6 +206,7 @@ end
 
 function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
   local src = tds.Vec()
+  local srcFeatures = tds.Vec()
 
   local tgt = tds.Vec()
   local tgtFeatures = tds.Vec()
@@ -275,11 +276,28 @@ function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
   scpReader:close()
   tgtReader:close()
 
+  local function reorderData(perm)
+    src = onmt.utils.Table.reorder(src, perm, true)
+    tgt = onmt.utils.Table.reorder(tgt, perm, true)
+
+    if #tgtDicts.features > 0 then
+      tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm, true)
+    end
+  end
+
+  if self.args.shuffle == 1 then
+    _G.logger:info('... shuffling sentences')
+    local perm = torch.randperm(#src)
+    sizes = onmt.utils.Table.reorder(sizes, perm, true)
+    reorderData(perm)
+  end
+
   _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
                    .. ' ignored due to target length > ' .. self.args.tgt_seq_length .. ')')
 
   local srcData = {
-    feats = src,
+    vectors = src,
+    features = srcFeatures
   }
 
   local tgtData = {

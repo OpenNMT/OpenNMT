@@ -68,8 +68,11 @@ function Seq2Seq.modelName()
   return 'Sequence to Sequence with Attention'
 end
 
--- Returns expected dataMode.
-function Seq2Seq.dataType()
+-- Returns expected dataMode or check that parameter is compatible
+function Seq2Seq.dataType(dm)
+  if dm then
+    return dm == 'bitext' or dm == 'audiotext'
+  end
   return 'bitext'
 end
 
