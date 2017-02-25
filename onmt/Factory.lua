@@ -124,11 +124,16 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
   if verbose then
     _G.logger:info(' * Encoder:')
   end
-
-  local inputNetwork = buildInputNetwork(opt, dicts,
-                                         opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
-                                         verbose)
+  local inputNetwork
+  if dicts then
+    inputNetwork = buildInputNetwork(opt, dicts,
+                                     opt.src_word_vec_size or opt.word_vec_size,
+                                     opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
+                                     verbose)
+  else
+    inputNetwork = nn.Identity()
+    inputNetwork.inputSize = opt.dimInputSize
+  end
 
   return Factory.buildEncoder(opt, inputNetwork)
 end

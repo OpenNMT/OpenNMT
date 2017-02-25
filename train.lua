@@ -78,12 +78,16 @@ local function main()
     if dataset.dicts.src then
       srcVocSize = dataset.dicts.src.words:size()
       srcFeatSize = #dataset.dicts.src.features
+    else
+      srcVocSize = '*'..dataset.dicts.srcInputSize
     end
     local tgtVocSize = '-'
     local tgtFeatSize = '-'
     if dataset.dicts.tgt then
       tgtVocSize = dataset.dicts.tgt.words:size()
       tgtFeatSize = #dataset.dicts.tgt.features
+    else
+      tgtVocSize = '*'..dataset.dicts.tgtInputSize
     end
     _G.logger:info(' * vocabulary size: source = %s; target = %s',
                    srcVocSize, tgtVocSize)

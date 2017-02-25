@@ -51,7 +51,7 @@ local Batch = torch.class('Batch')
 
 Parameters:
 
-  * `src` - 2D table of source batch indices
+  * `src` - 2D table of source batch indices or prebuilt source batch vectors
   * `srcFeatures` - 2D table of source batch features (opt)
   * `tgt` - 2D table of target batch indices
   * `tgtFeatures` - 2D table of target batch features (opt)
@@ -69,9 +69,18 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
 
   self.sourceLength, self.sourceSize = getLength(src)
 
+  -- if input vectors (speech for instance)
+  self.inputVectors = src[1]:dim() > 1
+
   local sourceSeq = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
-  self.sourceInput = sourceSeq:clone()
-  self.sourceInputRev = sourceSeq:clone()
+
+  if not self.inputVectors then
+    self.sourceInput = sourceSeq:clone()
+    self.sourceInputRev = sourceSeq:clone()
+  else
+    self.sourceInput = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
+    self.sourceInputRev = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
+  end
 
   self.sourceInputFeatures = {}
   self.sourceInputRevFeatures = {}
