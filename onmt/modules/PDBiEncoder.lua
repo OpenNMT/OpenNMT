@@ -26,6 +26,7 @@ function PDBiEncoder:__init(args, input)
 
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.layers = args.layers
+  self.args.dropout = args.dropout
 
   self.layers = {}
 
@@ -40,6 +41,11 @@ function PDBiEncoder:__init(args, input)
     self:add(self.layers[#self.layers])
     if #self.layers ~= 1 then
       self.args.multiplier = self.args.multiplier * self.args.pdbrnn_reduction
+    else
+      -- trick to force a dropout on each layer L > 1
+      if args.dropout > 0 then
+        args.dropout = -args.dropout
+      end
     end
   end
   args.layers = self.args.layers

@@ -24,17 +24,23 @@ function DBiEncoder:__init(args, input)
 
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.layers = args.layers
+  self.args.dropout = args.dropout
 
   self.layers = {}
 
   args.layers = 1
   args.brnn_merge = 'sum'
-  for _=1,self.args.layers do
+
+  for _= 1, self.args.layers do
     table.insert(self.layers, onmt.BiEncoder(args, input))
     local identity = nn.Identity()
     identity.inputSize = args.rnn_size
     input = identity
     self:add(self.layers[#self.layers])
+    -- trick to force a dropout on each layer L > 1
+    if #self.layers == 1 and args.dropout > 0 then
+      args.dropout = -args.dropout
+    end
   end
   args.layers = self.args.layers
   self.args.numEffectiveLayers = self.layers[1].args.numEffectiveLayers * self.args.layers
