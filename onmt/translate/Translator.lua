@@ -75,7 +75,6 @@ function Translator:buildInput(tokens)
       wavFile = paths.concat(paths.dirname(self.args.src), wavFile)
     end
     local saudio, samplerate = audiolib.load(wavFile)
-    local audioTime = saudio:size(1)/samplerate
     data.vectors = self.audio:extractFeats(saudio, samplerate)
 
   else

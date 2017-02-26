@@ -134,7 +134,7 @@ local function main()
         sentId = sentId + 1
       end
 
-      if srcTokens == nil then
+      if srcSeq == nil then
         break
       end
 
