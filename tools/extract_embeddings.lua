@@ -45,7 +45,7 @@ local function main()
 
   encoder.network:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
-        print(m.net.weight:size(1), dicts.src.words:size())
+        print("Found source embeddings of size " ..  m.net.weight:size(1))
         if m.net.weight:size(1) == dicts.src.words:size() then
           encoder_embeddings = m.net.weight
         end
@@ -54,13 +54,17 @@ local function main()
 
   decoder.network:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
-        print(m.net.weight:size(1), dicts.tgt.words:size())
+        print("Found target embeddings of size " ..  m.net.weight:size(1))
         if m.net.weight:size(1) == dicts.tgt.words:size() then
           decoder_embeddings = m.net.weight
         end
       end
   end)
+
+  print("Writing source embeddings")
   write_embeddings(opt.output_dir .. "/src_embeddings.txt", dicts.src.words, encoder_embeddings)
+
+  print("Writing target embeddings")
   write_embeddings(opt.output_dir .. "/tgt_embeddings.txt", dicts.tgt.words, decoder_embeddings)
 
   print('... done.')
