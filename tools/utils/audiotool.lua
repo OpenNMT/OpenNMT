@@ -113,12 +113,12 @@ local function delta(feat, N)
   for i = 1, N do
     denominator = denominator + 2*i*i
   end
-  local delta_feat = torch.zeros(feat:size(1), feat:size(2))
-  local padded = torch.Tensor(feat:size(1)+2*N, feat:size(2))
+  local delta_feat = torch.zeros(NUMFRAMES, feat:size(2))
+  local padded = torch.Tensor(NUMFRAMES+2*N, feat:size(2)):zero()
   padded:narrow(1, N+1, NUMFRAMES):copy(feat)
   for i = 1, N do
     padded:narrow(1, i, 1):copy(feat:narrow(1,1,1))
-    padded:narrow(1, N+i+feat:size(2), 1):copy(feat:narrow(1, feat:size(1), 1))
+    padded:narrow(1, N+i+NUMFRAMES, 1):copy(feat:narrow(1, NUMFRAMES, 1))
   end
   for t = 1, NUMFRAMES do
     delta_feat[t] = (torch.linspace(-N, N+1, 2*N+1):resize(1,2*N+1)*padded:narrow(1, t, 2*N+1)) / denominator
