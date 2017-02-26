@@ -220,6 +220,8 @@ function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
   local tgtReader = onmt.utils.FileReader.new(tgtFile)
 
   local audio = audiotool.new(self.args)
+  local totalAudioTime = 0
+  local audioTimeIgnored = 0
 
   while true do
     local scpEntry = scpReader:next()
@@ -246,6 +248,7 @@ function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
       wavFile = paths.concat(paths.dirname(scpFile), wavFile)
     end
     local saudio, samplerate = audiolib.load(wavFile)
+    local audioTime = saudio:size(1)/samplerate
     local srcFeats = audio:extractFeats(saudio, samplerate)
 
     if isValid(tgtTokens, self.args.tgt_seq_length) then
@@ -264,12 +267,14 @@ function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
       sizes:insert(srcFeats:size(1))
     else
       ignored = ignored + 1
+      audioTimeIgnored = audioTimeIgnored + audioTime
     end
 
     count = count + 1
+    totalAudioTime = totalAudioTime + audioTime
 
     if count % self.args.report_every == 0 then
-      _G.logger:info('... ' .. count .. ' sentences prepared')
+      _G.logger:info('... ' .. count .. ' utterances prepared [%d sec]', totalAudioTime)
     end
   end
 
@@ -292,8 +297,8 @@ function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
     reorderData(perm)
   end
 
-  _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
-                   .. ' ignored due to target length > ' .. self.args.tgt_seq_length .. ')')
+  _G.logger:info('Prepared ' .. #src .. ' utterances [%d sec] (' .. ignored
+                   .. ' [%d sec] ignored due to target length > ' .. self.args.tgt_seq_length .. ')', totalAudioTime, audioTimeIgnored)
 
   local srcData = {
     vectors = src,
