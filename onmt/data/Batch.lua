@@ -77,15 +77,16 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   if not self.inputVectors then
     self.sourceInput = sourceSeq:clone()
     self.sourceInputRev = sourceSeq:clone()
+    -- will be used to return extra padded value
+    self.padTensor = torch.LongTensor(self.size):fill(onmt.Constants.PAD)
   else
     self.sourceInput = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
     self.sourceInputRev = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
+    self.padTensor = torch.Tensor(self.size, src[1]:size(2)):zero()
   end
 
   self.sourceInputFeatures = {}
   self.sourceInputRevFeatures = {}
-  -- will be used to return extra padded value
-  self.padTensor = torch.LongTensor(self.size):fill(onmt.Constants.PAD)
 
   if #srcFeatures > 0 then
     for _ = 1, #srcFeatures[1] do
