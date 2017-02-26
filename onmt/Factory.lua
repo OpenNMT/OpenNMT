@@ -151,11 +151,14 @@ function Factory.loadEncoder(pretrained, clone)
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
-  if pretrained.name == 'Encoder' then
-    return onmt.Encoder.load(pretrained)
-  end
-  if pretrained.name == 'BiEncoder' then
+  if pretrained.name == 'SimpleEncoder' then
+    return onmt.SimpleEncoder.load(pretrained)
+  elseif pretrained.name == 'BiEncoder' then
     return onmt.BiEncoder.load(pretrained)
+  elseif pretrained.name == 'PDBiEncoder' then
+    return onmt.PDBiEncoder.load(pretrained)
+  elseif pretrained.name == 'DBiEncoder' then
+    return onmt.DBiEncoder.load(pretrained)
   end
 
   -- Keep for backward compatibility.
@@ -163,7 +166,7 @@ function Factory.loadEncoder(pretrained, clone)
   if brnn then
     return onmt.BiEncoder.load(pretrained)
   else
-    return onmt.Encoder.load(pretrained)
+    return onmt.SimpleEncoder.load(pretrained)
   end
 end
 
