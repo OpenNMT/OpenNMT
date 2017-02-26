@@ -66,23 +66,23 @@ local function main()
   end
 
   while true do
-    local srcTokens = srcReader:next()
-    local goldTokens
+    local srcSeq = srcReader:next()
+    local goldOutputSeq
     if withGoldScore then
-      goldTokens = goldReader:next()
+      goldOutputSeq = goldReader:next()
     end
 
-    if srcTokens ~= nil then
-      table.insert(srcBatch, translator:buildInput(srcTokens))
+    if srcSeq ~= nil then
+      table.insert(srcBatch, translator:buildInput(srcSeq))
 
       if withGoldScore then
-        table.insert(goldBatch, translator:buildInput(goldTokens))
+        table.insert(goldBatch, translator:buildInput(goldOutputSeq))
       end
     elseif #srcBatch == 0 then
       break
     end
 
-    if srcTokens == nil or #srcBatch == opt.batch_size then
+    if srcSeq == nil or #srcBatch == opt.batch_size then
       if opt.time then
         timer:resume()
       end

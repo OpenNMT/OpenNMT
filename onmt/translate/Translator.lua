@@ -21,17 +21,31 @@ local options = {
                             then set this to a larger value to consider more.]]}
 }
 
+local audiolib
+local audiotool
+local paths = require('paths')
+
 function Translator.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Translator')
 end
 
 
 function Translator:__init(args)
-  self.opt = args
-  onmt.utils.Cuda.init(self.opt)
+  self.args = args
+  onmt.utils.Cuda.init(self.args)
 
-  _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
-  self.checkpoint = torch.load(self.opt.model)
+  _G.logger:info('Loading \'' .. self.args.model .. '\'...')
+  self.checkpoint = torch.load(self.args.model)
+
+  self.dataType = self.checkpoint.options.data_type or 'bitext'
+  self.modelType = self.checkpoint.options.model_type or 'seq2seq'
+  _G.logger:info('Model %s trained on %s', self.dataType, self.modelType)
+
+  if self.dataType == 'audiotext' then
+    audiolib = require 'audio'
+    audiotool = require 'tools.utils.audiotool'
+    self.audio = audiotool.new(self.checkpoint.options.preprocess)
+  end
 
   self.models = {}
   self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
@@ -45,19 +59,32 @@ function Translator:__init(args)
 
   self.dicts = self.checkpoint.dicts
 
-  if self.opt.phrase_table:len() > 0 then
-    self.phraseTable = onmt.translate.PhraseTable.new(self.opt.phrase_table)
+  if self.args.phrase_table:len() > 0 then
+    self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
 end
 
 function Translator:buildInput(tokens)
-  local words, features = onmt.utils.Features.extract(tokens)
-
   local data = {}
-  data.words = words
+  if self.dataType == 'audiotext' then
+    -- read audio file
+    local wavFile = scpEntry[2]
+    if wavFile:sub(1,1) ~= '/' then
+      -- relative file
+      wavFile = paths.concat(paths.dirname(self.args.src), wavFile)
+    end
+    local saudio, samplerate = audiolib.load(wavFile)
+    local audioTime = saudio:size(1)/samplerate
+    data.vectors = audio:extractFeats(saudio, samplerate)
 
-  if #features > 0 then
-    data.features = features
+  else
+    local words, features = onmt.utils.Features.extract(tokens)
+
+    data.words = words
+
+    if #features > 0 then
+      data.features = features
+    end
   end
 
   return data
@@ -119,7 +146,7 @@ end
 function Translator:buildTargetWords(pred, src, attn)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  if self.opt.replace_unk then
+  if self.args.replace_unk then
     for i = 1, #tokens do
       if tokens[i] == onmt.Constants.UNK_WORD then
         local _, maxIndex = attn[i]:max(1)
@@ -177,8 +204,8 @@ function Translator:translateBatch(batch)
   local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder,
                                                       batch,
                                                       context,
-                                                      self.opt.max_sent_length,
-                                                      self.opt.max_num_unks,
+                                                      self.args.max_sent_length,
+                                                      self.args.max_num_unks,
                                                       encStates,
                                                       self.dicts)
 
@@ -193,7 +220,7 @@ function Translator:translateBatch(batch)
 
   -- Conduct beam search.
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best, self.opt.pre_filter_factor)
+  local results = beamSearcher:search(self.args.beam_size, self.args.n_best, self.args.pre_filter_factor)
 
   local allHyp = {}
   local allFeats = {}
@@ -206,7 +233,7 @@ function Translator:translateBatch(batch)
     local attnBatch = {}
     local scoresBatch = {}
 
-    for n = 1, self.opt.n_best do
+    for n = 1, self.args.n_best do
       local result = results[b][n]
       local tokens = result.tokens
       local score = result.score
@@ -251,7 +278,7 @@ Returns:
 
   * `results` - a batch of tables containing:
     - `goldScore`: if `gold` was given, this is the confidence score
-    - `preds`: an array of `opt.n_best` tables containing:
+    - `preds`: an array of `args.n_best` tables containing:
       - `words`: the table of target words
       - `features`: the table of target features sequences
       - `attention`: the attention vectors of each target word over the source words
@@ -271,7 +298,7 @@ function Translator:translate(src, gold)
       results[b] = {}
 
       results[b].preds = {}
-      for n = 1, self.opt.n_best do
+      for n = 1, self.args.n_best do
         results[b].preds[n] = {}
         results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
         results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
