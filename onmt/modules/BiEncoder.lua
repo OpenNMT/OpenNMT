@@ -101,8 +101,8 @@ function BiEncoder.load(pretrained)
 
   parent.__init(self)
 
-  self.fwd = onmt.Encoder.load(pretrained.modules[1])
-  self.bwd = onmt.Encoder.load(pretrained.modules[2])
+  self.fwd = onmt.SimpleEncoder.load(pretrained.modules[1])
+  self.bwd = onmt.SimpleEncoder.load(pretrained.modules[2])
   self.args = pretrained.args
 
   self:add(self.fwd)

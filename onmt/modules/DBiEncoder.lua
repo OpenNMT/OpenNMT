@@ -54,8 +54,8 @@ function DBiEncoder.load(pretrained)
   local self = torch.factory('onmt.DBiEncoder')()
   parent.__init(self)
 
-  for i=1, #pretrained.modules do
-    self.layers = onmt.Encoder.load(pretrained.modules[i])
+  for i=1, #pretrained.layers do
+    self.layers = onmt.BiEncoder.load(pretrained.layers[i])
   end
 
   self.args = pretrained.args
@@ -66,14 +66,14 @@ end
 
 --[[ Return data to serialize. ]]
 function DBiEncoder:serialize()
-  local modulesData = {}
-  for i = 1, #self.modules do
-    table.insert(modulesData, self.modules[i]:serialize())
+  local layersData = {}
+  for i = 1, #self.layers do
+    table.insert(layersData, self.layers[i]:serialize())
   end
 
   return {
     name = 'DBiEncoder',
-    modules = modulesData,
+    layers = layersData,
     args = self.args
   }
 end
