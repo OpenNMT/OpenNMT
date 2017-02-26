@@ -40,14 +40,13 @@ local function main()
   end
   local dicts = checkpoint.dicts
   local encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder)
-  local decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder) 
+  local decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
   local encoder_embeddings, decoder_embeddings
-  
+
   encoder.network:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
         print(m.net.weight:size(1), dicts.src.words:size())
         if m.net.weight:size(1) == dicts.src.words:size() then
-          
           encoder_embeddings = m.net.weight
         end
       end
@@ -56,21 +55,19 @@ local function main()
   decoder.network:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
         print(m.net.weight:size(1), dicts.tgt.words:size())
-        if m.net.weight:size(1) == dicts.tgt.words:size() then 
+        if m.net.weight:size(1) == dicts.tgt.words:size() then
           decoder_embeddings = m.net.weight
         end
       end
   end)
   write_embeddings(opt.output_dir .. "/src_embeddings.txt", dicts.src.words, encoder_embeddings)
   write_embeddings(opt.output_dir .. "/tgt_embeddings.txt", dicts.tgt.words, decoder_embeddings)
-  
 
-  
   print('... done.')
 
   print('Converting model...')
 
-  
+
 
 end
 
