@@ -288,7 +288,7 @@ function Preprocessor:makeAudioTextData(scpFile, tgtFile, tgtDicts, isValid)
   if self.args.shuffle == 1 then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
-    sizes = onmt.utils.Table.reorder(sizes, perm, true)
+    onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 

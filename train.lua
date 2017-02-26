@@ -73,7 +73,7 @@ local function main()
   validData:setBatchSize(opt.max_batch_size)
 
   if dataset.dataType ~= 'monotext' then
-    local srcVocSize = '-'
+    local srcVocSize
     local srcFeatSize = '-'
     if dataset.dicts.src then
       srcVocSize = dataset.dicts.src.words:size()
@@ -81,7 +81,7 @@ local function main()
     else
       srcVocSize = '*'..dataset.dicts.srcInputSize
     end
-    local tgtVocSize = '-'
+    local tgtVocSize
     local tgtFeatSize = '-'
     if dataset.dicts.tgt then
       tgtVocSize = dataset.dicts.tgt.words:size()
