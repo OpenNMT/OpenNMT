@@ -177,6 +177,7 @@ function SimpleEncoder:forward(batch)
       -- Remember inputs for the backward pass.
       self.inputs[t] = inputs
     end
+
     states = self:net(t):forward(inputs)
 
     -- Make sure it always returns table.
