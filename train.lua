@@ -66,6 +66,9 @@ local function main()
     os.exit(0)
   end
 
+  -- record datatype in the options
+  opt.dataType = dataset.dataType
+
   local trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
