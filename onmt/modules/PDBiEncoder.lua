@@ -60,8 +60,10 @@ function PDBiEncoder.load(pretrained)
   local self = torch.factory('onmt.PDBiEncoder')()
   parent.__init(self)
 
+  self.layers = {}
+
   for i=1, #pretrained.layers do
-    self.layers = onmt.BiEncoder.load(pretrained.layers[i])
+    self.layers[i] = onmt.BiEncoder.load(pretrained.layers[i])
   end
 
   self.args = pretrained.args
