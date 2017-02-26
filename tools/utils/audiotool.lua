@@ -29,9 +29,13 @@ local options = {
 }
 
 function audiotool.declareOpts(cmd)
+  audiotool.loadLibs()
+  cmd:setCmdLineOptions(options, 'Audio')
+end
+
+function audiotool.loadLibs()
   signal = require 'signal'
   audio = require 'audio'
-  cmd:setCmdLineOptions(options, 'Audio')
 end
 
 function audiotool.getModuleOpts(args)

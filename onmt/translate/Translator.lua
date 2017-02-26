@@ -44,6 +44,7 @@ function Translator:__init(args)
   if self.dataType == 'audiotext' then
     audiolib = require 'audio'
     audiotool = require 'tools.utils.audiotool'
+    audiotool.loadLibs()
     self.audio = audiotool.new(self.checkpoint.options.preprocess)
   end
 
@@ -68,14 +69,14 @@ function Translator:buildInput(tokens)
   local data = {}
   if self.dataType == 'audiotext' then
     -- read audio file
-    local wavFile = scpEntry[2]
+    local wavFile = tokens[2]
     if wavFile:sub(1,1) ~= '/' then
       -- relative file
       wavFile = paths.concat(paths.dirname(self.args.src), wavFile)
     end
     local saudio, samplerate = audiolib.load(wavFile)
     local audioTime = saudio:size(1)/samplerate
-    data.vectors = audio:extractFeats(saudio, samplerate)
+    data.vectors = self.audio:extractFeats(saudio, samplerate)
 
   else
     local words, features = onmt.utils.Features.extract(tokens)
@@ -111,18 +112,21 @@ function Translator:buildData(src, gold)
   local index = 1
 
   for b = 1, #src do
-    if #src[b].words == 0 then
+    if src[b].words and #src[b].words == 0 then
       table.insert(ignored, b)
     else
       indexMap[index] = b
       index = index + 1
 
-      table.insert(srcData.words,
+      if self.dicts.src then
+        table.insert(srcData.words,
                    self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD))
-
-      if #self.dicts.src.features > 0 then
-        table.insert(srcData.features,
-                     onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
+        if #self.dicts.src.features > 0 then
+          table.insert(srcData.features,
+                       onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
+        end
+      else
+        table.insert(srcData.words,src[b].vectors)
       end
 
       if gold then
