@@ -5,6 +5,7 @@
 * Training code is now part of the library
 * Add `-fallback_to_cpu` option to continue execution on CPU if GPU can't be used
 * Add standalone script to generate vocabularies
+* Add script to extract word embeddings
 
 ### Fixes and improvements
 
