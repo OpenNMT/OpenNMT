@@ -52,9 +52,60 @@ function SampledDataset:sample(avgPpl)
   end
 
   if self.startedPplSampling then
+
+    local threshold = self.sample_w_ppl_max
+
+    if self.sample_w_ppl_max == -1 then
+      -- use mode (instead of mean) and stdev of samples with ppl>=mode to
+      -- find max ppl to consider (mode + x * stdev). when x is:
+      --      x: 1 ~ 100% - 31.7%/2 of train data are covered (divide by 2 because we cut only one-tail)
+      --      x: 2 ~ 100% - 4.55%/2
+      --      x: 3 ~ 100% - 0.270%/2
+      --      x: 4 ~ 100% - 0.00633%/2
+      --      x: 5 ~ 100% - 0.0000573%/2
+      --      x: 6 ~ 100% - 0.000000197%/2
+      --  (https://en.wikipedia.org/wiki/Standard_deviation)
+      -- we are using mode instead of average, and only samples above mode to calculate stdev, so
+      -- this is not really theoretically valid numbers, but more for emperical uses
+
+      -- find mode
+      local pplRounded = torch.round(self.ppl)
+      local bin = {}
+      for i = 1, pplRounded:size(1) do
+        idx = pplRounded[i]
+        if bin[idx] == nil then
+          bin[idx] = 0
+        end
+        bin[idx] = bin[idx] + 1
+      end
+      local modeIdx = 1
+      for i = 2, #bin do
+        if bin[modeIdx] < bin[i] then
+          modeIdx = i
+        end
+      end
+      local mode = bin[modeIdx]
+
+      -- stdev with mode only using samples with ppl >= mode
+      local sum = 0
+      local cnt = 0
+      for i = 1, #self.ppl do
+        if self.ppl[i] > mode then
+          sum = math.pow(self.ppl[i]-mode, 2)
+          cnt = cnt + 1
+        end
+      end
+      local stdev = math.sqrt(sum/(cnt-1))
+
+      threshold = mode + stdev
+      print('mode: ' .. mode)
+      print('stdev: ' .. stdev)
+      print('threshold: ' .. threshold)
+    end
+
     for i = 1, self.ppl:size(1) do
-      if self.ppl[i] > self.sample_w_ppl_max then
-        -- asign low value to instances with ppl above threshold
+      if self.ppl[i] ~= self.sample_w_ppl_init and self.ppl[i] > threshold then
+        -- asign low value to instances with ppl above threshold (outliers)
         self.samplingProb[i] = 1
       else
         self.samplingProb[i] = self.ppl[i]
