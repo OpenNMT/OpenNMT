@@ -63,21 +63,17 @@ Returns: The raw network clone at timestep t.
   When `evaluate()` has been called, cheat and return t=1.
 ]]
 function Sequencer:net(t)
-  if self.train then
+  if self.train and t then
     -- In train mode, the network has to be cloned to remember intermediate
     -- outputs for each timestep and to allow backpropagation through time.
-    if self.networkClones[t] == nil then
-      local clone = self:_sharedClone()
-      clone:training()
-      self.networkClones[t] = clone
+    while #self.networkClones < t do
+      table.insert(self.networkClones, self:_sharedClone())
     end
     return self.networkClones[t]
+  elseif #self.networkClones > 0 then
+    return self.networkClones[1]
   else
-    if #self.networkClones > 0 then
-      return self.networkClones[1]
-    else
-      return self.network
-    end
+    return self.network
   end
 end
 
@@ -86,7 +82,7 @@ function Sequencer:training()
   parent.training(self)
 
   if #self.networkClones > 0 then
-    -- Only first clone can be used for evaluation.
+    -- Only first clone was used for evaluation.
     self.networkClones[1]:training()
   end
 end
@@ -96,6 +92,7 @@ function Sequencer:evaluate()
   parent.evaluate(self)
 
   if #self.networkClones > 0 then
+    -- We only use the first clone for evaluation.
     self.networkClones[1]:evaluate()
   end
 end
