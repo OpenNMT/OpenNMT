@@ -26,23 +26,6 @@ end
 function Sequencer:_sharedClone()
   local clone = self.network:clone('weight', 'gradWeight', 'bias', 'gradBias')
 
-  -- Manually share word embeddings if they are fixed as they are not declared as parameters.
-  local wordEmb
-
-  self.network:apply(function(m)
-    if m.fix then
-      wordEmb = m
-    end
-  end)
-
-  if wordEmb then
-    clone:apply(function(m)
-      if m.fix then
-        m:share(wordEmb, 'weight')
-      end
-    end)
-  end
-
   -- Share intermediate tensors if defined.
   if self.networkClones[1] then
     local sharedTensors = {}
