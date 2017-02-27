@@ -94,11 +94,15 @@ local function main()
       end
 
       for b = 1, #results do
-        if (#srcBatch[b].words == 0) then
+        if (srcBatch[b].words and #srcBatch[b].words == 0) then
           _G.logger:warning('Line ' .. sentId .. ' is empty.')
           outFile:write('\n')
         else
-          _G.logger:info('SENT %d: %s', sentId, translator:buildOutput(srcBatch[b]))
+          if srcBatch[b].words then
+            _G.logger:info('SENT %d: %s', sentId, translator:buildOutput(srcBatch[b]))
+          else
+            _G.logger:info('AUDIO %d: %s', sentId, srcSeq[2])
+          end
 
           if withGoldScore then
             _G.logger:info('GOLD %d: %s', sentId, translator:buildOutput(goldBatch[b]), results[b].goldScore)

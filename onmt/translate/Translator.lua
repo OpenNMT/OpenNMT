@@ -243,9 +243,11 @@ function Translator:translateBatch(batch)
       table.remove(tokens)
 
       -- Remove unnecessary values from the attention vectors.
-      local size = batch.sourceSize[b]
-      for j = 1, #attn do
-        attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
+      if batch.size > 1 then
+        local size = batch.sourceSize[b]
+        for j = 1, #attn do
+          attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
+        end
       end
 
       table.insert(hypBatch, tokens)
