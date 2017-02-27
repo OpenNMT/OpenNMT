@@ -70,11 +70,6 @@ local function main()
   write_embeddings(opt.output_dir .. "/tgt_embeddings.txt", dicts.tgt.words, decoder_embeddings)
 
   print('... done.')
-
-  print('Converting model...')
-
-
-
 end
 
 main()
