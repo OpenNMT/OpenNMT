@@ -342,9 +342,6 @@ function Decoder:backward(batch, outputs, criterion)
       local curLossSum = 0
       for i=1, pred[1]:size(1) do
         local tmpLoss = criterion:forward({pred[1][i]},{output[1][i]})
-        if indvAvgLoss[i] == nil then
-          indvAvgLoss[i] = 0
-        end
         indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
         curLossSum = curLossSum + tmpLoss
       end
