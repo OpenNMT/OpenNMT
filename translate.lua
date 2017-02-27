@@ -76,7 +76,7 @@ local function main()
       table.insert(srcBatch, translator:buildInput(srcSeq))
 
       if withGoldScore then
-        table.insert(goldBatch, translator:buildInput(goldOutputSeq))
+        table.insert(goldBatch, translator:buildInputGold(goldOutputSeq))
       end
     elseif #srcBatch == 0 then
       break

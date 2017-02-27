@@ -87,6 +87,24 @@ function Translator:buildInput(tokens)
   return data
 end
 
+function Translator:buildInputGold(tokens)
+  local data = {}
+
+  if self.dataType == 'audiotext' then
+    table.remove(tokens, 1)
+  end
+
+  local words, features = onmt.utils.Features.extract(tokens)
+
+  data.words = words
+
+  if #features > 0 then
+    data.features = features
+  end
+
+  return data
+end
+
 function Translator:buildOutput(data)
   return table.concat(onmt.utils.Features.annotate(data.words, data.features), ' ')
 end
