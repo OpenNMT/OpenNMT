@@ -43,21 +43,23 @@ local function main()
   local decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
   local encoder_embeddings, decoder_embeddings
 
-  encoder.network:apply(function(m)
+  encoder:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
         print("Found source embeddings of size " ..  m.net.weight:size(1))
         if m.net.weight:size(1) == dicts.src.words:size() then
           encoder_embeddings = m.net.weight
         end
+        return
       end
   end)
 
-  decoder.network:apply(function(m)
+  decoder:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
         print("Found target embeddings of size " ..  m.net.weight:size(1))
         if m.net.weight:size(1) == dicts.tgt.words:size() then
           decoder_embeddings = m.net.weight
         end
+        return
       end
   end)
 
