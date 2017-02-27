@@ -48,15 +48,12 @@ function Translator:__init(args)
     self.audio = audiotool.new(self.checkpoint.options.preprocess)
   end
 
-  self.models = {}
-  self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
-  self.models.decoder = onmt.Factory.loadDecoder(self.checkpoint.models.decoder)
+  assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
-  self.models.encoder:evaluate()
-  self.models.decoder:evaluate()
+  self.model = onmt.Seq2Seq.load(args, self.checkpoint.models, self.checkpoint.dicts)
+  self.model:evaluate()
 
-  onmt.utils.Cuda.convert(self.models.encoder)
-  onmt.utils.Cuda.convert(self.models.decoder)
+  onmt.utils.Cuda.convert(self.model.models)
 
   self.dicts = self.checkpoint.dicts
 
@@ -125,7 +122,7 @@ function Translator:buildData(src, gold)
                        onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
         end
       else
-        table.insert(srcData.words,src[b].vectors)
+        table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
       end
 
       if gold then
@@ -189,22 +186,22 @@ function Translator:buildTargetFeatures(predFeats)
 end
 
 function Translator:translateBatch(batch)
-  self.models.encoder:maskPadding()
-  self.models.decoder:maskPadding()
+  self.model.models.encoder:maskPadding()
+  self.model.models.decoder:maskPadding()
 
-  local encStates, context = self.models.encoder:forward(batch)
+  local encStates, context = self.model.models.encoder:forward(batch)
 
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
     if batch.size > 1 then
-      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
+      self.model.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
     end
-    goldScore = self.models.decoder:computeScore(batch, encStates, context)
+    goldScore = self.model.models.decoder:computeScore(batch, encStates, context)
   end
 
   -- Specify how to go one step forward.
-  local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder,
+  local advancer = onmt.translate.DecoderAdvancer.new(self.model.models.decoder,
                                                       batch,
                                                       context,
                                                       self.args.max_sent_length,
@@ -293,7 +290,7 @@ function Translator:translate(src, gold)
   local results = {}
 
   if data:batchCount() > 0 then
-    local batch = data:getBatch()
+    local batch = onmt.utils.Cuda.convert(data:getBatch())
 
     local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
 
