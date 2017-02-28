@@ -21,6 +21,7 @@ local options = {
   {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
                      {enum={0,1}}},
   {'-residual', false, [[Add residual connections between RNN layers.]]},
+  {'-attention', 'global', [[Attention type: global|cgate. Global is the typical one, cgate is global with context gate]]},
   {'-brnn', false, [[Use a bidirectional encoder]]},
   {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],
                      {enum={'concat','sum'}}},

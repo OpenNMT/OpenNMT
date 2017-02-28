@@ -12,7 +12,7 @@ end
 function Generator:_buildGenerator(rnnSize, outputSize)
   return nn.Sequential()
     :add(nn.Linear(rnnSize, outputSize))
-    :add(nn:LogSoftMax())
+    :add(cudnn:LogSoftMax())
 end
 
 function Generator:updateOutput(input)

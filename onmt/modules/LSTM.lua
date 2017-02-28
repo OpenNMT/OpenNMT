@@ -126,7 +126,7 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   })
 
   -- Gated cells form the output.
-  local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
+  local nextH = nn.CMulTable()({outGate, cudnn.Tanh()(nextC)})
 
   return nn.gModule(inputs, {nextC, nextH})
 end

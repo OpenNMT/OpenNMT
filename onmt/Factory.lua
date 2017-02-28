@@ -162,8 +162,14 @@ function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
     RNN = onmt.GRU
   end
   local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+  
+  if opt.attention == 'cgate' then
+    if verbose then
+      _G.logger:info(' * using context gate attention')
+    end
+  end
 
-  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
+  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.attention, opt.input_feed == 1)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
@@ -175,7 +181,6 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
 
   return Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 end
-
 function Factory.loadDecoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)

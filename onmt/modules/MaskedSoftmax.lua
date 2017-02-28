@@ -29,7 +29,7 @@ end
 function MaskedSoftmax:_buildModel(sourceSizes, sourceLength)
   local numSents = sourceSizes:size(1)
   local input = nn.Identity()()
-  local softmax = nn.SoftMax()(input) -- numSents x State.sourceLength
+  local softmax = cudnn.SoftMax()(input) -- numSents x State.sourceLength
 
   -- Now we are masking the part of the output we don't need
   local tab = nn.SplitTable(1)(softmax) -- numSents x { State.sourceLength }

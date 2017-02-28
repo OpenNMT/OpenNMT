@@ -13,7 +13,11 @@ require('onmt.modules.LSTM')
 require('onmt.modules.MaskedSoftmax')
 require('onmt.modules.WordEmbedding')
 require('onmt.modules.FeaturesEmbedding')
+
+-- Attention modules
 require('onmt.modules.GlobalAttention')
+require('onmt.modules.ContextGateAttention')
+
 
 require('onmt.modules.Generator')
 require('onmt.modules.FeaturesGenerator')

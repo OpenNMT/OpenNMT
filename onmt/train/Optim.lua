@@ -86,6 +86,8 @@ function Optim:__init(args, optimStates)
       self.optimStates = {}
     end
   end
+  
+  self.args.start_decay_at = args.start_decay_at
 end
 
 function Optim:setOptimStates(num)
@@ -139,7 +141,7 @@ end
 
 -- decay learning rate if val perf does not improve or we hit the startDecayAt limit
 function Optim:updateLearningRate(score, epoch)
-  if self.args.optim == 'sgd' then
+  if self.args.optim == 'sgd' or self.args.optim == 'adam' then
     self.valPerf[#self.valPerf + 1] = score
 
     if epoch >= self.args.start_decay_at then
@@ -167,5 +169,7 @@ end
 function Optim:getStates()
   return self.optimStates
 end
+
+print " ** Optim modified to reduce learning rate with Adam"
 
 return Optim

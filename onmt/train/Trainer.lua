@@ -27,7 +27,7 @@ local options = {
   {'-save_every',              0 ,    [[Save intermediate models every this many iterations within an epoch.
                                             If = 0, will not save models within an epoch. ]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-report_every',            50,    [[Print stats every this many iterations within an epoch.]],
+  {'-report_every',            100,    [[Print stats every this many iterations within an epoch.]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-async_parallel',          false, [[Use asynchronous parallelism training.]]},
   {'-async_parallel_minbatch', 1000,  [[For async parallel computing, minimal number of batches before being parallel.]],

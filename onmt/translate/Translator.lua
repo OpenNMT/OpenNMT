@@ -4,6 +4,7 @@ local options = {
   {'-model', '', [[Path to model .t7 file]], {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
   {'-beam_size', 5, [[Beam size]]},
   {'-batch_size', 30, [[Batch size]]},
+  {'-word_pen', 0, [[Word Penalty during decoding]]},
   {'-max_sent_length', 250, [[Maximum output sentence length.]]},
   {'-replace_unk', false, [[Replace the generated UNK tokens with the source token that
                           had the highest attention weight. If phrase_table is provided,
@@ -180,7 +181,7 @@ function Translator:translateBatch(batch)
                                                       self.opt.max_sent_length,
                                                       self.opt.max_num_unks,
                                                       encStates,
-                                                      self.dicts)
+                                                      self.dicts, self.opt.word_pen)
 
   -- Save memory by only keeping track of necessary elements in the states.
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.

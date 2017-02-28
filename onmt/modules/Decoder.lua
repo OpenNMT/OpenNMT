@@ -26,7 +26,7 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
+function Decoder:__init(inputNetwork, rnn, generator, attention, inputFeed)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -41,6 +41,10 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
+  
+  
+  -- Attention type
+  self.args.attention = attention
 
   parent.__init(self, self:_buildModel())
 
@@ -130,8 +134,10 @@ function Decoder:_buildModel()
   end
 
   -- Compute the input network.
-  local input = self.inputNet(x)
-
+  local embedding = self.inputNet(x)
+  
+  
+  local input = embedding
   -- If set, concatenate previous decoder output.
   if self.args.inputFeed then
     input = nn.JoinTable(2)({input, inputFeed})
@@ -145,9 +151,20 @@ function Decoder:_buildModel()
   outputs = { outputs:split(self.args.numEffectiveLayers) }
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = onmt.GlobalAttention(self.args.rnnSize)
+  
+  local attnLayer
+  if self.args.attention == 'global' then
+	attnLayer = onmt.GlobalAttention(self.args.rnnSize)
+  elseif self.args.attention == 'cgate' then
+	attnLayer = onmt.ContextGateAttention(self.args.rnnSize)
+  end
+  
   attnLayer.name = 'decoderAttn'
-  local attnOutput = attnLayer({outputs[#outputs], context})
+  
+  local attnInput = {outputs[#outputs], context}
+  
+  
+  local attnOutput = attnLayer(attnInput)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
