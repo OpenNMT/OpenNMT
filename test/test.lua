@@ -54,6 +54,63 @@ end
 
 tester:add(stringTest)
 
+local filereaderTest = torch.TestSuite()
+
+function filereaderTest.readText()
+  local readerA = onmt.utils.FileReader.new("test/files/a")
+  local file = {}
+  while true do
+    local line, idx = readerA:next()
+    if not line then
+      break
+    end
+    tester:eq(idx, nil)
+    table.insert(file, line)
+  end
+  tester:eq(#file, 4)
+end
+
+function filereaderTest.readTextIdx()
+  local readerA = onmt.utils.FileReader.new("test/files/bidx", true)
+  local idxs = {}
+  while true do
+    local line, idx = readerA:next()
+    if not line then
+      break
+    end
+    tester:ne(idx, nil)
+    idxs[idx]=line
+  end
+  local nkey = 0
+  for _,_ in pairs(idxs) do
+    nkey = nkey + 1
+  end
+  tester:eq(nkey, 3)
+end
+
+function filereaderTest.readFeatIdx()
+  local readerA = onmt.utils.FileReader.new("test/files/feat", true, true)
+  local idxs = {}
+  while true do
+    local line, idx = readerA:next()
+    if not line then
+      break
+    end
+    tester:ne(idx, nil)
+    idxs[idx]=line
+  end
+  local nkey = 0
+  for _,_ in pairs(idxs) do
+    nkey = nkey + 1
+  end
+  tester:eq(nkey, 2)
+  tester:eq(#(idxs.jean[1]), 3)
+  tester:eq(#(idxs.jean[2]), 2)
+  tester:eq(#(idxs.jacques), 1)
+end
+
+tester:add(filereaderTest)
+
 local profileTest = torch.TestSuite()
 
 function profileTest.profiling()
