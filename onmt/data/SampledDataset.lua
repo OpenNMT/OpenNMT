@@ -72,24 +72,23 @@ function SampledDataset:sample(avgPpl)
       local pplRounded = torch.round(self.ppl)
       local bin = {}
       for i = 1, pplRounded:size(1) do
-        idx = pplRounded[i]
+        local idx = pplRounded[i]
         if bin[idx] == nil then
           bin[idx] = 0
         end
         bin[idx] = bin[idx] + 1
       end
-      local modeIdx = 1
-      for i = 2, #bin do
-        if bin[modeIdx] < bin[i] then
-          modeIdx = i
+      local mode = nil
+      for key,value in pairs(bin) do
+        if mode == nil or bin[mode] < value then
+          mode = key
         end
       end
-      local mode = bin[modeIdx]
 
       -- stdev with mode only using samples with ppl >= mode
       local sum = 0
       local cnt = 0
-      for i = 1, #self.ppl do
+      for i = 1, self.ppl:size(1) do
         if self.ppl[i] > mode then
           sum = math.pow(self.ppl[i]-mode, 2)
           cnt = cnt + 1
@@ -98,9 +97,10 @@ function SampledDataset:sample(avgPpl)
       local stdev = math.sqrt(sum/(cnt-1))
 
       threshold = mode + stdev
-      print('mode: ' .. mode)
-      print('stdev: ' .. stdev)
-      print('threshold: ' .. threshold)
+
+      _G.logger:info('Sampler mode: ' .. mode)
+      _G.logger:info('Sampler stdev: ' .. stdev)
+      _G.logger:info('Sampler threshold: ' .. threshold)
     end
 
     for i = 1, self.ppl:size(1) do
