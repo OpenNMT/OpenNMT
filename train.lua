@@ -73,8 +73,8 @@ local function main()
   local trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
-  trainData:setBatchSize(opt.max_batch_size)
-  validData:setBatchSize(opt.max_batch_size)
+  trainData:setBatchSize(opt.max_batch_size, opt.same_size_batch)
+  validData:setBatchSize(opt.max_batch_size, opt.same_size_batch)
 
   if dataset.dataType ~= 'monotext' then
     local srcVocSize
