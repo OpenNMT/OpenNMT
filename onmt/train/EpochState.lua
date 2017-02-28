@@ -33,13 +33,19 @@ end
 
 --[[ Log to status stdout. ]]
 function EpochState:log(iteration)
+  local ppl = math.exp(self.trainLoss / self.targetWords)
+  local tokpersec = self.sourceWords / self.timer:time().real
   _G.logger:info('Epoch %d ; Iteration %d/%d ; Learning rate %.4f ; Source tokens/s %d ; Perplexity %.2f',
-                 self.epoch,
-                 iteration or self.iterations, self.numIterations,
-                 self.learningRate,
-                 self.sourceWords / self.timer:time().real,
-                 math.exp(self.trainLoss / self.targetWords))
-
+                  self.epoch,
+                  iteration or self.iterations, self.numIterations,
+                  self.learningRate,
+                  tokpersec,
+                  ppl)
+  if _G.crayon_logger.on == true then
+     _G.crayon_logger.exp:add_scalar_value("learning_rate", self.learningRate)
+     _G.crayon_logger.exp:add_scalar_value("perplexity", ppl)
+     _G.crayon_logger.exp:add_scalar_value("token_per_sec", tokpersec)
+  end
   self:reset()
 end
 
