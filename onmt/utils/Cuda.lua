@@ -2,6 +2,7 @@ local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
 
 local Cuda = {
   fp16 = false,
+  cudnn = nil,
   gpuIds = {},
   activated = false
 }
@@ -11,6 +12,7 @@ local options = {
                                  {valid=ExtendedCmdLine.listUInt}},
   {'-fallback_to_cpu', false, [[If GPU can't be use, rollback on the CPU.]]},
   {'-fp16', false, [[Use half-precision float on GPU.]]},
+  {'-cudnn', false, [[Use CuDNN backend when available]]},
   {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
 }
 
@@ -34,6 +36,16 @@ function Cuda.init(opt, masterGPU)
       require('cutorch')
       require('cunn')
       Cuda.fp16 = opt.fp16
+
+      if opt.cudnn then
+        -- First check cudnn is available.
+        local ret
+        ret, Cuda.cudnn = pcall(require, 'cudnn')
+        if not ret then
+          _G.logger:warning("CuDNN library not found; ignoring the option")
+          Cuda.cudnn = nil
+        end
+      end
 
       if masterGPU == nil then
         masterGPU = 1
@@ -131,6 +143,10 @@ function Cuda.freeMemory()
     return freeMemory
   end
   return 0
+end
+
+function Cuda.withCudnnSupport()
+  return Cuda.cudnn
 end
 
 return Cuda
