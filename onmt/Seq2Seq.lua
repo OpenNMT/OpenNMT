@@ -67,7 +67,7 @@ end
 -- Returns expected dataMode or check that parameter is compatible
 function Seq2Seq.dataType(dm)
   if dm then
-    return dm == 'bitext' or dm == 'audiotext'
+    return dm == 'bitext' or dm == 'feattext'
   end
   return 'bitext'
 end

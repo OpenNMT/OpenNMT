@@ -29,10 +29,10 @@ function FileReader:next()
     end
   else
     local p = 1
-    while p<=#line and line:sub(p,1) == ' ' do
+    while p<=#line and line:sub(p,p) == ' ' do
       p = p + 1
     end
-    assert(p <= #line and line:sub(p,1) == '[', 'Invalid feature start line: '..line)
+    assert(p <= #line and line:sub(p,p) == '[', 'Invalid feature start line (pos '..p..'): '..line)
     while true do
       line = self.file:read()
       local row = {}

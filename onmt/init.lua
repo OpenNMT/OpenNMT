@@ -15,6 +15,4 @@ onmt.Seq2Seq = require('onmt.Seq2Seq')
 onmt.LanguageModel = require('onmt.LanguageModel')
 onmt.ModelSelector = require('onmt.ModelSelector')
 
-onmt.audiotool = require('tools.utils.audiotool')
-
 return onmt

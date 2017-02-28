@@ -9,7 +9,7 @@ local dataType = cmd.getArgument(arg, '-data_type') or 'bitext'
 local options = {
   {'-data_type',         'bitext',    [[Type of text to preprocess. Use 'monotext' for monolingual text.
                                         This option impacts all options choices.]],
-                                    {enum={'bitext', 'monotext', 'audiotext'}}},
+                                    {enum={'bitext', 'monotext', 'feattext'}}},
   {'-save_data',               '',    [[Output file for the prepared data]],
                                     {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
 }
@@ -29,8 +29,11 @@ onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
-local function isValid(sent, maxSeqLength)
-  return #sent > 0 and #sent <= maxSeqLength
+local function isValid(seq, maxSeqLength)
+  if torch.isTensor(seq) then
+    return seq:size(1) > 0 and seq:size(1) <= maxSeqLength
+  end
+  return #seq > 0 and #seq <= maxSeqLength
 end
 
 local function main()
@@ -50,7 +53,7 @@ local function main()
   data.dicts = {}
 
   _G.logger:info('Preparing vocabulary...')
-  if dataType ~= 'audiotext' then
+  if dataType ~= 'feattext' then
     local src_file = opt.train_src
     if dataType == 'monotext' then
       src_file = opt.train
@@ -64,16 +67,9 @@ local function main()
   end
   if dataType ~= 'monotext' then
     local tgt_file = opt.train_tgt
-    local filterText
-    if dataType == 'audiotext' then
-      tgt_file = opt.kaldi_data .. '/train/text.tok'
-      filterText = function(s)
-        if not s then
-          return nil
-        end
-        local p = s:find(" ")
-        return s:sub(p+1, #s)
-      end
+    local idxFile
+    if dataType == 'feattext' then
+      idxFile = true
     end
     data.dicts.tgt = Vocabulary.init('target',
                                      tgt_file,
@@ -81,18 +77,17 @@ local function main()
                                      opt.tgt_vocab_size,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.tgt_seq_length) end,
-                                     filterText)
+                                     idxFile)
   end
 
   _G.logger:info('Preparing training data...')
   data.train = {}
   if dataType == 'monotext' then
     data.train.src = Preprocessor:makeMonolingualData(opt.train, data.dicts.src, isValid)
-  elseif dataType == 'audiotext' then
-    data.train.src, data.train.tgt = Preprocessor:makeAudioTextData(opt.kaldi_data..'/train/wav.scp',
-                                                                    opt.kaldi_data..'/train/text.tok',
-                                                                    data.dicts.tgt,
-                                                                    isValid)
+  elseif dataType == 'feattext' then
+    data.train.src, data.train.tgt = Preprocessor:makeFeatTextData(opt.train_src, opt.train_tgt,
+                                                                   data.dicts.tgt,
+                                                                   isValid)
     -- record the size of the input layer
     data.dicts.srcInputSize = data.train.src.vectors[1]:size(2)
   else
@@ -107,9 +102,8 @@ local function main()
   data.valid = {}
   if dataType == 'monotext' then
     data.valid.src = Preprocessor:makeMonolingualData(opt.valid, data.dicts.src, isValid)
-  elseif dataType == 'audiotext' then
-    data.valid.src, data.valid.tgt = Preprocessor:makeAudioTextData(opt.kaldi_data..'/dev/wav.scp',
-                                                                    opt.kaldi_data..'/dev/text.tok',
+  elseif dataType == 'feattext' then
+    data.valid.src, data.valid.tgt = Preprocessor:makeFeatTextData(opt.valid_src, opt.valid_tgt,
                                                                     data.dicts.tgt,
                                                                     isValid)
   else
@@ -127,7 +121,7 @@ local function main()
     if opt.features_vocabs_prefix:len() == 0 then
       Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data)
     end
-  elseif dataType == 'audiotext' then
+  elseif dataType == 'feattext' then
     if opt.tgt_vocab:len() == 0 then
       Vocabulary.save('target', data.dicts.tgt.words, opt.save_data .. '.tgt.dict')
     end
