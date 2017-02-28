@@ -16,7 +16,8 @@ function SampledDataset:__init(srcData, tgtData, samplingSize, sample_w_ppl, sam
     self.tgtFeatures = tgtData.features
   end
 
-  assert(samplingSize <= #self.src, "sampling size should be less than the number of instances in the train data")
+--  assert(samplingSize <= #self.src, "sampling size should be less than the number of instances in the train data")
+--  with samplaing with replacement (which we always do have with AliasMultinomial), above condition can be ignored
 
   self.samplingSize = samplingSize
   self.sample_w_ppl = sample_w_ppl
@@ -55,10 +56,10 @@ function SampledDataset:sample(avgPpl)
 
     local threshold = self.sample_w_ppl_max
 
-    if self.sample_w_ppl_max == -1 then
+    if self.sample_w_ppl_max < 0 then
       -- use mode (instead of mean) and stdev of samples with ppl>=mode to
       -- find max ppl to consider (mode + x * stdev). when x is:
-      --      x: 1 ~ 100% - 31.7%/2 of train data are covered (divide by 2 because we cut only one-tail)
+      --      x: 1 ~ 100% - 31.7%/2 of train data are not included (divide by 2 because we cut only one-tail)
       --      x: 2 ~ 100% - 4.55%/2
       --      x: 3 ~ 100% - 0.270%/2
       --      x: 4 ~ 100% - 0.00633%/2
@@ -67,6 +68,8 @@ function SampledDataset:sample(avgPpl)
       --  (https://en.wikipedia.org/wiki/Standard_deviation)
       -- we are using mode instead of average, and only samples above mode to calculate stdev, so
       -- this is not really theoretically valid numbers, but more for emperical uses
+
+      local x = math.abs(self.sample_w_ppl_max)
 
       -- find mode
       local pplRounded = torch.round(self.ppl)
@@ -98,7 +101,7 @@ function SampledDataset:sample(avgPpl)
       end
       local stdev = math.sqrt(sum/(cnt-1))
 
-      threshold = mode + stdev
+      threshold = mode + x * stdev
 
       _G.logger:info('Sampler count: ' .. cnt)
       _G.logger:info('Sampler mode: ' .. mode)
