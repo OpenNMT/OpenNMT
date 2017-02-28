@@ -377,17 +377,17 @@
         },
         {
             "location": "/code/modules/onmt+modules+MaskedSoftmax/",
-            "text": "onmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nFor instance there may be a batch of instances where A is padding.\n\n\nAXXXAA\nAXXAAA\nAXXXXX\n\n\n\nMaskedSoftmax ensures that no probability is given to the A's.\n\n\nFor this example, \nbeamSize\n is 3, \nsourceLength\n is {3, 2, 5}.\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(sourceSizes, sourceLength)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsourceSizes\n -  the true lengths (with left padding).\n\n\nsourceLength\n - the max length in the batch \nbeamSize\n.",
+            "text": "onmt.MaskedSoftmax\n\n\nA batched-softmax wrapper to mask the probabilities of padding.\n\n\nFor instance there may be a batch of instances where A is padding.\n\n\nXXXXAA\nXXAAAA\nXXXXXX\n\n\n\nMaskedSoftmax ensures that no probability is given to the A's.\n\n\nFor this example, \nsourceSizes\n is {4, 2, 6} and \nsourceLength\n is 6.\n\n\n[src]\n\n\n\n\nonmt.MaskedSoftmax(sourceSizes, sourceLength)\n\n\nA nn-style module that applies a softmax on input that gives no weight to the left padding.\n\n\nParameters:\n\n\n\n\nsourceSizes\n -  the true lengths (with left padding).\n\n\nsourceLength\n - the length of the batch.",
             "title": "onmt+modules+MaskedSoftmax"
         },
         {
             "location": "/code/modules/onmt+modules+MaskedSoftmax/#onmtmaskedsoftmax",
-            "text": "A batched-softmax wrapper to mask the probabilities of padding.  For instance there may be a batch of instances where A is padding.  AXXXAA\nAXXAAA\nAXXXXX  MaskedSoftmax ensures that no probability is given to the A's.  For this example,  beamSize  is 3,  sourceLength  is {3, 2, 5}.  [src]",
+            "text": "A batched-softmax wrapper to mask the probabilities of padding.  For instance there may be a batch of instances where A is padding.  XXXXAA\nXXAAAA\nXXXXXX  MaskedSoftmax ensures that no probability is given to the A's.  For this example,  sourceSizes  is {4, 2, 6} and  sourceLength  is 6.  [src]",
             "title": "onmt.MaskedSoftmax"
         },
         {
             "location": "/code/modules/onmt+modules+MaskedSoftmax/#onmtmaskedsoftmaxsourcesizes-sourcelength",
-            "text": "A nn-style module that applies a softmax on input that gives no weight to the left padding.  Parameters:   sourceSizes  -  the true lengths (with left padding).  sourceLength  - the max length in the batch  beamSize .",
+            "text": "A nn-style module that applies a softmax on input that gives no weight to the left padding.  Parameters:   sourceSizes  -  the true lengths (with left padding).  sourceLength  - the length of the batch.",
             "title": "onmt.MaskedSoftmax(sourceSizes, sourceLength)"
         },
         {

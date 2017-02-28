@@ -399,20 +399,20 @@
 <h2 id="onmtmaskedsoftmax">onmt.MaskedSoftmax</h2>
 <p>A batched-softmax wrapper to mask the probabilities of padding.</p>
 <p>For instance there may be a batch of instances where A is padding.</p>
-<pre><code>AXXXAA
-AXXAAA
-AXXXXX
+<pre><code>XXXXAA
+XXAAAA
+XXXXXX
 </code></pre>
 <p>MaskedSoftmax ensures that no probability is given to the A's.</p>
-<p>For this example, <code>beamSize</code> is 3, <code>sourceLength</code> is {3, 2, 5}.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/4c541ada1afe3ff30ab9fc9927bb6752d919834d/onmt/modules/MaskedSoftmax.lua#L25">[src]</a>
+<p>For this example, <code>sourceSizes</code> is {4, 2, 6} and <code>sourceLength</code> is 6.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/ec0d50830525b6290c6f248f65b16754665977e2/onmt/modules/MaskedSoftmax.lua#L25">[src]</a>
 <a name="onmt.MaskedSoftmax"></a></p>
 <h3 id="onmtmaskedsoftmaxsourcesizes-sourcelength">onmt.MaskedSoftmax(sourceSizes, sourceLength)</h3>
 <p>A nn-style module that applies a softmax on input that gives no weight to the left padding.</p>
 <p>Parameters:</p>
 <ul>
 <li><code>sourceSizes</code> -  the true lengths (with left padding).</li>
-<li><code>sourceLength</code> - the max length in the batch <code>beamSize</code>.</li>
+<li><code>sourceLength</code> - the length of the batch.</li>
 </ul>
               
             </div>
