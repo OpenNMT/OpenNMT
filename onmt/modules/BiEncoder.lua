@@ -46,7 +46,7 @@ local options = {
 }
 
 function BiEncoder.declareOpts(cmd)
-  onmt.SimpleEncoder.declareOpts(cmd)
+  onmt.Encoder.declareOpts(cmd)
   cmd:setCmdLineOptions(options)
 end
 
@@ -76,8 +76,8 @@ function BiEncoder:__init(args, input)
 
   self.args.rnn_size = args.rnn_size
 
-  self.fwd = onmt.SimpleEncoder.new(args, input)
-  self.bwd = onmt.SimpleEncoder.new(args, input:clone('weight', 'bias', 'gradWeight', 'gradBias'))
+  self.fwd = onmt.Encoder.new(args, input)
+  self.bwd = onmt.Encoder.new(args, input:clone('weight', 'bias', 'gradWeight', 'gradBias'))
 
   self.args.numEffectiveLayers = self.fwd.args.numEffectiveLayers
 
@@ -101,8 +101,8 @@ function BiEncoder.load(pretrained)
 
   parent.__init(self)
 
-  self.fwd = onmt.SimpleEncoder.load(pretrained.modules[1])
-  self.bwd = onmt.SimpleEncoder.load(pretrained.modules[2])
+  self.fwd = onmt.Encoder.load(pretrained.modules[1])
+  self.bwd = onmt.Encoder.load(pretrained.modules[2])
   self.args = pretrained.args
 
   self:add(self.fwd)

@@ -1,4 +1,4 @@
---[[ SimpleEncoder is a unidirectional Sequencer used for the source language.
+--[[ Encoder is a unidirectional Sequencer used for the source language.
 
     h_1 => h_2 => h_3 => ... => h_n
      |      |      |             |
@@ -12,10 +12,10 @@
 
 Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
-local SimpleEncoder, parent = torch.class('onmt.SimpleEncoder', 'onmt.Sequencer')
+local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 local options = {
-  {'-layers', 2,         [[Number of layers in the RNN SimpleEncoder/decoder]],
+  {'-layers', 2,         [[Number of layers in the RNN Encoder/decoder]],
                             {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-rnn_size', 500,     [[Size of RNN hidden states]],
                             {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
@@ -25,18 +25,18 @@ local options = {
   {'-residual', false, [[Add residual connections between RNN layers.]]}
 }
 
-function SimpleEncoder.declareOpts(cmd)
+function Encoder.declareOpts(cmd)
   cmd:setCmdLineOptions(options)
 end
 
---[[ Construct an SimpleEncoder layer.
+--[[ Construct an Encoder layer.
 
 Parameters:
 
   * `inputNetwork` - input module.
   * `rnn` - recurrent module.
 ]]
-function SimpleEncoder:__init(args, inputNetwork)
+function Encoder:__init(args, inputNetwork)
   local RNN = onmt.LSTM
   if args.rnn_type == 'GRU' then
     RNN = onmt.GRU
@@ -56,9 +56,9 @@ function SimpleEncoder:__init(args, inputNetwork)
   self:resetPreallocation()
 end
 
---[[ Return a new SimpleEncoder using the serialized data `pretrained`. ]]
-function SimpleEncoder.load(pretrained)
-  local self = torch.factory('onmt.SimpleEncoder')()
+--[[ Return a new Encoder using the serialized data `pretrained`. ]]
+function Encoder.load(pretrained)
+  local self = torch.factory('onmt.Encoder')()
 
   self.args = pretrained.args
   parent.__init(self, pretrained.modules[1])
@@ -69,15 +69,15 @@ function SimpleEncoder.load(pretrained)
 end
 
 --[[ Return data to serialize. ]]
-function SimpleEncoder:serialize()
+function Encoder:serialize()
   return {
-    name = 'SimpleEncoder',
+    name = 'Encoder',
     modules = self.modules,
     args = self.args
   }
 end
 
-function SimpleEncoder:resetPreallocation()
+function Encoder:resetPreallocation()
   -- Prototype for preallocated hidden and cell states.
   self.stateProto = torch.Tensor()
 
@@ -88,11 +88,11 @@ function SimpleEncoder:resetPreallocation()
   self.contextProto = torch.Tensor()
 end
 
-function SimpleEncoder:maskPadding()
+function Encoder:maskPadding()
   self.maskPad = true
 end
 
---[[ Build one time-step of an SimpleEncoder
+--[[ Build one time-step of an Encoder
 
 Returns: An nn-graph mapping
 
@@ -102,7 +102,7 @@ Returns: An nn-graph mapping
   Where $$c^l$$ and $$h^l$$ are the hidden and cell states at each layer,
   $$x_t$$ is a sparse word to lookup.
 --]]
-function SimpleEncoder:_buildModel()
+function Encoder:_buildModel()
   local inputs = {}
   local states = {}
 
@@ -137,7 +137,7 @@ Returns:
   1. - final hidden states
   2. - context matrix H
 --]]
-function SimpleEncoder:forward(batch)
+function Encoder:forward(batch)
 
   -- TODO: Change `batch` to `input`.
 
@@ -219,7 +219,7 @@ end
 
   Returns: `gradInputs` of input network.
 --]]
-function SimpleEncoder:backward(batch, gradStatesOutput, gradContextOutput)
+function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
   -- TODO: change this to (input, gradOutput) as in nngraph.
   local outputSize = self.args.rnnSize
   if self.gradOutputsProto == nil then
@@ -244,7 +244,7 @@ function SimpleEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
-    -- Prepare next SimpleEncoder output gradients.
+    -- Prepare next Encoder output gradients.
     for i = 1, #gradStatesInput do
       gradStatesInput[i]:copy(gradInput[i])
     end
