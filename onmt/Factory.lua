@@ -173,7 +173,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator)
   end
   local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
 
-  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1, --[[indvLoss]] opt.sample_w_ppl)
+  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)

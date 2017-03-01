@@ -74,6 +74,16 @@ function Seq2Seq.dataType()
   return 'bitext'
 end
 
+function Seq2Seq:returnIndividualLosses(enable)
+  if torch.getmetatable(torch.type(self.models.decoder))['returnIndividualLosses'] == nil then
+    _G.logger:info('Current Seq2Seq model does not support training with sample_w_ppl option')
+    return false
+  else
+    self.models.decoder:returnIndividualLosses(enable)
+  end
+  return true
+end
+
 function Seq2Seq:enableProfiling()
   _G.profiler.addHook(self.models.encoder, 'encoder')
   _G.profiler.addHook(self.models.decoder, 'decoder')

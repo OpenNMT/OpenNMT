@@ -26,7 +26,7 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed, indvLoss)
+function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -41,7 +41,6 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed, indvLoss)
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
-  self.args.indvLoss = indvLoss
 
   parent.__init(self, self:_buildModel())
 
@@ -51,6 +50,10 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed, indvLoss)
   self:add(self.generator)
 
   self:resetPreallocation()
+end
+
+function Decoder:returnIndividualLosses(enable)
+  self.indvLoss = enable
 end
 
 --[[ Return a new Decoder using the serialized data `pretrained`. ]]
@@ -338,7 +341,7 @@ function Decoder:backward(batch, outputs, criterion)
     local pred = self.generator:forward(outputs[t])
     local output = batch:getTargetOutput(t)
 
-    if self.args.indvLoss then
+    if self.indvLoss then
       local curLossSum = 0
       for i=1, pred[1]:size(1) do
         local tmpLoss = criterion:forward({pred[1][i]},{output[1][i]})
@@ -378,7 +381,7 @@ function Decoder:backward(batch, outputs, criterion)
     end
   end
   
-  if self.args.indvLoss then
+  if self.indvLoss then
     indvAvgLoss:div(batch.targetLength)
   end
 

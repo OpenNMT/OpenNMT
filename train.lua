@@ -128,6 +128,13 @@ local function main()
     end
   end)
 
+  if opt.sample_w_ppl then
+    if torch.getmetatable(torch.type(model))['returnIndividualLosses'] == nil or model:returnIndividualLosses(true) == false then
+      _G.logger:info('Current model does not support training with sample_w_ppl option; The option is disabled.')
+      opt.sample_w_ppl = false
+    end
+  end
+
   -- Define optimization method.
   local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
   local optim = onmt.train.Optim.new(opt, optimStates)
