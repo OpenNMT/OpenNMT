@@ -16,9 +16,6 @@ function SampledDataset:__init(srcData, tgtData, samplingSize, sample_w_ppl, sam
     self.tgtFeatures = tgtData.features
   end
 
---  assert(samplingSize <= #self.src, "sampling size should be less than the number of instances in the train data")
---  with samplaing with replacement (which we always do have with AliasMultinomial), above condition can be ignored
-
   self.samplingSize = samplingSize
   self.sample_w_ppl = sample_w_ppl
   self.sample_w_ppl_init = sample_w_ppl_init
