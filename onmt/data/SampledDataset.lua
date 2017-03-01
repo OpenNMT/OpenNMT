@@ -136,7 +136,7 @@ function SampledDataset:setPpl(batchIdx, ppl)
   assert(self:batchCount() >= batchIdx, "Batch idx out of range: " .. batchIdx .. "/" .. self:batchCount())
   local rangeStart = self.maxBatchSize * (batchIdx-1) + 1
   local rangeEnd = math.min(self.maxBatchSize * batchIdx, self:getNumSampled())
-  self.ppl[{rangeStart, rangeEnd}] = ppl
+  self.ppl[{{rangeStart, rangeEnd}}] = ppl
 end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]
