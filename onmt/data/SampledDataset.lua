@@ -34,7 +34,7 @@ function SampledDataset:__init(srcData, tgtData, samplingSize, sample_w_ppl, sam
 
   self.ppl = torch.Tensor(#self.src)
   self.ppl:fill(self.sample_w_ppl_init)
-  self.isSampled = torch.zeros(#self.src)
+  self.sampled = nil
 end
 
 --[[ initiate sampling ]]
@@ -124,43 +124,9 @@ function SampledDataset:sample(avgPpl)
 -- https://github.com/nicholas-leonard/torchx/blob/master/AliasMultinomial.lua
   local sampler = torch.AliasMultinomial(self.samplingProb)
   _G.logger:info('Created sampler...')
-  local sampled = torch.LongTensor(self.samplingSize)
-  sampled = sampler:batchdraw(sampled)
-  _G.logger:info('Sampled...')
-
-  self.isSampled:zero()
-  for i=1, sampled:size(1) do
-    self.isSampled[sampled[i]] = 1
-  end
-
-  -- Prepares batches in terms of range within self.src and self.tgt.
-  self.batchRange = {}
-  local offset = 0
-  local batchSize = 1
-  local sourceLength = 0
-
-  for i = 1, #self.src do
-    if self.isSampled[i] > 0 then
-      -- Set up the offsets to make same source size batches of the
-      -- correct size.
-      if batchSize == self.maxBatchSize or self.src[i]:size(1) ~= sourceLength then
-        if offset > 1 then
-          table.insert(self.batchRange, { ["begin"] = offset, ["end"] = i - 1 })
---          print('Batch ' .. #self.batchRange .. ' (' .. offset .. ', ' .. (i-1) .. '): ' .. batchSize)
-        end
-
-        offset = i
-        batchSize = 1
-        sourceLength = self.src[i]:size(1)
-        targetLength = 0
-      else
-        batchSize = batchSize + 1
-      end
-    end
-  end
-  -- Catch last batch.
-  table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src })
---  print('Batch ' .. #self.batchRange .. ' (' .. offset .. ', ' .. #self.src .. '): ' .. batchSize)
+  self.sampled = torch.LongTensor(self.samplingSize)
+  self.sampled = sampler:batchdraw(self.sampled)
+  _G.logger:info('Sampled ' .. self.sampled:size(1) .. ' instances')
 end
 
 --[[ get ppl ]]
@@ -170,18 +136,10 @@ end
 
 --[[ set ppl ]]
 function SampledDataset:setPpl(batchIdx, ppl)
-
-  -- assert batchIdx <= #self.batchRange
-  local rangeStart = self.batchRange[batchIdx]["begin"]
-  local rangeEnd = self.batchRange[batchIdx]["end"]
-
-  local pplIdx = 1
-  for i = rangeStart, rangeEnd do
-    if self.isSampled[i] > 0 then
-      self.ppl[i] = ppl[pplIdx]
-      pplIdx = pplIdx + 1
-    end
-  end
+  assert(self:batchCount() >= batchIdx, "Batch idx out of range: " .. batchIdx .. "/" .. self:batchCount())
+  local rangeStart = self.maxBatchSize * (batchIdx-1) + 1
+  local rangeEnd = math.min(self.maxBatchSize * batchIdx, self:getNumSampled())
+  self.ppl[{rangeStart, rangeEnd}] = ppl
 end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]
@@ -205,19 +163,19 @@ end
 
 --[[ Return number of sampled instances. ]]
 function SampledDataset:getNumSampled()
-  return torch.sum(self.isSampled)
+  return self.sampled:size(1)
 end
 
 --[[ Return number of batches. ]]
 function SampledDataset:batchCount()
-  if self.batchRange == nil then
+  if self.sampled == nil then
     if #self.src > 0 then
       return 1
     else
       return 0
     end
   end
-  return #self.batchRange
+  return math.ceil(self.sampled:size(1)/self.maxBatchSize)
 end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
@@ -226,12 +184,14 @@ function SampledDataset:getBatch(idx)
     return nil
   end
 
-  if idx == nil or self.batchRange == nil then
+  if idx == nil or self.sampled == nil then
     return onmt.data.Batch.new(self.src, self.srcFeatures, self.tgt, self.tgtFeatures)
   end
 
-  local rangeStart = self.batchRange[idx]["begin"]
-  local rangeEnd = self.batchRange[idx]["end"]
+  assert(self:batchCount() >= idx, "Batch idx out of range: " .. idx .. "/" .. self:batchCount())
+
+  local rangeStart = self.maxBatchSize * (idx-1) + 1
+  local rangeEnd = math.min(self.maxBatchSize * idx, self:getNumSampled())
 
   local src = {}
   local tgt
@@ -244,18 +204,19 @@ function SampledDataset:getBatch(idx)
   local tgtFeatures = {}
 
   for i = rangeStart, rangeEnd do
-    if self.isSampled[i] > 0 then
-      table.insert(src, self.src[i])
 
-      if self.srcFeatures[i] then
-        table.insert(srcFeatures, self.srcFeatures[i])
-      end
+    local idx = self.sampled[i]
 
-      if self.tgt ~= nil then
-        table.insert(tgt, self.tgt[i])
-        if self.tgtFeatures[i] then
-          table.insert(tgtFeatures, self.tgtFeatures[i])
-        end
+    table.insert(src, self.src[idx])
+
+    if self.srcFeatures[idx] then
+      table.insert(srcFeatures, self.srcFeatures[idx])
+    end
+
+    if self.tgt ~= nil then
+      table.insert(tgt, self.tgt[idx])
+      if self.tgtFeatures[idx] then
+        table.insert(tgtFeatures, self.tgtFeatures[idx])
       end
     end
   end
