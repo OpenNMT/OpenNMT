@@ -111,6 +111,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     end
 
     self.args.start_iteration = 1
+    local needLog = false
 
     if not self.args.async_parallel then
       -- Synchronous training.
@@ -118,6 +119,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
         local batches = {}
         local totalSize = 0
+        needLog = true
 
         for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount() - i + 1) do
           local batchIdx = batchOrder[i + j - 1]
@@ -176,6 +178,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
         if iter % self.args.report_every == 0 then
           epochState:log(iter)
+          needLog = false
         end
         if self.args.save_every > 0 and iter % self.args.save_every == 0 then
           checkpoint:saveIteration(iter, epochState, batchOrder, true)
@@ -198,6 +201,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       counter:set(startI)
 
       while counter:get() <= trainData:batchCount() do
+        needLog = true
         local startCounter = counter:get()
 
         onmt.utils.Parallel.launch(function(idx)
@@ -259,6 +263,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
         if iter % self.args.report_every == 0 then
           epochState:log()
+          needLog = false
         end
         if iter % self.args.save_every == 0 then
           checkpoint:saveIteration(iter, epochState, batchOrder, true)
@@ -272,7 +277,9 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       avgPpl = epochState:getAvgPpl()
     end
 
-    epochState:log()
+    if needLog then
+      epochState:log()
+    end
 
     if self.options.sample then
       if self.options.sample_w_ppl then

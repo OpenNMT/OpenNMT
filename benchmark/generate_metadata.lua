@@ -76,7 +76,7 @@ local function main()
            getLayerName(checkpoint.models.decoder.modules[2], '.*[Ss]oftMax.*'))
   addField('oov', 'OOV Replacement', opt.oov)
   addField('optimization', 'Optimization', checkpoint.options.optim)
-  addField('training', 'Training specific', extractEpoch(opt.model))
+  addField('training', 'Training specific', extractEpoch(opt.model) .. ' epochs')
 
   local json = io.open(opt.save_data, 'w')
   local first = true

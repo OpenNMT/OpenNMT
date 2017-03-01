@@ -24,6 +24,18 @@ local function convert(key, val, ref)
   return new
 end
 
+local function wrapIndent(text, size, pad)
+  local p = 0
+  while true do
+    local q = text:find(" ", size+p)
+    if not q then
+      return text
+    end
+    text = text:sub(1, q) .. "\n" ..pad .. text:sub(q+1, #text)
+    p = q+2+#pad
+  end
+end
+
 ---------------------------------------------------------------------------------
 
 local ExtendedCmdLine, parent, path
@@ -62,10 +74,10 @@ function ExtendedCmdLine:__init(script)
   parent.__init(self)
 
   self:text('')
-  self:option('-h', false, 'this help')
-  self:option('-md', false, 'Dump help in Markdown format')
-  self:option('-config', '', 'read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
-  self:option('-save_config', '', 'save options from config file.')
+  self:option('-h', false, 'This help.')
+  self:option('-md', false, 'Dump help in Markdown format.')
+  self:option('-config', '', 'Read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
+  self:option('-save_config', '', 'Save options from config file.')
 
 end
 
@@ -136,14 +148,15 @@ function ExtendedCmdLine:help(arg, doMd)
         io.write('  ')
         if option.default ~= nil then -- It is an option.
           io.write(onmt.utils.String.pad(option.key, optsz))
+          local msg = ''
           if option.meta and option.meta.enum then
-            io.write(' (' .. table.concat(option.meta.enum, ', ') .. ')')
+            msg = '(' .. table.concat(option.meta.enum, ', ') .. ') '
           end
-          option.help = option.help:gsub('\n   *', '\n' .. padMultiLine .. '   ')
-          if option.help then
-            io.write(' ' .. option.help)
+          msg = msg .. option.help:gsub('\n', ' ')
+          if type(option.default) ~= "boolean" and option.default ~= '' then
+            msg = msg .. ' Default [' .. tostring(option.default) .. ']'
           end
-          io.write(' [' .. tostring(option.default) .. ']')
+          io.write(' ' .. wrapIndent(msg:gsub('  *', ' '),60,padMultiLine..'     '))
         else -- It is an argument.
           io.write(onmt.utils.String.pad('<' .. onmt.utils.String.stripHyphens(option.key) .. '>', optsz))
           if option.help then
@@ -160,8 +173,13 @@ function ExtendedCmdLine:help(arg, doMd)
 end
 
 function ExtendedCmdLine:option(key, default, help, _meta_)
- parent.option(self, key, default, help)
- self.options[key].meta = _meta_
+  for _,v in ipairs(self.helplines) do
+    if v.key == key then
+      return
+    end
+  end
+  parent.option(self, key, default, help)
+  self.options[key].meta = _meta_
 end
 
 --[[ Override options with option values set in file `filename`. ]]
@@ -353,6 +371,18 @@ end
 -- Check non set or if the corresponding file exists.
 function ExtendedCmdLine.fileNullOrExists(v)
   return v == '' or ExtendedCmdLine.fileExists(v)
+end
+
+-- Check it is a directory and some file exists
+function ExtendedCmdLine.dirStructure(files)
+  return function(v)
+    for _,f in ipairs(files) do
+      if not path.exists(v.."/"..f) then
+        return false
+      end
+    end
+    return true
+  end
 end
 
 return ExtendedCmdLine

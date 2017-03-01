@@ -83,7 +83,7 @@ end
 
 --[[ Generate target sequences from labels. ]]
 local function generateTarget(dicts, tgt, cdata)
-  check('source', dicts, tgt)
+  check('target', dicts, tgt)
 
   local tgtId
   if cdata then

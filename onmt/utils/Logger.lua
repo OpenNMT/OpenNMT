@@ -4,7 +4,7 @@ local Logger = torch.class('Logger')
 
 local options = {
   {'-log_file',     '',     [[Outputs logs to a file under this path instead of stdout.]]},
-  {'-disable_logs', false,  [[If = true, output nothing.]]},
+  {'-disable_logs', false,  [[When activated, output nothing.]]},
   {'-log_level',    'INFO', [[Outputs logs at this level and above.]],
                             {enum={'DEBUG','INFO','WARNING','ERROR'}}}
 }

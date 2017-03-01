@@ -12,45 +12,45 @@ local Preprocessor = torch.class('Preprocessor')
 local tds = require('tds')
 
 local bitextOptions = {
-  {'-train_src',               '',     [[Path to the training source data]],
+  {'-train_src',               '',     [[Path to the training source data.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-train_tgt',               '',     [[Path to the training target data]],
+  {'-train_tgt',               '',     [[Path to the training target data.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-valid_src',               '',     [[Path to the validation source data]],
+  {'-valid_src',               '',     [[Path to the validation source data.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-valid_tgt',               '',     [[Path to the validation target data]],
+  {'-valid_tgt',               '',     [[Path to the validation target data.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-src_vocab',               '',     [[Path to an existing source vocabulary]],
+  {'-src_vocab',               '',     [[Path to an existing source vocabulary.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-tgt_vocab',               '',     [[Path to an existing target vocabulary]],
+  {'-tgt_vocab',               '',     [[Path to an existing target vocabulary.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-src_vocab_size',          '50000',[[Comma-separated list of source vocabularies size: word[,feat1,feat2,...].]],
                                        {valid=onmt.utils.ExtendedCmdLine.listUInt}},
   {'-tgt_vocab_size',          '50000',[[Comma-separated list of target vocabularies size: word[,feat1,feat2,...].]],
                                        {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-src_seq_length',          50,     [[Maximum source sequence length]],
+  {'-src_seq_length',          50,     [[Maximum source sequence length.]],
                                        {valid=onmt.utils.ExtendedCmdLine.isUInt}},
-  {'-tgt_seq_length',          50,     [[Maximum target sequence length]],
+  {'-tgt_seq_length',          50,     [[Maximum target sequence length.]],
                                        {valid=onmt.utils.ExtendedCmdLine.isUInt}}
 }
 
 local monotextOptions = {
-  {'-train',                   '',     [[Path to the training source data]],
+  {'-train',                   '',     [[Path to the training source data.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-valid',                   '',     [[Path to the validation source data]],
+  {'-valid',                   '',     [[Path to the validation source data.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-vocab',                   '',     [[Path to an existing source vocabulary]],
+  {'-vocab',                   '',     [[Path to an existing source vocabulary.]],
                                        {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
   {'-vocab_size',             '50000', [[Comma-separated list of source vocabularies size: word[,feat1,feat2,...].]],
                                        {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-seq_length',              50,     [[Maximum source sequence length]],
-                                       {valid=onmt.utils.ExtendedCmdLine.isUInt}}
+  {'-seq_length',              50,     [[Maximum source sequence length.]],
+                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
 }
 
 local commonOptions = {
-  {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-shuffle',                1,       [[Shuffle data]]}
+  {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies.]]},
+  {'-shuffle',                1,       [[If 1, shuffle data.]],
+                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} }
 }
 
 function Preprocessor.declareOpts(cmd, mode)
