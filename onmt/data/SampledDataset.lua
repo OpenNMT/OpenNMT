@@ -203,6 +203,11 @@ function SampledDataset:setBatchSize(maxBatchSize)
   self:sample()
 end
 
+--[[ Return number of sampled instances. ]]
+function SampledDataset:getNumSampled()
+  return torch.sum(self.isSampled)
+end
+
 --[[ Return number of batches. ]]
 function SampledDataset:batchCount()
   if self.batchRange == nil then

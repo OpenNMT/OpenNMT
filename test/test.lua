@@ -303,6 +303,9 @@ tester:add(beamSearchTest)
 
 local SampledDatasetTest = torch.TestSuite()
 function SampledDatasetTest.Sample()
+
+  _G.logger = onmt.utils.Logger.new()
+
   local dataSize = 1234
   local samplingSize = 100
   local batchSize = 16
@@ -328,7 +331,11 @@ function SampledDatasetTest.Sample()
   dataset:setBatchSize(batchSize)
 
   tester:eq(dataset:getBatch(1).size, 16)
-  tester:eq(dataset:batchCount(), 7)
+
+  local numSampled = dataset:getNumSampled()
+  local numBatch = math.ceil(numSampled / batchSize)
+
+  tester:eq(dataset:batchCount(), numBatch)
   for i = 1, dataset:batchCount() do
     dataset:getBatch(i)
   end
@@ -337,8 +344,11 @@ function SampledDatasetTest.Sample()
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_begin, sample_w_ppl_max)
   dataset:setBatchSize(batchSize)
 
+  numSampled = dataset:getNumSampled()
+  numBatch = math.ceil(numSampled / batchSize)
+
   tester:eq(dataset:getBatch(1).size, 16)
-  tester:eq(dataset:batchCount(), 7)
+  tester:eq(dataset:batchCount(), numBatch)
 
   for i = 1, dataset:batchCount() do
     dataset:getBatch(i)
