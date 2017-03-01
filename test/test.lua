@@ -304,7 +304,7 @@ tester:add(beamSearchTest)
 local SampledDatasetTest = torch.TestSuite()
 function SampledDatasetTest.Sample()
 
-  _G.logger = onmt.utils.Logger.new()
+  _G.logger = onmt.utils.Logger.new(nil, true, nil)
 
   local dataSize = 1234
   local samplingSize = 100
