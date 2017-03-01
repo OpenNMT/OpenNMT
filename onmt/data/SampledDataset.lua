@@ -35,18 +35,18 @@ function SampledDataset:__init(srcData, tgtData, samplingSize, sample_w_ppl, sam
 end
 
 --[[ initiate sampling ]]
-function SampledDataset:sample(avgPpl)
+function SampledDataset:sample()
   _G.logger:info('Sampling...')
 
   -- populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init
-  if avgPpl == nil and self.sample_w_ppl then
-    avgPpl = torch.sum(self.ppl)
-    avgPpl = avgPpl/self.ppl:size(1)
-  end
 
-  if self.sample_w_ppl and not self.startedPplSampling and avgPpl < self.sample_w_ppl_init then
-    _G.logger:info('Beginning to sample with ppl as probability distribution...')
-    self.startedPplSampling = true
+  if self.sample_w_ppl and not self.startedPplSampling then
+    local avgPpl = torch.sum(self.ppl)
+    avgPpl = avgPpl/self.ppl:size(1)
+    if avgPpl < self.sample_w_ppl_init then
+      _G.logger:info('Beginning to sample with ppl as probability distribution...')
+      self.startedPplSampling = true
+    end
   end
 
   if self.startedPplSampling then

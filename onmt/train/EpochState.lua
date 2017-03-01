@@ -47,7 +47,4 @@ function EpochState:getTime()
   return self.globalTimer:time().real
 end
 
-function EpochState:getAvgPpl()
-  return math.exp(self.trainLoss / self.targetWords)
-end
 return EpochState

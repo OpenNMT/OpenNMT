@@ -271,22 +271,12 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       end
     end
 
-    -- if needed, get avgPpl from epochState before log() since log() will reset internal stats
-    local avgPpl
-    if self.options.sample and self.options.sample_w_ppl then
-      avgPpl = epochState:getAvgPpl()
-    end
-
     if needLog then
       epochState:log()
     end
 
     if self.options.sample then
-      if self.options.sample_w_ppl then
-        trainData:sample(avgPpl)
-      else
-        trainData:sample()
-      end
+      trainData:sample()
     end
 
     return epochState, epochProfiler:dump()
