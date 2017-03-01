@@ -17,7 +17,7 @@ local options = {
 
 function LanguageModel.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Language Model')
-  onmt.SimpleEncoder.declareOpts(cmd)
+  onmt.Encoder.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 

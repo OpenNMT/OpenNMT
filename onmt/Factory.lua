@@ -123,7 +123,7 @@ function Factory.buildEncoder(opt, inputNetwork)
   else
     _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
                    opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
-    return onmt.SimpleEncoder.new(opt, inputNetwork)
+    return onmt.Encoder.new(opt, inputNetwork)
   end
 
 end
@@ -146,8 +146,8 @@ function Factory.loadEncoder(pretrained, clone)
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
-  if pretrained.name == 'SimpleEncoder' then
-    return onmt.SimpleEncoder.load(pretrained)
+  if pretrained.name == 'Encoder' then
+    return onmt.Encoder.load(pretrained)
   elseif pretrained.name == 'BiEncoder' then
     return onmt.BiEncoder.load(pretrained)
   elseif pretrained.name == 'PDBiEncoder' then
@@ -161,7 +161,7 @@ function Factory.loadEncoder(pretrained, clone)
   if brnn then
     return onmt.BiEncoder.load(pretrained)
   else
-    return onmt.SimpleEncoder.load(pretrained)
+    return onmt.Encoder.load(pretrained)
   end
 end
 

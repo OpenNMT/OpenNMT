@@ -28,7 +28,7 @@ local options = {
 
 function Seq2Seq.declareOpts(cmd)
   cmd:setCmdLineOptions(options, Seq2Seq.modelName())
-  onmt.SimpleEncoder.declareOpts(cmd)
+  onmt.Encoder.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 
