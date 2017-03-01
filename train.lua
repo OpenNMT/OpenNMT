@@ -15,7 +15,7 @@ local options = {
   {'-sample',              0, [[Number of instances to sample from train data in each epoch]]},
   {'-sample_w_ppl',    false, [[use ppl as probability distribution when sampling]]},
   {'-sample_w_ppl_init',  15, [[start perplexity-based sampling when average train perplexity per batch falls below this value]]},
-  {'-sample_w_ppl_max', -1.5, [[when greater than 0, max ppl value allowed (instances with perplexity above this value will be considered as noise and ignored);
+  {'-sample_w_ppl_max', -1.5, [[when greater than 0, instances with perplexity above this value will be considered as noise and ignored;
                                 when less than 0, mode + (-sample_w_ppl_max) * stdev will be used as threshold]]},
 
   {'-save_model', '', [[Model filename (the model will be saved as
