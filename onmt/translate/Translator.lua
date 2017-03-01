@@ -21,10 +21,6 @@ local options = {
                             then set this to a larger value to consider more.]]}
 }
 
-local audiolib
-local audiotool
-local paths = require('paths')
-
 function Translator.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Translator')
 end
@@ -40,13 +36,6 @@ function Translator:__init(args)
   self.dataType = self.checkpoint.options.data_type or 'bitext'
   self.modelType = self.checkpoint.options.model_type or 'seq2seq'
   _G.logger:info('Model %s trained on %s', self.dataType, self.modelType)
-
-  if self.dataType == 'audiotext' then
-    audiolib = require 'audio'
-    audiotool = require 'tools.utils.audiotool'
-    audiotool.loadLibs()
-    self.audio = audiotool.new(self.checkpoint.options.preprocess)
-  end
 
   assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
