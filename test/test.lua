@@ -310,7 +310,7 @@ function SampledDatasetTest.Sample()
   local samplingSize = 100
   local batchSize = 16
   local sample_w_ppl = false
-  local sample_w_ppl_begin = 100
+  local sample_w_ppl_init = 100
   local sample_w_ppl_max = 1000
 
   local tds = require('tds')
@@ -327,32 +327,52 @@ function SampledDatasetTest.Sample()
 
   tester:eq(#srcData.words, dataSize)
 
-  local dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_begin, sample_w_ppl_max)
+  local dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_init, sample_w_ppl_max)
   dataset:setBatchSize(batchSize)
-
-  tester:eq(dataset:getBatch(1).size, 16)
 
   local numSampled = dataset:getNumSampled()
   local numBatch = math.ceil(numSampled / batchSize)
 
+  tester:eq(dataset:getBatch(1).size, 16)
+  tester:eq(dataset:getNumSampled(), samplingSize)
   tester:eq(dataset:batchCount(), numBatch)
   for i = 1, dataset:batchCount() do
     dataset:getBatch(i)
   end
 
   sample_w_ppl = true
-  dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_begin, sample_w_ppl_max)
+  dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_init, sample_w_ppl_max)
   dataset:setBatchSize(batchSize)
 
   numSampled = dataset:getNumSampled()
   numBatch = math.ceil(numSampled / batchSize)
 
   tester:eq(dataset:getBatch(1).size, 16)
+  tester:eq(dataset:getNumSampled(), samplingSize)
   tester:eq(dataset:batchCount(), numBatch)
 
   for i = 1, dataset:batchCount() do
     dataset:getBatch(i)
   end
+
+  -- oversampling
+  samplingSize = 2000
+  sample_w_ppl = false
+
+  dataset = onmt.data.SampledDataset.new(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_init, sample_w_ppl_max)
+  dataset:setBatchSize(batchSize)
+
+  numSampled = dataset:getNumSampled()
+  numBatch = math.ceil(numSampled / batchSize)
+
+  tester:eq(dataset:getBatch(1).size, 16)
+  tester:eq(dataset:getNumSampled(), samplingSize)
+  tester:eq(dataset:batchCount(), numBatch)
+
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+
 end
 tester:add(SampledDatasetTest)
 
