@@ -62,7 +62,7 @@ function Vocabulary.make(filename, validFunc, idxFile)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, featuresVocabsFiles, validFunc, idxFile)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, idxFile)
   local wordVocab
   local featuresVocabs = {}
   local numFeatures = countFeatures(dataFile, idxFile)
@@ -111,35 +111,31 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, featuresVocabsFil
       table.insert(originalSizes, genFeaturesVocabs[i]:size())
     end
 
-    local newSizes
-    if type(vocabSize) == 'string' then
-      newSizes = onmt.utils.String.split(vocabSize, ',')
-      for i = 1, #newSizes do
-        newSizes[i] = tonumber(newSizes[i])
-      end
-    else
-      newSizes = { vocabSize }
+    local newSizes = onmt.utils.String.split(vocabSize, ',')
+    local minFrequency = onmt.utils.String.split(wordsMinFrequency, ',')
+
+    for i = 1, 1 + #genFeaturesVocabs do
+      newSizes[i] = (newSizes[i] and tonumber(newSizes[i])) or 0
+      minFrequency[i] = (minFrequency[i] and tonumber(minFrequency[i])) or 0
     end
 
     if wordVocab == nil then
-      wordVocab = genWordVocab:prune(newSizes[1])
+      if minFrequency[1] > 0 then
+        wordVocab = genWordVocab:pruneByMinFrequency(minFrequency[1])
+      elseif newSizes[1] > 0 then
+        wordVocab = genWordVocab:prune(newSizes[1])
+      end
+
       _G.logger:info('Created word dictionary of size '
                        .. wordVocab:size() .. ' (pruned from ' .. originalSizes[1] .. ')')
     end
 
     if #featuresVocabs == 0 then
       for i = 1, #genFeaturesVocabs do
-        local maxFeatSize
-        if i + 1 > #newSizes then
-          maxFeatSize = 0
-        else
-          maxFeatSize = newSizes[i + 1]
-        end
-
-        if maxFeatSize > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:prune(maxFeatSize)
-        else
-          featuresVocabs[i] = genFeaturesVocabs[i]
+        if minFrequency[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequencys(minFrequency[i + 1])
+        elseif newSizes[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:prune(newSizes[i + 1])
         end
 
         _G.logger:info('Created feature ' .. i .. ' dictionary of size '
