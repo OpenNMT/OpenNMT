@@ -50,6 +50,7 @@ local function translateMessage(translator, lines)
     local err
     local tokens
     local BPE = require ('tools.utils.BPE')
+    timer = torch.Timer()
     if opt.bpe_model ~= '' then
        bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
     end
@@ -67,13 +68,14 @@ local function translateMessage(translator, lines)
     for word in srcTokenized[1]:gmatch'([^%s]+)' do
       table.insert(srcTokens, word)
     end
+    print('it took: ' .. timer:time().real .. 'seconds to tokenize')
 
     -- Currently just a single batch.
     table.insert(batch, translator:buildInput(srcTokens))
-
+    timer = torch.Timer()
   -- Translate
   local results = translator:translate(batch)
-
+    print('it took: ' .. timer:time().real .. 'seconds to translate')
   -- Return the nbest translations for each in the batch.
   local translations = {}
     local ret = {}
@@ -130,7 +132,7 @@ server:add_resource("translator", {
          print(req)
          local translate = translateMessage(translator, req)
          print("sending response: ")
-         print(translate)
+--         print(translate)
          return restserver.response():status(200):entity(translate)
       end,
    },
