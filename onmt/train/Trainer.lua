@@ -255,7 +255,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     end
 
     if needLog then
-      epochState:log()
+      epochState:log(numIterations)
     end
 
     return epochState, epochProfiler:dump()
