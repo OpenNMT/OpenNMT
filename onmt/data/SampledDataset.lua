@@ -176,19 +176,19 @@ function SampledDataset:batchCount()
 end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
-function SampledDataset:getBatch(idx)
+function SampledDataset:getBatch(batchIdx)
   if #self.src == 0 then
     return nil
   end
 
-  if idx == nil or self.sampled == nil then
+  if batchIdx == nil or self.sampled == nil then
     return onmt.data.Batch.new(self.src, self.srcFeatures, self.tgt, self.tgtFeatures)
   end
 
-  assert(self:batchCount() >= idx, "Batch idx out of range: " .. idx .. "/" .. self:batchCount())
+  assert(self:batchCount() >= batchIdx, "Batch idx out of range: " .. batchIdx .. "/" .. self:batchCount())
 
-  local rangeStart = self.maxBatchSize * (idx-1) + 1
-  local rangeEnd = math.min(self.maxBatchSize * idx, self:getNumSampled())
+  local rangeStart = self.maxBatchSize * (batchIdx-1) + 1
+  local rangeEnd = math.min(self.maxBatchSize * batchIdx, self:getNumSampled())
 
   local src = {}
   local tgt
@@ -202,18 +202,18 @@ function SampledDataset:getBatch(idx)
 
   for i = rangeStart, rangeEnd do
 
-    local idx = self.sampled[i]
+    local sampleIdx = self.sampled[i]
 
-    table.insert(src, self.src[idx])
+    table.insert(src, self.src[sampleIdx])
 
-    if self.srcFeatures[idx] then
-      table.insert(srcFeatures, self.srcFeatures[idx])
+    if self.srcFeatures[sampleIdx] then
+      table.insert(srcFeatures, self.srcFeatures[sampleIdx])
     end
 
     if self.tgt ~= nil then
-      table.insert(tgt, self.tgt[idx])
-      if self.tgtFeatures[idx] then
-        table.insert(tgtFeatures, self.tgtFeatures[idx])
+      table.insert(tgt, self.tgt[sampleIdx])
+      if self.tgtFeatures[sampleIdx] then
+        table.insert(tgtFeatures, self.tgtFeatures[sampleIdx])
       end
     end
   end
