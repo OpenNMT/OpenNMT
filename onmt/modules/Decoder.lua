@@ -342,13 +342,19 @@ function Decoder:backward(batch, outputs, criterion)
     local output = batch:getTargetOutput(t)
 
     if self.indvLoss then
-      local curLossSum = 0
       for i=1, pred[1]:size(1) do
-        local tmpLoss = criterion:forward({pred[1][i]},{output[1][i]})
-        indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
-        curLossSum = curLossSum + tmpLoss
+        if t <= batch.targetSize[i] then
+          local tmpPred = {}
+          local tmpOutput = {}
+          for j = 1, #pred do
+            table.insert(tmpPred, pred[j][{{i},{}}])
+            table.insert(tmpOutput, output[j][{{i}}])
+          end
+          local tmpLoss = criterion:forward(tmpPred,tmpOutput)
+          indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
+          loss = loss + tmpLoss
+        end
       end
-      loss = loss + curLossSum
     else
       loss = loss + criterion:forward(pred, output)
     end
@@ -380,9 +386,9 @@ function Decoder:backward(batch, outputs, criterion)
       gradStatesInput[i]:copy(gradInput[i])
     end
   end
-  
+
   if self.indvLoss then
-    indvAvgLoss:div(batch.targetLength)
+    indvAvgLoss = torch.cdiv(indvAvgLoss, batch.targetSize:double())
   end
 
   return gradStatesInput, gradContextInput, loss, indvAvgLoss
