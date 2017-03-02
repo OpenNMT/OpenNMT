@@ -1,5 +1,13 @@
 local Memory = {}
 
+local options = {
+  {'-disable_mem_optimization', false, [[Disable sharing of internal buffers between clones for visualization or development.]]}
+}
+
+function Memory.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+end
+
 --[[ Optimize memory usage of Neural Machine Translation.
 
 Parameters:
@@ -42,11 +50,6 @@ function Memory.optimize(model, batch, verbose)
   -- Restore batch to be transparent for the calling code.
   batch.sourceLength = realSizes.sourceLength
   batch.targetLength = realSizes.targetLength
-end
-
-function Memory.declareOpts(cmd)
-  cmd:option('-disable_mem_optimization', false, [[Disable sharing internal of internal buffers between clones - which is in general safe,
-                                                   except if you want to look inside clones for visualization purpose for instance.]])
 end
 
 return Memory
