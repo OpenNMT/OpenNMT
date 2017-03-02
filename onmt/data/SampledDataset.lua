@@ -66,15 +66,14 @@ function SampledDataset:needIndividualLosses()
   return self.sample_w_ppl
 end
 
---[[ initiate sampling ]]
+--[[ Initiate sampling. ]]
 function SampledDataset:sample()
   _G.logger:info('Sampling...')
 
-  -- populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init
-
+  -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init.
   if self.sample_w_ppl and not self.startedPplSampling then
     local avgPpl = torch.sum(self.ppl)
-    avgPpl = avgPpl/self.ppl:size(1)
+    avgPpl = avgPpl / self.ppl:size(1)
     if avgPpl < self.sample_w_ppl_init then
       _G.logger:info('Beginning to sample with ppl as probability distribution...')
       self.startedPplSampling = true
@@ -82,11 +81,10 @@ function SampledDataset:sample()
   end
 
   if self.startedPplSampling then
-
     local threshold = self.sample_w_ppl_max
 
     if self.sample_w_ppl_max < 0 then
-      -- use mode (instead of mean) and stdev of samples with ppl>=mode to
+      -- Use mode (instead of mean) and stdev of samples with ppl >= mode to
       -- find max ppl to consider (mode + x * stdev). when x is:
       --      x: 1 ~ 100% - 31.7%/2 of train data are not included (divide by 2 because we cut only one-tail)
       --      x: 2 ~ 100% - 4.55%/2
@@ -95,12 +93,12 @@ function SampledDataset:sample()
       --      x: 5 ~ 100% - 0.0000573%/2
       --      x: 6 ~ 100% - 0.000000197%/2
       --  (https://en.wikipedia.org/wiki/Standard_deviation)
-      -- we are using mode instead of average, and only samples above mode to calculate stdev, so
-      -- this is not really theoretically valid numbers, but more for emperical uses
+      -- We are using mode instead of average, and only samples above mode to calculate stdev, so
+      -- this is not really theoretically valid numbers, but more for emperical uses.
 
       local x = math.abs(self.sample_w_ppl_max)
 
-      -- find mode
+      -- Find mode.
       local pplRounded = torch.round(self.ppl)
       local bin = {}
       for i = 1, pplRounded:size(1) do
@@ -113,7 +111,7 @@ function SampledDataset:sample()
         end
       end
       local mode = nil
-      for key,value in pairs(bin) do
+      for key, value in pairs(bin) do
         if mode == nil or bin[mode] < value then
           mode = key
         end
@@ -124,11 +122,11 @@ function SampledDataset:sample()
       local cnt = 0
       for i = 1, self.ppl:size(1) do
         if self.ppl[i] > mode and self.ppl[i] ~= self.sample_w_ppl_init then
-          sum = math.pow(self.ppl[i]-mode, 2)
+          sum = math.pow(self.ppl[i] - mode, 2)
           cnt = cnt + 1
         end
       end
-      local stdev = math.sqrt(sum/(cnt-1))
+      local stdev = math.sqrt(sum / (cnt - 1))
 
       threshold = mode + x * stdev
 
@@ -140,7 +138,7 @@ function SampledDataset:sample()
 
     for i = 1, self.ppl:size(1) do
       if self.ppl[i] ~= self.sample_w_ppl_init and self.ppl[i] > threshold then
-        -- asign low value to instances with ppl above threshold (outliers)
+        -- Assign low value to instances with ppl above threshold (outliers).
         self.samplingProb[i] = 1
       else
         self.samplingProb[i] = self.ppl[i]
@@ -154,7 +152,7 @@ function SampledDataset:sample()
   self.sampled = sampler:batchdraw(self.sampled)
 
   self.sampledCnt:zero()
-  for i=1, self.sampled:size(1) do
+  for i = 1, self.sampled:size(1) do
     self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
   end
 
@@ -170,10 +168,15 @@ function SampledDataset:sample()
     for j = 1, self.sampledCnt[i] do
       if batchSize == self.maxBatchSize or self.src[i]:size(1) ~= sourceLength then
         if offset > 0 then
-          local batchEnd = (j==1) and i - 1 or i
-          local sampleCntEnd = (j==1) and self.sampledCnt[i-1] or j - 1
-          table.insert(self.batchRange, { ["begin"] = offset, ["end"] = batchEnd, ["sampleCntBegin"] = sampleCntBegin, ["sampleCntEnd"] = sampleCntEnd })
-          sampleCntBegin = (j==1) and 1 or j
+          local batchEnd = (j == 1) and i - 1 or i
+          local sampleCntEnd = (j == 1) and self.sampledCnt[i - 1] or j - 1
+          table.insert(self.batchRange, {
+            ["begin"] = offset,
+            ["end"] = batchEnd,
+            ["sampleCntBegin"] = sampleCntBegin,
+            ["sampleCntEnd"] = sampleCntEnd
+          })
+          sampleCntBegin = (j == 1) and 1 or j
         end
         offset = i
         batchSize = 1
@@ -185,18 +188,23 @@ function SampledDataset:sample()
   end
   -- Catch last batch.
   if offset < #self.src then
-    table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src, ["sampleCntBegin"] = sampleCntBegin, ["sampleCntEnd"] = self.sampledCnt[#self.src] })
+    table.insert(self.batchRange, {
+      ["begin"] = offset,
+      ["end"] = #self.src,
+      ["sampleCntBegin"] = sampleCntBegin,
+      ["sampleCntEnd"] = self.sampledCnt[#self.src]
+    })
   end
 
   _G.logger:info('Prepared ' .. #self.batchRange .. ' batches')
 end
 
---[[ get ppl ]]
+--[[ Get perplexity. ]]
 function SampledDataset:getPpl()
   return self.ppl
 end
 
---[[ set ppl ]]
+--[[ Set perplexity. ]]
 function SampledDataset:setLoss(batchIdx, loss)
   assert(self:batchCount() >= batchIdx, "Batch idx out of range: " .. batchIdx .. "/" .. self:batchCount())
   local rangeStart = self.batchRange[batchIdx]["begin"]
@@ -206,9 +214,9 @@ function SampledDataset:setLoss(batchIdx, loss)
   loss = loss:exp()
   local pplIdx = 1
   for i = rangeStart, rangeEnd do
-    local j_begin = (i == rangeStart) and sampleCntBegin or 1
-    local j_end = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
-    for _ = j_begin, j_end do
+    local jBegin = (i == rangeStart) and sampleCntBegin or 1
+    local jEnd = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
+    for _ = jBegin, jEnd do
       self.ppl[i] = loss[pplIdx]
       pplIdx = pplIdx + 1
     end
@@ -217,7 +225,6 @@ end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]
 function SampledDataset:setBatchSize(maxBatchSize)
-
   self.maxBatchSize = maxBatchSize
   self.maxSourceLength = 0
   self.maxTargetLength = 0
@@ -253,7 +260,6 @@ end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
 function SampledDataset:getBatch(batchIdx)
-
   if #self.src == 0 then
     return nil
   end
@@ -278,9 +284,9 @@ function SampledDataset:getBatch(batchIdx)
   local tgtFeatures = {}
 
   for i = rangeStart, rangeEnd do
-    local j_begin = (i == rangeStart) and sampleCntBegin or 1
-    local j_end = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
-    for _ = j_begin, j_end do
+    local jBegin = (i == rangeStart) and sampleCntBegin or 1
+    local jEnd = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
+    for _ = jBegin, jEnd do
       table.insert(src, self.src[i])
       if self.srcFeatures[i] then
         table.insert(srcFeatures, self.srcFeatures[i])

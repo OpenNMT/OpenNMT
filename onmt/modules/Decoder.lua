@@ -342,15 +342,15 @@ function Decoder:backward(batch, outputs, criterion)
     local output = batch:getTargetOutput(t)
 
     if self.indvLoss then
-      for i=1, pred[1]:size(1) do
+      for i = 1, pred[1]:size(1) do
         if t <= batch.targetSize[i] then
           local tmpPred = {}
           local tmpOutput = {}
           for j = 1, #pred do
-            table.insert(tmpPred, pred[j][{{i},{}}])
+            table.insert(tmpPred, pred[j][{{i}, {}}])
             table.insert(tmpOutput, output[j][{{i}}])
           end
-          local tmpLoss = criterion:forward(tmpPred,tmpOutput)
+          local tmpLoss = criterion:forward(tmpPred, tmpOutput)
           indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
           loss = loss + tmpLoss
         end
