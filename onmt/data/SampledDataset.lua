@@ -1,5 +1,4 @@
 --[[ Data management and batch creation. Handles data created by `preprocess.lua`. ]]
-require 'torchx'
 
 local SampledDataset = torch.class("SampledDataset")
 
@@ -149,10 +148,7 @@ function SampledDataset:sample()
     end
   end
 
---  local sampled = torch.multinomial(self.samplingProb:view(1,#self.src), self.samplingSize, --[[replacement]] false)
--- Faster sampling
--- https://github.com/nicholas-leonard/torchx/blob/master/AliasMultinomial.lua
-  local sampler = torch.AliasMultinomial(self.samplingProb)
+  local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
   _G.logger:info('Created sampler...')
   self.sampled = torch.LongTensor(self.samplingSize)
   self.sampled = sampler:batchdraw(self.sampled)
