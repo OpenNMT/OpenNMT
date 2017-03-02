@@ -21,7 +21,7 @@ function Tagger:__init(args)
     os.exit(0)
   end
 
-  self.model = SeqTagger.load(self.checkpoint.options, self.checkpoint.models, self.checkpoint.dicts)
+  self.model = onmt.SeqTagger.load(self.checkpoint.options, self.checkpoint.models, self.checkpoint.dicts)
   onmt.utils.Cuda.convert(self.model)
 
   self.dicts = self.checkpoint.dicts
@@ -105,11 +105,11 @@ function Tagger:tagBatch(batch)
 
   local pred = {}
   local feats = {}
-  for b = 1, batch.size do
+  for _ = 1, batch.size do
     table.insert(pred, {})
     table.insert(feats, {})
   end
-  local encStates, context = self.model.models.encoder:forward(batch)
+  local _, context = self.model.models.encoder:forward(batch)
 
   for t = 1, batch.sourceLength do
     local out = self.model.models.generator:forward(context:select(2, t))
@@ -151,7 +151,7 @@ Returns:
       - `features`: the table of target features sequences
 ]]
 function Tagger:tag(src)
-  local data, ignored, indexMap = self:buildData(src)
+  local data, ignored = self:buildData(src)
 
   local results = {}
 

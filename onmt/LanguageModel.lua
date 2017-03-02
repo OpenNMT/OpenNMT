@@ -41,7 +41,7 @@ function LanguageModel:__init(args, dicts, verbose)
   end
 end
 
-function LanguageModel.load()
+function LanguageModel.load(args, models, dicts, isReplica)
   local self = torch.factory('LanguageModel')()
 
   parent.__init(self, args)

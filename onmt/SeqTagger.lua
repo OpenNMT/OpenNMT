@@ -55,7 +55,7 @@ function SeqTagger.modelName()
 end
 
 -- Returns expected dataMode
-function SeqTagger.dataType(dm)
+function SeqTagger.dataType()
   return 'bitext'
 end
 
@@ -70,7 +70,7 @@ function SeqTagger:getOutput(batch)
 end
 
 function SeqTagger:forwardComputeLoss(batch)
-  local encoderStates, context = self.models.encoder:forward(batch)
+  local _, context = self.models.encoder:forward(batch)
 
   local loss = 0
 
@@ -88,7 +88,7 @@ function SeqTagger:forwardComputeLoss(batch)
   return loss
 end
 
-function SeqTagger:trainNetwork(batch, dryRun)
+function SeqTagger:trainNetwork(batch)
   local loss = 0
 
   local _, context = self.models.encoder:forward(batch)
