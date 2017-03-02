@@ -74,7 +74,7 @@ function Seq2Seq.dataType()
 end
 
 function Seq2Seq:returnIndividualLosses(enable)
-  if torch.getmetatable(torch.type(self.models.decoder))['returnIndividualLosses'] == nil then
+  if not self.models.decoder.returnIndividualLosses then
     _G.logger:info('Current Seq2Seq model does not support training with sample_w_ppl option')
     return false
   else

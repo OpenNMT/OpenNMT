@@ -3,35 +3,67 @@ require 'torchx'
 
 local SampledDataset = torch.class("SampledDataset")
 
+local options = {
+  {'-sample',              0, [[Number of instances to sample from train data in each epoch]]},
+  {'-sample_w_ppl',    false, [[use ppl as probability distribution when sampling]]},
+  {'-sample_w_ppl_init',  15, [[start perplexity-based sampling when average train perplexity per batch falls below this value]]},
+  {'-sample_w_ppl_max', -1.5, [[when greater than 0, instances with perplexity above this value will be considered as noise and ignored;
+                                when less than 0, mode + (-sample_w_ppl_max) * stdev will be used as threshold]]},
+}
+
+function SampledDataset.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'SampledDataset')
+end
+
 --[[ Initialize a data object given aligned tables of IntTensors `srcData`
   and `tgtData`.
 --]]
-function SampledDataset:__init(srcData, tgtData, samplingSize, sample_w_ppl, sample_w_ppl_init, sample_w_ppl_max)
+function SampledDataset:__init(srcData, tgtData, opt)
 
-  self.src = srcData.words
+  self.src = srcData.words or srcData.vectors
   self.srcFeatures = srcData.features
 
   if tgtData ~= nil then
-    self.tgt = tgtData.words
+    self.tgt = tgtData.words  or tgtData.vectors
     self.tgtFeatures = tgtData.features
   end
 
-  self.samplingSize = samplingSize
-  self.sample_w_ppl = sample_w_ppl
-  self.sample_w_ppl_init = sample_w_ppl_init
-  self.sample_w_ppl_max = sample_w_ppl_max
+  self.samplingSize = opt.sample
+  self.sample_w_ppl = opt.sample_w_ppl
+  self.sample_w_ppl_init = opt.sample_w_ppl_init
+  self.sample_w_ppl_max = opt.sample_w_ppl_max
   self.startedPplSampling = false
+
+  _G.logger:info(' * sampling ' .. opt.sample .. ' instances from ' .. #self.src .. ' at each epoch')
+  if opt.sample_w_ppl then
+    _G.logger:info(' * using train data perplexity as probability distribution when sampling')
+    _G.logger:info(' * sample_w_ppl_init: ' .. opt.sample_w_ppl_init)
+    _G.logger:info(' * sample_w_ppl_max: ' .. opt.sample_w_ppl_max)
+  end
 
   if self.sample_w_ppl then
     self.samplingProb = torch.Tensor(#self.src)
     self.samplingProb:fill(self.sample_w_ppl_init)
+    self.ppl = torch.Tensor(#self.src)
+    self.ppl:fill(self.sample_w_ppl_init)
   else
     self.samplingProb = torch.ones(#self.src)
   end
 
-  self.ppl = torch.Tensor(#self.src)
-  self.ppl:fill(self.sample_w_ppl_init)
   self.sampled = nil
+end
+
+function SampledDataset:checkModel(model)
+  if not model.returnIndividualLosses or model:returnIndividualLosses(true) == false then
+    _G.logger:info('Current model does not support training with invididual losses; Sampling with individual loss will be disabled.')
+    self.sample_w_ppl = false
+    self.samplingProb = torch.ones(#self.src)
+    self.ppl = nil
+  end
+end
+
+function SampledDataset:needIndividualLosses()
+  return self.sample_w_ppl
 end
 
 --[[ initiate sampling ]]
@@ -132,11 +164,11 @@ function SampledDataset:getPpl()
 end
 
 --[[ set ppl ]]
-function SampledDataset:setPpl(batchIdx, ppl)
+function SampledDataset:setLoss(batchIdx, loss)
   assert(self:batchCount() >= batchIdx, "Batch idx out of range: " .. batchIdx .. "/" .. self:batchCount())
   local rangeStart = self.maxBatchSize * (batchIdx-1) + 1
   local rangeEnd = math.min(self.maxBatchSize * batchIdx, self:getNumSampled())
-  self.ppl[{{rangeStart, rangeEnd}}] = ppl
+  self.ppl[{{rangeStart, rangeEnd}}] = loss:exp()
 end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]

@@ -11,13 +11,6 @@ local modelClass = onmt.ModelSelector(modelType)
 local options = {
   {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
                       {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-
-  {'-sample',              0, [[Number of instances to sample from train data in each epoch]]},
-  {'-sample_w_ppl',    false, [[use ppl as probability distribution when sampling]]},
-  {'-sample_w_ppl_init',  15, [[start perplexity-based sampling when average train perplexity per batch falls below this value]]},
-  {'-sample_w_ppl_max', -1.5, [[when greater than 0, instances with perplexity above this value will be considered as noise and ignored;
-                                when less than 0, mode + (-sample_w_ppl_max) * stdev will be used as threshold]]},
-
   {'-save_model', '', [[Model filename (the model will be saved as
                             <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]],
                       {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
@@ -30,6 +23,7 @@ modelClass.declareOpts(cmd)
 onmt.train.Optim.declareOpts(cmd)
 onmt.train.Trainer.declareOpts(cmd)
 onmt.train.Checkpoint.declareOpts(cmd)
+onmt.data.SampledDataset.declareOpts(cmd)
 
 cmd:text('')
 cmd:text('**Other options**')
@@ -75,7 +69,7 @@ local function main()
 
   local trainData
   if opt.sample > 0 then
-     trainData = onmt.data.SampledDataset.new(dataset.train.src, dataset.train.tgt, opt.sample, opt.sample_w_ppl, opt.sample_w_ppl_init, opt.sample_w_ppl_max)
+     trainData = onmt.data.SampledDataset.new(dataset.train.src, dataset.train.tgt, opt)
   else
      trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   end
@@ -98,15 +92,6 @@ local function main()
   _G.logger:info(' * number of training sentences: %d', #trainData.src)
   _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
 
-  if opt.sample > 0 then
-    _G.logger:info(' * sampling ' .. opt.sample .. ' instances at each epoch')
-    if opt.sample_w_ppl then
-      _G.logger:info(' * using train data perplexity as probability distribution when sampling')
-      _G.logger:info(' * sample_w_ppl_init: ' .. opt.sample_w_ppl_init .. ' (start perplexity-based sampling when average perplexity per batch falls below this value)')
-      _G.logger:info(' * sample_w_ppl_max: ' .. opt.sample_w_ppl_max .. ' (instances with perplexity above this value will be considered outlier and will have perplexity 1 while sampling)')
-    end
-  end
-
   _G.logger:info('Building model...')
 
   local model
@@ -128,11 +113,8 @@ local function main()
     end
   end)
 
-  if opt.sample_w_ppl then
-    if torch.getmetatable(torch.type(model))['returnIndividualLosses'] == nil or model:returnIndividualLosses(true) == false then
-      _G.logger:info('Current model does not support training with sample_w_ppl option; The option is disabled.')
-      opt.sample_w_ppl = false
-    end
+  if opt.sample > 0 then
+    trainData:checkModel(model)
   end
 
   -- Define optimization method.

@@ -152,7 +152,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         end,
         function(idx, loss, indvAvgLoss, profile)
           losses[idx]=loss
-          if self.options.sample_w_ppl then
+          if trainData.needIndividualLosses and trainData:needIndividualLosses() then
             indvAvgLosses[idx] = indvAvgLoss
           end
           epochProfiler:add(profile)
@@ -170,9 +170,8 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
         for bi = 1, #batches do
           epochState:update(model, batches[bi], losses[bi])
-          if self.options.sample_w_ppl then
-            indvAvgLosses[bi] = indvAvgLosses[bi]:exp()
-            trainData:setPpl(batchOrder[i + bi - 1], indvAvgLosses[bi])
+          if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+            trainData:setLoss(batchOrder[i + bi - 1], indvAvgLosses[bi])
           end
         end
 
@@ -235,7 +234,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             optim:zeroGrad(_G.gradParams)
             local loss, indvAvgLoss = _G.model:trainNetwork(_G.batch)
             table.insert(losses, loss)
-            if self.options.sample_w_ppl then
+            if trainData.needIndividualLosses and trainData:needIndividualLosses() then
               indvAvgLosses[batchIdx] = indvAvgLoss
             end
 
@@ -251,9 +250,8 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             iter = iter + #batches
             for i = 1, #batches do
               epochState:update(model, batches[i], losses[i])
-              if self.options.sample_w_ppl then
-                indvAvgLosses[batchOrder[i]] = indvAvgLosses[batchOrder[i]]:exp()
-                trainData:setPpl(batchOrder[i], indvAvgLosses[batchOrder[i]])
+              if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+                trainData:setLoss(batchOrder[i], indvAvgLosses[batchOrder[i]])
               end
             end
             epochProfiler:add(profile)
@@ -274,7 +272,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
       epochState:log()
     end
 
-    if self.options.sample then
+    if trainData.sample then
       trainData:sample()
     end
 
