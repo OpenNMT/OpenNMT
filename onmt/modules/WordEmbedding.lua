@@ -15,21 +15,18 @@ function WordEmbedding:__init(vocabSize, vecSize, preTrained, fix)
   self.vocabSize = vocabSize
   parent.__init(self, nn.LookupTable(vocabSize, vecSize, onmt.Constants.PAD))
 
-  self.preTrained = preTrained
-  self.fix = fix
-  if self.fix then
-    self.net.gradWeight = nil
-  end
-end
-
-function WordEmbedding:postParametersInitialization()
   -- If embeddings are given. Initialize them.
-  if self.preTrained and self.preTrained:len() > 0 then
-    local vecs = torch.load(self.preTrained)
+  if preTrained and preTrained:len() > 0 then
+    local vecs = torch.load(preTrained)
     self.net.weight:copy(vecs)
   end
 
   self.net.weight[onmt.Constants.PAD]:zero()
+
+  self.fix = fix
+  if self.fix then
+    self.net.gradWeight = nil
+  end
 end
 
 function WordEmbedding:accGradParameters(input, gradOutput, scale)
