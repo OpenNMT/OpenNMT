@@ -20,7 +20,6 @@ local options = {
                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
                      {enum={0,1}}},
-
   {'-residual', false, [[Add residual connections between RNN layers.]]},
   {'-brnn', false, [[Use a bidirectional encoder]]},
   {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],

@@ -249,7 +249,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         function(batches, losses, indvAvgLosses, profile)
           if batches then
             iter = iter + #batches
-
             for i = 1, #batches do
               epochState:update(model, batches[i], losses[i])
               if self.options.sample_w_ppl then
