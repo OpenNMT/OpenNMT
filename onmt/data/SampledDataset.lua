@@ -51,6 +51,7 @@ function SampledDataset:__init(srcData, tgtData, opt)
   end
 
   self.sampled = nil
+  self.sampledCnt = torch.zeros(#self.src)
 end
 
 function SampledDataset:checkModel(model)
@@ -155,7 +156,43 @@ function SampledDataset:sample()
   _G.logger:info('Created sampler...')
   self.sampled = torch.LongTensor(self.samplingSize)
   self.sampled = sampler:batchdraw(self.sampled)
+
+  self.sampledCnt:zero()
+  for i=1, self.sampled:size(1) do
+    self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
+  end
+
   _G.logger:info('Sampled ' .. self.sampled:size(1) .. ' instances')
+
+  -- Prepares batches in terms of range within self.src and self.tgt.
+  self.batchRange = {}
+  local offset = 0
+  local sampleCntBegin = 1
+  local batchSize = 1
+  local sourceLength = -1
+  for i = 1, #self.src do
+    for j = 1, self.sampledCnt[i] do
+      if batchSize == self.maxBatchSize or self.src[i]:size(1) ~= sourceLength then
+        if offset > 0 then
+          local batchEnd = (j==1) and i - 1 or i
+          local sampleCntEnd = (j==1) and self.sampledCnt[i-1] or j - 1
+          table.insert(self.batchRange, { ["begin"] = offset, ["end"] = batchEnd, ["sampleCntBegin"] = sampleCntBegin, ["sampleCntEnd"] = sampleCntEnd })
+          sampleCntBegin = (j==1) and 1 or j
+        end
+        offset = i
+        batchSize = 1
+        sourceLength = self.src[i]:size(1)
+      else
+        batchSize = batchSize + 1
+      end
+    end
+  end
+  -- Catch last batch.
+  if offset < #self.src then
+    table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src, ["sampleCntBegin"] = sampleCntBegin, ["sampleCntEnd"] = self.sampledCnt[#self.src] })
+  end
+
+  _G.logger:info('Prepared ' .. #self.batchRange .. ' batches')
 end
 
 --[[ get ppl ]]
@@ -166,9 +203,20 @@ end
 --[[ set ppl ]]
 function SampledDataset:setLoss(batchIdx, loss)
   assert(self:batchCount() >= batchIdx, "Batch idx out of range: " .. batchIdx .. "/" .. self:batchCount())
-  local rangeStart = self.maxBatchSize * (batchIdx-1) + 1
-  local rangeEnd = math.min(self.maxBatchSize * batchIdx, self:getNumSampled())
-  self.ppl[{{rangeStart, rangeEnd}}] = loss:exp()
+  local rangeStart = self.batchRange[batchIdx]["begin"]
+  local rangeEnd = self.batchRange[batchIdx]["end"]
+  local sampleCntBegin = self.batchRange[batchIdx]["sampleCntBegin"]
+  local sampleCntEnd =  self.batchRange[batchIdx]["sampleCntEnd"]
+  loss = loss:exp()
+  local pplIdx = 1
+  for i = rangeStart, rangeEnd do
+    local j_begin = (i == rangeStart) and sampleCntBegin or 1
+    local j_end = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
+    for _ = j_begin, j_end do
+      self.ppl[i] = loss[pplIdx]
+      pplIdx = pplIdx + 1
+    end
+  end
 end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]
@@ -197,34 +245,35 @@ end
 
 --[[ Return number of batches. ]]
 function SampledDataset:batchCount()
-  if self.sampled == nil then
+  if self.batchRange == nil then
     if #self.src > 0 then
       return 1
     else
       return 0
     end
   end
-  return math.ceil(self.sampled:size(1)/self.maxBatchSize)
+  return #self.batchRange
 end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
 function SampledDataset:getBatch(batchIdx)
+
   if #self.src == 0 then
     return nil
   end
-
-  if batchIdx == nil or self.sampled == nil then
+  if batchIdx == nil or self.batchRange == nil then
     return onmt.data.Batch.new(self.src, self.srcFeatures, self.tgt, self.tgtFeatures)
   end
 
   assert(self:batchCount() >= batchIdx, "Batch idx out of range: " .. batchIdx .. "/" .. self:batchCount())
 
-  local rangeStart = self.maxBatchSize * (batchIdx-1) + 1
-  local rangeEnd = math.min(self.maxBatchSize * batchIdx, self:getNumSampled())
+  local rangeStart = self.batchRange[batchIdx]["begin"]
+  local rangeEnd = self.batchRange[batchIdx]["end"]
+  local sampleCntBegin =  self.batchRange[batchIdx]["sampleCntBegin"]
+  local sampleCntEnd =  self.batchRange[batchIdx]["sampleCntEnd"]
 
   local src = {}
   local tgt
-
   if self.tgt ~= nil then
     tgt = {}
   end
@@ -233,19 +282,18 @@ function SampledDataset:getBatch(batchIdx)
   local tgtFeatures = {}
 
   for i = rangeStart, rangeEnd do
-
-    local sampleIdx = self.sampled[i]
-
-    table.insert(src, self.src[sampleIdx])
-
-    if self.srcFeatures[sampleIdx] then
-      table.insert(srcFeatures, self.srcFeatures[sampleIdx])
-    end
-
-    if self.tgt ~= nil then
-      table.insert(tgt, self.tgt[sampleIdx])
-      if self.tgtFeatures[sampleIdx] then
-        table.insert(tgtFeatures, self.tgtFeatures[sampleIdx])
+    local j_begin = (i == rangeStart) and sampleCntBegin or 1
+    local j_end = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
+    for _ = j_begin, j_end do
+      table.insert(src, self.src[i])
+      if self.srcFeatures[i] then
+        table.insert(srcFeatures, self.srcFeatures[i])
+      end
+      if self.tgt ~= nil then
+        table.insert(tgt, self.tgt[i])
+        if self.tgtFeatures[i] then
+          table.insert(tgtFeatures, self.tgtFeatures[i])
+        end
       end
     end
   end
