@@ -15,6 +15,15 @@ function Generator:_buildGenerator(rnnSize, outputSize)
     :add(nn:LogSoftMax())
 end
 
+--[[ Return a new Encoder using the serialized data `pretrained`. ]]
+function Generator.load(pretrained)
+  local self = torch.factory('onmt.Generator')()
+
+  parent.__init(self, pretrained.modules[1])
+
+  return self
+end
+
 function Generator:updateOutput(input)
   self.output = {self.net:updateOutput(input)}
   return self.output

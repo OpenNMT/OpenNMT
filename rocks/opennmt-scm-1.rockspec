@@ -27,7 +27,7 @@ build = {
     bin = {
       onmt_preprocess = "preprocess.lua",
       onmt_train = "train.lua",
-      onmt_translate = "translate.lua",
+      onmt_translate = "translate.lua"
     }
   },
 
@@ -65,6 +65,8 @@ build = {
     ["onmt.translate.BeamSearcher"] = "onmt/translate/BeamSearcher.lua",
     ["onmt.translate.Translator"] = "onmt/translate/Translator.lua",
     ["onmt.translate.PhraseTable"] = "onmt/translate/PhraseTable.lua",
+    ["onmt.tagger.init"] = "onmt/tagger/init.lua",
+    ["onmt.tagger.Tagger"] = "onmt/tagger/Tagger.lua",
     ["onmt.utils.init"] = "onmt/utils/init.lua",
     ["onmt.utils.Cuda"] = "onmt/utils/Cuda.lua",
     ["onmt.utils.Dict"] = "onmt/utils/Dict.lua",

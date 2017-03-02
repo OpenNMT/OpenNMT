@@ -1,5 +1,5 @@
---[[ Language Model. ]]
-local LanguageModel, parent = torch.class('LanguageModel', 'Model')
+--[[ Sequence to sequence model with attention. ]]
+local SeqTagger, parent = torch.class('SeqTagger', 'Model')
 
 local options = {
   {'-layers', 2, [[Number of layers in the RNN encoder/decoder]]},
@@ -23,76 +23,61 @@ local options = {
   {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
 }
 
-function LanguageModel.declareOpts(cmd)
-  cmd:setCmdLineOptions(options, 'Language Model')
+function SeqTagger.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, SeqTagger.modelName())
 end
 
-function LanguageModel:__init(args, dicts, verbose)
+function SeqTagger:__init(args, dicts, verbose)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src, verbose)
-  self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.src)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
-
-  self.eosProto = {}
-  for _ = 1, #dicts.src.features + 1 do
-    table.insert(self.eosProto, torch.LongTensor())
-  end
+  self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.tgt)
+  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
-function LanguageModel.load()
-  local self = torch.factory('LanguageModel')()
+function SeqTagger.load(args, models, dicts, isReplica)
+  local self = torch.factory('SeqTagger')()
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.generator = onmt.Factory.loadGenerator(models.generator, isReplica)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 
   return self
 end
 
 -- Returns model name.
-function LanguageModel.modelName()
-  return 'Language'
+function SeqTagger.modelName()
+  return 'Sequence Tagger'
 end
 
--- Returns expected dataMode.
-function LanguageModel.dataType()
-  return 'monotext'
+-- Returns expected dataMode
+function SeqTagger.dataType(dm)
+  return 'bitext'
 end
 
-function LanguageModel:enableProfiling()
+function SeqTagger:enableProfiling()
   _G.profiler.addHook(self.models.encoder, 'encoder')
   _G.profiler.addHook(self.models.generator, 'generator')
   _G.profiler.addHook(self.criterion, 'criterion')
 end
 
-function LanguageModel:getOutput(batch)
-  return batch.sourceInput
+function SeqTagger:getOutput(batch)
+  return batch.targetOutput
 end
 
-function LanguageModel:forwardComputeLoss(batch)
-  local _, context = self.models.encoder:forward(batch)
-  local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
-  for i = 1, #eos do
-    eos[i]:fill(onmt.Constants.EOS)
-  end
+function SeqTagger:forwardComputeLoss(batch)
+  local encoderStates, context = self.models.encoder:forward(batch)
 
   local loss = 0
 
   for t = 1, batch.sourceLength do
     local genOutputs = self.models.generator:forward(context:select(2, t))
 
-    -- LanguageModel is supposed to predict the following word.
-    local output
-    if t ~= batch.sourceLength then
-      output = batch:getSourceInput(t + 1)
-    else
-      output = eos
-    end
+    local output = batch:getTargetOutput(t)
 
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
@@ -103,28 +88,18 @@ function LanguageModel:forwardComputeLoss(batch)
   return loss
 end
 
-function LanguageModel:trainNetwork(batch)
+function SeqTagger:trainNetwork(batch, dryRun)
   local loss = 0
 
   local _, context = self.models.encoder:forward(batch)
 
   local gradContexts = context:clone():zero()
-  local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
-  for i = 1, #eos do
-    eos[i]:fill(onmt.Constants.EOS)
-  end
 
   -- For each word of the sentence, generate target.
   for t = 1, batch.sourceLength do
     local genOutputs = self.models.generator:forward(context:select(2, t))
 
-    -- LanguageModel is supposed to predict following word.
-    local output
-    if t ~= batch.sourceLength then
-      output = batch:getSourceInput(t + 1)
-    else
-      output = eos
-    end
+    local output = batch:getTargetOutput(t)
 
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
@@ -144,4 +119,4 @@ function LanguageModel:trainNetwork(batch)
   return loss
 end
 
-return LanguageModel
+return SeqTagger

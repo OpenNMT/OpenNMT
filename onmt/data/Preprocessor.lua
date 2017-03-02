@@ -49,6 +49,8 @@ local monotextOptions = {
 
 local commonOptions = {
   {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies.]]},
+  {'-time_shift_feature',     1,       [[Time shift features for seq2seq attn model]],
+                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
   {'-shuffle',                1,       [[If 1, shuffle data.]],
                                        { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} }
 }
@@ -122,7 +124,7 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
         srcFeatures:insert(onmt.utils.Features.generateSource(srcDicts.features, srcFeats, true))
       end
       if #tgtDicts.features > 0 then
-        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
+        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true, self.args.time_shift_feature))
       end
 
       sizes:insert(#srcWords)
