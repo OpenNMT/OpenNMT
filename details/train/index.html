@@ -413,7 +413,6 @@
 <li><code>-data</code>: Path to the training *-train.t7 file from preprocess.lua []</li>
 <li><code>-save_model</code>: Model filename (the model will be saved as <save_model>_epochN_PPL.t7 where PPL is the validation perplexity []</li>
 <li><code>-model_type</code>: (lm, seq2seq) Type of the model to train. This option impacts all options choices [seq2seq]</li>
-<li><code>-param_init</code>: Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</li>
 </ul>
 <h2 id="sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options</h2>
 <ul>
@@ -466,7 +465,7 @@
 <li><code>-gpuid</code>: List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]</li>
 <li><code>-fallback_to_cpu</code>: If GPU can't be use, rollback on the CPU. [false]</li>
 <li><code>-no_nccl</code>: Disable usage of nccl in parallel mode. [false]</li>
-<li><code>-disable_mem_optimization</code>: Disable sharing internal of internal buffers between clones - which is in general safe, except if you want to look inside clones for visualization purpose for instance. [false]</li>
+<li><code>-disable_mem_optimization</code>: Disable sharing of internal buffers between clones for visualization or development. [false]</li>
 <li><code>-log_file</code>: Outputs logs to a file under this path instead of stdout. []</li>
 <li><code>-disable_logs</code>: When activated, output nothing. [false]</li>
 <li><code>-log_level</code>: (DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]</li>

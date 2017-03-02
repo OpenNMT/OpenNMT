@@ -415,8 +415,10 @@
 <li><code>-valid_tgt</code>: Path to the validation target data. []</li>
 <li><code>-src_vocab</code>: Path to an existing source vocabulary. []</li>
 <li><code>-tgt_vocab</code>: Path to an existing target vocabulary. []</li>
-<li><code>-src_vocab_size</code>: Comma-separated list of source vocabularies size: word[,feat1,feat2,...]. [50000]</li>
-<li><code>-tgt_vocab_size</code>: Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. [50000]</li>
+<li><code>-src_vocab_size</code>: Comma-separated list of source vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned. [50000]</li>
+<li><code>-tgt_vocab_size</code>: Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned. [50000]</li>
+<li><code>-src_words_min_frequency</code>: Comma-separated list of source words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size. [0]</li>
+<li><code>-tgt_words_min_frequency</code>: Comma-separated list of target words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size. [0]</li>
 <li><code>-src_seq_length</code>: Maximum source sequence length. [50]</li>
 <li><code>-tgt_seq_length</code>: Maximum target sequence length. [50]</li>
 <li><code>-features_vocabs_prefix</code>: Path prefix to existing features vocabularies. []</li>
