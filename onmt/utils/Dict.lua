@@ -123,6 +123,32 @@ function Dict:prune(size)
   return newDict
 end
 
+--[[ Return a new dictionary with entries appearing at least `minFrequency` times. ]]
+function Dict:pruneByMinFrequency(minFrequency)
+  if minFrequency < 2 then
+    return self
+  end
+
+  local freq = torch.Tensor(self.frequencies)
+  local sortedFreq, idx = torch.sort(freq, 1, true)
+
+  local newDict = Dict.new()
+
+  -- Add special entries in all cases.
+  for i = 1, #self.special do
+    newDict:addSpecial(self.idxToLabel[self.special[i]])
+  end
+
+  for i = 1, self:size() do
+    if sortedFreq[i] < minFrequency then
+      break
+    end
+    newDict:add(self.idxToLabel[idx[i]])
+  end
+
+  return newDict
+end
+
 --[[
   Convert `labels` to indices. Use `unkWord` if not found.
   Optionally insert `bosWord` at the beginning and `eosWord` at the end.

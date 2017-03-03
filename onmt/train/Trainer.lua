@@ -49,8 +49,9 @@ end
 
 function Trainer:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
-  -- Use profiler in Trainer.
   self.args.profiler = args.profiler
+  self.args.disable_mem_optimization = args.disable_mem_optimization
+
   -- Make a difference with options which is only used in Checkpoint.
   self.options = args
 end
@@ -269,7 +270,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     end
 
     if needLog then
-      epochState:log()
+      epochState:log(numIterations)
     end
 
     if trainData.sample then
