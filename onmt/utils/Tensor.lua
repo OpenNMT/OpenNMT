@@ -1,14 +1,24 @@
---[[ Recursively call `clone()` on all tensors within `out`. ]]
-local function recursiveClone(out)
-  if torch.isTensor(out) then
-    return out:clone()
-  else
-    local res = {}
-    for k, v in ipairs(out) do
-      res[k] = recursiveClone(v)
+--[[ Recursively call `func()` on all tensors within `out`. ]]
+local function recursiveApply(out, func, ...)
+  local res
+  if torch.type(out) == 'table' then
+    res = {}
+    for k, v in pairs(out) do
+      res[k] = recursiveApply(v, func, ...)
     end
     return res
   end
+  if torch.isTensor(out) then
+    res = func(out, ...)
+  else
+    res = out
+  end
+  return res
+end
+
+--[[ Recursively call `clone()` on all tensors within `out`. ]]
+local function recursiveClone(out)
+  return recursiveApply(out, function (h) return h:clone() end)
 end
 
 --[[ Recursively add `b` tensors into `a`'s. ]]
@@ -44,8 +54,7 @@ local function deepClone(obj)
 end
 
 --[[
-Reuse Tensor storage and avoid new allocation unless any dimension
-has a larger size.
+Reuse Tensor storage.
 
 Parameters:
 
@@ -62,35 +71,7 @@ local function reuseTensor(t, sizes)
     sizes = torch.LongStorage(sizes)
   end
 
-  -- Tensor was uninitialized, just resize it.
-  if t:dim() == 0 then
-    return t:resize(sizes):zero()
-  end
-
-  assert(#sizes == t:dim(), 'reused tensor must have the same number of dimensions')
-
-  -- Otherwise, prepare new tensor sizes.
-  local newSizes = t:size()
-
-  for d = 1, t:dim() do
-    -- Change size only if storage needs to expand.
-    if sizes[d] > t:size(d) then
-      newSizes[d] = sizes[d]
-    end
-  end
-
-  -- If one dimension size changed, resize the given tensor.
-  if torch.any(torch.ne(torch.Tensor(torch.totable(newSizes)),
-                        torch.Tensor(torch.totable(t:size())))) then
-    t:resize(newSizes)
-  end
-
-  -- In all cases, extract the given sizes.
-  for d = 1, t:dim() do
-    t = t:narrow(d, 1, sizes[d])
-  end
-
-  return t:zero()
+  return t:resize(sizes):zero()
 end
 
 --[[
@@ -119,7 +100,7 @@ Initialize a table of tensors with the given sizes.
 
 Parameters:
 
-  * `tab` - the table of tensors
+  * `size` - the number of clones to create
   * `proto` - tensor to be clone for each index
   * `sizes` - a table of new sizes
 
@@ -160,6 +141,7 @@ local function copyTensorTable(proto, src)
 end
 
 return {
+  recursiveApply = recursiveApply,
   recursiveClone = recursiveClone,
   recursiveAdd = recursiveAdd,
   recursiveSet = recursiveSet,

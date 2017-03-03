@@ -2,21 +2,41 @@ require('onmt.init')
 
 local path = require('pl.path')
 
-local cmd = torch.CmdLine()
-cmd:option('-model', '', 'trained model file')
-cmd:option('-output_model', '', 'released model file')
-cmd:option('-force', false, 'force output model creation')
+local cmd = onmt.utils.ExtendedCmdLine.new('release_model.lua')
+
+local options = {
+  {'-model', '', 'trained model file'},
+  {'-output_model', '', 'released model file'},
+  {'-force', false, 'force output model creation'}
+}
+
+cmd:setCmdLineOptions(options, 'Model')
+
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
+
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
-local function toCPU(model)
+local function releaseModel(model, tensorCache)
+  tensorCache = tensorCache or {}
   for _, submodule in pairs(model.modules) do
     if torch.type(submodule) == 'table' and submodule.modules then
-      toCPU(submodule)
+      releaseModel(submodule, tensorCache)
     else
-      submodule:float()
+      submodule:float(tensorCache)
       submodule:clearState()
+      submodule:apply(function (m)
+        nn.utils.clear(m, 'gradWeight', 'gradBias')
+        for k, v in pairs(m) do
+          if type(v) == 'function' then
+            m[k] = nil
+          end
+        end
+      end)
     end
   end
 end
@@ -57,7 +77,7 @@ local function main()
   _G.logger:info('Converting model...')
   checkpoint.info = nil
   for _, model in pairs(checkpoint.models) do
-    toCPU(model)
+    releaseModel(model)
   end
   _G.logger:info('... done.')
 

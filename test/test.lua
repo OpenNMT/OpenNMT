@@ -54,6 +54,25 @@ end
 
 tester:add(stringTest)
 
+local profileTest = torch.TestSuite()
+
+function profileTest.profiling()
+  local profiler = onmt.utils.Profiler.new({profiler=true})
+  profiler:start("main")
+  local count = 0
+  while count < 100 do count = count+1 end
+  profiler:start("a")
+  while count < 1000 do count = count+1 end
+  profiler:stop("a"):start("b.c")
+  while count < 10000 do count = count+1 end
+  profiler:stop("b.c"):start("b.d"):stop("b.d")
+  profiler:stop("main")
+  local v=profiler:log():gsub("[-0-9.e]+","*")
+  tester:assert(v=="main:{total:*,a:*,b:{total:*,d:*,c:*}}" or v == "main:{total:*,a:*,b:{total:*,c:*,d:*}}"
+                or v == "main:{total:*,b:{total:*,c:*,d:*},a:*}" or v == "main:{total:*,b:{total:*,d:*,c:*},a:*}")
+end
+
+tester:add(profileTest)
 
 local tensorTest = torch.TestSuite()
 
@@ -185,8 +204,189 @@ function dictTest.pruneInvariableSpecialTokensIndex()
   tester:eq(pruned:lookup('titi'), titiIndex)
 end
 
+function dictTest.pruneByMinFrequency()
+  local d = onmt.utils.Dict.new({ 'toto', 'titi' })
+  d:add('foo')
+  d:add('bar')
+  d:add('foobar')
+  d:add('bar')
+  d:add('foobar')
+  d:add('bar')
+
+  local totoIndex = d:lookup('toto')
+  local titiIndex = d:lookup('titi')
+
+  local pruned = d:pruneByMinFrequency(2)
+  tester:eq(pruned:lookup('toto'), totoIndex)
+  tester:eq(pruned:lookup('titi'), titiIndex)
+  tester:ne(pruned:lookup('bar'), nil)
+  tester:ne(pruned:lookup('foobar'), nil)
+  tester:eq(pruned:lookup('foo'), nil)
+end
+
 tester:add(dictTest)
 
+local beamSearchTest = torch.TestSuite()
+function beamSearchTest.beamSearch()
+  local transitionScores = { {-math.huge, math.log(.6), math.log(.4), -math.huge},
+                   {math.log(.6), -math.huge, math.log(.4), -math.huge},
+                   {-math.huge, -math.huge, math.log(.1), math.log(.9)},
+                   {-math.huge, -math.huge, -math.huge, -math.huge}
+               }
+  transitionScores = torch.Tensor(transitionScores)
+
+  local Advancer = onmt.translate.Advancer
+
+  local initBeam = function()
+    return onmt.translate.Beam.new(torch.LongTensor({1, 2, 3}), {})
+  end
+  local update = function()
+  end
+  local expand = function(beam)
+    local tokens = beam:getTokens()
+    local token = tokens[#tokens]
+    local scores = transitionScores:index(1, token)
+    return scores
+  end
+  local isComplete = function(beam)
+    local tokens = beam:getTokens()
+    local completed = tokens[#tokens]:eq(4)
+    if #tokens - 1 > 2 then
+      completed:fill(1)
+    end
+    return completed
+  end
+
+  Advancer.initBeam = function() return initBeam() end
+  Advancer.update = function(_, beam) update(beam) end
+  Advancer.expand = function(_, beam) return expand(beam) end
+  Advancer.isComplete = function(_, beam) return isComplete(beam) end
+  local beamSize, nBest, advancer, beamSearcher, results
+  advancer = Advancer.new()
+  -- Test different beam sizes
+  nBest = 1
+  -- Beam size 2
+  beamSize = 2
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)}},
+                       {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
+  -- Beam size 1
+  beamSize = 1
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {2, 1, 2}, states = {}, score = math.log(.6*.6*.6)}},
+                       {{tokens = {1, 2, 1}, states = {}, score = math.log(.6*.6*.6)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
+
+  -- Test nBest = 2
+  nBest = 2
+  beamSize = 3
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)},
+                        {tokens = {2, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {3, 4}, states = {}, score = math.log(.4*.9)},
+                        {tokens = {1, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)},
+                       {tokens = {3, 4}, states = {}, score = math.log(.1*.9)}} }, 1e-6)
+
+  -- Test filter
+  local filter = function(beam)
+    local tokens = beam:getTokens()
+    local batchSize = tokens[1]:size(1)
+    -- Disallow {3, 4}
+    local prune = torch.ByteTensor(batchSize):zero()
+    for b = 1, batchSize do
+      if #tokens >= 3 then
+        if tokens[2][b] == 3 and tokens[3][b] == 4 then
+          prune[b] = 1
+        end
+      end
+    end
+    return prune
+  end
+  Advancer.filter = function(_, beam) return filter(beam) end
+  advancer = Advancer.new()
+  nBest = 1
+  beamSize = 3
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results, { {{tokens = {2, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {1, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
+                       {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
+end
+
+tester:add(beamSearchTest)
+
+
+local SampledDatasetTest = torch.TestSuite()
+function SampledDatasetTest.Sample()
+
+  _G.logger = onmt.utils.Logger.new(nil, true, nil)
+
+  local dataSize = 1234
+  local batchSize = 16
+
+  local opt = {}
+  opt.sample = 100
+  opt.sample_w_ppl = false
+  opt.sample_w_ppl_init = 100
+  opt.sample_w_ppl_max = 1000
+
+  local tds = require('tds')
+  local srcData = {words = tds.Vec(), features = tds.Vec()}
+  local tgtData = {words = tds.Vec(), features = tds.Vec()}
+  for i = 1, dataSize do
+    srcData.words:insert(torch.Tensor(5))
+    srcData.features:insert(tds.Vec())
+    srcData.features[i]:insert(torch.Tensor(5))
+    tgtData.words:insert(torch.Tensor(5))
+    tgtData.features:insert(tds.Vec())
+    tgtData.features[i]:insert(torch.Tensor(5))
+  end
+
+  -- random sampling
+  local dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
+  dataset:setBatchSize(batchSize)
+
+  local numSampled = dataset:getNumSampled()
+
+  tester:eq(dataset:getNumSampled(), opt.sample)
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+
+  -- sampling with ppl
+  opt.sample_w_ppl = true
+
+  dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
+  dataset:setBatchSize(batchSize)
+
+  numSampled = dataset:getNumSampled()
+
+  tester:eq(dataset:getNumSampled(), opt.sample)
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+
+  -- oversampling
+  opt.sample = 2000
+  opt.sample_w_ppl = false
+
+  dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
+  dataset:setBatchSize(batchSize)
+
+  numSampled = dataset:getNumSampled()
+
+  tester:eq(dataset:getNumSampled(), opt.sample)
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+
+end
+tester:add(SampledDatasetTest)
 
 local function main()
   -- Limit number of threads since everything is small

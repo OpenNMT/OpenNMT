@@ -60,13 +60,21 @@ end
 --[[ Return number of batches. ]]
 function Dataset:batchCount()
   if self.batchRange == nil then
-    return 1
+    if #self.src > 0 then
+      return 1
+    else
+      return 0
+    end
   end
   return #self.batchRange
 end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
 function Dataset:getBatch(idx)
+  if #self.src == 0 then
+    return nil
+  end
+
   if idx == nil or self.batchRange == nil then
     return onmt.data.Batch.new(self.src, self.srcFeatures, self.tgt, self.tgtFeatures)
   end

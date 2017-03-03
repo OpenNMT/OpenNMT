@@ -1,6 +1,5 @@
 --[[
   Split `str` on string or pattern separator `sep`.
-  Compared to the standard Lua split function, this one does not drop empty fragment.
 ]]
 local function split(str, sep)
   local res = {}
@@ -29,7 +28,17 @@ end
 
 --[[ Remove whitespaces at the start and end of the string `s`. ]]
 local function strip(s)
-  return s:gsub("^%s+",""):gsub("%s+$","")
+  return s:gsub('^%s+', ''):gsub('%s+$', '')
+end
+
+--[[ Remove initial hyphen(s). ]]
+local function stripHyphens(str)
+   return string.match(str, '%-*(.*)')
+end
+
+--[[ Right pad a strip with spaces. ]]
+local function pad(str, sz)
+   return str .. string.rep(' ', sz - #str)
 end
 
 --[[ Convenience function to test `s` for emptiness. ]]
@@ -40,5 +49,7 @@ end
 return {
   split = split,
   strip = strip,
-  isEmpty = isEmpty
+  isEmpty = isEmpty,
+  pad = pad,
+  stripHyphens = stripHyphens
 }

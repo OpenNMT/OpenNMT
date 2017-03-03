@@ -52,6 +52,10 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   self:resetPreallocation()
 end
 
+function Decoder:returnIndividualLosses(enable)
+  self.indvLoss = enable
+end
+
 --[[ Return a new Decoder using the serialized data `pretrained`. ]]
 function Decoder.load(pretrained)
   local self = torch.factory('onmt.Decoder')()
@@ -163,7 +167,7 @@ end
 
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
-function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
+function Decoder:maskPadding(sourceSizes, sourceLength)
   if not self.decoderAttn then
     self.network:apply(function (layer)
       if layer.name == 'decoderAttn' then
@@ -176,7 +180,7 @@ function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
     if module.name == 'softmaxAttn' then
       local mod
       if sourceSizes ~= nil then
-        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)
+        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength)
       else
         mod = nn.SoftMax()
       end
@@ -329,6 +333,7 @@ function Decoder:backward(batch, outputs, criterion)
                                                          { batch.size, batch.sourceLength, self.args.rnnSize })
 
   local loss = 0
+  local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
   for t = batch.targetLength, 1, -1 do
     -- Compute decoder output gradients.
@@ -336,7 +341,23 @@ function Decoder:backward(batch, outputs, criterion)
     local pred = self.generator:forward(outputs[t])
     local output = batch:getTargetOutput(t)
 
-    loss = loss + criterion:forward(pred, output)
+    if self.indvLoss then
+      for i = 1, pred[1]:size(1) do
+        if t <= batch.targetSize[i] then
+          local tmpPred = {}
+          local tmpOutput = {}
+          for j = 1, #pred do
+            table.insert(tmpPred, pred[j][{{i}, {}}])
+            table.insert(tmpOutput, output[j][{{i}}])
+          end
+          local tmpLoss = criterion:forward(tmpPred, tmpOutput)
+          indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
+          loss = loss + tmpLoss
+        end
+      end
+    else
+      loss = loss + criterion:forward(pred, output)
+    end
 
     -- Compute the criterion gradient.
     local genGradOut = criterion:backward(pred, output)
@@ -348,7 +369,7 @@ function Decoder:backward(batch, outputs, criterion)
     local decGradOut = self.generator:backward(outputs[t], genGradOut)
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
-    -- Compute the standarad backward.
+    -- Compute the standard backward.
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
     -- Accumulate encoder output gradients.
@@ -366,7 +387,11 @@ function Decoder:backward(batch, outputs, criterion)
     end
   end
 
-  return gradStatesInput, gradContextInput, loss
+  if self.indvLoss then
+    indvAvgLoss = torch.cdiv(indvAvgLoss, batch.targetSize:double())
+  end
+
+  return gradStatesInput, gradContextInput, loss, indvAvgLoss
 end
 
 --[[ Compute the loss on a batch.

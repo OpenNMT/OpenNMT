@@ -19,9 +19,7 @@ local function waitForDevice(dst, src)
 end
 
 function Parallel.getCounter()
-  local atomic = Parallel._tds.AtomicCounter()
-  atomic:inc()
-  return atomic
+  return Parallel._tds.AtomicCounter()
 end
 
 function Parallel.gmutexId()
@@ -36,6 +34,7 @@ function Parallel.init(opt)
 
     if Parallel.count > 1 then
       local globalLogger = _G.logger
+      local globalProfiler = _G.profiler
       local threads = require('threads')
       threads.Threads.serialization('threads.sharedserialize')
       Parallel._gmutex = threads.Mutex()
@@ -49,6 +48,7 @@ function Parallel.init(opt)
         end,
         function(threadid)
           _G.logger = globalLogger
+          _G.profiler = globalProfiler
           onmt.utils.Cuda.init(opt, threadid)
         end
       ) -- dedicate threads to GPUs

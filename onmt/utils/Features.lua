@@ -1,4 +1,5 @@
-local tds = require('tds')
+-- tds is lazy loaded.
+local tds
 
 --[[ Separate words and features (if any). ]]
 local function extract(tokens)
@@ -34,14 +35,14 @@ local function extract(tokens)
 end
 
 --[[ Reverse operation: attach features to tokens. ]]
-local function annotate(tokens, features, dicts)
+local function annotate(tokens, features)
   if not features or #features == 0 then
     return tokens
   end
 
   for i = 1, #tokens do
-    for j = 1, #features[i + 1] do
-      tokens[i] = tokens[i] .. '￨' .. dicts[j]:lookup(features[i + 1][j])
+    for j = 1, #features do
+      tokens[i] = tokens[i] .. '￨' .. features[j][i]
     end
   end
 
@@ -65,6 +66,9 @@ local function generateSource(dicts, src, cdata)
 
   local srcId
   if cdata then
+    if not tds then
+      tds = require('tds')
+    end
     srcId = tds.Vec()
   else
     srcId = {}
@@ -79,10 +83,13 @@ end
 
 --[[ Generate target sequences from labels. ]]
 local function generateTarget(dicts, tgt, cdata)
-  check('source', dicts, tgt)
+  check('target', dicts, tgt)
 
   local tgtId
   if cdata then
+    if not tds then
+      tds = require('tds')
+    end
     tgtId = tds.Vec()
   else
     tgtId = {}
@@ -94,6 +101,8 @@ local function generateTarget(dicts, tgt, cdata)
     table.insert(tgt[j], 1, onmt.Constants.BOS_WORD)
     table.insert(tgt[j], 1, onmt.Constants.EOS_WORD)
     tgtId[j] = dicts[j]:convertToIdx(tgt[j], onmt.Constants.UNK_WORD)
+    table.remove(tgt[j], 1)
+    table.remove(tgt[j], 1)
   end
 
   return tgtId
