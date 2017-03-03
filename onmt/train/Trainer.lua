@@ -132,13 +132,14 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         end
 
         local losses = {}
+        local indvAvgLosses = {}
 
         onmt.utils.Parallel.launch(function(idx)
           _G.profiler = onmt.utils.Profiler.new(doProfile)
 
           _G.batch = batches[idx]
           if _G.batch == nil then
-            return idx, 0, _G.profiler:dump()
+            return idx, 0, nil, _G.profiler:dump()
           end
 
           -- Send batch data to the GPU.
@@ -146,12 +147,15 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           _G.batch.totalSize = totalSize
 
           optim:zeroGrad(_G.gradParams)
-          local loss = _G.model:trainNetwork(_G.batch)
+          local loss, indvAvgLoss = _G.model:trainNetwork(_G.batch)
 
-          return idx, loss, _G.profiler:dump()
+          return idx, loss, indvAvgLoss, _G.profiler:dump()
         end,
-        function(idx, loss, profile)
+        function(idx, loss, indvAvgLoss, profile)
           losses[idx]=loss
+          if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+            indvAvgLosses[idx] = indvAvgLoss
+          end
           epochProfiler:add(profile)
         end)
 
@@ -167,6 +171,9 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
         for bi = 1, #batches do
           epochState:update(model, batches[bi], losses[bi])
+          if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+            trainData:setLoss(batchOrder[i + bi - 1], indvAvgLosses[bi])
+          end
         end
 
         if iter % self.args.report_every == 0 then
@@ -207,11 +214,12 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
           local batches = {}
           local losses = {}
+          local indvAvgLosses = {}
 
           while true do
             local i = counter:inc()
             if i - startCounter >= maxConcurrentIter or i > trainData:batchCount() then
-              return batches, losses, _G.profiler:dump()
+              return batches, losses, indvAvgLosses, _G.profiler:dump()
             end
 
             local batchIdx = batchOrder[i]
@@ -225,8 +233,11 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             onmt.utils.Cuda.convert(_G.batch)
 
             optim:zeroGrad(_G.gradParams)
-            local loss = _G.model:trainNetwork(_G.batch)
+            local loss, indvAvgLoss = _G.model:trainNetwork(_G.batch)
             table.insert(losses, loss)
+            if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+              indvAvgLosses[batchIdx] = indvAvgLoss
+            end
 
             -- Update the parameters.
             optim:prepareGrad(_G.gradParams)
@@ -235,11 +246,14 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             onmt.utils.Parallel.updateAndSync(params[1], _G.gradParams, _G.params, gradBuffer, masterGPU, gmutexId)
           end
         end,
-        function(batches, losses, profile)
+        function(batches, losses, indvAvgLosses, profile)
           if batches then
             iter = iter + #batches
             for i = 1, #batches do
               epochState:update(model, batches[i], losses[i])
+              if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+                trainData:setLoss(batchOrder[i], indvAvgLosses[batchOrder[i]])
+              end
             end
             epochProfiler:add(profile)
           end
@@ -257,6 +271,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     if needLog then
       epochState:log(numIterations)
+    end
+
+    if trainData.sample then
+      trainData:sample()
     end
 
     return epochState, epochProfiler:dump()

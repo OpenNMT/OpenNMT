@@ -7,6 +7,7 @@
 * Add standalone script to generate vocabularies
 * Add script to extract word embeddings
 * Add option to prune vocabularies by minimum word frequency
+* Add data sampling during training
 
 ### Fixes and improvements
 
