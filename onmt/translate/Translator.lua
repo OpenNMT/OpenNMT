@@ -35,7 +35,7 @@ function Translator:__init(args)
 
   self.dataType = self.checkpoint.options.data_type or 'bitext'
   self.modelType = self.checkpoint.options.model_type or 'seq2seq'
-  _G.logger:info('Model %s trained on %s', self.dataType, self.modelType)
+  _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
 
   assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
@@ -51,18 +51,14 @@ function Translator:__init(args)
   end
 end
 
+function Translator:srcFeat()
+  return self.dataType == 'feattext'
+end
+
 function Translator:buildInput(tokens)
   local data = {}
-  if self.dataType == 'audiotext' then
-    -- read audio file
-    local wavFile = tokens[2]
-    if wavFile:sub(1,1) ~= '/' then
-      -- relative file
-      wavFile = paths.concat(paths.dirname(self.args.src), wavFile)
-    end
-    local saudio, samplerate = audiolib.load(wavFile)
-    data.vectors = self.audio:extractFeats(saudio, samplerate)
-
+  if self.dataType == 'feattext' then
+    data.vectors = torch.Tensor(tokens)
   else
     local words, features = onmt.utils.Features.extract(tokens)
 
@@ -78,10 +74,6 @@ end
 
 function Translator:buildInputGold(tokens)
   local data = {}
-
-  if self.dataType == 'audiotext' then
-    table.remove(tokens, 1)
-  end
 
   local words, features = onmt.utils.Features.extract(tokens)
 
