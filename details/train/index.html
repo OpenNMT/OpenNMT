@@ -72,6 +72,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/data/onmt+data+AliasMultinomial/">onmt+data+AliasMultinomial</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/data/onmt+data+Batch/">onmt+data+Batch</a>
         
     </li>
@@ -87,6 +94,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/data/onmt+data+Preprocessor/">onmt+data+Preprocessor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/data/onmt+data+SampledDataset/">onmt+data+SampledDataset</a>
         
     </li>
 
@@ -347,6 +361,8 @@
                 
                     <li><a class="toctree-l4" href="#checkpoint-options">Checkpoint options</a></li>
                 
+                    <li><a class="toctree-l4" href="#sampleddataset-options">SampledDataset options</a></li>
+                
                     <li><a class="toctree-l4" href="#other-options">Other options</a></li>
                 
             
@@ -413,6 +429,7 @@
 <li><code>-data</code>: Path to the training *-train.t7 file from preprocess.lua []</li>
 <li><code>-save_model</code>: Model filename (the model will be saved as <save_model>_epochN_PPL.t7 where PPL is the validation perplexity []</li>
 <li><code>-model_type</code>: (lm, seq2seq) Type of the model to train. This option impacts all options choices [seq2seq]</li>
+<li><code>-param_init</code>: Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]</li>
 </ul>
 <h2 id="sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options</h2>
 <ul>
@@ -459,6 +476,13 @@
 <ul>
 <li><code>-train_from</code>: If training from a checkpoint then this is the path to the pretrained model. []</li>
 <li><code>-continue</code>: If training from a checkpoint, whether to continue the training in the same configuration or not. [false]</li>
+</ul>
+<h2 id="sampleddataset-options">SampledDataset options</h2>
+<ul>
+<li><code>-sample</code>: Number of instances to sample from train data in each epoch [0]</li>
+<li><code>-sample_w_ppl</code>: use ppl as probability distribution when sampling [false]</li>
+<li><code>-sample_w_ppl_init</code>: start perplexity-based sampling when average train perplexity per batch falls below this value [15]</li>
+<li><code>-sample_w_ppl_max</code>: when greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + (-sample_w_ppl_max) * stdev will be used as threshold [-1.5]</li>
 </ul>
 <h2 id="other-options">Other options</h2>
 <ul>
