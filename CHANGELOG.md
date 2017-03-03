@@ -8,6 +8,7 @@
 * Add script to extract word embeddings
 * Add option to prune vocabularies by minimum word frequency
 * Add data sampling during training
+* Add half floating point (fp16) support
 
 ### Fixes and improvements
 
