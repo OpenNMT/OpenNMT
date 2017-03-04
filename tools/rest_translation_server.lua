@@ -17,7 +17,8 @@ local restserver = require("restserver")
 local cmd = onmt.utils.ExtendedCmdLine.new('rest_translation_server.lua')
 
 local options = {
-   {'-port', '7784', [[Port to run the server on]]}
+   {'-port', '7784', [[Port to run the server on.]]},
+   {'-withAttn', false, [[If set returns by default attn vector.]]}
 }
 
 cmd:setCmdLineOptions(options, 'Server')
@@ -30,17 +31,18 @@ cmd:text("")
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
-cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner' character]])
-cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners]])
-cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token]])
-cmd:option('-case_feature', false, [[Generate case feature]])
-cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given]])
-cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
+cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive'
+  only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing'.]])
+cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner' character.]])
+cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners.]])
+cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token.]])
+cmd:option('-case_feature', false, [[Generate case feature.]])
+cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given.]])
+cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory.]])
 
 local opt = cmd:parse(arg)
 
-local function translateMessage(translator, lines)
+local function translateMessage(translator, req)
   local batch = {}
   -- We need to tokenize the input line before translation
   local srcTokens = {}
@@ -53,7 +55,7 @@ local function translateMessage(translator, lines)
   if opt.bpe_model ~= '' then
      bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
   end
-  res, err = pcall(function() tokens = tokenizer.tokenize(opt, lines.src, bpe) end)
+  res, err = pcall(function() tokens = tokenizer.tokenize(opt, req.src, bpe) end)
      -- it can generate an exception if there are utf-8 issues in the text
      if not res then
        if string.find(err, "interrupted") then
@@ -92,18 +94,20 @@ local function translateMessage(translator, lines)
       end
     end
 
-    local attnTable = {}
-    for j = 1, #results[1].preds[i].attention do
-      table.insert(attnTable, results[1].preds[i].attention[j]:totable())
-    end
-
-    table.insert(ret, {
+    local lineres = {
       tgt = oline,
-      attn = attnTable,
       src = srcSent,
       n_best = i,
       pred_score = results[1].preds[i].score
-    })
+    }
+    if opt.withAttn or req.withAttn then
+      local attnTable = {}
+      for j = 1, #results[1].preds[i].attention do
+        table.insert(attnTable, results[1].preds[i].attention[j]:totable())
+      end
+      lineres.attn = attnTable
+    end
+    table.insert(ret, lineres)
   end
   table.insert(translations, ret)
 
@@ -119,9 +123,6 @@ local function init_server(port, translator)
       path = "/translate",
       consumes = "application/json",
       produces = "application/json",
-      input_schema = {
-        src = { type = "string" },
-      },
       handler = function(req)
         _G.logger:info("receiving request: [%s]", req.src:gsub("\n", "\\n"))
         local translate = translateMessage(translator, req)
