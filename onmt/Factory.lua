@@ -109,12 +109,20 @@ end
 function Factory.buildEncoder(opt, inputNetwork)
 
   if opt.brnn then
+    _G.logger:info('   - Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
     return onmt.BiEncoder.new(opt, inputNetwork)
   elseif opt.dbrnn then
+    _G.logger:info('   - Deep Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
     return onmt.DBiEncoder.new(opt, inputNetwork)
   elseif opt.pdbrnn then
+    _G.logger:info('   - Pyramidal Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
     return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
+    _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
     return onmt.SimpleEncoder.new(opt, inputNetwork)
   end
 
