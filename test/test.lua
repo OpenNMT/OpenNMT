@@ -351,8 +351,6 @@ function SampledDatasetTest.Sample()
   local dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
 
-  local numSampled = dataset:getNumSampled()
-
   tester:eq(dataset:getNumSampled(), opt.sample)
   for i = 1, dataset:batchCount() do
     dataset:getBatch(i)
@@ -363,8 +361,6 @@ function SampledDatasetTest.Sample()
 
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
-
-  numSampled = dataset:getNumSampled()
 
   tester:eq(dataset:getNumSampled(), opt.sample)
   for i = 1, dataset:batchCount() do
@@ -377,8 +373,6 @@ function SampledDatasetTest.Sample()
 
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
-
-  numSampled = dataset:getNumSampled()
 
   tester:eq(dataset:getNumSampled(), opt.sample)
   for i = 1, dataset:batchCount() do
