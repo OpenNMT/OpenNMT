@@ -8,6 +8,7 @@
 * Add script to extract word embeddings
 * Add option to prune vocabularies by minimum word frequency
 * Add data sampling during training
+* Add half floating point (fp16) support (with [cutorch@359ee80](https://github.com/torch/cutorch/commit/359ee80be391028ffa098de429cc0533b2f268f5))
 * New rest server
 
 ### Fixes and improvements
