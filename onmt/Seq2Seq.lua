@@ -72,6 +72,16 @@ function Seq2Seq.dataType(dm)
   return 'bitext'
 end
 
+function Seq2Seq:returnIndividualLosses(enable)
+  if not self.models.decoder.returnIndividualLosses then
+    _G.logger:info('Current Seq2Seq model does not support training with sample_w_ppl option')
+    return false
+  else
+    self.models.decoder:returnIndividualLosses(enable)
+  end
+  return true
+end
+
 function Seq2Seq:enableProfiling()
   _G.profiler.addHook(self.models.encoder, 'encoder')
   _G.profiler.addHook(self.models.decoder, 'decoder')
@@ -97,10 +107,10 @@ function Seq2Seq:trainNetwork(batch, dryRun)
     decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
   end
 
-  local encGradStatesOut, gradContext, loss = self.models.decoder:backward(batch, decOutputs, self.criterion)
+  local encGradStatesOut, gradContext, loss, indvLoss = self.models.decoder:backward(batch, decOutputs, self.criterion)
   self.models.encoder:backward(batch, encGradStatesOut, gradContext)
 
-  return loss
+  return loss, indvLoss
 end
 
 return Seq2Seq
