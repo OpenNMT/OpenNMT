@@ -68,6 +68,7 @@ build = {
     ["onmt.translate.Translator"] = "onmt/translate/Translator.lua",
     ["onmt.translate.PhraseTable"] = "onmt/translate/PhraseTable.lua",
     ["onmt.utils.init"] = "onmt/utils/init.lua",
+    ["onmt.utils.CrayonLogger"] = "onmt/utils/CrayonLogger.lua",
     ["onmt.utils.Cuda"] = "onmt/utils/Cuda.lua",
     ["onmt.utils.Dict"] = "onmt/utils/Dict.lua",
     ["onmt.utils.Features"] = "onmt/utils/Features.lua",
