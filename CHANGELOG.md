@@ -3,6 +3,7 @@
 ### New features
 
 * Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
+* Add partial CuDNN support (unidirectional LSTM and GRU)
 
 ### Fixes and improvements
 
