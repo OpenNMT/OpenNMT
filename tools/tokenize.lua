@@ -19,12 +19,20 @@ cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is
 cmd:option('-EOT_marker', separators.EOT, [[Marker used to mark the end of token, use '</w>' for python models, otherwise default value ]])
 cmd:option('-BOT_marker', separators.BOT, [[Marker used to mark the begining of token]])
 cmd:option('-bpe_case_insensitive', false, [[Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
-cmd:option('-bpe_prefix', false, [[Append '﹤' to the begining of each word to apply prefix-orientated pair statistics. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
-cmd:option('-bpe_suffix', false, [[Append '﹥' to the end of each word to apply suffix-orientated pair statistics. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
+cmd:option('-bpe_mode', 'suffix', [[Define the mode for bpe. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua. - 'prefix': Append '﹤' to the begining of each word to learn prefix-oriented pair statistics;
+'suffix': Append '﹥' to the end of each word to learn suffix-oriented pair statistics, as in the original python script;
+'both': suffix and prefix; 'none': no suffix nor prefix]])
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
 local opt = cmd:parse(arg)
+
+if opt.bpe_model ~= '' then
+  local f = assert(io.open(opt.bpe_model, "r"))
+  local options = {}
+  for i in string.gmatch(f:read("*line"), "[^;]+") do table.insert(options, i) end
+  if #options == 4 then opt.mode = options[4] end  -- overriding 'mode' from cmd by options from bpe_model for BPE compatibility
+end
 
 local pool = threads.Threads(
    opt.nparallel,
@@ -33,10 +41,6 @@ local pool = threads.Threads(
      _G.tokenizer = require('tools.utils.tokenizer')
      _G.BPE = require ('tools.utils.BPE')
      if opt.bpe_model ~= '' then
-       local f = assert(io.open(opt.bpe_model, "r"))
-       local options = {}
-       for i in string.gmatch(f:read("*line"), "[^;]+") do table.insert(options, i) end
-       if #options == 4 then opt.mode = options[4] end  -- overriding 'mode' from cmd by options from bpe_model for BPE compatibility
        _G.bpe = _G.BPE.new(opt)
      end
    end

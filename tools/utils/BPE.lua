@@ -28,8 +28,8 @@ function BPE:__init(opt)
     self.case_insensitive = options[3] == "true"
     t = f:read("*line")
   else
-    self.prefix = opt.bpe_prefix
-    self.suffix = opt.bpe_suffix
+    self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
+    self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"
     self.case_insensitive = opt.bpe_case_insensitive
   end
   local i = 1
