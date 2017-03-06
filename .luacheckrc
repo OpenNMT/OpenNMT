@@ -1,6 +1,7 @@
 globals = {
   "table.unpack",
   "table.pack",
+  "string.split",
   "torch",
   "cutorch",
   "nn",
