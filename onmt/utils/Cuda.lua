@@ -1,6 +1,7 @@
 local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
 
 local Cuda = {
+  fp16 = false,
   gpuIds = {},
   activated = false
 }
@@ -9,6 +10,7 @@ local options = {
   {'-gpuid',     '0',   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
                                  {valid=ExtendedCmdLine.listUInt}},
   {'-fallback_to_cpu', false, [[If GPU can't be use, rollback on the CPU.]]},
+  {'-fp16', false, [[Use half-precision float on GPU.]]},
   {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
 }
 
@@ -31,6 +33,7 @@ function Cuda.init(opt, masterGPU)
     local _, err = pcall(function()
       require('cutorch')
       require('cunn')
+      Cuda.fp16 = opt.fp16
 
       if masterGPU == nil then
         masterGPU = 1
@@ -60,6 +63,9 @@ function Cuda.init(opt, masterGPU)
         error(err)
       end
     end
+    if Cuda.fp16 and not cutorch.hasHalf then
+      error("installed cutorch does not support half-tensor")
+    end
   end
 end
 
@@ -72,16 +78,18 @@ function Cuda.convert(obj)
   if objtype then
     if Cuda.activated and obj.cuda ~= nil then
       if objtype:find('torch%..*LongTensor') then
-        return obj:cudaLong()
+        return obj:type('torch.CudaLongTensor')
+      elseif Cuda.fp16 then
+        return obj:type('torch.CudaHalfTensor')
       else
-        return obj:cuda()
+        return obj:type('torch.CudaTensor')
       end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
       if objtype:find('torch%..*LongTensor') then
-        return obj:long()
+        return obj:type('torch.LongTensor')
       else
-        return obj:float()
+        return obj:type('torch.FloatTensor')
       end
     end
   end
