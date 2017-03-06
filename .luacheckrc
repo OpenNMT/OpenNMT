@@ -1,4 +1,6 @@
 globals = {
+  "table.unpack",
+  "table.pack",
   "torch",
   "cutorch",
   "nn",
@@ -8,3 +10,4 @@ globals = {
 }
 
 self = false
+max_line_length = false
