@@ -74,6 +74,22 @@ function CudnnEncoder:resetPreallocation()
   self.rnn.gradCellOutput = torch.Tensor()
 end
 
+function CudnnEncoder:toNN()
+  local rnn
+
+  if self.rnn.mode == 'CUDNN_GRU' then
+    rnn = onmt.GRU(self.rnn.numLayers, self.rnn.inputSize, self.rnn.hiddenSize, self.rnn.dropout)
+  elseif self.rnn.mode == 'CUDNN_LSTM' then
+    rnn = onmt.LSTM(self.rnn.numLayers, self.rnn.inputSize, self.rnn.hiddenSize, self.rnn.dropout)
+  else
+    error('unsupported ' .. self.rnn.mode .. ' CuDNN mode')
+  end
+
+  rnn:setParameters(self.rnn:weights(), self.rnn:biases())
+
+  return onmt.Encoder(self.inputNetwork, rnn)
+end
+
 --[[Compute the context representation of an input.
 
 Parameters:

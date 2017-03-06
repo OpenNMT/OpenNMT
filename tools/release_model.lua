@@ -76,7 +76,11 @@ local function main()
 
   _G.logger:info('Converting model...')
   checkpoint.info = nil
-  for _, model in pairs(checkpoint.models) do
+  for key, model in pairs(checkpoint.models) do
+    if model.name == 'CudnnEncoder' then
+      model = onmt.CudnnEncoder.load(model):toNN()
+      checkpoint.models[key] = model
+    end
     releaseModel(model)
   end
   _G.logger:info('... done.')

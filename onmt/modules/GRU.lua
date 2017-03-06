@@ -149,3 +149,29 @@ function GRU:_buildLayer(inputSize, hiddenSize)
 
   return nn.gModule(inputs, {nextH})
 end
+
+--[[ Set parameters as returned by CuDNN. ]]
+function GRU:setParameters(weights, biases)
+  local layer = 1
+  local i = 1
+
+  self.net:apply(function(m)
+    if torch.typename(m) == 'nn.Linear' then
+      if i > #weights[layer] then
+        i = 1
+        layer = layer + 1
+      end
+
+      for j = 1, 3 do
+        m.weight
+          :narrow(1, (j - 1) * self.outputSize + 1, self.outputSize)
+          :copy(weights[layer][i]:view(-1, self.outputSize))
+        m.bias
+          :narrow(1, (j - 1) * self.outputSize + 1, self.outputSize)
+          :copy(biases[layer][i])
+
+        i = i + 1
+      end
+    end
+  end)
+end
