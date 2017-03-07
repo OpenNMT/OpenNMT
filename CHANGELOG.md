@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### New features
+
+* Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
+
 ### Fixes and improvements
 
 * Fix translation with FP16 precision
