@@ -426,7 +426,7 @@
 <p>A batch of sentences to translate and targets. Manages padding,
   features, and batch alignment (for efficiency).</p>
 <p>Used by the decoder and encoder objects.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/11649dc718eb93eea4cfdc35ff2ddab866f38162/onmt/data/Batch.lua#L59">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8472ae1a704e44d8586f6c51c5c153cbfff1321/onmt/data/Batch.lua#L59">[src]</a>
 <a name="onmt.Batch"></a></p>
 <h3 id="onmtbatchsrc-srcfeatures-tgt-tgtfeatures">onmt.Batch(src, srcFeatures, tgt, tgtFeatures)</h3>
 <p>Create a batch object.</p>
@@ -437,7 +437,7 @@
 <li><code>tgt</code> - 2D table of target batch indices</li>
 <li><code>tgtFeatures</code> - 2D table of target batch features (opt)</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/11649dc718eb93eea4cfdc35ff2ddab866f38162/onmt/data/Batch.lua#L155">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8472ae1a704e44d8586f6c51c5c153cbfff1321/onmt/data/Batch.lua#L155">[src]</a>
 <a name="onmt.Batch:setSourceInput"></a></p>
 <h3 id="onmtbatchsetsourceinputsourceinput">onmt.Batch:setSourceInput(sourceInput)</h3>
 <p>Set source input directly,</p>
@@ -446,7 +446,7 @@
 <li><code>sourceInput</code> - a Tensor of size (sequence_length, batch_size, feature_dim)
   ,or a sequence of size (sequence_length, batch_size). Be aware that sourceInput is not cloned here.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/11649dc718eb93eea4cfdc35ff2ddab866f38162/onmt/data/Batch.lua#L172">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8472ae1a704e44d8586f6c51c5c153cbfff1321/onmt/data/Batch.lua#L172">[src]</a>
 <a name="onmt.Batch:setTargetInput"></a></p>
 <h3 id="onmtbatchsettargetinputtargetinput">onmt.Batch:setTargetInput(targetInput)</h3>
 <p>Set target input directly.</p>
@@ -454,7 +454,7 @@
 <ul>
 <li><code>targetInput</code> - a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD. Be aware that targetInput is not cloned here.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/11649dc718eb93eea4cfdc35ff2ddab866f38162/onmt/data/Batch.lua#L189">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8472ae1a704e44d8586f6c51c5c153cbfff1321/onmt/data/Batch.lua#L189">[src]</a>
 <a name="onmt.Batch:setTargetOutput"></a></p>
 <h3 id="onmtbatchsettargetoutputtargetoutput">onmt.Batch:setTargetOutput(targetOutput)</h3>
 <p>Set target output directly.</p>
@@ -462,15 +462,15 @@
 <ul>
 <li><code>targetOutput</code> - a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD.  Be aware that targetOutput is not cloned here.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/11649dc718eb93eea4cfdc35ff2ddab866f38162/onmt/data/Batch.lua#L209">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8472ae1a704e44d8586f6c51c5c153cbfff1321/onmt/data/Batch.lua#L209">[src]</a>
 <a name="onmt.Batch:getSourceInput"></a></p>
 <h3 id="onmtbatchgetsourceinputt">onmt.Batch:getSourceInput(t)</h3>
 <p>Get source input batch at timestep <code>t</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/11649dc718eb93eea4cfdc35ff2ddab866f38162/onmt/data/Batch.lua#L222">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8472ae1a704e44d8586f6c51c5c153cbfff1321/onmt/data/Batch.lua#L222">[src]</a>
 <a name="onmt.Batch:getTargetInput"></a></p>
 <h3 id="onmtbatchgettargetinputt">onmt.Batch:getTargetInput(t)</h3>
 <p>Get target input batch at timestep <code>t</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/11649dc718eb93eea4cfdc35ff2ddab866f38162/onmt/data/Batch.lua#L235">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/b8472ae1a704e44d8586f6c51c5c153cbfff1321/onmt/data/Batch.lua#L235">[src]</a>
 <a name="onmt.Batch:getTargetOutput"></a></p>
 <h3 id="onmtbatchgettargetoutputt">onmt.Batch:getTargetOutput(t)</h3>
 <p>Get target output batch at timestep <code>t</code> (values t+1). </p>
