@@ -67,9 +67,10 @@ local options = {
   {'-learning_rate_decay', 0.5 , [[Learning rate decay factor]]},
   {'-start_decay_at',      9   , [[With 'default' decay mode, start decay after this epoch]],
                                  {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-start_decay_ppl_delta', 0 , [[Start decay when validation perplexity improvement is lower than this value]]},
   {'-decay',          'default', [[When to apply learning rate decay.
-                                 'default': decay after each epoch past start_decay_at or as soon as the validation perplexity goes up,
-                                 'perplexity_only': only decay when validation perplexity goes up]],
+                                 'default': decay after each epoch past start_decay_at or as soon as the validation perplexity is not improving more than start_decay_ppl_delta,
+                                 'perplexity_only': only decay when validation perplexity is not improving more than start_decay_ppl_delta]],
                                  {enum={'default', 'perplexity_only'}}}
 }
 
@@ -159,7 +160,7 @@ function Optim:updateLearningRate(score, epoch)
     if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
       local currPpl = self.valPerf[#self.valPerf]
       local prevPpl = self.valPerf[#self.valPerf-1]
-      if currPpl > prevPpl then
+      if prevPpl - currPpl < self.args.start_decay_ppl_delta then
         self.startDecay = true
         decayConditionMet = true
       end
