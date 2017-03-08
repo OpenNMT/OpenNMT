@@ -61,6 +61,7 @@ local options = {
   {'-learning_rate',       1   , [[Starting learning rate. If adagrad or adam is used,
                                       then this is the global learning rate. Recommended settings are: sgd = 1,
                                       adagrad = 0.1, adam = 0.0002]]},
+  {'-min_learning_rate',   0   , [[Do not continue the training past this learning rate]]},
   {'-max_grad_norm',       5   , [[If the norm of the gradient vector exceeds this renormalize it to have
                                        the norm equal to max_grad_norm]]},
   {'-learning_rate_decay', 0.5 , [[Decay learning rate by this much if (i) perplexity does not decrease
@@ -157,7 +158,11 @@ function Optim:updateLearningRate(score, epoch)
     if self.startDecay then
       self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
     end
+
+    return self.args.learning_rate >= self.args.min_learning_rate
   end
+
+  return true
 end
 
 function Optim:getLearningRate()
