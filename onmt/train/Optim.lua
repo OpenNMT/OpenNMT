@@ -64,10 +64,13 @@ local options = {
   {'-min_learning_rate',   0   , [[Do not continue the training past this learning rate]]},
   {'-max_grad_norm',       5   , [[If the norm of the gradient vector exceeds this renormalize it to have
                                        the norm equal to max_grad_norm]]},
-  {'-learning_rate_decay', 0.5 , [[Decay learning rate by this much if (i) perplexity does not decrease
-                                       on the validation set or (ii) epoch has gone past the start_decay_at_limit]]},
-  {'-start_decay_at',      9   , [[Start decay after this epoch]],
-                                 {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
+  {'-learning_rate_decay', 0.5 , [[Learning rate decay factor]]},
+  {'-start_decay_at',      9   , [[With 'default' decay mode, start decay after this epoch]],
+                                 {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-decay',          'default', [[When to apply learning rate decay.
+                                 'default': decay after each epoch past start_decay_at or as soon as the validation perplexity goes up,
+                                 'perplexity_only': only decay when validation perplexity goes up]],
+                                 {enum={'default', 'perplexity_only'}}}
 }
 
 function Optim.declareOpts(cmd)
@@ -140,6 +143,10 @@ end
 
 -- decay learning rate if val perf does not improve or we hit the startDecayAt limit
 function Optim:updateLearningRate(score, epoch)
+  local function decayLr()
+    self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
+  end
+
   if self.args.optim == 'sgd' then
     self.valPerf[#self.valPerf + 1] = score
 
@@ -147,16 +154,21 @@ function Optim:updateLearningRate(score, epoch)
       self.startDecay = true
     end
 
+    local decayConditionMet = false
+
     if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
       local currPpl = self.valPerf[#self.valPerf]
       local prevPpl = self.valPerf[#self.valPerf-1]
       if currPpl > prevPpl then
         self.startDecay = true
+        decayConditionMet = true
       end
     end
 
-    if self.startDecay then
-      self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
+    if self.args.decay == 'default' and self.startDecay then
+      decayLr()
+    elseif self.args.decay == 'perplexity_only' and decayConditionMet then
+      decayLr()
     end
 
     return self.args.learning_rate >= self.args.min_learning_rate

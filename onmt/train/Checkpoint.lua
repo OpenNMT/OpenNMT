@@ -92,6 +92,7 @@ function Checkpoint.loadFromCheckpoint(opt)
     -- Resume training from checkpoint
     if opt.continue then
       opt.optim = checkpoint.options.optim
+      opt.decay = checkpoint.options.decay
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.min_learning_rate = checkpoint.options.min_learning_rate
       opt.start_decay_at = checkpoint.options.start_decay_at
