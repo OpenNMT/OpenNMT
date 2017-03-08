@@ -74,7 +74,9 @@ function DecoderAdvancer:update(beam)
     inputs = { token }
     table.insert(inputs, features)
   end
-  self.decoder:maskPadding(sourceSizes, self.batch.sourceLength)
+  if self.batch.size>1 then
+    self.decoder:maskPadding(sourceSizes, self.batch.encoderOutputLength or self.batch.sourceLength)
+  end
   decOut, decStates = self.decoder:forwardOne(inputs, decStates, context, decOut)
   t = t + 1
   local softmaxOut = self.decoder.softmaxAttn.output

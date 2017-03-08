@@ -23,10 +23,12 @@ local opt = cmd:parse(arg)
 
 local function releaseModel(model, tensorCache)
   tensorCache = tensorCache or {}
-  for _, submodule in pairs(model.modules) do
-    if torch.type(submodule) == 'table' and submodule.modules then
+  for n, submodule in pairs(model) do
+    if torch.type(submodule) == 'table' then
       releaseModel(submodule, tensorCache)
-    else
+    elseif torch.isTensor(submodule) then
+      model.n = submodule:float()
+    elseif torch.isTypeOf(submodule, "nn.Module") then
       submodule:float(tensorCache)
       submodule:clearState()
       submodule:apply(function (m)

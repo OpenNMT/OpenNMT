@@ -35,7 +35,7 @@ onmt.utils.Memory.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 onmt.utils.Profiler.declareOpts(cmd)
 
-cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
+cmd:option('-seed', 3435, [[Seed for random initialization.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 
 local opt = cmd:parse(arg)
 
@@ -63,10 +63,14 @@ local function main()
   dataset.dataType = dataset.dataType or 'bitext'
 
   -- Check if data type matches the model.
-  if dataset.dataType ~= modelClass.dataType() then
-    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.dataType() .. '\'')
+  if not modelClass.dataType(dataset.dataType) then
+    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.modelName() .. '\'')
     os.exit(0)
   end
+
+  -- record datatype in the options, and preprocessing options if present
+  opt.data_type = dataset.dataType
+  opt.preprocess = dataset.opt
 
   local trainData
   if opt.sample > 0 then
@@ -76,14 +80,30 @@ local function main()
   end
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
-  trainData:setBatchSize(opt.max_batch_size)
-  validData:setBatchSize(opt.max_batch_size)
+  trainData:setBatchSize(opt.max_batch_size, opt.same_size_batch)
+  validData:setBatchSize(opt.max_batch_size, opt.same_size_batch)
 
-  if dataset.dataType == 'bitext' then
-    _G.logger:info(' * vocabulary size: source = %d; target = %d',
-                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
-    _G.logger:info(' * additional features: source = %d; target = %d',
-                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+  if dataset.dataType ~= 'monotext' then
+    local srcVocSize
+    local srcFeatSize = '-'
+    if dataset.dicts.src then
+      srcVocSize = dataset.dicts.src.words:size()
+      srcFeatSize = #dataset.dicts.src.features
+    else
+      srcVocSize = '*'..dataset.dicts.srcInputSize
+    end
+    local tgtVocSize
+    local tgtFeatSize = '-'
+    if dataset.dicts.tgt then
+      tgtVocSize = dataset.dicts.tgt.words:size()
+      tgtFeatSize = #dataset.dicts.tgt.features
+    else
+      tgtVocSize = '*'..dataset.dicts.tgtInputSize
+    end
+    _G.logger:info(' * vocabulary size: source = %s; target = %s',
+                   srcVocSize, tgtVocSize)
+    _G.logger:info(' * additional features: source = %s; target = %s',
+                   srcFeatSize, tgtFeatSize)
   else
     _G.logger:info(' * vocabulary size: %d', dataset.dicts.src.words:size())
     _G.logger:info(' * additional features: %d', #dataset.dicts.src.features)

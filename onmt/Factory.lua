@@ -1,5 +1,18 @@
 local Factory = torch.class('Factory')
 
+local options = {
+  {'-brnn', false, [[Use a bidirectional encoder.]]},
+  {'-dbrnn', false, [[Use a deep bidirectional encoder.]]},
+  {'-pdbrnn', false, [[Use pyramidal deep bidirectional encoder.]]}
+}
+
+function Factory.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+  onmt.BiEncoder.declareOpts(cmd)
+  onmt.DBiEncoder.declareOpts(cmd)
+  onmt.PDBiEncoder.declareOpts(cmd)
+end
+
 -- Return effective embeddings size based on user options.
 local function resolveEmbSizes(opt, dicts, wordSizes)
   local wordEmbSize
@@ -94,47 +107,41 @@ function Factory.getOutputSizes(dicts)
 end
 
 function Factory.buildEncoder(opt, inputNetwork)
-  local encoder
-
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
-  end
 
   if opt.brnn then
-    -- Compute rnn hidden size depending on hidden states merge action.
-    local rnnSize = opt.rnn_size
-    if opt.brnn_merge == 'concat' then
-      if opt.rnn_size % 2 ~= 0 then
-        error('in concat mode, rnn_size must be divisible by 2')
-      end
-      rnnSize = rnnSize / 2
-    elseif opt.brnn_merge == 'sum' then
-      rnnSize = rnnSize
-    else
-      error('invalid merge action ' .. opt.brnn_merge)
-    end
-
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
-
-    encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    _G.logger:info('   - Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    return onmt.BiEncoder.new(opt, inputNetwork)
+  elseif opt.dbrnn then
+    _G.logger:info('   - Deep Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    return onmt.DBiEncoder.new(opt, inputNetwork)
+  elseif opt.pdbrnn then
+    _G.logger:info('   - Pyramidal Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
-
-    encoder = onmt.Encoder.new(inputNetwork, rnn)
+    _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    return onmt.Encoder.new(opt, inputNetwork)
   end
-  return encoder
+
 end
 
 function Factory.buildWordEncoder(opt, dicts, verbose)
   if verbose then
     _G.logger:info(' * Encoder:')
   end
-
-  local inputNetwork = buildInputNetwork(opt, dicts,
-                                         opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
-                                         verbose)
+  local inputNetwork
+  if dicts then
+    inputNetwork = buildInputNetwork(opt, dicts,
+                                     opt.src_word_vec_size or opt.word_vec_size,
+                                     opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
+                                     verbose)
+  else
+    inputNetwork = nn.Identity()
+    inputNetwork.inputSize = opt.dimInputSize
+  end
 
   return Factory.buildEncoder(opt, inputNetwork)
 end
@@ -146,9 +153,12 @@ function Factory.loadEncoder(pretrained, clone)
 
   if pretrained.name == 'Encoder' then
     return onmt.Encoder.load(pretrained)
-  end
-  if pretrained.name == 'BiEncoder' then
+  elseif pretrained.name == 'BiEncoder' then
     return onmt.BiEncoder.load(pretrained)
+  elseif pretrained.name == 'PDBiEncoder' then
+    return onmt.PDBiEncoder.load(pretrained)
+  elseif pretrained.name == 'DBiEncoder' then
+    return onmt.DBiEncoder.load(pretrained)
   end
 
   -- Keep for backward compatibility.

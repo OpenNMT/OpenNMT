@@ -14,14 +14,36 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
---[[ Construct an encoder layer.
+local options = {
+  {'-layers', 2,         [[Number of layers in the RNN Encoder/decoder]],
+                            {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-rnn_size', 500,     [[Size of RNN hidden states]],
+                            {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-rnn_type', 'LSTM', [[Type of RNN cell]],
+                            {enum={'LSTM','GRU'}}},
+  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]},
+  {'-residual', false, [[Add residual connections between RNN layers.]]}
+}
+
+function Encoder.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+end
+
+--[[ Construct an Encoder layer.
 
 Parameters:
 
   * `inputNetwork` - input module.
   * `rnn` - recurrent module.
 ]]
-function Encoder:__init(inputNetwork, rnn)
+function Encoder:__init(args, inputNetwork)
+  local RNN = onmt.LSTM
+  if args.rnn_type == 'GRU' then
+    RNN = onmt.GRU
+  end
+
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual)
+
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -70,7 +92,7 @@ function Encoder:maskPadding()
   self.maskPad = true
 end
 
---[[ Build one time-step of an encoder
+--[[ Build one time-step of an Encoder
 
 Returns: An nn-graph mapping
 
@@ -155,6 +177,7 @@ function Encoder:forward(batch)
       -- Remember inputs for the backward pass.
       self.inputs[t] = inputs
     end
+
     states = self:net(t):forward(inputs)
 
     -- Make sure it always returns table.
@@ -221,7 +244,7 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
 
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
-    -- Prepare next encoder output gradients.
+    -- Prepare next Encoder output gradients.
     for i = 1, #gradStatesInput do
       gradStatesInput[i]:copy(gradInput[i])
     end
