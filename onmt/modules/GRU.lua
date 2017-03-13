@@ -28,7 +28,7 @@ Parameters:
   * `layers` - Number of layers
   * `inputSize` - Size of input layer
   * `hiddenSize` - Size of the hidden layers
-  * `dropout` - Dropout rate to use (should be in $$[0,1]$$ range.
+  * `dropout` - Dropout rate to use (in $$[0,1]$$ range, if negative, force dropout even on first layer).
   * `residual` - Residual connections between layers (boolean)
 --]]
 function GRU:__init(layers, inputSize, hiddenSize, dropout, residual)
@@ -73,9 +73,9 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
       if residual and (L > 2 or inputSize == hiddenSize) then
         input = nn.CAddTable()({input, prevInput})
       end
-      if dropout > 0 then
-        input = nn.Dropout(dropout)(input)
-      end
+    end
+    if dropout < 0 or (dropout > 0 and L>1) then
+      input = nn.Dropout(math.abs(dropout))(input)
     end
 
     local prevH = inputs[L]
