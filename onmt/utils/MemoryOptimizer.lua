@@ -1,4 +1,7 @@
---[[ MemoryOptimizer is a class used for optimizing memory usage
+--[[
+  MemoryOptimizer is a class used for optimizing memory usage.
+  The idea is that each module is using different tensors:
+    - params
 --]]
 local MemoryOptimizer = torch.class('MemoryOptimizer')
 
@@ -57,21 +60,28 @@ local function canShare(t, net, protected)
   return false
 end
 
+-- Returns size and shape of tensor/tensor table
 local function getSize(t, mempool)
   local size = 0
+  local shape = ''
   if torch.isTensor(t) then
+    for i = 1,t:dim() do
+      shape = shape .. '/' .. t:size(i)
+    end
     if t:storage() then
       if not mempool[torch.pointer(t:storage())] then
         mempool[torch.pointer(t:storage())] = t:storage():size()*t:elementSize()
-        return mempool[torch.pointer(t:storage())]
+        return mempool[torch.pointer(t:storage())], shape
       end
     end
   elseif torch.type(t) == 'table' then
     for _, m in ipairs(t) do
-      size = size + getSize(m, mempool)
+      local subSize, subShape = getSize(m, mempool)
+      size = size + subSize
+      shape = shape .. '-' .. subShape
     end
   end
-  return size
+  return size, shape
 end
 
 -- Convenience function to register a network to optimize.
@@ -135,6 +145,101 @@ function MemoryOptimizer:__init(modules)
   end
 end
 
+local function registerStorageDepth(depth, t, depthStorage)
+  if type(t) == 'table' then
+    for _,v in ipairs(t) do
+      registerStorageDepth(depth, v, depthStorage)
+    end
+  elseif torch.isTensor(t) then
+    if not depthStorage[torch.pointer(t:storage())] or depthStorage[torch.pointer(t:storage())] < depth then
+      depthStorage[torch.pointer(t:storage())] = depth
+    end
+  end
+end
+
+local function calculateDepths(node, depth, depths, depthStorage)
+  if not depths[node.id] or depths[node.id] < depth then
+    depths[node.id] = depth
+    registerStorageDepth(depth, node.data.gradOutput, depthStorage)
+    registerStorageDepth(depth, node.data.input, depthStorage)
+    if node.data.module then
+      node.data.module:apply(function(m)
+        if m.input then
+          registerStorageDepth(depth, m.input, depthStorage)
+        end
+        if m.gradInput then
+          registerStorageDepth(depth, m.gradInput, depthStorage)
+        end
+        if m.output then
+          registerStorageDepth(depth, m.output, depthStorage)
+        end
+      end)
+    end
+    if node.children then
+      for i in ipairs(node.children) do
+        calculateDepths(node.children[i], depth+1, depths, depthStorage)
+      end
+    end
+  end
+end
+
+local function getMaxDepthStorage(t, depthStorage)
+  if type(t) == 'table' then
+    local max = -1
+    for _,v in ipairs(t) do
+      local m = getMaxDepthStorage(v, depthStorage)
+      if m > max then
+        max = m
+      end
+    end
+    return max
+  elseif torch.isTensor(t) then
+    if depthStorage[torch.pointer(t:storage())] then
+      return depthStorage[torch.pointer(t:storage())]
+    else
+      return 100000
+    end
+  end
+end
+
+local function getSharedTensor(idx, t, tShape, tSize, depthStorageFwd, depthStorageBwd, MapVShare)
+  local fwdDepth = getMaxDepthStorage(t, depthStorageFwd)
+  local bwdDepth = getMaxDepthStorage(t, depthStorageBwd)
+  local vSave = 0
+  local shareIdx
+  -- check if we can use another shared index with the same shape/size
+  if MapVShare[tShape] then
+    for idxMap, ranges in pairs(MapVShare[tShape]) do
+      local isOk = true
+      for _,v in ipairs(ranges) do
+        -- range of usage of the tensor/tensor table can not overlap with our current tensor/tensor table
+        if not((fwdDepth>v.fwdDepth and bwdDepth<v.bwdDepth) or
+               (fwdDepth<v.fwdDepth and bwdDepth>v.bwdDepth)) then
+          isOk = false
+          break
+        end
+      end
+      if isOk then
+        shareIdx = idxMap
+        vSave = tSize
+        break
+      end
+    end
+  else
+    MapVShare[tShape] = {}
+  end
+  -- if we cannot recycle a variable, create a new index
+  if not shareIdx then
+    shareIdx = idx
+    idx = idx + 1
+  end
+  if not MapVShare[tShape][shareIdx] then
+    MapVShare[tShape][shareIdx] = {}
+  end
+  table.insert(MapVShare[tShape][shareIdx], {fwdDepth=fwdDepth, bwdDepth=bwdDepth})
+  return idx, shareIdx, vSave
+end
+
 --[[ Enable memory optimization by marking tensors to share. Note that the modules must have been initialized
 -- by calling forward() and backward() before calling this function and after calling the MemoryOptimizer constructor.
 
@@ -145,11 +250,28 @@ Returns:
 function MemoryOptimizer:optimize()
   local totSize = 0
   local sharedSize = 0
+  local verticalSizeSave = 0
+
   for _, desc in pairs(self.modelDesc) do
     for i = 1, #desc do
       local net = desc[i].net
       local base = desc[i].base
       local mempool = {}
+
+      -- calculate depth of the nodes, and storages used in the graph
+      -- it will be used to recycle vertically storages
+      local depthsFwd = {}
+      local depthStorageFwd = {}
+      local roots = net.fg:roots()
+      for j,_ in ipairs(roots) do
+        calculateDepths(roots[j], 0, depthsFwd, depthStorageFwd)
+      end
+      local depthsBwd = {}
+      local depthStorageBwd = {}
+      roots = net.bg:roots()
+      for j,_ in ipairs(roots) do
+        calculateDepths(roots[j], 0, depthsBwd, depthStorageBwd)
+      end
 
       -- Some modules are using output when performing updateGradInput so we cannot share these.
       local protectedOutput = { desc[i].input }
@@ -166,25 +288,29 @@ function MemoryOptimizer:optimize()
       local idx = 1
 
       local gradInputMap = {}
+      local MapVShare = {}
       local outputMap = {}
 
       -- Go over the network to determine which tensors can be shared.
       net:apply(function(m)
-        local giSize = getSize(m.gradInput, mempool)
-        local oSize = getSize(m.output, mempool)
+        local giSize, giShape = getSize(m.gradInput, mempool)
+        local oSize, oShape = getSize(m.output, mempool)
         totSize = totSize + giSize
         totSize = totSize + oSize
+        local vSave
         if canShare(m.gradInput, net, desc[i].gradOutput) then
           sharedSize = sharedSize + giSize
-          m.gradInputSharedIdx = idx
-          gradInputMap[globalIdx] = idx
-          idx = idx + 1
+          idx, shareIdx, vSave = getSharedTensor(idx, m.gradInput, giShape, giSize, depthStorageFwd, depthStorageBwd, MapVShare)
+          verticalSizeSave = verticalSizeSave + vSave
+          m.gradInputSharedIdx = shareIdx
+          gradInputMap[globalIdx] = shareIdx
         end
         if canShare(m.output, net, protectedOutput) then
           sharedSize = sharedSize + oSize
-          m.outputSharedIdx = idx
-          outputMap[globalIdx] = idx
-          idx = idx + 1
+          idx, shareIdx, vSave = getSharedTensor(idx, m.output, oShape, oSize, depthStorageFwd, depthStorageBwd, MapVShare)
+          verticalSizeSave = verticalSizeSave + vSave
+          m.outputSharedIdx = shareIdx
+          outputMap[globalIdx] = shareIdx
         end
 
         -- Remove the wrapper around updateOutput to catch the module input.
@@ -212,7 +338,7 @@ function MemoryOptimizer:optimize()
       net.forward = nil
     end
   end
-  return sharedSize, totSize
+  return sharedSize, verticalSizeSave, totSize
 end
 
 return MemoryOptimizer
