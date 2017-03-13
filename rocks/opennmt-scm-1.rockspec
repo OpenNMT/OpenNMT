@@ -52,6 +52,7 @@ build = {
     ["onmt.modules.ParallelClassNLLCriterion"] = "onmt/modules/ParallelClassNLLCriterion.lua",
     ["onmt.data.init"] = "onmt/data/init.lua",
     ["onmt.data.Batch"] = "onmt/data/Batch.lua",
+    ["onmt.data.BatchTensor"] = "onmt/data/BatchTensor.lua",
     ["onmt.data.Dataset"] = "onmt/data/Dataset.lua",
     ["onmt.data.Preprocessor"] = "onmt/data/Preprocessor.lua",
     ["onmt.data.Vocabulary"] = "onmt/data/Vocabulary.lua",
