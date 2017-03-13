@@ -91,21 +91,33 @@ local function main()
   local model
 
   -- Build or load model from checkpoint and copy to GPUs.
-  onmt.utils.Parallel.launch(function(idx)
-    local _modelClass = onmt.ModelSelector(modelType)
-    if checkpoint.models then
-      _G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
-    else
-      local verbose = idx == 1
-      _G.model = _modelClass.new(opt, dataset.dicts, verbose)
-    end
-    onmt.utils.Cuda.convert(_G.model)
-    return idx, _G.model
-  end, function(idx, themodel)
-    if idx == 1 then
-      model = themodel
-    end
-  end)
+  --~ onmt.utils.Parallel.launch(function(idx)
+    --~ local _modelClass = onmt.ModelSelector(modelType)
+    --~ if checkpoint.models then
+      --~ _G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
+    --~ else
+      --~ local verbose = idx == 1
+      --~ _G.model = _modelClass.new(opt, dataset.dicts, verbose)
+    --~ end
+    --~ onmt.utils.Cuda.convert(_G.model)
+    --~ return idx, _G.model
+  --~ end, function(idx, themodel)
+    --~ if idx == 1 then
+      --~ model = themodel
+    --~ end
+  --~ end)
+  
+  local _modelClass = onmt.ModelSelector(modelType)
+  if checkpoint.models then
+	_G.model = _modelClass.load(opt, checkpoint.models, datatset.dicts, idx > 1)
+  else
+    local verbose = true
+    _G.model = _modelClass.new(opt, dataset.dicts, verbose)
+  end
+  onmt.utils.Cuda.convert(_G.model)
+  
+  model = _G.model
+  
 
   -- Define optimization method.
   local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
