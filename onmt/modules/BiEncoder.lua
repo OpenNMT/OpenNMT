@@ -105,6 +105,10 @@ function BiEncoder.load(pretrained)
   self.bwd = onmt.Encoder.load(pretrained.modules[2])
   self.args = pretrained.args
 
+  -- backward compatibility
+  self.args.rnn_size = self.args.rnn_size or self.args.rnnSize
+  self.args.brnn_merge = self.args.brnn_merge or self.args.merge
+
   self:add(self.fwd)
   self:add(self.bwd)
 
