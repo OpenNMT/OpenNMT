@@ -297,7 +297,7 @@ function MemoryOptimizer:optimize()
         local oSize, oShape = getSize(m.output, mempool)
         totSize = totSize + giSize
         totSize = totSize + oSize
-        local vSave
+        local vSave, shareIdx
         if canShare(m.gradInput, net, desc[i].gradOutput) then
           sharedSize = sharedSize + giSize
           idx, shareIdx, vSave = getSharedTensor(idx, m.gradInput, giShape, giSize, depthStorageFwd, depthStorageBwd, MapVShare)
