@@ -126,7 +126,7 @@ function MemoryOptimizer:__init(modules)
     elseif mod.modules then
       -- Otherwise, look in submodules instead.
       for i = 1, #mod.modules do
-        if mod.modules[i].net then
+        if torch.isTypeOf(mod, 'onmt.Sequencer') then
           self.modelDesc[name][i] = {}
           registerNet(self.modelDesc[name][i], mod.modules[i]:net(1), mod.modules[i].network)
         end

@@ -37,6 +37,11 @@ function Translator:__init(args)
   self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
   self.models.decoder = onmt.Factory.loadDecoder(self.checkpoint.models.decoder)
 
+  if torch.typename(self.models.encoder) == 'onmt.CudnnEncoder' then
+    _G.logger:warning('Translation with CuDNN models are not (yet) supported. Converting to NN...')
+    self.models.encoder = self.models.encoder:toNN()
+  end
+
   self.models.encoder:evaluate()
   self.models.decoder:evaluate()
 

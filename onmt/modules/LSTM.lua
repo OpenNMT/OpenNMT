@@ -114,10 +114,10 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   -- Decode the gates.
   local inGate = nn.Sigmoid()(n1)
   local forgetGate = nn.Sigmoid()(n2)
-  local outGate = nn.Sigmoid()(n3)
+  local outGate = nn.Sigmoid()(n4)
 
   -- Decode the write inputs.
-  local inTransform = nn.Tanh()(n4)
+  local inTransform = nn.Tanh()(n3)
 
   -- Perform the LSTM update.
   local nextC = nn.CAddTable()({
@@ -129,4 +129,30 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
 
   return nn.gModule(inputs, {nextC, nextH})
+end
+
+--[[ Set parameters as returned by CuDNN. ]]
+function LSTM:setParameters(weights, biases)
+  local layer = 1
+  local i = 1
+
+  self.net:apply(function(m)
+    if torch.typename(m) == 'nn.Linear' then
+      if i > #weights[layer] then
+        i = 1
+        layer = layer + 1
+      end
+
+      for j = 1, 4 do
+        m.weight
+          :narrow(1, (j - 1) * self.outputSize + 1, self.outputSize)
+          :copy(weights[layer][i]:view(-1, self.outputSize))
+        m.bias
+          :narrow(1, (j - 1) * self.outputSize + 1, self.outputSize)
+          :copy(biases[layer][i])
+
+        i = i + 1
+      end
+    end
+  end)
 end

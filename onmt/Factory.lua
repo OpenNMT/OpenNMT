@@ -96,33 +96,50 @@ end
 function Factory.buildEncoder(opt, inputNetwork)
   local encoder
 
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
-  end
-
-  if opt.brnn then
-    -- Compute rnn hidden size depending on hidden states merge action.
-    local rnnSize = opt.rnn_size
-    if opt.brnn_merge == 'concat' then
-      if opt.rnn_size % 2 ~= 0 then
-        error('in concat mode, rnn_size must be divisible by 2')
-      end
-      rnnSize = rnnSize / 2
-    elseif opt.brnn_merge == 'sum' then
-      rnnSize = rnnSize
-    else
-      error('invalid merge action ' .. opt.brnn_merge)
+  if onmt.utils.Cuda.withCudnnSupport() then
+    if opt.brnn then
+      error('BRNN is not (yet) supported with CuDNN')
+    end
+    if opt.residual then
+      error('-residual is not supported with CuDNN')
     end
 
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
+    local RNN = cudnn.LSTM
+    if opt.rnn_type == 'GRU' then
+      RNN = cudnn.GRU
+    end
 
-    encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    encoder = onmt.CudnnEncoder.new(inputNetwork, RNN, opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout)
   else
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    local RNN = onmt.LSTM
+    if opt.rnn_type == 'GRU' then
+      RNN = onmt.GRU
+    end
 
-    encoder = onmt.Encoder.new(inputNetwork, rnn)
+    if opt.brnn then
+      -- Compute rnn hidden size depending on hidden states merge action.
+      local rnnSize = opt.rnn_size
+      if opt.brnn_merge == 'concat' then
+        if opt.rnn_size % 2 ~= 0 then
+          error('in concat mode, rnn_size must be divisible by 2')
+        end
+        rnnSize = rnnSize / 2
+      elseif opt.brnn_merge == 'sum' then
+        rnnSize = rnnSize
+      else
+        error('invalid merge action ' .. opt.brnn_merge)
+      end
+
+      local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
+
+      encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    else
+      local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
+
+      encoder = onmt.Encoder.new(inputNetwork, rnn)
+    end
   end
+
   return encoder
 end
 
@@ -149,6 +166,12 @@ function Factory.loadEncoder(pretrained, clone)
   end
   if pretrained.name == 'BiEncoder' then
     return onmt.BiEncoder.load(pretrained)
+  end
+  if pretrained.name == 'CudnnEncoder' then
+    if not onmt.utils.Cuda.withCudnnSupport() then
+      error('CuDNN is required to load this model')
+    end
+    return onmt.CudnnEncoder.load(pretrained)
   end
 
   -- Keep for backward compatibility.
