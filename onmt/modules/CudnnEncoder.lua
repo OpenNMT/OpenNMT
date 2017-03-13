@@ -27,12 +27,11 @@ Parameters:
 function CudnnEncoder:__init(inputNetwork, rnnClass, layers, inputSize, rnnSize, dropout)
   parent.__init(self)
 
-  self.rnn = rnnClass(inputSize, rnnSize, layers, false, dropout, false)
+  self.rnn = rnnClass(inputSize, rnnSize, layers, true, dropout, false)
   self.inputNetwork = inputNetwork
 
   self.net = nn.Sequential()
     :add(self.inputNetwork)
-    :add(nn.Transpose({1, 2})) -- By default, batch is second in CuDNN.
     :add(self.rnn)
 
   self:add(self.net)
@@ -105,7 +104,7 @@ Returns:
 function CudnnEncoder:forward(batch)
   self.inputs = batch:getSourceInput()
 
-  local context = self.net:forward(self.inputs):transpose(1, 2)
+  local context = self.net:forward(self.inputs)
 
   local states = {}
 
@@ -146,5 +145,5 @@ function CudnnEncoder:backward(batch, gradStatesOutput, gradContextOutput)
     end
   end
 
-  return self.net:backward(self.inputs or batch:getSourceInput(), gradContextOutput:transpose(1, 2))
+  return self.net:backward(self.inputs or batch:getSourceInput(), gradContextOutput)
 end
