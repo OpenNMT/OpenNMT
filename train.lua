@@ -23,6 +23,8 @@ modelClass.declareOpts(cmd)
 onmt.train.Optim.declareOpts(cmd)
 onmt.train.Trainer.declareOpts(cmd)
 onmt.train.Checkpoint.declareOpts(cmd)
+onmt.utils.CrayonLogger.declareOpts(cmd)
+onmt.data.SampledDataset.declareOpts(cmd)
 
 cmd:text('')
 cmd:text('**Other options**')
@@ -43,7 +45,7 @@ local function main()
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   _G.profiler = onmt.utils.Profiler.new(false)
-
+  _G.crayon_logger = onmt.utils.CrayonLogger.new(opt)
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
@@ -66,7 +68,12 @@ local function main()
     os.exit(0)
   end
 
-  local trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
+  local trainData
+  if opt.sample > 0 then
+     trainData = onmt.data.SampledDataset.new(dataset.train.src, dataset.train.tgt, opt)
+  else
+     trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
+  end
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
   trainData:setBatchSize(opt.max_batch_size)
@@ -106,6 +113,10 @@ local function main()
       model = themodel
     end
   end)
+
+  if opt.sample > 0 then
+    trainData:checkModel(model)
+  end
 
   -- Define optimization method.
   local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil

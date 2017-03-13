@@ -124,6 +124,8 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
         wordVocab = genWordVocab:pruneByMinFrequency(minFrequency[1])
       elseif newSizes[1] > 0 then
         wordVocab = genWordVocab:prune(newSizes[1])
+      else
+        wordVocab = genWordVocab
       end
 
       _G.logger:info('Created word dictionary of size '
@@ -133,9 +135,11 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
     if #featuresVocabs == 0 then
       for i = 1, #genFeaturesVocabs do
         if minFrequency[i + 1] > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequencys(minFrequency[i + 1])
+          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequency(minFrequency[i + 1])
         elseif newSizes[i + 1] > 0 then
           featuresVocabs[i] = genFeaturesVocabs[i]:prune(newSizes[i + 1])
+        else
+          featuresVocabs[i] = genFeaturesVocabs[i]
         end
 
         _G.logger:info('Created feature ' .. i .. ' dictionary of size '

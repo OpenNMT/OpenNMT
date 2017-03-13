@@ -45,7 +45,7 @@ local function main()
   local data = { dataType=dataType }
 
   data.dicts = {}
-  data.dicts.src = Vocabulary.init('train',
+  data.dicts.src = Vocabulary.init('source',
                                    opt.train_src or opt.train,
                                    opt.src_vocab or opt.vocab,
                                    opt.src_vocab_size or opt.vocab_size,

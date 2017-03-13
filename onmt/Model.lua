@@ -15,6 +15,7 @@ end
 
 function Model:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+  self.args.train_from = args.train_from
   self.models = {}
 end
 
@@ -55,7 +56,19 @@ function Model:initParams(verbose)
   table.sort(orderedIndex)
 
   for _, key in ipairs(orderedIndex) do
-    local p, gp = self.models[key]:getParameters()
+    local mod = self.models[key]
+    local p, gp = mod:getParameters()
+
+    if self.args.train_from:len() == 0 then
+      p:uniform(-self.args.param_init, self.args.param_init)
+
+      mod:apply(function (m)
+        if m.postParametersInitialization then
+          m:postParametersInitialization()
+        end
+      end)
+    end
+
     numParams = numParams + p:size(1)
     table.insert(params, p)
     table.insert(gradParams, gp)
