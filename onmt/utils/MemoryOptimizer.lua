@@ -202,6 +202,9 @@ local function getMaxDepthStorage(t, depthStorage)
   end
 end
 
+-- a tensor/tensor table shareable between clones can also be recycled "vertically"
+-- we check if there is another tensor with exactly the same shape and without any overlap in the
+-- calculation graph that we can use
 local function getSharedTensor(idx, t, tShape, tSize, depthStorageFwd, depthStorageBwd, MapVShare)
   local fwdDepth = getMaxDepthStorage(t, depthStorageFwd)
   local bwdDepth = getMaxDepthStorage(t, depthStorageBwd)
