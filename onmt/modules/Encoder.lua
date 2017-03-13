@@ -49,6 +49,7 @@ end
 --[[ Return data to serialize. ]]
 function Encoder:serialize()
   return {
+    name = 'Encoder',
     modules = self.modules,
     args = self.args
   }

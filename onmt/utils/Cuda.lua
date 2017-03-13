@@ -1,10 +1,21 @@
+local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
+
 local Cuda = {
+  fp16 = false,
   gpuIds = {},
   activated = false
 }
 
+local options = {
+  {'-gpuid',     '0',   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
+                                 {valid=ExtendedCmdLine.listUInt}},
+  {'-fallback_to_cpu', false, [[If GPU can't be use, rollback on the CPU.]]},
+  {'-fp16', false, [[Use half-precision float on GPU.]]},
+  {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
+}
+
 function Cuda.declareOpts(cmd)
-  cmd:option('-gpuid', '0', [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]])
+  cmd:setCmdLineOptions(options)
 end
 
 function Cuda.init(opt, masterGPU)
@@ -19,30 +30,45 @@ function Cuda.init(opt, masterGPU)
   Cuda.activated = #Cuda.gpuIds > 0
 
   if Cuda.activated then
-    require('cutorch')
-    require('cunn')
+    local _, err = pcall(function()
+      require('cutorch')
+      require('cunn')
+      Cuda.fp16 = opt.fp16
 
-    if masterGPU == nil then
-      masterGPU = 1
+      if masterGPU == nil then
+        masterGPU = 1
 
-      -- Validate GPU identifiers.
-      for i = 1, #Cuda.gpuIds do
-        assert(Cuda.gpuIds[i] <= cutorch.getDeviceCount(),
-               'GPU ' .. Cuda.gpuIds[i] .. ' is requested but only '
-                 .. cutorch.getDeviceCount() .. ' GPUs are available')
+        -- Validate GPU identifiers.
+        for i = 1, #Cuda.gpuIds do
+          assert(Cuda.gpuIds[i] <= cutorch.getDeviceCount(),
+                 'GPU ' .. Cuda.gpuIds[i] .. ' is requested but only '
+                   .. cutorch.getDeviceCount() .. ' GPUs are available')
+        end
+
+        _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
       end
 
-      _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
+      if cutorch.isCachingAllocatorEnabled and cutorch.isCachingAllocatorEnabled() then
+        _G.logger:warning('The caching CUDA memory allocator is enabled. This allocator improves performance at the cost of a higher GPU memory usage. To optimize for memory, consider disabling it by setting the environment variable: THC_CACHING_ALLOCATOR=0')
+      end
+
+      cutorch.setDevice(Cuda.gpuIds[masterGPU])
 
       if opt.seed then
-        cutorch.manualSeedAll(opt.seed)
+        cutorch.manualSeed(opt.seed)
+      end
+    end)
+
+    if err then
+      if opt.fallback_to_cpu then
+        _G.logger:warning('Falling back to CPU')
+        Cuda.activated = false
+      else
+        error(err)
       end
     end
-
-    cutorch.setDevice(Cuda.gpuIds[masterGPU])
-
-    if opt.seed then
-      cutorch.manualSeed(opt.seed)
+    if Cuda.fp16 and not cutorch.hasHalf then
+      error("installed cutorch does not support half-tensor")
     end
   end
 end
@@ -56,16 +82,18 @@ function Cuda.convert(obj)
   if objtype then
     if Cuda.activated and obj.cuda ~= nil then
       if objtype:find('torch%..*LongTensor') then
-        return obj:cudaLong()
+        return obj:type('torch.CudaLongTensor')
+      elseif Cuda.fp16 then
+        return obj:type('torch.CudaHalfTensor')
       else
-        return obj:cuda()
+        return obj:type('torch.CudaTensor')
       end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
       if objtype:find('torch%..*LongTensor') then
-        return obj:long()
+        return obj:type('torch.LongTensor')
       else
-        return obj:float()
+        return obj:type('torch.FloatTensor')
       end
     end
   end

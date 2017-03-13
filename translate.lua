@@ -1,27 +1,22 @@
 require('onmt.init')
 
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
 
-cmd:text("")
-cmd:text("**onmt.translate.lua**")
-cmd:text("")
+local options = {
+  {'-src', '', [[Source sequence to decode (one line per sequence)]],
+               {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+  {'-tgt', '', [[True target sequence (optional)]]},
+  {'-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence)]]}
+}
 
-
-cmd:option('-config', '', [[Read options from this file]])
-
-cmd:text("")
-cmd:text("**Data options**")
-cmd:text("")
-
-cmd:option('-src', '', [[Source sequence to decode (one line per sequence)]])
-cmd:option('-tgt', '', [[True target sequence (optional)]])
-cmd:option('-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
+cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
 
-cmd:text("")
-cmd:text("**Other options**")
-cmd:text("")
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
+
 cmd:option('-time', false, [[Measure batch translation time]])
 
 onmt.utils.Cuda.declareOpts(cmd)
@@ -33,32 +28,8 @@ local function reportScore(name, scoreTotal, wordsTotal)
                  math.exp(-scoreTotal/wordsTotal))
 end
 
-local function extractData(tokens)
-  local words, features = onmt.utils.Features.extract(tokens)
-
-  local data = {}
-  data.words = words
-
-  if #features > 0 then
-    data.features = features
-  end
-
-  return data
-end
-
-local function buildSentence(data)
-  return table.concat(onmt.utils.Features.annotate(data.words, data.features), " ")
-end
-
 local function main()
   local opt = cmd:parse(arg)
-
-  local requiredOptions = {
-    "model",
-    "src"
-  }
-
-  onmt.utils.Opt.init(opt, requiredOptions)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
@@ -102,10 +73,10 @@ local function main()
     end
 
     if srcTokens ~= nil then
-      table.insert(srcBatch, extractData(srcTokens))
+      table.insert(srcBatch, translator:buildInput(srcTokens))
 
       if withGoldScore then
-        table.insert(goldBatch, extractData(goldTokens))
+        table.insert(goldBatch, translator:buildInput(goldTokens))
       end
     elseif #srcBatch == 0 then
       break
@@ -127,17 +98,17 @@ local function main()
           _G.logger:warning('Line ' .. sentId .. ' is empty.')
           outFile:write('\n')
         else
-          _G.logger:info('SENT %d: %s', sentId, buildSentence(srcBatch[b]))
+          _G.logger:info('SENT %d: %s', sentId, translator:buildOutput(srcBatch[b]))
 
           if withGoldScore then
-            _G.logger:info('GOLD %d: %s', sentId, buildSentence(goldBatch[b]), results[b].goldScore)
+            _G.logger:info('GOLD %d: %s', sentId, translator:buildOutput(goldBatch[b]), results[b].goldScore)
             _G.logger:info("GOLD SCORE: %.2f", results[b].goldScore)
             goldScoreTotal = goldScoreTotal + results[b].goldScore
-            goldWordsTotal = goldWordsTotal + #goldBatch[b]
+            goldWordsTotal = goldWordsTotal + #goldBatch[b].words
           end
 
           for n = 1, #results[b].preds do
-            local sentence = buildSentence(results[b].preds[n])
+            local sentence = translator:buildOutput(results[b].preds[n])
 
             if n == 1 then
               outFile:write(sentence .. '\n')

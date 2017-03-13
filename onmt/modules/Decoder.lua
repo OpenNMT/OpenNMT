@@ -52,6 +52,10 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   self:resetPreallocation()
 end
 
+function Decoder:returnIndividualLosses(enable)
+  self.indvLoss = enable
+end
+
 --[[ Return a new Decoder using the serialized data `pretrained`. ]]
 function Decoder.load(pretrained)
   local self = torch.factory('onmt.Decoder')()
@@ -329,34 +333,43 @@ function Decoder:backward(batch, outputs, criterion)
                                                          { batch.size, batch.sourceLength, self.args.rnnSize })
 
   local loss = 0
+  local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
   for t = batch.targetLength, 1, -1 do
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
-    _G.profiler:start("generator.fwd")
     local pred = self.generator:forward(outputs[t])
-    _G.profiler:stop("generator.fwd")
     local output = batch:getTargetOutput(t)
 
-    _G.profiler:start("criterion.fwd")
-    loss = loss + criterion:forward(pred, output)
-    _G.profiler:stop("criterion.fwd")
+    if self.indvLoss then
+      for i = 1, pred[1]:size(1) do
+        if t <= batch.targetSize[i] then
+          local tmpPred = {}
+          local tmpOutput = {}
+          for j = 1, #pred do
+            table.insert(tmpPred, pred[j][{{i}, {}}])
+            table.insert(tmpOutput, output[j][{{i}}])
+          end
+          local tmpLoss = criterion:forward(tmpPred, tmpOutput)
+          indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
+          loss = loss + tmpLoss
+        end
+      end
+    else
+      loss = loss + criterion:forward(pred, output)
+    end
 
     -- Compute the criterion gradient.
-    _G.profiler:start("criterion.bwd")
     local genGradOut = criterion:backward(pred, output)
-    _G.profiler:stop("criterion.bwd")
     for j = 1, #genGradOut do
       genGradOut[j]:div(batch.totalSize)
     end
 
     -- Compute the final layer gradient.
-    _G.profiler:start("generator.bwd")
     local decGradOut = self.generator:backward(outputs[t], genGradOut)
-    _G.profiler:stop("generator.bwd")
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
-    -- Compute the standarad backward.
+    -- Compute the standard backward.
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
     -- Accumulate encoder output gradients.
@@ -374,7 +387,11 @@ function Decoder:backward(batch, outputs, criterion)
     end
   end
 
-  return gradStatesInput, gradContextInput, loss
+  if self.indvLoss then
+    indvAvgLoss = torch.cdiv(indvAvgLoss, batch.targetSize:double())
+  end
+
+  return gradStatesInput, gradContextInput, loss, indvAvgLoss
 end
 
 --[[ Compute the loss on a batch.

@@ -24,20 +24,22 @@ end
 
 function FeaturesEmbedding:_buildModel(vocabSizes, vecSizes, merge)
   local inputs = {}
-  local output
+  local outputs = {}
 
   for i = 1, #vocabSizes do
-    local feat = nn.Identity()() -- batchSize
-    table.insert(inputs, feat)
+    table.insert(inputs, nn.Identity()())
+    table.insert(outputs, nn.LookupTable(vocabSizes[i], vecSizes[i])(inputs[#inputs]))
+  end
 
-    local emb = nn.LookupTable(vocabSizes[i], vecSizes[i])(feat)
+  local output
 
-    if not output then
-      output = emb
-    elseif merge == 'sum' then
-      output = nn.CAddTable()({output, emb})
+  if #outputs == 1 then
+    output = outputs[1]
+  else
+    if merge == 'sum' then
+      output = nn.CAddTable()(outputs)
     else
-      output = nn.JoinTable(2)({output, emb})
+      output = nn.JoinTable(2, 2)(outputs)
     end
   end
 

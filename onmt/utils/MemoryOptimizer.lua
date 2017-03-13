@@ -119,7 +119,7 @@ function MemoryOptimizer:__init(modules)
   for name, mod in pairs(modules) do
     self.modelDesc[name] = {}
 
-    if mod.net then
+    if torch.isTypeOf(mod, 'onmt.Sequencer') then
       -- If the module directly contains a network, take the first clone.
       self.modelDesc[name][1] = {}
       registerNet(self.modelDesc[name][1], mod:net(1), mod.network)

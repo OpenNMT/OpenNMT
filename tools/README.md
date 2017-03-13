@@ -69,7 +69,7 @@ easy way to use models from other languages such as Java and Python.
 ### Dependencies
 
 * `lua-zmq`
-* `json`
+* `dkjson`
 
 ### Installation
 
@@ -77,14 +77,8 @@ The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubu
 
 ```
 sudo apt-get install libzmq-dev
-luarocks install json
+luarocks install dkjson
 luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
-```
-
-Also you will need to install the OpenNMT as a library.
-
-```
-luarocks make rocks/opennmt-scm-1.rockspec
 ```
 
 The translation server can be run using any of the arguments from `translate.lua`.
