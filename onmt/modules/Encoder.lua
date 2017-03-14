@@ -21,7 +21,9 @@ local options = {
                             {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-rnn_type', 'LSTM', [[Type of RNN cell]],
                             {enum={'LSTM','GRU'}}},
-  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]},
+  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]],
+                            {valid=onmt.utils.ExtendedCmdLine.isFloat(0,1)}},
+  {'-dropout_input', false, [[Add dropout also on input.]]},
   {'-residual', false, [[Add residual connections between RNN layers.]]}
 }
 
@@ -42,7 +44,7 @@ function Encoder:__init(args, inputNetwork)
     RNN = onmt.GRU
   end
 
-  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual)
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input)
 
   self.rnn = rnn
   self.inputNet = inputNetwork

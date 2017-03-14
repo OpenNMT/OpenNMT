@@ -176,7 +176,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator)
   if opt.rnn_type == 'GRU' then
     RNN = onmt.GRU
   end
-  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.dropout_input)
 
   return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
 end
