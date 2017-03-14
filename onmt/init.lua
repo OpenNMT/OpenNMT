@@ -1,3 +1,5 @@
+require('torch')
+
 onmt = {}
 
 onmt.utils = require('onmt.utils.init')
