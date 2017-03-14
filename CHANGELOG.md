@@ -2,24 +2,35 @@
 
 ### New features
 
+* Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
+
+### Fixes and improvements
+
+* Fix translation with FP16 precision
+
+## [v0.5.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.0) (2017-03-06)
+
+### New features
+
 * Training code is now part of the library
 * Add `-fallback_to_cpu` option to continue execution on CPU if GPU can't be used
 * Add standalone script to generate vocabularies
 * Add script to extract word embeddings
 * Add option to prune vocabularies by minimum word frequency
-* Add data sampling during training
-* New rest server
+* New REST server
+* [*experimental*] Add data sampling during training
+* [*experimental*] Add half floating point (fp16) support (with [cutorch@359ee80](https://github.com/torch/cutorch/commit/359ee80be391028ffa098de429cc0533b2f268f5))
 
 ### Fixes and improvements
 
 * Make sure released model does not contain any serialized function
+* Reduce size of released BRNN models (up to 2x smaller)
 * Reported metrics are no longer averaged on the entire epoch
 * Improve logging in asynchronous training
 * Allow fixing word embeddings without providing pre-trained embeddings
-* Fix error when using translation server with GPU model
-* Reduce size of released BRNN models (up to 2x smaller)
-* Fix gold data perplexity reporting during translation
 * Fix pretrained word embeddings that were overriden by parameters initialization
+* Fix error when using translation server with GPU model
+* Fix gold data perplexity reporting during translation
 * Fix wrong number of attention vectors returned by the translator
 
 ## [v0.4.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.1) (2017-02-16)

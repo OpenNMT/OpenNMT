@@ -102,6 +102,8 @@ function Checkpoint.loadFromCheckpoint(opt)
 
       _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
                          .. ' at iteration ' .. opt.start_iteration .. '...')
+    else
+      checkpoint.info = nil
     end
   end
   return checkpoint, opt
