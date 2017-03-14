@@ -54,11 +54,16 @@ function SampledDataset:__init(srcData, tgtData, opt)
 end
 
 function SampledDataset:checkModel(model)
-  if not model.returnIndividualLosses or model:returnIndividualLosses(true) == false then
+  if self:needIndividualLosses() and (not model.returnIndividualLosses or model:returnIndividualLosses(true) == false) then
     _G.logger:info('Current model does not support training with invididual losses; Sampling with individual loss will be disabled.')
     self.sample_w_ppl = false
     self.samplingProb = torch.ones(#self.src)
     self.ppl = nil
+  else
+    _G.logger:info('Current sampling does not require individual loss')
+    if model.returnIndividualLosses then
+      model:returnIndividualLosses(false)
+    end
   end
 end
 
