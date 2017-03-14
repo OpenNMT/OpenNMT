@@ -3,6 +3,8 @@
 ### New features
 
 * Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
+* Add deep bidirectional encoder
+* Add pyramidal deep bidirectional encoder
 
 ### Fixes and improvements
 
