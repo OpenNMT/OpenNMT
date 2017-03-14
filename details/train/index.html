@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../code/data/onmt+data+BatchTensor/">onmt+data+BatchTensor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../code/data/onmt+data+Dataset/">onmt+data+Dataset</a>
         
     </li>
@@ -130,6 +137,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+DBiEncoder/">onmt+modules+DBiEncoder</a>
         
     </li>
 
@@ -200,6 +214,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../code/modules/onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../code/modules/onmt+modules+PDBiEncoder/">onmt+modules+PDBiEncoder</a>
         
     </li>
 
@@ -435,33 +456,40 @@
 </ul>
 <h2 id="sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options</h2>
 <ul>
-<li><code>-layers</code>: Number of layers in the RNN encoder/decoder [2]</li>
-<li><code>-rnn_size</code>: Size of RNN hidden states [500]</li>
-<li><code>-rnn_type</code>: (LSTM, GRU) Type of RNN cell [LSTM]</li>
 <li><code>-word_vec_size</code>: Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]</li>
 <li><code>-src_word_vec_size</code>: Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]</li>
 <li><code>-tgt_word_vec_size</code>: Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]</li>
-<li><code>-feat_merge</code>: (concat, sum) Merge action for the features embeddings [concat]</li>
-<li><code>-feat_vec_exponent</code>: When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]</li>
-<li><code>-feat_vec_size</code>: When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]</li>
-<li><code>-input_feed</code>: (0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</li>
-<li><code>-residual</code>: Add residual connections between RNN layers. [false]</li>
-<li><code>-brnn</code>: Use a bidirectional encoder [false]</li>
-<li><code>-brnn_merge</code>: (concat, sum) Merge action for the bidirectional hidden states [sum]</li>
 <li><code>-pre_word_vecs_enc</code>: If a valid path is specified, then this will load pretrained word embeddings on the encoder side. See README for specific formatting instructions. []</li>
 <li><code>-pre_word_vecs_dec</code>: If a valid path is specified, then this will load pretrained word embeddings on the decoder side. See README for specific formatting instructions. []</li>
 <li><code>-fix_word_vecs_enc</code>: Fix word embeddings on the encoder side [false]</li>
 <li><code>-fix_word_vecs_dec</code>: Fix word embeddings on the decoder side [false]</li>
+<li><code>-feat_merge</code>: (concat, sum) Merge action for the features embeddings [concat]</li>
+<li><code>-feat_vec_exponent</code>: When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]</li>
+<li><code>-feat_vec_size</code>: When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]</li>
+<li><code>-input_feed</code>: (0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]</li>
+<li><code>-layers</code>: Number of layers in the RNN Encoder/decoder [2]</li>
+<li><code>-rnn_size</code>: Size of RNN hidden states [500]</li>
+<li><code>-rnn_type</code>: (LSTM, GRU) Type of RNN cell [LSTM]</li>
 <li><code>-dropout</code>: Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]</li>
+<li><code>-dropout_input</code>: Add dropout also on input. [false]</li>
+<li><code>-residual</code>: Add residual connections between RNN layers. [false]</li>
+<li><code>-brnn</code>: Use a bidirectional encoder. [false]</li>
+<li><code>-dbrnn</code>: Use a deep bidirectional encoder. [false]</li>
+<li><code>-pdbrnn</code>: Use pyramidal deep bidirectional encoder. [false]</li>
+<li><code>-brnn_merge</code>: (concat, sum) Merge action for the bidirectional hidden states [sum]</li>
+<li><code>-pdbrnn_reduction</code>: Time-Reduction factor at each layer. [2]</li>
 </ul>
 <h2 id="optimization-options">Optimization options</h2>
 <ul>
 <li><code>-max_batch_size</code>: Maximum batch size [64]</li>
 <li><code>-optim</code>: (sgd, adagrad, adadelta, adam) Optimization method. [sgd]</li>
 <li><code>-learning_rate</code>: Starting learning rate. If adagrad or adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002 [1]</li>
+<li><code>-min_learning_rate</code>: Do not continue the training past this learning rate [0]</li>
 <li><code>-max_grad_norm</code>: If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]</li>
-<li><code>-learning_rate_decay</code>: Decay learning rate by this much if (i) perplexity does not decrease on the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]</li>
-<li><code>-start_decay_at</code>: Start decay after this epoch [9]</li>
+<li><code>-learning_rate_decay</code>: Learning rate decay factor [0.5]</li>
+<li><code>-start_decay_at</code>: With 'default' decay mode, start decay after this epoch [9]</li>
+<li><code>-start_decay_ppl_delta</code>: Start decay when validation perplexity improvement is lower than this value [0]</li>
+<li><code>-decay</code>: (default, perplexity_only) When to apply learning rate decay. 'default': decay after each epoch past start_decay_at or as soon as the validation perplexity is not improving more than start_decay_ppl_delta, 'perplexity_only': only decay when validation perplexity is not improving more than start_decay_ppl_delta [default]</li>
 </ul>
 <h2 id="trainer-options">Trainer options</h2>
 <ul>

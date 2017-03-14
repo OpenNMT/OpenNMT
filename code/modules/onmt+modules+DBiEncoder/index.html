@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../../img/favicon.ico">
-  <title>onmt+modules+GlobalAttention - OpenNMT</title>
+  <title>onmt+modules+DBiEncoder - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "onmt+modules+GlobalAttention";
-    var mkdocs_page_input_path = "code/modules/onmt+modules+GlobalAttention.md";
-    var mkdocs_page_url = "/code/modules/onmt+modules+GlobalAttention/";
+    var mkdocs_page_name = "onmt+modules+DBiEncoder";
+    var mkdocs_page_input_path = "code/modules/onmt+modules+DBiEncoder.md";
+    var mkdocs_page_url = "/code/modules/onmt+modules+DBiEncoder/";
   </script>
   
   <script src="../../../js/jquery-2.1.1.min.js"></script>
@@ -142,8 +142,21 @@
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../onmt+modules+DBiEncoder/">onmt+modules+DBiEncoder</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">onmt+modules+DBiEncoder</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#onmtdbiencoder">onmt.DBiEncoder</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdbiencoderargs-input">onmt.DBiEncoder(args, input)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdbiencoderloadpretrained">onmt.DBiEncoder.load(pretrained)</a></li>
+                
+                    <li><a class="toctree-l4" href="#onmtdbiencoderserialize">onmt.DBiEncoder:serialize()</a></li>
+                
+            
+            </ul>
         
     </li>
 
@@ -191,17 +204,8 @@
 
         
             
-    <li class="toctree-l1 current">
-        <a class="current" href="./">onmt+modules+GlobalAttention</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#onmtglobalattention">onmt.GlobalAttention</a></li>
-                
-                    <li><a class="toctree-l4" href="#onmtglobalattentiondim">onmt.GlobalAttention(dim)</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+GlobalAttention/">onmt+modules+GlobalAttention</a>
         
     </li>
 
@@ -420,7 +424,7 @@
         
       
     
-    <li>onmt+modules+GlobalAttention</li>
+    <li>onmt+modules+DBiEncoder</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -430,31 +434,37 @@
           <div role="main">
             <div class="section">
               
-                <p><a name="onmt.GlobalAttention.dok"></a></p>
-<h2 id="onmtglobalattention">onmt.GlobalAttention</h2>
-<p>Global attention takes a matrix and a query vector. It
-then computes a parameterized convex combination of the matrix
-based on the input query.</p>
-<pre><code>H_1 H_2 H_3 ... H_n
- q   q   q       q
-  |  |   |       |
-   \ |   |      /
-       .....
-     \   |  /
-         a
-</code></pre>
-<p>Constructs a unit mapping:
-  <script type="math/tex; mode=display">(H_1 .. H_n, q) => (a)</script>
-  Where H is of <code>batch x n x dim</code> and q is of <code>batch x dim</code>.</p>
-<p>The full function is  <script type="math/tex; mode=display">\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)</script>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/modules/GlobalAttention.lua#L31">[src]</a>
-<a name="onmt.GlobalAttention"></a></p>
-<h3 id="onmtglobalattentiondim">onmt.GlobalAttention(dim)</h3>
-<p>A nn-style module computing attention.</p>
+                <p><a name="onmt.DBiEncoder.dok"></a></p>
+<h2 id="onmtdbiencoder">onmt.DBiEncoder</h2>
+<p>DBiEncoder is a deep bidirectional Sequencer used for the source language.</p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/modules/DBiEncoder.lua#L22">[src]</a>
+<a name="onmt.DBiEncoder"></a></p>
+<h3 id="onmtdbiencoderargs-input">onmt.DBiEncoder(args, input)</h3>
+<p>Create a deep bidirectional encoder - each layers reconnect before starting another bidirectional layer</p>
 <p>Parameters:</p>
 <ul>
-<li><code>dim</code> - dimension of the context vectors.</li>
+<li><code>args</code> - global arguments</li>
+<li><code>input</code> - input neural network.</li>
 </ul>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/modules/DBiEncoder.lua#L55">[src]</a>
+<a name="onmt.DBiEncoder.load"></a></p>
+<h3 id="onmtdbiencoderloadpretrained">onmt.DBiEncoder.load(pretrained)</h3>
+<p>Return a new DBiEncoder using the serialized data <code>pretrained</code>. </p>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/modules/DBiEncoder.lua#L72">[src]</a>
+<a name="onmt.DBiEncoder:serialize"></a></p>
+<h3 id="onmtdbiencoderserialize">onmt.DBiEncoder:serialize()</h3>
+<p>Return data to serialize. </p>
+<h4 id="undocumented-methods">Undocumented methods</h4>
+<p><a name="onmt.DBiEncoder.declareOpts"></a>
+ * <code>onmt.DBiEncoder.declareOpts(cmd)</code>
+<a name="onmt.DBiEncoder:resetPreallocation"></a>
+ * <code>onmt.DBiEncoder:resetPreallocation()</code>
+<a name="onmt.DBiEncoder:maskPadding"></a>
+ * <code>onmt.DBiEncoder:maskPadding()</code>
+<a name="onmt.DBiEncoder:forward"></a>
+ * <code>onmt.DBiEncoder:forward(batch)</code>
+<a name="onmt.DBiEncoder:backward"></a>
+ * <code>onmt.DBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)</code></p>
               
             </div>
           </div>
@@ -462,10 +472,10 @@ based on the input query.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+modules+LSTM/" class="btn btn-neutral float-right" title="onmt+modules+LSTM">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+modules+Decoder/" class="btn btn-neutral float-right" title="onmt+modules+Decoder">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../onmt+modules+Generator/" class="btn btn-neutral" title="onmt+modules+Generator"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+modules+BiEncoder/" class="btn btn-neutral" title="onmt+modules+BiEncoder"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -491,10 +501,10 @@ based on the input query.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt+modules+Generator/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+modules+BiEncoder/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+modules+LSTM/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+modules+Decoder/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

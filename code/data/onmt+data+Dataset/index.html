@@ -85,6 +85,13 @@
 
         
             
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+data+BatchTensor/">onmt+data+BatchTensor</a>
+        
+    </li>
+
+        
+            
     <li class="toctree-l1 current">
         <a class="current" href="./">onmt+data+Dataset</a>
         
@@ -145,6 +152,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+DBiEncoder/">onmt+modules+DBiEncoder</a>
         
     </li>
 
@@ -215,6 +229,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+PDBiEncoder/">onmt+modules+PDBiEncoder</a>
         
     </li>
 
@@ -418,20 +439,20 @@
                 <p><a name="onmt.Dataset.dok"></a></p>
 <h2 id="onmtdataset">onmt.Dataset</h2>
 <p>Data management and batch creation. Handles data created by <code>preprocess.lua</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Dataset.lua#L7">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Dataset.lua#L7">[src]</a>
 <a name="onmt.Dataset"></a></p>
 <h3 id="onmtdatasetsrcdata-tgtdata">onmt.Dataset(srcData, tgtData)</h3>
 <p>Initialize a data object given aligned tables of IntTensors <code>srcData</code>
   and <code>tgtData</code>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Dataset.lua#L19">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Dataset.lua#L19">[src]</a>
 <a name="onmt.Dataset:setBatchSize"></a></p>
 <h3 id="onmtdatasetsetbatchsizemaxbatchsize">onmt.Dataset:setBatchSize(maxBatchSize)</h3>
 <p>Setup up the training data to respect <code>maxBatchSize</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Dataset.lua#L61">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Dataset.lua#L61">[src]</a>
 <a name="onmt.Dataset:batchCount"></a></p>
 <h3 id="onmtdatasetbatchcount">onmt.Dataset:batchCount()</h3>
 <p>Return number of batches. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Dataset.lua#L73">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Dataset.lua#L73">[src]</a>
 <a name="onmt.Dataset:getBatch"></a></p>
 <h3 id="onmtdatasetgetbatchidx">onmt.Dataset:getBatch(idx)</h3>
 <p>Get <code>Batch</code> number <code>idx</code>. If nil make a batch of all the data. </p>
@@ -445,7 +466,7 @@
         <a href="../onmt+data+Preprocessor/" class="btn btn-neutral float-right" title="onmt+data+Preprocessor">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../onmt+data+Batch/" class="btn btn-neutral" title="onmt+data+Batch"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../onmt+data+BatchTensor/" class="btn btn-neutral" title="onmt+data+BatchTensor"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -471,7 +492,7 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../onmt+data+Batch/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../onmt+data+BatchTensor/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../onmt+data+Preprocessor/" style="color: #fcfcfc">Next &raquo;</a></span>

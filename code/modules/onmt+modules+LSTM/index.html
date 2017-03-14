@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+BatchTensor/">onmt+data+BatchTensor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../data/onmt+data+Dataset/">onmt+data+Dataset</a>
         
     </li>
@@ -130,6 +137,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+DBiEncoder/">onmt+modules+DBiEncoder</a>
         
     </li>
 
@@ -191,7 +205,7 @@
             
                 <li class="toctree-l3"><a href="#onmtlstm">onmt.LSTM</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtlstmlayers-inputsize-hiddensize-dropout-residual">onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)</a></li>
+                    <li><a class="toctree-l4" href="#onmtlstmlayers-inputsize-hiddensize-dropout-residual-dropout_input">onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual, dropout_input)</a></li>
                 
             
             </ul>
@@ -209,6 +223,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+PDBiEncoder/">onmt+modules+PDBiEncoder</a>
         
     </li>
 
@@ -429,16 +450,17 @@ an nn unit.</p>
             x_t
 </code></pre>
 <p>Computes <script type="math/tex; mode=display">(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})</script>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/modules/LSTM.lua#L36">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/modules/LSTM.lua#L37">[src]</a>
 <a name="onmt.LSTM"></a></p>
-<h3 id="onmtlstmlayers-inputsize-hiddensize-dropout-residual">onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)</h3>
+<h3 id="onmtlstmlayers-inputsize-hiddensize-dropout-residual-dropout_input">onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual, dropout_input)</h3>
 <p>Parameters:</p>
 <ul>
 <li><code>layers</code> - Number of LSTM layers, L.</li>
 <li><code>inputSize</code> - Size of input layer</li>
 <li><code>hiddenSize</code> - Size of the hidden layers.</li>
-<li><code>dropout</code> - Dropout rate to use.</li>
+<li><code>dropout</code> - Dropout rate to use (in <script type="math/tex; mode=display">[0,1]</script> range).</li>
 <li><code>residual</code> - Residual connections between layers.</li>
+<li><code>dropout_input</code> - if true, add a dropout layer on the first layer (useful for instance in complex encoders)</li>
 </ul>
               
             </div>

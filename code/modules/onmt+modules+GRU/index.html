@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+BatchTensor/">onmt+data+BatchTensor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../data/onmt+data+Dataset/">onmt+data+Dataset</a>
         
     </li>
@@ -136,6 +143,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+DBiEncoder/">onmt+modules+DBiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+Decoder/">onmt+modules+Decoder</a>
         
     </li>
@@ -170,7 +184,7 @@
             
                 <li class="toctree-l3"><a href="#onmtgru">onmt.GRU</a></li>
                 
-                    <li><a class="toctree-l4" href="#onmtgrulayers-inputsize-hiddensize-dropout-residual">onmt.GRU(layers, inputSize, hiddenSize, dropout, residual)</a></li>
+                    <li><a class="toctree-l4" href="#onmtgrulayers-inputsize-hiddensize-dropout-residual-dropout_input">onmt.GRU(layers, inputSize, hiddenSize, dropout, residual, dropout_input)</a></li>
                 
             
             </ul>
@@ -209,6 +223,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../onmt+modules+PDBiEncoder/">onmt+modules+PDBiEncoder</a>
         
     </li>
 
@@ -427,16 +448,17 @@ an nn unit.</p>
             x_t
 </code></pre>
 <p>Computes <script type="math/tex; mode=display">(h_{t-1}, x_t) => (h_{t})</script>.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/modules/GRU.lua#L34">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/modules/GRU.lua#L35">[src]</a>
 <a name="onmt.GRU"></a></p>
-<h3 id="onmtgrulayers-inputsize-hiddensize-dropout-residual">onmt.GRU(layers, inputSize, hiddenSize, dropout, residual)</h3>
+<h3 id="onmtgrulayers-inputsize-hiddensize-dropout-residual-dropout_input">onmt.GRU(layers, inputSize, hiddenSize, dropout, residual, dropout_input)</h3>
 <p>Parameters:</p>
 <ul>
 <li><code>layers</code> - Number of layers</li>
 <li><code>inputSize</code> - Size of input layer</li>
 <li><code>hiddenSize</code> - Size of the hidden layers</li>
-<li><code>dropout</code> - Dropout rate to use (should be in <script type="math/tex; mode=display">[0,1]</script> range.</li>
+<li><code>dropout</code> - Dropout rate to use (in <script type="math/tex; mode=display">[0,1]</script> range).</li>
 <li><code>residual</code> - Residual connections between layers (boolean)</li>
+<li><code>dropout_input</code> - if true, add a dropout layer on the first layer (useful for instance in complex encoders)</li>
 </ul>
               
             </div>

@@ -106,6 +106,26 @@
             "title": "onmt.Batch:getTargetOutput(t)"
         },
         {
+            "location": "/code/data/onmt+data+BatchTensor/",
+            "text": "onmt.BatchTensor\n\n\n[src]\n\n\n\n\nonmt.BatchTensor(T)\n\n\nTake Batch x TimeStep x layer size tensors\n\n\nUndocumented methods\n\n\n\n * \nonmt.BatchTensor:getSourceInput(t)",
+            "title": "onmt+data+BatchTensor"
+        },
+        {
+            "location": "/code/data/onmt+data+BatchTensor/#onmtbatchtensor",
+            "text": "[src]",
+            "title": "onmt.BatchTensor"
+        },
+        {
+            "location": "/code/data/onmt+data+BatchTensor/#onmtbatchtensort",
+            "text": "Take Batch x TimeStep x layer size tensors",
+            "title": "onmt.BatchTensor(T)"
+        },
+        {
+            "location": "/code/data/onmt+data+BatchTensor/#undocumented-methods",
+            "text": "*  onmt.BatchTensor:getSourceInput(t)",
+            "title": "Undocumented methods"
+        },
+        {
             "location": "/code/data/onmt+data+Dataset/",
             "text": "onmt.Dataset\n\n\nData management and batch creation. Handles data created by \npreprocess.lua\n. \n\n\n[src]\n\n\n\n\nonmt.Dataset(srcData, tgtData)\n\n\nInitialize a data object given aligned tables of IntTensors \nsrcData\n\n  and \ntgtData\n.\n\n\n[src]\n\n\n\n\nonmt.Dataset:setBatchSize(maxBatchSize)\n\n\nSetup up the training data to respect \nmaxBatchSize\n. \n\n\n[src]\n\n\n\n\nonmt.Dataset:batchCount()\n\n\nReturn number of batches. \n\n\n[src]\n\n\n\n\nonmt.Dataset:getBatch(idx)\n\n\nGet \nBatch\n number \nidx\n. If nil make a batch of all the data.",
             "title": "onmt+data+Dataset"
@@ -237,7 +257,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+BiEncoder/",
-            "text": "onmt.BiEncoder\n\n\nBiEncoder is a bidirectional Sequencer used for the source language.\n\n\nnetFwd\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nnetBwd\n\n\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.BiEncoder(input, rnn, merge)\n\n\nCreate a bi-encoder.\n\n\nParameters:\n\n\n\n\ninput\n - input neural network.\n\n\nrnn\n - recurrent template module.\n\n\nmerge\n - fwd/bwd merge operation {\"concat\", \"sum\"}\n\n\n\n\n[src]\n\n\n\n\nonmt.BiEncoder.load(pretrained)\n\n\nReturn a new BiEncoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.BiEncoder:serialize()\n\n\nReturn data to serialize. \n\n\nUndocumented methods\n\n\n\n * \nonmt.BiEncoder:resetPreallocation()\n\n\n\n * \nonmt.BiEncoder:maskPadding()\n\n\n\n * \nonmt.BiEncoder:forward(batch)\n\n\n\n * \nonmt.BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
+            "text": "onmt.BiEncoder\n\n\nBiEncoder is a bidirectional Sequencer used for the source language.\n\n\nnetFwd\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nnetBwd\n\n\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 \n= h_2 \n= h_3 \n= ... \n= h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.BiEncoder(args, input)\n\n\nCreate a bi-encoder.\n\n\nParameters:\n\n\n\n\ninput\n - input neural network.\n\n\nrnn\n - recurrent template module.\n\n\nmerge\n - fwd/bwd merge operation {\"concat\", \"sum\"}\n\n\n\n\n[src]\n\n\n\n\nonmt.BiEncoder.load(pretrained)\n\n\nReturn a new BiEncoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.BiEncoder:serialize()\n\n\nReturn data to serialize. \n\n\nUndocumented methods\n\n\n\n * \nonmt.BiEncoder.declareOpts(cmd)\n\n\n\n * \nonmt.BiEncoder:resetPreallocation()\n\n\n\n * \nonmt.BiEncoder:maskPadding()\n\n\n\n * \nonmt.BiEncoder:forward(batch)\n\n\n\n * \nonmt.BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
             "title": "onmt+modules+BiEncoder"
         },
         {
@@ -246,9 +266,9 @@
             "title": "onmt.BiEncoder"
         },
         {
-            "location": "/code/modules/onmt+modules+BiEncoder/#onmtbiencoderinput-rnn-merge",
+            "location": "/code/modules/onmt+modules+BiEncoder/#onmtbiencoderargs-input",
             "text": "Create a bi-encoder.  Parameters:   input  - input neural network.  rnn  - recurrent template module.  merge  - fwd/bwd merge operation {\"concat\", \"sum\"}   [src]",
-            "title": "onmt.BiEncoder(input, rnn, merge)"
+            "title": "onmt.BiEncoder(args, input)"
         },
         {
             "location": "/code/modules/onmt+modules+BiEncoder/#onmtbiencoderloadpretrained",
@@ -262,7 +282,37 @@
         },
         {
             "location": "/code/modules/onmt+modules+BiEncoder/#undocumented-methods",
-            "text": "*  onmt.BiEncoder:resetPreallocation()  \n *  onmt.BiEncoder:maskPadding()  \n *  onmt.BiEncoder:forward(batch)  \n *  onmt.BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
+            "text": "*  onmt.BiEncoder.declareOpts(cmd)  \n *  onmt.BiEncoder:resetPreallocation()  \n *  onmt.BiEncoder:maskPadding()  \n *  onmt.BiEncoder:forward(batch)  \n *  onmt.BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
+            "title": "Undocumented methods"
+        },
+        {
+            "location": "/code/modules/onmt+modules+DBiEncoder/",
+            "text": "onmt.DBiEncoder\n\n\nDBiEncoder is a deep bidirectional Sequencer used for the source language.\n\n\n[src]\n\n\n\n\nonmt.DBiEncoder(args, input)\n\n\nCreate a deep bidirectional encoder - each layers reconnect before starting another bidirectional layer\n\n\nParameters:\n\n\n\n\nargs\n - global arguments\n\n\ninput\n - input neural network.\n\n\n\n\n[src]\n\n\n\n\nonmt.DBiEncoder.load(pretrained)\n\n\nReturn a new DBiEncoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.DBiEncoder:serialize()\n\n\nReturn data to serialize. \n\n\nUndocumented methods\n\n\n\n * \nonmt.DBiEncoder.declareOpts(cmd)\n\n\n\n * \nonmt.DBiEncoder:resetPreallocation()\n\n\n\n * \nonmt.DBiEncoder:maskPadding()\n\n\n\n * \nonmt.DBiEncoder:forward(batch)\n\n\n\n * \nonmt.DBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
+            "title": "onmt+modules+DBiEncoder"
+        },
+        {
+            "location": "/code/modules/onmt+modules+DBiEncoder/#onmtdbiencoder",
+            "text": "DBiEncoder is a deep bidirectional Sequencer used for the source language.  [src]",
+            "title": "onmt.DBiEncoder"
+        },
+        {
+            "location": "/code/modules/onmt+modules+DBiEncoder/#onmtdbiencoderargs-input",
+            "text": "Create a deep bidirectional encoder - each layers reconnect before starting another bidirectional layer  Parameters:   args  - global arguments  input  - input neural network.   [src]",
+            "title": "onmt.DBiEncoder(args, input)"
+        },
+        {
+            "location": "/code/modules/onmt+modules+DBiEncoder/#onmtdbiencoderloadpretrained",
+            "text": "Return a new DBiEncoder using the serialized data  pretrained .   [src]",
+            "title": "onmt.DBiEncoder.load(pretrained)"
+        },
+        {
+            "location": "/code/modules/onmt+modules+DBiEncoder/#onmtdbiencoderserialize",
+            "text": "Return data to serialize.",
+            "title": "onmt.DBiEncoder:serialize()"
+        },
+        {
+            "location": "/code/modules/onmt+modules+DBiEncoder/#undocumented-methods",
+            "text": "*  onmt.DBiEncoder.declareOpts(cmd)  \n *  onmt.DBiEncoder:resetPreallocation()  \n *  onmt.DBiEncoder:maskPadding()  \n *  onmt.DBiEncoder:forward(batch)  \n *  onmt.DBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
             "title": "Undocumented methods"
         },
         {
@@ -327,7 +377,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+Encoder/",
-            "text": "onmt.Encoder\n\n\nEncoder is a unidirectional Sequencer used for the source language.\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Encoder(inputNetwork, rnn)\n\n\nConstruct an encoder layer.\n\n\nParameters:\n\n\n\n\ninputNetwork\n - input module.\n\n\nrnn\n - recurrent module.\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder.load(pretrained)\n\n\nReturn a new Encoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.Encoder:serialize()\n\n\nReturn data to serialize. \n\n\n[src]\n\n\n\n\nonmt.Encoder:forward(batch)\n\n\nCompute the context representation of an input.\n\n\nParameters:\n\n\n\n\nbatch\n - as defined in batch.lua.\n\n\n\n\nReturns:\n\n\n\n\n\n\n\n\nfinal hidden states\n\n\n\n\n\n\n\n\n\n\ncontext matrix H\n\n\n\n\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder:backward(batch, gradStatesOutput, gradContextOutput)\n\n\nBackward pass (only called during training)\n\n\nParameters:\n\n\n\n\nbatch\n - must be same as for forward\n\n\ngradStatesOutput\n gradient of loss wrt last state - this can be null if states are not used\n\n\ngradContextOutput\n - gradient of loss wrt full context.\n\n\n\n\nReturns: \ngradInputs\n of input network.\n\n\nUndocumented methods\n\n\n\n * \nonmt.Encoder:resetPreallocation()\n\n\n\n * \nonmt.Encoder:maskPadding()",
+            "text": "onmt.Encoder\n\n\nEncoder is a unidirectional Sequencer used for the source language.\n\n\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n .      .      .             .\n |      |      |             |\nh_1 =\n h_2 =\n h_3 =\n ... =\n h_n\n |      |      |             |\n |      |      |             |\nx_1    x_2    x_3           x_n\n\n\n\nInherits from \nonmt.Sequencer\n.\n\n\n[src]\n\n\n\n\nonmt.Encoder(args, inputNetwork)\n\n\nConstruct an Encoder layer.\n\n\nParameters:\n\n\n\n\ninputNetwork\n - input module.\n\n\nrnn\n - recurrent module.\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder.load(pretrained)\n\n\nReturn a new Encoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.Encoder:serialize()\n\n\nReturn data to serialize. \n\n\n[src]\n\n\n\n\nonmt.Encoder:forward(batch)\n\n\nCompute the context representation of an input.\n\n\nParameters:\n\n\n\n\nbatch\n - as defined in batch.lua.\n\n\n\n\nReturns:\n\n\n\n\n\n\n\n\nfinal hidden states\n\n\n\n\n\n\n\n\n\n\ncontext matrix H\n\n\n\n\n\n\n\n\n[src]\n\n\n\n\nonmt.Encoder:backward(batch, gradStatesOutput, gradContextOutput)\n\n\nBackward pass (only called during training)\n\n\nParameters:\n\n\n\n\nbatch\n - must be same as for forward\n\n\ngradStatesOutput\n gradient of loss wrt last state - this can be null if states are not used\n\n\ngradContextOutput\n - gradient of loss wrt full context.\n\n\n\n\nReturns: \ngradInputs\n of input network.\n\n\nUndocumented methods\n\n\n\n * \nonmt.Encoder.declareOpts(cmd)\n\n\n\n * \nonmt.Encoder:resetPreallocation()\n\n\n\n * \nonmt.Encoder:maskPadding()",
             "title": "onmt+modules+Encoder"
         },
         {
@@ -336,9 +386,9 @@
             "title": "onmt.Encoder"
         },
         {
-            "location": "/code/modules/onmt+modules+Encoder/#onmtencoderinputnetwork-rnn",
-            "text": "Construct an encoder layer.  Parameters:   inputNetwork  - input module.  rnn  - recurrent module.   [src]",
-            "title": "onmt.Encoder(inputNetwork, rnn)"
+            "location": "/code/modules/onmt+modules+Encoder/#onmtencoderargs-inputnetwork",
+            "text": "Construct an Encoder layer.  Parameters:   inputNetwork  - input module.  rnn  - recurrent module.   [src]",
+            "title": "onmt.Encoder(args, inputNetwork)"
         },
         {
             "location": "/code/modules/onmt+modules+Encoder/#onmtencoderloadpretrained",
@@ -362,7 +412,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+Encoder/#undocumented-methods",
-            "text": "*  onmt.Encoder:resetPreallocation()  \n *  onmt.Encoder:maskPadding()",
+            "text": "*  onmt.Encoder.declareOpts(cmd)  \n *  onmt.Encoder:resetPreallocation()  \n *  onmt.Encoder:maskPadding()",
             "title": "Undocumented methods"
         },
         {
@@ -397,7 +447,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+GRU/",
-            "text": "onmt.GRU\n\n\nImplementation of a single stacked-GRU step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(h_{t-1}, x_t) => (h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.GRU(layers, inputSize, hiddenSize, dropout, residual)\n\n\nParameters:\n\n\n\n\nlayers\n - Number of layers\n\n\ninputSize\n - Size of input layer\n\n\nhiddenSize\n - Size of the hidden layers\n\n\ndropout\n - Dropout rate to use (should be in \n[0,1]\n range.\n\n\nresidual\n - Residual connections between layers (boolean)",
+            "text": "onmt.GRU\n\n\nImplementation of a single stacked-GRU step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(h_{t-1}, x_t) => (h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.GRU(layers, inputSize, hiddenSize, dropout, residual, dropout_input)\n\n\nParameters:\n\n\n\n\nlayers\n - Number of layers\n\n\ninputSize\n - Size of input layer\n\n\nhiddenSize\n - Size of the hidden layers\n\n\ndropout\n - Dropout rate to use (in \n[0,1]\n range).\n\n\nresidual\n - Residual connections between layers (boolean)\n\n\ndropout_input\n - if true, add a dropout layer on the first layer (useful for instance in complex encoders)",
             "title": "onmt+modules+GRU"
         },
         {
@@ -406,9 +456,9 @@
             "title": "onmt.GRU"
         },
         {
-            "location": "/code/modules/onmt+modules+GRU/#onmtgrulayers-inputsize-hiddensize-dropout-residual",
-            "text": "Parameters:   layers  - Number of layers  inputSize  - Size of input layer  hiddenSize  - Size of the hidden layers  dropout  - Dropout rate to use (should be in  [0,1]  range.  residual  - Residual connections between layers (boolean)",
-            "title": "onmt.GRU(layers, inputSize, hiddenSize, dropout, residual)"
+            "location": "/code/modules/onmt+modules+GRU/#onmtgrulayers-inputsize-hiddensize-dropout-residual-dropout_input",
+            "text": "Parameters:   layers  - Number of layers  inputSize  - Size of input layer  hiddenSize  - Size of the hidden layers  dropout  - Dropout rate to use (in  [0,1]  range).  residual  - Residual connections between layers (boolean)  dropout_input  - if true, add a dropout layer on the first layer (useful for instance in complex encoders)",
+            "title": "onmt.GRU(layers, inputSize, hiddenSize, dropout, residual, dropout_input)"
         },
         {
             "location": "/code/modules/onmt+modules+Generator/",
@@ -442,7 +492,7 @@
         },
         {
             "location": "/code/modules/onmt+modules+LSTM/",
-            "text": "onmt.LSTM\n\n\nImplementation of a single stacked-LSTM step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n  c^L_{t-1} --- c^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n  c^1_{t-1} --- c^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)\n\n\nParameters:\n\n\n\n\nlayers\n - Number of LSTM layers, L.\n\n\ninputSize\n - Size of input layer\n\n\nhiddenSize\n - Size of the hidden layers.\n\n\ndropout\n - Dropout rate to use.\n\n\nresidual\n - Residual connections between layers.",
+            "text": "onmt.LSTM\n\n\nImplementation of a single stacked-LSTM step as\nan nn unit.\n\n\n  h^L_{t-1} --- h^L_t\n  c^L_{t-1} --- c^L_t\n             |\n\n\n             .\n             |\n         [dropout]\n             |\n  h^1_{t-1} --- h^1_t\n  c^1_{t-1} --- c^1_t\n             |\n             |\n            x_t\n\n\n\nComputes \n(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})\n.\n\n\n[src]\n\n\n\n\nonmt.LSTM(layers, inputSize, hiddenSize, dropout, residual, dropout_input)\n\n\nParameters:\n\n\n\n\nlayers\n - Number of LSTM layers, L.\n\n\ninputSize\n - Size of input layer\n\n\nhiddenSize\n - Size of the hidden layers.\n\n\ndropout\n - Dropout rate to use (in \n[0,1]\n range).\n\n\nresidual\n - Residual connections between layers.\n\n\ndropout_input\n - if true, add a dropout layer on the first layer (useful for instance in complex encoders)",
             "title": "onmt+modules+LSTM"
         },
         {
@@ -451,9 +501,9 @@
             "title": "onmt.LSTM"
         },
         {
-            "location": "/code/modules/onmt+modules+LSTM/#onmtlstmlayers-inputsize-hiddensize-dropout-residual",
-            "text": "Parameters:   layers  - Number of LSTM layers, L.  inputSize  - Size of input layer  hiddenSize  - Size of the hidden layers.  dropout  - Dropout rate to use.  residual  - Residual connections between layers.",
-            "title": "onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual)"
+            "location": "/code/modules/onmt+modules+LSTM/#onmtlstmlayers-inputsize-hiddensize-dropout-residual-dropout_input",
+            "text": "Parameters:   layers  - Number of LSTM layers, L.  inputSize  - Size of input layer  hiddenSize  - Size of the hidden layers.  dropout  - Dropout rate to use (in  [0,1]  range).  residual  - Residual connections between layers.  dropout_input  - if true, add a dropout layer on the first layer (useful for instance in complex encoders)",
+            "title": "onmt.LSTM(layers, inputSize, hiddenSize, dropout, residual, dropout_input)"
         },
         {
             "location": "/code/modules/onmt+modules+MaskedSoftmax/",
@@ -483,6 +533,36 @@
         {
             "location": "/code/modules/onmt+modules+Network/#undocumented-methods",
             "text": "*  onmt.Network(net)  \n *  onmt.Network:updateOutput(input)  \n *  onmt.Network:updateGradInput(input, gradOutput)  \n *  onmt.Network:accGradParameters(input, gradOutput, scale)",
+            "title": "Undocumented methods"
+        },
+        {
+            "location": "/code/modules/onmt+modules+PDBiEncoder/",
+            "text": "onmt.PDBiEncoder\n\n\nPDBiEncoder is a pyramidal deep bidirectional Sequencer used for the source language.\n\n\n[src]\n\n\n\n\nonmt.PDBiEncoder(args, input)\n\n\nCreate a pyrimal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer\n\n\nParameters:\n\n\n\n\nargs\n - global arguments\n\n\ninput\n - input neural network.\n\n\n\n\n[src]\n\n\n\n\nonmt.PDBiEncoder.load(pretrained)\n\n\nReturn a new PDBiEncoder using the serialized data \npretrained\n. \n\n\n[src]\n\n\n\n\nonmt.PDBiEncoder:serialize()\n\n\nReturn data to serialize. \n\n\nUndocumented methods\n\n\n\n * \nonmt.PDBiEncoder.declareOpts(cmd)\n\n\n\n * \nonmt.PDBiEncoder:resetPreallocation()\n\n\n\n * \nonmt.PDBiEncoder:maskPadding()\n\n\n\n * \nonmt.PDBiEncoder:forward(batch)\n\n\n\n * \nonmt.PDBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
+            "title": "onmt+modules+PDBiEncoder"
+        },
+        {
+            "location": "/code/modules/onmt+modules+PDBiEncoder/#onmtpdbiencoder",
+            "text": "PDBiEncoder is a pyramidal deep bidirectional Sequencer used for the source language.  [src]",
+            "title": "onmt.PDBiEncoder"
+        },
+        {
+            "location": "/code/modules/onmt+modules+PDBiEncoder/#onmtpdbiencoderargs-input",
+            "text": "Create a pyrimal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer  Parameters:   args  - global arguments  input  - input neural network.   [src]",
+            "title": "onmt.PDBiEncoder(args, input)"
+        },
+        {
+            "location": "/code/modules/onmt+modules+PDBiEncoder/#onmtpdbiencoderloadpretrained",
+            "text": "Return a new PDBiEncoder using the serialized data  pretrained .   [src]",
+            "title": "onmt.PDBiEncoder.load(pretrained)"
+        },
+        {
+            "location": "/code/modules/onmt+modules+PDBiEncoder/#onmtpdbiencoderserialize",
+            "text": "Return data to serialize.",
+            "title": "onmt.PDBiEncoder:serialize()"
+        },
+        {
+            "location": "/code/modules/onmt+modules+PDBiEncoder/#undocumented-methods",
+            "text": "*  onmt.PDBiEncoder.declareOpts(cmd)  \n *  onmt.PDBiEncoder:resetPreallocation()  \n *  onmt.PDBiEncoder:maskPadding()  \n *  onmt.PDBiEncoder:forward(batch)  \n *  onmt.PDBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)",
             "title": "Undocumented methods"
         },
         {
@@ -882,7 +962,7 @@
         },
         {
             "location": "/details/train/",
-            "text": "train.lua\n\n\n\n\n-h\n: This help. [false]\n\n\n-md\n: Dump help in Markdown format. [false]\n\n\n-config\n: Read options from config file. []\n\n\n-save_config\n: Save options from config file. []\n\n\n\n\nData options\n\n\n\n\n-data\n: Path to the training *-train.t7 file from preprocess.lua []\n\n\n-save_model\n: Model filename (the model will be saved as \n_epochN_PPL.t7 where PPL is the validation perplexity []\n\n\n-model_type\n: (lm, seq2seq) Type of the model to train. This option impacts all options choices [seq2seq]\n\n\n-param_init\n: Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]\n\n\n\n\nSequence to Sequence with Attention options\n\n\n\n\n-layers\n: Number of layers in the RNN encoder/decoder [2]\n\n\n-rnn_size\n: Size of RNN hidden states [500]\n\n\n-rnn_type\n: (LSTM, GRU) Type of RNN cell [LSTM]\n\n\n-word_vec_size\n: Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]\n\n\n-src_word_vec_size\n: Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]\n\n\n-tgt_word_vec_size\n: Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]\n\n\n-feat_merge\n: (concat, sum) Merge action for the features embeddings [concat]\n\n\n-feat_vec_exponent\n: When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]\n\n\n-feat_vec_size\n: When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]\n\n\n-input_feed\n: (0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]\n\n\n-residual\n: Add residual connections between RNN layers. [false]\n\n\n-brnn\n: Use a bidirectional encoder [false]\n\n\n-brnn_merge\n: (concat, sum) Merge action for the bidirectional hidden states [sum]\n\n\n-pre_word_vecs_enc\n: If a valid path is specified, then this will load pretrained word embeddings on the encoder side. See README for specific formatting instructions. []\n\n\n-pre_word_vecs_dec\n: If a valid path is specified, then this will load pretrained word embeddings on the decoder side. See README for specific formatting instructions. []\n\n\n-fix_word_vecs_enc\n: Fix word embeddings on the encoder side [false]\n\n\n-fix_word_vecs_dec\n: Fix word embeddings on the decoder side [false]\n\n\n-dropout\n: Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]\n\n\n\n\nOptimization options\n\n\n\n\n-max_batch_size\n: Maximum batch size [64]\n\n\n-optim\n: (sgd, adagrad, adadelta, adam) Optimization method. [sgd]\n\n\n-learning_rate\n: Starting learning rate. If adagrad or adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002 [1]\n\n\n-max_grad_norm\n: If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]\n\n\n-learning_rate_decay\n: Decay learning rate by this much if (i) perplexity does not decrease on the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]\n\n\n-start_decay_at\n: Start decay after this epoch [9]\n\n\n\n\nTrainer options\n\n\n\n\n-save_every\n: Save intermediate models every this many iterations within an epoch. If = 0, will not save models within an epoch.  [0]\n\n\n-report_every\n: Print stats every this many iterations within an epoch. [50]\n\n\n-async_parallel\n: Use asynchronous parallelism training. [false]\n\n\n-async_parallel_minbatch\n: For async parallel computing, minimal number of batches before being parallel. [1000]\n\n\n-start_iteration\n: If loading from a checkpoint, the iteration from which to start [1]\n\n\n-end_epoch\n: The final epoch of the training [13]\n\n\n-start_epoch\n: If loading from a checkpoint, the epoch from which to start [1]\n\n\n-curriculum\n: For this many epochs, order the minibatches based on source sequence length. Sometimes setting this to 1 will increase convergence speed. [0]\n\n\n\n\nCheckpoint options\n\n\n\n\n-train_from\n: If training from a checkpoint then this is the path to the pretrained model. []\n\n\n-continue\n: If training from a checkpoint, whether to continue the training in the same configuration or not. [false]\n\n\n\n\nCrayon options\n\n\n\n\n-exp_host\n: Crayon server IP [127.0.0.1]\n\n\n-exp_port\n: Crayon Server port [8889]\n\n\n-exp\n: Crayon experiment name []\n\n\n\n\nSampledDataset options\n\n\n\n\n-sample\n: Number of instances to sample from train data in each epoch [0]\n\n\n-sample_w_ppl\n: use ppl as probability distribution when sampling [false]\n\n\n-sample_w_ppl_init\n: start perplexity-based sampling when average train perplexity per batch falls below this value [15]\n\n\n-sample_w_ppl_max\n: when greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + (-sample_w_ppl_max) * stdev will be used as threshold [-1.5]\n\n\n\n\nOther options\n\n\n\n\n-gpuid\n: List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\n-fallback_to_cpu\n: If GPU can't be use, rollback on the CPU. [false]\n\n\n-fp16\n: Use half-precision float on GPU. [false]\n\n\n-no_nccl\n: Disable usage of nccl in parallel mode. [false]\n\n\n-disable_mem_optimization\n: Disable sharing of internal buffers between clones for visualization or development. [false]\n\n\n-log_file\n: Outputs logs to a file under this path instead of stdout. []\n\n\n-disable_logs\n: When activated, output nothing. [false]\n\n\n-log_level\n: (DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]\n\n\n-profiler\n: Generate profiling logs. [false]\n\n\n-seed\n: Seed for random initialization [3435]",
+            "text": "train.lua\n\n\n\n\n-h\n: This help. [false]\n\n\n-md\n: Dump help in Markdown format. [false]\n\n\n-config\n: Read options from config file. []\n\n\n-save_config\n: Save options from config file. []\n\n\n\n\nData options\n\n\n\n\n-data\n: Path to the training *-train.t7 file from preprocess.lua []\n\n\n-save_model\n: Model filename (the model will be saved as \n_epochN_PPL.t7 where PPL is the validation perplexity []\n\n\n-model_type\n: (lm, seq2seq) Type of the model to train. This option impacts all options choices [seq2seq]\n\n\n-param_init\n: Parameters are initialized over uniform distribution with support (-param_init, param_init) [0.1]\n\n\n\n\nSequence to Sequence with Attention options\n\n\n\n\n-word_vec_size\n: Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]\n\n\n-src_word_vec_size\n: Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]\n\n\n-tgt_word_vec_size\n: Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]\n\n\n-pre_word_vecs_enc\n: If a valid path is specified, then this will load pretrained word embeddings on the encoder side. See README for specific formatting instructions. []\n\n\n-pre_word_vecs_dec\n: If a valid path is specified, then this will load pretrained word embeddings on the decoder side. See README for specific formatting instructions. []\n\n\n-fix_word_vecs_enc\n: Fix word embeddings on the encoder side [false]\n\n\n-fix_word_vecs_dec\n: Fix word embeddings on the decoder side [false]\n\n\n-feat_merge\n: (concat, sum) Merge action for the features embeddings [concat]\n\n\n-feat_vec_exponent\n: When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]\n\n\n-feat_vec_size\n: When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]\n\n\n-input_feed\n: (0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]\n\n\n-layers\n: Number of layers in the RNN Encoder/decoder [2]\n\n\n-rnn_size\n: Size of RNN hidden states [500]\n\n\n-rnn_type\n: (LSTM, GRU) Type of RNN cell [LSTM]\n\n\n-dropout\n: Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]\n\n\n-dropout_input\n: Add dropout also on input. [false]\n\n\n-residual\n: Add residual connections between RNN layers. [false]\n\n\n-brnn\n: Use a bidirectional encoder. [false]\n\n\n-dbrnn\n: Use a deep bidirectional encoder. [false]\n\n\n-pdbrnn\n: Use pyramidal deep bidirectional encoder. [false]\n\n\n-brnn_merge\n: (concat, sum) Merge action for the bidirectional hidden states [sum]\n\n\n-pdbrnn_reduction\n: Time-Reduction factor at each layer. [2]\n\n\n\n\nOptimization options\n\n\n\n\n-max_batch_size\n: Maximum batch size [64]\n\n\n-optim\n: (sgd, adagrad, adadelta, adam) Optimization method. [sgd]\n\n\n-learning_rate\n: Starting learning rate. If adagrad or adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002 [1]\n\n\n-min_learning_rate\n: Do not continue the training past this learning rate [0]\n\n\n-max_grad_norm\n: If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]\n\n\n-learning_rate_decay\n: Learning rate decay factor [0.5]\n\n\n-start_decay_at\n: With 'default' decay mode, start decay after this epoch [9]\n\n\n-start_decay_ppl_delta\n: Start decay when validation perplexity improvement is lower than this value [0]\n\n\n-decay\n: (default, perplexity_only) When to apply learning rate decay. 'default': decay after each epoch past start_decay_at or as soon as the validation perplexity is not improving more than start_decay_ppl_delta, 'perplexity_only': only decay when validation perplexity is not improving more than start_decay_ppl_delta [default]\n\n\n\n\nTrainer options\n\n\n\n\n-save_every\n: Save intermediate models every this many iterations within an epoch. If = 0, will not save models within an epoch.  [0]\n\n\n-report_every\n: Print stats every this many iterations within an epoch. [50]\n\n\n-async_parallel\n: Use asynchronous parallelism training. [false]\n\n\n-async_parallel_minbatch\n: For async parallel computing, minimal number of batches before being parallel. [1000]\n\n\n-start_iteration\n: If loading from a checkpoint, the iteration from which to start [1]\n\n\n-end_epoch\n: The final epoch of the training [13]\n\n\n-start_epoch\n: If loading from a checkpoint, the epoch from which to start [1]\n\n\n-curriculum\n: For this many epochs, order the minibatches based on source sequence length. Sometimes setting this to 1 will increase convergence speed. [0]\n\n\n\n\nCheckpoint options\n\n\n\n\n-train_from\n: If training from a checkpoint then this is the path to the pretrained model. []\n\n\n-continue\n: If training from a checkpoint, whether to continue the training in the same configuration or not. [false]\n\n\n\n\nCrayon options\n\n\n\n\n-exp_host\n: Crayon server IP [127.0.0.1]\n\n\n-exp_port\n: Crayon Server port [8889]\n\n\n-exp\n: Crayon experiment name []\n\n\n\n\nSampledDataset options\n\n\n\n\n-sample\n: Number of instances to sample from train data in each epoch [0]\n\n\n-sample_w_ppl\n: use ppl as probability distribution when sampling [false]\n\n\n-sample_w_ppl_init\n: start perplexity-based sampling when average train perplexity per batch falls below this value [15]\n\n\n-sample_w_ppl_max\n: when greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + (-sample_w_ppl_max) * stdev will be used as threshold [-1.5]\n\n\n\n\nOther options\n\n\n\n\n-gpuid\n: List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0. [0]\n\n\n-fallback_to_cpu\n: If GPU can't be use, rollback on the CPU. [false]\n\n\n-fp16\n: Use half-precision float on GPU. [false]\n\n\n-no_nccl\n: Disable usage of nccl in parallel mode. [false]\n\n\n-disable_mem_optimization\n: Disable sharing of internal buffers between clones for visualization or development. [false]\n\n\n-log_file\n: Outputs logs to a file under this path instead of stdout. []\n\n\n-disable_logs\n: When activated, output nothing. [false]\n\n\n-log_level\n: (DEBUG, INFO, WARNING, ERROR) Outputs logs at this level and above. [INFO]\n\n\n-profiler\n: Generate profiling logs. [false]\n\n\n-seed\n: Seed for random initialization [3435]",
             "title": "Train"
         },
         {
@@ -897,12 +977,12 @@
         },
         {
             "location": "/details/train/#sequence-to-sequence-with-attention-options",
-            "text": "-layers : Number of layers in the RNN encoder/decoder [2]  -rnn_size : Size of RNN hidden states [500]  -rnn_type : (LSTM, GRU) Type of RNN cell [LSTM]  -word_vec_size : Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]  -src_word_vec_size : Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]  -tgt_word_vec_size : Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]  -feat_merge : (concat, sum) Merge action for the features embeddings [concat]  -feat_vec_exponent : When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]  -feat_vec_size : When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]  -input_feed : (0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]  -residual : Add residual connections between RNN layers. [false]  -brnn : Use a bidirectional encoder [false]  -brnn_merge : (concat, sum) Merge action for the bidirectional hidden states [sum]  -pre_word_vecs_enc : If a valid path is specified, then this will load pretrained word embeddings on the encoder side. See README for specific formatting instructions. []  -pre_word_vecs_dec : If a valid path is specified, then this will load pretrained word embeddings on the decoder side. See README for specific formatting instructions. []  -fix_word_vecs_enc : Fix word embeddings on the encoder side [false]  -fix_word_vecs_dec : Fix word embeddings on the decoder side [false]  -dropout : Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]",
+            "text": "-word_vec_size : Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size. [0]  -src_word_vec_size : Comma-separated list of source embedding sizes: word[,feat1,feat2,...]. [500]  -tgt_word_vec_size : Comma-separated list of target embedding sizes: word[,feat1,feat2,...]. [500]  -pre_word_vecs_enc : If a valid path is specified, then this will load pretrained word embeddings on the encoder side. See README for specific formatting instructions. []  -pre_word_vecs_dec : If a valid path is specified, then this will load pretrained word embeddings on the decoder side. See README for specific formatting instructions. []  -fix_word_vecs_enc : Fix word embeddings on the encoder side [false]  -fix_word_vecs_dec : Fix word embeddings on the decoder side [false]  -feat_merge : (concat, sum) Merge action for the features embeddings [concat]  -feat_vec_exponent : When features embedding sizes are not set and using -feat_merge concat, their dimension will be set to N^exponent where N is the number of values the feature takes. [0.7]  -feat_vec_size : When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features [20]  -input_feed : (0, 1) Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder. [1]  -layers : Number of layers in the RNN Encoder/decoder [2]  -rnn_size : Size of RNN hidden states [500]  -rnn_type : (LSTM, GRU) Type of RNN cell [LSTM]  -dropout : Dropout probability. Dropout is applied between vertical LSTM stacks. [0.3]  -dropout_input : Add dropout also on input. [false]  -residual : Add residual connections between RNN layers. [false]  -brnn : Use a bidirectional encoder. [false]  -dbrnn : Use a deep bidirectional encoder. [false]  -pdbrnn : Use pyramidal deep bidirectional encoder. [false]  -brnn_merge : (concat, sum) Merge action for the bidirectional hidden states [sum]  -pdbrnn_reduction : Time-Reduction factor at each layer. [2]",
             "title": "Sequence to Sequence with Attention options"
         },
         {
             "location": "/details/train/#optimization-options",
-            "text": "-max_batch_size : Maximum batch size [64]  -optim : (sgd, adagrad, adadelta, adam) Optimization method. [sgd]  -learning_rate : Starting learning rate. If adagrad or adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002 [1]  -max_grad_norm : If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]  -learning_rate_decay : Decay learning rate by this much if (i) perplexity does not decrease on the validation set or (ii) epoch has gone past the start_decay_at_limit [0.5]  -start_decay_at : Start decay after this epoch [9]",
+            "text": "-max_batch_size : Maximum batch size [64]  -optim : (sgd, adagrad, adadelta, adam) Optimization method. [sgd]  -learning_rate : Starting learning rate. If adagrad or adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002 [1]  -min_learning_rate : Do not continue the training past this learning rate [0]  -max_grad_norm : If the norm of the gradient vector exceeds this renormalize it to have the norm equal to max_grad_norm [5]  -learning_rate_decay : Learning rate decay factor [0.5]  -start_decay_at : With 'default' decay mode, start decay after this epoch [9]  -start_decay_ppl_delta : Start decay when validation perplexity improvement is lower than this value [0]  -decay : (default, perplexity_only) When to apply learning rate decay. 'default': decay after each epoch past start_decay_at or as soon as the validation perplexity is not improving more than start_decay_ppl_delta, 'perplexity_only': only decay when validation perplexity is not improving more than start_decay_ppl_delta [default]",
             "title": "Optimization options"
         },
         {

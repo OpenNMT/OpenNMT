@@ -86,6 +86,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../data/onmt+data+BatchTensor/">onmt+data+BatchTensor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../data/onmt+data+Dataset/">onmt+data+Dataset</a>
         
     </li>
@@ -130,6 +137,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+DBiEncoder/">onmt+modules+DBiEncoder</a>
         
     </li>
 
@@ -200,6 +214,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+PDBiEncoder/">onmt+modules+PDBiEncoder</a>
         
     </li>
 
@@ -464,7 +485,7 @@
   ENDWHILE
 </code></pre>
 <p>==================================================================</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/translate/Advancer.lua#L56">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/translate/Advancer.lua#L56">[src]</a>
 <a name="onmt.Advancer:initBeam"></a></p>
 <h3 id="onmtadvancerinitbeam">onmt.Advancer:initBeam()</h3>
 <p>Returns an initial beam.</p>
@@ -472,7 +493,7 @@
 <ul>
 <li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/translate/Advancer.lua#L66">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/translate/Advancer.lua#L66">[src]</a>
 <a name="onmt.Advancer:update"></a></p>
 <h3 id="onmtadvancerupdatebeam">onmt.Advancer:update(beam)</h3>
 <p>Updates beam states given new tokens.</p>
@@ -480,7 +501,7 @@
 <ul>
 <li><code>beam</code> - beam with updated token list.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/translate/Advancer.lua#L80">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/translate/Advancer.lua#L80">[src]</a>
 <a name="onmt.Advancer:expand"></a></p>
 <h3 id="onmtadvancerexpandbeam">onmt.Advancer:expand(beam)</h3>
 <p>Expands beam by all possible tokens and returns the scores.</p>
@@ -492,7 +513,7 @@
 <ul>
 <li><code>scores</code> - a 2D tensor of size <code>(batchSize * beamSize, numTokens)</code>.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/translate/Advancer.lua#L93">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/translate/Advancer.lua#L93">[src]</a>
 <a name="onmt.Advancer:isComplete"></a></p>
 <h3 id="onmtadvanceriscompletebeam">onmt.Advancer:isComplete(beam)</h3>
 <p>Checks which hypotheses in the beam are already finished.</p>
@@ -502,7 +523,7 @@
 </ul>
 <p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
   which hypotheses are finished.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/translate/Advancer.lua#L105">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/translate/Advancer.lua#L105">[src]</a>
 <a name="onmt.Advancer:setKeptStateIndexes"></a></p>
 <h3 id="onmtadvancersetkeptstateindexesindexes">onmt.Advancer:setKeptStateIndexes(indexes)</h3>
 <p>Specifies which states to keep track of. After beam search, those states
@@ -512,7 +533,7 @@
 <ul>
 <li><code>indexes</code> - a table of iterators, specifying the indexes in the <code>states</code> to track.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/translate/Advancer.lua#L119">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/translate/Advancer.lua#L119">[src]</a>
 <a name="onmt.Advancer:filter"></a></p>
 <h3 id="onmtadvancerfilter">onmt.Advancer:filter()</h3>
 <p>Checks which hypotheses in the beam shall be pruned.</p>

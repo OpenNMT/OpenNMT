@@ -107,6 +107,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../onmt+data+BatchTensor/">onmt+data+BatchTensor</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../onmt+data+Dataset/">onmt+data+Dataset</a>
         
     </li>
@@ -151,6 +158,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+BiEncoder/">onmt+modules+BiEncoder</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+DBiEncoder/">onmt+modules+DBiEncoder</a>
         
     </li>
 
@@ -221,6 +235,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../modules/onmt+modules+Network/">onmt+modules+Network</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../modules/onmt+modules+PDBiEncoder/">onmt+modules+PDBiEncoder</a>
         
     </li>
 
@@ -426,7 +447,7 @@
 <p>A batch of sentences to translate and targets. Manages padding,
   features, and batch alignment (for efficiency).</p>
 <p>Used by the decoder and encoder objects.</p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Batch.lua#L59">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Batch.lua#L59">[src]</a>
 <a name="onmt.Batch"></a></p>
 <h3 id="onmtbatchsrc-srcfeatures-tgt-tgtfeatures">onmt.Batch(src, srcFeatures, tgt, tgtFeatures)</h3>
 <p>Create a batch object.</p>
@@ -437,7 +458,7 @@
 <li><code>tgt</code> - 2D table of target batch indices</li>
 <li><code>tgtFeatures</code> - 2D table of target batch features (opt)</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Batch.lua#L155">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Batch.lua#L157">[src]</a>
 <a name="onmt.Batch:setSourceInput"></a></p>
 <h3 id="onmtbatchsetsourceinputsourceinput">onmt.Batch:setSourceInput(sourceInput)</h3>
 <p>Set source input directly,</p>
@@ -446,7 +467,7 @@
 <li><code>sourceInput</code> - a Tensor of size (sequence_length, batch_size, feature_dim)
   ,or a sequence of size (sequence_length, batch_size). Be aware that sourceInput is not cloned here.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Batch.lua#L172">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Batch.lua#L174">[src]</a>
 <a name="onmt.Batch:setTargetInput"></a></p>
 <h3 id="onmtbatchsettargetinputtargetinput">onmt.Batch:setTargetInput(targetInput)</h3>
 <p>Set target input directly.</p>
@@ -454,7 +475,7 @@
 <ul>
 <li><code>targetInput</code> - a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD. Be aware that targetInput is not cloned here.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Batch.lua#L189">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Batch.lua#L191">[src]</a>
 <a name="onmt.Batch:setTargetOutput"></a></p>
 <h3 id="onmtbatchsettargetoutputtargetoutput">onmt.Batch:setTargetOutput(targetOutput)</h3>
 <p>Set target output directly.</p>
@@ -462,15 +483,15 @@
 <ul>
 <li><code>targetOutput</code> - a tensor of size (sequence_length, batch_size). Padded with onmt.Constants.PAD.  Be aware that targetOutput is not cloned here.</li>
 </ul>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Batch.lua#L209">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Batch.lua#L217">[src]</a>
 <a name="onmt.Batch:getSourceInput"></a></p>
 <h3 id="onmtbatchgetsourceinputt">onmt.Batch:getSourceInput(t)</h3>
 <p>Get source input batch at timestep <code>t</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Batch.lua#L222">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Batch.lua#L236">[src]</a>
 <a name="onmt.Batch:getTargetInput"></a></p>
 <h3 id="onmtbatchgettargetinputt">onmt.Batch:getTargetInput(t)</h3>
 <p>Get target input batch at timestep <code>t</code>. </p>
-<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/8251d7586ee8411766341ed2bcab655c8b3d5b03/onmt/data/Batch.lua#L235">[src]</a>
+<p><a class="entityLink" href="https://github.com/opennmt/opennmt/blob/49e7601d911090a242fc3c5366c830df48a92fe7/onmt/data/Batch.lua#L249">[src]</a>
 <a name="onmt.Batch:getTargetOutput"></a></p>
 <h3 id="onmtbatchgettargetoutputt">onmt.Batch:getTargetOutput(t)</h3>
 <p>Get target output batch at timestep <code>t</code> (values t+1). </p>
@@ -481,7 +502,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../onmt+data+Dataset/" class="btn btn-neutral float-right" title="onmt+data+Dataset">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../onmt+data+BatchTensor/" class="btn btn-neutral float-right" title="onmt+data+BatchTensor">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../onmt+data+AliasMultinomial/" class="btn btn-neutral" title="onmt+data+AliasMultinomial"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -513,7 +534,7 @@
         <span><a href="../onmt+data+AliasMultinomial/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../onmt+data+Dataset/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../onmt+data+BatchTensor/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
