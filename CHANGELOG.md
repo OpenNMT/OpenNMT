@@ -5,6 +5,7 @@
 * Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
 * Add deep bidirectional encoder
 * Add pyramidal deep bidirectional encoder
+* Add alternative learning rate decay strategy for SGD training
 
 ### Fixes and improvements
 

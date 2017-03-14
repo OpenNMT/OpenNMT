@@ -96,6 +96,10 @@ function Checkpoint.loadFromCheckpoint(opt)
       opt.start_decay_at = checkpoint.options.start_decay_at
       opt.curriculum = checkpoint.options.curriculum
 
+      opt.decay = checkpoint.options.decay or opt.decay
+      opt.min_learning_rate = checkpoint.options.min_learning_rate or opt.min_learning_rate
+      opt.start_decay_ppl_delta = checkpoint.options.start_decay_ppl_delta or opt.start_decay_ppl_delta
+
       opt.learning_rate = checkpoint.info.learningRate
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration

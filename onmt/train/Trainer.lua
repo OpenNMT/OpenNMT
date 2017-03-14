@@ -299,9 +299,14 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
-    optim:updateLearningRate(validPpl, epoch)
+    local continue = optim:updateLearningRate(validPpl, epoch)
 
     checkpoint:saveEpoch(validPpl, epochState, true)
+
+    if not continue then
+      _G.logger:warning('Stopping training due to a too small learning rate value.')
+      break
+    end
   end
 end
 
