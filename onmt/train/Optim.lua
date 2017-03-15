@@ -56,6 +56,7 @@ local Optim = torch.class('Optim')
 local options = {
   {'-max_batch_size',     64   , [[Maximum batch size]],
                                  {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-uneven_batches',     false, [[If true, batches are filled up to max_batch_size even if they have different sizes.]]},
   {'-optim',              'sgd', [[Optimization method.]],
                                  {enum={'sgd', 'adagrad', 'adadelta', 'adam'}}},
   {'-learning_rate',       1   , [[Starting learning rate. If adagrad or adam is used,

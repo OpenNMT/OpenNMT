@@ -76,8 +76,8 @@ local function main()
   end
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
-  trainData:setBatchSize(opt.max_batch_size)
-  validData:setBatchSize(opt.max_batch_size)
+  local nTrainBatch = trainData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+  validData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
 
   if dataset.dataType == 'bitext' then
     _G.logger:info(' * vocabulary size: source = %d; target = %d',
@@ -91,7 +91,11 @@ local function main()
   _G.logger:info(' * maximum sequence length: source = %d; target = %d',
                  trainData.maxSourceLength, trainData.maxTargetLength)
   _G.logger:info(' * number of training sentences: %d', #trainData.src)
-  _G.logger:info(' * maximum batch size: %d', opt.max_batch_size)
+  local typeBatch = "(even)"
+  if opt.uneven_batches then
+    typeBatch = "(uneven)"
+  end
+  _G.logger:info(' * %d batches, maximum size: %d %s', nTrainBatch, opt.max_batch_size, typeBatch)
 
   _G.logger:info('Building model...')
 

@@ -15,8 +15,9 @@ function Dataset:__init(srcData, tgtData)
   end
 end
 
---[[ Setup up the training data to respect `maxBatchSize`. ]]
-function Dataset:setBatchSize(maxBatchSize)
+--[[ Setup up the training data to respect `maxBatchSize`.
+     If uneven_batches - then build up batches with different lengths ]]
+function Dataset:setBatchSize(maxBatchSize, uneven_batches)
 
   self.batchRange = {}
   self.maxSourceLength = 0
@@ -31,7 +32,8 @@ function Dataset:setBatchSize(maxBatchSize)
   for i = 1, #self.src do
     -- Set up the offsets to make same source size batches of the
     -- correct size.
-    if batchSize == maxBatchSize or self.src[i]:size(1) ~= sourceLength then
+    if batchSize == maxBatchSize or
+        not(not uneven_batches and self.src[i]:size(1) ~= sourceLength) then
       if i > 1 then
         table.insert(self.batchRange, { ["begin"] = offset, ["end"] = i - 1 })
       end
@@ -55,6 +57,7 @@ function Dataset:setBatchSize(maxBatchSize)
   end
   -- Catch last batch.
   table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src })
+  return #self.batchRange
 end
 
 --[[ Return number of batches. ]]

@@ -229,8 +229,9 @@ function SampledDataset:setLoss(batchIdx, loss)
 end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]
-function SampledDataset:setBatchSize(maxBatchSize)
+function SampledDataset:setBatchSize(maxBatchSize, uneven_batches)
   self.maxBatchSize = maxBatchSize
+  self.uneven_batches = uneven_batches
   self.maxSourceLength = 0
   self.maxTargetLength = 0
 
