@@ -125,12 +125,14 @@ function MemoryOptimizer:__init(modules)
       registerNet(self.modelDesc[name][1], mod:net(1), mod.network)
     elseif mod.modules then
       -- Otherwise, look in submodules instead.
-      for i = 1, #mod.modules do
-        if mod.modules[i].net then
+      local i = 1
+      mod:apply(function(m)
+        if m.network then
           self.modelDesc[name][i] = {}
-          registerNet(self.modelDesc[name][i], mod.modules[i]:net(1), mod.modules[i].network)
+          registerNet(self.modelDesc[name][i], m:net(1), m.network)
+          i = i + 1
         end
-      end
+      end)
     end
   end
 end

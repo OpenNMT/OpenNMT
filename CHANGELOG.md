@@ -3,10 +3,14 @@
 ### New features
 
 * Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
+* Add deep bidirectional encoder
+* Add pyramidal deep bidirectional encoder
+* Add alternative learning rate decay strategy for SGD training
 
 ### Fixes and improvements
 
 * Fix translation with FP16 precision
+* Fix individual losses that were always computed when using random sampling
 
 ## [v0.5.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.0) (2017-03-06)
 

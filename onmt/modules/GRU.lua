@@ -28,21 +28,22 @@ Parameters:
   * `layers` - Number of layers
   * `inputSize` - Size of input layer
   * `hiddenSize` - Size of the hidden layers
-  * `dropout` - Dropout rate to use (should be in $$[0,1]$$ range.
+  * `dropout` - Dropout rate to use (in $$[0,1]$$ range).
   * `residual` - Residual connections between layers (boolean)
+  * `dropout_input` - if true, add a dropout layer on the first layer (useful for instance in complex encoders)
 --]]
-function GRU:__init(layers, inputSize, hiddenSize, dropout, residual)
+function GRU:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = layers
   self.outputSize = hiddenSize
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input))
 end
 
 --[[ Stack the GRU units. ]]
-function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
+function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
   -- inputs: { prevOutput L1, ..., prevOutput Ln, input }
   -- outputs: { output L1, ..., output Ln }
 
@@ -73,9 +74,9 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
       if residual and (L > 2 or inputSize == hiddenSize) then
         input = nn.CAddTable()({input, prevInput})
       end
-      if dropout > 0 then
-        input = nn.Dropout(dropout)(input)
-      end
+    end
+    if dropout_input or (dropout > 0 and L>1) then
+      input = nn.Dropout(dropout)(input)
     end
 
     local prevH = inputs[L]
