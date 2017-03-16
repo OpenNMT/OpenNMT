@@ -40,10 +40,6 @@ function Seq2Seq:__init(args, dicts, verbose)
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
-
-  if args.uneven_batches then
-    self.models.encoder:maskPadding()
-  end
 end
 
 function Seq2Seq.load(args, models, dicts, isReplica)
@@ -56,10 +52,6 @@ function Seq2Seq.load(args, models, dicts, isReplica)
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
-
-  if args.uneven_batches then
-    self.models.encoder:maskPadding()
-  end
 
   return self
 end
@@ -95,7 +87,19 @@ function Seq2Seq:getOutput(batch)
   return batch.targetOutput
 end
 
+function Seq2Seq:maskPadding(batch)
+  self.models.encoder:maskPadding()
+  if self.args.uneven_batches then
+    if batch.uneven then
+      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
+    else
+      self.models.decoder:maskPadding()
+    end
+  end
+end
+
 function Seq2Seq:forwardComputeLoss(batch)
+  self:maskPadding(batch)
   local encoderStates, context = self.models.encoder:forward(batch)
   return self.models.decoder:computeLoss(batch, encoderStates, context, self.criterion)
 end

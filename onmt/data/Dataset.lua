@@ -62,7 +62,9 @@ function Dataset:setBatchSize(maxBatchSize, uneven_batches)
       self.maxTargetLength = math.max(self.maxTargetLength, targetSeqLength)
     end
   end
+
   -- Catch last batch.
+  batchesCapacity = batchesCapacity + batchSize * maxSourceLength
   table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src })
   return #self.batchRange, batchesOccupation/batchesCapacity
 end
