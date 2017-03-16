@@ -76,7 +76,7 @@ local function main()
   end
   local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
-  local nTrainBatch = trainData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+  local nTrainBatch, batchUsage = trainData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
   validData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
 
   if dataset.dataType == 'bitext' then
@@ -96,7 +96,8 @@ local function main()
     typeBatch = "(uneven)"
   end
   local avgBatchSize = #trainData.src/nTrainBatch
-  _G.logger:info(' * %d batches, maximum size: %d %s, avg size: %f', nTrainBatch, opt.max_batch_size, typeBatch, avgBatchSize)
+  _G.logger:info(' * %d batches, maximum size: %d %s, avg size: %f, batch Usage: %d%%',
+                    nTrainBatch, opt.max_batch_size, typeBatch, avgBatchSize, math.ceil(batchUsage*1000)/10)
 
   _G.logger:info('Building model...')
 
