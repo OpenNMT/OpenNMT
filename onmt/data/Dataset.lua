@@ -32,8 +32,8 @@ function Dataset:setBatchSize(maxBatchSize, uneven_batches)
   for i = 1, #self.src do
     -- Set up the offsets to make same source size batches of the
     -- correct size.
-    if batchSize == maxBatchSize or
-        not(not uneven_batches and self.src[i]:size(1) ~= sourceLength) then
+    if batchSize == maxBatchSize or i == 1 or
+        (not(uneven_batches) and self.src[i]:size(1) ~= sourceLength) then
       if i > 1 then
         table.insert(self.batchRange, { ["begin"] = offset, ["end"] = i - 1 })
       end
