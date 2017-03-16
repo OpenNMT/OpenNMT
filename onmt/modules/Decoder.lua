@@ -169,7 +169,7 @@ end
 --]]
 function Decoder:maskPadding(sourceSizes, sourceLength)
 
-  function substituteSoftmax(module)
+  local function substituteSoftmax(module)
     if module.name == 'softmaxAttn' then
       local mod
       if sourceSizes ~= nil then
