@@ -29,8 +29,6 @@ function Dataset:setBatchSize(maxBatchSize, uneven_batches)
   -- Prepares batches in terms of range within self.src and self.tgt.
   local offset = 0
   local batchSize = 1
-  -- total size of sentences in current batch
-  local totalBatchSize = 0
   local maxSourceLength = 0
   local targetLength = 0
 
