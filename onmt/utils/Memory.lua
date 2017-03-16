@@ -33,10 +33,11 @@ function Memory.optimize(model, batch, verbose)
   local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model.models)
 
   -- Batch of one single word since we optimize the first clone.
-  local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength }
+  local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength, uneven = batch.uneven }
 
   batch.sourceLength = 1
   batch.targetLength = 1
+  batch.uneven = false
 
   model:trainNetwork(batch, true)
 
@@ -50,6 +51,7 @@ function Memory.optimize(model, batch, verbose)
   -- Restore batch to be transparent for the calling code.
   batch.sourceLength = realSizes.sourceLength
   batch.targetLength = realSizes.targetLength
+  batch.uneven = realSizes.uneven
 end
 
 return Memory

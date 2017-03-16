@@ -193,6 +193,37 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
       return module
     end
   end)
+  if self.train then
+    if not self.decoderAttnClones then
+      self.decoderAttnClones = {}
+    end
+    for t = 1, #self.networkClones do
+      if not self.decoderAttnClones[t] then
+        self:net(t):apply(function (layer)
+          if layer.name == 'decoderAttn' then
+            self.decoderAttnClones[t] = layer
+          end
+        end)
+      end
+      self.decoderAttnClones[t]:replace(function(module)
+        if module.name == 'softmaxAttn' then
+          local mod
+          if sourceSizes ~= nil then
+            mod = onmt.MaskedSoftmax(sourceSizes, sourceLength)
+          else
+            mod = nn.SoftMax()
+          end
+
+          mod.name = 'softmaxAttn'
+          mod:type(module._type)
+          self.softmaxAttn = mod
+          return mod
+        else
+          return module
+        end
+      end)
+    end
+  end
 end
 
 --[[ Run one step of the decoder.
