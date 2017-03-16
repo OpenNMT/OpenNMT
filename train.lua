@@ -96,7 +96,7 @@ local function main()
     typeBatch = "(uneven)"
   end
   local avgBatchSize = #trainData.src/nTrainBatch
-  _G.logger:info(' * %d batches, max size: %d %s, avg size: %f, batch Usage: %d%%',
+  _G.logger:info(' * %d batches, max size: %d %s, avg size: %f, capacity: %d%%',
                     nTrainBatch, opt.max_batch_size, typeBatch, avgBatchSize, math.ceil(batchUsage*1000)/10)
 
   _G.logger:info('Building model...')
