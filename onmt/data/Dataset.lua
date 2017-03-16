@@ -15,36 +15,45 @@ function Dataset:__init(srcData, tgtData)
   end
 end
 
---[[ Setup up the training data to respect `maxBatchSize`. ]]
-function Dataset:setBatchSize(maxBatchSize)
+--[[ Setup up the training data to respect `maxBatchSize`.
+     If uneven_batches - then build up batches with different lengths ]]
+function Dataset:setBatchSize(maxBatchSize, uneven_batches)
 
   self.batchRange = {}
   self.maxSourceLength = 0
   self.maxTargetLength = 0
 
+  local batchesCapacity = 0
+  local batchesOccupation = 0
+
   -- Prepares batches in terms of range within self.src and self.tgt.
   local offset = 0
   local batchSize = 1
-  local sourceLength = 0
+  local maxSourceLength = 0
   local targetLength = 0
 
   for i = 1, #self.src do
     -- Set up the offsets to make same source size batches of the
     -- correct size.
-    if batchSize == maxBatchSize or self.src[i]:size(1) ~= sourceLength then
+    local sourceLength = self.src[i]:size(1)
+    if batchSize == maxBatchSize or i == 1 or
+        (not(uneven_batches) and self.src[i]:size(1) ~= maxSourceLength) then
       if i > 1 then
+        batchesCapacity = batchesCapacity + batchSize * maxSourceLength
         table.insert(self.batchRange, { ["begin"] = offset, ["end"] = i - 1 })
       end
 
       offset = i
       batchSize = 1
-      sourceLength = self.src[i]:size(1)
       targetLength = 0
+      maxSourceLength = 0
     else
       batchSize = batchSize + 1
     end
+    batchesOccupation = batchesOccupation + sourceLength
+    maxSourceLength = math.max(maxSourceLength, sourceLength)
 
-    self.maxSourceLength = math.max(self.maxSourceLength, self.src[i]:size(1))
+    self.maxSourceLength = math.max(self.maxSourceLength, sourceLength)
 
     if self.tgt ~= nil then
       -- Target contains <s> and </s>.
@@ -53,8 +62,11 @@ function Dataset:setBatchSize(maxBatchSize)
       self.maxTargetLength = math.max(self.maxTargetLength, targetSeqLength)
     end
   end
+
   -- Catch last batch.
+  batchesCapacity = batchesCapacity + batchSize * maxSourceLength
   table.insert(self.batchRange, { ["begin"] = offset, ["end"] = #self.src })
+  return #self.batchRange, batchesOccupation/batchesCapacity
 end
 
 --[[ Return number of batches. ]]

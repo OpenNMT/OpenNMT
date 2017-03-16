@@ -55,6 +55,8 @@ local monotextOptions = {
 
 local commonOptions = {
   {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies.]]},
+  {'-sort',                   1,       [[If 1, sort the sentences by size.]],
+                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
   {'-shuffle',                1,       [[If 1, shuffle data.]],
                                        { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} }
 }
@@ -165,9 +167,11 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     reorderData(perm)
   end
 
-  _G.logger:info('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes))
-  reorderData(perm)
+  if self.args.sort == 1 then
+    _G.logger:info('... sorting sentences by size')
+    local _, perm = torch.sort(vecToTensor(sizes))
+    reorderData(perm)
+  end
 
   _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
                    .. ' ignored due to source length > ' .. self.args.src_seq_length
@@ -239,9 +243,11 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
     reorderData(perm)
   end
 
-  _G.logger:info('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes))
-  reorderData(perm)
+  if self.args.sort == 1 then
+    _G.logger:info('... sorting sentences by size')
+    local _, perm = torch.sort(vecToTensor(sizes))
+    reorderData(perm)
+  end
 
   _G.logger:info('Prepared ' .. #dataset .. ' sentences (' .. ignored
                    .. ' ignored due to length > ' .. self.args.seq_length .. ')')

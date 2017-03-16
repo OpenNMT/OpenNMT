@@ -35,6 +35,7 @@ end
 function Seq2Seq:__init(args, dicts, verbose)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
+  self.args.uneven_batches = args.uneven_batches
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
@@ -46,6 +47,7 @@ function Seq2Seq.load(args, models, dicts, isReplica)
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
+  self.args.uneven_batches = args.uneven_batches
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
@@ -85,12 +87,26 @@ function Seq2Seq:getOutput(batch)
   return batch.targetOutput
 end
 
+function Seq2Seq:maskPadding(batch)
+  if self.args.uneven_batches then
+    self.models.encoder:maskPadding()
+    if batch.uneven then
+      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
+    else
+      self.models.decoder:maskPadding()
+    end
+  end
+end
+
 function Seq2Seq:forwardComputeLoss(batch)
+  self:maskPadding(batch)
   local encoderStates, context = self.models.encoder:forward(batch)
   return self.models.decoder:computeLoss(batch, encoderStates, context, self.criterion)
 end
 
 function Seq2Seq:trainNetwork(batch, dryRun)
+  self:maskPadding(batch)
+
   local encStates, context = self.models.encoder:forward(batch)
 
   local decOutputs = self.models.decoder:forward(batch, encStates, context)
