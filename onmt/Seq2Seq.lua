@@ -88,8 +88,8 @@ function Seq2Seq:getOutput(batch)
 end
 
 function Seq2Seq:maskPadding(batch)
-  self.models.encoder:maskPadding()
   if self.args.uneven_batches then
+    self.models.encoder:maskPadding()
     if batch.uneven then
       self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
     else
@@ -105,13 +105,7 @@ function Seq2Seq:forwardComputeLoss(batch)
 end
 
 function Seq2Seq:trainNetwork(batch, dryRun)
-  if self.args.uneven_batches then
-    if batch.uneven then
-      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
-    else
-      self.models.decoder:maskPadding()
-    end
-  end
+  self:maskPadding(batch)
 
   local encStates, context = self.models.encoder:forward(batch)
 

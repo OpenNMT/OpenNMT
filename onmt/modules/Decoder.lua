@@ -196,20 +196,18 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
   end
   self.decoderAttn:replace(substituteSoftmax)
 
-  if self.train then
-    if not self.decoderAttnClones then
-      self.decoderAttnClones = {}
+  if not self.decoderAttnClones then
+    self.decoderAttnClones = {}
+  end
+  for t = 1, #self.networkClones do
+    if not self.decoderAttnClones[t] then
+      self:net(t):apply(function (layer)
+        if layer.name == 'decoderAttn' then
+          self.decoderAttnClones[t] = layer
+        end
+      end)
     end
-    for t = 1, #self.networkClones do
-      if not self.decoderAttnClones[t] then
-        self:net(t):apply(function (layer)
-          if layer.name == 'decoderAttn' then
-            self.decoderAttnClones[t] = layer
-          end
-        end)
-      end
-      self.decoderAttnClones[t]:replace(substituteSoftmax)
-    end
+    self.decoderAttnClones[t]:replace(substituteSoftmax)
   end
 end
 
