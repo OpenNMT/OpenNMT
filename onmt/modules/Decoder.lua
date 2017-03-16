@@ -168,15 +168,8 @@ end
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
 function Decoder:maskPadding(sourceSizes, sourceLength)
-  if not self.decoderAttn then
-    self.network:apply(function (layer)
-      if layer.name == 'decoderAttn' then
-        self.decoderAttn = layer
-      end
-    end)
-  end
 
-  self.decoderAttn:replace(function(module)
+  function substituteSoftmax(module)
     if module.name == 'softmaxAttn' then
       local mod
       if sourceSizes ~= nil then
@@ -192,7 +185,17 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
     else
       return module
     end
-  end)
+  end
+
+  if not self.decoderAttn then
+    self.network:apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttn = layer
+      end
+    end)
+  end
+  self.decoderAttn:replace(substituteSoftmax)
+
   if self.train then
     if not self.decoderAttnClones then
       self.decoderAttnClones = {}
@@ -205,23 +208,7 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
           end
         end)
       end
-      self.decoderAttnClones[t]:replace(function(module)
-        if module.name == 'softmaxAttn' then
-          local mod
-          if sourceSizes ~= nil then
-            mod = onmt.MaskedSoftmax(sourceSizes, sourceLength)
-          else
-            mod = nn.SoftMax()
-          end
-
-          mod.name = 'softmaxAttn'
-          mod:type(module._type)
-          self.softmaxAttn = mod
-          return mod
-        else
-          return module
-        end
-      end)
+      self.decoderAttnClones[t]:replace(substituteSoftmax)
     end
   end
 end
