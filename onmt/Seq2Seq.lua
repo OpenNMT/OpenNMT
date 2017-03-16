@@ -35,10 +35,15 @@ end
 function Seq2Seq:__init(args, dicts, verbose)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
+  self.args.uneven_batches = args.uneven_batches
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+
+  if args.uneven_batches then
+    self.models.encoder:maskPadding()
+  end
 end
 
 function Seq2Seq.load(args, models, dicts, isReplica)
@@ -46,10 +51,15 @@ function Seq2Seq.load(args, models, dicts, isReplica)
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
+  self.args.uneven_batches = args.uneven_batches
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+
+  if args.uneven_batches then
+    self.models.encoder:maskPadding()
+  end
 
   return self
 end
@@ -91,6 +101,14 @@ function Seq2Seq:forwardComputeLoss(batch)
 end
 
 function Seq2Seq:trainNetwork(batch, dryRun)
+  if self.args.uneven_batches then
+    if batch.uneven then
+      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
+    else
+      self.models.decoder:maskPadding()
+    end
+  end
+
   local encStates, context = self.models.encoder:forward(batch)
 
   local decOutputs = self.models.decoder:forward(batch, encStates, context)
