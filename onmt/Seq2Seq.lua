@@ -49,8 +49,8 @@ function Seq2Seq.load(args, models, dicts, isReplica)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
   self.args.uneven_batches = args.uneven_batches
 
-  self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
-  self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
+  self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica, args)
+  self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica, args)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 
   return self
