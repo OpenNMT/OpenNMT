@@ -42,20 +42,23 @@ cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not ch
 
 local opt = cmd:parse(arg)
 
-local function translateMessage(translator, req)
+local function translateMessage(translator, lines)
   local batch = {}
   -- We need to tokenize the input line before translation
-  local srcTokens = {}
+
   local bpe
-  local srcTokenized = {}
-  local res
-  local err
-  local tokens
+
   _G.logger:info("Start Tokenization")
   if opt.bpe_model ~= '' then
      bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
   end
-  res, err = pcall(function() tokens = tokenizer.tokenize(opt, req.src, bpe) end)
+  for i = 1, #lines do
+    local srcTokenized = {}
+    local res
+    local err
+    local tokens
+    local srcTokens = {}
+    res, err = pcall(function() tokens = tokenizer.tokenize(opt, lines[i].src, bpe) end)
      -- it can generate an exception if there are utf-8 issues in the text
      if not res then
        if string.find(err, "interrupted") then
@@ -64,53 +67,54 @@ local function translateMessage(translator, req)
          error("unicode error in line " .. err)
        end
      end
-  table.insert(srcTokenized, table.concat(tokens, ' '))
-  -- Extract from the line.
-  for word in srcTokenized[1]:gmatch'([^%s]+)' do
-    table.insert(srcTokens, word)
+    table.insert(srcTokenized, table.concat(tokens, ' '))
+    -- Extract from the line.
+    for word in srcTokenized[1]:gmatch'([^%s]+)' do
+      table.insert(srcTokens, word)
+    end
+    -- Currently just a single batch.
+    table.insert(batch, translator:buildInput(srcTokens))
   end
-
-  _G.logger:info("Start Translation")
-  -- Currently just a single batch.
-  table.insert(batch, translator:buildInput(srcTokens))
   -- Translate
+  _G.logger:info("Start Translation")
   local results = translator:translate(batch)
   _G.logger:info("End Translation")
 
   -- Return the nbest translations for each in the batch.
   local translations = {}
-  local ret = {}
-  for i = 1, translator.opt.n_best do
-    local srcSent = translator:buildOutput(batch[1])
-    local predSent = translator:buildOutput(results[1].preds[i])
+  for b = 1, #lines do
+    local ret = {}
+    for i = 1, translator.opt.n_best do
+      local srcSent = translator:buildOutput(batch[b])
+      local predSent = translator:buildOutput(results[b].preds[i])
 
-    local oline
-    res, err = pcall(function() oline = tokenizer.detokenize(predSent, opt) end)
-    if not res then
-      if string.find(err,"interrupted") then
-        error("interrupted")
-       else
-        error("unicode error in line ".. err)
+      local oline
+      res, err = pcall(function() oline = tokenizer.detokenize(predSent, opt) end)
+      if not res then
+        if string.find(err,"interrupted") then
+          error("interrupted")
+         else
+          error("unicode error in line ".. err)
+        end
       end
-    end
 
-    local lineres = {
-      tgt = oline,
-      src = srcSent,
-      n_best = i,
-      pred_score = results[1].preds[i].score
-    }
-    if opt.withAttn or req.withAttn then
-      local attnTable = {}
-      for j = 1, #results[1].preds[i].attention do
-        table.insert(attnTable, results[1].preds[i].attention[j]:totable())
+      local lineres = {
+        tgt = oline,
+        src = srcSent,
+        n_best = i,
+        pred_score = results[1].preds[i].score
+      }
+      if opt.withAttn or lines[b].withAttn then
+        local attnTable = {}
+        for j = 1, #results[b].preds[i].attention do
+          table.insert(attnTable, results[b].preds[i].attention[j]:totable())
+        end
+        lineres.attn = attnTable
       end
-      lineres.attn = attnTable
+      table.insert(ret, lineres)
     end
-    table.insert(ret, lineres)
+    table.insert(translations, ret)
   end
-  table.insert(translations, ret)
-
   return translations
 end
 
@@ -124,9 +128,11 @@ local function init_server(port, translator)
       consumes = "application/json",
       produces = "application/json",
       handler = function(req)
-        _G.logger:info("receiving request: [%s]", req.src:gsub("\n", "\\n"))
+--        print(req)
+        _G.logger:info("receiving request")
         local translate = translateMessage(translator, req)
         _G.logger:info("sending response")
+--        print(translate)
         return restserver.response():status(200):entity(translate)
       end,
     }
