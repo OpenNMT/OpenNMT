@@ -44,18 +44,16 @@ local opt = cmd:parse(arg)
 
 local function translateMessage(translator, lines)
   local batch = {}
-  -- We need to tokenize the input line before translation
-
+ -- We need to tokenize the input line before translation
   local bpe
-
+  local res
+  local err
   _G.logger:info("Start Tokenization")
   if opt.bpe_model ~= '' then
      bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
   end
   for i = 1, #lines do
     local srcTokenized = {}
-    local res
-    local err
     local tokens
     local srcTokens = {}
     res, err = pcall(function() tokens = tokenizer.tokenize(opt, lines[i].src, bpe) end)
