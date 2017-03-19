@@ -63,10 +63,14 @@ local function main()
   dataset.dataType = dataset.dataType or 'bitext'
 
   -- Check if data type matches the model.
-  if dataset.dataType ~= modelClass.dataType() then
-    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.dataType() .. '\'')
+  if not modelClass.dataType(dataset.dataType) then
+    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.modelName() .. '\'')
     os.exit(0)
   end
+
+  -- record datatype in the options, and preprocessing options if present
+  opt.data_type = dataset.dataType
+  opt.preprocess = dataset.opt
 
   local trainData
   if opt.sample > 0 then
@@ -79,11 +83,27 @@ local function main()
   local nTrainBatch, batchUsage = trainData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
   validData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
 
-  if dataset.dataType == 'bitext' then
-    _G.logger:info(' * vocabulary size: source = %d; target = %d',
-                   dataset.dicts.src.words:size(), dataset.dicts.tgt.words:size())
-    _G.logger:info(' * additional features: source = %d; target = %d',
-                   #dataset.dicts.src.features, #dataset.dicts.tgt.features)
+  if dataset.dataType ~= 'monotext' then
+    local srcVocSize
+    local srcFeatSize = '-'
+    if dataset.dicts.src then
+      srcVocSize = dataset.dicts.src.words:size()
+      srcFeatSize = #dataset.dicts.src.features
+    else
+      srcVocSize = '*'..dataset.dicts.srcInputSize
+    end
+    local tgtVocSize
+    local tgtFeatSize = '-'
+    if dataset.dicts.tgt then
+      tgtVocSize = dataset.dicts.tgt.words:size()
+      tgtFeatSize = #dataset.dicts.tgt.features
+    else
+      tgtVocSize = '*'..dataset.dicts.tgtInputSize
+    end
+    _G.logger:info(' * vocabulary size: source = %s; target = %s',
+                   srcVocSize, tgtVocSize)
+    _G.logger:info(' * additional features: source = %s; target = %s',
+                   srcFeatSize, tgtFeatSize)
   else
     _G.logger:info(' * vocabulary size: %d', dataset.dicts.src.words:size())
     _G.logger:info(' * additional features: %d', #dataset.dicts.src.features)
