@@ -193,6 +193,7 @@ function Translator:translateBatch(batch)
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
+    if batch.uneven then
       self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
       self.model.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
     end
