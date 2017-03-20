@@ -203,7 +203,10 @@ function Translator:translateBatch(batch)
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
                                                       encStates,
-                                                      self.dicts)
+                                                      self.dicts,
+                                                      function(sourceSize, sourceLength)
+                                                        return self.model.models.encoder:contextSize(sourceSize, sourceLength)
+                                                      end)
 
   -- Save memory by only keeping track of necessary elements in the states.
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.
@@ -246,8 +249,10 @@ function Translator:translateBatch(batch)
       -- Remove unnecessary values from the attention vectors.
       if batch.size > 1 then
         local size = batch.sourceSize[b]
+        local length = batch.sourceLength
+        size, length = self.model.models.encoder:contextSize(size, length)
         for j = 1, #attn do
-          attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
+          attn[j] = attn[j]:narrow(1, length - size + 1, size)
         end
       end
 
