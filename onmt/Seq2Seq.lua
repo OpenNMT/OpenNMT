@@ -96,7 +96,7 @@ function Seq2Seq:maskPadding(batch)
   if self.args.uneven_batches then
     self.models.encoder:maskPadding()
     if batch.uneven then
-      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
+      self.models.decoder:maskPadding(self.models.encoder:contextSize(batch.sourceSize, batch.sourceLength))
     else
       self.models.decoder:maskPadding()
     end

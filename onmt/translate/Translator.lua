@@ -185,18 +185,14 @@ function Translator:buildTargetFeatures(predFeats)
 end
 
 function Translator:translateBatch(batch)
-  self.model.models.encoder:maskPadding()
-  self.model.models.decoder:maskPadding()
+  self.model:maskPadding()
 
   local encStates, context = self.model.models.encoder:forward(batch)
 
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
-    if batch.uneven then
-      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
-      self.model.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
-    end
+    self.model:maskPadding(batch)
     goldScore = self.model.models.decoder:computeScore(batch, encStates, context)
   end
 
