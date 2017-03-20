@@ -100,7 +100,7 @@ local function translateMessage(translator, lines)
         tgt = oline,
         src = srcSent,
         n_best = i,
-        pred_score = results[1].preds[i].score
+        pred_score = results[b].preds[i].score
       }
       if opt.withAttn or lines[b].withAttn then
         local attnTable = {}
@@ -126,11 +126,9 @@ local function init_server(port, translator)
       consumes = "application/json",
       produces = "application/json",
       handler = function(req)
---        print(req)
         _G.logger:info("receiving request")
         local translate = translateMessage(translator, req)
         _G.logger:info("sending response")
---        print(translate)
         return restserver.response():status(200):entity(translate)
       end,
     }
