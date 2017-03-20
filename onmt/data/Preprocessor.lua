@@ -56,6 +56,7 @@ local monotextOptions = {
 local commonOptions = {
   {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies.]]},
   {'-time_shift_feature',     1,       [[Time shift features for seq2seq attn model]],
+                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
   {'-sort',                   1,       [[If 1, sort the sentences by size.]],
                                        { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
   {'-shuffle',                1,       [[If 1, shuffle data.]],
