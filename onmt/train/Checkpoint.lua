@@ -91,6 +91,9 @@ function Checkpoint.loadFromCheckpoint(opt)
 
     -- Resume training from checkpoint
     if opt.continue then
+      opt.fix_word_vecs_enc = checkpoint.options.fix_word_vecs_enc
+      opt.fix_word_vecs_dec = checkpoint.options.fix_word_vecs_dec
+
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at

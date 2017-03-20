@@ -98,6 +98,14 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   return inputNetwork
 end
 
+local function fixWordEmbeddings(model, fix)
+  model:apply(function(mod)
+    if torch.typename(mod) == 'onmt.WordEmbedding' then
+      mod:fixEmbeddings(fix)
+    end
+  end)
+end
+
 function Factory.getOutputSizes(dicts)
   local outputSizes = { dicts.words:size() }
   for i = 1, #dicts.features do
@@ -141,28 +149,36 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
   return Factory.buildEncoder(opt, inputNetwork)
 end
 
-function Factory.loadEncoder(pretrained, clone)
+function Factory.loadEncoder(pretrained, clone, opt)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
+  local encoder
+
   if pretrained.name == 'Encoder' then
-    return onmt.Encoder.load(pretrained)
+    encoder = onmt.Encoder.load(pretrained)
   elseif pretrained.name == 'BiEncoder' then
-    return onmt.BiEncoder.load(pretrained)
+    encoder = onmt.BiEncoder.load(pretrained)
   elseif pretrained.name == 'PDBiEncoder' then
-    return onmt.PDBiEncoder.load(pretrained)
+    encoder = onmt.PDBiEncoder.load(pretrained)
   elseif pretrained.name == 'DBiEncoder' then
-    return onmt.DBiEncoder.load(pretrained)
+    encoder = onmt.DBiEncoder.load(pretrained)
+  else
+    -- Keep for backward compatibility.
+    local brnn = #pretrained.modules == 2
+    if brnn then
+      encoder = onmt.BiEncoder.load(pretrained)
+    else
+      encoder = onmt.Encoder.load(pretrained)
+    end
   end
 
-  -- Keep for backward compatibility.
-  local brnn = #pretrained.modules == 2
-  if brnn then
-    return onmt.BiEncoder.load(pretrained)
-  else
-    return onmt.Encoder.load(pretrained)
+  if opt then
+    fixWordEmbeddings(encoder, opt.fix_word_vecs_enc)
   end
+
+  return encoder
 end
 
 function Factory.buildDecoder(opt, inputNetwork, generator)
@@ -196,12 +212,18 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   return Factory.buildDecoder(opt, inputNetwork, generator)
 end
 
-function Factory.loadDecoder(pretrained, clone)
+function Factory.loadDecoder(pretrained, clone, opt)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
-  return onmt.Decoder.load(pretrained)
+  local decoder = onmt.Decoder.load(pretrained)
+
+  if opt then
+    fixWordEmbeddings(decoder, opt.fix_word_vecs_dec)
+  end
+
+  return decoder
 end
 
 function Factory.buildGenerator(rnnSize, dicts)

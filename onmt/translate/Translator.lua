@@ -171,7 +171,7 @@ function Translator:translateBatch(batch)
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
-    if batch.size > 1 then
+    if batch.uneven then
       self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
     end
     goldScore = self.models.decoder:computeScore(batch, encStates, context)
