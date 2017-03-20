@@ -105,12 +105,12 @@ end
 
 -- size of context vector
 function PDBiEncoder:contextSize(sourceSize, sourceLength)
-  local contextLength = math.ceil(batch_length/self.args.multiplier)
+  local contextLength = math.ceil(sourceLength/self.args.multiplier)
   local contextSize = {}
   for i = 1, #sourceSize do
     table.insert(contextSize, math.ceil(contextSize[i]/self.args.multiplier))
   end
-  return sourceSize, sourceLength
+  return contextSize, contextLength
 end
 
 function PDBiEncoder:forward(batch)
