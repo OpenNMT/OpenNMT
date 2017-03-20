@@ -113,7 +113,7 @@ function PDBiEncoder:contextSize(sourceSize, sourceLength)
       table.insert(contextSize, math.ceil(contextSize[i]/self.args.multiplier))
     end
   elseif type(sourceSize) == 'int' then
-    contextSize = math.ceil(contextSize[i]/self.args.multiplier)
+    contextSize = math.ceil(sourceSize/self.args.multiplier)
   else
     contextSize = torch.ceil(sourceSize/self.args.multiplier)
   end
