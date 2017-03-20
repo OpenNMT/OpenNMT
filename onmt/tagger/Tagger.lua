@@ -16,8 +16,8 @@ function Tagger:__init(args)
   _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
   self.checkpoint = torch.load(self.opt.model)
 
-  if self.checkpoint.options.model_type and self.checkpoint.options.model_type ~= 'seqtagger' then
-    _G.logger:error('Tagger can only process seq2seq models')
+  if not self.checkpoint.options.model_type or self.checkpoint.options.model_type ~= 'seqtagger' then
+    _G.logger:error('Tagger can only process seqtagger models')
     os.exit(0)
   end
 

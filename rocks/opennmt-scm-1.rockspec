@@ -27,7 +27,8 @@ build = {
     bin = {
       onmt_preprocess = "preprocess.lua",
       onmt_train = "train.lua",
-      onmt_translate = "translate.lua"
+      onmt_translate = "translate.lua",
+      onmt_tag = "seqtagger.lua"
     }
   },
 
@@ -92,6 +93,7 @@ build = {
     ["onmt.ModelSelector"] = "onmt/ModelSelector.lua",
     ["onmt.LanguageModel"] = "onmt/LanguageModel.lua",
     ["onmt.Seq2Seq"] = "onmt/Seq2Seq.lua",
+    ["onmt.SeqTagger"] = "onmt/SeqTagger.lua",
     ["onmt.Model"] = "onmt/Model.lua"
   }
 }
