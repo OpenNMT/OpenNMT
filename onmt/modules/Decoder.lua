@@ -266,13 +266,13 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     end
   end
 
+  if self.args.needAttnSum then
+    table.insert(inputs, self.attnSum)
+  end
+
   -- Remember inputs for the backward pass.
   if self.train then
     self.inputs[t] = inputs
-  end
-
-  if self.args.needAttnSum then
-    table.insert(inputs, self.attnSum)
   end
 
   local outputs = self:net(t):forward(inputs)
