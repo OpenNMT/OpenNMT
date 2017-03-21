@@ -119,15 +119,15 @@ function Tagger:tagBatch(batch)
     local _, best = out[1]:max(2)
     for b = 1, batch.size do
       if t > batch.sourceLength-batch.sourceSize[b] then
-        pred[b][t-batch.sourceLength+batch.sourceSize[b]] = best[b][1]
-        feats[b][t-batch.sourceLength+batch.sourceSize[b]] = {}
+        pred[b][t - batch.sourceLength + batch.sourceSize[b]] = best[b][1]
+        feats[b][t - batch.sourceLength + batch.sourceSize[b]] = {}
       end
     end
     for j = 2, #out do
       _, best = out[j]:max(2)
       for b = 1, batch.size do
         if t > batch.sourceLength-batch.sourceSize[b] then
-          feats[b][t-batch.sourceLength+batch.sourceSize[b]][j-1]=best[b][1]
+          feats[b][t - batch.sourceLength + batch.sourceSize[b]][j - 1] = best[b][1]
         end
       end
     end
