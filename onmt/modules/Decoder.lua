@@ -43,6 +43,11 @@ function Decoder:__init(inputNetwork, rnn, generator, attention, inputFeed, cove
   self.args.inputFeed = inputFeed
   self.args.coverageSize = coverage
   
+  -- backward compatibility with older models
+  if self.args.coverageSize == nil then 
+		self.args.coverageSize = 0
+	end
+  
   
   -- Attention type
   self.args.attention = attention
@@ -85,9 +90,14 @@ function Decoder:resetPreallocation()
     self.inputFeedProto = torch.Tensor()
   end
   
+  -- backward compatibility with older models
+  if self.args.coverageSize == nil then
+		self.args.coverageSize = 0
+	end
+  
   if self.args.coverageSize > 0 then
-	self.coverageInputProto = torch.Tensor()
-	self.gradCoverageProto = torch.Tensor()
+		self.coverageInputProto = torch.Tensor()
+		self.gradCoverageProto = torch.Tensor()
   end
 
   -- Prototype for preallocated hidden and cell states.

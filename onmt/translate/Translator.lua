@@ -33,6 +33,7 @@ function Translator:__init(args)
 
   _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
   self.checkpoint = torch.load(self.opt.model)
+  _G.logger:info('Done...')
 
   self.models = {}
   self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
