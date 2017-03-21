@@ -139,6 +139,8 @@ end
 local function main()
   -- load logger
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  onmt.utils.Cuda.init(opt)
+
   -- disable profiling
   _G.profiler = onmt.utils.Profiler.new(false)
 

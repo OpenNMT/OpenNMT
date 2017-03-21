@@ -6,6 +6,7 @@
 * Add deep bidirectional encoder
 * Add pyramidal deep bidirectional encoder
 * Add alternative learning rate decay strategy for SGD training
+* Add sequence tagger model
 
 ### Fixes and improvements
 

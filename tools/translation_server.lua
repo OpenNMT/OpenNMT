@@ -72,6 +72,7 @@ local function main()
   local opt = cmd:parse(arg)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  onmt.utils.Cuda.init(opt)
 
   _G.logger:info("Loading model")
   local translator = onmt.translate.Translator.new(opt)
