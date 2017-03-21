@@ -33,18 +33,19 @@ Parameters:
   * `dropout` - Dropout rate to use.
   * `residual` - Residual connections between layers.
 --]]
-function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual)
+function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
+  self.dropout_input = dropout_input
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input))
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
+function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
   local inputs = {}
   local outputs = {}
 
@@ -126,7 +127,7 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   })
 
   -- Gated cells form the output.
-  local nextH = nn.CMulTable()({outGate, cudnn.Tanh()(nextC)})
+  local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
 
   return nn.gModule(inputs, {nextC, nextH})
 end

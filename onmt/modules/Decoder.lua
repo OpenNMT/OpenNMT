@@ -26,7 +26,7 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, attention, inputFeed)
+function Decoder:__init(inputNetwork, rnn, generator, attention, inputFeed, coverage)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -41,6 +41,7 @@ function Decoder:__init(inputNetwork, rnn, generator, attention, inputFeed)
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
+  self.args.coverageSize = coverage
   
   
   -- Attention type
@@ -83,6 +84,11 @@ function Decoder:resetPreallocation()
   if self.args.inputFeed then
     self.inputFeedProto = torch.Tensor()
   end
+  
+  if self.args.coverageSize > 0 then
+	self.coverageInputProto = torch.Tensor()
+	self.gradCoverageProto = torch.Tensor()
+  end
 
   -- Prototype for preallocated hidden and cell states.
   self.stateProto = torch.Tensor()
@@ -92,6 +98,10 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+  
+  self.gradHiddenProto = torch.Tensor()
+  
+  self.samplingProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -125,12 +135,20 @@ function Decoder:_buildModel()
   local context = nn.Identity()() -- batchSize x sourceLength x rnnSize
   table.insert(inputs, context)
   self.args.inputIndex.context = #inputs
-
+  
   local inputFeed
   if self.args.inputFeed then
     inputFeed = nn.Identity()() -- batchSize x rnnSize
     table.insert(inputs, inputFeed)
     self.args.inputIndex.inputFeed = #inputs
+  end
+  
+  local coverageVector
+  if self.args.coverageSize > 0 then
+	_G.logger:info(" * Maintaining context coverage with GRU-based model ")
+	coverageVector = nn.Identity()() -- batchSize x coverageSize
+	table.insert(inputs, coverageVector)
+	self.args.inputIndex.coverage = #inputs
   end
 
   -- Compute the input network.
@@ -153,18 +171,36 @@ function Decoder:_buildModel()
   -- Compute the attention here using h^L as query.
   
   local attnLayer
-  if self.args.attention == 'global' then
-	attnLayer = onmt.GlobalAttention(self.args.rnnSize)
-  elseif self.args.attention == 'cgate' then
-	attnLayer = onmt.ContextGateAttention(self.args.rnnSize)
+  
+  if self.args.coverageSize == 0 then
+	  if self.args.attention == 'global' then
+		attnLayer = onmt.GlobalAttention(self.args.rnnSize)
+	  elseif self.args.attention == 'cgate' then
+		attnLayer = onmt.ContextGateAttention(self.args.rnnSize)
+	  end
+  else
+	  attnLayer = onmt.CoverageAttention(self.args.rnnSize, self.args.coverageSize)
   end
   
   attnLayer.name = 'decoderAttn'
   
+  -- prepare input for the attention module
   local attnInput = {outputs[#outputs], context}
-  
+  if self.args.coverageSize > 0 then
+	table.insert(attnInput, coverageVector)
+  end
   
   local attnOutput = attnLayer(attnInput)
+  
+  
+  local nextCoverage
+  if self.args.coverageSize > 0 then
+	attnOutput = {attnOutput:split(2)}
+	nextCoverage = attnOutput[2]
+	attnOutput = attnOutput[1]
+	table.insert(outputs, nextCoverage)
+  end
+  
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
@@ -223,7 +259,7 @@ Returns:
  1. `out` - Top-layer hidden state.
  2. `states` - All states.
 --]]
-function Decoder:forwardOne(input, prevStates, context, prevOut, t)
+function Decoder:forwardOne(input, prevStates, context, prevOut, prevCoverage, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `buildNetwork('dec')`).
@@ -245,12 +281,19 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
       table.insert(inputs, prevOut)
     end
   end
+  
+  if self.args.coverageSize > 0 then
+	if prevCoverage == nil then -- initialize the coverage vector as zero
+		prevCoverage = onmt.utils.Tensor.reuseTensor(self.coverageInputProto, {inputSize, context:size(2), self.args.coverageSize})
+	end
+	table.insert(inputs, prevCoverage)
+  end
 
   -- Remember inputs for the backward pass.
   if self.train then
     self.inputs[t] = inputs
   end
-
+  
   local outputs = self:net(t):forward(inputs)
 
   -- Make sure decoder always returns table.
@@ -258,11 +301,19 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
 
   local out = outputs[#outputs]
   local states = {}
-  for i = 1, #outputs - 1 do
+  
+  local nOutputs = 1
+  local nextCoverage = nil
+  if self.args.coverageSize > 0 then
+	nOutputs = 2
+	nextCoverage = outputs[#outputs - 1] -- update the coverage vector
+  end
+  
+  for i = 1, #outputs - nOutputs do
     table.insert(states, outputs[i])
   end
 
-  return out, states
+  return out, nextCoverage, states
 end
 
 --[[Compute all forward steps.
@@ -286,10 +337,10 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
 
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, encoderStates)
 
-  local prevOut
+  local prevOut, prevCoverage
 
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
+    prevOut, prevCoverage, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, prevCoverage, t)
     func(prevOut, t)
   end
 end
@@ -335,7 +386,7 @@ Parameters:
   -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers + 1,
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                                               self.gradOutputProto,
                                                               { batch.size, self.args.rnnSize })
   end
@@ -344,6 +395,14 @@ function Decoder:backward(batch, outputs, criterion)
                                                              { batch.size, self.args.rnnSize })
   local gradContextInput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
                                                          { batch.size, batch.sourceLength, self.args.rnnSize })
+                                                         
+  if self.args.coverageSize > 0 then
+	local gradCoverageOutput = onmt.utils.Tensor.reuseTensor(self.gradCoverageProto, {batch.size, batch.sourceLength, self.args.coverageSize})
+	table.insert(gradStatesInput, gradCoverageOutput)
+  end
+  
+  local gradHiddenProto = onmt.utils.Tensor.reuseTensor(self.gradHiddenProto, {batch.size, self.args.rnnSize})
+  table.insert(gradStatesInput, gradHiddenProto)
 
   local loss = 0
 
@@ -375,6 +434,12 @@ function Decoder:backward(batch, outputs, criterion)
     -- Accumulate previous output gradients with input feeding gradients.
     if self.args.inputFeed and t > 1 then
       gradStatesInput[#gradStatesInput]:add(gradInput[self.args.inputIndex.inputFeed])
+    end
+    
+    -- Accumulate previous coverage gradients
+    if self.args.coverageSize > 0 and t > 1 then
+	  gradStatesInput[#gradStatesInput]:zero()
+	  gradStatesInput[#gradStatesInput-1]:add(gradInput[self.args.inputIndex.coverage])
     end
 
     -- Prepare next decoder output gradients.
@@ -440,4 +505,67 @@ function Decoder:computeScore(batch, encoderStates, context)
   end)
 
   return score
+end
+
+function Decoder:sampleBatch(batch, encoderStates, context, maxLength, argmax)
+	
+	maxLength = maxLength or onmt.Constants.MAX_TARGET_LENGTH
+	
+	local sampled = onmt.utils.Tensor.reuseTensor(self.samplingProto, {maxLength, batch.size})
+	
+	local sampledSeq = onmt.utils.Cuda.convert(sampled)
+
+	sampledSeq:fill(onmt.Constants.PAD) -- fill with PAD first
+	sampledSeq[1]:fill(onmt.Constants.BOS) -- <s> at the beginning
+	
+	if self.statesProto == nil then
+		self.statesProto = onmt.utils.Tensor.initTensorTable(#encoderStates,
+                                                         self.stateProto,
+                                                         { batch.size, self.args.rnnSize })
+	end
+	
+	local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, encoderStates)
+	
+	local prevOut, prevCoverage
+	
+	local realMaxLength = maxLength-- Avoid wasting time in sampling too many PAD
+	
+	-- Start sampling
+	for t = 1, maxLength do
+		local input
+		
+		if t == 1 then
+			input = sampledSeq[t]
+		else
+			input = sampledSeq[t - 1]
+		end
+		
+		prevOut, prevCoverage, states = self:forwardOne(input, states, context, prevOut, prevCoverage, t)
+		
+		
+		local pred = self.generator:forward(out)[1] -- because generator returns a table
+		pred:exp() -- exp to get the distribution
+		
+		-- get the argmax ( we are using greedy sampling )
+		local _, indx = prob:max(2)
+		
+		sampledSeq[t]:copy(indx:resize(batch.size))
+			
+		local continueFlag = false 
+		for b = 1, batch.size do
+			if input[b] == onmt.Constants.EOS or input[b] == onmt.Constants.PAD then -- stop sampling if input is EOS or PAD
+				sampledSeq[t][b] = onmt.Constants.PAD
+			else
+				continueFlag = true -- one of the sentences is not finished yet
+			end
+		end
+	
+		if continueFlag == false then
+			realMaxLength = t
+			break
+		end
+	end
+	
+	sampledSeq = sampledSeq:narrow(1, 1, realMaxLength)  
+	return sampledSeq
 end

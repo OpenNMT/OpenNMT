@@ -88,6 +88,13 @@ function Checkpoint.loadFromCheckpoint(opt)
     opt.brnn = checkpoint.options.brnn
     opt.brnn_merge = checkpoint.options.brnn_merge
     opt.input_feed = checkpoint.options.input_feed
+	opt.word_vec_size = checkpoint.options.word_vec_size
+	opt.rnn_type = checkpoint.rnn_type
+	opt.feat_merge = checkpoint.feat_merge
+	opt.feat_vec_exponent = checkpoint.feat_vec_exponent
+	opt.coverage = checkpoint.coverage
+	opt.attention = checkpoint.attention
+	opt.dropout = checkpoint.dropout
 
     -- Resume training from checkpoint
     if opt.continue then

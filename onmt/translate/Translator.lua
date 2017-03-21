@@ -139,6 +139,7 @@ function Translator:buildTargetWords(pred, src, attn)
 end
 
 function Translator:buildTargetFeatures(predFeats)
+
   local numFeatures = #predFeats[1]
 
   if numFeatures == 0 then
@@ -187,8 +188,8 @@ function Translator:translateBatch(batch)
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.
   local attnIndex = 4
 
-  -- Features are at index 5 in the states defined in onmt.translate.DecoderAdvancer.
-  local featsIndex = 5
+  -- Features are at index 6 in the states defined in onmt.translate.DecoderAdvancer.
+  local featsIndex = 6
 
   advancer:setKeptStateIndexes({attnIndex, featsIndex})
 
@@ -267,7 +268,10 @@ function Translator:translate(src, gold)
     local batch = data:getBatch()
 
     local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
-
+	
+	--~ print(pred, predFeats)
+	--~ print(pred[1])
+	--~ print(predFeats[1])
     for b = 1, batch.size do
       results[b] = {}
 

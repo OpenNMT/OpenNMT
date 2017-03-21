@@ -24,4 +24,13 @@ require('onmt.modules.FeaturesGenerator')
 
 require('onmt.modules.ParallelClassNLLCriterion')
 
+
+-- Coverage modules
+require('onmt.modules.Coverage.ContextCoverage')
+require('onmt.modules.Coverage.CoverageAttention')
+
+require('onmt.modules.Utils.SequenceLinear')
+require('onmt.modules.Utils.Replicator')
+require('onmt.modules.Utils.Energy')
+
 return onmt

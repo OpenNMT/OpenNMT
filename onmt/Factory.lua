@@ -169,7 +169,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
     end
   end
 
-  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.attention, opt.input_feed == 1)
+  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.attention, opt.input_feed == 1, opt.coverage)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)

@@ -18,6 +18,8 @@ local options = {
                                 will be set to N^exponent where N is the number of values the feature takes.]]},
   {'-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]],
                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+  {'-coverage', 0, [[Coverage vector size. 0 to disable this feature.]],
+                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
                      {enum={0,1}}},
   {'-residual', false, [[Add residual connections between RNN layers.]]},
@@ -103,6 +105,15 @@ function Seq2Seq:trainNetwork(batch, dryRun)
   self.models.encoder:backward(batch, encGradStatesOut, gradContext)
 
   return loss
+end
+
+function Seq2Seq:sampleBatch(batch, maxLength, argmax)
+	
+	local encStates, context = self.models.encoder:forward(batch)
+	
+	local sampledBatch = self.models.decoder:sampleBatch(batch, encStates, context, maxLength, argmax)
+	
+	return sampledBatch
 end
 
 return Seq2Seq

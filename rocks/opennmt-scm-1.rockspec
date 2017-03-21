@@ -2,7 +2,7 @@ package = "opennmt"
 version = "scm-1"
 
 source = {
-  url = "git://github.com/opennmt/opennmt",
+  url = "./",
   tag = "master"
 }
 

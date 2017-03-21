@@ -31,6 +31,7 @@ function Cuda.init(opt, masterGPU)
     local _, err = pcall(function()
       require('cutorch')
       require('cunn')
+      require('cudnn')
 
       if masterGPU == nil then
         masterGPU = 1

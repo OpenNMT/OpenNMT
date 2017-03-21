@@ -1,7 +1,6 @@
 onmt = {}
 
 require('onmt.modules.init')
-require 'cudnn'
 
 onmt.utils = require('onmt.utils.init')
 onmt.data = require('onmt.data.init')
