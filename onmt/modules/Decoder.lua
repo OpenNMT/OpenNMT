@@ -41,6 +41,7 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed, attentionModel)
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
+  self.args.needAttnSum = attentionModel.needAttnSum
 
   parent.__init(self, self:_buildModel(attentionModel))
 
@@ -169,6 +170,28 @@ function Decoder:_buildModel(attentionModel)
   return nn.gModule(inputs, outputs)
 end
 
+function Decoder:findAttentionModel()
+  if not self.decoderAttn then
+    self.network:apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttn = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.softmaxAttn = layer
+      end
+    end)
+    self.decoderAttnClones = {}
+  end
+  for t = #self.decoderAttnClones+1, #self.networkClones do
+    self:net(t):apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttnClones[t] = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.decoderAttnClones[t].softmaxAttn = layer
+      end
+    end)
+  end
+end
+
 --[[ Mask padding means that the attention-layer is constrained to
   give zero-weight to padding. This is done by storing a reference
   to the softmax attention-layer.
@@ -178,6 +201,7 @@ end
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
 function Decoder:maskPadding(sourceSizes, sourceLength)
+  self:findAttentionModel()
 
   local function substituteSoftmax(module)
     if module.name == 'softmaxAttn' then
@@ -197,26 +221,9 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
     end
   end
 
-  if not self.decoderAttn then
-    self.network:apply(function (layer)
-      if layer.name == 'decoderAttn' then
-        self.decoderAttn = layer
-      end
-    end)
-  end
   self.decoderAttn:replace(substituteSoftmax)
 
-  if not self.decoderAttnClones then
-    self.decoderAttnClones = {}
-  end
   for t = 1, #self.networkClones do
-    if not self.decoderAttnClones[t] then
-      self:net(t):apply(function (layer)
-        if layer.name == 'decoderAttn' then
-          self.decoderAttnClones[t] = layer
-        end
-      end)
-    end
     self.decoderAttnClones[t]:replace(substituteSoftmax)
   end
 end
@@ -264,6 +271,10 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     self.inputs[t] = inputs
   end
 
+  if self.args.needAttnSum then
+    table.insert(inputs, self.attnSum)
+  end
+
   local outputs = self:net(t):forward(inputs)
 
   -- Make sure decoder always returns table.
@@ -301,11 +312,33 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
 
   local prevOut
 
-  local attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
-                                                         { batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.rnnSize })
+  -- if need attention sum
+  if self.args.needAttnSum then
+    self.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
+                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength })
+    if batch.uneven then
+      -- by default it is zero
+      for b = 1, batch.size do
+        self.attnSum:narrow(1,b,b):narrow(2,1,context:size(2)):fill(0.01)
+      end
+    else
+      self.attnSum:fill(0.01)
+    end
+  end
 
   for t = 1, batch.targetLength do
     prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
+    -- if need attention sum
+    if self.args.needAttnSum then
+      -- check if we have reference to attention model
+      self:findAttentionModel()
+      local clone = self:cloneId(t)
+      local softmaxAttn = self.softmaxAttn
+      if t > 0 then
+        softmaxAttn = self.decoderAttnClones[clone].softmaxAttn
+      end
+      self.attnSum:add(softmaxAttn.output)
+    end
     func(prevOut, t)
   end
 end
