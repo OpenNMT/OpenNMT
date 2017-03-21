@@ -239,7 +239,7 @@ function Factory.loadGenerator(pretrained, clone)
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
-  return onmt.Generator.load(pretrained)
+  return pretrained
 end
 
 return Factory
