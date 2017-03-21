@@ -24,7 +24,7 @@ local GlobalAttentionCoverage, parent = torch.class('onmt.GlobalAttentionCoverag
 
 
 local options = {
-  {'-temporal_attention', false,         [[Temporal attention model]]}
+  {'-temporal_attention', false,         [[Temporal attention model.]]}
 }
 
 function GlobalAttentionCoverage.declareOpts(cmd)

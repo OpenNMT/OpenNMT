@@ -38,7 +38,7 @@ function Seq2Seq:__init(args, dicts, verbose)
   self.args.uneven_batches = args.uneven_batches
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
-  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, attentionModel, verbose)
+  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
