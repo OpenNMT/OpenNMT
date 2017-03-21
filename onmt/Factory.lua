@@ -234,4 +234,12 @@ function Factory.buildGenerator(rnnSize, dicts)
   end
 end
 
+function Factory.loadGenerator(pretrained, clone)
+  if clone then
+    pretrained = onmt.utils.Tensor.deepClone(pretrained)
+  end
+
+  return pretrained
+end
+
 return Factory
