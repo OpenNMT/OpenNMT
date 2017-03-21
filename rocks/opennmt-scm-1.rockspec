@@ -28,7 +28,7 @@ build = {
       onmt_preprocess = "preprocess.lua",
       onmt_train = "train.lua",
       onmt_translate = "translate.lua",
-      onmt_tag = "seqtagger.lua"
+      onmt_tag = "tag.lua"
     }
   },
 
