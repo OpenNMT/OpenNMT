@@ -28,7 +28,6 @@ end
 
 function Translator:__init(args)
   self.args = args
-  onmt.utils.Cuda.init(self.args)
 
   _G.logger:info('Loading \'' .. self.args.model .. '\'...')
   self.checkpoint = torch.load(self.args.model)
