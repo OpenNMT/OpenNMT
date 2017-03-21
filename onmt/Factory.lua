@@ -11,6 +11,7 @@ function Factory.declareOpts(cmd)
   onmt.BiEncoder.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
+  onmt.GlobalAttentionCoverage.declareOpts(cmd)
 end
 
 -- Return effective embeddings size based on user options.
@@ -181,7 +182,7 @@ function Factory.loadEncoder(pretrained, clone, opt)
   return encoder
 end
 
-function Factory.buildDecoder(opt, inputNetwork, generator)
+function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
   local inputSize = inputNetwork.inputSize
 
   if opt.input_feed == 1 then
@@ -194,7 +195,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator)
   end
   local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.dropout_input)
 
-  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
+  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1, attnModel)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
@@ -208,8 +209,9 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
                                          verbose)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
+  local attnModel = Factory.buildAttention(opt)
 
-  return Factory.buildDecoder(opt, inputNetwork, generator)
+  return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
 end
 
 function Factory.loadDecoder(pretrained, clone, opt)
@@ -231,6 +233,16 @@ function Factory.buildGenerator(rnnSize, dicts)
     return onmt.FeaturesGenerator(rnnSize, Factory.getOutputSizes(dicts))
   else
     return onmt.Generator(rnnSize, dicts.words:size())
+  end
+end
+
+function Factory.buildAttention(args)
+  if args.temporal_attention then
+    _G.logger:info('   - Global Attention with Coverage')
+    return onmt.GlobalAttentionCoverage
+  else
+    _G.logger:info('   - Global Attention')
+    return onmt.GlobalAttention
   end
 end
 

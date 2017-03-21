@@ -26,7 +26,7 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
+function Decoder:__init(inputNetwork, rnn, generator, inputFeed, attentionModel)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -42,7 +42,7 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   -- previous step.
   self.args.inputFeed = inputFeed
 
-  parent.__init(self, self:_buildModel())
+  parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
@@ -92,6 +92,9 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+
+  -- Prototype for attention sum
+  self.attnSumProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -107,7 +110,7 @@ Returns: An nn-graph mapping
   ${if}$ is the input feeding, and
   ${a}$ is the context vector computed at this timestep.
 --]]
-function Decoder:_buildModel()
+function Decoder:_buildModel(attentionModel)
   local inputs = {}
   local states = {}
 
@@ -142,6 +145,12 @@ function Decoder:_buildModel()
   end
   table.insert(states, input)
 
+  local attnSum
+  if attentionModel.needAttnSum then
+    attnSum = nn.Identity()()
+    table.insert(inputs, attnSum)
+  end
+
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
 
@@ -149,9 +158,10 @@ function Decoder:_buildModel()
   outputs = { outputs:split(self.args.numEffectiveLayers) }
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = onmt.GlobalAttention(self.args.rnnSize)
+  local attnLayer = attentionModel(self.args.rnnSize)
   attnLayer.name = 'decoderAttn'
-  local attnOutput = attnLayer({outputs[#outputs], context})
+  local attnInput = {outputs[#outputs], context, attnSum}
+  local attnOutput = attnLayer(attnInput)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
@@ -290,6 +300,9 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, encoderStates)
 
   local prevOut
+
+  local attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
+                                                         { batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.rnnSize })
 
   for t = 1, batch.targetLength do
     prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
