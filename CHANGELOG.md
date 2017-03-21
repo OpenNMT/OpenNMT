@@ -6,6 +6,7 @@
 * Add deep bidirectional encoder
 * Add pyramidal deep bidirectional encoder
 * Add alternative learning rate decay strategy for SGD training
+* Add sequence tagger model
 
 ### Fixes and improvements
 
@@ -21,7 +22,6 @@
 * Add `-fallback_to_cpu` option to continue execution on CPU if GPU can't be used
 * Add standalone script to generate vocabularies
 * Add script to extract word embeddings
-* Add Sequence Tagger
 * Add option to prune vocabularies by minimum word frequency
 * New REST server
 * [*experimental*] Add data sampling during training
