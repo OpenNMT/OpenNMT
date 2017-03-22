@@ -309,7 +309,7 @@ end
   * `batch` - `Batch` object
   * `states` - the states of the decoder. Can use key/value to add states without impact.
 ]]
-function Decoder:initializeSpecialStates(states, batch)
+function Decoder:initializeSpecialStates(states, context, batch)
   -- if need attention sum, initialize
   if self.args.needAttnSum then
     states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
@@ -348,7 +348,7 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
 
   local prevOut
 
-  self:initializeSpecialStates(states, batch)
+  self:initializeSpecialStates(states, context, batch)
 
   for t = 1, batch.targetLength do
     prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
