@@ -55,13 +55,16 @@ function GlobalAttentionCoverage:_buildModel(dim)
 
   -- Get attention.
   local attn = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
-  attnsum = nn.Sum(3)
-  attnsum.name = 'Attn'
-  attn = attnsum(attn)
+  attn = nn.Sum(3)(attn)
+  -- handle possible large values of attn
+  attn = nn.AddConstant(-100)(attn)
+  local attnexp = nn.Exp()
+  attnexp.name = 'Attn'
+  attn = attnexp(attn)
 
   attn = nn.CDivTable()({attn, sumAttn})
 
-  local softmaxAttn = nn.SoftMax()
+  local softmaxAttn = nn.Normalize(1)
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
