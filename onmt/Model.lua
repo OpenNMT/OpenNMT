@@ -19,6 +19,25 @@ function Model:__init(args)
   self.models = {}
 end
 
+-- Changes dynamically parameters
+function Model:paramChanges(changes)
+  _G.logger:info('Changing parameters:')
+  for k,v in pairs(changes) do
+    if k == 'dropout' then
+      local count = 0
+      for _, model in pairs(self.models) do
+        model:apply(function(m)
+          if torch.typename(m) == 'nn.Dropout' then
+            m:setp(v)
+            count = count + 1
+          end
+        end)
+      end
+      _G.logger:info(' * dropout = %f (%d instances)', v, count)
+    end
+  end
+end
+
 function Model:getInputLabelsCount(batch)
   return batch.sourceInput:ne(onmt.Constants.PAD):sum()
 end

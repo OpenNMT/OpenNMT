@@ -76,23 +76,79 @@ function Checkpoint:saveEpoch(validPpl, epochState, verbose)
   self:save(filePath, info)
 end
 
+-- structural parameters - the parameters with true can be changed dynamically in a train_from
+local structural_parameters = {
+  -- input feeding
+  input_feed       = false,
+  -- rnn parameters
+  brnn_merge       = false,
+  brnn             = false,
+  dbrnn            = false,
+  pdbrnn           = false,
+  pdbrnn_reduction = false,
+  rnn_size         = false,
+  rnn_type         = false,
+  -- dropout parameters
+  dropout          = true,
+  dropout_input    = false,
+  -- layers of the NN
+  layers           = false,
+  -- feature parameters
+  feat_merge       = false,
+  feat_vec_exponent= false,
+  feat_vec_size    = false,
+  -- word embedding
+  fix_word_vecs_enc= false,
+  fix_word_vecs_dec= false,
+  word_vec_size    = false,
+  src_word_vec_size= false,
+  tgt_word_vec_size= false,
+  -- residual connections
+  residual         = false
+}
+
+-- initialization parameters of the NN - can not be reused when restarting a run
+local initialization_parameters = {
+  model_type       = false,
+  pre_word_vecs_dec= false,
+  pre_word_vecs_enc= false,
+  param_init       = false
+}
+
 function Checkpoint.loadFromCheckpoint(opt)
   local checkpoint = {}
+  local param_changes = {}
   if opt.train_from:len() > 0 then
     _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
 
     checkpoint = torch.load(opt.train_from)
+    local error
 
-    opt.layers = checkpoint.options.layers
-    opt.rnn_size = checkpoint.options.rnn_size
-    opt.brnn = checkpoint.options.brnn
-    opt.brnn_merge = checkpoint.options.brnn_merge
-    opt.input_feed = checkpoint.options.input_feed
+    for k,v in pairs(structural_parameters) do
+      if opt[k] and opt[k] ~= checkpoint.options[k] then
+        if v == false then
+          _G.logger:error('Cannot change dynamically parameters: %s', k)
+          error = true
+        else
+          param_changes[k] = opt[k]
+        end
+      end
+      opt[k] = checkpoint.options[k]
+    end
+
+    for k,_ in pairs(initialization_parameters) do
+      if opt[k] and opt[k] ~= checkpoint.options[k] then
+        _G.logger:error('Cannot change initialization parameters: %s', k)
+        error = true
+      end
+    end
+
+    if error then
+      os.exit(1)
+    end
 
     -- Resume training from checkpoint
     if opt.continue then
-      opt.fix_word_vecs_enc = checkpoint.options.fix_word_vecs_enc
-      opt.fix_word_vecs_dec = checkpoint.options.fix_word_vecs_dec
 
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
@@ -113,7 +169,7 @@ function Checkpoint.loadFromCheckpoint(opt)
       checkpoint.info = nil
     end
   end
-  return checkpoint, opt
+  return checkpoint, opt, param_changes
 end
 
 return Checkpoint
