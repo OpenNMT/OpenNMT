@@ -177,6 +177,8 @@ function Decoder:findAttentionModel()
         self.decoderAttn = layer
       elseif layer.name == 'softmaxAttn' then
         self.softmaxAttn = layer
+      elseif layer.name == 'Attn' then
+        self.Attn = layer
       end
     end)
     self.decoderAttnClones = {}
@@ -187,6 +189,8 @@ function Decoder:findAttentionModel()
         self.decoderAttnClones[t] = layer
       elseif layer.name == 'softmaxAttn' then
         self.decoderAttnClones[t].softmaxAttn = layer
+      elseif layer.name == 'Attn' then
+        self.decoderAttnClones[t].Attn = layer
       end
     end)
   end
@@ -292,11 +296,11 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     -- check if we have reference to attention model
     self:findAttentionModel()
     local clone = self:cloneId(t)
-    local softmaxAttn = self.softmaxAttn
+    local Attn = self.Attn
     if t > 0 then
-      softmaxAttn = self.decoderAttnClones[clone].softmaxAttn
+      Attn = self.decoderAttnClones[clone].Attn
     end
-    states.attnSum = torch.add(prevStates.attnSum, softmaxAttn.output)
+    states.attnSum = torch.add(prevStates.attnSum, Attn.output)
   end
 
   return out, states
