@@ -26,6 +26,7 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
     decoder.args.numEffectiveLayers,
     onmt.utils.Cuda.convert(torch.Tensor()),
     { self.batch.size, decoder.args.rnnSize })
+  decoder:initializeSpecialStates(self.decStates, batch)
   self.dicts = dicts
 end
 

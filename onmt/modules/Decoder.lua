@@ -266,8 +266,9 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     end
   end
 
+  -- if some module need attn sum, it is the next input
   if self.args.needAttnSum then
-    table.insert(inputs, self.attnSum)
+    table.insert(inputs, prevStates.attnSum)
   end
 
   -- Remember inputs for the backward pass.
@@ -286,7 +287,42 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     table.insert(states, outputs[i])
   end
 
+  -- if need attention sum
+  if self.args.needAttnSum then
+    -- check if we have reference to attention model
+    self:findAttentionModel()
+    local clone = self:cloneId(t)
+    local softmaxAttn = self.softmaxAttn
+    if t > 0 then
+      softmaxAttn = self.decoderAttnClones[clone].softmaxAttn
+    end
+    states.attnSum = torch.add(prevStates.attnSum, softmaxAttn.output)
+  end
+
   return out, states
+end
+
+--[[Initial special states of the decoder that be used by specific modules
+
+  Parameters:
+
+  * `batch` - `Batch` object
+  * `states` - the states of the decoder. Can use key/value to add states without impact.
+]]
+function Decoder:initializeSpecialStates(states, batch)
+  -- if need attention sum, initialize
+  if self.args.needAttnSum then
+    states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
+                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength })
+    if batch.uneven then
+      -- by default it is zero
+      for b = 1, batch.size do
+        states.attnSum:narrow(1,b,b):narrow(2,1,context:size(2)):fill(0.01)
+      end
+    else
+      states.attnSum:fill(0.01)
+    end
+  end
 end
 
 --[[Compute all forward steps.
@@ -312,33 +348,10 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
 
   local prevOut
 
-  -- if need attention sum
-  if self.args.needAttnSum then
-    self.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
-                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength })
-    if batch.uneven then
-      -- by default it is zero
-      for b = 1, batch.size do
-        self.attnSum:narrow(1,b,b):narrow(2,1,context:size(2)):fill(0.01)
-      end
-    else
-      self.attnSum:fill(0.01)
-    end
-  end
+  self:initializeSpecialStates(states, batch)
 
   for t = 1, batch.targetLength do
     prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
-    -- if need attention sum
-    if self.args.needAttnSum then
-      -- check if we have reference to attention model
-      self:findAttentionModel()
-      local clone = self:cloneId(t)
-      local softmaxAttn = self.softmaxAttn
-      if t > 0 then
-        softmaxAttn = self.decoderAttnClones[clone].softmaxAttn
-      end
-      self.attnSum:add(softmaxAttn.output)
-    end
     func(prevOut, t)
   end
 end
