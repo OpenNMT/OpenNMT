@@ -47,6 +47,10 @@ function Decoder:__init(inputNetwork, rnn, generator, attention, inputFeed, cove
   if self.args.coverageSize == nil then 
 		self.args.coverageSize = 0
 	end
+	
+	if self.args.attention == nil then
+		self.args.attention = 'global'
+	end
   
   
   -- Attention type
