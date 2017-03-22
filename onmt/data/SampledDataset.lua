@@ -173,8 +173,6 @@ function SampledDataset:sample()
   local maxSourceLength = -1
   for i = 1, #self.src do
     for j = 1, self.sampledCnt[i] do
-
---      if batchSize == self.maxBatchSize or self.src[i]:size(1) ~= sourceLength then
       local sourceLength = self.src[i]:size(1)
       if batchSize == self.maxBatchSize or offset == 1 or
          (not(self.uneven_batches) and self.src[i]:size(1) ~= maxSourceLength) then
@@ -212,7 +210,7 @@ function SampledDataset:sample()
   end
 
   _G.logger:info('Prepared ' .. #self.batchRange .. ' batches')
-  return #self.batchRange, batchesOccupation/batchesCapacity
+  return #self.batchRange, batchesOccupation / batchesCapacity
 end
 
 --[[ Get perplexity. ]]
