@@ -50,21 +50,13 @@ function GlobalAttentionCoverage:_buildModel(dim)
   table.insert(inputs, nn.Identity()())
 
   local targetT = nn.Linear(dim, dim, false)(inputs[1]) -- batchL x dim
-  local context = inputs[2] -- batchL x sourceTimesteps x dim
-  local sumAttn = inputs[3] -- batchL x sourceTimesteps
+  local context = inputs[2] -- batchL x sourceL x dim
+  local sumAttn = inputs[3] -- batchL x sourceL
 
   -- Get attention.
   local attn = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
   attn = nn.Sum(3)(attn)
-  -- handle possible large values of attn
-  attn = nn.AddConstant(-100)(attn)
-  local attnexp = nn.Exp()
-  attnexp.name = 'Attn'
-  attn = attnexp(attn)
-
-  attn = nn.CDivTable()({attn, sumAttn})
-
-  local softmaxAttn = nn.Normalize(1)
+  local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
@@ -72,8 +64,14 @@ function GlobalAttentionCoverage:_buildModel(dim)
   -- Apply attention to context.
   local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
   contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
-  contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
-  local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
+
+  sumAttn = nn.Normalize(1)({sumAttn})
+  sumAttn = nn.Replicate(1,2)(sumAttn) -- batchL x 1 x sourceL
+  local sumAttnCombined = nn.MM()({sumAttn, context})
+  sumAttnCombined = nn.Sum(2)(sumAttnCombined) -- batchL x dim
+
+  contextCombined = nn.JoinTable(2)({contextCombined, inputs[1], sumAttnCombined}) -- batchL x dim*3
+  local contextOutput = nn.Tanh()(nn.Linear(dim*3, dim, false)(contextCombined))
 
   return nn.gModule(inputs, {contextOutput})
 end
