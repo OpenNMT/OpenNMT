@@ -32,7 +32,6 @@ local function main()
   local opt = cmd:parse(arg)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
-  onmt.utils.Cuda.init(opt)
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
@@ -124,6 +123,9 @@ local function main()
 
             if #results[b].preds > 1 then
               _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
+              if n ~= 1 then -- for the n == 1 case, we already wrote out the hypothesis above
+                outFile:write(sentence .. '\n')
+              end
             else
               _G.logger:info("PRED %d: %s", sentId, sentence)
               _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
