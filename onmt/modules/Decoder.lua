@@ -1,3 +1,5 @@
+print(" * Modified decoder for coverage and context gate attention - 23/3/2017")
+
 --[[ Unit to decode a sequence of output tokens.
 
      .      .      .             .
@@ -451,9 +453,10 @@ function Decoder:backward(batch, outputs, criterion)
     end
     
     -- Accumulate previous coverage gradients
-    if self.args.coverageSize > 0 and t > 1 then
-	  gradStatesInput[#gradStatesInput]:zero()
-	  gradStatesInput[#gradStatesInput-1]:add(gradInput[self.args.inputIndex.coverage])
+    if self.args.coverageSize > 0  then
+	  --~ gradStatesInput[#gradStatesInput-1]:zero()
+	  --~ gradStatesInput[#gradStatesInput-1]:add(gradInput[self.args.inputIndex.coverage])
+	  gradStatesInput[#gradStatesInput-1] = gradInput[self.args.inputIndex.coverage]
     end
 
     -- Prepare next decoder output gradients.
