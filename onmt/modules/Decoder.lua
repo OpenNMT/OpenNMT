@@ -314,14 +314,6 @@ function Decoder:initializeSpecialStates(states, context, batch)
   if self.args.needAttnSum then
     states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
                                                            { batch.size, batch.encoderOutputLength or batch.sourceLength })
-    if batch.uneven then
-      -- by default it is zero
-      for b = 1, batch.size do
-        states.attnSum:narrow(1,b,b):narrow(2,1,context:size(2)):fill(0.01)
-      end
-    else
-      states.attnSum:fill(0.01)
-    end
   end
 end
 
