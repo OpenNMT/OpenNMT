@@ -65,7 +65,6 @@ function GlobalAttentionCoverage:_buildModel(dim)
   local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
   contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
 
-  sumAttn = nn.Normalize(1)({sumAttn})
   sumAttn = nn.Replicate(1,2)(sumAttn) -- batchL x 1 x sourceL
   local sumAttnCombined = nn.MM()({sumAttn, context})
   sumAttnCombined = nn.Sum(2)(sumAttnCombined) -- batchL x dim
