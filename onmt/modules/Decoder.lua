@@ -243,7 +243,7 @@ Returns:
  1. `out` - Top-layer hidden state.
  2. `states` - All states.
 --]]
-function Decoder:forwardOne(input, prevStates, context, prevOut, t)
+function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `buildNetwork('dec')`).
@@ -297,6 +297,8 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
       Attn = self.decoderAttnClones[clone].softmaxAttn
     end
     states.attnSum = torch.add(prevStates.attnSum, Attn.output)
+        :cdiv(sourceSize:resize(sourceSize:size(1),1)
+                        :expand(prevStates.attnSum:size(1),prevStates.attnSum:size(2)))
   end
 
   return out, states
@@ -309,7 +311,7 @@ end
   * `batch` - `Batch` object
   * `states` - the states of the decoder. Can use key/value to add states without impact.
 ]]
-function Decoder:initializeSpecialStates(states, context, batch)
+function Decoder:initializeSpecialStates(states, _, batch)
   -- if need attention sum, initialize
   if self.args.needAttnSum then
     states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
@@ -343,7 +345,7 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
   self:initializeSpecialStates(states, context, batch)
 
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
+    prevOut, states = self:forwardOne(batch:getTargetInput(t), batch.sourceSize, states, context, prevOut, t)
     func(prevOut, t)
   end
 end
