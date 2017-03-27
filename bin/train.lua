@@ -94,7 +94,7 @@ local function main()
   
   local _modelClass = onmt.ModelSelector(modelType)
   if checkpoint.models then
-	_G.model = _modelClass.load(opt, checkpoint.models, datatset.dicts)
+	_G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts)
   else
     local verbose = true
     _G.model = _modelClass.new(opt, dataset.dicts, verbose)
@@ -103,7 +103,7 @@ local function main()
   
   model = _G.model
   
-
+  
   -- Define optimization method.
   local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
   local optim = onmt.train.Optim.new(opt, optimStates)

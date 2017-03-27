@@ -24,8 +24,8 @@ end
 
 --[[ Gated unit for coverage. ]]
 function ContextCoverage:_buildModel(hiddenSize, coverageSize)
-  -- inputs: { prevOutput L1, ..., prevOutput Ln, input }
-  -- outputs: { output L1, ..., output Ln }
+  -- inputs: { last coverage vector, context matrix and current alignment vector }
+  -- outputs: { new coverage vector }
 
   local inputs = {}
   local outputs = {}

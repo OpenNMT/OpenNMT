@@ -19,6 +19,30 @@ local function eval(model, data)
   return math.exp(loss / totalWords)
 end
 
+local function evalBLEU(model, data)
+  
+  model:evaluate()
+  
+  local maxLength = onmt.Constants.MAX_TARGET_LENGTH or 50 -- to avoid nil 
+  
+  for i = 1, data:batchCount() do
+	
+	local batch = onmt.utils.Cuda.convert(data:getBatch(i))
+	local sampled = model:sampleBatch(batch, maxLength, true)
+	
+	_G.scorer:accumulateCorpusScoreBatch(sampled, batch.targetOutput)
+  end
+  
+  local bleuScore = _G.scorer:computeCorpusBLEU()
+  
+  model:training()
+  _G.scorer:resetStats()
+  collectgarbage()
+  
+  return bleuScore
+
+end
+
 ------------------------------------------------------------------------------------------------------------------
 
 local Trainer = torch.class('Trainer')
@@ -29,7 +53,7 @@ local options = {
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',            100,    [[Print stats every this many iterations within an epoch.]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-async_parallel',          false, [[Use asynchronous parallelism training.]]},
+  {'-report_bleu',          false, [[Report BLEU Score for validation data.]]},
   {'-async_parallel_minbatch', 1000,  [[For async parallel computing, minimal number of batches before being parallel.]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-start_iteration',         1,     [[If loading from a checkpoint, the iteration from which to start]],
@@ -56,34 +80,8 @@ function Trainer:__init(args)
 end
 
 function Trainer:train(model, optim, trainData, validData, dataset, info)
-  --~ local params, gradParams = {}, {}
+  _G.scorer = onmt.utils.BLEU.new(dataset.dicts.tgt.words, 4, 1)
 
-  --~ onmt.utils.Parallel.launch(function(idx)
-    --~ -- Only logs information of the first thread.
-    --~ local verbose = idx == 1
---~ 
-    --~ -- Initialize and get model parameters.
-    --~ _G.params, _G.gradParams = _G.model:initParams(verbose)
---~ 
-    --~ -- Switch to training mode.
-    --~ _G.model:training()
---~ 
-    --~ if self.args.profiler then
-      --~ _G.model:enableProfiling()
-    --~ end
---~ 
-    --~ -- optimize memory of the first clone
-    --~ if not self.args.disable_mem_optimization then
-      --~ local batch = onmt.utils.Cuda.convert(trainData:getBatch(1))
-      --~ batch.totalSize = batch.size
-      --~ onmt.utils.Memory.optimize(_G.model, batch, verbose)
-    --~ end
---~ 
-    --~ return idx, _G.params, _G.gradParams
-  --~ end, function(idx, theparams, thegradParams)
-    --~ params[idx] = theparams
-    --~ gradParams[idx] = thegradParams
-  --~ end)
   
   local verbose = true
   
@@ -176,74 +174,18 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         
     
     end
-
-    --~ if not self.args.async_parallel then
-      --~ -- Synchronous training.
-      --~ local iter = startI
-      --~ for i = startI, trainData:batchCount(), onmt.utils.Parallel.count do
-        --~ local batches = {}
-        --~ local totalSize = 0
---~ 
-        --~ for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount() - i + 1) do
-          --~ local batchIdx = batchOrder[i + j - 1]
-          --~ if epoch <= self.args.curriculum then
-            --~ batchIdx = i + j - 1
-          --~ end
-          --~ table.insert(batches, trainData:getBatch(batchIdx))
-          --~ totalSize = totalSize + batches[#batches].size
-        --~ end
---~ 
-        --~ local losses = {}
---~ 
-        --~ onmt.utils.Parallel.launch(function(idx)
-          --~ _G.profiler = onmt.utils.Profiler.new(doProfile)
---~ 
-          --~ _G.batch = batches[idx]
-          --~ if _G.batch == nil then
-            --~ return idx, 0, _G.profiler:dump()
-          --~ end
---~ 
-          --~ -- Send batch data to the GPU.
-          --~ onmt.utils.Cuda.convert(_G.batch)
-          --~ _G.batch.totalSize = totalSize
---~ 
-          --~ optim:zeroGrad(_G.gradParams)
-          --~ local loss = _G.model:trainNetwork(_G.batch)
---~ 
-          --~ return idx, loss, _G.profiler:dump()
-        --~ end,
-        --~ function(idx, loss, profile)
-          --~ losses[idx]=loss
-          --~ epochProfiler:add(profile)
-        --~ end)
---~ 
-        --~ -- Accumulate the gradients from the different parallel threads.
-        --~ onmt.utils.Parallel.accGradParams(gradParams, batches)
---~ 
-        --~ -- Update the parameters.
-        --~ optim:prepareGrad(gradParams[1])
-        --~ optim:updateParams(params[1], gradParams[1])
---~ 
-        --~ -- Synchronize the parameters with the different parallel threads.
-        --~ onmt.utils.Parallel.syncParams(params)
---~ 
-        --~ for bi = 1, #batches do
-          --~ epochState:update(model, batches[bi], losses[bi])
-        --~ end
---~ 
-        --~ if iter % self.args.report_every == 0 then
-          --~ epochState:log(iter)
-        --~ end
-        --~ if self.args.save_every > 0 and iter % self.args.save_every == 0 then
-          --~ checkpoint:saveIteration(iter, epochState, batchOrder, true)
-        --~ end
-        --~ iter = iter + 1
-      --~ end
     
 
     epochState:log()
 
     return epochState, epochProfiler:dump()
+  end
+  
+  if self.args.report_bleu == true then
+	
+	local bleuScore = evalBLEU(model, validData)
+	_G.logger:info('Validation BLEU score: %.2f', bleuScore)
+	
   end
 
   _G.logger:info('Start training...')

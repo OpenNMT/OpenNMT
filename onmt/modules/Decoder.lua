@@ -560,11 +560,11 @@ function Decoder:sampleBatch(batch, encoderStates, context, maxLength, argmax)
 		prevOut, prevCoverage, states = self:forwardOne(input, states, context, prevOut, prevCoverage, t)
 		
 		
-		local pred = self.generator:forward(out)[1] -- because generator returns a table
+		local pred = self.generator:forward(prevOut)[1] -- because generator returns a table
 		pred:exp() -- exp to get the distribution
 		
 		-- get the argmax ( we are using greedy sampling )
-		local _, indx = prob:max(2)
+		local _, indx = pred:max(2)
 		
 		sampledSeq[t]:copy(indx:resize(batch.size))
 			

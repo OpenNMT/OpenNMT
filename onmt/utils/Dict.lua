@@ -150,17 +150,31 @@ function Dict:convertToIdx(labels, unkWord, bosWord, eosWord)
 end
 
 --[[ Convert `idx` to labels. If index `stop` is reached, convert it and return. ]]
-function Dict:convertToLabels(idx, stop)
-  local labels = {}
-
-  for i = 1, #idx do
-    table.insert(labels, self:lookup(idx[i]))
-    if idx[i] == stop then
-      break
-    end
-  end
-
-  return labels
+function Dict:convertToLabels(idx, stop, getstring)
+	local labels = {}
+	getstring = getstring or false
+	local sentence = ""
+	local length = #idx
+	-- to be compatible with input as vector
+	if torch.type(length) == 'torch.LongStorage' then
+		length = length[1]
+	end
+	for i = 1, length do
+		local word = self:lookup(idx[i])
+		table.insert(labels, word)
+		sentence = sentence .. word
+		if idx[i] == stop then
+			break
+		else
+			sentence = sentence .. " "
+		end
+	end
+	
+	if getstring == true then
+		return labels, sentence
+	end
+	-- to avoid incompatibility with main OpenNMT
+return labels
 end
 
 return Dict
