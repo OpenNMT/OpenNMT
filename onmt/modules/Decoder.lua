@@ -293,7 +293,7 @@ function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
     self:findAttentionModel()
     local clone = self:cloneId(t)
     local Attn = self.softmaxAttn
-    if t and t > 0 then
+    if clone and clone > 0 then
       Attn = self.decoderAttnClones[clone].softmaxAttn
     end
     states.attnSum = torch.add(prevStates.attnSum, Attn.output)
