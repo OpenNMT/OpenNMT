@@ -296,7 +296,7 @@ function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
     if clone and clone > 0 then
       Attn = self.decoderAttnClones[clone].softmaxAttn
     end
-    local sourceSizeView = sourceSize:view(sourceSize:size(1),1)
+    local sourceSizeView = onmt.utils.Cuda.convert(sourceSize:view(sourceSize:size(1),1))
     states.attnSum = torch.add(prevStates.attnSum, Attn.output)
         :cdiv(sourceSizeView:expand(prevStates.attnSum:size(1),prevStates.attnSum:size(2)))
   end
