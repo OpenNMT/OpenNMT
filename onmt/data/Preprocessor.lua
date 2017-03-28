@@ -9,7 +9,7 @@ local function vecToTensor(vec)
 end
 
 local Preprocessor = torch.class('Preprocessor')
-local tds = require('tds')
+local tds
 
 local bitextOptions = {
   {'-train_src',               '',     [[Path to the training source data.]],
@@ -74,6 +74,8 @@ function Preprocessor.declareOpts(cmd, mode)
 end
 
 function Preprocessor:__init(args, mode)
+  tds = require('tds')
+
   mode = mode or 'bitext'
   local options
   if mode == 'bitext' then
