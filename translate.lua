@@ -88,6 +88,10 @@ local function main()
       end
 
       local results = translator:translate(srcBatch, goldBatch)
+      local results_table = {}
+      if opt.print_input_embeddings then
+        results_table = torch.totable(results[1][1])
+      end
 
       if opt.time then
         timer:stop()
@@ -106,33 +110,35 @@ local function main()
             goldScoreTotal = goldScoreTotal + results[b].goldScore
             goldWordsTotal = goldWordsTotal + #goldBatch[b].words
           end
+          if opt.print_input_embeddings then
+            outFile:write(sentId, ' ', table.concat(results_table[b], " "), '\n')
+          else
+            for n = 1, #results[b].preds do
+              local sentence = translator:buildOutput(results[b].preds[n])
 
-          for n = 1, #results[b].preds do
-            local sentence = translator:buildOutput(results[b].preds[n])
+              if n == 1 then
+                outFile:write(sentence .. '\n')
+                predScoreTotal = predScoreTotal + results[b].preds[n].score
+                predWordsTotal = predWordsTotal + #results[b].preds[n].words
 
-            if n == 1 then
-              outFile:write(sentence .. '\n')
-              predScoreTotal = predScoreTotal + results[b].preds[n].score
-              predWordsTotal = predWordsTotal + #results[b].preds[n].words
+                if #results[b].preds > 1 then
+                  _G.logger:info('')
+                  _G.logger:info('BEST HYP:')
+                end
+              end
 
               if #results[b].preds > 1 then
-                _G.logger:info('')
-                _G.logger:info('BEST HYP:')
+                _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
+                if n ~= 1 then -- for the n == 1 case, we already wrote out the hypothesis above
+                  outFile:write(sentence .. '\n')
+                end
+              else
+                _G.logger:info("PRED %d: %s", sentId, sentence)
+                _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
               end
-            end
-
-            if #results[b].preds > 1 then
-              _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
-              if n ~= 1 then -- for the n == 1 case, we already wrote out the hypothesis above
-                outFile:write(sentence .. '\n')
-              end
-            else
-              _G.logger:info("PRED %d: %s", sentId, sentence)
-              _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
             end
           end
         end
-
         _G.logger:info('')
         sentId = sentId + 1
       end
@@ -159,12 +165,13 @@ local function main()
     _G.logger:info("avg sys\t" .. time.sys / sentenceCount .. "\n")
   end
 
-  reportScore('PRED', predScoreTotal, predWordsTotal)
+  if opt.print_input_embeddings == false then
+    reportScore('PRED', predScoreTotal, predWordsTotal)
 
-  if withGoldScore then
-    reportScore('GOLD', goldScoreTotal, goldWordsTotal)
+    if withGoldScore then
+      reportScore('GOLD', goldScoreTotal, goldWordsTotal)
+    end
   end
-
   outFile:close()
   _G.logger:shutDown()
 end
