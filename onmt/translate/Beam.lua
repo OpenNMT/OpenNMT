@@ -181,7 +181,7 @@ Parameters:
   start with `beamSize` hypotheses per sequence. [`token:size(1)`]
 
 --]]
-function Beam:__init(token, state, batchSize)
+function Beam:__init(token, state, params, batchSize)
   self._remaining = batchSize or token:size(1)
 
   if torch.type(token) == 'table' then
@@ -190,6 +190,15 @@ function Beam:__init(token, state, batchSize)
     self._tokens = { token }
   end
   self._state = state
+
+  self._params = {}
+  if params then
+    self._params = params
+  else
+    self._params.length_norm = 0.0
+    self._params.coverage_norm = 0.0
+    self._params.eos_norm = false
+  end
 
   self._scores = torch.zeros(self._remaining)
   self._backPointer = nil
@@ -326,13 +335,13 @@ function Beam:_normalizeScores(scores)
   attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
 
   local function normalizeLength(t)
-    local alpha = 0.2
+    local alpha = self._params.length_norm
     local norm_term =  math.pow(5.0 + t, alpha)/math.pow(5.0 + 1.0, alpha)
     return norm_term
   end
 
   local function normalizeCoverage(attnProba)
-    local beta = 0.2
+    local beta = self._params.coverage_norm
     local result = torch.cmin(attnProba, 1.0):log1p():sum(3):mul(beta)
     return result
   end
@@ -359,8 +368,10 @@ function Beam:_expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
 
-  local EOS_penalty = torch.div(self._state[6]:view(remaining, beamSize), self._step)
-  scores:view(remaining, beamSize, -1)[{{},{},onmt.Constants.EOS}]:cmul(EOS_penalty)
+  if self._params.eos_norm then
+    local EOS_penalty = torch.div(self._state[6]:view(remaining, beamSize), self._step)
+    scores:view(remaining, beamSize, -1)[{{},{},onmt.Constants.EOS}]:cmul(EOS_penalty)
+  end
 
   self._scores = self._scores:typeAs(scores)
   local expandedScores
@@ -377,8 +388,10 @@ end
 -- Create a new beam given new token, scores and backpointer.
 function Beam:_nextBeam(token, scores, backPointer, beamSize)
   local remaining = math.floor(token:size(1) / beamSize)
+  local params = self._params
   local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
                            self:_nextState(backPointer, beamSize),
+                           params,
                            remaining)
   newBeam:setScores(scores)
   newBeam:setBackPointer(backPointer)

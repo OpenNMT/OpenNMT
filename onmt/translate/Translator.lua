@@ -18,7 +18,10 @@ local options = {
   {'-pre_filter_factor', 1, [[Optional, set this only if filter is being used. Before
                             applying filters, hypotheses with top `beamSize * preFilterFactor`
                             scores will be considered. If the returned hypotheses voilate filters,
-                            then set this to a larger value to consider more.]]}
+                            then set this to a larger value to consider more.]]},
+  {'-length_norm', 0.0, [[Length normalization coefficient. If set to 0, no length normalization.]]},
+  {'-coverage_norm', 0.0, [[Coverage normalization coefficient. If set to 0, no coverage normalization.]]},
+  {'-eos_norm', false, [[If true, apply eos penalty.]]}
 }
 
 function Translator.declareOpts(cmd)
@@ -180,7 +183,10 @@ function Translator:translateBatch(batch)
                                                       self.opt.max_sent_length,
                                                       self.opt.max_num_unks,
                                                       encStates,
-                                                      self.dicts)
+                                                      self.dicts,
+                                                      self.opt.length_norm,
+                                                      self.opt.coverage_norm,
+                                                      self.opt.eos_norm)
 
   -- Save memory by only keeping track of necessary elements in the states.
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.

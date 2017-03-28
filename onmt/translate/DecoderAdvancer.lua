@@ -16,12 +16,15 @@ Parameters:
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts)
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
   self.batch = batch
   self.context = context
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
+  self.length_norm = length_norm or 0.0
+  self.coverage_norm = coverage_norm or 0.0
+  self.eos_norm = eos_norm or false
   self.decStates = decStates or onmt.utils.Tensor.initTensorTable(
     decoder.args.numEffectiveLayers,
     onmt.utils.Cuda.convert(torch.Tensor()),
@@ -57,7 +60,11 @@ function DecoderAdvancer:initBeam()
   -- Define state to be { decoder states, decoder output, context,
   -- attentions, features, sourceSizes, step, cumulated attention probablities }.
   local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba }
-  return onmt.translate.Beam.new(tokens, state)
+  local params = {}
+  params.length_norm = self.length_norm
+  params.coverage_norm = self.coverage_norm
+  params.eos_norm = self.eos_norm
+  return onmt.translate.Beam.new(tokens, state, params)
 end
 
 --[[Updates beam states given new tokens.
