@@ -332,11 +332,11 @@ end
 function Beam:_normalizeScores(scores)
 
   local step = self._step
-  local ap = self._state[8]:view(self._remaining, scores:size(2), -1)
+  local attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
 
-  local function normalizeLength(step)
+  local function normalizeLength(t)
     local alpha = self._params.length_norm
-    local norm_term =  math.pow(5.0 + step, alpha)/math.pow(5.0 + 1.0, alpha)
+    local norm_term =  math.pow(5.0 + t, alpha)/math.pow(5.0 + 1.0, alpha)
     return norm_term
   end
 
@@ -346,7 +346,7 @@ function Beam:_normalizeScores(scores)
     return result
   end
 
-  local coveragePenalty = normalizeCoverage(ap)
+  local coveragePenalty = normalizeCoverage(attnProba)
   local lengthPenalty = normalizeLength(step)
 
   if (scores:nDimension() > 2) then
