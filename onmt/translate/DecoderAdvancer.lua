@@ -45,10 +45,18 @@ function DecoderAdvancer:initBeam()
     end
   end
   local sourceSizes = onmt.utils.Cuda.convert(self.batch.sourceSize)
+  local attnProba = torch.FloatTensor(self.batch.size, self.context:size(2)):fill(0.0001)
+  -- Mask padding
+  for i = 1,self.batch.size do
+    local pad_size = self.context:size(2) - sourceSizes[i]
+    if (pad_size ~= 0) then
+      attnProba[{ i, {1,pad_size} }] = 1.0
+    end
+  end
 
   -- Define state to be { decoder states, decoder output, context,
-  -- attentions, features, sourceSizes, step }.
-  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1 }
+  -- attentions, features, sourceSizes, step, cumulated attention probablities }.
+  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba }
   return onmt.translate.Beam.new(tokens, state)
 end
 
@@ -61,8 +69,8 @@ Parameters:
 ]]
 function DecoderAdvancer:update(beam)
   local state = beam:getState()
-  local decStates, decOut, context, _, features, sourceSizes, t
-    = table.unpack(state, 1, 7)
+  local decStates, decOut, context, softMax, features, sourceSizes, t, cumAttnProba
+    = table.unpack(state, 1, 8)
   local tokens = beam:getTokens()
   local token = tokens[#tokens]
   local inputs
@@ -78,7 +86,10 @@ function DecoderAdvancer:update(beam)
   decOut, decStates = self.decoder:forwardOne(inputs, decStates, context, decOut)
   t = t + 1
   local softmaxOut = self.decoder.softmaxAttn.output
-  local nextState = {decStates, decOut, context, softmaxOut, nil, sourceSizes, t}
+
+  cumAttnProba = cumAttnProba:typeAs(softmaxOut):add(softmaxOut)
+
+  local nextState = {decStates, decOut, context, softmaxOut, nil, sourceSizes, t, cumAttnProba}
   beam:setState(nextState)
 end
 
