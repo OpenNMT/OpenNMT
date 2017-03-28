@@ -76,7 +76,7 @@ Parameters:
 ]]
 function DecoderAdvancer:update(beam)
   local state = beam:getState()
-  local decStates, decOut, context, softMax, features, sourceSizes, t, cumAttnProba
+  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba
     = table.unpack(state, 1, 8)
   local tokens = beam:getTokens()
   local token = tokens[#tokens]

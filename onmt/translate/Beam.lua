@@ -331,8 +331,8 @@ end
 -- Normalize scores by length and coverage
 function Beam:_normalizeScores(scores)
 
-  t = self._step
-  attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
+  local t = self._step
+  local attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
 
   local function normalizeLength(t)
     local alpha = self._params.length_norm
@@ -378,8 +378,6 @@ function Beam:_expandScores(scores, beamSize)
     = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
          + self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize)
       )
-
-  local srcSize = self._state[4]:size(2)
 
   local normExpandedScores = self:_normalizeScores(expandedScores)
   return expandedScores:view(remaining, -1), normExpandedScores:view(remaining, -1)

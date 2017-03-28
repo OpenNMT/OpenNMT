@@ -120,7 +120,7 @@ function BeamSearcher:_findKBest(beams, scores)
   if ((not pruned) or (not pruned:any())) and (self.preFilterFactor == 1) then
     beams[t + 1] = newBeam
   else
-    local kBestNormScores, kBestIds = topk(consideredNormScores, self.beamSize, 2, true, true)
+    local _, kBestIds = topk(consideredNormScores, self.beamSize, 2, true, true)
     local kBestScores = consideredScores:gather(2, kBestIds)
     local backPointer = consideredBackPointer:gather(2, kBestIds)
     local token = consideredToken
