@@ -331,8 +331,9 @@ end
 -- Normalize scores by length and coverage
 function Beam:_normalizeScores(scores)
 
-  local step = self._step
-  local attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
+  if #self._state ~= 8 then
+    return scores
+  end
 
   local function normalizeLength(t)
     local alpha = self._params.length_norm
@@ -346,8 +347,11 @@ function Beam:_normalizeScores(scores)
     return result
   end
 
-  local coveragePenalty = normalizeCoverage(attnProba)
+  local step = self._step
   local lengthPenalty = normalizeLength(step)
+
+  local attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
+  local coveragePenalty = normalizeCoverage(attnProba)
 
   if (scores:nDimension() > 2) then
     coveragePenalty =  coveragePenalty:expand(scores:size())
@@ -368,7 +372,7 @@ function Beam:_expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
 
-  if self._params.eos_norm then
+  if self._params.eos_norm and #self._state == 8 then
     local EOS_penalty = torch.div(self._state[6]:view(remaining, beamSize), self._step)
     scores:view(remaining, beamSize, -1)[{{},{},onmt.Constants.EOS}]:cmul(EOS_penalty)
   end
