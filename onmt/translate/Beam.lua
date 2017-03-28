@@ -326,14 +326,14 @@ function Beam:_normalizeScores(scores)
   attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
 
   local function normalizeLength(t)
-    local alpha = 0.0
+    local alpha = 0.2
     local norm_term =  math.pow(5.0 + t, alpha)/math.pow(5.0 + 1.0, alpha)
     return norm_term
   end
 
   local function normalizeCoverage(attnProba)
     local beta = 0.2
-    local result = torch.cmin(attnProba, 1.0):log():sum(3):mul(beta)
+    local result = torch.cmin(attnProba, 1.0):log1p():sum(3):mul(beta)
     return result
   end
 
