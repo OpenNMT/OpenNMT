@@ -3,27 +3,32 @@ local Seq2Seq, parent = torch.class('Seq2Seq', 'Model')
 
 local options = {
   {'-word_vec_size', 0, [[Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size.]],
-                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]]},
-  {'-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]]},
+                     {valid=onmt.utils.ExtendedCmdLine.isUInt(),structural=0}},
+  {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]],
+                     {structural=0}},
+  {'-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]],
+                     {structural=0}},
   {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
                                      pretrained word embeddings on the encoder side.
                                      See README for specific formatting instructions.]],
-                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
+                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists, init_only=true}},
   {'-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
                                        pretrained word embeddings on the decoder side.
                                        See README for specific formatting instructions.]],
-                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
-  {'-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]]},
+                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists, init_only=true}},
+  {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]],
+                     {structural=0}},
+  {'-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]],
+                     {structural=0}},
   {'-feat_merge', 'concat', [[Merge action for the features embeddings]],
-                     {enum={'concat','sum'}}},
+                     {enum={'concat','sum'}},structural=0},
   {'-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension
-                                will be set to N^exponent where N is the number of values the feature takes.]]},
+                                will be set to N^exponent where N is the number of values the feature takes.]],
+                     {structural=0}},
   {'-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]],
-                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
+                     {valid=onmt.utils.ExtendedCmdLine.isUInt()},structural=0},
   {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
-                     {enum={0,1}}}
+                     {enum={0,1},structural=0}}
 }
 
 function Seq2Seq.declareOpts(cmd)

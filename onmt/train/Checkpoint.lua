@@ -76,45 +76,6 @@ function Checkpoint:saveEpoch(validPpl, epochState, verbose)
   self:save(filePath, info)
 end
 
--- structural parameters - the parameters with true can be changed dynamically in a train_from
-local structural_parameters = {
-  -- input feeding
-  input_feed       = false,
-  -- rnn parameters
-  brnn_merge       = false,
-  brnn             = false,
-  dbrnn            = false,
-  pdbrnn           = false,
-  pdbrnn_reduction = false,
-  rnn_size         = false,
-  rnn_type         = false,
-  -- dropout parameters
-  dropout          = true,
-  dropout_input    = false,
-  -- layers of the NN
-  layers           = false,
-  -- feature parameters
-  feat_merge       = false,
-  feat_vec_exponent= false,
-  feat_vec_size    = false,
-  -- word embedding
-  fix_word_vecs_enc= false,
-  fix_word_vecs_dec= false,
-  word_vec_size    = false,
-  src_word_vec_size= false,
-  tgt_word_vec_size= false,
-  -- residual connections
-  residual         = false
-}
-
--- initialization parameters of the NN - can not be reused when restarting a run
-local initialization_parameters = {
-  model_type       = false,
-  pre_word_vecs_dec= false,
-  pre_word_vecs_enc= false,
-  param_init       = false
-}
-
 function Checkpoint.loadFromCheckpoint(opt)
   local checkpoint = {}
   local param_changes = {}
@@ -124,24 +85,24 @@ function Checkpoint.loadFromCheckpoint(opt)
     checkpoint = torch.load(opt.train_from)
     local error
 
-    for k,v in pairs(structural_parameters) do
-      -- if parameter was set in commandline (and not default value)
-      -- we need to check that we can actually change it
-      if opt[k] and not (opt._is_default and opt._is_default[k]) and opt[k] ~= checkpoint.options[k] then
-        if v == false then
-          _G.logger:error('Cannot change dynamically parameters: %s', k)
-          error = true
-        else
-          param_changes[k] = opt[k]
+    for k,v in pairs(opt) do
+      if k:sub(1, 1) ~= '_' then
+        local _is_default = opt._is_default and opt._is_default[k]
+        -- if parameter was set in commandline (and not default value)
+        -- we need to check that we can actually change it
+        if opt._structural[k] and not _is_default and v ~= checkpoint.options[k] then
+          if opt._structural[k] == 0 then
+            _G.logger:error('Cannot change dynamically parameters: %s', k)
+            error = true
+          else
+            param_changes[k] = v
+          end
         end
-      end
-      opt[k] = checkpoint.options[k]
-    end
-
-    for k,_ in pairs(initialization_parameters) do
-      if opt[k] and opt[k] ~= checkpoint.options[k] then
-        _G.logger:error('Cannot change initialization parameters: %s', k)
-        error = true
+        if opt._init_only[k] == true and not _is_default then
+          _G.logger:error('Cannot change initialization parameters: %s', k)
+          error = true
+        end
+        opt[k] = checkpoint.options[k]
       end
     end
 

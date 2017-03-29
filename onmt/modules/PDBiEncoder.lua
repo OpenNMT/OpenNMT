@@ -5,7 +5,7 @@
 local PDBiEncoder, parent = torch.class('onmt.PDBiEncoder', 'nn.Container')
 
 local options = {
-  {'-pdbrnn_reduction', 2, [[Time-Reduction factor at each layer.]]}
+  {'-pdbrnn_reduction', 2, [[Time-Reduction factor at each layer.]], {structural=0}}
 }
 
 function PDBiEncoder.declareOpts(cmd)

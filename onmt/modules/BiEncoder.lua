@@ -42,7 +42,7 @@ local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 
 local options = {
   {'-brnn_merge', 'sum', [[Merge action for the bidirectional hidden states]],
-                     {enum={'concat','sum'}}}
+                     {enum={'concat','sum'}, structural=0}}
 }
 
 function BiEncoder.declareOpts(cmd)

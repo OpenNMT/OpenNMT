@@ -1,9 +1,9 @@
 local Factory = torch.class('Factory')
 
 local options = {
-  {'-brnn', false, [[Use a bidirectional encoder.]]},
-  {'-dbrnn', false, [[Use a deep bidirectional encoder.]]},
-  {'-pdbrnn', false, [[Use pyramidal deep bidirectional encoder.]]}
+  {'-brnn', false, [[Use a bidirectional encoder.]], {structural=0}},
+  {'-dbrnn', false, [[Use a deep bidirectional encoder.]], {structural=0}},
+  {'-pdbrnn', false, [[Use pyramidal deep bidirectional encoder.]], {structural=0}}
 }
 
 function Factory.declareOpts(cmd)

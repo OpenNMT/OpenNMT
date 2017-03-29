@@ -67,6 +67,14 @@ end
     local opt = cmd:parse(arg)
 
     local optimArgs = cmd.getModuleOpts(opt, options)
+
+  Additional meta-fields:
+
+  * `valid`: validation method
+  * `enum`: enumeration list
+  * `structural`: if defined, mark a structural parameter - 0 means cannot change value, 1 means that it can change dynamically
+  * `init_only`: if true, mark a parameter that can only be set at init time
+
 ]]
 
 function ExtendedCmdLine:__init(script)
@@ -211,7 +219,7 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 
   for key, val in pairs(opt) do
-    if key ~= '_is_default' then
+    if key:sub(1, 1) ~= '_' then
       file:write(key .. ' = ' .. tostring(val) .. '\n')
     end
   end
@@ -223,7 +231,7 @@ function ExtendedCmdLine:parse(arg)
   local i = 1
 
   -- set default value
-  local params = { _is_default={} }
+  local params = { _is_default={}, _structural={}, _init_only={} }
   for option,v in pairs(self.options) do
     local soption = onmt.utils.String.stripHyphens(option)
     params[soption] = v.default
@@ -280,18 +288,25 @@ function ExtendedCmdLine:parse(arg)
   end
 
   for k, v in pairs(params) do
-    if k ~= '_is_default' then
+    if k:sub(1, 1) ~= '_' then
       local K = '-' .. k
       if not self.options[K] and self.options[k] then
         K = k
       end
       local meta = self.options[K].meta
       if meta then
+        -- check option validity
         if meta.valid and not meta.valid(v) then
           self:error('option \'' .. k .. '\' value is not valid')
         end
         if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
           self:error('option \'' .. k.. '\' value is not in possible values')
+        end
+        if meta.structural then
+          params._structural[k] = meta.structural
+        end
+        if meta.init_only then
+          params._init_only[k] = meta.init_only
         end
       end
     end
