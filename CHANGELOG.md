@@ -1,8 +1,15 @@
-## [Unreleased]
+## [v0.5.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.2) (2017-03-29)
+
+### Fixes and improvements
+
+* Improve compatibility with older Torch versions missing the `fmod` implementation
+
+## [v0.5.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.1) (2017-03-28)
 
 ### Fixes and improvements
 
 * Fix translation with FP16 precision
+* Fix regression that make `tds` mandatory for translation
 
 ## [v0.5.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.0) (2017-03-06)
 
