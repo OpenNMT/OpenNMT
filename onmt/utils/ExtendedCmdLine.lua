@@ -36,10 +36,6 @@ local function wrapIndent(text, size, pad)
   end
 end
 
-local function strip(str)
-   return string.match(str, '%-*(.*)')
-end
-
 ---------------------------------------------------------------------------------
 
 local ExtendedCmdLine, parent, path
@@ -229,8 +225,9 @@ function ExtendedCmdLine:parse(arg)
   -- set default value
   local params = {}
   for option,v in pairs(self.options) do
-    params[strip(option)] = v.default
-    params[strip(option)..'_default'] = true
+    local soption = onmt.utils.String.stripHyphens(option)
+    params[soption] = v.default
+    params[soption..'_default'] = true
   end
 
   local nArgument = 0
@@ -254,12 +251,13 @@ function ExtendedCmdLine:parse(arg)
       saveConfig = arg[i + 1]
       i = i + 2
     else
+      local sopt = onmt.utils.String.stripHyphens(arg[i])
       if self.options[arg[i]] then
-        params[strip(arg[i])..'_default'] = nil
+        params[sopt..'_default'] = nil
         i = i + self:__readOption__(params, arg, i)
       else
         nArgument = nArgument + 1
-        params[strip(arg[i])..'_default'] = nil
+        params[sopt..'_default'] = nil
         i = i + self:__readArgument__(params, arg, i, nArgument)
       end
     end
