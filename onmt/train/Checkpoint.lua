@@ -125,7 +125,9 @@ function Checkpoint.loadFromCheckpoint(opt)
     local error
 
     for k,v in pairs(structural_parameters) do
-      if opt[k] and opt[k] ~= checkpoint.options[k] then
+      -- if parameter was set in commandline (and not default value)
+      -- we need to check that we can actually change it
+      if opt[k] and not opt[k..'_default'] and opt[k] ~= checkpoint.options[k] then
         if v == false then
           _G.logger:error('Cannot change dynamically parameters: %s', k)
           error = true

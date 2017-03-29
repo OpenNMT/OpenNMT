@@ -36,6 +36,10 @@ local function wrapIndent(text, size, pad)
   end
 end
 
+local function strip(str)
+   return string.match(str, '%-*(.*)')
+end
+
 ---------------------------------------------------------------------------------
 
 local ExtendedCmdLine, parent, path
@@ -198,6 +202,8 @@ function ExtendedCmdLine:loadConfig(filename, opt)
       assert(opt[key] ~= nil, 'unkown option ' .. key)
 
       opt[key] = convert(key, val, opt[key])
+      opt[key..'_default'] = nil
+
     end
   end
 
@@ -209,7 +215,9 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 
   for key, val in pairs(opt) do
-    file:write(key .. ' = ' .. tostring(val) .. '\n')
+    if key:sub(-8) ~= '_default' then
+      file:write(key .. ' = ' .. tostring(val) .. '\n')
+    end
   end
 
   file:close()
@@ -217,7 +225,13 @@ end
 
 function ExtendedCmdLine:parse(arg)
   local i = 1
-  local params = self:default()
+
+  -- set default value
+  local params = {}
+  for option,v in pairs(self.options) do
+    params[strip(option)] = v.default
+    params[strip(option)..'_default'] = true
+  end
 
   local nArgument = 0
 
@@ -241,10 +255,12 @@ function ExtendedCmdLine:parse(arg)
       i = i + 2
     else
       if self.options[arg[i]] then
+        params[strip(arg[i])..'_default'] = nil
         i = i + self:__readOption__(params, arg, i)
       else
         nArgument = nArgument + 1
-       i = i + self:__readArgument__(params, arg, i, nArgument)
+        params[strip(arg[i])..'_default'] = nil
+        i = i + self:__readArgument__(params, arg, i, nArgument)
       end
     end
   end
@@ -267,17 +283,19 @@ function ExtendedCmdLine:parse(arg)
   end
 
   for k, v in pairs(params) do
-    local K = '-' .. k
-    if not self.options[K] and self.options[k] then
-      K = k
-    end
-    local meta = self.options[K].meta
-    if meta then
-      if meta.valid and not meta.valid(v) then
-        self:error('option \'' .. k .. '\' value is not valid')
+    if k:sub(-8) ~= '_default' then
+      local K = '-' .. k
+      if not self.options[K] and self.options[k] then
+        K = k
       end
-      if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-        self:error('option \'' .. k.. '\' value is not in possible values')
+      local meta = self.options[K].meta
+      if meta then
+        if meta.valid and not meta.valid(v) then
+          self:error('option \'' .. k .. '\' value is not valid')
+        end
+        if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
+          self:error('option \'' .. k.. '\' value is not in possible values')
+        end
       end
     end
   end
