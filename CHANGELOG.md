@@ -7,11 +7,13 @@
 * Add pyramidal deep bidirectional encoder
 * Add alternative learning rate decay strategy for SGD training
 * Add sequence tagger model
+* Introduce dynamic parameter change for dropout
 
 ### Fixes and improvements
 
 * Fix individual losses that were always computed when using random sampling
 * Allow to change the state of word embeddings optimization during a retraining
+* Check consistency of option settings when training from existing model
 
 ## [v0.5.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.1) (2017-03-28)
 
