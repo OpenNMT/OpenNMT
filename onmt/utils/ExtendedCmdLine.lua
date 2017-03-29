@@ -198,7 +198,7 @@ function ExtendedCmdLine:loadConfig(filename, opt)
       assert(opt[key] ~= nil, 'unkown option ' .. key)
 
       opt[key] = convert(key, val, opt[key])
-      opt[key..'_default'] = nil
+      opt._is_default[key] = nil
 
     end
   end
@@ -211,7 +211,7 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 
   for key, val in pairs(opt) do
-    if key:sub(-8) ~= '_default' then
+    if key ~= '_is_default' then
       file:write(key .. ' = ' .. tostring(val) .. '\n')
     end
   end
@@ -223,11 +223,11 @@ function ExtendedCmdLine:parse(arg)
   local i = 1
 
   -- set default value
-  local params = {}
+  local params = { _is_default={} }
   for option,v in pairs(self.options) do
     local soption = onmt.utils.String.stripHyphens(option)
     params[soption] = v.default
-    params[soption..'_default'] = true
+    params._is_default[soption] = true
   end
 
   local nArgument = 0
@@ -252,12 +252,11 @@ function ExtendedCmdLine:parse(arg)
       i = i + 2
     else
       local sopt = onmt.utils.String.stripHyphens(arg[i])
+      params._is_default[sopt] = nil
       if self.options[arg[i]] then
-        params[sopt..'_default'] = nil
         i = i + self:__readOption__(params, arg, i)
       else
         nArgument = nArgument + 1
-        params[sopt..'_default'] = nil
         i = i + self:__readArgument__(params, arg, i, nArgument)
       end
     end
@@ -281,7 +280,7 @@ function ExtendedCmdLine:parse(arg)
   end
 
   for k, v in pairs(params) do
-    if k:sub(-8) ~= '_default' then
+    if k ~= '_is_default' then
       local K = '-' .. k
       if not self.options[K] and self.options[k] then
         K = k
