@@ -13,6 +13,12 @@
 * Fix individual losses that were always computed when using random sampling
 * Allow to change the state of word embeddings optimization during a retraining
 
+## [v0.5.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.2) (2017-03-29)
+
+### Fixes and improvements
+
+* Improve compatibility with older Torch versions missing the `fmod` implementation
+
 ## [v0.5.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.1) (2017-03-28)
 
 ### Fixes and improvements
