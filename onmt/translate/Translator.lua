@@ -19,9 +19,19 @@ local options = {
                             applying filters, hypotheses with top `beamSize * preFilterFactor`
                             scores will be considered. If the returned hypotheses voilate filters,
                             then set this to a larger value to consider more.]]},
-  {'-length_norm', 0.0, [[Length normalization coefficient. If set to 0, no length normalization.]]},
-  {'-coverage_norm', 0.0, [[Coverage normalization coefficient. If set to 0, no coverage normalization.]]},
-  {'-eos_norm', false, [[If true, apply eos penalty.]]}
+  {'-length_norm', 0.0, [[Length normalization coefficient (alpha).
+                          Hypotheses scores are divided by (5+|Y|/5 + 1)^alpha,
+                          where |Y| is current target length.
+                          If set to 0, no length normalization.]]},
+  {'-coverage_norm', 0.0, [[Coverage normalization coefficient (beta).
+                            An extra coverage term multiplied by beta is added to hypotheses scores.
+                            Coverage is expressed as a sum over all source words of
+                            a log of attention probabilities cumulated over target words.
+                            If is set to 0, no coverage normalization.]]},
+  {'-eos_norm', 0.0, [[End of sentence normalization coefficient (gamma).
+                       The score for the EOS token is multiplied by (|X|/|Y|)*gamma,
+                       where |X| is source length and |Y| is current target length.
+                       If set to 0, no EOS normalization.]]}
 }
 
 function Translator.declareOpts(cmd)

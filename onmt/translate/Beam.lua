@@ -197,7 +197,7 @@ function Beam:__init(token, state, params, batchSize)
   else
     self._params.length_norm = 0.0
     self._params.coverage_norm = 0.0
-    self._params.eos_norm = false
+    self._params.eos_norm = 0.0
   end
 
   self._scores = torch.zeros(self._remaining)
@@ -337,7 +337,7 @@ function Beam:_normalizeScores(scores)
 
   local function normalizeLength(t)
     local alpha = self._params.length_norm
-    local norm_term =  math.pow(5.0 + t, alpha)/math.pow(5.0 + 1.0, alpha)
+    local norm_term = math.pow((5.0 + t)/6.0, alpha)
     return norm_term
   end
 
@@ -372,8 +372,8 @@ function Beam:_expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
 
-  if self._params.eos_norm and #self._state == 8 then
-    local EOS_penalty = torch.div(self._state[6]:view(remaining, beamSize), self._step)
+  if #self._state == 8 and self._params.eos_norm > 0 then
+    local EOS_penalty = torch.div(self._state[6]:view(remaining, beamSize), self._step/self._params.eos_norm)
     scores:view(remaining, beamSize, -1)[{{},{},onmt.Constants.EOS}]:cmul(EOS_penalty)
   end
 

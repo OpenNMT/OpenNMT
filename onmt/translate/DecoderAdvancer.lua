@@ -24,7 +24,7 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.max_num_unks = max_num_unks or math.huge
   self.length_norm = length_norm or 0.0
   self.coverage_norm = coverage_norm or 0.0
-  self.eos_norm = eos_norm or false
+  self.eos_norm = eos_norm or 0.0
   self.decStates = decStates or onmt.utils.Tensor.initTensorTable(
     decoder.args.numEffectiveLayers,
     onmt.utils.Cuda.convert(torch.Tensor()),
