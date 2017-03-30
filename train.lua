@@ -1,4 +1,5 @@
 require('onmt.init')
+require('tds')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('train.lua')
 
