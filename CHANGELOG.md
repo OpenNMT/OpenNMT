@@ -12,6 +12,7 @@
 
 ### Fixes and improvements
 
+* [*Breaking, changed option*] `-fix_word_vecs` options now accept `0` and `1` for a better retraining experience
 * Fix individual losses that were always computed when using random sampling
 * Allow to change the state of word embeddings optimization during a retraining
 * Check consistency of option settings when training from existing model
