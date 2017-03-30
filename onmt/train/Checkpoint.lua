@@ -83,7 +83,6 @@ function Checkpoint.loadFromCheckpoint(opt)
     _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
 
     checkpoint = torch.load(opt.train_from)
-    local error
 
     for k,v in pairs(opt) do
       if k:sub(1, 1) ~= '_' then
@@ -92,22 +91,16 @@ function Checkpoint.loadFromCheckpoint(opt)
         -- we need to check that we can actually change it
         if opt._structural[k] and not _is_default and v ~= checkpoint.options[k] then
           if opt._structural[k] == 0 then
-            _G.logger:error('Cannot change dynamically parameters: %s', k)
-            error = true
+            _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
           else
             param_changes[k] = v
           end
         end
         if opt._init_only[k] == true and not _is_default then
-          _G.logger:error('Cannot change initialization parameters: %s', k)
-          error = true
+          _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
         end
         opt[k] = checkpoint.options[k]
       end
-    end
-
-    if error then
-      os.exit(1)
     end
 
     -- Resume training from checkpoint
