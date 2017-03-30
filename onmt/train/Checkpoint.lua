@@ -89,17 +89,21 @@ function Checkpoint.loadFromCheckpoint(opt)
         local _is_default = opt._is_default and opt._is_default[k]
         -- if parameter was set in commandline (and not default value)
         -- we need to check that we can actually change it
-        if opt._structural[k] and not _is_default and v ~= checkpoint.options[k] then
-          if opt._structural[k] == 0 then
-            _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
-          else
-            param_changes[k] = v
+
+        if opt._structural[k] then
+          if not _is_default and v ~= checkpoint.options[k] then
+            if opt._structural[k] == 0 then
+              _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
+            else
+              param_changes[k] = v
+            end
           end
+          opt[k] = checkpoint.options[k]
         end
+
         if opt._init_only[k] == true and not _is_default then
           _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
         end
-        opt[k] = checkpoint.options[k]
       end
     end
 
