@@ -78,7 +78,7 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   end
 
   inputNetwork.inputSize = inputSize
-  inputNetwork.wordEmbLayer = wordEmbedding
+  --~ inputNetwork.wordEmbLayer = wordEmbedding
 
   return inputNetwork
 end
@@ -188,20 +188,25 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   -- tieing the weights if chosen
   if opt.tie_embedding == true then
       _G.logger:info(" * Tying weights between the word embedding and the final softmax layer")
-	  local linearLayer
+	  local linearLayer, wordEmbLayer
 	  if #dicts.features > 0 then
 		-- this is a feature generator
 		-- first modules[1] is the concattable
 		-- second modules[1] is the sequential
 		-- third modules[1] is the linear
 		linearLayer = generator.modules[1].modules[1].modules[1] 
+		
+		-- first modules[1] is the sequential
+		-- second modules[1] is the parallel table
+		wordEmbLayer = inputNetwork.modules[1].modules[1].modules[1]
 	  else
 		linearLayer = generator.modules[1].modules[1]
+		wordEmbLayer = inputNetwork.modules[1]
 	  end
 	  
 	  --~ print(linearLayer)
-	  --~ linearLayer:noBias()
-	  --~ linearLayer:share(inputNetwork.wordEmbLayer.modules[1], 'weight', 'gradWeight')
+	  linearLayer:noBias()
+	  linearLayer:share(wordEmbLayer, 'weight', 'gradWeight')
   end
 
   return Factory.buildDecoder(opt, inputNetwork, generator, verbose)
