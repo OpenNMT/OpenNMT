@@ -78,7 +78,7 @@ end
 
 function Checkpoint.loadFromCheckpoint(opt)
   local checkpoint = {}
-  local param_changes = {}
+  local paramChanges = {}
   if opt.train_from:len() > 0 then
     _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
 
@@ -86,22 +86,22 @@ function Checkpoint.loadFromCheckpoint(opt)
 
     for k,v in pairs(opt) do
       if k:sub(1, 1) ~= '_' then
-        local _is_default = opt._is_default and opt._is_default[k]
+        local isDefault = opt._is_default and opt._is_default[k]
         -- if parameter was set in commandline (and not default value)
         -- we need to check that we can actually change it
 
         if opt._structural[k] then
-          if not _is_default and v ~= checkpoint.options[k] then
+          if not isDefault and v ~= checkpoint.options[k] then
             if opt._structural[k] == 0 then
               _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
             else
-              param_changes[k] = v
+              paramChanges[k] = v
             end
           end
           opt[k] = checkpoint.options[k]
         end
 
-        if opt._init_only[k] == true and not _is_default then
+        if opt._init_only[k] == true and not isDefault then
           _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
         end
       end
@@ -109,7 +109,6 @@ function Checkpoint.loadFromCheckpoint(opt)
 
     -- Resume training from checkpoint
     if opt.continue then
-
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
@@ -129,7 +128,8 @@ function Checkpoint.loadFromCheckpoint(opt)
       checkpoint.info = nil
     end
   end
-  return checkpoint, opt, param_changes
+
+  return checkpoint, opt, paramChanges
 end
 
 return Checkpoint

@@ -50,8 +50,8 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  local checkpoint, param_changes
-  checkpoint, opt, param_changes = onmt.train.Checkpoint.loadFromCheckpoint(opt)
+  local checkpoint, paramChanges
+  checkpoint, opt, paramChanges = onmt.train.Checkpoint.loadFromCheckpoint(opt)
 
   _G.logger:info('Training '..modelClass.modelName()..' model')
 
@@ -110,8 +110,8 @@ local function main()
     if checkpoint.models then
       _G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
       -- dynamic parameter changes
-      if not onmt.utils.Table.empty(param_changes) then
-        _G.model:paramChanges(param_changes)
+      if not onmt.utils.Table.empty(paramChanges) then
+        _G.model:paramChanges(paramChanges)
       end
     else
       local verbose = idx == 1
