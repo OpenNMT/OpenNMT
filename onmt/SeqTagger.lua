@@ -19,7 +19,7 @@ local options = {
                                      pretrained word embeddings on the encoder side.
                                      See README for specific formatting instructions.]],
                          {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
+  {'-fix_word_vecs_enc', 0, [[Fix word embeddings on the encoder side]]},
   {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]}
 }
 

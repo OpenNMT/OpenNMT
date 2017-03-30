@@ -98,14 +98,6 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   return inputNetwork
 end
 
-local function fixWordEmbeddings(model, fix)
-  model:apply(function(mod)
-    if torch.typename(mod) == 'onmt.WordEmbedding' then
-      mod:fixEmbeddings(fix)
-    end
-  end)
-end
-
 function Factory.getOutputSizes(dicts)
   local outputSizes = { dicts.words:size() }
   for i = 1, #dicts.features do
@@ -143,7 +135,7 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
                                          verbose)
 
   return Factory.buildEncoder(opt, inputNetwork)
@@ -174,10 +166,6 @@ function Factory.loadEncoder(pretrained, clone, opt)
     end
   end
 
-  if opt then
-    fixWordEmbeddings(encoder, opt.fix_word_vecs_enc)
-  end
-
   return encoder
 end
 
@@ -204,7 +192,7 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.tgt_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec,
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec == 1,
                                          verbose)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
@@ -218,10 +206,6 @@ function Factory.loadDecoder(pretrained, clone, opt)
   end
 
   local decoder = onmt.Decoder.load(pretrained)
-
-  if opt then
-    fixWordEmbeddings(decoder, opt.fix_word_vecs_dec)
-  end
 
   return decoder
 end

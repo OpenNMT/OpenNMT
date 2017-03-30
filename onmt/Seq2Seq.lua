@@ -16,10 +16,10 @@ local options = {
                                        pretrained word embeddings on the decoder side.
                                        See README for specific formatting instructions.]],
                          {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists, init_only=true}},
-  {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]],
-                     {structural=0}},
-  {'-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]],
-                     {structural=0}},
+  {'-fix_word_vecs_enc', 0, [[Fix word embeddings on the encoder side]],
+                     {structural=1}},
+  {'-fix_word_vecs_dec', 0, [[Fix word embeddings on the decoder side]],
+                     {structural=1}},
   {'-feat_merge', 'concat', [[Merge action for the features embeddings]],
                      {enum={'concat','sum'}}, structural=0},
   {'-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension

@@ -19,23 +19,28 @@ function Model:__init(args)
   self.models = {}
 end
 
--- Changes dynamically parameters
-function Model:paramChanges(changes)
-  _G.logger:info('Changing parameters:')
-  for k,v in pairs(changes) do
-    if k == 'dropout' then
-      local count = 0
-      for _, model in pairs(self.models) do
-        model:apply(function(m)
-          if torch.typename(m) == 'nn.Dropout' then
-            m:setp(v)
-            count = count + 1
+-- Dynamically change parameters in the graph.
+function Model:changeParameters(changes)
+  _G.logger:info('Applying new parameters:')
+
+  for k, v in pairs(changes) do
+    _G.logger:info(' * %s = ' .. v, k)
+
+    for _, model in pairs(self.models) do
+      model:apply(function(m)
+        if k == 'dropout' and torch.typename(m) == 'nn.Dropout' then
+          m:setp(v)
+        elseif k:find('fix_word_vecs') and torch.typename(m) == 'onmt.WordEmbedding' then
+          local enc = k == 'fix_word_vecs_enc' and torch.typename(model):find('Encoder')
+          local dec = k == 'fix_word_vecs_dec' and torch.typename(model):find('Decoder')
+          if enc or dec then
+            m:fixEmbeddings(v == 1)
           end
-        end)
-      end
-      _G.logger:info(' * dropout = %f (%d instances)', v, count)
+        end
+      end)
     end
   end
+
 end
 
 function Model:getInputLabelsCount(batch)
