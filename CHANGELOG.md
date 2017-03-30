@@ -1,3 +1,9 @@
+## [v0.5.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.3) (2017-03-30)
+
+### Fixes and improvements
+
+* Fix data loading during training
+
 ## [v0.5.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.2) (2017-03-29)
 
 ### Fixes and improvements
