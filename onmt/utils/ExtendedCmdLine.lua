@@ -358,6 +358,15 @@ function ExtendedCmdLine.listUInt(v)
   end
 end
 
+-- Check if value between minValue and maxValue.
+function ExtendedCmdLine.isFloat(minValue, maxValue)
+  return function(v)
+    return (type(v) == 'number' and
+      (not minValue or v >= minValue) and
+      (not maxValue or v <= maxValue))
+    end
+end
+
 -- Check if non empty.
 function ExtendedCmdLine.nonEmpty(v)
   return v and v ~= ''

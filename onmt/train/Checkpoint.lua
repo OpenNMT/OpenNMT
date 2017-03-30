@@ -91,10 +91,17 @@ function Checkpoint.loadFromCheckpoint(opt)
 
     -- Resume training from checkpoint
     if opt.continue then
+      opt.fix_word_vecs_enc = checkpoint.options.fix_word_vecs_enc
+      opt.fix_word_vecs_dec = checkpoint.options.fix_word_vecs_dec
+
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
       opt.curriculum = checkpoint.options.curriculum
+
+      opt.decay = checkpoint.options.decay or opt.decay
+      opt.min_learning_rate = checkpoint.options.min_learning_rate or opt.min_learning_rate
+      opt.start_decay_ppl_delta = checkpoint.options.start_decay_ppl_delta or opt.start_decay_ppl_delta
 
       opt.learning_rate = checkpoint.info.learningRate
       opt.start_epoch = checkpoint.info.epoch

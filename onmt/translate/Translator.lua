@@ -41,10 +41,14 @@ end
 
 function Translator:__init(args)
   self.opt = args
-  onmt.utils.Cuda.init(self.opt)
 
   _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
   self.checkpoint = torch.load(self.opt.model)
+
+  if self.checkpoint.options.model_type and self.checkpoint.options.model_type ~= 'seq2seq' then
+    _G.logger:error('Translator can only process seq2seq models')
+    os.exit(0)
+  end
 
   self.models = {}
   self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
@@ -180,7 +184,7 @@ function Translator:translateBatch(batch)
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
-    if batch.size > 1 then
+    if batch.uneven then
       self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
     end
     goldScore = self.models.decoder:computeScore(batch, encStates, context)

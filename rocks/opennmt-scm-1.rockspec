@@ -28,6 +28,7 @@ build = {
       onmt_preprocess = "preprocess.lua",
       onmt_train = "train.lua",
       onmt_translate = "translate.lua",
+      onmt_tag = "tag.lua"
     }
   },
 
@@ -35,6 +36,8 @@ build = {
     onmt = "onmt/init.lua",
     ["onmt.modules.init"] = "onmt/modules/init.lua",
     ["onmt.modules.BiEncoder"] = "onmt/modules/BiEncoder.lua",
+    ["onmt.modules.DBiEncoder"] = "onmt/modules/DBiEncoder.lua",
+    ["onmt.modules.PDBiEncoder"] = "onmt/modules/PDBiEncoder.lua",
     ["onmt.modules.Decoder"] = "onmt/modules/Decoder.lua",
     ["onmt.modules.Encoder"] = "onmt/modules/Encoder.lua",
     ["onmt.modules.Network"] = "onmt/modules/Network.lua",
@@ -50,6 +53,7 @@ build = {
     ["onmt.modules.ParallelClassNLLCriterion"] = "onmt/modules/ParallelClassNLLCriterion.lua",
     ["onmt.data.init"] = "onmt/data/init.lua",
     ["onmt.data.Batch"] = "onmt/data/Batch.lua",
+    ["onmt.data.BatchTensor"] = "onmt/data/BatchTensor.lua",
     ["onmt.data.Dataset"] = "onmt/data/Dataset.lua",
     ["onmt.data.Preprocessor"] = "onmt/data/Preprocessor.lua",
     ["onmt.data.Vocabulary"] = "onmt/data/Vocabulary.lua",
@@ -67,6 +71,8 @@ build = {
     ["onmt.translate.BeamSearcher"] = "onmt/translate/BeamSearcher.lua",
     ["onmt.translate.Translator"] = "onmt/translate/Translator.lua",
     ["onmt.translate.PhraseTable"] = "onmt/translate/PhraseTable.lua",
+    ["onmt.tagger.init"] = "onmt/tagger/init.lua",
+    ["onmt.tagger.Tagger"] = "onmt/tagger/Tagger.lua",
     ["onmt.utils.init"] = "onmt/utils/init.lua",
     ["onmt.utils.CrayonLogger"] = "onmt/utils/CrayonLogger.lua",
     ["onmt.utils.Cuda"] = "onmt/utils/Cuda.lua",
@@ -87,6 +93,7 @@ build = {
     ["onmt.ModelSelector"] = "onmt/ModelSelector.lua",
     ["onmt.LanguageModel"] = "onmt/LanguageModel.lua",
     ["onmt.Seq2Seq"] = "onmt/Seq2Seq.lua",
+    ["onmt.SeqTagger"] = "onmt/SeqTagger.lua",
     ["onmt.Model"] = "onmt/Model.lua"
   }
 }

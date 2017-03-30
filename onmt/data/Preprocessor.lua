@@ -9,7 +9,7 @@ local function vecToTensor(vec)
 end
 
 local Preprocessor = torch.class('Preprocessor')
-local tds = require('tds')
+local tds
 
 local bitextOptions = {
   {'-train_src',               '',     [[Path to the training source data.]],
@@ -55,6 +55,10 @@ local monotextOptions = {
 
 local commonOptions = {
   {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies.]]},
+  {'-time_shift_feature',     1,       [[Time shift features for seq2seq attn model]],
+                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
+  {'-sort',                   1,       [[If 1, sort the sentences by size.]],
+                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
   {'-shuffle',                1,       [[If 1, shuffle data.]],
                                        { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} }
 }
@@ -74,6 +78,8 @@ function Preprocessor.declareOpts(cmd, mode)
 end
 
 function Preprocessor:__init(args, mode)
+  tds = require('tds')
+
   mode = mode or 'bitext'
   local options
   if mode == 'bitext' then
@@ -128,7 +134,7 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
         srcFeatures:insert(onmt.utils.Features.generateSource(srcDicts.features, srcFeats, true))
       end
       if #tgtDicts.features > 0 then
-        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
+        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true, self.args.time_shift_feature))
       end
 
       sizes:insert(#srcWords)
@@ -165,9 +171,11 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     reorderData(perm)
   end
 
-  _G.logger:info('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes))
-  reorderData(perm)
+  if self.args.sort == 1 then
+    _G.logger:info('... sorting sentences by size')
+    local _, perm = torch.sort(vecToTensor(sizes))
+    reorderData(perm)
+  end
 
   _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
                    .. ' ignored due to source length > ' .. self.args.src_seq_length
@@ -239,9 +247,11 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
     reorderData(perm)
   end
 
-  _G.logger:info('... sorting sentences by size')
-  local _, perm = torch.sort(vecToTensor(sizes))
-  reorderData(perm)
+  if self.args.sort == 1 then
+    _G.logger:info('... sorting sentences by size')
+    local _, perm = torch.sort(vecToTensor(sizes))
+    reorderData(perm)
+  end
 
   _G.logger:info('Prepared ' .. #dataset .. ' sentences (' .. ignored
                    .. ' ignored due to length > ' .. self.args.seq_length .. ')')

@@ -104,7 +104,14 @@ function BeamSearcher:_findKBest(beams, scores)
   consideredIds:add(-1)
 
   local consideredBackPointer = (consideredIds:clone():div(vocabSize)):add(1)
-  local consideredToken = consideredIds:fmod(vocabSize):add(1):view(-1)
+  local consideredToken = consideredIds:view(-1)
+  if consideredToken.fmod then
+    consideredToken = consideredToken:fmod(vocabSize):add(1)
+  else
+    for i = 1, consideredToken:size(1) do
+      consideredToken[i] = math.fmod(consideredToken[i], vocabSize) + 1
+    end
+  end
 
   local newBeam = beams[t]:_nextBeam(consideredToken, consideredScores,
                                     consideredBackPointer, self.beamSize)

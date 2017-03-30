@@ -54,11 +54,16 @@ function SampledDataset:__init(srcData, tgtData, opt)
 end
 
 function SampledDataset:checkModel(model)
-  if not model.returnIndividualLosses or model:returnIndividualLosses(true) == false then
+  if self:needIndividualLosses() and (not model.returnIndividualLosses or model:returnIndividualLosses(true) == false) then
     _G.logger:info('Current model does not support training with invididual losses; Sampling with individual loss will be disabled.')
     self.sample_w_ppl = false
     self.samplingProb = torch.ones(#self.src)
     self.ppl = nil
+  else
+    _G.logger:info('Current sampling does not require individual loss')
+    if model.returnIndividualLosses then
+      model:returnIndividualLosses(false)
+    end
   end
 end
 
@@ -159,15 +164,20 @@ function SampledDataset:sample()
   _G.logger:info('Sampled ' .. self.sampled:size(1) .. ' instances')
 
   -- Prepares batches in terms of range within self.src and self.tgt.
+  local batchesCapacity = 0
+  local batchesOccupation = 0
   self.batchRange = {}
   local offset = 0
   local sampleCntBegin = 1
   local batchSize = 1
-  local sourceLength = -1
+  local maxSourceLength = -1
   for i = 1, #self.src do
     for j = 1, self.sampledCnt[i] do
-      if batchSize == self.maxBatchSize or self.src[i]:size(1) ~= sourceLength then
+      local sourceLength = self.src[i]:size(1)
+      if batchSize == self.maxBatchSize or offset == 1 or
+         (not(self.uneven_batches) and self.src[i]:size(1) ~= maxSourceLength) then
         if offset > 0 then
+          batchesCapacity = batchesCapacity + batchSize * maxSourceLength
           local batchEnd = (j == 1) and i - 1 or i
           local sampleCntEnd = (j == 1) and self.sampledCnt[i - 1] or j - 1
           table.insert(self.batchRange, {
@@ -180,14 +190,17 @@ function SampledDataset:sample()
         end
         offset = i
         batchSize = 1
-        sourceLength = self.src[i]:size(1)
+        maxSourceLength = -1
       else
         batchSize = batchSize + 1
       end
+      batchesOccupation = batchesOccupation + sourceLength
+      maxSourceLength = math.max(maxSourceLength, sourceLength)
     end
   end
   -- Catch last batch.
   if offset < #self.src then
+    batchesCapacity = batchesCapacity + batchSize * maxSourceLength
     table.insert(self.batchRange, {
       ["begin"] = offset,
       ["end"] = #self.src,
@@ -197,6 +210,7 @@ function SampledDataset:sample()
   end
 
   _G.logger:info('Prepared ' .. #self.batchRange .. ' batches')
+  return #self.batchRange, batchesOccupation / batchesCapacity
 end
 
 --[[ Get perplexity. ]]
@@ -224,8 +238,9 @@ function SampledDataset:setLoss(batchIdx, loss)
 end
 
 --[[ Setup up the training data to respect `maxBatchSize`. ]]
-function SampledDataset:setBatchSize(maxBatchSize)
+function SampledDataset:setBatchSize(maxBatchSize, uneven_batches)
   self.maxBatchSize = maxBatchSize
+  self.uneven_batches = uneven_batches
   self.maxSourceLength = 0
   self.maxTargetLength = 0
 
@@ -238,7 +253,7 @@ function SampledDataset:setBatchSize(maxBatchSize)
     end
   end
 
-  self:sample()
+  return self:sample()
 end
 
 --[[ Return number of sampled instances. ]]
