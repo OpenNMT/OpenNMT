@@ -84,11 +84,11 @@ function Checkpoint.loadFromCheckpoint(opt)
 
     checkpoint = torch.load(opt.train_from)
 
+    -- Reload and check options.
     for k,v in pairs(opt) do
       if k:sub(1, 1) ~= '_' then
+        -- If an option was set by the user, check that we can actually change it.
         local isDefault = opt._is_default and opt._is_default[k]
-        -- if parameter was set in commandline (and not default value)
-        -- we need to check that we can actually change it
 
         if opt._structural[k] then
           if not isDefault and v ~= checkpoint.options[k] then
