@@ -141,7 +141,7 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
   return Factory.buildEncoder(opt, inputNetwork)
 end
 
-function Factory.loadEncoder(pretrained, clone, opt)
+function Factory.loadEncoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
@@ -200,7 +200,7 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   return Factory.buildDecoder(opt, inputNetwork, generator)
 end
 
-function Factory.loadDecoder(pretrained, clone, opt)
+function Factory.loadDecoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
