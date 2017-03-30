@@ -7,6 +7,7 @@
 * Add pyramidal deep bidirectional encoder
 * Add alternative learning rate decay strategy for SGD training
 * Add sequence tagger model
+* Add length and coverage normalization during the beam search
 
 ### Fixes and improvements
 
