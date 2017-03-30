@@ -12,6 +12,11 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
   else
     wordEmbSize = tonumber(wordSizes[1])
   end
+  
+  -- if we want to tie word embedding then they must have the same size
+  if opt.tie_embedding == true then
+	assert(wordEmbSize == opt.rnn_size)
+  end
 
   for i = 1, #dicts.features do
     local size
@@ -23,7 +28,7 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
     else
       size = math.floor(dicts.features[i]:size() ^ opt.feat_vec_exponent)
     end
-
+    
     table.insert(featEmbSizes, size)
   end
 
@@ -73,6 +78,7 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   end
 
   inputNetwork.inputSize = inputSize
+  inputNetwork.wordEmbLayer = wordEmbedding
 
   return inputNetwork
 end
@@ -178,6 +184,25 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
                                          opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
+  
+  -- tieing the weights if chosen
+  if opt.tie_embedding == true then
+      _G.logger:info(" * Tying weights between the word embedding and the final softmax layer")
+	  local linearLayer
+	  if #dicts.features > 0 then
+		-- this is a feature generator
+		-- first modules[1] is the concattable
+		-- second modules[1] is the sequential
+		-- third modules[1] is the linear
+		linearLayer = generator.modules[1].modules[1].modules[1] 
+	  else
+		linearLayer = generator.modules[1].modules[1]
+	  end
+	  
+	  --~ print(linearLayer)
+	  --~ linearLayer:noBias()
+	  --~ linearLayer:share(inputNetwork.wordEmbLayer.modules[1], 'weight', 'gradWeight')
+  end
 
   return Factory.buildDecoder(opt, inputNetwork, generator, verbose)
 end
