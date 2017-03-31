@@ -89,25 +89,27 @@ end
 
 -- returns RNGState for CPU and enabled GPUs
 function Cuda.getRNGStates()
-  local rngstates = { torch.getRNGState() }
+  local rngStates = { torch.getRNGState() }
   for _,idx in ipairs(Cuda.gpuIds) do
-    table.insert(rngstates, cutorch.getRNGState(idx))
+    table.insert(rngStates, cutorch.getRNGState(idx))
   end
   return rngStates
 end
 
 -- set RNGState from saved state
-function Cuda.setRNGStates(rngStates)
+function Cuda.setRNGStates(rngStates, verbose)
   if not rngStates then
     return
   end
-  _G.logger:info("Resetting Random Number Generator states")
+  if verbose then
+    _G.logger:info("Resetting Random Number Generator states")
+  end
   torch.setRNGState(rngStates[1])
   if #rngStates-1 ~= #Cuda.gpuIds then
     _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
   end
   for idx = 2, #Cuda.gpuIds do
-    cutorch.getRNGState(rngStates[idx], idx-1)
+    cutorch.setRNGState(rngStates[idx], idx-1)
   end
 end
 

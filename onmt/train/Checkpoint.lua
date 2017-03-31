@@ -129,7 +129,6 @@ function Checkpoint.loadFromCheckpoint(opt)
 
       opt.learning_rate = checkpoint.info.learningRate
       opt.start_epoch = checkpoint.info.epoch
-      onmt.utils.Cuda.setRNGStates(checkpoint.info.rngStates)
       opt.start_iteration = checkpoint.info.iteration
 
       _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
