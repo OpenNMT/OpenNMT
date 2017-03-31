@@ -16,6 +16,7 @@
 * Fix individual losses that were always computed when using random sampling
 * Allow to change the state of word embeddings optimization during a retraining
 * Check consistency of option settings when training from existing model
+* Save and Restore random number generator states in checkpoints
 
 ## [v0.5.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.3) (2017-03-30)
 

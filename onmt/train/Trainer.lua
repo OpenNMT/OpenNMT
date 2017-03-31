@@ -124,6 +124,11 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     gradParams[idx] = thegradParams
   end)
 
+  if info then
+    -- if we had saved a previous rng state - restore it
+    onmt.utils.Cuda.setRNGStates(info.rngStates, true)
+  end
+
   local checkpoint = onmt.train.Checkpoint.new(self.options, model, optim, dataset.dicts)
 
   optim:setOptimStates(#params[1])

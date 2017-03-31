@@ -87,6 +87,32 @@ function Cuda.init(opt, masterGPU)
   end
 end
 
+-- returns RNGState for CPU and enabled GPUs
+function Cuda.getRNGStates()
+  local rngStates = { torch.getRNGState() }
+  for _,idx in ipairs(Cuda.gpuIds) do
+    table.insert(rngStates, cutorch.getRNGState(idx))
+  end
+  return rngStates
+end
+
+-- set RNGState from saved state
+function Cuda.setRNGStates(rngStates, verbose)
+  if not rngStates then
+    return
+  end
+  if verbose then
+    _G.logger:info("Resetting Random Number Generator states")
+  end
+  torch.setRNGState(rngStates[1])
+  if #rngStates-1 ~= #Cuda.gpuIds then
+    _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
+  end
+  for idx = 2, #rngStates do
+    cutorch.setRNGState(rngStates[idx], idx-1)
+  end
+end
+
 --[[
   Recursively move all supported objects in `obj` on the GPU.
   When using CPU only, converts to float instead of the default double.
