@@ -38,11 +38,14 @@ function ContextCoverage:_buildModel(hiddenSize, coverageSize)
   local context = inputs[2]
   local lastCoverage = inputs[1]
   
+  -- transform the decoder hidden layer
+  --~ decHidden = nn.Linear(hiddenSize, coverageSize)(decHidden)
+  
   -- In this GRU unit, there are actually three current inputs: context, alignment and hidden layer
-  local function buildGate(cov, context, align)
+  local function buildGate(cov, context, align, hidden)
 	local projectedContext = onmt.SequenceLinear(hiddenSize, coverageSize)(context) -- these two will play the role of 'x' in typical GRU
 	local projectedAlign = onmt.SequenceLinear(1, coverageSize)(align)
-	local projectedCov = onmt.SequenceLinear(coverageSize, coverageSize)(cov)	
+	local projectedCov = onmt.SequenceLinear(coverageSize, coverageSize)(cov)
 	
 	return nn.CAddTable()({projectedCov, projectedAlign, projectedContext})
   end
@@ -69,4 +72,3 @@ function ContextCoverage:_buildModel(hiddenSize, coverageSize)
 end
 
 
-return ContextCoverage

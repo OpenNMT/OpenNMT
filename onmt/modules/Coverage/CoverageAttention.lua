@@ -44,10 +44,10 @@ function CoverageAttention:_buildModel(dim, coverageDim)
   local transformedCoverage = onmt.SequenceLinear(coverageDim, dim, false)(inputs[3]) -- no bias here 
   
   -- update the context matrix with the coverage vector
-  context = nn.CAddTable()({context, transformedCoverage})
+  local coveragedContext = nn.CAddTable()({context, transformedCoverage})
   
   -- Get attention.
-  local attn = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
+  local attn = nn.MM()({coveragedContext, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
   attn = nn.Sum(3)(attn)
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'

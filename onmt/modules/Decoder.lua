@@ -310,6 +310,8 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, prevCoverage, t
     self.inputs[t] = inputs
   end
   
+  --~ print(self.inputs[t])
+  
   local outputs = self:net(t):forward(inputs)
 
   -- Make sure decoder always returns table.
