@@ -1,0 +1,34 @@
+site_name: OpenNMT
+theme: readthedocs
+docs_dir: docs
+extra_javascript:
+  - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+markdown_extensions:
+  - math
+  - sane_lists
+  - def_list
+  - fenced_code
+pages:
+  - Overview: index.md
+  - Quickstart: quickstart.md
+  - Data:
+      - "Word features": data/word_features.md
+  - Training:
+      - Models: training/models.md
+      - Embeddings: training/embeddings.md
+      - GPU: training/gpu.md
+      - Retraining: training/retraining.md
+      - "Data sampling": training/sampling.md
+      - "Decay strategies": training/decay.md
+  - Translation:
+      - Translate: translation/translate.md
+  - Options:
+      - Concept: options/concept.md
+      - Preprocess: options/preprocess.md
+      - Train: options/train.md
+      - Translate: options/translate.md
+  - Tools:
+      - Tokenization: tools/tokenization.md
+      - Servers: tools/servers.md
+  - Extensions: extensions.md
+  - "Common issues": issues.md
