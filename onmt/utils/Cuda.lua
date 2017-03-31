@@ -107,9 +107,10 @@ function Cuda.setRNGStates(rngStates, verbose)
   torch.setRNGState(rngStates[1])
   if #rngStates-1 ~= #Cuda.gpuIds then
     _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
-  end
-  for idx = 2, #rngStates do
-    cutorch.setRNGState(rngStates[idx], idx-1)
+  else
+    for idx = 2, #rngStates do
+      cutorch.setRNGState(rngStates[idx], idx-1)
+    end
   end
 end
 
