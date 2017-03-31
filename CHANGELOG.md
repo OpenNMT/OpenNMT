@@ -7,12 +7,15 @@
 * Add pyramidal deep bidirectional encoder
 * Add alternative learning rate decay strategy for SGD training
 * Add sequence tagger model
+* Introduce dynamic parameter change for dropout
 * Add length and coverage normalization during the beam search
 
 ### Fixes and improvements
 
+* [*Breaking, changed option*] `-fix_word_vecs` options now accept `0` and `1` for a better retraining experience
 * Fix individual losses that were always computed when using random sampling
 * Allow to change the state of word embeddings optimization during a retraining
+* Check consistency of option settings when training from existing model
 
 ## [v0.5.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.2) (2017-03-29)
 

@@ -2,9 +2,17 @@
 local Checkpoint = torch.class('Checkpoint')
 
 local options = {
-  {'-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]],
-                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]]}
+  {
+    '-train_from', '',
+    [[Path to a checkpoint.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
+    '-continue', false,
+    [[If set, continue the training where it left off.]]
+  }
 }
 
 function Checkpoint.declareOpts(cmd)
@@ -78,22 +86,37 @@ end
 
 function Checkpoint.loadFromCheckpoint(opt)
   local checkpoint = {}
+  local paramChanges = {}
   if opt.train_from:len() > 0 then
     _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
 
     checkpoint = torch.load(opt.train_from)
 
-    opt.layers = checkpoint.options.layers
-    opt.rnn_size = checkpoint.options.rnn_size
-    opt.brnn = checkpoint.options.brnn
-    opt.brnn_merge = checkpoint.options.brnn_merge
-    opt.input_feed = checkpoint.options.input_feed
+    -- Reload and check options.
+    for k,v in pairs(opt) do
+      if k:sub(1, 1) ~= '_' then
+        -- If an option was set by the user, check that we can actually change it.
+        local isDefault = opt._is_default and opt._is_default[k]
+
+        if opt._structural[k] then
+          if not isDefault and v ~= checkpoint.options[k] then
+            if opt._structural[k] == 0 then
+              _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
+            else
+              paramChanges[k] = v
+            end
+          end
+          opt[k] = checkpoint.options[k]
+        end
+
+        if opt._init_only[k] == true and not isDefault then
+          _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
+        end
+      end
+    end
 
     -- Resume training from checkpoint
     if opt.continue then
-      opt.fix_word_vecs_enc = checkpoint.options.fix_word_vecs_enc
-      opt.fix_word_vecs_dec = checkpoint.options.fix_word_vecs_dec
-
       opt.optim = checkpoint.options.optim
       opt.learning_rate_decay = checkpoint.options.learning_rate_decay
       opt.start_decay_at = checkpoint.options.start_decay_at
@@ -113,7 +136,8 @@ function Checkpoint.loadFromCheckpoint(opt)
       checkpoint.info = nil
     end
   end
-  return checkpoint, opt
+
+  return checkpoint, opt, paramChanges
 end
 
 return Checkpoint
