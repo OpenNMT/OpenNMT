@@ -101,7 +101,7 @@ function ExtendedCmdLine:help(arg, doMd)
           if option.help then
             io.write(option.help)
           end
-          valInfo = {}
+          local valInfo = {}
           if option.meta and option.meta.enum then
             for k, v in pairs(option.meta.enum) do
               option.meta.enum[k] = '`' .. v .. '`'
@@ -167,7 +167,7 @@ function ExtendedCmdLine:help(arg, doMd)
           io.write(onmt.utils.String.pad(option.key, optsz))
           local msg = ''
           msg = msg .. option.help:gsub('\n', ' ')
-          valInfo = {}
+          local valInfo = {}
           if option.meta and option.meta.enum then
             table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
           end
