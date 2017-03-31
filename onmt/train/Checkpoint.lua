@@ -31,6 +31,7 @@ end
 function Checkpoint:save(filePath, info)
   info.learningRate = self.optim:getLearningRate()
   info.optimStates = self.optim:getStates()
+  info.rngStates = onmt.utils.Cuda.getRNGStates()
 
   local data = {
     models = {},
@@ -128,6 +129,7 @@ function Checkpoint.loadFromCheckpoint(opt)
 
       opt.learning_rate = checkpoint.info.learningRate
       opt.start_epoch = checkpoint.info.epoch
+      onmt.utils.Cuda.setRNGStates(checkpoint.info.rngStates)
       opt.start_iteration = checkpoint.info.iteration
 
       _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
