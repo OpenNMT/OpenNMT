@@ -1,9 +1,18 @@
 local CrayonLogger = torch.class('CrayonLogger')
 
 local options = {
-  {'-exp_host', '127.0.0.1', [[Crayon server IP]], {}},
-  {'-exp_port', '8889', [[Crayon Server port]], {}},
-  {'-exp', '', [[Crayon experiment name]], {}}
+  {
+    '-exp_host', '127.0.0.1',
+    [[Crayon server IP.]]
+  },
+  {
+    '-exp_port', '8889',
+    [[Crayon server port.]]
+  },
+  {
+    '-exp', '',
+    [[Crayon experiment name.]]
+  }
 }
 
 function CrayonLogger.declareOpts(cmd)

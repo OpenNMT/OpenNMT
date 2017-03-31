@@ -2,17 +2,54 @@
 local LanguageModel, parent = torch.class('LanguageModel', 'Model')
 
 local options = {
-  {'-word_vec_size', '500', [[Comma-separated list of embedding sizes: word[,feat1,feat2,...].]]},
-  {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
-                                     pretrained word embeddings on the encoder side.
-                                     See README for specific formatting instructions.]],
-                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-fix_word_vecs_enc', 0, [[Fix word embeddings on the encoder side]]},
-  {'-feat_merge', 'concat', [[Merge action for the features embeddings.]],
-                     {enum={'concat', 'sum'}}},
-  {'-feat_vec_exponent', 0.7, [[When using concatenation, if the feature takes N values
-                                        then the embedding dimension will be set to N^exponent]]},
-  {'-feat_vec_size', 20, [[When using sum, the common embedding size of the features]]}
+  {
+    '-word_vec_size', '500',
+    [[Comma-separated list of embedding sizes: word[,feat1,feat2,...].]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-pre_word_vecs_enc', '',
+    [[Path to pretrained word embeddings on the encoder side serialized as a Torch tensor.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists,
+      init_only = true
+    }
+  },
+  {
+    '-fix_word_vecs_enc', 0,
+    [[Fix word embeddings on the encoder side.]],
+    {
+      enum = {0, 1},
+      structural = 1
+    }
+  },
+  {
+    '-feat_merge', 'concat',
+    [[Merge action for the features embeddings.]],
+    {
+      enum = {'concat', 'sum'},
+      structural = 0
+    }
+  },
+  {
+    '-feat_vec_exponent', 0.7,
+    [[When features embedding sizes are not set and using -feat_merge concat, their dimension
+      will be set to N^exponent where N is the number of values the feature takes.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-feat_vec_size', 20,
+    [[When features embedding sizes are not set and using -feat_merge sum,
+      this is the common embedding size of the features]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  }
 }
 
 function LanguageModel.declareOpts(cmd)

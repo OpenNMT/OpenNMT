@@ -2,9 +2,17 @@
 local Checkpoint = torch.class('Checkpoint')
 
 local options = {
-  {'-train_from', '',  [[If training from a checkpoint then this is the path to the pretrained model.]],
-                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-continue', false, [[If training from a checkpoint, whether to continue the training in the same configuration or not.]]}
+  {
+    '-train_from', '',
+    [[Path to a checkpoint.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
+    '-continue', false,
+    [[If set, continue the training where it left off.]]
+  }
 }
 
 function Checkpoint.declareOpts(cmd)

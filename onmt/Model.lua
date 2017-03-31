@@ -2,15 +2,26 @@
 local Model = torch.class('Model')
 
 local options = {
-  {'-model_type', 'seq2seq',  [[Type of the model to train.
-                              This option impacts all options choices]],
-                     {enum={'lm','seq2seq', 'seqtagger', structural=0}}},
-  {'-param_init', 0.1, [[Parameters are initialized over uniform distribution with support (-param_init, param_init)]],
-                       {valid=function(v) return v >= 0 and v <= 1 end, init_only=true}}
+  {
+    '-model_type', 'seq2seq',
+    [[Type of model to train. This option impacts all options choices.]],
+    {
+      enum = {'lm', 'seq2seq', 'seqtagger'},
+      structural = 0
+    }
+  },
+  {
+    '-param_init', 0.1,
+    [[Parameters are initialized over uniform distribution with support (-param_init, param_init).]],
+    {
+      valid = function(v) return v >= 0 and v <= 1 end,
+      init_only = true
+    }
+  }
 }
 
 function Model.declareOpts(cmd)
-  cmd:setCmdLineOptions(options)
+  cmd:setCmdLineOptions(options, 'Model')
 end
 
 function Model:__init(args)

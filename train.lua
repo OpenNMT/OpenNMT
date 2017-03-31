@@ -10,33 +10,43 @@ local modelClass = onmt.ModelSelector(modelType)
 
 -- Options declaration.
 local options = {
-  {'-data',       '', [[Path to the training *-train.t7 file from preprocess.lua]],
-                      {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-  {'-save_model', '', [[Model filename (the model will be saved as
-                            <save_model>_epochN_PPL.t7 where PPL is the validation perplexity]],
-                      {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
+  {
+    '-data', '',
+    [[Path to the data package *-train.t7 file from preprocess.lua.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-save_model', '',
+    [[Model filename (the model will be saved as <save_model>_epochN_PPL.t7
+      where PPL is the validation perplexity.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Data')
 
+onmt.data.SampledDataset.declareOpts(cmd)
 onmt.Model.declareOpts(cmd)
 modelClass.declareOpts(cmd)
 onmt.train.Optim.declareOpts(cmd)
 onmt.train.Trainer.declareOpts(cmd)
 onmt.train.Checkpoint.declareOpts(cmd)
 onmt.utils.CrayonLogger.declareOpts(cmd)
-onmt.data.SampledDataset.declareOpts(cmd)
+onmt.utils.Cuda.declareOpts(cmd)
+onmt.utils.Logger.declareOpts(cmd)
 
 cmd:text('')
 cmd:text('**Other options**')
 cmd:text('')
 
-onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Memory.declareOpts(cmd)
-onmt.utils.Logger.declareOpts(cmd)
 onmt.utils.Profiler.declareOpts(cmd)
 
-cmd:option('-seed', 3435, [[Seed for random initialization]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
+cmd:option('-seed', 3435, [[Random seed.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 
 local opt = cmd:parse(arg)
 

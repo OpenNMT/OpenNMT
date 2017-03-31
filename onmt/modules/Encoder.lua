@@ -15,18 +15,52 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
 local options = {
-  {'-layers', 2,         [[Number of layers in the RNN Encoder/decoder]],
-                            {valid=onmt.utils.ExtendedCmdLine.isUInt(), structural=0}},
-  {'-rnn_size', 500,     [[Size of RNN hidden states]],
-                            {valid=onmt.utils.ExtendedCmdLine.isUInt(), structural=0}},
-  {'-rnn_type', 'LSTM', [[Type of RNN cell]],
-                            {enum={'LSTM','GRU'}, structural=0}},
-  {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]],
-                            {valid=onmt.utils.ExtendedCmdLine.isFloat(0,1), structural=1}},
-  {'-dropout_input', false, [[Add dropout also on input.]],
-                            {structural=0}},
-  {'-residual', false, [[Add residual connections between RNN layers.]],
-                            {structural=0}}
+  {
+    '-layers', 2,
+    [[Number of recurrent layers of the encoder and decoder.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
+    '-rnn_size', 500,
+    [[Hidden size of the recurrent unit.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
+    '-rnn_type', 'LSTM',
+    [[Type of recurrent cell.]],
+    {
+      enum = {'LSTM', 'GRU'},
+      structural = 0
+    }
+  },
+  {
+    '-dropout', 0.3,
+    [[Dropout probability applied between recurrent layers.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0, 1),
+      structural = 1
+    }
+  },
+  {
+    '-dropout_input', false,
+    [[Also apply dropout to the input of the recurrent module.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-residual', false,
+    [[Add residual connections between recurrent layers.]],
+    {
+      structural = 0
+    }
+  }
 }
 
 function Encoder.declareOpts(cmd)

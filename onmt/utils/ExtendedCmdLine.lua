@@ -97,14 +97,23 @@ function ExtendedCmdLine:help(arg, doMd)
         io.write('* ')
         if option.default ~= nil then -- It is an option.
           io.write('`' .. option.key .. '`: ')
-          if option.meta and option.meta.enum then
-            io.write('(' .. table.concat(option.meta.enum, ', ') .. ') ')
-          end
           option.help = option.help:gsub(' *\n   *', ' ')
           if option.help then
             io.write(option.help)
           end
-          io.write(' [' .. tostring(option.default) .. ']')
+          valInfo = {}
+          if option.meta and option.meta.enum then
+            for k, v in pairs(option.meta.enum) do
+              option.meta.enum[k] = '`' .. v .. '`'
+            end
+            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+          end
+          if type(option.default) ~= "boolean" and option.default ~= '' then
+            table.insert(valInfo, 'default: `' .. tostring(option.default) .. '`')
+          end
+          if #valInfo > 0 then
+            io.write(' (' .. table.concat(valInfo, '; ') .. ')')
+          end
         else -- It is an argument.
           io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
           if option.help then
@@ -157,12 +166,16 @@ function ExtendedCmdLine:help(arg, doMd)
         if option.default ~= nil then -- It is an option.
           io.write(onmt.utils.String.pad(option.key, optsz))
           local msg = ''
-          if option.meta and option.meta.enum then
-            msg = '(' .. table.concat(option.meta.enum, ', ') .. ') '
-          end
           msg = msg .. option.help:gsub('\n', ' ')
+          valInfo = {}
+          if option.meta and option.meta.enum then
+            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+          end
           if type(option.default) ~= "boolean" and option.default ~= '' then
-            msg = msg .. ' Default [' .. tostring(option.default) .. ']'
+            table.insert(valInfo, 'default: ' .. tostring(option.default))
+          end
+          if #valInfo > 0 then
+            msg = msg .. ' (' .. table.concat(valInfo, '; ') .. ')'
           end
           io.write(' ' .. wrapIndent(msg:gsub('  *', ' '),60,padMultiLine..'     '))
         else -- It is an argument.
