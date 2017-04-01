@@ -62,7 +62,7 @@ function Vocabulary.make(filename, validFunc)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency)
   local wordVocab
   local featuresVocabs = {}
   local numFeatures = countFeatures(dataFile)
@@ -101,7 +101,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
              .. ' features but only ' .. #featuresVocabs .. ' dictionaries were found')
   end
 
-  if wordVocab == nil or (#featuresVocabs == 0 and numFeatures > 0) then
+  if keepFrequency or wordVocab == nil or (#featuresVocabs == 0 and numFeatures > 0) then
     -- If a dictionary is still missing, generate it.
     _G.logger:info('Building ' .. name  .. ' vocabularies...')
     local genWordVocab, genFeaturesVocabs = Vocabulary.make(dataFile, validFunc)

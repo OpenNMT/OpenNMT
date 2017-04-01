@@ -149,6 +149,24 @@ function Dict:pruneByMinFrequency(minFrequency)
   return newDict
 end
 
+--[[ Return a new dictionary based on provided dictionary. ]]
+function Dict:filterDict(dict)
+  local newDict = Dict.new()
+
+  for i = 1, dict:size() do
+    local token = dict:idxToLabel(i)
+    local idx = self:labelToIdx(token)
+    local frequency = 0
+    if idx then
+      frequency = self.frequencies[idx]
+    end
+    newDict:add(token, i)
+    newDict.frequencies[i] = frequency
+  end
+
+  return newDict
+end
+
 --[[
   Convert `labels` to indices. Use `unkWord` if not found.
   Optionally insert `bosWord` at the beginning and `eosWord` at the end.
