@@ -71,6 +71,8 @@ build = {
     ["onmt.translate.BeamSearcher"] = "onmt/translate/BeamSearcher.lua",
     ["onmt.translate.Translator"] = "onmt/translate/Translator.lua",
     ["onmt.translate.PhraseTable"] = "onmt/translate/PhraseTable.lua",
+    ["onmt.translate.EnsembleTranslator"] = "onmt/translate/Ensemble/EnsembleTranslator.lua",
+    ["onmt.translate.EnsembleDecoderAdvancer"] = "onmt/translate/Ensemble/EnsembleDecoderAdvancer.lua",
     ["onmt.utils.init"] = "onmt/utils/init.lua",
     ["onmt.utils.Cuda"] = "onmt/utils/Cuda.lua",
     ["onmt.utils.Dict"] = "onmt/utils/Dict.lua",
@@ -91,6 +93,6 @@ build = {
     ["onmt.ModelSelector"] = "onmt/ModelSelector.lua",
     ["onmt.LanguageModel"] = "onmt/LanguageModel.lua",
     ["onmt.Seq2Seq"] = "onmt/Seq2Seq.lua",
-    ["onmt.Model"] = "onmt/Model.lua"
+    ["onmt.Model"] = "onmt/Model.lua",
   }
 }

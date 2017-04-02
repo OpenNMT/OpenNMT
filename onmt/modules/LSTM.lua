@@ -40,12 +40,13 @@ function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_i
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
   self.dropout_input = dropout_input
+  self.ln = ln
 
   parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input))
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
+function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, ln)
   local inputs = {}
   local outputs = {}
 
@@ -83,7 +84,7 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
     local prevC = inputs[L*2 - 1]
     local prevH = inputs[L*2]
 
-    nextC, nextH = self:_buildLayer(inputDim, hiddenSize)({prevC, prevH, input}):split(2)
+    nextC, nextH = self:_buildLayer(inputDim, hiddenSize, ln)({prevC, prevH, input}):split(2)
     prevInput = input
 
     table.insert(outputs, nextC)
@@ -94,7 +95,7 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
 end
 
 --[[ Build a single LSTM unit layer. ]]
-function LSTM:_buildLayer(inputSize, hiddenSize)
+function LSTM:_buildLayer(inputSize, hiddenSize, ln)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -125,7 +126,7 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
     nn.CMulTable()({forgetGate, prevC}),
     nn.CMulTable()({inGate, inTransform})
   })
-
+  
   -- Gated cells form the output.
   local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
 

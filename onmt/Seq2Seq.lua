@@ -38,7 +38,7 @@ local options = {
   {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
   {'-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]]},
   {'-dropout', 0.3, [[Dropout probability. Dropout is applied between vertical LSTM stacks.]]},
-  {'-dropout_embedding', 0, [[Dropout probability on embedding (input of LSTM)]]},
+  {'-dropout_input', 0, [[Dropout probability on embedding (input of LSTM)]]},
   {'-tie_embedding', false, [[Tie the embedding layer and the linear layer of the output]]}
 }
 

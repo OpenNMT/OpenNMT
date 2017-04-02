@@ -24,7 +24,7 @@ function DecoderAdvancer:__init(decoders, batch, contexts, max_sent_length, max_
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
   self.nModels = #self.decoders -- number of models
-  self.ensembleOps = ensembleOps or 'sum'
+  self.ensembleOps = ensembleOps or 'sum' -- sum or logsum
   
   self.decStates = {}
   
@@ -55,26 +55,20 @@ function DecoderAdvancer:ensembleScore(scores)
 	
 	
 	if self.ensembleOps == 'sum' then -- get the average of the probability
-	
 		for n = 1, nOutputs do
-		
 			score[n] = torch.exp(score[n]) -- so we have to exp to get the prob
-			
 			for i = 2, self.nModels do
 				score[n]:add(torch.exp(scores[i][n]))
 			end
-			score[n]:div(self.nModels)
+			score[n]:div(self.nModels) -- take the average
 			score[n] = torch.log(score[n])
 		end
 	else -- logsum operation. 
-		
 		for n = 1, nOutputs do
 			for i = 2, self.nModels do
 				score[n]:add(scores[i][n])
 			end
-			
 			score[n]:div(self.nModels)
-				
 			score[n] = self.logSoftMax:forward(score[n])
 		end 
 	end
@@ -129,7 +123,6 @@ function DecoderAdvancer:update(beam)
     inputs = { token }
     table.insert(inputs, features)
   end
-  --~ self.decoder:maskPadding(sourceSizes, self.batch.sourceLength)
   
   local newOuts = {}
   local newCovs = {}
@@ -155,10 +148,7 @@ function DecoderAdvancer:update(beam)
   end
  
   
-  --~ decOut, decCov, decStates = self.decoder:forwardOne(inputs, decStates, context, decOut, decCov)
   t = t + 1
-  --~ local softmaxOut = self.decoder.softmaxAttn.output
-  --~ local nextState = {decStates, decOut, decCov, context, softmaxOut, nil, sourceSizes, t}
   local nextState = {newStates, newOuts, newCovs, contexts, attnOuts, nil, sourceSizes, t}
   beam:setState(nextState)
 end

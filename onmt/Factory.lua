@@ -1,3 +1,4 @@
+
 local Factory = torch.class('Factory')
 
 -- Return effective embeddings size based on user options.
@@ -113,11 +114,11 @@ function Factory.buildEncoder(opt, inputNetwork)
       error('invalid merge action ' .. opt.brnn_merge)
     end
 
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual, opt.dropout_input)
 
     encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
   else
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
+    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.dropout_input)
 
     encoder = onmt.Encoder.new(inputNetwork, rnn)
   end
@@ -167,7 +168,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator, verbose)
   if opt.rnn_type == 'GRU' then
     RNN = onmt.GRU
   end
-  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
+  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.dropout_input)
   
   if opt.attention == 'cgate' then
     if verbose then
@@ -204,7 +205,6 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
 		wordEmbLayer = inputNetwork.modules[1]
 	  end
 	  
-	  --~ print(linearLayer)
 	  linearLayer:noBias()
 	  linearLayer:share(wordEmbLayer, 'weight', 'gradWeight')
   end

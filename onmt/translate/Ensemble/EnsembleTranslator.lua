@@ -255,10 +255,12 @@ function Translator:computeGoldScore(batch, encStates, contexts)
 
 	local scores = {}
 	
-	--~ for i = 1, self.nModels do
-		--~ if batch.size > 1 then self.models[i].decoder:maskPadding(batch.sourceSize, batch.sourceLength) end
+	for i = 1, self.nModels do
+		if batch.size > 1 then self.models[i].decoder:maskPadding(batch.sourceSize, batch.sourceLength) end
 		--~ scores[i] = self.models[i].decoder:computeScore(batch, encStates[i], contexts[i])
-	--~ end
+	end
+	
+	
 	
 	--~ local goldScore = self:ensembleScore(scores)
 	
@@ -308,7 +310,8 @@ function Translator:translateBatch(batch)
                                                       self.opt.max_sent_length,
                                                       self.opt.max_num_unks,
                                                       encStates,
-                                                      self.dicts, self.opt.word_pen)
+                                                      self.dicts, self.opt.word_pen,
+                                                      self.ensembleOps)
 
   -- Save memory by only keeping track of necessary elements in the states.
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.
