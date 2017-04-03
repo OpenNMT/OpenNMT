@@ -242,7 +242,8 @@ function Translator:ensembleScore(scores)
 		for i = 2, self.nModels do
 			score:add(scores[i])
 		end
-			
+		
+		score:div(self.nModels)
 		score = self.logSoftMax:forward(score) 
 	end
 	
@@ -253,12 +254,78 @@ end
 -- For decoder advancer, we have to compute the gold score a bit differently 
 function Translator:computeGoldScore(batch, encStates, contexts)
 
-	local scores = {}
+
+	local goldScore = self.models[1].decoder:computeScore(batch, encStates[1], contexts[1])
 	
-	for i = 1, self.nModels do
-		if batch.size > 1 then self.models[i].decoder:maskPadding(batch.sourceSize, batch.sourceLength) end
-		--~ scores[i] = self.models[i].decoder:computeScore(batch, encStates[i], contexts[i])
+	for i = 2, self.nModels do
+		local score = self.models[i].decoder:computeScore(batch, encStates[i], contexts[i])
+		for b = 1, batch.size do
+			goldScore[b] = goldScore[b] + score[b]
+		end
 	end
+	
+	for b = 1, batch.size do
+		goldScore[b] = goldScore[b] / self.nModels
+	end
+
+	--~ local scoreSeqs = {}
+	
+	--~ for i = 1, self.nModels do
+		--~ if batch.size > 1 then self.models[i].decoder:maskPadding(batch.sourceSize, batch.sourceLength) end
+		--~ scores[i] = self.models[i].decoder:computeScore(batch, encStates[i], contexts[i])
+		--~ scoreSeqs[i] = self.models[i].decoder:computeScore(batch, encStates[i], contexts[i], true)
+		
+		--~ print(scoreSeqs[i])
+	--~ end
+	
+	
+	
+	--~ local mainScoreSeq = scoreSeqs[1]
+	
+	--~ print(mainScoreSeq)
+	--~ local nSteps = #mainScoreSeq
+	
+	--~ for t = 1, nSteps do
+		--~ if self.ensembleOps == 'sum' then
+			--~ mainScoreSeq[t] = torch.exp(mainScoreSeq[t])
+		--~ end
+		
+		--~ for i = 2, self.nModels do
+			--~ if self.ensembleOps == 'sum' then
+				--~ mainScoreSeq[t]:add(torch.exp(scoreSeqs[i][t]))
+			--~ else
+				--~ mainScoreSeq[t]:add(scoreSeq[i][t])
+			--~ end
+		--~ end
+		
+		--~ mainScoreSeq[t]:div(self.nModels)
+		
+		--~ if self.ensembleOps == 'sum' then
+			--~ mainScoreSeq[t] = torch.log(mainScoreSeq[t])
+		--~ else
+			--~ mainScoreSeq[t] = self.logSoftMax:forward(mainScoreSeq[t])
+		--~ end
+	--~ end
+	
+	--~ local goldScore = {}
+	
+	--~ for t = 1, nSteps do
+		
+		--~ for b = 1, batch.size do
+			--~ goldScore[b] = (goldScore[b] or 0) + mainScoreSeq[t][b] 
+		--~ end	
+	--~ end
+	
+	--~ for i = 2, self.nModels do
+		
+		--~ for t = 1, nSteps do
+			
+			--~ if self.ensembleOps = 'sum' then
+				--~ mainScoreSeq[t] = torch.exp(mainScoreSeq[t])
+			--~ end
+			
+		--~ end
+	--~ end
 	
 	
 	
