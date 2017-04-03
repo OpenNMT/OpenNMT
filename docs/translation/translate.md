@@ -1,9 +1,3 @@
-## Beam search
-
-By default translation is done using beam search. The `-beam_size` option can be used to trade-off translation time and search accuracy, with `-beam_size 1` giving greedy search. The small default beam size is often enough in practice.
-
-Beam search can also be used to provide an approximate n-best list of translations by setting `-n_best` greater than 1. For analysis, the translation command also takes an oracle/gold `-tgt` file and will output a comparison of scores.
-
 ## Unknown words
 
 The default translation mode allows the model to produce the UNK

@@ -17,12 +17,13 @@ pages:
   - Training:
       - Models: training/models.md
       - Embeddings: training/embeddings.md
-      - GPU: training/gpu.md
+      - "Mutli GPU": training/multi_gpu.md
       - Retraining: training/retraining.md
-      - "Data sampling": training/sampling.md
       - "Decay strategies": training/decay.md
+      - "Data sampling": training/sampling.md
   - Translation:
       - Translate: translation/translate.md
+      - "Beam search": translation/beam_search.md
   - Options:
       - Concept: options/concept.md
       - Preprocess: options/preprocess.md

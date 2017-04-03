@@ -20,8 +20,8 @@ th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/mode
 
 You can test it with a `curl` command locally or from any other client:
 
-```curl
-curl -v -H "Content-Type: application/json" -X POST -d '{ "src" : "Hello World }' http://IP_address:7784/translator/translate
+```text
+curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "Hello World }]' http://IP_address:7784/translator/translate
 ```
 
 Answer will be embeeded in a JSON format, translated sentence in the `tgt` section. Additionnally you can get the attention matrix with the `-withAttn` option in the server command line.
