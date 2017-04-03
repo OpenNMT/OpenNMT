@@ -25,13 +25,16 @@ pages:
       - Inference: translation/inference.md
       - "Beam search": translation/beam_search.md
       - "Unkown words": translation/unknowns.md
-  - Options:
+  - Tools:
+      - Tokenization: tools/tokenization.md
+      - Servers: tools/servers.md
+  - "Reference: Options":
       - Concept: options/concept.md
       - Preprocess: options/preprocess.md
       - Train: options/train.md
       - Translate: options/translate.md
-  - Tools:
-      - Tokenization: tools/tokenization.md
-      - Servers: tools/servers.md
+      - Tag: options/tag.md
+      - Tokenize: options/tokenize.md
+      - "REST server": options/rest_server.md
   - Extensions: extensions.md
   - "Common issues": issues.md

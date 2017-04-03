@@ -1,6 +1,6 @@
 ## Configuration files
 
-When using the main scripts `preprocess.lua`, `train.lua` and `translate.lua`, you can pass your options using a configuration file. The file has a simple key-value syntax with one `option = value` per line. Here is an example:
+You can pass your options using a configuration file. The file has a simple key-value syntax with one `option = value` per line. Here is an example:
 
 ```
 $ cat generic.txt
