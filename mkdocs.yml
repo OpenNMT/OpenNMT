@@ -22,8 +22,9 @@ pages:
       - "Decay strategies": training/decay.md
       - "Data sampling": training/sampling.md
   - Translation:
-      - Translate: translation/translate.md
+      - Inference: translation/inference.md
       - "Beam search": translation/beam_search.md
+      - "Unkown words": translation/unknowns.md
   - Options:
       - Concept: options/concept.md
       - Preprocess: options/preprocess.md

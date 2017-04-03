@@ -10,8 +10,12 @@ The pretrained embeddings must be manually constructed Torch serialized tensors 
 local vocab_size = 50004
 local embedding_size = 500
 
-torch.save('emb.t7', torch.Tensor(vocab_size, embedding_size):uniform())
+local embeddings = torch.Tensor(vocab_size, embedding_size):uniform()
+
+torch.save('enc_embeddings.t7', embeddings)
 ```
+
+where `embeddings[i]` is the embedding of the \(i\)-th word in the vocabulary.
 
 ## Fixed
 
