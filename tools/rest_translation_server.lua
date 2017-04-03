@@ -4,7 +4,7 @@
   run server (this file)
   th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/model-baseline-1M-enfr_epoch13_3.44.t7 -gpuid 1
   query the server:
-  curl -v -H "Content-Type: application/json" -X POST -d '{ "src" : "international migration" }' http://127.0.0.1:7784/translator/translate
+  curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "international migration" }]' http://127.0.0.1:7784/translator/translate
 ]]
 
 require('onmt.init')
