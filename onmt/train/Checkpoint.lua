@@ -31,6 +31,7 @@ end
 function Checkpoint:save(filePath, info)
   info.learningRate = self.optim:getLearningRate()
   info.optimStates = self.optim:getStates()
+  info.rngStates = onmt.utils.Cuda.getRNGStates()
 
   local data = {
     models = {},
