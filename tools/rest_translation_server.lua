@@ -50,7 +50,7 @@ local function translateMessage(translator, lines)
   local err
   _G.logger:info("Start Tokenization")
   if opt.bpe_model ~= '' then
-     bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
+     bpe = BPE.new(opt)
   end
   for i = 1, #lines do
     local srcTokenized = {}
