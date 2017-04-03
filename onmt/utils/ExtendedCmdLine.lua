@@ -96,7 +96,8 @@ function ExtendedCmdLine:help(arg, doMd)
       if type(option) == 'table' then
         io.write('* ')
         if option.default ~= nil then -- It is an option.
-          io.write('`' .. option.key .. '`<br/>')
+          local args = type(option.default) == 'boolean' and '' or ' <' .. type(option.default) .. '>'
+          io.write('`' .. option.key .. args ..'`<br/>')
           option.help = option.help:gsub(' *\n   *', ' ')
           if option.help then
             io.write(option.help)
