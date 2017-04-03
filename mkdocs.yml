@@ -12,6 +12,7 @@ pages:
   - Overview: index.md
   - Quickstart: quickstart.md
   - Data:
+      - Preparation: data/preparation.md
       - "Word features": data/word_features.md
   - Training:
       - Models: training/models.md

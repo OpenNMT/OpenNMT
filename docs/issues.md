@@ -13,6 +13,6 @@ To work around this error during training, follow these steps in order and stop 
 * Reduce the `-src_seq_length` and `-tgt_seq_length` values during the preprocessing
 * Reduce your model size (`-layers`, `-rnn_size`, etc.)
 
-## unknown Torch class <torch.CudaTensor>
+## unknown Torch class <torch.CudaTensor\>
 
 This means you wanted to load a GPU model but did not use the `-gpuid` option to define which GPU to use.

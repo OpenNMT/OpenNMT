@@ -47,7 +47,7 @@ with 11
 
 Internally the system never touches the words themselves, but uses these indices.
 
-Note that if the corpus is not tokenized - you can use [`tools/tokenizer.lua`](https://github.com/OpenNMT/OpenNMT/tree/master/tools#tokenization)
+Note that if the corpus is not tokenized, you can use [`tools/tokenizer.lua`](https://github.com/OpenNMT/OpenNMT/tree/master/tools#tokenization).
 
 ## Step 2: Train the model
 

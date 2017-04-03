@@ -9,7 +9,7 @@ alongside the word it annotates.
 decoder is then able to decode a sentence and annotate each word.
 
 To use additional features, directly modify your data by appending labels to each word with
-the special character `￨` (unicode character FFE8). There can be an arbitrary number of additional
+the special character `￨` (unicode character FFE8). There can be an **arbitrary number** of additional
 features in the form `word￨feat1￨feat2￨...￨featN` but each word must have the same number of
 features and in the same order. Source and target data can have a different number of additional features.
 
@@ -23,6 +23,13 @@ it￨C is￨l not￨l acceptable￨l that￨l ,￨n with￨l the￨l help￨l of
 ```
 
 You can generate this case feature with OpenNMT's tokenization script and the `-case_feature` flag.
+
+## Time-shifting
+
+By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. More precisely at timestep `t`:
+
+* the inputs are `words[t]` and `features[t - 1]`
+* the outputs are `words[t + 1]` and `features[t]`
 
 ## Vocabularies
 
@@ -42,8 +49,22 @@ By default, features vocabulary size is unlimited. Depending on the type of feat
 -src_vocab_size 50000,60,100
 ```
 
+You can similarly use `-src_words_min_frequency` and `-tgt_words_min_frequency` to limit vocabulary by frequency instead of absolute size.
+
+Like words, word features vocabularies can be reused across datasets with the `-features_vocabs_prefix`. For example, if the processing generates theses features dictionaries:
+
+* `data/mydicts.source_feature_1.dict`
+* `data/mydicts.source_feature_2.dict`
+* `data/mydicts.source_feature_3.dict`
+
+you have to set `-features_vocabs_prefix data/mydicts` as command line option.
+
 ## Embeddings
 
 The feature embedding size is automatically computed based on the number of values the feature takes. The default size reduction works well for features with few values like the case or POS. For other features, you may want to manually choose the embedding size with the `-src_word_vec_size` and `-tgt_word_vec_size` options. They behave similarly to `-src_vocab_size` with a comma-separated list of embedding size: `word_vec_size[,feat1_vec_size[,feat2_vec_size[...]]]`.
 
 By default each embedding is concatenated. You can choose to sum them by setting `-feat_merge sum`. Note that in this case each feature embedding must have the same dimension. You can set the common embedding size with `-feat_vec_size`.
+
+## Beam search
+
+During decoding, the beam search is only applied on the target words space and not on the word features. When the beam path is complete, the associated features are selected along this path.
