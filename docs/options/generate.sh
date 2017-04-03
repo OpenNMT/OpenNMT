@@ -1,4 +1,12 @@
 #! /bin/sh
-th preprocess.lua -h -md > docs/options/preprocess.md
-th train.lua -h -md > docs/options/train.md
-th translate.lua -h -md > docs/options/translate.md
+
+gen_script_options ()
+{
+    echo "<!--- This file was automatically generated. Do not modify it manually but use the docs/options/generate.sh script instead. -->" > $2
+    echo "" >> $2
+    th $1 -h -md >> $2
+}
+
+gen_script_options preprocess.lua docs/options/preprocess.md
+gen_script_options train.lua docs/options/train.md
+gen_script_options translate.lua docs/options/translate.md
