@@ -1,4 +1,4 @@
-OpenNMT provides generic tokenization utilies to quickly process new training data. For LuaJIT users, tokenization tools require the `bit32` package.
+OpenNMT provides generic tokenization utilities to quickly process new training data. For LuaJIT users, tokenization tools require the `bit32` package.
 
 ## Tokenization
 
@@ -20,9 +20,9 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 
 ## Special characters
 
-* `￨` is the feature separator symbol - if such character is used in source text, it is replace by its non presentation form `│`
-* `￭` is the default joiner marker (generated in `-joiner_annotate marker` mode) - if such character is used in source text, it is replace by its non presentation form `■`
+* `￨` is the feature separator symbol. If such character is used in source text, it is replaced by its non presentation form `│`.
+* `￭` is the default joiner marker (generated in `-joiner_annotate marker` mode). If such character is used in source text, it is replaced by its non presentation form `■`
 
 ## BPE
 
-TODO
+Coming soon.
