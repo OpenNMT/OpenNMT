@@ -97,11 +97,8 @@ function ExtendedCmdLine:help(arg, doMd)
         io.write('* ')
         if option.default ~= nil then -- It is an option.
           local args = type(option.default) == 'boolean' and '' or ' <' .. type(option.default) .. '>'
-          io.write('`' .. option.key .. args ..'`<br/>')
-          option.help = option.help:gsub(' *\n   *', ' ')
-          if option.help then
-            io.write(option.help)
-          end
+          io.write('`' .. option.key .. args ..'`')
+
           local valInfo = {}
           if option.meta and option.meta.enum then
             for k, v in pairs(option.meta.enum) do
@@ -114,6 +111,13 @@ function ExtendedCmdLine:help(arg, doMd)
           end
           if #valInfo > 0 then
             io.write(' (' .. table.concat(valInfo, '; ') .. ')')
+          end
+
+          io.write('<br/>')
+
+          option.help = option.help:gsub(' *\n   *', ' ')
+          if option.help then
+            io.write(option.help)
           end
         else -- It is an argument.
           io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
