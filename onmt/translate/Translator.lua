@@ -347,7 +347,6 @@ function Translator:translate(src, gold)
     for b = 1, batch.size do
       if self.opt.dump_input_encoding then
         results[b] = encStates[b]
-        --print(results[b])
       else
         results[b] = {}
 
