@@ -31,7 +31,7 @@ for file in $dir/*.raw; do
     fi
 
     if [ $bpe ]; then
-        tokenize_opts="$tokenize_opts -bpe_model $dir/$bpe_dir/$bpe -EOT_marker </w> -bpe_mode suffix"
+        tokenize_opts="$tokenize_opts -bpe_model $dir/$bpe_dir/$bpe -bpe_mode suffix"
     fi
 
     # Test tokenization 1.
