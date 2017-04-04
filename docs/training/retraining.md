@@ -43,7 +43,8 @@ The `-continue` flag ensures that the training continues with the same configura
 * `start_epoch`
 * `start_iteration`
 
-**Note:** the `-end_epoch` value is not automatically set as the user may want to continue its training for more epochs past the end.
+!!! note "Note"
+    The `-end_epoch` value is not automatically set as the user may want to continue its training for more epochs past the end.
 
 ## Training from pre-trained parameters
 

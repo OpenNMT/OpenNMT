@@ -11,6 +11,7 @@ markdown_extensions:
   - sane_lists
   - def_list
   - fenced_code
+  - markdown.extensions.admonition
 pages:
   - Overview: index.md
   - Quickstart: quickstart.md

@@ -63,7 +63,10 @@ you have to set `-features_vocabs_prefix data/mydicts` as command line option.
 
 The feature embedding size is automatically computed based on the number of values the feature takes. The default size reduction works well for features with few values like the case or POS. For other features, you may want to manually choose the embedding size with the `-src_word_vec_size` and `-tgt_word_vec_size` options. They behave similarly to `-src_vocab_size` with a comma-separated list of embedding size: `word_vec_size[,feat1_vec_size[,feat2_vec_size[...]]]`.
 
-By default each embedding is concatenated. You can choose to sum them by setting `-feat_merge sum`. Note that in this case each feature embedding must have the same dimension. You can set the common embedding size with `-feat_vec_size`.
+By default each embedding is concatenated. You can choose to sum them by setting `-feat_merge sum`.
+
+!!! warning "Warning"
+    In the `sum` case, each feature embedding must have the same dimension. You can set the common embedding size with `-feat_vec_size`.
 
 ## Beam search
 

@@ -13,7 +13,8 @@ The main goal of the preprocessing is to build the word vocabularies and assign 
 
 These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the `-src_vocab` and `-tgt_vocab` options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.
 
-**Note**: when pruning vocabularies to 50,000, the preprocessing will actually reports a vocabulary size of 50,004 because of 4 special tokens that are automatically added.
+!!! note "Note"
+    When pruning vocabularies to 50,000, the preprocessing will actually reports a vocabulary size of 50,004 because of 4 special tokens that are automatically added.
 
 ## Shuffling and sorting
 
@@ -22,4 +23,5 @@ By default, OpenNMT both shuffles and sorts the data before the training. This p
 * **shuffling**: sentences within a batch should come from different parts of the corpus
 * **sorting**: sentences within a batch should have the same source length (i.e. without padding to maximize efficiency)
 
-Note that during the training, batches are randomly selected.
+!!! note "Note"
+    During the training, batches are again randomly selected.

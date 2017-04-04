@@ -12,4 +12,5 @@ This approach is an attempt to feed relevant training data at each epoch. When u
 
 Alternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the `-sample_w_ppl_init` option.
 
-**Note:** this perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of **each** sequence has to be independently computed.
+!!! warning "Warning"
+    This perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of **each** sequence has to be independently computed.

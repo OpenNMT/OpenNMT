@@ -16,7 +16,8 @@ The translation server can be run using any of the arguments from `tokenize.lua`
 th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/model-baseline-1M-enfr_epoch13_3.44.t7 -gpuid 1 -host ... -port -case_feature -bpe_model ...
 ```
 
-**Note:** the default host is set to `127.0.0.1` and default port to `7784`.
+!!! note "Note"
+    The default host is set to `127.0.0.1` and default port to `7784`.
 
 You can test it with a `curl` command locally or from any other client:
 
@@ -42,7 +43,8 @@ The translation server can be run using any of the arguments from `translate.lua
 th tools/translation_server.lua -host ... -port ... -model ...
 ```
 
-**Note:** the default host is set to `127.0.0.1` which only allows local access. If you want to support remote access, use `0.0.0.0` instead.
+!!! note "Note"
+    The default host is set to `127.0.0.1` which only allows local access. If you want to support remote access, use `0.0.0.0` instead.
 
 It runs as a message queue that takes in a JSON batch of src sentences. For example the following 5 lines of Python
 code can be used to send a single sentence for translation.

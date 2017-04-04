@@ -47,7 +47,8 @@ with 11
 
 Internally the system never touches the words themselves, but uses these indices.
 
-Note that if the corpus is not tokenized, you can use [`tools/tokenizer.lua`](https://github.com/OpenNMT/OpenNMT/tree/master/tools#tokenization).
+!!! note "Note"
+    If the corpus is not tokenized, you can use [OpenNMT's tokenizer](tools/tokenization.md).
 
 ## Step 2: Train the model
 
@@ -66,9 +67,7 @@ can also add `-gpuid 1` to use (say) GPU 1.
 th translate.lua -model demo-model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
 ```
 
-Now you have a model which you can use to predict on new data. We do this by running beam search.
+Now you have a model which you can use to predict on new data. We do this by running beam search. This will output predictions into `pred.txt`.
 
-This will output predictions into `pred.txt`. The predictions are going to be quite terrible,
-as the demo dataset is small. Try running on some larger datasets! For example you can download
-millions of parallel sentences for [translation](http://www.statmt.org/wmt16/translation-task.html)
-or [summarization](https://github.com/harvardnlp/sent-summary).
+!!! note "Note"
+    The predictions are going to be quite terrible, as the demo dataset is small. Try running on some larger datasets! For example you can download millions of parallel sentences for [translation](http://www.statmt.org/wmt16/translation-task.html) or [summarization](https://github.com/harvardnlp/sent-summary).

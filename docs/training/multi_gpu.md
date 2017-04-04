@@ -10,7 +10,8 @@ will use the first, the second and the fourth GPU of the machine.
 
 In this default mode, each replica processes in parallel a different batch at each iteration. The gradients from each replica are accumulated, and parameters updated and synchronized.
 
-Note that when using `N` GPU(s), the actual batch size is `N * max_batch_size`.
+!!! warning "Warning"
+    When using `N` GPU(s), the actual batch size is `N * max_batch_size`.
 
 ## Asynchronous
 
@@ -18,7 +19,8 @@ In this mode enabled with the `-async_parallel` flag, the different replicas are
 calculating their own gradients, updating a master copy of the parameters and getting updated values
 of the parameters. To enable convergence at the beginning of the training, only one replica is working for the first `-async_parallel_minbatch` iterations to prepare a better initialization for the asynchronous part.
 
-**Note:**
+!!! note "Note"
+    A GPU core is dedicated to store the master copy of the parameters and is not used for training.
 
-* a GPU core is dedicated to store the master copy of the parameters and is not used for training
-* as training logs and saving require synchronization, consider using higher `-report_every` and `-save_every` values
+!!! note "Note"
+    As training logs and saving require synchronization, consider using higher `-report_every` and `-save_every` values.
