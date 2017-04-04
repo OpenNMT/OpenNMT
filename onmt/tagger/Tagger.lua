@@ -1,14 +1,22 @@
 local Tagger = torch.class('Tagger')
 
 local options = {
-  {'-model', '', [[Path to model .t7 file]], {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-  {'-batch_size', 30, [[Batch size]]}
+  {
+    '-model', '',
+    [[Path to the serialized model file.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-batch_size', 30,
+    [[Batch size.]]
+  }
 }
 
 function Tagger.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Tagger')
 end
-
 
 function Tagger:__init(args)
   self.opt = args

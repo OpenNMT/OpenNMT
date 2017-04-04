@@ -7,25 +7,45 @@ local dataType = cmd.getArgument(arg, '-data_type') or 'bitext'
 
 -- Options declaration
 local options = {
-  {'-data_type',         'bitext',  [[Type of text to preprocess. Use 'monotext' for monolingual text.
-                                    This option impacts all options choices.]],
-                                    {enum={'bitext','monotext'}}},
-  {'-save_data',               '',  [[Output file for the prepared data.]],
-                                    {valid=onmt.utils.ExtendedCmdLine.nonEmpty}}
+  {
+    '-data_type', 'bitext',
+    [[Type of data to preprocess. Use 'monotext' for monolingual data.
+      This option impacts all options choices.]],
+    {
+      enum = {'bitext', 'monotext'}
+    }
+  },
+  {
+    '-save_data', '',
+    [[Output file for the prepared data.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Preprocess')
 
 onmt.data.Preprocessor.declareOpts(cmd, dataType)
+onmt.utils.Logger.declareOpts(cmd)
 
 local otherOptions = {
-  {'-seed',                   3425,    [[Random seed.]],
-                                   {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-report_every',           100000,  [[Report status every this many sentences.]],
-                                   {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
+  {
+    '-seed', 3425,
+    [[Random seed.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
+  },
+  {
+    '-report_every', 100000,
+    [[Report status every this many sentences.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
+  }
 }
 cmd:setCmdLineOptions(otherOptions, 'Other')
-onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 

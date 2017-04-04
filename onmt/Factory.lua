@@ -1,9 +1,27 @@
 local Factory = torch.class('Factory')
 
 local options = {
-  {'-brnn', false, [[Use a bidirectional encoder.]]},
-  {'-dbrnn', false, [[Use a deep bidirectional encoder.]]},
-  {'-pdbrnn', false, [[Use pyramidal deep bidirectional encoder.]]}
+  {
+    '-brnn', false,
+    [[Use a bidirectional encoder.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-dbrnn', false,
+    [[Use a deep bidirectional encoder.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-pdbrnn', false,
+    [[Use a pyramidal deep bidirectional encoder.]],
+    {
+      structural = 0
+    }
+  }
 }
 
 function Factory.declareOpts(cmd)
@@ -98,14 +116,6 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   return inputNetwork
 end
 
-local function fixWordEmbeddings(model, fix)
-  model:apply(function(mod)
-    if torch.typename(mod) == 'onmt.WordEmbedding' then
-      mod:fixEmbeddings(fix)
-    end
-  end)
-end
-
 function Factory.getOutputSizes(dicts)
   local outputSizes = { dicts.words:size() }
   for i = 1, #dicts.features do
@@ -114,23 +124,31 @@ function Factory.getOutputSizes(dicts)
   return outputSizes
 end
 
-function Factory.buildEncoder(opt, inputNetwork)
+function Factory.buildEncoder(opt, inputNetwork, verbose)
 
   if opt.brnn then
-    _G.logger:info('   - Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.BiEncoder.new(opt, inputNetwork)
   elseif opt.dbrnn then
-    _G.logger:info('   - Deep Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Deep Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.DBiEncoder.new(opt, inputNetwork)
   elseif opt.pdbrnn then
-    _G.logger:info('   - Pyramidal Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Pyramidal Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
-    _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.Encoder.new(opt, inputNetwork)
   end
 
@@ -143,13 +161,13 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
                                          verbose)
 
-  return Factory.buildEncoder(opt, inputNetwork)
+  return Factory.buildEncoder(opt, inputNetwork, verbose)
 end
 
-function Factory.loadEncoder(pretrained, clone, opt)
+function Factory.loadEncoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
@@ -172,10 +190,6 @@ function Factory.loadEncoder(pretrained, clone, opt)
     else
       encoder = onmt.Encoder.load(pretrained)
     end
-  end
-
-  if opt then
-    fixWordEmbeddings(encoder, opt.fix_word_vecs_enc)
   end
 
   return encoder
@@ -204,7 +218,7 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.tgt_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec,
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec == 1,
                                          verbose)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
@@ -212,16 +226,12 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   return Factory.buildDecoder(opt, inputNetwork, generator)
 end
 
-function Factory.loadDecoder(pretrained, clone, opt)
+function Factory.loadDecoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
   end
 
   local decoder = onmt.Decoder.load(pretrained)
-
-  if opt then
-    fixWordEmbeddings(decoder, opt.fix_word_vecs_dec)
-  end
 
   return decoder
 end
