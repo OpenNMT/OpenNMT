@@ -16,7 +16,7 @@ brnn = true
 save_model = generic
 ```
 
-It handles empty line and ignore lines prefixed with `#`.
+It handles empty line and ignores lines prefixed with `#`.
 
 You can then pass this file along other options on the command line:
 
