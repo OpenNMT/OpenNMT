@@ -2,7 +2,7 @@
 
 You can pass your options using a configuration file. The file has a simple key-value syntax with one `option = value` per line. Here is an example:
 
-```
+```text
 $ cat generic.txt
 rnn_size = 600
 layers = 4
@@ -14,7 +14,7 @@ It handles empty line and ignore lines prefixed with `#`.
 
 You can then pass this file along other options on the command line:
 
-```
+```bash
 th train.lua -config generic.txt -data data/demo-train.t7 -gpuid 1
 ```
 
