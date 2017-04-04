@@ -26,7 +26,7 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
+function Decoder:__init(inputNetwork, rnn, generator, inputFeed, attentionModel)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -41,8 +41,9 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
+  self.args.needAttnSum = attentionModel.needAttnSum
 
-  parent.__init(self, self:_buildModel())
+  parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
@@ -92,6 +93,9 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+
+  -- Prototype for attention sum
+  self.attnSumProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -107,7 +111,7 @@ Returns: An nn-graph mapping
   ${if}$ is the input feeding, and
   ${a}$ is the context vector computed at this timestep.
 --]]
-function Decoder:_buildModel()
+function Decoder:_buildModel(attentionModel)
   local inputs = {}
   local states = {}
 
@@ -142,6 +146,12 @@ function Decoder:_buildModel()
   end
   table.insert(states, input)
 
+  local attnSum
+  if attentionModel.needAttnSum then
+    attnSum = nn.Identity()()
+    table.insert(inputs, attnSum)
+  end
+
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
 
@@ -149,14 +159,37 @@ function Decoder:_buildModel()
   outputs = { outputs:split(self.args.numEffectiveLayers) }
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = onmt.GlobalAttention(self.args.rnnSize)
+  local attnLayer = attentionModel(self.args.rnnSize)
   attnLayer.name = 'decoderAttn'
-  local attnOutput = attnLayer({outputs[#outputs], context})
+  local attnInput = {outputs[#outputs], context, attnSum}
+  local attnOutput = attnLayer(attnInput)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
   table.insert(outputs, attnOutput)
   return nn.gModule(inputs, outputs)
+end
+
+function Decoder:findAttentionModel()
+  if not self.decoderAttn then
+    self.network:apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttn = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.softmaxAttn = layer
+      end
+    end)
+    self.decoderAttnClones = {}
+  end
+  for t = #self.decoderAttnClones+1, #self.networkClones do
+    self:net(t):apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttnClones[t] = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.decoderAttnClones[t].softmaxAttn = layer
+      end
+    end)
+  end
 end
 
 --[[ Mask padding means that the attention-layer is constrained to
@@ -168,6 +201,7 @@ end
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
 function Decoder:maskPadding(sourceSizes, sourceLength)
+  self:findAttentionModel()
 
   local function substituteSoftmax(module)
     if module.name == 'softmaxAttn' then
@@ -187,26 +221,9 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
     end
   end
 
-  if not self.decoderAttn then
-    self.network:apply(function (layer)
-      if layer.name == 'decoderAttn' then
-        self.decoderAttn = layer
-      end
-    end)
-  end
   self.decoderAttn:replace(substituteSoftmax)
 
-  if not self.decoderAttnClones then
-    self.decoderAttnClones = {}
-  end
   for t = 1, #self.networkClones do
-    if not self.decoderAttnClones[t] then
-      self:net(t):apply(function (layer)
-        if layer.name == 'decoderAttn' then
-          self.decoderAttnClones[t] = layer
-        end
-      end)
-    end
     self.decoderAttnClones[t]:replace(substituteSoftmax)
   end
 end
@@ -249,6 +266,11 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     end
   end
 
+  -- if some module need attn sum, it is the next input
+  if self.args.needAttnSum then
+    table.insert(inputs, prevStates.attnSum)
+  end
+
   -- Remember inputs for the backward pass.
   if self.train then
     self.inputs[t] = inputs
@@ -265,7 +287,42 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     table.insert(states, outputs[i])
   end
 
+  -- if need attention sum
+  if self.args.needAttnSum then
+    -- check if we have reference to attention model
+    self:findAttentionModel()
+    local clone = self:cloneId(t)
+    local softmaxAttn = self.softmaxAttn
+    if t > 0 then
+      softmaxAttn = self.decoderAttnClones[clone].softmaxAttn
+    end
+    states.attnSum = torch.add(prevStates.attnSum, softmaxAttn.output)
+  end
+
   return out, states
+end
+
+--[[Initial special states of the decoder that be used by specific modules
+
+  Parameters:
+
+  * `batch` - `Batch` object
+  * `states` - the states of the decoder. Can use key/value to add states without impact.
+]]
+function Decoder:initializeSpecialStates(states, context, batch)
+  -- if need attention sum, initialize
+  if self.args.needAttnSum then
+    states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
+                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength })
+    if batch.uneven then
+      -- by default it is zero
+      for b = 1, batch.size do
+        states.attnSum:narrow(1,b,b):narrow(2,1,context:size(2)):fill(0.01)
+      end
+    else
+      states.attnSum:fill(0.01)
+    end
+  end
 end
 
 --[[Compute all forward steps.
@@ -290,6 +347,8 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, encoderStates)
 
   local prevOut
+
+  self:initializeSpecialStates(states, context, batch)
 
   for t = 1, batch.targetLength do
     prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
