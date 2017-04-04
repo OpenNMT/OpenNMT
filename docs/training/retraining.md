@@ -21,7 +21,7 @@ To overcome the vocabulary, a common approach is to use subtokenization like BPE
 
 It is common that a training stops: crash, server reboot, user action, etc. In this case, you may want to continue the training for more epochs by using using the `-continue` flag. For example:
 
-```
+```bash
 # start the initial training
 th train.lua -gpuid 1 -data data/demo-train.t7 -save_model demo -save_every 50
 

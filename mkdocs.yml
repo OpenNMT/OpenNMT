@@ -1,8 +1,11 @@
 site_name: OpenNMT
+repo_url: https://github.com/OpenNMT/OpenNMT
 theme: readthedocs
 docs_dir: docs
 extra_javascript:
   - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+extra_css:
+  - css/extra.css
 markdown_extensions:
   - math
   - sane_lists

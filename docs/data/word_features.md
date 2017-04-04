@@ -35,7 +35,7 @@ By default, word features on the target side are automatically shifted compared 
 
 By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the `-src_vocab_size` and `-tgt_vocab_size` options in the format `word_vocab_size[,feat1_vocab_size[,feat2_vocab_size[...]]]`. For example:
 
-```
+```bash
 # unlimited source features vocabulary size
 -src_vocab_size 50000
 

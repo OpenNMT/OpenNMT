@@ -6,13 +6,13 @@ You can use an easy REST syntax to simply send plain text. Sentences will be tok
 
 The server uses the `restserver-xavante` dependency, you need to install it by running:
 
-```
+```bash
 luarocks install restserver-xavante
 ```
 
 The translation server can be run using any of the arguments from `tokenize.lua` or `translate.lua`.
 
-```
+```bash
 th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/model-baseline-1M-enfr_epoch13_3.44.t7 -gpuid 1 -host ... -port -case_feature -bpe_model ...
 ```
 
@@ -20,7 +20,7 @@ th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/mode
 
 You can test it with a `curl` command locally or from any other client:
 
-```text
+```bash
 curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "Hello World }]' http://IP_address:7784/translator/translate
 ```
 
@@ -30,7 +30,7 @@ Answer will be embeeded in a JSON format, translated sentence in the `tgt` secti
 
 The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubuntu by running:
 
-```
+```bash
 sudo apt-get install libzmq-dev
 luarocks install dkjson
 luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
@@ -38,7 +38,7 @@ luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=
 
 The translation server can be run using any of the arguments from `translate.lua`.
 
-```
+```bash
 th tools/translation_server.lua -host ... -port ... -model ...
 ```
 

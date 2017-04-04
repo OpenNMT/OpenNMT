@@ -1,6 +1,6 @@
 ## Step 1: Preprocess the data
 
-```
+```bash
 th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo
 ```
 
@@ -51,7 +51,7 @@ Note that if the corpus is not tokenized, you can use [`tools/tokenizer.lua`](ht
 
 ## Step 2: Train the model
 
-```
+```bash
 th train.lua -data data/demo-train.t7 -save_model demo-model
 ```
 
@@ -62,7 +62,7 @@ can also add `-gpuid 1` to use (say) GPU 1.
 
 ## Step 3: Translate
 
-```
+```bash
 th translate.lua -model demo-model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
 ```
 

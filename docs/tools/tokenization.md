@@ -4,7 +4,7 @@ OpenNMT provides generic tokenization utilities to quickly process new training 
 
 To tokenize a corpus:
 
-```
+```bash
 th tools/tokenize.lua OPTIONS < file > file.tok
 ```
 
@@ -14,7 +14,7 @@ See `th tools/tokenize.lua -h` for a detailled list of options.
 
 If you activate `-joiner_annotate` marker, the tokenization is reversible. Just use:
 
-```
+```bash
 th tools/detokenize.lua OPTIONS < file.tok > file.detok
 ```
 

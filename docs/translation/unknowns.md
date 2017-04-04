@@ -10,7 +10,7 @@ Instead of copying the source token with the highest attention, it will lookup i
 
 The phrase table is a file with one translation per line in the format:
 
-```
+```text
 source|||target
 ```
 
