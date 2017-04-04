@@ -10,12 +10,13 @@ There are several reasons one may want to train from a saved model with the `-tr
 
 ## Considerations
 
-When training from an existing model, you have to consider the following points:
+When training from an existing model, some settings can not be changed:
 
-* the model topology (layers, hidden size, etc.) can not be changed
-* the vocabulary must be the same
+* the model topology (layers, hidden size, etc.)
+* the vocabularies
 
-To overcome the vocabulary, a common approach is to use subtokenization like BPE or wordpieces to simulate open vocabularies.
+!!! note "Exceptions"
+    `dropout`, `fix_word_vecs_enc` and `fix_word_vecs_dec` are model options that can be changed for a retraining.
 
 ## Resuming a stopped training
 
