@@ -67,11 +67,11 @@ local options = {
       If set to 0, no EOS normalization.]]
   },
   {
-    'dump_input_encoding', false,
+    '-dump_input_encoding', false,
     [[Instead of generating target tokens conditional on
     the source tokens, we print the representation
     (encoding/embedding) of the input.]]
-  }    
+  }
 }
 
 function Translator.declareOpts(cmd)
