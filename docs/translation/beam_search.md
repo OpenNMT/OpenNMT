@@ -25,7 +25,7 @@ where \(|Y|\) is the current target length and \(\alpha\) is the length normaliz
 
 Scores are penalized by the following formula as defined in [Wu et al. (2016)](https://arxiv.org/pdf/1609.08144.pdf):
 
-$$cp(X; Y) = \beta\sum_{i=1}^{|X|}\log(\min(\sum_{j=1}^{|Y|}p_{i,j},1.0))$$
+$$cp(X;Y) = \beta\sum_{i=1}^{|X|}\log(\min(\sum_{j=1}^{|Y|}p_{i,j},1.0))$$
 
 where \(p_{i,j}\) is the attention probability of the \(j\)-th target word \(y_j\) on the \(i\)-th source word \(x_i\), \(|X|\) is the source length, \(|Y|\) is the current target length and \(\beta\) is the coverage normalization coefficient `-coverage_norm`.
 
@@ -33,6 +33,6 @@ where \(p_{i,j}\) is the attention probability of the \(j\)-th target word \(y_j
 
 The score of the end of sentence token is penalized by the following formula:
 
-$$\gamma\frac{|X|}{|Y|}$$
+$$ep(X;Y)=\gamma\frac{|X|}{|Y|}$$
 
 where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\gamma\) is the coverage normalization coefficient `-eos_norm`.
