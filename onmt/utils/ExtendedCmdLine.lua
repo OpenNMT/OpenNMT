@@ -67,6 +67,14 @@ end
     local opt = cmd:parse(arg)
 
     local optimArgs = cmd.getModuleOpts(opt, options)
+
+  Additional meta-fields:
+
+  * `valid`: validation method
+  * `enum`: enumeration list
+  * `structural`: if defined, mark a structural parameter - 0 means cannot change value, 1 means that it can change dynamically
+  * `init_only`: if true, mark a parameter that can only be set at init time
+
 ]]
 
 function ExtendedCmdLine:__init(script)
@@ -89,14 +97,23 @@ function ExtendedCmdLine:help(arg, doMd)
         io.write('* ')
         if option.default ~= nil then -- It is an option.
           io.write('`' .. option.key .. '`: ')
-          if option.meta and option.meta.enum then
-            io.write('(' .. table.concat(option.meta.enum, ', ') .. ') ')
-          end
           option.help = option.help:gsub(' *\n   *', ' ')
           if option.help then
             io.write(option.help)
           end
-          io.write(' [' .. tostring(option.default) .. ']')
+          local valInfo = {}
+          if option.meta and option.meta.enum then
+            for k, v in pairs(option.meta.enum) do
+              option.meta.enum[k] = '`' .. v .. '`'
+            end
+            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+          end
+          if type(option.default) ~= "boolean" and option.default ~= '' then
+            table.insert(valInfo, 'default: `' .. tostring(option.default) .. '`')
+          end
+          if #valInfo > 0 then
+            io.write(' (' .. table.concat(valInfo, '; ') .. ')')
+          end
         else -- It is an argument.
           io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
           if option.help then
@@ -149,12 +166,16 @@ function ExtendedCmdLine:help(arg, doMd)
         if option.default ~= nil then -- It is an option.
           io.write(onmt.utils.String.pad(option.key, optsz))
           local msg = ''
-          if option.meta and option.meta.enum then
-            msg = '(' .. table.concat(option.meta.enum, ', ') .. ') '
-          end
           msg = msg .. option.help:gsub('\n', ' ')
+          local valInfo = {}
+          if option.meta and option.meta.enum then
+            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+          end
           if type(option.default) ~= "boolean" and option.default ~= '' then
-            msg = msg .. ' Default [' .. tostring(option.default) .. ']'
+            table.insert(valInfo, 'default: ' .. tostring(option.default))
+          end
+          if #valInfo > 0 then
+            msg = msg .. ' (' .. table.concat(valInfo, '; ') .. ')'
           end
           io.write(' ' .. wrapIndent(msg:gsub('  *', ' '),60,padMultiLine..'     '))
         else -- It is an argument.
@@ -198,6 +219,8 @@ function ExtendedCmdLine:loadConfig(filename, opt)
       assert(opt[key] ~= nil, 'unkown option ' .. key)
 
       opt[key] = convert(key, val, opt[key])
+      opt._is_default[key] = nil
+
     end
   end
 
@@ -209,7 +232,9 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 
   for key, val in pairs(opt) do
-    file:write(key .. ' = ' .. tostring(val) .. '\n')
+    if key:sub(1, 1) ~= '_' then
+      file:write(key .. ' = ' .. tostring(val) .. '\n')
+    end
   end
 
   file:close()
@@ -217,7 +242,14 @@ end
 
 function ExtendedCmdLine:parse(arg)
   local i = 1
-  local params = self:default()
+
+  -- set default value
+  local params = { _is_default={}, _structural={}, _init_only={} }
+  for option,v in pairs(self.options) do
+    local soption = onmt.utils.String.stripHyphens(option)
+    params[soption] = v.default
+    params._is_default[soption] = true
+  end
 
   local nArgument = 0
 
@@ -240,11 +272,13 @@ function ExtendedCmdLine:parse(arg)
       saveConfig = arg[i + 1]
       i = i + 2
     else
+      local sopt = onmt.utils.String.stripHyphens(arg[i])
+      params._is_default[sopt] = nil
       if self.options[arg[i]] then
         i = i + self:__readOption__(params, arg, i)
       else
         nArgument = nArgument + 1
-       i = i + self:__readArgument__(params, arg, i, nArgument)
+        i = i + self:__readArgument__(params, arg, i, nArgument)
       end
     end
   end
@@ -267,17 +301,26 @@ function ExtendedCmdLine:parse(arg)
   end
 
   for k, v in pairs(params) do
-    local K = '-' .. k
-    if not self.options[K] and self.options[k] then
-      K = k
-    end
-    local meta = self.options[K].meta
-    if meta then
-      if meta.valid and not meta.valid(v) then
-        self:error('option \'' .. k .. '\' value is not valid')
+    if k:sub(1, 1) ~= '_' then
+      local K = '-' .. k
+      if not self.options[K] and self.options[k] then
+        K = k
       end
-      if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-        self:error('option \'' .. k.. '\' value is not in possible values')
+      local meta = self.options[K].meta
+      if meta then
+        -- check option validity
+        if meta.valid and not meta.valid(v) then
+          self:error('option \'' .. k .. '\' value is not valid')
+        end
+        if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
+          self:error('option \'' .. k.. '\' value is not in possible values')
+        end
+        if meta.structural then
+          params._structural[k] = meta.structural
+        end
+        if meta.init_only then
+          params._init_only[k] = meta.init_only
+        end
       end
     end
   end

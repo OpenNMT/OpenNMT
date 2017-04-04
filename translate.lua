@@ -3,24 +3,34 @@ require('onmt.init')
 local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
 
 local options = {
-  {'-src', '', [[Source sequence to decode (one line per sequence)]],
-               {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-  {'-tgt', '', [[True target sequence (optional)]]},
-  {'-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence)]]}
+  {
+    '-src', '',
+    [[Source sequences to translate.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-tgt', '',
+    [[Optional true target sequences.]]
+  },
+  {
+    '-output', 'pred.txt',
+    [[Output file.]]
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
+onmt.utils.Cuda.declareOpts(cmd)
+onmt.utils.Logger.declareOpts(cmd)
 
 cmd:text('')
 cmd:text('**Other options**')
 cmd:text('')
 
-cmd:option('-time', false, [[Measure batch translation time]])
-
-onmt.utils.Cuda.declareOpts(cmd)
-onmt.utils.Logger.declareOpts(cmd)
+cmd:option('-time', false, [[Measure average translation time.]])
 
 local function reportScore(name, scoreTotal, wordsTotal)
   _G.logger:info(name .. " AVG SCORE: %.2f, " .. name .. " PPL: %.2f",

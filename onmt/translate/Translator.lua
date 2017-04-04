@@ -1,24 +1,71 @@
 local Translator = torch.class('Translator')
 
 local options = {
-  {'-model', '', [[Path to model .t7 file]], {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-  {'-beam_size', 5, [[Beam size]]},
-  {'-batch_size', 30, [[Batch size]]},
-  {'-max_sent_length', 250, [[Maximum output sentence length.]]},
-  {'-replace_unk', false, [[Replace the generated UNK tokens with the source token that
-                          had the highest attention weight. If phrase_table is provided,
-                          it will lookup the identified source token and give the corresponding
-                          target token. If it is not provided (or the identified source token
-                          does not exist in the table) then it will copy the source token]]},
-  {'-phrase_table', '', [[Path to source-target dictionary to replace UNK
-                        tokens. See README.md for the format this file should be in]]},
-  {'-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]]},
-  {'-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored
-                               during beam search]]},
-  {'-pre_filter_factor', 1, [[Optional, set this only if filter is being used. Before
-                            applying filters, hypotheses with top `beamSize * preFilterFactor`
-                            scores will be considered. If the returned hypotheses voilate filters,
-                            then set this to a larger value to consider more.]]}
+  {
+    '-model', '',
+    [[Path to the serialized model file.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-beam_size', 5,
+    [[Beam size.]]
+  },
+  {
+    '-batch_size', 30,
+    [[Batch size.]]
+  },
+  {
+    '-max_sent_length', 250,
+    [[Maximum output sentence length.]]
+  },
+  {
+    '-replace_unk', false,
+    [[Replace the generated <unk> tokens with the source token that
+      has the highest attention weight. If phrase_table is provided,
+      it will lookup the identified source token and give the corresponding
+      target token. If it is not provided (or the identified source token
+      does not exist in the table) then it will copy the source token]]},
+  {
+    '-phrase_table', '',
+    [[Path to source-target dictionary to replace <unk> tokens.]]
+  },
+  {
+    '-n_best', 1,
+    [[If > 1, it will also output an n_best list of decoded sentences.]]
+  },
+  {
+    '-max_num_unks', math.huge,
+    [[All sequences with more <unk>s than this will be ignored during beam search.]]
+  },
+  {
+    '-pre_filter_factor', 1,
+    [[Optional, set this only if filter is being used. Before
+      applying filters, hypotheses with top `beamSize * preFilterFactor`
+      scores will be considered. If the returned hypotheses voilate filters,
+      then set this to a larger value to consider more.]]},
+  {
+    '-length_norm', 0.0,
+    [[Length normalization coefficient (alpha).
+      Hypotheses scores are divided by (5+|Y|/5 + 1)^alpha, where |Y| is current target length.
+      If set to 0, no length normalization.]]
+  },
+  {
+    '-coverage_norm', 0.0,
+    [[Coverage normalization coefficient (beta).
+      An extra coverage term multiplied by beta is added to hypotheses scores.
+      Coverage is expressed as a sum over all source words of
+      a log of attention probabilities cumulated over target words.
+      If is set to 0, no coverage normalization.]]
+  },
+  {
+    '-eos_norm', 0.0,
+    [[End of sentence normalization coefficient (gamma).
+      The score for the EOS token is multiplied by (|X|/|Y|)*gamma,
+      where |X| is source length and |Y| is current target length.
+      If set to 0, no EOS normalization.]]
+  }
 }
 
 function Translator.declareOpts(cmd)
@@ -184,7 +231,10 @@ function Translator:translateBatch(batch)
                                                       self.opt.max_sent_length,
                                                       self.opt.max_num_unks,
                                                       encStates,
-                                                      self.dicts)
+                                                      self.dicts,
+                                                      self.opt.length_norm,
+                                                      self.opt.coverage_norm,
+                                                      self.opt.eos_norm)
 
   -- Save memory by only keeping track of necessary elements in the states.
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.

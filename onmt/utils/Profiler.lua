@@ -3,7 +3,10 @@
 local Profiler = torch.class('Profiler')
 
 local options = {
-  {'-profiler', false, [[Generate profiling logs.]]}
+  {
+    '-profiler', false,
+    [[Generate profiling logs.]]
+  }
 }
 
 function Profiler.declareOpts(cmd)

@@ -7,12 +7,36 @@
 * Add pyramidal deep bidirectional encoder
 * Add alternative learning rate decay strategy for SGD training
 * Add sequence tagger model
+* Introduce dynamic parameter change for dropout
+* Add length and coverage normalization during the beam search
+
+### Fixes and improvements
+
+* [*Breaking, changed option*] `-fix_word_vecs` options now accept `0` and `1` for a better retraining experience
+* Fix individual losses that were always computed when using random sampling
+* Allow to change the state of word embeddings optimization during a retraining
+* Check consistency of option settings when training from existing model
+* Save and Restore random number generator states in checkpoints
+* Improve duplicate messages in parallel mode
+
+## [v0.5.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.3) (2017-03-30)
+
+### Fixes and improvements
+
+* Fix data loading during training
+
+## [v0.5.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.2) (2017-03-29)
+
+### Fixes and improvements
+
+* Improve compatibility with older Torch versions missing the `fmod` implementation
+
+## [v0.5.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.1) (2017-03-28)
 
 ### Fixes and improvements
 
 * Fix translation with FP16 precision
-* Fix individual losses that were always computed when using random sampling
-* Allow to change the state of word embeddings optimization during a retraining
+* Fix regression that make `tds` mandatory for translation
 
 ## [v0.5.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.0) (2017-03-06)
 

@@ -3,15 +3,22 @@ require('onmt.init')
 local cmd = onmt.utils.ExtendedCmdLine.new('tag.lua')
 
 local options = {
-  {'-src', '', [[Source sequence to tag (one line per sequence)]],
-               {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-  {'-output', 'pred.txt', [[Path to output the predictions (each line will be the tagged sequence)]]}
+  {
+    '-src', '',
+    [[Source sequences to tag.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-output', 'pred.txt',
+    [[Output file.]]
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Data')
 
 onmt.tagger.Tagger.declareOpts(cmd)
-
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
@@ -19,7 +26,7 @@ cmd:text('')
 cmd:text('**Other options**')
 cmd:text('')
 
-cmd:option('-time', false, [[Measure batch translation time]])
+cmd:option('-time', false, [[Measure average translation time.]])
 
 local function main()
   local opt = cmd:parse(arg)
