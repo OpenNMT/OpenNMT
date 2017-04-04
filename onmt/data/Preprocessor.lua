@@ -9,56 +9,172 @@ local function vecToTensor(vec)
 end
 
 local Preprocessor = torch.class('Preprocessor')
-local tds = require('tds')
+local tds
 
 local bitextOptions = {
-  {'-train_src',               '',     [[Path to the training source data.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-train_tgt',               '',     [[Path to the training target data.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-valid_src',               '',     [[Path to the validation source data.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-valid_tgt',               '',     [[Path to the validation target data.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-src_vocab',               '',     [[Path to an existing source vocabulary.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-tgt_vocab',               '',     [[Path to an existing target vocabulary.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-src_vocab_size',          '50000',[[Comma-separated list of source vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-tgt_vocab_size',          '50000',[[Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-src_words_min_frequency', '0',    [[Comma-separated list of source words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-tgt_words_min_frequency', '0',    [[Comma-separated list of target words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-src_seq_length',          50,     [[Maximum source sequence length.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.isUInt}},
-  {'-tgt_seq_length',          50,     [[Maximum target sequence length.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.isUInt}}
+  {
+    '-train_src', '',
+    [[Path to the training source data.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileExists
+    }
+  },
+  {
+    '-train_tgt', '',
+    [[Path to the training target data.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileExists
+    }
+  },
+  {
+    '-valid_src', '',
+    [[Path to the validation source data.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileExists
+    }
+  },
+  {
+    '-valid_tgt', '',
+    [[Path to the validation target data.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileExists
+    }
+  },
+  {
+    '-src_vocab', '',
+    [[Path to an existing source vocabulary.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
+    '-tgt_vocab', '',
+    [[Path to an existing target vocabulary.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
+    '-src_vocab_size', '50000',
+    [[Comma-separated list of source vocabularies size: word[,feat1,feat2,...].
+      If = 0, vocabularies are not pruned.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.listUInt
+    }
+  },
+  {
+    '-tgt_vocab_size', '50000',
+    [[Comma-separated list of target vocabularies size: word[,feat1,feat2,...].
+      If = 0, vocabularies are not pruned.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.listUInt
+    }
+  },
+  {
+    '-src_words_min_frequency', '0',
+    [[Comma-separated list of source words min frequency: word[,feat1,feat2,...].
+      If = 0, vocabularies are pruned by size.]],
+    {
+      valid=onmt.utils.ExtendedCmdLine.listUInt
+    }
+  },
+  {
+    '-tgt_words_min_frequency', '0',
+    [[Comma-separated list of target words min frequency: word[,feat1,feat2,...].
+      If = 0, vocabularies are pruned by size.]],
+   {
+     valid=onmt.utils.ExtendedCmdLine.listUInt
+   }
+  },
+  {
+    '-src_seq_length', 50,
+    [[Maximum source sequence length.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt
+    }
+  },
+  {
+    '-tgt_seq_length', 50,
+    [[Maximum target sequence length.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt
+    }
+  }
 }
 
 local monotextOptions = {
-  {'-train',                   '',     [[Path to the training source data.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-valid',                   '',     [[Path to the validation source data.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileExists}},
-  {'-vocab',                   '',     [[Path to an existing source vocabulary.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-vocab_size',             '50000', [[Comma-separated list of source vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-words_min_frequency',    '0',    [[Comma-separated list of source words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.listUInt}},
-  {'-seq_length',              50,     [[Maximum source sequence length.]],
-                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
+  {
+    '-train', '',
+    [[Path to the training source data.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileExists
+    }
+  },
+  {
+    '-valid', '',
+    [[Path to the validation source data.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileExists
+    }
+  },
+  {
+    '-vocab', '',
+    [[Path to an existing source vocabulary.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
+    '-vocab_size', '50000',
+    [[Comma-separated list of source vocabularies size: word[,feat1,feat2,...].
+      If = 0, vocabularies are not pruned.]],
+    {
+      valid=onmt.utils.ExtendedCmdLine.listUInt
+    }
+  },
+  {
+    '-words_min_frequency', '0',
+    [[Comma-separated list of source words min frequency: word[,feat1,feat2,...].
+      If = 0, vocabularies are pruned by size.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.listUInt
+    }
+  },
+  {
+    '-seq_length', 50,
+    [[Maximum source sequence length.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
+  }
 }
 
 local commonOptions = {
-  {'-features_vocabs_prefix', '',      [[Path prefix to existing features vocabularies.]]},
-  {'-sort',                   1,       [[If 1, sort the sentences by size.]],
-                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} },
-  {'-shuffle',                1,       [[If 1, shuffle data.]],
-                                       { valid=onmt.utils.ExtendedCmdLine.isInt(0,1)} }
+  {
+    '-features_vocabs_prefix', '',
+    [[Path prefix to existing features vocabularies.]]
+  },
+  {
+    '-time_shift_feature', 1,
+    [[Time shift features on the decoder side.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
+    }
+  },
+  {
+    '-sort', 1,
+    [[If = 1, sort the sentences by size to build batches without source padding.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
+    }
+  },
+  {
+    '-shuffle', 1,
+    [[If = 1, shuffle data (prior sorting).]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(0,1)
+    }
+  }
 }
 
 function Preprocessor.declareOpts(cmd, mode)
@@ -72,10 +188,12 @@ function Preprocessor.declareOpts(cmd, mode)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
-  cmd:setCmdLineOptions(options, 'Preprocess')
+  cmd:setCmdLineOptions(options, 'Data')
 end
 
 function Preprocessor:__init(args, mode)
+  tds = require('tds')
+
   mode = mode or 'bitext'
   local options
   if mode == 'bitext' then
@@ -130,7 +248,7 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
         srcFeatures:insert(onmt.utils.Features.generateSource(srcDicts.features, srcFeats, true))
       end
       if #tgtDicts.features > 0 then
-        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
+        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true, self.args.time_shift_feature))
       end
 
       sizes:insert(#srcWords)

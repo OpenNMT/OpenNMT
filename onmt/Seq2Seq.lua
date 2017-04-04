@@ -2,28 +2,94 @@
 local Seq2Seq, parent = torch.class('Seq2Seq', 'Model')
 
 local options = {
-  {'-word_vec_size', 0, [[Common word embedding size. If set, this overrides -src_word_vec_size and -tgt_word_vec_size.]],
-                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-src_word_vec_size', '500', [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]]},
-  {'-tgt_word_vec_size', '500', [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]]},
-  {'-pre_word_vecs_enc', '', [[If a valid path is specified, then this will load
-                                     pretrained word embeddings on the encoder side.
-                                     See README for specific formatting instructions.]],
-                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-pre_word_vecs_dec', '', [[If a valid path is specified, then this will load
-                                       pretrained word embeddings on the decoder side.
-                                       See README for specific formatting instructions.]],
-                         {valid=onmt.utils.ExtendedCmdLine.fileNullOrExists}},
-  {'-fix_word_vecs_enc', false, [[Fix word embeddings on the encoder side]]},
-  {'-fix_word_vecs_dec', false, [[Fix word embeddings on the decoder side]]},
-  {'-feat_merge', 'concat', [[Merge action for the features embeddings]],
-                     {enum={'concat','sum'}}},
-  {'-feat_vec_exponent', 0.7, [[When features embedding sizes are not set and using -feat_merge concat, their dimension
-                                will be set to N^exponent where N is the number of values the feature takes.]]},
-  {'-feat_vec_size', 20, [[When features embedding sizes are not set and using -feat_merge sum, this is the common embedding size of the features]],
-                     {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-input_feed', 1, [[Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.]],
-                     {enum={0,1}}}
+  {
+    '-word_vec_size', 0,
+    [[Shared word embedding size. If set, this overrides src_word_vec_size and tgt_word_vec_size.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
+    '-src_word_vec_size', '500',
+    [[Comma-separated list of source embedding sizes: word[,feat1,feat2,...].]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-tgt_word_vec_size', '500',
+    [[Comma-separated list of target embedding sizes: word[,feat1,feat2,...].]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-pre_word_vecs_enc', '',
+    [[Path to pretrained word embeddings on the encoder side serialized as a Torch tensor.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists,
+      init_only = true
+    }
+  },
+  {
+    '-pre_word_vecs_dec', '',
+    [[Path to pretrained word embeddings on the decoder side serialized as a Torch tensor.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists,
+      init_only = true
+    }
+  },
+  {
+    '-fix_word_vecs_enc', 0,
+    [[Fix word embeddings on the encoder side.]],
+    {
+      enum = {0, 1},
+      structural = 1
+    }
+  },
+  {
+    '-fix_word_vecs_dec', 0,
+    [[Fix word embeddings on the decoder side.]],
+    {
+      enum = {0, 1},
+      structural = 1
+    }
+  },
+  {
+    '-feat_merge', 'concat',
+    [[Merge action for the features embeddings.]],
+    {
+      enum = {'concat', 'sum'},
+      structural = 0
+    }
+  },
+  {
+    '-feat_vec_exponent', 0.7,
+    [[When features embedding sizes are not set and using -feat_merge concat, their dimension
+      will be set to N^exponent where N is the number of values the feature takes.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-feat_vec_size', 20,
+    [[When features embedding sizes are not set and using -feat_merge sum,
+      this is the common embedding size of the features]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
+    '-input_feed', 1,
+    [[Feed the context vector at each time step as additional input
+      (via concatenation with the word embeddings) to the decoder.]],
+    {
+      enum = {0, 1},
+      structural = 0
+    }
+  }
 }
 
 function Seq2Seq.declareOpts(cmd)

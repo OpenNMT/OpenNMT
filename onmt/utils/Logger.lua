@@ -3,14 +3,25 @@
 local Logger = torch.class('Logger')
 
 local options = {
-  {'-log_file',     '',     [[Outputs logs to a file under this path instead of stdout.]]},
-  {'-disable_logs', false,  [[When activated, output nothing.]]},
-  {'-log_level',    'INFO', [[Outputs logs at this level and above.]],
-                            {enum={'DEBUG','INFO','WARNING','ERROR'}}}
+  {
+    '-log_file', '',
+    [[Output logs to a file under this path instead of stdout.]]
+  },
+  {
+    '-disable_logs', false,
+    [[If set, output nothing.]]
+  },
+  {
+    '-log_level', 'INFO',
+    [[Output logs at this level and above.]],
+    {
+      enum = {'DEBUG', 'INFO', 'WARNING', 'ERROR'}
+    }
+  }
 }
 
 function Logger.declareOpts(cmd)
-  cmd:setCmdLineOptions(options)
+  cmd:setCmdLineOptions(options, 'Logger')
 end
 
 --[[ Construct a Logger object.

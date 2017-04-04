@@ -4,12 +4,11 @@
   run server (this file)
   th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/model-baseline-1M-enfr_epoch13_3.44.t7 -gpuid 1
   query the server:
-  curl -v -H "Content-Type: application/json" -X POST -d '{ "src" : "international migration" }' http://127.0.0.1:7784/translator/translate
+  curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "international migration" }]' http://127.0.0.1:7784/translator/translate
 ]]
 
 require('onmt.init')
 
-local separators = require('tools.utils.separators')
 local tokenizer = require('tools.utils.tokenizer')
 local BPE = require ('tools.utils.BPE')
 local restserver = require("restserver")
@@ -25,19 +24,14 @@ cmd:setCmdLineOptions(options, 'Server')
 
 onmt.translate.Translator.declareOpts(cmd)
 
+onmt.utils.Cuda.declareOpts(cmd)
+onmt.utils.Logger.declareOpts(cmd)
+tokenizer.declareOpts(cmd)
+
 cmd:text("")
 cmd:text("**Other options**")
 cmd:text("")
-onmt.utils.Cuda.declareOpts(cmd)
-onmt.utils.Logger.declareOpts(cmd)
 
-cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive'
-  only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing'.]])
-cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner' character.]])
-cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners.]])
-cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token.]])
-cmd:option('-case_feature', false, [[Generate case feature.]])
-cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given.]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory.]])
 
 local opt = cmd:parse(arg)
@@ -50,7 +44,7 @@ local function translateMessage(translator, lines)
   local err
   _G.logger:info("Start Tokenization")
   if opt.bpe_model ~= '' then
-     bpe = BPE.new(opt.bpe_model, opt.joiner_annotate, opt.joiner_new)
+     bpe = BPE.new(opt)
   end
   for i = 1, #lines do
     local srcTokenized = {}
@@ -139,6 +133,8 @@ end
 local function main()
   -- load logger
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  onmt.utils.Cuda.init(opt)
+
   -- disable profiling
   _G.profiler = onmt.utils.Profiler.new(false)
 
