@@ -19,8 +19,8 @@ local options = {
                             applying filters, hypotheses with top `beamSize * preFilterFactor`
                             scores will be considered. If the returned hypotheses voilate filters,
                             then set this to a larger value to consider more.]]},
-  {'-print_input_embeddings', false, [[Instead of generating target tokens conditional on
-                            the source tokens, we print the representation (embedding) of the input.]]}
+  {'-dump_input_encoding', false, [[Instead of generating target tokens conditional on
+                            the source tokens, we print the representation (encoding/embedding) of the input.]]}
 }
 
 function Translator.declareOpts(cmd)
@@ -169,87 +169,86 @@ function Translator:translateBatch(batch)
   self.models.decoder:maskPadding()
 
   local encStates, context = self.models.encoder:forward(batch)
-  if self.opt.print_input_embeddings then
-    return encStates
-  else
-    -- Compute gold score.
-    local goldScore
-    if batch.targetInput ~= nil then
-      if batch.uneven then
-        self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
-      end
-      goldScore = self.models.decoder:computeScore(batch, encStates, context)
-    end
-
-    -- Specify how to go one step forward.
-    local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder,
-                                                        batch,
-                                                        context,
-                                                        self.opt.max_sent_length,
-                                                        self.opt.max_num_unks,
-                                                        encStates,
-                                                        self.dicts)
-
-    -- Save memory by only keeping track of necessary elements in the states.
-    -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.
-    local attnIndex = 4
-
-    -- Features are at index 5 in the states defined in onmt.translate.DecoderAdvancer.
-    local featsIndex = 5
-
-    advancer:setKeptStateIndexes({attnIndex, featsIndex})
-
-    -- Conduct beam search.
-    local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-    local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best, self.opt.pre_filter_factor)
-
-    local allHyp = {}
-    local allFeats = {}
-    local allAttn = {}
-    local allScores = {}
-
-    for b = 1, batch.size do
-      local hypBatch = {}
-      local featsBatch = {}
-      local attnBatch = {}
-      local scoresBatch = {}
-
-      for n = 1, self.opt.n_best do
-        local result = results[b][n]
-        local tokens = result.tokens
-        local score = result.score
-        local states = result.states
-        local attn = states[attnIndex] or {}
-        local feats = states[featsIndex] or {}
-
-        -- Ignore generated </s>.
-        table.remove(tokens)
-        if #attn > 0 then
-          table.remove(attn)
-        end
-
-        -- Remove unnecessary values from the attention vectors.
-        local size = batch.sourceSize[b]
-        for j = 1, #attn do
-          attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
-        end
-
-        table.insert(hypBatch, tokens)
-        if #feats > 0 then
-          table.insert(featsBatch, feats)
-        end
-        table.insert(attnBatch, attn)
-        table.insert(scoresBatch, score)
-      end
-
-      table.insert(allHyp, hypBatch)
-      table.insert(allFeats, featsBatch)
-      table.insert(allAttn, attnBatch)
-      table.insert(allScores, scoresBatch)
-    end
-
-    return allHyp, allFeats, allScores, allAttn, goldScore
+  if self.opt.dump_input_encoding then
+    return encStates[#encStates]
   end
+  -- Compute gold score.
+  local goldScore
+  if batch.targetInput ~= nil then
+    if batch.uneven then
+      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
+    end
+    goldScore = self.models.decoder:computeScore(batch, encStates, context)
+  end
+
+  -- Specify how to go one step forward.
+  local advancer = onmt.translate.DecoderAdvancer.new(self.models.decoder,
+                                                      batch,
+                                                      context,
+                                                      self.opt.max_sent_length,
+                                                      self.opt.max_num_unks,
+                                                      encStates,
+                                                      self.dicts)
+
+  -- Save memory by only keeping track of necessary elements in the states.
+  -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.
+  local attnIndex = 4
+
+  -- Features are at index 5 in the states defined in onmt.translate.DecoderAdvancer.
+  local featsIndex = 5
+
+  advancer:setKeptStateIndexes({attnIndex, featsIndex})
+
+  -- Conduct beam search.
+  local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  local results = beamSearcher:search(self.opt.beam_size, self.opt.n_best, self.opt.pre_filter_factor)
+
+  local allHyp = {}
+  local allFeats = {}
+  local allAttn = {}
+  local allScores = {}
+
+  for b = 1, batch.size do
+    local hypBatch = {}
+    local featsBatch = {}
+    local attnBatch = {}
+    local scoresBatch = {}
+
+    for n = 1, self.opt.n_best do
+      local result = results[b][n]
+      local tokens = result.tokens
+      local score = result.score
+      local states = result.states
+      local attn = states[attnIndex] or {}
+      local feats = states[featsIndex] or {}
+
+      -- Ignore generated </s>.
+      table.remove(tokens)
+      if #attn > 0 then
+        table.remove(attn)
+      end
+
+      -- Remove unnecessary values from the attention vectors.
+      local size = batch.sourceSize[b]
+      for j = 1, #attn do
+        attn[j] = attn[j]:narrow(1, batch.sourceLength - size + 1, size)
+      end
+
+      table.insert(hypBatch, tokens)
+      if #feats > 0 then
+        table.insert(featsBatch, feats)
+      end
+      table.insert(attnBatch, attn)
+      table.insert(scoresBatch, score)
+    end
+
+    table.insert(allHyp, hypBatch)
+    table.insert(allFeats, featsBatch)
+    table.insert(allAttn, attnBatch)
+    table.insert(allScores, scoresBatch)
+  end
+
+  return allHyp, allFeats, allScores, allAttn, goldScore
 end
 
 --[[ Translate a batch of source sequences.
@@ -285,15 +284,16 @@ function Translator:translate(src, gold)
     local predScore = {}
     local attn = {}
     local goldScore = {}
-    if self.opt.print_input_embeddings then
+    if self.opt.dump_input_encoding then
       encStates = self:translateBatch(batch)
     else
       pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
     end
 
     for b = 1, batch.size do
-      if self.opt.print_input_embeddings then
-        results[b] = encStates
+      if self.opt.dump_input_encoding then
+        results[b] = encStates[b]
+        --print(results[b])
       else
         results[b] = {}
 
@@ -307,7 +307,7 @@ function Translator:translate(src, gold)
         end
       end
 
-      if goldScore ~= nil then
+      if next(goldScore) ~= nil then
         results[b].goldScore = goldScore[b]
       end
     end

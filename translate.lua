@@ -32,6 +32,7 @@ local function main()
   local opt = cmd:parse(arg)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  onmt.utils.Cuda.init(opt)
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
@@ -88,10 +89,6 @@ local function main()
       end
 
       local results = translator:translate(srcBatch, goldBatch)
-      local results_table = {}
-      if opt.print_input_embeddings then
-        results_table = torch.totable(results[1][1])
-      end
 
       if opt.time then
         timer:stop()
@@ -110,14 +107,13 @@ local function main()
             goldScoreTotal = goldScoreTotal + results[b].goldScore
             goldWordsTotal = goldWordsTotal + #goldBatch[b].words
           end
-          if opt.print_input_embeddings then
-            outFile:write(sentId, ' ', table.concat(results_table[b], " "), '\n')
+          if opt.dump_input_encoding then
+            outFile:write(sentId, ' ', table.concat(torch.totable(results[b]), " "), '\n')
           else
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
-
+              outFile:write(sentence .. '\n')
               if n == 1 then
-                outFile:write(sentence .. '\n')
                 predScoreTotal = predScoreTotal + results[b].preds[n].score
                 predWordsTotal = predWordsTotal + #results[b].preds[n].words
 
@@ -129,9 +125,6 @@ local function main()
 
               if #results[b].preds > 1 then
                 _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
-                if n ~= 1 then -- for the n == 1 case, we already wrote out the hypothesis above
-                  outFile:write(sentence .. '\n')
-                end
               else
                 _G.logger:info("PRED %d: %s", sentId, sentence)
                 _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
@@ -165,7 +158,7 @@ local function main()
     _G.logger:info("avg sys\t" .. time.sys / sentenceCount .. "\n")
   end
 
-  if opt.print_input_embeddings == false then
+  if opt.dump_input_encoding == false then
     reportScore('PRED', predScoreTotal, predWordsTotal)
 
     if withGoldScore then
