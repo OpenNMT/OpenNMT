@@ -6,7 +6,7 @@ th train.lua -data data/demo-train.t7 -save_model demo -gpuid 1,2,4
 
 will use the first, the second and the fourth GPU of the machine as returned by the CUDA API.
 
-!!! warning "Warning"
+!!! note "Note"
     `nvidia-smi` enumerates devices based on the driver API which can be in a different order than the CUDA API.
 
 ## Synchronous
