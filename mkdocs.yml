@@ -3,7 +3,7 @@ repo_url: https://github.com/OpenNMT/OpenNMT
 theme: readthedocs
 docs_dir: docs
 extra_javascript:
-  - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML
 extra_css:
   - css/extra.css
 markdown_extensions:
