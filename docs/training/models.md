@@ -40,7 +40,7 @@ With residual connections the input of a layer is element-wise added to the outp
 
 ![RNN with residual connections](../img/residual.png)
 
-The following components support residual connections:
+The following components support residual connections with the `-residual` flag:
 
 * default encoder
 * bidirectional encoder
