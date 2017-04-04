@@ -33,7 +33,7 @@ pages:
       - Tokenization: tools/tokenization.md
       - Servers: tools/servers.md
   - "Reference: Options":
-      - Usage: options/usage.md
+      - "Scripts usage": options/usage.md
       - Preprocess: options/preprocess.md
       - Train: options/train.md
       - Translate: options/translate.md

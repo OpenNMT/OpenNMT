@@ -1,3 +1,9 @@
+By default, OpenNMT's scripts can only be called from the root of OpenNMT's directory. If calling the scripts from any directory is more convenient to you, you need to extend the `LUA_PATH`:
+
+```bash
+export LUA_PATH="$LUA_PATH;/path/to/OpenNMT/?.lua"
+```
+
 ## Configuration files
 
 You can pass your options using a configuration file. The file has a simple key-value syntax with one `option = value` per line. Here is an example:
