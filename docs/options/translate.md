@@ -27,6 +27,7 @@
 * `-length_norm <number>` (default: `0`)<br/>Length normalization coefficient (alpha). Hypotheses scores are divided by (5+|Y|/5 + 1)^alpha, where |Y| is current target length. If set to 0, no length normalization.
 * `-coverage_norm <number>` (default: `0`)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. Coverage is expressed as a sum over all source words of a log of attention probabilities cumulated over target words. If is set to 0, no coverage normalization.
 * `-eos_norm <number>` (default: `0`)<br/>End of sentence normalization coefficient (gamma). The score for the EOS token is multiplied by (|X|/|Y|)*gamma, where |X| is source length and |Y| is current target length. If set to 0, no EOS normalization.
+* `-dump_input_encoding`<br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.
 
 ## Cuda options
 
