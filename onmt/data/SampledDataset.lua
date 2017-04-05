@@ -121,7 +121,7 @@ function SampledDataset:sample(logLevel)
       local x = math.abs(self.sample_w_ppl_max)
 
       -- Find mode.
-      local pplRounded = torch.round(self.ppl)
+      local pplRounded = torch.round(self.ppl * 100) / 100 -- keep up to the second decimal point
       local bin = {}
       for i = 1, pplRounded:size(1) do
         if self.ppl[i] ~=  self.sample_w_ppl_init then
