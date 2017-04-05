@@ -13,6 +13,8 @@ The main goal of the preprocessing is to build the word vocabularies and assign 
 
 These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the `-src_vocab` and `-tgt_vocab` options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.
 
+Vocabularies can be generated beforhand with the `tools/build_vocab.lua` script.
+
 !!! note "Note"
     When pruning vocabularies to 50,000, the preprocessing will actually reports a vocabulary size of 50,004 because of 4 special tokens that are automatically added.
 
