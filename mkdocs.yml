@@ -32,7 +32,6 @@ pages:
   - Tools:
       - Tokenization: tools/tokenization.md
       - Servers: tools/servers.md
-      - Extraction: tools/extraction.md
   - "Reference: Options":
       - "Scripts usage": options/usage.md
       - Preprocess: options/preprocess.md

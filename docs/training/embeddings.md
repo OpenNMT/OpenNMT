@@ -20,3 +20,7 @@ where `embeddings[i]` is the embedding of the \(i\)-th word in the vocabulary.
 ## Fixed
 
 By default these embeddings will be updated during training, but they can be held fixed using `-fix_word_vecs_enc` and `-fix_word_vecs_dec` options. These options can be enabled or disabled during a retraining.
+
+## Extraction
+
+The `tools/extract_embeddings.lua` can be used to extract the model word embeddings into text files. They can then be easily transformed into another format for visualization or processing.
