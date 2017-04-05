@@ -268,13 +268,17 @@ th train.lua -gpuid 1 -data data/demo-train.t7 -save_model demo -save_every 50 -
 
 <p>The <code>-continue</code> flag ensures that the training continues with the same configuration and optimization states. In particular, the following options are set to their last known value:</p>
 <ul>
-<li><code>curriculum</code></li>
-<li><code>learning_rate_decay</code></li>
-<li><code>learning_rate</code></li>
-<li><code>optim</code></li>
-<li><code>start_decay_at</code></li>
-<li><code>start_epoch</code></li>
-<li><code>start_iteration</code></li>
+<li><code>-curriculum</code></li>
+<li><code>-decay</code></li>
+<li><code>-learning_rate_decay</code></li>
+<li><code>-learning_rate</code></li>
+<li><code>-max_grad_norm</code></li>
+<li><code>-min_learning_rate</code></li>
+<li><code>-optim</code></li>
+<li><code>-start_decay_at</code></li>
+<li><code>-start_decay_ppl_delta</code></li>
+<li><code>-start_epoch</code></li>
+<li><code>-start_iteration</code></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
