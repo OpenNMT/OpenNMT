@@ -65,6 +65,12 @@ local options = {
       The score for the EOS token is multiplied by (|X|/|Y|)*gamma,
       where |X| is source length and |Y| is current target length.
       If set to 0, no EOS normalization.]]
+  },
+  {
+    '-dump_input_encoding', false,
+    [[Instead of generating target tokens conditional on
+    the source tokens, we print the representation
+    (encoding/embedding) of the input.]]
   }
 }
 
@@ -214,7 +220,9 @@ function Translator:translateBatch(batch)
   self.models.decoder:maskPadding()
 
   local encStates, context = self.models.encoder:forward(batch)
-
+  if self.opt.dump_input_encoding then
+    return encStates[#encStates]
+  end
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
@@ -324,21 +332,35 @@ function Translator:translate(src, gold)
   if data:batchCount() > 0 then
     local batch = data:getBatch()
 
-    local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
+    local encStates = {}
+    local pred = {}
+    local predFeats = {}
+    local predScore = {}
+    local attn = {}
+    local goldScore = {}
+    if self.opt.dump_input_encoding then
+      encStates = self:translateBatch(batch)
+    else
+      pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
+    end
 
     for b = 1, batch.size do
-      results[b] = {}
+      if self.opt.dump_input_encoding then
+        results[b] = encStates[b]
+      else
+        results[b] = {}
 
-      results[b].preds = {}
-      for n = 1, self.opt.n_best do
-        results[b].preds[n] = {}
-        results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
-        results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
-        results[b].preds[n].attention = attn[b][n]
-        results[b].preds[n].score = predScore[b][n]
+        results[b].preds = {}
+        for n = 1, self.opt.n_best do
+          results[b].preds[n] = {}
+          results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
+          results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
+          results[b].preds[n].attention = attn[b][n]
+          results[b].preds[n].score = predScore[b][n]
+        end
       end
 
-      if goldScore ~= nil then
+      if next(goldScore) ~= nil then
         results[b].goldScore = goldScore[b]
       end
     end
