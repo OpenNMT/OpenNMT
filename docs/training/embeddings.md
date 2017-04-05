@@ -23,4 +23,4 @@ By default these embeddings will be updated during training, but they can be hel
 
 ## Extraction
 
-The `tools/extract_embeddings.lua` can be used to extract the model word embeddings into text files. They can then be easily transformed into another format for visualization or processing.
+The `tools/extract_embeddings.lua` script can be used to extract the model word embeddings into text files. They can then be easily transformed into another format for visualization or processing.

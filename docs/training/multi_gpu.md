@@ -1,4 +1,4 @@
-OpenNMT can make use of multiple GPU during the training by implementing *data parallelism*. This technique trains batches in parallel on different *network replicas*. To use data parellelism, assign a list of comma-separated GPU identifiers to the `-gpuid` option. For example:
+OpenNMT can make use of multiple GPU during the training by implementing **data parallelism**. This technique trains batches in parallel on different network replicas. To use data parellelism, assign a list of comma-separated GPU identifiers to the `-gpuid` option. For example:
 
 ```bash
 th train.lua -data data/demo-train.t7 -save_model demo -gpuid 1,2,4
@@ -14,7 +14,7 @@ will use the first, the second and the fourth GPU of the machine as returned by 
 In this default mode, each replica processes in parallel a different batch at each iteration. The gradients from each replica are accumulated, and parameters updated and synchronized.
 
 !!! warning "Warning"
-    When using `N` GPU(s), the actual batch size is `N * max_batch_size`.
+    When using \(N\) GPU(s), the actual batch size is \(N \times\) `-max_batch_size`.
 
 ## Asynchronous
 

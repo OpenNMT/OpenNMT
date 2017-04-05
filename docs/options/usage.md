@@ -6,7 +6,7 @@ export LUA_PATH="$LUA_PATH;/path/to/OpenNMT/?.lua"
 
 ## Configuration files
 
-You can pass your options using a configuration file. The file has a simple key-value syntax with one `option = value` per line. Here is an example:
+You can pass options using a configuration file. The file has a simple key-value syntax with one `option = value` per line. Here is an example:
 
 ```text
 $ cat generic.txt
@@ -16,7 +16,7 @@ brnn = true
 save_model = generic
 ```
 
-It handles empty line and ignores lines prefixed with `#`.
+It handles empty lines and ignores lines prefixed with `#`.
 
 You can then pass this file along other options on the command line:
 
@@ -31,3 +31,11 @@ If an option appears both in the file and on the command line, the file takes pr
 Flags are options that do not take arguments. For example the option `-brnn` enables bidirectional encoder when added to the command line.
 
 However, flags that are enabled by default can take `0` as argument to disable them. For example, input feeding is disabled with `-input_feed 0`.
+
+## Multiple arguments
+
+Some options can take multiple arguments. Unless otherwise noted, they accept a list of comma-separated values without spaces:
+
+```text
+-option_name value1,value2,value3
+```

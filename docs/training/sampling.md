@@ -2,7 +2,7 @@ Data sampling is a technique to select a subset of the training set at each epoc
 
 ## Uniform
 
-The simplest data sampling is to uniformly select a subset of the training data. Using the `-sample N` option, the training will randomly choose `N` training sequences at each epoch.
+The simplest data sampling is to uniformly select a subset of the training data. Using the `-sample N` option, the training will randomly choose \(N\) training sequences at each epoch.
 
 A typical use case is to reduce the length of the epochs for more frequent learning rate updates and validation perplexity computation.
 

@@ -1,9 +1,9 @@
 OpenNMT supports additional features on source and target words in the form of **discrete labels**.
 
-* On the source side, these features act as additional information to the encoder. An
+* On the source side, these features act as **additional information** to the encoder. An
 embedding will be optimized for each label and then fed as additional source input
 alongside the word it annotates.
-* On the target side, these features will be predicted by the network. The
+* On the target side, these features will be **predicted** by the network. The
 decoder is then able to decode a sentence and annotate each word.
 
 To use additional features, directly modify your data by appending labels to each word with
@@ -24,10 +24,10 @@ You can generate this case feature with OpenNMT's tokenization script and the `-
 
 ## Time-shifting
 
-By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. More precisely at timestep `t`:
+By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. More precisely at timestep \(t\):
 
-* the inputs are `words[t]` and `features[t - 1]`
-* the outputs are `words[t + 1]` and `features[t]`
+* the inputs are \(words^{(t)}\) and \(features^{(t-1)}\)
+* the outputs are \(words^{(t+1)}\) and \(features^{(t)}\)
 
 ## Vocabularies
 

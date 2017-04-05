@@ -1,4 +1,7 @@
-OpenNMT provides generic tokenization utilities to quickly process new training data. For LuaJIT users, tokenization tools require the `bit32` package.
+OpenNMT provides generic tokenization utilities to quickly process new training data.
+
+!!! note "Note"
+    For LuaJIT users, tokenization tools require the `bit32` package.
 
 ## Tokenization
 
@@ -34,14 +37,14 @@ with two additional features:
 
 **1\. Add support for different modes of handling prefixes and/or suffixes: `-bpe_mode`**
 
-* `suffix`: BPE merge operations are learnt to distinguish sub-tokens like *ent* in the middle of a word and *ent<\w>* at the end of a word. *<\w>* is an artificial marker appended to the end of each token input and treated as a single unit before doing statistics on bigrams. This is the default mode which is useful for most of the languages.
-* `prefix`: BPE merge operations are learnt to distinguish sub-tokens like *ent* in the middle of a word and *<w>ent* at the begining of a word. *<w>* is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.
+* `suffix`: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "ent<\w>" at the end of a word. "<\w>" is an artificial marker appended to the end of each token input and treated as a single unit before doing statistics on bigrams. This is the default mode which is useful for most of the languages.
+* `prefix`: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "<w\>ent" at the begining of a word. "<w\>" is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.
 * `both`: `suffix` + `prefix`
 * `none`: No artificial marker is appended to input tokens, a sub-token is treated equally whether it is in the middle or at the beginning or at the end of a token.
 
 **2\. Add support for BPE in addition to the case feature: `-bpe_case_insensitive`**
 
-OpenNMT's tokenization flow first applies BPE then add the case feature for each input token. With the standard BPE, *Constitution* and *constitution* may result in the different sequences of sub-tokens:
+OpenNMT's tokenization flow first applies BPE then add the case feature for each input token. With the standard BPE, "Constitution" and "constitution" may result in the different sequences of sub-tokens:
 
 ```text
 Constitution --> con￨C sti￨l tu￨l tion￨l
