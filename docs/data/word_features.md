@@ -1,5 +1,3 @@
-## Concept
-
 OpenNMT supports additional features on source and target words in the form of **discrete labels**.
 
 * On the source side, these features act as additional information to the encoder. An
