@@ -84,8 +84,8 @@ function ExtendedCmdLine:__init(script)
   self:text('')
   self:option('-h', false, 'This help.')
   self:option('-md', false, 'Dump help in Markdown format.')
-  self:option('-config', '', 'Read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
-  self:option('-save_config', '', 'Save options from config file.')
+  self:option('-config', '', 'Load options from this file.', {valid=ExtendedCmdLine.fileNullOrExists})
+  self:option('-save_config', '', 'Save options to this file.')
 
 end
 

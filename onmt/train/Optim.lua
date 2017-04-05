@@ -63,7 +63,7 @@ local options = {
   },
   {
     '-uneven_batches', false,
-    [[If true, batches are filled up to max_batch_size even if source lengths are different.
+    [[If set, batches are filled up to max_batch_size even if source lengths are different.
       Slower but needed for some tasks.]]
   },
   {
@@ -88,7 +88,7 @@ local options = {
   },
   {
     '-learning_rate_decay', 0.7,
-    [[Learning rate decay factor: learning_rate = learning_rate * learning_rate_decay.]]
+    [[Learning rate decay factor: `learning_rate = learning_rate * learning_rate_decay`.]]
   },
   {
     '-start_decay_at', 9,
@@ -104,10 +104,10 @@ local options = {
   {
     '-decay', 'default',
     [[When to apply learning rate decay.
-      "default": decay after each epoch past start_decay_at or as soon as the validation perplexity
-      is not improving more than start_decay_ppl_delta,
-      "perplexity_only": only decay when validation perplexity is not improving more than
-      start_decay_ppl_delta.]],
+      `default`: decay after each epoch past `-start_decay_at` or as soon as the
+      validation perplexity is not improving more than `-start_decay_ppl_delta`,
+      `perplexity_only`: only decay when validation perplexity is not improving more than
+      `-start_decay_ppl_delta`.]],
     {
       enum = {'default', 'perplexity_only'}
     }

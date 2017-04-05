@@ -19,7 +19,7 @@ local options = {
   {
     '-sample_w_ppl_max', -1.5,
     [[When greater than 0, instances with perplexity above this value will be
-      considered as noise and ignored; when less than 0, mode + (-sample_w_ppl_max) * stdev
+      considered as noise and ignored; when less than 0, mode + `-sample_w_ppl_max` * stdev
       will be used as threshold.]]
   }
 }

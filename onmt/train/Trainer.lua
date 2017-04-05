@@ -73,7 +73,7 @@ local options = {
   },
   {
     '-curriculum', 0,
-    [[For this many epochs, order the minibatches based on source length.
+    [[For this many epochs, order the minibatches based on source length (from smaller to longer).
       Sometimes setting this to 1 will increase convergence speed.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt()

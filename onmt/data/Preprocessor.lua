@@ -56,7 +56,7 @@ local bitextOptions = {
   },
   {
     '-src_vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: word[,feat1,feat2,...].
+    [[Comma-separated list of source vocabularies size: `word[,feat1,feat2,...]`.
       If = 0, vocabularies are not pruned.]],
     {
       valid = onmt.utils.ExtendedCmdLine.listUInt
@@ -64,7 +64,7 @@ local bitextOptions = {
   },
   {
     '-tgt_vocab_size', '50000',
-    [[Comma-separated list of target vocabularies size: word[,feat1,feat2,...].
+    [[Comma-separated list of target vocabularies size: `word[,feat1,feat2,...]`.
       If = 0, vocabularies are not pruned.]],
     {
       valid = onmt.utils.ExtendedCmdLine.listUInt
@@ -72,7 +72,7 @@ local bitextOptions = {
   },
   {
     '-src_words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: word[,feat1,feat2,...].
+    [[Comma-separated list of source words min frequency: `word[,feat1,feat2,...]`.
       If = 0, vocabularies are pruned by size.]],
     {
       valid=onmt.utils.ExtendedCmdLine.listUInt
@@ -80,7 +80,7 @@ local bitextOptions = {
   },
   {
     '-tgt_words_min_frequency', '0',
-    [[Comma-separated list of target words min frequency: word[,feat1,feat2,...].
+    [[Comma-separated list of target words min frequency: `word[,feat1,feat2,...]`.
       If = 0, vocabularies are pruned by size.]],
    {
      valid=onmt.utils.ExtendedCmdLine.listUInt
@@ -126,7 +126,7 @@ local monotextOptions = {
   },
   {
     '-vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: word[,feat1,feat2,...].
+    [[Comma-separated list of source vocabularies size: `word[,feat1,feat2,...]`.
       If = 0, vocabularies are not pruned.]],
     {
       valid=onmt.utils.ExtendedCmdLine.listUInt
@@ -134,7 +134,7 @@ local monotextOptions = {
   },
   {
     '-words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: word[,feat1,feat2,...].
+    [[Comma-separated list of source words min frequency: `word[,feat1,feat2,...]`.
       If = 0, vocabularies are pruned by size.]],
     {
       valid = onmt.utils.ExtendedCmdLine.listUInt

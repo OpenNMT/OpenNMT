@@ -4,8 +4,8 @@
 
 * `-h`<br/>This help.
 * `-md`<br/>Dump help in Markdown format.
-* `-config <string>`<br/>Read options from config file.
-* `-save_config <string>`<br/>Save options from config file.
+* `-config <string>`<br/>Load options from this file.
+* `-save_config <string>`<br/>Save options to this file.
 
 ## Data options
 

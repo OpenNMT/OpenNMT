@@ -23,21 +23,21 @@ local options = {
   {
     '-replace_unk', false,
     [[Replace the generated <unk> tokens with the source token that
-      has the highest attention weight. If phrase_table is provided,
+      has the highest attention weight. If `-phrase_table` is provided,
       it will lookup the identified source token and give the corresponding
       target token. If it is not provided (or the identified source token
       does not exist in the table) then it will copy the source token]]},
   {
     '-phrase_table', '',
-    [[Path to source-target dictionary to replace <unk> tokens.]]
+    [[Path to source-target dictionary to replace `<unk>` tokens.]]
   },
   {
     '-n_best', 1,
-    [[If > 1, it will also output an n_best list of decoded sentences.]]
+    [[If > 1, it will also output an n-best list of decoded sentences.]]
   },
   {
     '-max_num_unks', math.huge,
-    [[All sequences with more <unk>s than this will be ignored during beam search.]]
+    [[All sequences with more `<unk>`s than this will be ignored during beam search.]]
   },
   {
     '-pre_filter_factor', 1,
@@ -47,24 +47,17 @@ local options = {
       then set this to a larger value to consider more.]]},
   {
     '-length_norm', 0.0,
-    [[Length normalization coefficient (alpha).
-      Hypotheses scores are divided by (5+|Y|/5 + 1)^alpha, where |Y| is current target length.
-      If set to 0, no length normalization.]]
+    [[Length normalization coefficient (alpha). If set to 0, no length normalization.]]
   },
   {
     '-coverage_norm', 0.0,
     [[Coverage normalization coefficient (beta).
       An extra coverage term multiplied by beta is added to hypotheses scores.
-      Coverage is expressed as a sum over all source words of
-      a log of attention probabilities cumulated over target words.
       If is set to 0, no coverage normalization.]]
   },
   {
     '-eos_norm', 0.0,
-    [[End of sentence normalization coefficient (gamma).
-      The score for the EOS token is multiplied by (|X|/|Y|)*gamma,
-      where |X| is source length and |Y| is current target length.
-      If set to 0, no EOS normalization.]]
+    [[End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.]]
   },
   {
     '-dump_input_encoding', false,
