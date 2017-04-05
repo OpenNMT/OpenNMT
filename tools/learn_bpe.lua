@@ -29,8 +29,6 @@ local function string2word(s)
   local t = {}
   if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, separators.BOT) end
   for _, c in unicode.utf8_iter(s) do
-    if c == separators.BOT then c = separators.BOT_substitute end
-    if c == separators.EOT then c = separators.EOT_substitute end
     table.insert(t, c)
   end
   if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, separators.EOT) end

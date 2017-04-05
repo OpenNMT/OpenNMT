@@ -124,23 +124,31 @@ function Factory.getOutputSizes(dicts)
   return outputSizes
 end
 
-function Factory.buildEncoder(opt, inputNetwork)
+function Factory.buildEncoder(opt, inputNetwork, verbose)
 
   if opt.brnn then
-    _G.logger:info('   - Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.BiEncoder.new(opt, inputNetwork)
   elseif opt.dbrnn then
-    _G.logger:info('   - Deep Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Deep Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.DBiEncoder.new(opt, inputNetwork)
   elseif opt.pdbrnn then
-    _G.logger:info('   - Pyramidal Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Pyramidal Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
-    _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    if verbose then
+      _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
+                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+    end
     return onmt.Encoder.new(opt, inputNetwork)
   end
 
@@ -156,7 +164,7 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
                                          opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
                                          verbose)
 
-  return Factory.buildEncoder(opt, inputNetwork)
+  return Factory.buildEncoder(opt, inputNetwork, verbose)
 end
 
 function Factory.loadEncoder(pretrained, clone)

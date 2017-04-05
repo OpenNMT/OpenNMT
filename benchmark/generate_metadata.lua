@@ -6,7 +6,9 @@ local options = {
   {'-model', '', 'trained model file', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
   {'-save_data', '', 'JSON metadata file', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
   {'-name', '', 'name of the submitted system', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}};
-  {'-language_pair', '', 'language pair', {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
+  {'-language_pair', '', 'language pair'},
+  {'-source_languages', '', 'source languages'},
+  {'-target_languages', '', 'target languages'},
   {'-version', '', 'version of OpenNMT used for training'},
   {'-features', '', 'side features used'},
   {'-tokenization', '', 'side features used'},
@@ -36,6 +38,21 @@ local function extractEpoch(modelFile)
   return modelFile:match('epoch%d+'):sub(6)
 end
 
+local function writeValue(json, v)
+  if type(v) == 'table' then
+    json:write('[ ')
+    for i = 1, #v do
+      if i > 1 then
+        json:write(', ')
+      end
+      writeValue(json, v[i])
+    end
+    json:write(' ]')
+  else
+    json:write('"' .. (v or '') .. '"')
+  end
+end
+
 local function main()
   local opt = cmd:parse(arg)
 
@@ -53,11 +70,19 @@ local function main()
     metadata[name].value = defaultValue
   end
 
+  if opt.language_pair:len() > 0 then
+    addField('sourceLanguage', 'Source Language', opt.language_pair:sub(1, 2))
+    addField('targetLanguage', 'Target Language', opt.language_pair:sub(3))
+  else
+    assert(opt.source_languages:len() > 0 and opt.target_languages:len() > 0,
+           "You either need to set -language_pair or -source_languages and -target_languages")
+    addField('sourceLanguage', 'Source Language', onmt.utils.String.split(opt.source_languages, ','))
+    addField('targetLanguage', 'Target Language', onmt.utils.String.split(opt.target_languages, ','))
+  end
+
   addField('systemName', 'System name', opt.name)
   addField('constraint', 'Constrainted system', 'true')
   addField('framework', 'Framework', 'OpenNMT')
-  addField('sourceLanguage', 'Source Language', opt.language_pair:sub(1, 2))
-  addField('targetLanguage', 'Target Language', opt.language_pair:sub(3))
   addField('type', 'Type', 'NMT')
   addField('architecture', 'Global NN architecture', 'seq2seq-attn')
   addField('features', 'Use of side features', opt.features)
@@ -88,7 +113,8 @@ local function main()
     else
       first = false
     end
-    json:write('  "' .. k .. '": "' .. (v.value or '') .. '"')
+    json:write('  "' .. k .. '": ')
+    writeValue(json, v.value)
   end
   json:write('\n}\n')
 
