@@ -29,6 +29,7 @@ function Factory.declareOpts(cmd)
   onmt.BiEncoder.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
+  onmt.GlobalAttention.declareOpts(cmd)
   onmt.GlobalAttentionCoverage.declareOpts(cmd)
 end
 
@@ -209,7 +210,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
   end
   local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.dropout_input)
 
-  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1, attnModel)
+  return onmt.Decoder.new(opt, inputNetwork, rnn, generator, opt.input_feed == 1, attnModel)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
@@ -251,7 +252,7 @@ function Factory.buildAttention(args)
     _G.logger:info('   - Global Attention with Coverage')
     return onmt.GlobalAttentionCoverage
   else
-    _G.logger:info('   - Global Attention')
+    _G.logger:info('   - Global Attention: '..args.global_attention)
     return onmt.GlobalAttention
   end
 end

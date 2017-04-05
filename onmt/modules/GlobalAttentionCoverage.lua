@@ -37,7 +37,7 @@ end
 
   * `dim` - dimension of the context vectors.
 --]]
-function GlobalAttentionCoverage:__init(dim)
+function GlobalAttentionCoverage:__init(_, dim)
   parent.__init(self, self:_buildModel(dim))
 end
 

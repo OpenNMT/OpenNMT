@@ -19,8 +19,21 @@ Constructs a unit mapping:
 
   The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.
 
+  * dot: $$score(h_t,{\overline{h}}_s) = h_t^T{\overline{h}}_s$$
+  * general: $$score(h_t,{\overline{h}}_s) = h_t^T W_a {\overline{h}}_s$$
+  * concat: $$score(h_t,{\overline{h}}_s) = \nu_a^T tanh(W_a[h_t;{\overline{h}}_s])$$
+
 --]]
 local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'onmt.Network')
+
+local options = {
+  {'-global_attention', 'general',         [[Global attention model type.]],
+        {enum={'general', 'dot', 'concat'}}}
+}
+
+function GlobalAttention.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Global Attention Model')
+end
 
 --[[A nn-style module computing attention.
 
@@ -28,20 +41,35 @@ local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'onmt.Networ
 
   * `dim` - dimension of the context vectors.
 --]]
-function GlobalAttention:__init(dim)
-  parent.__init(self, self:_buildModel(dim))
+function GlobalAttention:__init(opt, dim)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(opt, options)
+  parent.__init(self, self:_buildModel(dim, self.args.global_attention))
 end
 
-function GlobalAttention:_buildModel(dim)
+function GlobalAttention:_buildModel(dim, global_attention)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local targetT = nn.Linear(dim, dim, false)(inputs[1]) -- batchL x dim
+  local targetT
+  if global_attention == 'general' then
+    targetT = nn.Linear(dim, dim, false)(inputs[1]) -- batchL x dim
+  else
+    targetT = inputs[1]
+  end
   local context = inputs[2] -- batchL x sourceTimesteps x dim
 
   -- Get attention.
-  local attn = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
+  local attn
+  if global_attention ~= 'concat' then
+    attn = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
+  else
+    local extendedTarget = nn.Replicate(1,2)(targetT)
+    attn = nn.Bottle(nn.Linear(dim,1),2)(
+                nn.Tanh()(
+                    nn.Bottle(nn.Linear(dim*2, dim, false),2)(
+                        onmt.JoinReplicateTable(2,3)({extendedTarget, context}))))
+  end
   attn = nn.Sum(3)(attn)
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'

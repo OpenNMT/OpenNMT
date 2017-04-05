@@ -26,11 +26,11 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed, attentionModel)
+function Decoder:__init(args, inputNetwork, rnn, generator, inputFeed, attentionModel)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
-  self.args = {}
+  self.args = args
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
 
@@ -159,7 +159,7 @@ function Decoder:_buildModel(attentionModel)
   outputs = { outputs:split(self.args.numEffectiveLayers) }
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = attentionModel(self.args.rnnSize)
+  local attnLayer = attentionModel(self.args, self.args.rnnSize)
   attnLayer.name = 'decoderAttn'
   local attnInput = {outputs[#outputs], context, attnSum}
   local attnOutput = attnLayer(attnInput)
