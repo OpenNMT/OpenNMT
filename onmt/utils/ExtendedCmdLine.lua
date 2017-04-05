@@ -74,6 +74,7 @@ end
   * `enum`: enumeration list
   * `structural`: if defined, mark a structural parameter - 0 means cannot change value, 1 means that it can change dynamically
   * `init_only`: if true, mark a parameter that can only be set at init time
+  * `train_state`: if true, the option will be automatically reused when continuing a training
 
 ]]
 
@@ -249,7 +250,7 @@ function ExtendedCmdLine:parse(arg)
   local i = 1
 
   -- set default value
-  local params = { _is_default={}, _structural={}, _init_only={} }
+  local params = { _is_default={}, _structural={}, _init_only={}, _train_state={} }
   for option,v in pairs(self.options) do
     local soption = onmt.utils.String.stripHyphens(option)
     params[soption] = v.default
@@ -325,6 +326,9 @@ function ExtendedCmdLine:parse(arg)
         end
         if meta.init_only then
           params._init_only[k] = meta.init_only
+        end
+        if meta.train_state then
+          params._train_state[k] = meta.train_state
         end
       end
     end
