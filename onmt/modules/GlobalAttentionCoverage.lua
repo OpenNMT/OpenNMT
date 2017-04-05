@@ -23,12 +23,7 @@ Constructs a unit mapping:
 local GlobalAttentionCoverage, parent = torch.class('onmt.GlobalAttentionCoverage', 'onmt.Network')
 
 
-local options = {
-  {'-temporal_attention', false,         [[Temporal attention model.]]}
-}
-
-function GlobalAttentionCoverage.declareOpts(cmd)
-  cmd:setCmdLineOptions(options, 'Attention Model')
+function GlobalAttentionCoverage.declareOpts(_)
 end
 
 --[[A nn-style module computing attention.

@@ -21,6 +21,13 @@ local options = {
     {
       structural = 0
     }
+  },
+  {
+    '-attention', 'global',
+    [[Attention model.]],
+    {
+      enum = {'no', 'global', 'temporal'}
+    }
   }
 }
 
@@ -248,7 +255,10 @@ function Factory.buildGenerator(rnnSize, dicts)
 end
 
 function Factory.buildAttention(args)
-  if args.temporal_attention then
+  if args.attention == 'no' then
+    _G.logger:info('   - No Attention')
+    return onmt.NoAttention
+  elseif args.attention == 'temporal' then
     _G.logger:info('   - Global Attention with Coverage')
     return onmt.GlobalAttentionCoverage
   else

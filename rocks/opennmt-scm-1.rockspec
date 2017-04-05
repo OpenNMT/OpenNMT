@@ -44,6 +44,7 @@ build = {
     ["onmt.modules.FeaturesEmbedding"] = "onmt/modules/FeaturesEmbedding.lua",
     ["onmt.modules.FeaturesGenerator"] = "onmt/modules/FeaturesGenerator.lua",
     ["onmt.modules.Generator"] = "onmt/modules/Generator.lua",
+    ["onmt.modules.NoAttention"] = "onmt/modules/NoAttention.lua",
     ["onmt.modules.GlobalAttention"] = "onmt/modules/GlobalAttention.lua",
     ["onmt.modules.GlobalAttentionCoverage"] = "onmt/modules/GlobalAttentionCoverage.lua",
     ["onmt.modules.LSTM"] = "onmt/modules/LSTM.lua",

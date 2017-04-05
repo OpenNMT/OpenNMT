@@ -9,6 +9,7 @@
 * Add sequence tagger model
 * Introduce dynamic parameter change for dropout
 * Add length and coverage normalization during the beam search
+* Multiple attention option: no attention, global attention dot/general/concat, temporal attention
 
 ### Fixes and improvements
 
