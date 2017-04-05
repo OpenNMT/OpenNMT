@@ -138,6 +138,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     local startI = self.args.start_iteration
 
+    if trainData.sample then
+      trainData:sample()
+    end
+
     local numIterations = trainData:batchCount()
     -- In parallel mode, number of iterations is reduced to reflect larger batch size.
     if onmt.utils.Parallel.count > 1 and not self.args.async_parallel then
@@ -314,10 +318,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     if needLog then
       epochState:log(numIterations)
-    end
-
-    if trainData.sample then
-      trainData:sample()
     end
 
     return epochState, epochProfiler:dump()
