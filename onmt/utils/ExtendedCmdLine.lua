@@ -234,6 +234,26 @@ function ExtendedCmdLine:loadConfig(filename, opt)
   return opt
 end
 
+function ExtendedCmdLine:logConfig(opt)
+  local keys = {}
+  for key in pairs(opt) do
+    table.insert(keys, key)
+  end
+
+  table.sort(keys)
+  _G.logger:debug('Options:')
+
+  for _, key in ipairs(keys) do
+    if key:sub(1, 1) ~= '_' then
+      local val = opt[key]
+      if type(val) == 'string' then
+        val = '\'' .. val .. '\''
+      end
+      _G.logger:debug(' * ' .. key .. ' = ' .. tostring(val))
+    end
+  end
+end
+
 function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 

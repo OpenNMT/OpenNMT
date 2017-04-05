@@ -63,6 +63,8 @@ local function main()
   local checkpoint, paramChanges
   checkpoint, opt, paramChanges = onmt.train.Checkpoint.loadFromCheckpoint(opt)
 
+  cmd:logConfig(opt)
+
   _G.logger:info('Training '..modelClass.modelName()..' model')
 
   -- Create the data loader class.
