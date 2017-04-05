@@ -246,8 +246,8 @@
 <ul>
 <li><code>-h</code><br/>This help.</li>
 <li><code>-md</code><br/>Dump help in Markdown format.</li>
-<li><code>-config &lt;string&gt;</code><br/>Read options from config file.</li>
-<li><code>-save_config &lt;string&gt;</code><br/>Save options from config file.</li>
+<li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
+<li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
 </ul>
 <h2 id="data-options">Data options</h2>
 <ul>
@@ -261,14 +261,14 @@
 <li><code>-beam_size &lt;number&gt;</code> (default: <code>5</code>)<br/>Beam size.</li>
 <li><code>-batch_size &lt;number&gt;</code> (default: <code>30</code>)<br/>Batch size.</li>
 <li><code>-max_sent_length &lt;number&gt;</code> (default: <code>250</code>)<br/>Maximum output sentence length.</li>
-<li><code>-replace_unk</code><br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If phrase_table is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token</li>
-<li><code>-phrase_table &lt;string&gt;</code><br/>Path to source-target dictionary to replace <unk> tokens.</li>
-<li><code>-n_best &lt;number&gt;</code> (default: <code>1</code>)<br/>If &gt; 1, it will also output an n_best list of decoded sentences.</li>
-<li><code>-max_num_unks &lt;number&gt;</code> (default: <code>inf</code>)<br/>All sequences with more <unk>s than this will be ignored during beam search.</li>
+<li><code>-replace_unk</code><br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If <code>-phrase_table</code> is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token</li>
+<li><code>-phrase_table &lt;string&gt;</code><br/>Path to source-target dictionary to replace <code>&lt;unk&gt;</code> tokens.</li>
+<li><code>-n_best &lt;number&gt;</code> (default: <code>1</code>)<br/>If &gt; 1, it will also output an n-best list of decoded sentences.</li>
+<li><code>-max_num_unks &lt;number&gt;</code> (default: <code>inf</code>)<br/>All sequences with more <code>&lt;unk&gt;</code>s than this will be ignored during beam search.</li>
 <li><code>-pre_filter_factor &lt;number&gt;</code> (default: <code>1</code>)<br/>Optional, set this only if filter is being used. Before applying filters, hypotheses with top <code>beamSize * preFilterFactor</code> scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.</li>
-<li><code>-length_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Length normalization coefficient (alpha). Hypotheses scores are divided by (5+|Y|/5 + 1)^alpha, where |Y| is current target length. If set to 0, no length normalization.</li>
-<li><code>-coverage_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. Coverage is expressed as a sum over all source words of a log of attention probabilities cumulated over target words. If is set to 0, no coverage normalization.</li>
-<li><code>-eos_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>End of sentence normalization coefficient (gamma). The score for the EOS token is multiplied by (|X|/|Y|)*gamma, where |X| is source length and |Y| is current target length. If set to 0, no EOS normalization.</li>
+<li><code>-length_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Length normalization coefficient (alpha). If set to 0, no length normalization.</li>
+<li><code>-coverage_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.</li>
+<li><code>-eos_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.</li>
 <li><code>-dump_input_encoding</code><br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.</li>
 </ul>
 <h2 id="cuda-options">Cuda options</h2>
