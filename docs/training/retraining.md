@@ -36,13 +36,17 @@ th train.lua -gpuid 1 -data data/demo-train.t7 -save_model demo -save_every 50 -
 
 The `-continue` flag ensures that the training continues with the same configuration and optimization states. In particular, the following options are set to their last known value:
 
-* `curriculum`
-* `learning_rate_decay`
-* `learning_rate`
-* `optim`
-* `start_decay_at`
-* `start_epoch`
-* `start_iteration`
+* `-curriculum`
+* `-decay`
+* `-learning_rate_decay`
+* `-learning_rate`
+* `-max_grad_norm`
+* `-min_learning_rate`
+* `-optim`
+* `-start_decay_at`
+* `-start_decay_ppl_delta`
+* `-start_epoch`
+* `-start_iteration`
 
 !!! note "Note"
     The `-end_epoch` value is not automatically set as the user may want to continue its training for more epochs past the end.
