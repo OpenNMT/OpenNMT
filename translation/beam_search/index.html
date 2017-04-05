@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Beam search - OpenNMT</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../css/extra.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Beam search";
+    var mkdocs_page_input_path = "translation/beam_search.md";
+    var mkdocs_page_url = "/translation/beam_search/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> OpenNMT</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../quickstart/">Quickstart</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Data</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../data/preparation/">Preparation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../data/word_features/">Word features</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Training</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../training/models/">Models</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/embeddings/">Embeddings</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/multi_gpu/">Mutli GPU</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/retraining/">Retraining</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/decay/">Decay strategies</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/sampling/">Data sampling</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Translation</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../inference/">Inference</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Beam search</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#hypotheses-filtering">Hypotheses filtering</a></li>
+    
+
+    <li class="toctree-l3"><a href="#normalization">Normalization</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#length-normalization">Length normalization</a></li>
+        
+            <li><a class="toctree-l4" href="#coverage-normalization">Coverage normalization</a></li>
+        
+            <li><a class="toctree-l4" href="#end-of-sentence-normalization">End of sentence normalization</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../unknowns/">Unkown words</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Tools</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../tools/tokenization/">Tokenization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../tools/servers/">Servers</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Reference: Options</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../options/usage/">Scripts usage</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/preprocess/">Preprocess</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/train/">Train</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/translate/">Translate</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/tag/">Tag</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/tokenize/">Tokenize</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/rest_server/">REST server</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../extensions/">Extensions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../issues/">Common issues</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">OpenNMT</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Translation &raquo;</li>
+        
+      
+    
+    <li>Beam search</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/translation/beam_search.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>By default, translation is done using beam search. The <code>-beam_size</code> option can be used to trade-off translation time and search accuracy, with <code>-beam_size 1</code> giving greedy search. The small default beam size is often enough in practice.</p>
+<p>Beam search can also be used to provide an approximate n-best list of translations by setting <code>-n_best</code> greater than 1. For analysis, the translation command also takes an oracle/gold <code>-tgt</code> file and will output a comparison of scores.</p>
+<h2 id="hypotheses-filtering">Hypotheses filtering</h2>
+<p>The beam search provides a built-in filter based on unknown words: <code>-max_num_unks</code>. Hypotheses with for more unkown words than this value are dropped.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>As dropped hypotheses temporarily reduce the beam size, the <code>-pre_filter_factor</code> is a way to increase the number of considered hypotheses before applying filters.</p>
+</div>
+<h2 id="normalization">Normalization</h2>
+<p>The beam search also supports various normalization techniques that are disabled by default and can be used to biased the scores generated by the model:</p>
+<p>
+<script type="math/tex; mode=display">s(Y,X)=\frac{\log P(Y|X)}{lp(Y)}+cp(X,Y)</script>
+</p>
+<p>where <script type="math/tex">X</script> is the source, <script type="math/tex">Y</script> is the current target, and the functions as defined below. An additional penalty on end of sentence tokens can also be added to prioritize longer sentences.</p>
+<h3 id="length-normalization">Length normalization</h3>
+<p>Scores are normalized by the following formula as defined in <a href="https://arxiv.org/pdf/1609.08144.pdf">Wu et al. (2016)</a>:</p>
+<p>
+<script type="math/tex; mode=display">lp(Y) = \frac{(5+|Y|)^\alpha}{(5+1)^\alpha}</script>
+</p>
+<p>where <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\alpha</script> is the length normalization coefficient <code>-length_norm</code>.</p>
+<h3 id="coverage-normalization">Coverage normalization</h3>
+<p>Scores are penalized by the following formula as defined in <a href="https://arxiv.org/pdf/1609.08144.pdf">Wu et al. (2016)</a>:</p>
+<p>
+<script type="math/tex; mode=display">cp(X,Y) = \beta\sum_{i=1}^{|X|}\log(\min(\sum_{j=1}^{|Y|}p_{i,j},1.0))</script>
+</p>
+<p>where <script type="math/tex">p_{i,j}</script> is the attention probability of the <script type="math/tex">j</script>-th target word <script type="math/tex">y_j</script> on the <script type="math/tex">i</script>-th source word <script type="math/tex">x_i</script>, <script type="math/tex">|X|</script> is the source length, <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\beta</script> is the coverage normalization coefficient <code>-coverage_norm</code>.</p>
+<h3 id="end-of-sentence-normalization">End of sentence normalization</h3>
+<p>The score of the end of sentence token is penalized by the following formula:</p>
+<p>
+<script type="math/tex; mode=display">ep(X,Y)=\gamma\frac{|X|}{|Y|}</script>
+</p>
+<p>where <script type="math/tex">|X|</script> is the source length, <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\gamma</script> is the coverage normalization coefficient <code>-eos_norm</code>.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../unknowns/" class="btn btn-neutral float-right" title="Unkown words">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../inference/" class="btn btn-neutral" title="Inference"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/OpenNMT/OpenNMT" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../inference/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../unknowns/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</body>
+</html>

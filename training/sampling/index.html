@@ -5,27 +5,27 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="None">
   
-  <link rel="shortcut icon" href="./img/favicon.ico">
-  <title>Overview - OpenNMT</title>
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Data sampling - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="./css/highlight.css">
-  <link href="./css/extra.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../css/extra.css" rel="stylesheet">
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Overview";
-    var mkdocs_page_input_path = "index.md";
-    var mkdocs_page_url = "/";
+    var mkdocs_page_name = "Data sampling";
+    var mkdocs_page_input_path = "training/sampling.md";
+    var mkdocs_page_url = "/training/sampling/";
   </script>
   
-  <script src="./js/jquery-2.1.1.min.js"></script>
-  <script src="./js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
   
 </head>
 
@@ -36,9 +36,9 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="." class="icon icon-home"> OpenNMT</a>
+        <a href="../.." class="icon icon-home"> OpenNMT</a>
         <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
   </form>
 </div>
@@ -48,20 +48,14 @@
 	<ul class="current">
 	  
           
-            <li class="toctree-l1 current">
+            <li class="toctree-l1">
 		
-    <a class="current" href=".">Overview</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l2"><a href="#additional-resources">Additional resources</a></li>
-    
-
-    </ul>
+    <a class="" href="../..">Overview</a>
 	    </li>
           
             <li class="toctree-l1">
 		
-    <a class="" href="quickstart/">Quickstart</a>
+    <a class="" href="../../quickstart/">Quickstart</a>
 	    </li>
           
             <li class="toctree-l1">
@@ -70,11 +64,11 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="data/preparation/">Preparation</a>
+    <a class="" href="../../data/preparation/">Preparation</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="data/word_features/">Word features</a>
+    <a class="" href="../../data/word_features/">Word features</a>
                 </li>
     </ul>
 	    </li>
@@ -85,27 +79,36 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="training/models/">Models</a>
+    <a class="" href="../models/">Models</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="training/embeddings/">Embeddings</a>
+    <a class="" href="../embeddings/">Embeddings</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="training/multi_gpu/">Mutli GPU</a>
+    <a class="" href="../multi_gpu/">Mutli GPU</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="training/retraining/">Retraining</a>
+    <a class="" href="../retraining/">Retraining</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="training/decay/">Decay strategies</a>
+    <a class="" href="../decay/">Decay strategies</a>
                 </li>
-                <li class="">
+                <li class=" current">
                     
-    <a class="" href="training/sampling/">Data sampling</a>
+    <a class="current" href="./">Data sampling</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#uniform">Uniform</a></li>
+    
+
+    <li class="toctree-l3"><a href="#perplexity-based">Perplexity-based</a></li>
+    
+
+    </ul>
                 </li>
     </ul>
 	    </li>
@@ -116,15 +119,15 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="translation/inference/">Inference</a>
+    <a class="" href="../../translation/inference/">Inference</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="translation/beam_search/">Beam search</a>
+    <a class="" href="../../translation/beam_search/">Beam search</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="translation/unknowns/">Unkown words</a>
+    <a class="" href="../../translation/unknowns/">Unkown words</a>
                 </li>
     </ul>
 	    </li>
@@ -135,11 +138,11 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="tools/tokenization/">Tokenization</a>
+    <a class="" href="../../tools/tokenization/">Tokenization</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="tools/servers/">Servers</a>
+    <a class="" href="../../tools/servers/">Servers</a>
                 </li>
     </ul>
 	    </li>
@@ -150,43 +153,43 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="options/usage/">Scripts usage</a>
+    <a class="" href="../../options/usage/">Scripts usage</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="options/preprocess/">Preprocess</a>
+    <a class="" href="../../options/preprocess/">Preprocess</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="options/train/">Train</a>
+    <a class="" href="../../options/train/">Train</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="options/translate/">Translate</a>
+    <a class="" href="../../options/translate/">Translate</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="options/tag/">Tag</a>
+    <a class="" href="../../options/tag/">Tag</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="options/tokenize/">Tokenize</a>
+    <a class="" href="../../options/tokenize/">Tokenize</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="options/rest_server/">REST server</a>
+    <a class="" href="../../options/rest_server/">REST server</a>
                 </li>
     </ul>
 	    </li>
           
             <li class="toctree-l1">
 		
-    <a class="" href="extensions/">Extensions</a>
+    <a class="" href="../../extensions/">Extensions</a>
 	    </li>
           
             <li class="toctree-l1">
 		
-    <a class="" href="issues/">Common issues</a>
+    <a class="" href="../../issues/">Common issues</a>
 	    </li>
           
         </ul>
@@ -199,7 +202,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href=".">OpenNMT</a>
+        <a href="../..">OpenNMT</a>
       </nav>
 
       
@@ -207,14 +210,18 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href=".">Docs</a> &raquo;</li>
+    <li><a href="../..">Docs</a> &raquo;</li>
     
       
+        
+          <li>Training &raquo;</li>
+        
+      
     
-    <li>Overview</li>
+    <li>Data sampling</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/index.md"
+        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/training/sampling.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -224,17 +231,16 @@
           <div role="main">
             <div class="section">
               
-                <p>This portal provides a detailled documentation of the OpenNMT toolkit. It desribes how to use the Torch project and how it works.</p>
-<p><em>For the PyTorch version, visit the project on <a href="https://github.com/OpenNMT/OpenNMT-py">GitHub</a>.</em></p>
-<h2 id="additional-resources">Additional resources</h2>
-<p>You can find additional help or tutorials in the following resources:</p>
-<ul>
-<li><a href="http://forum.opennmt.net/">Forum</a></li>
-<li><a href="https://gitter.im/OpenNMT/openmt">Gitter channel</a></li>
-</ul>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If you find an error in this documentation, please consider <a href="https://github.com/OpenNMT/OpenNMT/issues/new">opening an issue</a> or directly submitting a modification by clicking on the <em>Edit on GitHub</em> link.</p>
+                <p>Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch.</p>
+<h2 id="uniform">Uniform</h2>
+<p>The simplest data sampling is to uniformly select a subset of the training data. Using the <code>-sample N</code> option, the training will randomly choose <script type="math/tex">N</script> training sequences at each epoch.</p>
+<p>A typical use case is to reduce the length of the epochs for more frequent learning rate updates and validation perplexity computation.</p>
+<h2 id="perplexity-based">Perplexity-based</h2>
+<p>This approach is an attempt to feed relevant training data at each epoch. When using the flag <code>-sample_w_ppl</code>, the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.</p>
+<p>Alternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the <code>-sample_w_ppl_init</code> option.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of <strong>each</strong> sequence has to be independently computed.</p>
 </div>
               
             </div>
@@ -243,8 +249,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="quickstart/" class="btn btn-neutral float-right" title="Quickstart">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../translation/inference/" class="btn btn-neutral float-right" title="Inference">Next <span class="icon icon-circle-arrow-right"></span></a>
       
+      
+        <a href="../decay/" class="btn btn-neutral" title="Decay strategies"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -272,18 +280,15 @@
           <a href="https://github.com/OpenNMT/OpenNMT" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
+        <span><a href="../decay/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
-        <span style="margin-left: 15px"><a href="quickstart/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+        <span style="margin-left: 15px"><a href="../../translation/inference/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
-    <script src="./js/theme.js"></script>
+    <script src="../../js/theme.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 
 </body>
 </html>
-
-<!--
-MkDocs version : 0.16.2
-Build Date UTC : 2017-04-05 10:20:12
--->

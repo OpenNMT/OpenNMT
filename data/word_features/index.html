@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Word features - OpenNMT</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../css/extra.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Word features";
+    var mkdocs_page_input_path = "data/word_features.md";
+    var mkdocs_page_url = "/data/word_features/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> OpenNMT</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../quickstart/">Quickstart</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Data</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../preparation/">Preparation</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Word features</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#time-shifting">Time-shifting</a></li>
+    
+
+    <li class="toctree-l3"><a href="#vocabularies">Vocabularies</a></li>
+    
+
+    <li class="toctree-l3"><a href="#embeddings">Embeddings</a></li>
+    
+
+    <li class="toctree-l3"><a href="#beam-search">Beam search</a></li>
+    
+
+    </ul>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Training</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../training/models/">Models</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/embeddings/">Embeddings</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/multi_gpu/">Mutli GPU</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/retraining/">Retraining</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/decay/">Decay strategies</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../training/sampling/">Data sampling</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Translation</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../translation/inference/">Inference</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../translation/beam_search/">Beam search</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../translation/unknowns/">Unkown words</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Tools</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../tools/tokenization/">Tokenization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../tools/servers/">Servers</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Reference: Options</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../options/usage/">Scripts usage</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/preprocess/">Preprocess</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/train/">Train</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/translate/">Translate</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/tag/">Tag</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/tokenize/">Tokenize</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/rest_server/">REST server</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../extensions/">Extensions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../issues/">Common issues</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">OpenNMT</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Data &raquo;</li>
+        
+      
+    
+    <li>Word features</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/data/word_features.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>OpenNMT supports additional features on source and target words in the form of <strong>discrete labels</strong>.</p>
+<ul>
+<li>On the source side, these features act as <strong>additional information</strong> to the encoder. An
+embedding will be optimized for each label and then fed as additional source input
+alongside the word it annotates.</li>
+<li>On the target side, these features will be <strong>predicted</strong> by the network. The
+decoder is then able to decode a sentence and annotate each word.</li>
+</ul>
+<p>To use additional features, directly modify your data by appending labels to each word with
+the special character <code>￨</code> (unicode character FFE8). There can be an <strong>arbitrary number</strong> of additional
+features in the form <code>word￨feat1￨feat2￨...￨featN</code> but each word must have the same number of
+features and in the same order. Source and target data can have a different number of additional features.</p>
+<p>As an example, see <code>data/src-train-case.txt</code> which uses a separate feature
+to represent the case of each word. Using case as a feature is a way to optimize the word
+dictionary (no duplicated words like "the" and "The") and gives the system an additional
+information that can be useful to optimize its objective function.</p>
+<pre><code class="text">it￨C is￨l not￨l acceptable￨l that￨l ,￨n with￨l the￨l help￨l of￨l the￨l national￨l bureaucracies￨l ,￨n parliament￨C &amp;apos;s￨l legislative￨l prerogative￨l should￨l be￨l made￨l null￨l and￨l void￨l by￨l means￨l of￨l implementing￨l provisions￨l whose￨l content￨l ,￨n purpose￨l and￨l extent￨l are￨l not￨l laid￨l down￨l in￨l advance￨l .￨n
+</code></pre>
+
+<p>You can generate this case feature with OpenNMT's tokenization script and the <code>-case_feature</code> flag.</p>
+<h2 id="time-shifting">Time-shifting</h2>
+<p>By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. More precisely at timestep <script type="math/tex">t</script>:</p>
+<ul>
+<li>the inputs are <script type="math/tex">words^{(t)}</script> and <script type="math/tex">features^{(t-1)}</script>
+</li>
+<li>the outputs are <script type="math/tex">words^{(t+1)}</script> and <script type="math/tex">features^{(t)}</script>
+</li>
+</ul>
+<h2 id="vocabularies">Vocabularies</h2>
+<p>By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code> options in the format <code>word_vocab_size[,feat1_vocab_size[,feat2_vocab_size[...]]]</code>. For example:</p>
+<pre><code class="bash"># unlimited source features vocabulary size
+-src_vocab_size 50000
+
+# first feature vocabulary is limited to 60, others are unlimited
+-src_vocab_size 50000,60
+
+# second feature vocabulary is limited to 100, others are unlimited
+-src_vocab_size 50000,0,100
+
+# limit vocabulary size of the first and second feature
+-src_vocab_size 50000,60,100
+</code></pre>
+
+<p>You can similarly use <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> to limit vocabulary by frequency instead of absolute size.</p>
+<p>Like words, word features vocabularies can be reused across datasets with the <code>-features_vocabs_prefix</code>. For example, if the processing generates theses features dictionaries:</p>
+<ul>
+<li><code>data/mydicts.source_feature_1.dict</code></li>
+<li><code>data/mydicts.source_feature_2.dict</code></li>
+<li><code>data/mydicts.source_feature_3.dict</code></li>
+</ul>
+<p>you have to set <code>-features_vocabs_prefix data/mydicts</code> as command line option.</p>
+<h2 id="embeddings">Embeddings</h2>
+<p>The feature embedding size is automatically computed based on the number of values the feature takes. The default size reduction works well for features with few values like the case or POS. For other features, you may want to manually choose the embedding size with the <code>-src_word_vec_size</code> and <code>-tgt_word_vec_size</code> options. They behave similarly to <code>-src_vocab_size</code> with a comma-separated list of embedding size: <code>word_vec_size[,feat1_vec_size[,feat2_vec_size[...]]]</code>.</p>
+<p>By default each embedding is concatenated. You can choose to sum them by setting <code>-feat_merge sum</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In the <code>sum</code> case, each feature embedding must have the same dimension. You can set the common embedding size with <code>-feat_vec_size</code>.</p>
+</div>
+<h2 id="beam-search">Beam search</h2>
+<p>During decoding, the beam search is only applied on the target words space and not on the word features. When the beam path is complete, the associated features are selected along this path.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../../training/models/" class="btn btn-neutral float-right" title="Models">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../preparation/" class="btn btn-neutral" title="Preparation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/OpenNMT/OpenNMT" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../preparation/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../../training/models/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</body>
+</html>

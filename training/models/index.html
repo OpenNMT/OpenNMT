@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Models - OpenNMT</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../css/extra.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Models";
+    var mkdocs_page_input_path = "training/models.md";
+    var mkdocs_page_url = "/training/models/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> OpenNMT</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../quickstart/">Quickstart</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Data</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../data/preparation/">Preparation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../data/word_features/">Word features</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Training</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <a class="current" href="./">Models</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#encoders">Encoders</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#default-encoder">Default encoder</a></li>
+        
+            <li><a class="toctree-l4" href="#bidirectional-encoder">Bidirectional encoder</a></li>
+        
+            <li><a class="toctree-l4" href="#deep-bidirectional-encoder">Deep bidirectional encoder</a></li>
+        
+            <li><a class="toctree-l4" href="#pyramidal-deep-bidirectional-encoder">Pyramidal deep bidirectional encoder</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#decoders">Decoders</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#default-decoder">Default decoder</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#residual-connections">Residual connections</a></li>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../embeddings/">Embeddings</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../multi_gpu/">Mutli GPU</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../retraining/">Retraining</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../decay/">Decay strategies</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../sampling/">Data sampling</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Translation</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../translation/inference/">Inference</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../translation/beam_search/">Beam search</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../translation/unknowns/">Unkown words</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Tools</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../tools/tokenization/">Tokenization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../tools/servers/">Servers</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Reference: Options</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../options/usage/">Scripts usage</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/preprocess/">Preprocess</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/train/">Train</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/translate/">Translate</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/tag/">Tag</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/tokenize/">Tokenize</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../options/rest_server/">REST server</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../extensions/">Extensions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../issues/">Common issues</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">OpenNMT</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Training &raquo;</li>
+        
+      
+    
+    <li>Models</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/training/models.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>In addition to standard dimension settings like the number of layers, the hidden dimension size, etc., OpenNMT also provides various model architecture.</p>
+<h2 id="encoders">Encoders</h2>
+<h3 id="default-encoder">Default encoder</h3>
+<p>The default encoder is a simple recurrent neural network (LSTM or GRU).</p>
+<h3 id="bidirectional-encoder">Bidirectional encoder</h3>
+<p>The bidirectional encoder (<code>-brnn</code>) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the <code>-brnn_merge</code> option.</p>
+<p><img alt="Bidirectional encoder" src="../../img/brnn.png" /></p>
+<h3 id="deep-bidirectional-encoder">Deep bidirectional encoder</h3>
+<p>The deep bidirectional encoder (<code>-dbrnn</code>) is an alternative bidirectional encoder where the output of <strong>every</strong> layers are summed (or concatenated) prior feeding to the next layer.</p>
+<p><img alt="Deep bidirectional encoder" src="../../img/dbrnn.png" /></p>
+<h3 id="pyramidal-deep-bidirectional-encoder">Pyramidal deep bidirectional encoder</h3>
+<p>The pyramidal deep bidirectional encoder (<code>-pdbrnn</code>) is an alternative deep bidirectional encoder that reduces the time dimension at each layer based on <code>-pdbrnn_reduction</code>.</p>
+<p><img alt="Pyramidal deep bidirectional encoder" src="../../img/pdbrnn.png" /></p>
+<h2 id="decoders">Decoders</h2>
+<h3 id="default-decoder">Default decoder</h3>
+<p>The default decoder applies attention over the source sequence and implements input feeding by default.</p>
+<p>Input feeding is an approach to feed attentional vectors "<em>as inputs to the next time steps to inform the model about past alignment decisions</em>" (<a href="https://arxiv.org/pdf/1508.04025.pdf">Luong et al. (2015)</a>). This can be disabled by setting <code>-input_feed 0</code>.</p>
+<p><img alt="Decoder with input feeding" src="../../img/input_feed.png" /></p>
+<h2 id="residual-connections">Residual connections</h2>
+<p>With residual connections the input of a layer is element-wise added to the output before feeding to the next layer. This approach proved to be useful for the gradient flow with deep RNN stacks (more than 4 layers).</p>
+<p><img alt="RNN with residual connections" src="../../img/residual.png" /></p>
+<p>The following components support residual connections with the <code>-residual</code> flag:</p>
+<ul>
+<li>default encoder</li>
+<li>bidirectional encoder</li>
+<li>default decoder</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../embeddings/" class="btn btn-neutral float-right" title="Embeddings">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../../data/word_features/" class="btn btn-neutral" title="Word features"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/OpenNMT/OpenNMT" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../../data/word_features/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../embeddings/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+</body>
+</html>
