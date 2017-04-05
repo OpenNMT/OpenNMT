@@ -52,7 +52,7 @@ function JoinReplicateTable:_replicate(input, dim, dry_run)
          memStrides[idx] = st[dim]
          if not dry_run then
             st[dim] = 0
-            input[idx] = torch.Tensor(input[idx]:storage(), input[idx]:storageOffset(), sz, st)
+            input[idx]:set(input[idx]:storage(), input[idx]:storageOffset(), sz, st)
          end
       end
    end
@@ -66,7 +66,7 @@ function JoinReplicateTable:_dereplicate(input, dim, memStrides)
       sz[dim] = 1
       local st = input[idx]:stride()
       st[dim] = stval
-      input[idx] = torch.Tensor(input[idx]:storage(), input[idx]:storageOffset(), sz, st)
+      input[idx]:set(input[idx]:storage(), input[idx]:storageOffset(), sz, st)
    end
 end
 
