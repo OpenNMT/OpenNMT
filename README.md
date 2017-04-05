@@ -60,11 +60,7 @@ th train.lua -data data/demo-train.t7 -save_model model
 th translate.lua -model model_final.t7 -src data/src-test.txt -output pred.txt
 ```
 
-For more details, see:
-
-* the Lua scripts help (`-h`)
-* the <a href="http://opennmt.github.io/Guide">quickstart guide</a>
-* the <a href="http://opennmt.net/Advanced/">advanced guide</a>
+For more details, visit the [documentation](http://opennmt.net/OpenNMT/).
 
 ## Citation
 
@@ -72,7 +68,7 @@ A <a href="https://arxiv.org/abs/1701.02810">technical report</a> on OpenNMT is 
 
 ```
 @ARTICLE{2017opennmt,
-  author = { {Klein}, G. and {Kim}, Y. and {Deng}, Y. and {Senellart}, J. and {Rush}, A.~M.},
+  author = {{Klein}, G. and {Kim}, Y. and {Deng}, Y. and {Senellart}, J. and {Rush}, A.~M.},
   title = "{OpenNMT: Open-Source Toolkit for Neural Machine Translation}",
   journal = {ArXiv e-prints},
   eprint = {1701.02810}
@@ -81,9 +77,9 @@ A <a href="https://arxiv.org/abs/1701.02810">technical report</a> on OpenNMT is 
 
 ## Documentation
 
-* <a href="http://opennmt.github.io/Guide">Options and Features</a>
 * <a href="http://opennmt.github.io/OpenNMT">Documentation</a>
 * <a href="http://opennmt.github.io/Models">Example Models</a>
 * <a href="http://forum.opennmt.net">Forum</a>
+* <a href="https://gitter.im/OpenNMT/openmt">Gitter</a>
 * <a href="https://demo-pnmt.systran.net">Live Demo</a>
 * <a href="http://opennmt.github.io/about">Bibliography</a>
