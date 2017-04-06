@@ -25,7 +25,7 @@ To automate this process, OpenNMT provides a script `tools/embeddings.lua` than 
 For example, to generate pretrained English words embeddings:
 
 ```bash
-th tools/embeddings.lua -auto_load en -dict_file data/demo.src.dict -save_data data/demo-src-emb
+th tools/embeddings.lua -lang en -dict_file data/demo.src.dict -save_data data/demo-src-emb
 ```
 
 !!! note "Note"

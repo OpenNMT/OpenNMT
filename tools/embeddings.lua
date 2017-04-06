@@ -15,7 +15,7 @@ cmd:setCmdLineOptions(
     },
     {
       '-embed_file', '',
-      [[Path to embedding file. Ignored if auto_lang is used.]]
+      [[Path to embedding file. Ignored if lang is used.]]
     },
     {
       '-save_data', '',
@@ -27,12 +27,12 @@ cmd:setCmdLineOptions(
 cmd:setCmdLineOptions(
   {
     {
-      '-auto_lang', '',
+      '-lang', '',
       [[Wikipedia Language Code to autoload embeddings.]]
     },
     {
       '-embed_type', 'word2vec',
-      [['word2vec' or 'glove'. Ignored if auto_lang is used.]]
+      [['word2vec' or 'glove'. Ignored if lang is used.]]
     },
     {
       '-normalize', 'true',
@@ -297,9 +297,9 @@ local function main()
   local embedFile = opt.embed_file
   local embedType = opt.embed_type
 
-  if opt.auto_lang and opt.auto_lang:len() > 0 then
-    print('running autoload for ' .. opt.auto_lang)
-    embedFile = loadAuto(opt.auto_lang)
+  if opt.lang and opt.lang:len() > 0 then
+    print('running autoload for ' .. opt.lang)
+    embedFile = loadAuto(opt.lang)
     embedType = 'glove'
   end
 
