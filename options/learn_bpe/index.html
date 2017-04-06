@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Preprocess - OpenNMT</title>
+  <title>Learn BPE - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -18,9 +18,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Preprocess";
-    var mkdocs_page_input_path = "options/preprocess.md";
-    var mkdocs_page_url = "/options/preprocess/";
+    var mkdocs_page_name = "Learn BPE";
+    var mkdocs_page_input_path = "options/learn_bpe.md";
+    var mkdocs_page_url = "/options/learn_bpe/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -151,24 +151,9 @@
                     
     <a class="" href="../usage/">Scripts usage</a>
                 </li>
-                <li class=" current">
+                <li class="">
                     
-    <a class="current" href="./">Preprocess</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l3"><a href="#preprocess-options">Preprocess options</a></li>
-    
-
-    <li class="toctree-l3"><a href="#data-options">Data options</a></li>
-    
-
-    <li class="toctree-l3"><a href="#logger-options">Logger options</a></li>
-    
-
-    <li class="toctree-l3"><a href="#other-options">Other options</a></li>
-    
-
-    </ul>
+    <a class="" href="../preprocess/">Preprocess</a>
                 </li>
                 <li class="">
                     
@@ -186,9 +171,18 @@
                     
     <a class="" href="../tokenize/">Tokenize</a>
                 </li>
-                <li class="">
+                <li class=" current">
                     
-    <a class="" href="../learn_bpe/">Learn BPE</a>
+    <a class="current" href="./">Learn BPE</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#bpe-options">BPE options</a></li>
+    
+
+    <li class="toctree-l3"><a href="#logger-options">Logger options</a></li>
+    
+
+    </ul>
                 </li>
                 <li class="">
                     
@@ -238,10 +232,10 @@
         
       
     
-    <li>Preprocess</li>
+    <li>Learn BPE</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/preprocess.md"
+        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/learn_bpe.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -253,47 +247,27 @@
               
                 <!--- This file was automatically generated. Do not modify it manually but use the docs/options/generate.sh script instead. -->
 
-<p><code>preprocess.lua</code> options:</p>
+<p><code>learn_bpe.lua</code> options:</p>
 <ul>
 <li><code>-h</code><br/>This help.</li>
 <li><code>-md</code><br/>Dump help in Markdown format.</li>
 <li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
 <li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
 </ul>
-<h2 id="preprocess-options">Preprocess options</h2>
+<h2 id="bpe-options">BPE options</h2>
 <ul>
-<li><code>-data_type &lt;string&gt;</code> (accepted: <code>bitext</code>, <code>monotext</code>; default: <code>bitext</code>)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.</li>
-<li><code>-save_data &lt;string&gt;</code><br/>Output file for the prepared data.</li>
-</ul>
-<h2 id="data-options">Data options</h2>
-<ul>
-<li><code>-train_src &lt;string&gt;</code><br/>Path to the training source data.</li>
-<li><code>-train_tgt &lt;string&gt;</code><br/>Path to the training target data.</li>
-<li><code>-valid_src &lt;string&gt;</code><br/>Path to the validation source data.</li>
-<li><code>-valid_tgt &lt;string&gt;</code><br/>Path to the validation target data.</li>
-<li><code>-src_vocab &lt;string&gt;</code><br/>Path to an existing source vocabulary.</li>
-<li><code>-tgt_vocab &lt;string&gt;</code><br/>Path to an existing target vocabulary.</li>
-<li><code>-src_vocab_size &lt;string&gt;</code> (default: <code>50000</code>)<br/>Comma-separated list of source vocabularies size: <code>word[,feat1,feat2,...]</code>. If = 0, vocabularies are not pruned.</li>
-<li><code>-tgt_vocab_size &lt;string&gt;</code> (default: <code>50000</code>)<br/>Comma-separated list of target vocabularies size: <code>word[,feat1,feat2,...]</code>. If = 0, vocabularies are not pruned.</li>
-<li><code>-src_words_min_frequency &lt;string&gt;</code> (default: <code>0</code>)<br/>Comma-separated list of source words min frequency: <code>word[,feat1,feat2,...]</code>. If = 0, vocabularies are pruned by size.</li>
-<li><code>-tgt_words_min_frequency &lt;string&gt;</code> (default: <code>0</code>)<br/>Comma-separated list of target words min frequency: <code>word[,feat1,feat2,...]</code>. If = 0, vocabularies are pruned by size.</li>
-<li><code>-src_seq_length &lt;number&gt;</code> (default: <code>50</code>)<br/>Maximum source sequence length.</li>
-<li><code>-tgt_seq_length &lt;number&gt;</code> (default: <code>50</code>)<br/>Maximum target sequence length.</li>
-<li><code>-features_vocabs_prefix &lt;string&gt;</code><br/>Path prefix to existing features vocabularies.</li>
-<li><code>-time_shift_feature &lt;number&gt;</code> (default: <code>1</code>)<br/>Time shift features on the decoder side.</li>
-<li><code>-sort &lt;number&gt;</code> (default: <code>1</code>)<br/>If = 1, sort the sentences by size to build batches without source padding.</li>
-<li><code>-shuffle &lt;number&gt;</code> (default: <code>1</code>)<br/>If = 1, shuffle data (prior sorting).</li>
+<li><code>-size &lt;string&gt;</code> (default: <code>30000</code>)<br/>The number of merge operations to learn.</li>
+<li><code>-t</code><br/>Tokenize the input with tokenizer, the same options as tokenize.lua, but only <code>-mode</code> is taken into account for BPE training.</li>
+<li><code>-mode &lt;string&gt;</code> (accepted: <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc.</li>
+<li><code>-lc</code><br/>Lowercase the output from the tokenizer before learning BPE.</li>
+<li><code>-bpe_mode &lt;string&gt;</code> (accepted: <code>suffix</code>, <code>prefix</code>, <code>both</code>, <code>none</code>; default: <code>suffix</code>)<br/>Define the BPE mode. <code>prefix</code>: append <code>&lt;w&gt;</code> to the begining of each word to learn prefix-oriented pair statistics; <code>suffix</code>: append <code>&lt;/w&gt;</code> to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; <code>both</code>: <code>suffix</code> and <code>prefix</code>; <code>none</code>: no <code>suffix</code> nor <code>prefix</code>.</li>
+<li><code>-save_bpe &lt;string&gt;</code><br/>Path to save the output model.</li>
 </ul>
 <h2 id="logger-options">Logger options</h2>
 <ul>
 <li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
 <li><code>-disable_logs</code><br/>If set, output nothing.</li>
 <li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
-</ul>
-<h2 id="other-options">Other options</h2>
-<ul>
-<li><code>-seed &lt;number&gt;</code> (default: <code>3425</code>)<br/>Random seed.</li>
-<li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Report status every this many sentences.</li>
 </ul>
               
             </div>
@@ -302,10 +276,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../train/" class="btn btn-neutral float-right" title="Train">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../rest_server/" class="btn btn-neutral float-right" title="REST server">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../usage/" class="btn btn-neutral" title="Scripts usage"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../tokenize/" class="btn btn-neutral" title="Tokenize"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -333,10 +307,10 @@
           <a href="https://github.com/OpenNMT/OpenNMT" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
-        <span><a href="../usage/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../tokenize/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../train/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../rest_server/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
