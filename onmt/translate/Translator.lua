@@ -42,7 +42,7 @@ local options = {
   {
     '-pre_filter_factor', 1,
     [[Optional, set this only if filter is being used. Before
-      applying filters, hypotheses with top `beamSize * preFilterFactor`
+      applying filters, hypotheses with top `beam_size * pre_filter_factor`
       scores will be considered. If the returned hypotheses voilate filters,
       then set this to a larger value to consider more.]]},
   {
