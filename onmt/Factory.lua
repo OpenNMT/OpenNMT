@@ -256,7 +256,7 @@ end
 function Factory.buildAttention(args)
   if args.attention == 'none' then
     _G.logger:info('   - No Attention')
-    return onmt.NoAttention(args, args.rnnSize)
+    return onmt.NoAttention(args, args.rnn_size)
   else
     _G.logger:info('   - Global Attention: '..args.global_attention)
     return onmt.GlobalAttention(args, args.rnn_size)

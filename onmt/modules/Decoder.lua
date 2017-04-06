@@ -149,7 +149,7 @@ function Decoder:_buildModel(attentionModel)
   outputs = { outputs:split(self.args.numEffectiveLayers) }
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = attentionModel(self.args, self.args.rnnSize)
+  local attnLayer = attentionModel
   attnLayer.name = 'decoderAttn'
   local attnInput = {outputs[#outputs], context}
   local attnOutput = attnLayer(attnInput)
