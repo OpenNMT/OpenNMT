@@ -261,7 +261,7 @@ end
 
 local function main()
 
-  _G.logger = Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   local bpe_options = {}
   if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
