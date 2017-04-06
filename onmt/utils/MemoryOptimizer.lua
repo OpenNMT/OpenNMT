@@ -13,7 +13,7 @@ local protectOutput = {
 local protectInput = {
   'nn.Linear',
   'nn.JoinTable',
-  'JoinReplicateTable',
+  'onmt.JoinReplicateTable',
   'nn.CMulTable',
   'nn.MM'
 }
