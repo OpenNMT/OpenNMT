@@ -175,6 +175,14 @@
 
     
     <url>
+     <loc>/references/</loc>
+     <lastmod>2017-04-06</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
+    <url>
      <loc>/issues/</loc>
      <lastmod>2017-04-06</lastmod>
      <changefreq>daily</changefreq>

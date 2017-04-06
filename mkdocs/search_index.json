@@ -97,7 +97,7 @@
         }, 
         {
             "location": "/training/models/", 
-            "text": "In addition to standard dimension settings like the number of layers, the hidden dimension size, etc., OpenNMT also provides various model architecture.\n\n\nEncoders\n\n\nDefault encoder\n\n\nThe default encoder is a simple recurrent neural network (LSTM or GRU).\n\n\nBidirectional encoder\n\n\nThe bidirectional encoder (\n-brnn\n) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the \n-brnn_merge\n option.\n\n\n\n\nDeep bidirectional encoder\n\n\nThe deep bidirectional encoder (\n-dbrnn\n) is an alternative bidirectional encoder where the output of \nevery\n layers are summed (or concatenated) prior feeding to the next layer.\n\n\n\n\nPyramidal deep bidirectional encoder\n\n\nThe pyramidal deep bidirectional encoder (\n-pdbrnn\n) is an alternative deep bidirectional encoder that reduces the time dimension at each layer based on \n-pdbrnn_reduction\n.\n\n\n\n\nDecoders\n\n\nDefault decoder\n\n\nThe default decoder applies attention over the source sequence and implements input feeding by default.\n\n\nInput feeding is an approach to feed attentional vectors \"\nas inputs to the next time steps to inform the model about past alignment decisions\n\" (\nLuong et al. (2015)\n). This can be disabled by setting \n-input_feed 0\n.\n\n\n\n\nResidual connections\n\n\nWith residual connections the input of a layer is element-wise added to the output before feeding to the next layer. This approach proved to be useful for the gradient flow with deep RNN stacks (more than 4 layers).\n\n\n\n\nThe following components support residual connections with the \n-residual\n flag:\n\n\n\n\ndefault encoder\n\n\nbidirectional encoder\n\n\ndefault decoder", 
+            "text": "In addition to standard dimension settings like the number of layers, the hidden dimension size, etc., OpenNMT also provides various model architecture.\n\n\nEncoders\n\n\nDefault encoder\n\n\nThe default encoder is a simple recurrent neural network (LSTM or GRU).\n\n\nBidirectional encoder\n\n\nThe bidirectional encoder (\n-brnn\n) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the \n-brnn_merge\n option.\n\n\n\n\nDeep bidirectional encoder\n\n\nThe deep bidirectional encoder (\n-dbrnn\n) is an alternative bidirectional encoder where the output of \nevery\n layers are summed (or concatenated) prior feeding to the next layer.\n\n\n\n\nPyramidal deep bidirectional encoder\n\n\nThe pyramidal deep bidirectional encoder (\n-pdbrnn\n) is an alternative deep bidirectional encoder that reduces the time dimension at each layer based on \n-pdbrnn_reduction\n.\n\n\n\n\nDecoders\n\n\nDefault decoder\n\n\nThe default decoder applies attention over the source sequence and implements input feeding by default.\n\n\nInput feeding is an approach to feed attentional vectors \"\nas inputs to the next time steps to inform the model about past alignment decisions\n\" (\nLuong et al. (2015)\n). This can be disabled by setting \n-input_feed 0\n.\n\n\n\n\nResidual connections\n\n\nWith residual connections the input of a layer is element-wise added to the output before feeding to the next layer. This approach proved to be useful for the gradient flow with deep RNN stacks (more than 4 layers).\n\n\n\n\nThe following components support residual connections with the \n-residual\n flag:\n\n\n\n\ndefault encoder\n\n\nbidirectional encoder\n\n\ndefault decoder\n\n\n\n\nAttention Model\n\n\nDefault attention model implemented is \"Global Attention Model (\ngeneral\n)\" from: \nLuong (2015)\n.\n\n\n\n\nwhere:\n\n\n\n\na_t(s) = \\frac{exp(score(h_t,\\bar{h}_s))}{\\sum_{s'} exp(score(h_t,\\bar{h}_s)}\n\n\n\n\nand\n\n\n\n\nscore(h_t,\\bar{h}_s)=h_t^TW_a\\bar{h}_s", 
             "title": "Models"
         }, 
         {
@@ -139,6 +139,11 @@
             "location": "/training/models/#residual-connections", 
             "text": "With residual connections the input of a layer is element-wise added to the output before feeding to the next layer. This approach proved to be useful for the gradient flow with deep RNN stacks (more than 4 layers).   The following components support residual connections with the  -residual  flag:   default encoder  bidirectional encoder  default decoder", 
             "title": "Residual connections"
+        }, 
+        {
+            "location": "/training/models/#attention-model", 
+            "text": "Default attention model implemented is \"Global Attention Model ( general )\" from:  Luong (2015) .   where:   a_t(s) = \\frac{exp(score(h_t,\\bar{h}_s))}{\\sum_{s'} exp(score(h_t,\\bar{h}_s)}   and   score(h_t,\\bar{h}_s)=h_t^TW_a\\bar{h}_s", 
+            "title": "Attention Model"
         }, 
         {
             "location": "/training/embeddings/", 
@@ -549,6 +554,11 @@
             "location": "/extensions/#image-to-text", 
             "text": "As an example use case we have released an extension for translating from images-to-text. This model replaces the source-side word embeddings with a convolutional image network. The full model is\navailable at  OpenNMT/im2text .", 
             "title": "Image-to-Text"
+        }, 
+        {
+            "location": "/references/", 
+            "text": "This is the list of papers, OpenNMT has been inspired on:\n\n\n\n\nLuong, M. T., Pham, H., \n Manning, C. D. (2015). \nEffective approaches to attention-based neural machine translation\n. arXiv preprint arXiv:1508.04025.\n\n\nSennrich, R., \n Haddow, B. (2016). \nLinguistic input features improve neural machine translation\n. arXiv preprint arXiv:1606.02892.\n\n\nSennrich, R., Haddow, B., \n Birch, A. (2015). \nNeural machine translation of rare words with subword units\n. arXiv preprint arXiv:1508.07909.", 
+            "title": "References"
         }, 
         {
             "location": "/issues/", 

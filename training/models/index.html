@@ -114,6 +114,9 @@
     <li class="toctree-l3"><a href="#residual-connections">Residual connections</a></li>
     
 
+    <li class="toctree-l3"><a href="#attention-model">Attention Model</a></li>
+    
+
     </ul>
                 </li>
                 <li class="">
@@ -215,6 +218,11 @@
           
             <li class="toctree-l1">
 		
+    <a class="" href="../../references/">References</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
     <a class="" href="../../issues/">Common issues</a>
 	    </li>
           
@@ -284,6 +292,17 @@
 <li>bidirectional encoder</li>
 <li>default decoder</li>
 </ul>
+<h2 id="attention-model">Attention Model</h2>
+<p>Default attention model implemented is "Global Attention Model (<em>general</em>)" from: <a href="../../references/#Luong2015">Luong (2015)</a>.</p>
+<p><img alt="Global attentional model" src="../../img/global-attention-model.png" /></p>
+<p>where:</p>
+<p>
+<script type="math/tex; mode=display">a_t(s) = \frac{exp(score(h_t,\bar{h}_s))}{\sum_{s'} exp(score(h_t,\bar{h}_s)}</script>
+</p>
+<p>and</p>
+<p>
+<script type="math/tex; mode=display">score(h_t,\bar{h}_s)=h_t^TW_a\bar{h}_s</script>
+</p>
               
             </div>
           </div>
