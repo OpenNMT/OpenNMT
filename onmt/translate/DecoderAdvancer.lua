@@ -29,7 +29,6 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
     decoder.args.numEffectiveLayers,
     onmt.utils.Cuda.convert(torch.Tensor()),
     { self.batch.size, decoder.args.rnnSize })
-  decoder:initializeSpecialStates(self.decStates, context, batch)
   self.dicts = dicts
 end
 
@@ -91,7 +90,7 @@ function DecoderAdvancer:update(beam)
     table.insert(inputs, features)
   end
   self.decoder:maskPadding(sourceSizes, self.batch.sourceLength)
-  decOut, decStates = self.decoder:forwardOne(inputs, sourceSizes, decStates, context, decOut)
+  decOut, decStates = self.decoder:forwardOne(inputs, decStates, context, decOut)
   t = t + 1
   local softmaxOut = self.decoder.softmaxAttn.output
 

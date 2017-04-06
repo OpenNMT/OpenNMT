@@ -223,7 +223,6 @@ end
 Parameters:
 
   * `input` - input to be passed to inputNetwork.
-  * `sourceSize` - the size of the source - can be used in some attn models
   * `prevStates` - stack of hidden states (batch x layers*model x rnnSize)
   * `context` - encoder output (batch x n x rnnSize)
   * `prevOut` - previous distribution (batch x #words)
@@ -234,7 +233,7 @@ Returns:
  1. `out` - Top-layer hidden state.
  2. `states` - All states.
 --]]
-function Decoder:forwardOne(input, _, prevStates, context, prevOut, t)
+function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `buildNetwork('dec')`).
@@ -276,16 +275,6 @@ function Decoder:forwardOne(input, _, prevStates, context, prevOut, t)
   return out, states
 end
 
---[[Initial special states of the decoder that be used by specific modules
-
-  Parameters:
-
-  * `batch` - `Batch` object
-  * `states` - the states of the decoder. Can use key/value to add states without impact.
-]]
-function Decoder:initializeSpecialStates(_, _, _)
-end
-
 --[[Compute all forward steps.
 
   Parameters:
@@ -309,10 +298,8 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
 
   local prevOut
 
-  self:initializeSpecialStates(states, context, batch)
-
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t), batch.sourceSize, states, context, prevOut, t)
+    prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
     func(prevOut, t)
   end
 end
