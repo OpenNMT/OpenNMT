@@ -48,7 +48,7 @@ The following components support residual connections with the `-residual` flag:
 
 ## Attention Model
 
-Default attention model implemented is "Global Attention Model (general)" from: [Luong (2015)](../references.md#Luong2015).
+Default attention model implemented is "Global Attention Model (*general*)" from: [Luong (2015)](../references.md#Luong2015).
 
 ![Global attentional model](../img/global-attention-model.png)
 
