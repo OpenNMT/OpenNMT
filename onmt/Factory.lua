@@ -26,7 +26,7 @@ local options = {
     '-attention', 'global',
     [[Attention model.]],
     {
-      enum = {'no', 'global'}
+      enum = {'none', 'global'}
     }
   }
 }
@@ -254,7 +254,7 @@ function Factory.buildGenerator(rnnSize, dicts)
 end
 
 function Factory.buildAttention(args)
-  if args.attention == 'no' then
+  if args.attention == 'none' then
     _G.logger:info('   - No Attention')
     return onmt.NoAttention
   else
