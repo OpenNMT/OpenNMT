@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>REST server - OpenNMT</title>
+  <title>tools/rest_translation_server.lua - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -18,7 +18,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "REST server";
+    var mkdocs_page_name = "tools/rest_translation_server.lua";
     var mkdocs_page_input_path = "options/rest_server.md";
     var mkdocs_page_url = "/options/rest_server/";
   </script>
@@ -153,31 +153,31 @@
                 </li>
                 <li class="">
                     
-    <a class="" href="../preprocess/">Preprocess</a>
+    <a class="" href="../preprocess/">preprocess.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../train/">Train</a>
+    <a class="" href="../train/">train.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../translate/">Translate</a>
+    <a class="" href="../translate/">translate.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../tag/">Tag</a>
+    <a class="" href="../tag/">tag.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../tokenize/">Tokenize</a>
+    <a class="" href="../tokenize/">tools/tokenize.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../learn_bpe/">Learn BPE</a>
+    <a class="" href="../learn_bpe/">tools/learn_bpe.lua</a>
                 </li>
                 <li class=" current">
                     
-    <a class="current" href="./">REST server</a>
+    <a class="current" href="./">tools/rest_translation_server.lua</a>
     <ul class="subnav">
             
     <li class="toctree-l3"><a href="#server-options">Server options</a></li>
@@ -244,7 +244,7 @@
         
       
     
-    <li>REST server</li>
+    <li>tools/rest_translation_server.lua</li>
     <li class="wy-breadcrumbs-aside">
       
         <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/rest_server.md"
@@ -281,7 +281,7 @@
 <li><code>-phrase_table &lt;string&gt;</code><br/>Path to source-target dictionary to replace <code>&lt;unk&gt;</code> tokens.</li>
 <li><code>-n_best &lt;number&gt;</code> (default: <code>1</code>)<br/>If &gt; 1, it will also output an n-best list of decoded sentences.</li>
 <li><code>-max_num_unks &lt;number&gt;</code> (default: <code>inf</code>)<br/>All sequences with more <code>&lt;unk&gt;</code>s than this will be ignored during beam search.</li>
-<li><code>-pre_filter_factor &lt;number&gt;</code> (default: <code>1</code>)<br/>Optional, set this only if filter is being used. Before applying filters, hypotheses with top <code>beamSize * preFilterFactor</code> scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.</li>
+<li><code>-pre_filter_factor &lt;number&gt;</code> (default: <code>1</code>)<br/>Optional, set this only if filter is being used. Before applying filters, hypotheses with top <code>beam_size * pre_filter_factor</code> scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.</li>
 <li><code>-length_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Length normalization coefficient (alpha). If set to 0, no length normalization.</li>
 <li><code>-coverage_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.</li>
 <li><code>-eos_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.</li>
@@ -327,7 +327,7 @@
         <a href="../../extensions/" class="btn btn-neutral float-right" title="Extensions">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../learn_bpe/" class="btn btn-neutral" title="Learn BPE"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../learn_bpe/" class="btn btn-neutral" title="tools/learn_bpe.lua"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
