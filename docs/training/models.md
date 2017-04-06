@@ -45,3 +45,7 @@ The following components support residual connections with the `-residual` flag:
 * default encoder
 * bidirectional encoder
 * default decoder
+
+## Attention Model
+
+Different options are available for attention modeling inspired from [Luong (2015)](../references.md#Luong2015).
