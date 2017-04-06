@@ -42,4 +42,5 @@ pages:
       - Tokenize: options/tokenize.md
       - "REST server": options/rest_server.md
   - Extensions: extensions.md
+  - References: references.md
   - "Common issues": issues.md
