@@ -68,11 +68,11 @@ A <a href="https://arxiv.org/abs/1701.02810">technical report</a> on OpenNMT is 
 }
 ```
 
-## Documentation
+## Additional resources
 
 * <a href="http://opennmt.github.io/OpenNMT">Documentation</a>
-* <a href="http://opennmt.github.io/Models">Example Models</a>
+* <a href="http://opennmt.github.io/Models">Example models</a>
 * <a href="http://forum.opennmt.net">Forum</a>
-* <a href="https://gitter.im/OpenNMT/openmt">Gitter</a>
-* <a href="https://demo-pnmt.systran.net">Live Demo</a>
+* <a href="https://gitter.im/OpenNMT/openmt">Gitter channel</a>
+* <a href="https://demo-pnmt.systran.net">Live demo</a>
 * <a href="http://opennmt.github.io/about">Bibliography</a>
