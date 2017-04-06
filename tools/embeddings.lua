@@ -115,7 +115,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     for idx = 1, dictSize do
       if loaded[idx] == nil then
         for i = 1, embeddingSize do
-          weights[idx][i] = torch.uniform(-1, 1)
+          weights[idx][i] = torch.normal(0, 0.9)
         end
       end
     end
