@@ -14,6 +14,7 @@ markdown_extensions:
   - markdown.extensions.admonition
 pages:
   - Overview: index.md
+  - Installation: installation.md
   - Quickstart: quickstart.md
   - Data:
       - Preparation: data/preparation.md
@@ -39,6 +40,8 @@ pages:
       - Translate: options/translate.md
       - Tag: options/tag.md
       - Tokenize: options/tokenize.md
+      - "Learn BPE": options/learn_bpe.md
       - "REST server": options/rest_server.md
   - Extensions: extensions.md
+  - References: references.md
   - "Common issues": issues.md

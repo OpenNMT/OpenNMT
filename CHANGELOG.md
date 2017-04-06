@@ -18,6 +18,7 @@
 * Check consistency of option settings when training from existing models
 * Save and restore random number generator states in checkpoints
 * Output n-best hypotheses in the output file
+* Output more dataset metrics during the preprocessing
 * Fix individual losses that were always computed when using random sampling
 * Fix duplicate logs in parallel mode
 

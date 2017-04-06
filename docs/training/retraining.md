@@ -16,7 +16,7 @@ When training from an existing model, some settings can not be changed:
 * the vocabularies
 
 !!! note "Exceptions"
-    `dropout`, `fix_word_vecs_enc` and `fix_word_vecs_dec` are model options that can be changed for a retraining.
+    `-dropout`, `-fix_word_vecs_enc` and `-fix_word_vecs_dec` are model options that can be changed for a retraining.
 
 ## Resuming a stopped training
 

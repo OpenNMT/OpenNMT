@@ -219,6 +219,10 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
 
   local count = 0
   local ignored = 0
+  local avgSrcLength = 0
+  local avgTgtLength = 0
+  local prunedRatioSrc = 0
+  local prunedRatioTgt = 0
 
   local srcReader = onmt.utils.FileReader.new(srcFile)
   local tgtReader = onmt.utils.FileReader.new(tgtFile)
@@ -235,14 +239,26 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     end
 
     if isValid(srcTokens, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
+      avgSrcLength = avgSrcLength * (#src / (#src + 1)) + #srcTokens / (#src + 1)
+      avgTgtLength = avgTgtLength * (#tgt / (#tgt + 1)) + #tgtTokens / (#tgt + 1)
+
       local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
       local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
 
-      src:insert(srcDicts.words:convertToIdx(srcWords, onmt.Constants.UNK_WORD))
-      tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
-                                             onmt.Constants.UNK_WORD,
-                                             onmt.Constants.BOS_WORD,
-                                             onmt.Constants.EOS_WORD))
+      local srcVec = srcDicts.words:convertToIdx(srcWords, onmt.Constants.UNK_WORD)
+      local tgtVec = tgtDicts.words:convertToIdx(tgtWords,
+                                                 onmt.Constants.UNK_WORD,
+                                                 onmt.Constants.BOS_WORD,
+                                                 onmt.Constants.EOS_WORD)
+
+      local srcPruned = srcVec:eq(onmt.Constants.UNK):sum() / srcVec:size(1)
+      local tgtPruned = tgtVec:eq(onmt.Constants.UNK):sum() / tgtVec:size(1)
+
+      prunedRatioSrc = prunedRatioSrc * (#src / (#src + 1)) + srcPruned / (#src + 1)
+      prunedRatioTgt = prunedRatioTgt * (#tgt / (#tgt + 1)) + tgtPruned / (#tgt + 1)
+
+      src:insert(srcVec)
+      tgt:insert(tgtVec)
 
       if #srcDicts.features > 0 then
         srcFeatures:insert(onmt.utils.Features.generateSource(srcDicts.features, srcFeats, true))
@@ -291,9 +307,17 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     reorderData(perm)
   end
 
-  _G.logger:info('Prepared ' .. #src .. ' sentences (' .. ignored
-                   .. ' ignored due to source length > ' .. self.args.src_seq_length
-                   .. ' or target length > ' .. self.args.tgt_seq_length .. ')')
+  _G.logger:info('Prepared %d sentences:', #src)
+  _G.logger:info(' * %d sequences ignored due to source length > %d or target length > %d',
+                 ignored,
+                 self.args.src_seq_length,
+                 self.args.tgt_seq_length)
+  _G.logger:info(' * average sequence length: source = %.1f, target = %.1f',
+                 avgSrcLength,
+                 avgTgtLength)
+  _G.logger:info(' * %% of unkown words: source = %.1f%%, target = %.1f%%',
+                 prunedRatioSrc * 100,
+                 prunedRatioTgt * 100)
 
   local srcData = {
     words = src,
@@ -316,6 +340,8 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
 
   local count = 0
   local ignored = 0
+  local avgLength = 0
+  local prunedRatio = 0
 
   local reader = onmt.utils.FileReader.new(file)
 
@@ -327,9 +353,15 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
     end
 
     if isValid(tokens, self.args.seq_length) then
-      local words, feats = onmt.utils.Features.extract(tokens)
+      avgLength = avgLength * (#dataset / (#dataset + 1)) + #tokens / (#dataset + 1)
 
-      dataset:insert(dicts.words:convertToIdx(words, onmt.Constants.UNK_WORD))
+      local words, feats = onmt.utils.Features.extract(tokens)
+      local vec = dicts.words:convertToIdx(words, onmt.Constants.UNK_WORD)
+      local pruned = vec:eq(onmt.Constants.UNK):sum() / vec:size(1)
+
+      prunedRatio = prunedRatio * (#dataset / (#dataset + 1)) + pruned / (#dataset + 1)
+
+      dataset:insert(vec)
 
       if #dicts.features > 0 then
         features:insert(onmt.utils.Features.generateSource(dicts.features, feats, true))
@@ -367,8 +399,10 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
     reorderData(perm)
   end
 
-  _G.logger:info('Prepared ' .. #dataset .. ' sentences (' .. ignored
-                   .. ' ignored due to length > ' .. self.args.seq_length .. ')')
+  _G.logger:info('Prepared %d sentences:', #dataset)
+  _G.logger:info(' * %d sequences ignored due to length > %d', ignored, self.args.seq_length)
+  _G.logger:info(' * average sequence length = %.1f', avgLength)
+  _G.logger:info(' * %% of unkown words = %.1f%%', prunedRatio * 100)
 
   local data = {
     words = dataset,
