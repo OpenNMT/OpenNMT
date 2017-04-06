@@ -41,7 +41,6 @@ function Decoder:__init(args, inputNetwork, rnn, generator, inputFeed, attention
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
-  self.args.needAttnSum = attentionModel.needAttnSum
 
   parent.__init(self, self:_buildModel(attentionModel))
 
@@ -93,9 +92,6 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
-
-  -- Prototype for attention sum
-  self.attnSumProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -146,12 +142,6 @@ function Decoder:_buildModel(attentionModel)
   end
   table.insert(states, input)
 
-  local attnSum
-  if attentionModel.needAttnSum then
-    attnSum = nn.Identity()()
-    table.insert(inputs, attnSum)
-  end
-
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
 
@@ -161,7 +151,7 @@ function Decoder:_buildModel(attentionModel)
   -- Compute the attention here using h^L as query.
   local attnLayer = attentionModel(self.args, self.args.rnnSize)
   attnLayer.name = 'decoderAttn'
-  local attnInput = {outputs[#outputs], context, attnSum}
+  local attnInput = {outputs[#outputs], context}
   local attnOutput = attnLayer(attnInput)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
@@ -233,6 +223,7 @@ end
 Parameters:
 
   * `input` - input to be passed to inputNetwork.
+  * `sourceSize` - the size of the source - can be used in some attn models
   * `prevStates` - stack of hidden states (batch x layers*model x rnnSize)
   * `context` - encoder output (batch x n x rnnSize)
   * `prevOut` - previous distribution (batch x #words)
@@ -243,7 +234,7 @@ Returns:
  1. `out` - Top-layer hidden state.
  2. `states` - All states.
 --]]
-function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
+function Decoder:forwardOne(input, _, prevStates, context, prevOut, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `buildNetwork('dec')`).
@@ -266,11 +257,6 @@ function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
     end
   end
 
-  -- if some module need attn sum, it is the next input
-  if self.args.needAttnSum then
-    table.insert(inputs, prevStates.attnSum)
-  end
-
   -- Remember inputs for the backward pass.
   if self.train then
     self.inputs[t] = inputs
@@ -287,20 +273,6 @@ function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
     table.insert(states, outputs[i])
   end
 
-  -- if need attention sum
-  if self.args.needAttnSum then
-    -- check if we have reference to attention model
-    self:findAttentionModel()
-    local clone = self:cloneId(t)
-    local Attn = self.softmaxAttn
-    if clone and clone > 0 then
-      Attn = self.decoderAttnClones[clone].softmaxAttn
-    end
-    local sourceSizeView = onmt.utils.Cuda.convert(sourceSize:view(sourceSize:size(1),1))
-    states.attnSum = torch.add(prevStates.attnSum, Attn.output)
-        :cdiv(sourceSizeView:expand(prevStates.attnSum:size(1),prevStates.attnSum:size(2)))
-  end
-
   return out, states
 end
 
@@ -311,12 +283,7 @@ end
   * `batch` - `Batch` object
   * `states` - the states of the decoder. Can use key/value to add states without impact.
 ]]
-function Decoder:initializeSpecialStates(states, _, batch)
-  -- if need attention sum, initialize
-  if self.args.needAttnSum then
-    states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
-                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength })
-  end
+function Decoder:initializeSpecialStates(_, _, _)
 end
 
 --[[Compute all forward steps.

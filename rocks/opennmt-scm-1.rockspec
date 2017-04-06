@@ -46,7 +46,6 @@ build = {
     ["onmt.modules.Generator"] = "onmt/modules/Generator.lua",
     ["onmt.modules.NoAttention"] = "onmt/modules/NoAttention.lua",
     ["onmt.modules.GlobalAttention"] = "onmt/modules/GlobalAttention.lua",
-    ["onmt.modules.GlobalAttentionCoverage"] = "onmt/modules/GlobalAttentionCoverage.lua",
     ["onmt.modules.LSTM"] = "onmt/modules/LSTM.lua",
     ["onmt.modules.GRU"] = "onmt/modules/GRU.lua",
     ["onmt.modules.MaskedSoftmax"] = "onmt/modules/MaskedSoftmax.lua",

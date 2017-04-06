@@ -18,7 +18,6 @@ require('onmt.modules.FeaturesEmbedding')
 
 require('onmt.modules.NoAttention')
 require('onmt.modules.GlobalAttention')
-require('onmt.modules.GlobalAttentionCoverage')
 
 require('onmt.modules.Generator')
 require('onmt.modules.FeaturesGenerator')

@@ -26,7 +26,7 @@ local options = {
     '-attention', 'global',
     [[Attention model.]],
     {
-      enum = {'no', 'global', 'temporal'}
+      enum = {'no', 'global'}
     }
   }
 }
@@ -37,7 +37,6 @@ function Factory.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
-  onmt.GlobalAttentionCoverage.declareOpts(cmd)
 end
 
 -- Return effective embeddings size based on user options.
@@ -258,9 +257,6 @@ function Factory.buildAttention(args)
   if args.attention == 'no' then
     _G.logger:info('   - No Attention')
     return onmt.NoAttention
-  elseif args.attention == 'temporal' then
-    _G.logger:info('   - Global Attention with Coverage')
-    return onmt.GlobalAttentionCoverage
   else
     _G.logger:info('   - Global Attention: '..args.global_attention)
     return onmt.GlobalAttention
