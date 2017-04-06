@@ -2,23 +2,24 @@
 
 ### New features
 
-* Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
-* Add deep bidirectional encoder
-* Add pyramidal deep bidirectional encoder
+* Add alternative encoders (deep bidirectional and pyramidal deep bidirectional)
 * Add alternative learning rate decay strategy for SGD training
-* Add sequence tagger model
 * Introduce dynamic parameter change for dropout
 * Add length and coverage normalization during the beam search
-* Multiple attention option: no attention, global attention dot/general/concat, temporal attention
+* Add multiple attention option: no attention, global attention dot/general/concat, temporal attention
+* Add translation option to dump input sentence encoding
+* Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
+* [*experimental*] Add sequence tagger model
 
 ### Fixes and improvements
 
 * [*Breaking, changed option*] `-fix_word_vecs` options now accept `0` and `1` for a better retraining experience
-* Fix individual losses that were always computed when using random sampling
 * Allow to change the state of word embeddings optimization during a retraining
-* Check consistency of option settings when training from existing model
-* Save and Restore random number generator states in checkpoints
-* Improve duplicate messages in parallel mode
+* Check consistency of option settings when training from existing models
+* Save and restore random number generator states in checkpoints
+* Output n-best hypotheses in the output file
+* Fix individual losses that were always computed when using random sampling
+* Fix duplicate logs in parallel mode
 
 ## [v0.5.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.3) (2017-03-30)
 

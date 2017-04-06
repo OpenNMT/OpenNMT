@@ -4,7 +4,7 @@ local LanguageModel, parent = torch.class('LanguageModel', 'Model')
 local options = {
   {
     '-word_vec_size', '500',
-    [[Comma-separated list of embedding sizes: word[,feat1,feat2,...].]],
+    [[Comma-separated list of embedding sizes: `word[,feat1,feat2,...]`.]],
     {
       structural = 0
     }
@@ -35,15 +35,15 @@ local options = {
   },
   {
     '-feat_vec_exponent', 0.7,
-    [[When features embedding sizes are not set and using -feat_merge concat, their dimension
-      will be set to N^exponent where N is the number of values the feature takes.]],
+    [[When features embedding sizes are not set and using `-feat_merge concat`, their dimension
+      will be set to `N^feat_vec_exponent` where `N` is the number of values the feature takes.]],
     {
       structural = 0
     }
   },
   {
     '-feat_vec_size', 20,
-    [[When features embedding sizes are not set and using -feat_merge sum,
+    [[When features embedding sizes are not set and using `-feat_merge sum`,
       this is the common embedding size of the features]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),

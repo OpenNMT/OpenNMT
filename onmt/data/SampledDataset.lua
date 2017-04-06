@@ -19,7 +19,7 @@ local options = {
   {
     '-sample_w_ppl_max', -1.5,
     [[When greater than 0, instances with perplexity above this value will be
-      considered as noise and ignored; when less than 0, mode + (-sample_w_ppl_max) * stdev
+      considered as noise and ignored; when less than 0, mode + `-sample_w_ppl_max` * stdev
       will be used as threshold.]]
   }
 }
@@ -86,15 +86,18 @@ function SampledDataset:needIndividualLosses()
 end
 
 --[[ Initiate sampling. ]]
-function SampledDataset:sample()
-  _G.logger:info('Sampling...')
+function SampledDataset:sample(logLevel)
+
+  logLevel = logLevel or 'INFO'
+
+  _G.logger:log('Sampling...', logLevel)
 
   -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init.
   if self.sample_w_ppl and not self.startedPplSampling then
     local avgPpl = torch.sum(self.ppl)
     avgPpl = avgPpl / self.ppl:size(1)
     if avgPpl < self.sample_w_ppl_init then
-      _G.logger:info('Beginning to sample with ppl as probability distribution...')
+      _G.logger:log('Beginning to sample with ppl as probability distribution...', logLevel)
       self.startedPplSampling = true
     end
   end
@@ -118,7 +121,7 @@ function SampledDataset:sample()
       local x = math.abs(self.sample_w_ppl_max)
 
       -- Find mode.
-      local pplRounded = torch.round(self.ppl)
+      local pplRounded = torch.round(self.ppl * 100) / 100 -- keep up to the second decimal point
       local bin = {}
       for i = 1, pplRounded:size(1) do
         if self.ppl[i] ~=  self.sample_w_ppl_init then
@@ -149,10 +152,10 @@ function SampledDataset:sample()
 
       threshold = mode + x * stdev
 
-      _G.logger:info('Sampler count: ' .. cnt)
-      _G.logger:info('Sampler mode: ' .. mode)
-      _G.logger:info('Sampler stdev: ' .. stdev)
-      _G.logger:info('Sampler threshold: ' .. threshold)
+      _G.logger:log('Sampler count: ' .. cnt, logLevel)
+      _G.logger:log('Sampler mode: ' .. mode, logLevel)
+      _G.logger:log('Sampler stdev: ' .. stdev, logLevel)
+      _G.logger:log('Sampler threshold: ' .. threshold, logLevel)
     end
 
     for i = 1, self.ppl:size(1) do
@@ -166,7 +169,7 @@ function SampledDataset:sample()
   end
 
   local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
-  _G.logger:info('Created sampler...')
+  _G.logger:log('Created sampler...', logLevel)
   self.sampled = torch.LongTensor(self.samplingSize)
   self.sampled = sampler:batchdraw(self.sampled)
 
@@ -175,7 +178,7 @@ function SampledDataset:sample()
     self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
   end
 
-  _G.logger:info('Sampled ' .. self.sampled:size(1) .. ' instances')
+  _G.logger:log('Sampled ' .. self.sampled:size(1) .. ' instances', logLevel)
 
   -- Prepares batches in terms of range within self.src and self.tgt.
   local batchesCapacity = 0
@@ -223,7 +226,7 @@ function SampledDataset:sample()
     })
   end
 
-  _G.logger:info('Prepared ' .. #self.batchRange .. ' batches')
+  _G.logger:log('Prepared ' .. #self.batchRange .. ' batches', logLevel)
   return #self.batchRange, batchesOccupation / batchesCapacity
 end
 
@@ -267,7 +270,7 @@ function SampledDataset:setBatchSize(maxBatchSize, uneven_batches)
     end
   end
 
-  return self:sample()
+  return self:sample('DEBUG')
 end
 
 --[[ Return number of sampled instances. ]]

@@ -74,6 +74,7 @@ end
   * `enum`: enumeration list
   * `structural`: if defined, mark a structural parameter - 0 means cannot change value, 1 means that it can change dynamically
   * `init_only`: if true, mark a parameter that can only be set at init time
+  * `train_state`: if true, the option will be automatically reused when continuing a training
 
 ]]
 
@@ -84,23 +85,21 @@ function ExtendedCmdLine:__init(script)
   self:text('')
   self:option('-h', false, 'This help.')
   self:option('-md', false, 'Dump help in Markdown format.')
-  self:option('-config', '', 'Read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
-  self:option('-save_config', '', 'Save options from config file.')
+  self:option('-config', '', 'Load options from this file.', {valid=ExtendedCmdLine.fileNullOrExists})
+  self:option('-save_config', '', 'Save options to this file.')
 
 end
 
 function ExtendedCmdLine:help(arg, doMd)
   if doMd then
-    io.write('# ' .. self.script .. '\n')
+    io.write('`' .. self.script .. '` options:\n')
     for _, option in ipairs(self.helplines) do
       if type(option) == 'table' then
         io.write('* ')
         if option.default ~= nil then -- It is an option.
-          io.write('`' .. option.key .. '`: ')
-          option.help = option.help:gsub(' *\n   *', ' ')
-          if option.help then
-            io.write(option.help)
-          end
+          local args = type(option.default) == 'boolean' and '' or ' <' .. type(option.default) .. '>'
+          io.write('`' .. option.key .. args ..'`')
+
           local valInfo = {}
           if option.meta and option.meta.enum then
             for k, v in pairs(option.meta.enum) do
@@ -113,6 +112,13 @@ function ExtendedCmdLine:help(arg, doMd)
           end
           if #valInfo > 0 then
             io.write(' (' .. table.concat(valInfo, '; ') .. ')')
+          end
+
+          io.write('<br/>')
+
+          option.help = option.help:gsub(' *\n   *', ' ')
+          if option.help then
+            io.write(option.help)
           end
         else -- It is an argument.
           io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
@@ -228,6 +234,26 @@ function ExtendedCmdLine:loadConfig(filename, opt)
   return opt
 end
 
+function ExtendedCmdLine:logConfig(opt)
+  local keys = {}
+  for key in pairs(opt) do
+    table.insert(keys, key)
+  end
+
+  table.sort(keys)
+  _G.logger:debug('Options:')
+
+  for _, key in ipairs(keys) do
+    if key:sub(1, 1) ~= '_' then
+      local val = opt[key]
+      if type(val) == 'string' then
+        val = '\'' .. val .. '\''
+      end
+      _G.logger:debug(' * ' .. key .. ' = ' .. tostring(val))
+    end
+  end
+end
+
 function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 
@@ -244,7 +270,7 @@ function ExtendedCmdLine:parse(arg)
   local i = 1
 
   -- set default value
-  local params = { _is_default={}, _structural={}, _init_only={} }
+  local params = { _is_default={}, _structural={}, _init_only={}, _train_state={} }
   for option,v in pairs(self.options) do
     local soption = onmt.utils.String.stripHyphens(option)
     params[soption] = v.default
@@ -320,6 +346,9 @@ function ExtendedCmdLine:parse(arg)
         end
         if meta.init_only then
           params._init_only[k] = meta.init_only
+        end
+        if meta.train_state then
+          params._train_state[k] = meta.train_state
         end
       end
     end
