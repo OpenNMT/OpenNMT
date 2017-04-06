@@ -46,8 +46,13 @@
 * `-brnn`<br/>Use a bidirectional encoder.
 * `-dbrnn`<br/>Use a deep bidirectional encoder.
 * `-pdbrnn`<br/>Use a pyramidal deep bidirectional encoder.
+* `-attention <string>` (accepted: `none`, `global`; default: `global`)<br/>Attention model.
 * `-brnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action for the bidirectional states.
 * `-pdbrnn_reduction <number>` (default: `2`)<br/>Time-reduction factor at each layer.
+
+## Global Attention Model options
+
+* `-global_attention <string>` (accepted: `general`, `dot`, `concat`; default: `general`)<br/>Global attention model type.
 
 ## Optimization options
 

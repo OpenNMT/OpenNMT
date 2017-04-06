@@ -77,6 +77,18 @@ function Sequencer:net(t)
   end
 end
 
+--[[Return the id of the clone to use for timestep t or 0 if not using clones]]
+function Sequencer:cloneId(t)
+  if self.train and t then
+    return t
+  elseif #self.networkClones > 0 then
+    return 1
+  else
+    return 0
+  end
+end
+
+
 --[[ Move the network to train mode. ]]
 function Sequencer:training()
   parent.training(self)
