@@ -172,6 +172,9 @@
     <li class="toctree-l3"><a href="#sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options</a></li>
     
 
+    <li class="toctree-l3"><a href="#global-attention-model-options">Global Attention Model options</a></li>
+    
+
     <li class="toctree-l3"><a href="#optimization-options">Optimization options</a></li>
     
 
@@ -320,8 +323,13 @@
 <li><code>-brnn</code><br/>Use a bidirectional encoder.</li>
 <li><code>-dbrnn</code><br/>Use a deep bidirectional encoder.</li>
 <li><code>-pdbrnn</code><br/>Use a pyramidal deep bidirectional encoder.</li>
+<li><code>-attention &lt;string&gt;</code> (accepted: <code>none</code>, <code>global</code>; default: <code>global</code>)<br/>Attention model.</li>
 <li><code>-brnn_merge &lt;string&gt;</code> (accepted: <code>concat</code>, <code>sum</code>; default: <code>sum</code>)<br/>Merge action for the bidirectional states.</li>
 <li><code>-pdbrnn_reduction &lt;number&gt;</code> (default: <code>2</code>)<br/>Time-reduction factor at each layer.</li>
+</ul>
+<h2 id="global-attention-model-options">Global Attention Model options</h2>
+<ul>
+<li><code>-global_attention &lt;string&gt;</code> (accepted: <code>general</code>, <code>dot</code>, <code>concat</code>; default: <code>general</code>)<br/>Global attention model type.</li>
 </ul>
 <h2 id="optimization-options">Optimization options</h2>
 <ul>

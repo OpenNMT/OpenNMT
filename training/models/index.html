@@ -297,16 +297,22 @@
 <li>default decoder</li>
 </ul>
 <h2 id="attention-model">Attention Model</h2>
-<p>Default attention model implemented is "Global Attention Model (<em>general</em>)" from: <a href="../../references/#Luong2015">Luong (2015)</a>.</p>
+<p>Different models are available from <a href="../../references/#Luong2015">Luong (2015)</a> "Global Attention Model".</p>
 <p><img alt="Global attentional model" src="../../img/global-attention-model.png" /></p>
 <p>where:</p>
 <p>
-<script type="math/tex; mode=display">a_t(s) = \frac{exp(score(h_t,\bar{h}_s))}{\sum_{s'} exp(score(h_t,\bar{h}_s)}</script>
+<script type="math/tex; mode=display">a_t(s) = \frac{\mathrm{exp}(\mathrm{score}(h_t,\bar{h}_s))}{\sum_{s'} \mathrm{exp}(\mathrm{score}(h_t,\bar{h}_s)}</script>
 </p>
-<p>and</p>
-<p>
-<script type="math/tex; mode=display">score(h_t,\bar{h}_s)=h_t^TW_a\bar{h}_s</script>
-</p>
+<p>and the score function is one of these:</p>
+<ul>
+<li><code>dot</code>: <script type="math/tex; mode=display">\mathrm{score}(h_t,\bar{h}_s)=h_t^T\bar{h}_s</script>
+</li>
+<li><code>general</code>: <script type="math/tex; mode=display">\mathrm{score}(h_t,\bar{h}_s)=h_t^TW_a\bar{h}_s</script>
+</li>
+<li><code>concat</code>: <script type="math/tex; mode=display">\mathrm{score}(h_t,\bar{h}_s)=\nu_a^T.\mathrm{tanh}(W_a[h_t;\bar{h}_s])</script>
+</li>
+</ul>
+<p>The model is selected using <code>-global_attention</code> option or can be disabled with <code>-attention none</code> option. The default attention model is <code>general</code>.</p>
               
             </div>
           </div>
