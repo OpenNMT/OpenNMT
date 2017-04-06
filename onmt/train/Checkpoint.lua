@@ -94,13 +94,19 @@ function Checkpoint.loadFromCheckpoint(opt)
 
     checkpoint = torch.load(opt.train_from)
 
+    local function restoreOption(name)
+      if checkpoint.options[name] ~= nil then
+        opt[name] = checkpoint.options[name]
+      end
+    end
+
     -- Reload and check options.
     for k, v in pairs(opt) do
       if k:sub(1, 1) ~= '_' then
 
         if opt.continue and opt._train_state[k] then
           -- Training states should be retrieved when continuing a training.
-          opt[k] = checkpoint.options[k] or opt[k]
+          restoreOption(k)
         elseif opt._structural[k] or opt._init_only[k] then
           -- If an option was set by the user, check that we can actually change it.
           local valueChanged = not opt._is_default[k] and v ~= checkpoint.options[k]
@@ -108,15 +114,15 @@ function Checkpoint.loadFromCheckpoint(opt)
           if valueChanged then
             if opt._init_only[k] then
               _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
-              opt[k] = checkpoint.options[k] or opt[k]
+              restoreOption(k)
             elseif opt._structural[k] and opt._structural[k] == 0 then
               _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
-              opt[k] = checkpoint.options[k] or opt[k]
+              restoreOption(k)
             elseif opt._structural[k] and opt._structural[k] == 1 then
               paramChanges[k] = v
             end
           else
-            opt[k] = checkpoint.options[k] or opt[k]
+            restoreOption(k)
           end
 
         end
