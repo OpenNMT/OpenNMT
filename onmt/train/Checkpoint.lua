@@ -100,6 +100,17 @@ function Checkpoint.loadFromCheckpoint(opt)
       end
     end
 
+    if checkpoint.info.rngStates and not (opt._is_default['seed'] or opt.seed == checkpoint.options.seed) then
+      _G.logger:warning('\'-seed\' value has changed - ignoring saved rng states')
+      checkpoint.info.rngStates = nil
+    end
+
+    if opt.continue and (not (opt._is_default['learning_rate'] or opt.learning_rate == checkpoint.options.learning_rate) or
+        not (opt._is_default['start_epoch'] or opt.start_epoch == checkpoint.options.start_epoch)) then
+      _G.logger:warning('\'-continue\' option is used but learning_rate or start_epoch are set and different than previous epoch. Ignoring \'-continue\'')
+      opt.continue = nil
+    end
+
     -- Reload and check options.
     for k, v in pairs(opt) do
       if k:sub(1, 1) ~= '_' then
@@ -140,7 +151,9 @@ function Checkpoint.loadFromCheckpoint(opt)
                          .. ' at iteration ' .. opt.start_iteration .. '...')
     else
       -- Otherwise, we can drop previous training information.
-      checkpoint.info = nil
+      checkpoint.info.learningRate = nil
+      checkpoint.info.epoch = nil
+      checkpoint.info.iteration = nil
     end
   end
 
