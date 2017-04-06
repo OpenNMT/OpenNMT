@@ -50,20 +50,30 @@ local function main()
   
   local nModels = #modelFiles
   
-  local checkpoints = {}
-  
-  for i = 1, nModels do
-	_G.logger:info('Loading \'' .. modelFiles[i] .. '\'...')
-	checkpoints[i] = torch.load(modelFiles[i])
-  end 
+  --~ local checkpoints = {}
   
   local models = {}
   
   for i = 1, nModels do
-	models[i] = {}
-	models[i].encoder = onmt.Factory.loadEncoder(checkpoints[i].models.encoder)
-	models[i].decoder = onmt.Factory.loadDecoder(checkpoints[i].models.decoder)
-	
+		
+		
+		end 
+  
+  local models = {}
+  
+  for i = 1, nModels do
+		_G.logger:info('Loading \'' .. modelFiles[i] .. '\'...')
+		models[i] = {}
+		local checkpoint = torch.load(modelFiles[i])
+		models[i].encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder)
+		models[i].decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
+		
+
+		for k, v in pairs(models[i]) do
+			clearStateModel(v)
+		end
+		checkpoint = nil
+		collectgarbage() --save memory
   end
   
   _G.logger:info('Averaring the weights of these models ...')
@@ -96,7 +106,7 @@ local function main()
   
   for k, v in pairs(mainModel) do
 	--~ print(v)
-	clearStateModel(v)
+		--~ clearStateModel(v)
     if v.serialize then
       checkpoint.models[k] = v:serialize()
     else

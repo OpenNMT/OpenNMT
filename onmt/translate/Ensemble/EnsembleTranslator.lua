@@ -51,52 +51,62 @@ function Translator:__init(args)
   local models = pl.utils.split(self.opt.model, '|')
   
   local nModels = #models
-
-  self.checkpoints = {}
- 
-  for i = 1, nModels do
-	_G.logger:info('Loading \'' .. models[i] .. '\'...')
-	self.checkpoints[i] = torch.load(models[i])
-  end 
-  --~ _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
-  
-  _G.logger:info('Checking Vocabularies ...')
-  
-  local srcVocabSize = self.checkpoints[1].dicts.src.words:size()
-  local tgtVocabSize = self.checkpoints[1].dicts.tgt.words:size()
-  for i = 2, nModels do
-	assert(self.checkpoints[i].dicts.src.words:size() == srcVocabSize)
-	assert(self.checkpoints[i].dicts.tgt.words:size() == tgtVocabSize)
-  end
-  
-  --~ self.checkpoint = torch.load(self.opt.model)
   
   self.models = {}
-  
-  _G.logger:info('Building models ...')
 
+  --~ self.checkpoints = {}
+ 
+  --~ for i = 1, nModels do
+	--~ _G.logger:info('Loading \'' .. models[i] .. '\'...')
+		--~ self.checkpoints[i] = torch.load(models[i])
+  --~ end 
   
-  for i = 1, nModels do
-	self.models[i] = {}
-	self.models[i].encoder = onmt.Factory.loadEncoder(self.checkpoints[i].models.encoder)
-	self.models[i].decoder = onmt.Factory.loadDecoder(self.checkpoints[i].models.decoder)
-	
-	-- clearState model if necessary to save memory
-	if self.opt.save_mem == 1 then
-		_G.logger:info('Clear states of model ' .. i .. ' ...')
+  --~ _G.logger:info('Checking Vocabularies ...')
+  
+  --~ local srcVocabSize = self.checkpoints[1].dicts.src.words:size()
+  --~ local tgtVocabSize = self.checkpoints[1].dicts.tgt.words:size()
+  --~ for i = 2, nModels do
+		--~ assert(self.checkpoints[i].dicts.src.words:size() == srcVocabSize)
+		--~ assert(self.checkpoints[i].dicts.tgt.words:size() == tgtVocabSize)
+  --~ end
+  
+  --~ local dicts
+	for i = 1, nModels do
+		_G.logger:info('Loading \'' .. models[i] .. '\'...')
+		
+		local checkpoint = torch.load(models[i])
+		
+		
+		-- checking vocabularies with the same size
+		if i == 1 then
+			self.dicts = checkpoint.dicts
+		else
+			local srcVocabSize = checkpoint.dicts.src.words:size()
+			local tgtVocabSize = checkpoint.dicts.tgt.words:size()
+			
+			assert(self.dicts.src.words:size() == srcVocabSize)
+			assert(self.dicts.tgt.words:size() == tgtVocabSize)
+		end
+		
+		self.models[i] = {}
+		self.models[i].encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder)
+		self.models[i].decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
+		
 		clearStateModel(self.models[i].encoder)
 		clearStateModel(self.models[i].decoder)
+		-- save memory
+		checkpoint = nil
+		collectgarbage()
+		
+		self.models[i].encoder:evaluate()
+		self.models[i].decoder:evaluate()
+		onmt.utils.Cuda.convert(self.models[i].encoder)
+		onmt.utils.Cuda.convert(self.models[i].decoder)
 	end
-	self.models[i].encoder:evaluate()
-	self.models[i].decoder:evaluate()
-	onmt.utils.Cuda.convert(self.models[i].encoder)
-	onmt.utils.Cuda.convert(self.models[i].decoder)
-  end
   
   _G.logger:info('Done...')
   
   
-  self.dicts = self.checkpoints[1].dicts
 
   if self.opt.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.opt.phrase_table)
@@ -268,65 +278,7 @@ function Translator:computeGoldScore(batch, encStates, contexts)
 		goldScore[b] = goldScore[b] / self.nModels
 	end
 
-	--~ local scoreSeqs = {}
-	
-	--~ for i = 1, self.nModels do
-		--~ if batch.size > 1 then self.models[i].decoder:maskPadding(batch.sourceSize, batch.sourceLength) end
-		--~ scores[i] = self.models[i].decoder:computeScore(batch, encStates[i], contexts[i])
-		--~ scoreSeqs[i] = self.models[i].decoder:computeScore(batch, encStates[i], contexts[i], true)
-		
-		--~ print(scoreSeqs[i])
-	--~ end
-	
-	
-	
-	--~ local mainScoreSeq = scoreSeqs[1]
-	
-	--~ print(mainScoreSeq)
-	--~ local nSteps = #mainScoreSeq
-	
-	--~ for t = 1, nSteps do
-		--~ if self.ensembleOps == 'sum' then
-			--~ mainScoreSeq[t] = torch.exp(mainScoreSeq[t])
-		--~ end
-		
-		--~ for i = 2, self.nModels do
-			--~ if self.ensembleOps == 'sum' then
-				--~ mainScoreSeq[t]:add(torch.exp(scoreSeqs[i][t]))
-			--~ else
-				--~ mainScoreSeq[t]:add(scoreSeq[i][t])
-			--~ end
-		--~ end
-		
-		--~ mainScoreSeq[t]:div(self.nModels)
-		
-		--~ if self.ensembleOps == 'sum' then
-			--~ mainScoreSeq[t] = torch.log(mainScoreSeq[t])
-		--~ else
-			--~ mainScoreSeq[t] = self.logSoftMax:forward(mainScoreSeq[t])
-		--~ end
-	--~ end
-	
-	--~ local goldScore = {}
-	
-	--~ for t = 1, nSteps do
-		
-		--~ for b = 1, batch.size do
-			--~ goldScore[b] = (goldScore[b] or 0) + mainScoreSeq[t][b] 
-		--~ end	
-	--~ end
-	
-	--~ for i = 2, self.nModels do
-		
-		--~ for t = 1, nSteps do
-			
-			--~ if self.ensembleOps = 'sum' then
-				--~ mainScoreSeq[t] = torch.exp(mainScoreSeq[t])
-			--~ end
-			
-		--~ end
-	--~ end
-	
+
 	
 	
 	--~ local goldScore = self:ensembleScore(scores)
