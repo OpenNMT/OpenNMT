@@ -98,11 +98,9 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
   -- Looks for cased version and then lower version of matching dictionary word.
   local function locateIdx(word, dict)
-    local idx = nil
+    local idx = dict:lookup(word)
 
-    if dict:lookup(word) ~= nil then
-      idx = dict:lookup(word)
-    elseif dict:lookup(word:lower()) ~= nil then
+    if idx == nil then
       idx = dict:lookup(word:lower())
     end
 
