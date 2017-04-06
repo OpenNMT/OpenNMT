@@ -75,6 +75,29 @@ function unicode.utf8_iter(s)
   end
 end
 
+
+function unicode.utf8len (s)
+  local length = 0
+  for _, _ in unicode.utf8_iter(s) do
+    length = length + 1
+  end
+  return length
+end
+
+function unicode.utf8substr (s, begin_idx, end_idx)
+  local substr = {}
+  local idx = 1
+  for _, c in unicode.utf8_iter(s) do
+    if begin_idx <= idx and idx <= end_idx then
+      table.insert(substr, c)
+    elseif idx > end_idx then
+      break
+    end
+    idx = idx + 1
+  end
+  return table.concat(substr, "")
+end
+
 local function _find_codepoint(u, utable)
   for i,v in pairs(utable) do
     if u >= i then
@@ -148,10 +171,6 @@ end
 function unicode.isNumber(u)
   if not u then return false end
   return _find_codepoint(u, unidata.Number)
-end
-
-function unicode.isAlnum(u)
-  return unicode.isLetter(u) or unicode.isNumber(u) or u=='_'
 end
 
 return unicode

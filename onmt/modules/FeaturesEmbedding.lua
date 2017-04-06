@@ -2,62 +2,46 @@
   A nngraph unit that maps features ids to embeddings. When using multiple
   features this can be the concatenation or the sum of each individual embedding.
 ]]
-local FeaturesEmbedding, parent = torch.class('onmt.FeaturesEmbedding', 'nn.Container')
+local FeaturesEmbedding, parent = torch.class('onmt.FeaturesEmbedding', 'onmt.Network')
 
-function FeaturesEmbedding:__init(dicts, dimExponent, dim, merge)
-  parent.__init(self)
-
-  self.net = self:_buildModel(dicts, dimExponent, dim, merge)
-  self:add(self.net)
-end
-
-function FeaturesEmbedding:_buildModel(dicts, dimExponent, dim, merge)
-  local inputs = {}
-  local output
+function FeaturesEmbedding:__init(vocabSizes, vecSizes, merge)
+  assert(#vocabSizes == #vecSizes)
 
   if merge == 'sum' then
-    self.outputSize = dim
+    for i = 2, #vecSizes do
+      assert(vecSizes[i] == vecSizes[1], 'embeddings must have the same size when merging with a sum')
+    end
+    self.outputSize = vecSizes[1]
   else
     self.outputSize = 0
+    for i = 1, #vecSizes do
+      self.outputSize = self.outputSize + vecSizes[i]
+    end
   end
 
-  for i = 1, #dicts do
-    local feat = nn.Identity()() -- batchSize
-    table.insert(inputs, feat)
+  parent.__init(self, self:_buildModel(vocabSizes, vecSizes, merge))
+end
 
-    local vocabSize = dicts[i]:size()
-    local embSize
+function FeaturesEmbedding:_buildModel(vocabSizes, vecSizes, merge)
+  local inputs = {}
+  local outputs = {}
 
+  for i = 1, #vocabSizes do
+    table.insert(inputs, nn.Identity()())
+    table.insert(outputs, nn.LookupTable(vocabSizes[i], vecSizes[i])(inputs[#inputs]))
+  end
+
+  local output
+
+  if #outputs == 1 then
+    output = outputs[1]
+  else
     if merge == 'sum' then
-      embSize = self.outputSize
+      output = nn.CAddTable()(outputs)
     else
-      embSize = math.floor(vocabSize ^ dimExponent)
-      self.outputSize = self.outputSize + embSize
-    end
-
-    local emb = nn.LookupTable(vocabSize, embSize)(feat)
-
-    if not output then
-      output = emb
-    elseif merge == 'sum' then
-      output = nn.CAddTable()({output, emb})
-    else
-      output = nn.JoinTable(2)({output, emb})
+      output = nn.JoinTable(2, 2)(outputs)
     end
   end
 
   return nn.gModule(inputs, {output})
-end
-
-function FeaturesEmbedding:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function FeaturesEmbedding:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
-end
-
-function FeaturesEmbedding:accGradParameters(input, gradOutput, scale)
-  self.net:accGradParameters(input, gradOutput, scale)
 end

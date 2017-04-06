@@ -1,7 +1,7 @@
 --[[ nn unit. Maps from word ids to embeddings. Slim wrapper around
 nn.LookupTable to allow fixed and pretrained embeddings.
 --]]
-local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'nn.Container')
+local WordEmbedding, parent = torch.class('onmt.WordEmbedding', 'onmt.Network')
 
 --[[
 Parameters:
@@ -12,45 +12,41 @@ Parameters:
   * `fix` - keep the weights of the embeddings fixed.
 --]]
 function WordEmbedding:__init(vocabSize, vecSize, preTrained, fix)
-  parent.__init(self)
-  self.vocabSize = vocabSize
-  self.net = nn.LookupTable(vocabSize, vecSize, onmt.Constants.PAD)
-  self:add(self.net)
+  parent.__init(self, nn.LookupTable(vocabSize, vecSize, onmt.Constants.PAD))
 
-  -- If embeddings are given. Initialize them.
-  if preTrained and preTrained:len() > 0 then
-    local vecs = torch.load(preTrained)
-    self.net.weight:copy(vecs)
-
-    self.fix = fix
-    if self.fix then
-      self.net.gradWeight = nil
-    end
+  self.preTrained = preTrained
+  if fix then
+    self.net.gradWeight = nil
   end
 end
 
 function WordEmbedding:postParametersInitialization()
+  -- If embeddings are given. Initialize them.
+  if self.preTrained and self.preTrained:len() > 0 then
+    local vecs = torch.load(self.preTrained)
+    self.net.weight:copy(vecs)
+  end
+
   self.net.weight[onmt.Constants.PAD]:zero()
 end
 
-function WordEmbedding:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function WordEmbedding:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
+function WordEmbedding:fixEmbeddings(fix)
+  if fix and self.net.gradWeight then
+    self.net.gradWeight = nil
+  elseif not fix and not self.net.gradWeight then
+    self.net.gradWeight = self.net.weight.new(self.net.weight:size()):zero()
+  end
 end
 
 function WordEmbedding:accGradParameters(input, gradOutput, scale)
-  if not self.fix then
+  if self.net.gradWeight then
     self.net:accGradParameters(input, gradOutput, scale)
     self.net.gradWeight[onmt.Constants.PAD]:zero()
   end
 end
 
 function WordEmbedding:parameters()
-  if not self.fix then
+  if self.net.gradWeight then
     return parent.parameters(self)
   end
 end

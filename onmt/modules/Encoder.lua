@@ -14,14 +14,74 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
 local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 
---[[ Construct an encoder layer.
+local options = {
+  {
+    '-layers', 2,
+    [[Number of recurrent layers of the encoder and decoder.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
+    '-rnn_size', 500,
+    [[Hidden size of the recurrent unit.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
+    '-rnn_type', 'LSTM',
+    [[Type of recurrent cell.]],
+    {
+      enum = {'LSTM', 'GRU'},
+      structural = 0
+    }
+  },
+  {
+    '-dropout', 0.3,
+    [[Dropout probability applied between recurrent layers.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0, 1),
+      structural = 1
+    }
+  },
+  {
+    '-dropout_input', false,
+    [[Also apply dropout to the input of the recurrent module.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-residual', false,
+    [[Add residual connections between recurrent layers.]],
+    {
+      structural = 0
+    }
+  }
+}
+
+function Encoder.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+end
+
+--[[ Construct an Encoder layer.
 
 Parameters:
 
   * `inputNetwork` - input module.
   * `rnn` - recurrent module.
 ]]
-function Encoder:__init(inputNetwork, rnn)
+function Encoder:__init(args, inputNetwork)
+  local RNN = onmt.LSTM
+  if args.rnn_type == 'GRU' then
+    RNN = onmt.GRU
+  end
+
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input)
+
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -49,6 +109,7 @@ end
 --[[ Return data to serialize. ]]
 function Encoder:serialize()
   return {
+    name = 'Encoder',
     modules = self.modules,
     args = self.args
   }
@@ -69,7 +130,7 @@ function Encoder:maskPadding()
   self.maskPad = true
 end
 
---[[ Build one time-step of an encoder
+--[[ Build one time-step of an Encoder
 
 Returns: An nn-graph mapping
 
@@ -154,7 +215,11 @@ function Encoder:forward(batch)
       -- Remember inputs for the backward pass.
       self.inputs[t] = inputs
     end
+
     states = self:net(t):forward(inputs)
+
+    -- Make sure it always returns table.
+    if type(states) ~= "table" then states = { states } end
 
     -- Special case padding.
     if self.maskPad then
@@ -187,7 +252,7 @@ end
   Parameters:
 
   * `batch` - must be same as for forward
-  * `gradStatesOutput` gradient of loss wrt last state
+  * `gradStatesOutput` gradient of loss wrt last state - this can be null if states are not used
   * `gradContextOutput` - gradient of loss wrt full context.
 
   Returns: `gradInputs` of input network.
@@ -201,7 +266,14 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
                                                               { batch.size, outputSize })
   end
 
-  local gradStatesInput = onmt.utils.Tensor.copyTensorTable(self.gradOutputsProto, gradStatesOutput)
+  local gradStatesInput
+  if gradStatesOutput then
+    gradStatesInput = onmt.utils.Tensor.copyTensorTable(self.gradOutputsProto, gradStatesOutput)
+  else
+    -- if gradStatesOutput is not defined - start with empty tensor
+    gradStatesInput = onmt.utils.Tensor.reuseTensorTable(self.gradOutputsProto, { batch.size, outputSize })
+  end
+
   local gradInputs = {}
 
   for t = batch.sourceLength, 1, -1 do
@@ -210,7 +282,7 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
 
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
-    -- Prepare next encoder output gradients.
+    -- Prepare next Encoder output gradients.
     for i = 1, #gradStatesInput do
       gradStatesInput[i]:copy(gradInput[i])
     end

@@ -22,7 +22,7 @@ an nn unit.
 Computes $$(c_{t-1}, h_{t-1}, x_t) => (c_{t}, h_{t})$$.
 
 --]]
-local LSTM, parent = torch.class('onmt.LSTM', 'nn.Container')
+local LSTM, parent = torch.class('onmt.LSTM', 'onmt.Network')
 
 --[[
 Parameters:
@@ -30,24 +30,22 @@ Parameters:
   * `layers` - Number of LSTM layers, L.
   * `inputSize` - Size of input layer
   * `hiddenSize` - Size of the hidden layers.
-  * `dropout` - Dropout rate to use.
+  * `dropout` - Dropout rate to use (in $$[0,1]$$ range).
   * `residual` - Residual connections between layers.
+  * `dropout_input` - if true, add a dropout layer on the first layer (useful for instance in complex encoders)
 --]]
-function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual)
-  parent.__init(self)
-
+function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
 
-  self.net = self:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
-  self:add(self.net)
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input))
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
+function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
   local inputs = {}
   local outputs = {}
 
@@ -77,9 +75,9 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual)
       if residual and (L > 2 or inputSize == hiddenSize) then
         input = nn.CAddTable()({input, prevInput})
       end
-      if dropout > 0 then
-        input = nn.Dropout(dropout)(input)
-      end
+    end
+    if dropout_input or (dropout > 0 and L>1) then
+      input = nn.Dropout(dropout)(input)
     end
 
     local prevC = inputs[L*2 - 1]
@@ -108,7 +106,7 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
 
   -- Evaluate the input sums at once for efficiency.
   local i2h = nn.Linear(inputSize, 4 * hiddenSize)(x)
-  local h2h = nn.Linear(hiddenSize, 4 * hiddenSize, false)(prevH)
+  local h2h = nn.Linear(hiddenSize, 4 * hiddenSize)(prevH)
   local allInputSums = nn.CAddTable()({i2h, h2h})
 
   local reshaped = nn.Reshape(4, hiddenSize)(allInputSums)
@@ -132,17 +130,4 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
   local nextH = nn.CMulTable()({outGate, nn.Tanh()(nextC)})
 
   return nn.gModule(inputs, {nextC, nextH})
-end
-
-function LSTM:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function LSTM:updateGradInput(input, gradOutput)
-  return self.net:updateGradInput(input, gradOutput)
-end
-
-function LSTM:accGradParameters(input, gradOutput, scale)
-  return self.net:accGradParameters(input, gradOutput, scale)
 end

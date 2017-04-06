@@ -1,34 +1,115 @@
-require('nn')
-require('nngraph')
+local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
 
 local Cuda = {
+  fp16 = false,
+  gpuIds = {},
   activated = false
 }
 
-function Cuda.init(opt, gpuIdx)
-  Cuda.activated = opt.gpuid > 0
+local options = {
+  {
+    '-gpuid', '0',
+    [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
+    {
+      valid = ExtendedCmdLine.listUInt
+    }
+  },
+  {
+    '-fallback_to_cpu', false,
+    [[If GPU can't be used, rollback on the CPU.]]
+  },
+  {
+    '-fp16', false,
+    [[Use half-precision float on GPU.]]
+  },
+  {
+    '-no_nccl', false,
+    [[Disable usage of nccl in parallel mode.]]
+  }
+}
+
+function Cuda.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Cuda')
+end
+
+function Cuda.init(opt, masterGPU)
+  for _, val in ipairs(onmt.utils.String.split(opt.gpuid, ',')) do
+    local id = tonumber(val)
+    assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. val)
+    if id > 0 then
+      table.insert(Cuda.gpuIds, id)
+    end
+  end
+
+  Cuda.activated = #Cuda.gpuIds > 0
 
   if Cuda.activated then
     local _, err = pcall(function()
       require('cutorch')
       require('cunn')
-      if gpuIdx == nil then
-        -- allow memory access between devices
-        cutorch.getKernelPeerToPeerAccess(true)
-        if opt.seed then
-          cutorch.manualSeedAll(opt.seed)
+      Cuda.fp16 = opt.fp16
+
+      if masterGPU == nil then
+        masterGPU = 1
+
+        -- Validate GPU identifiers.
+        for i = 1, #Cuda.gpuIds do
+          assert(Cuda.gpuIds[i] <= cutorch.getDeviceCount(),
+                 'GPU ' .. Cuda.gpuIds[i] .. ' is requested but only '
+                   .. cutorch.getDeviceCount() .. ' GPUs are available')
         end
-        cutorch.setDevice(opt.gpuid)
-      else
-        cutorch.setDevice(gpuIdx)
+
+        _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
       end
+
+      if cutorch.isCachingAllocatorEnabled and cutorch.isCachingAllocatorEnabled() then
+        _G.logger:warning('The caching CUDA memory allocator is enabled. This allocator improves performance at the cost of a higher GPU memory usage. To optimize for memory, consider disabling it by setting the environment variable: THC_CACHING_ALLOCATOR=0')
+      end
+
+      cutorch.setDevice(Cuda.gpuIds[masterGPU])
+
       if opt.seed then
         cutorch.manualSeed(opt.seed)
       end
     end)
 
     if err then
-      error(err)
+      if opt.fallback_to_cpu then
+        _G.logger:warning('Falling back to CPU')
+        Cuda.activated = false
+      else
+        error(err)
+      end
+    end
+    if Cuda.fp16 and not cutorch.hasHalf then
+      error("installed cutorch does not support half-tensor")
+    end
+  end
+end
+
+-- returns RNGState for CPU and enabled GPUs
+function Cuda.getRNGStates()
+  local rngStates = { torch.getRNGState() }
+  for _,idx in ipairs(Cuda.gpuIds) do
+    table.insert(rngStates, cutorch.getRNGState(idx))
+  end
+  return rngStates
+end
+
+-- set RNGState from saved state
+function Cuda.setRNGStates(rngStates, verbose)
+  if not rngStates then
+    return
+  end
+  if verbose then
+    _G.logger:info("Resetting Random Number Generator states")
+  end
+  torch.setRNGState(rngStates[1])
+  if #rngStates-1 ~= #Cuda.gpuIds then
+    _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
+  else
+    for idx = 2, #rngStates do
+      cutorch.setRNGState(rngStates[idx], idx-1)
     end
   end
 end
@@ -38,16 +119,27 @@ end
   When using CPU only, converts to float instead of the default double.
 ]]
 function Cuda.convert(obj)
-  if torch.typename(obj) then
+  local objtype = torch.typename(obj)
+  if objtype then
     if Cuda.activated and obj.cuda ~= nil then
-      return obj:cuda()
+      if objtype:find('torch%..*LongTensor') then
+        return obj:type('torch.CudaLongTensor')
+      elseif Cuda.fp16 then
+        return obj:type('torch.CudaHalfTensor')
+      else
+        return obj:type('torch.CudaTensor')
+      end
     elseif not Cuda.activated and obj.float ~= nil then
       -- Defaults to float instead of double.
-      return obj:float()
+      if objtype:find('torch%..*LongTensor') then
+        return obj:type('torch.LongTensor')
+      else
+        return obj:type('torch.FloatTensor')
+      end
     end
   end
 
-  if torch.typename(obj) or type(obj) == 'table' then
+  if objtype or type(obj) == 'table' then
     for k, v in pairs(obj) do
       obj[k] = Cuda.convert(v)
     end
@@ -56,28 +148,24 @@ function Cuda.convert(obj)
   return obj
 end
 
-function Cuda.getGPUs(ngpu)
-  local gpus = {}
-  if Cuda.activated then
-    if ngpu > cutorch.getDeviceCount() then
-      error("not enough available GPU - " .. ngpu .. " requested, " .. cutorch.getDeviceCount() .. " available")
-    end
-    gpus[1] = Cuda.gpuid
-    local i = 1
-    while #gpus ~= ngpu do
-      if i ~= gpus[1] then
-        table.insert(gpus, i)
-      end
-      i = i + 1
-    end
-  else
-    for _ = 1, ngpu do
-      table.insert(gpus, 0)
-    end
-  end
-  return gpus
+--[[
+  Synchronize operations on current device if working on GPU.
+  Do nothing otherwise.
+]]
+function Cuda.synchronize()
+  if Cuda.activated then cutorch.synchronize() end
 end
 
+--[[
+  Number of available GPU.
+]]
+function Cuda.gpuCount()
+  return #Cuda.gpuIds
+end
+
+--[[
+  Free memory on the current GPU device.
+]]
 function Cuda.freeMemory()
   if Cuda.activated then
     local freeMemory = cutorch.getMemoryUsage(cutorch.getDevice())

@@ -1,4 +1,7 @@
 globals = {
+  "table.unpack",
+  "table.pack",
+  "string.split",
   "torch",
   "cutorch",
   "nn",
@@ -8,3 +11,4 @@ globals = {
 }
 
 self = false
+max_line_length = false

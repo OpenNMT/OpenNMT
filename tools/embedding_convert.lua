@@ -1,38 +1,50 @@
-require('onmt.init')
 require('torch')
+require('onmt.init')
+
 local tds = require('tds')
 local zlib = require ('zlib')
 local path = require('pl.path')
 
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new('embedding_convert.lua')
+
+cmd:setCmdLineOptions(
+  {
+    {
+      '-dict_file', '',
+      [[Path to outputted dict file from preprocess.lua.]]
+    },
+    {
+      '-embed_file', '',
+      [[Path to embedding file. Ignored if auto_lang is used.]]
+    },
+    {
+      '-save_data', '',
+      [[Output file path/label.]]
+    }
+  }, 'Data')
 
 
-cmd:text("")
-cmd:text("**embedding_convert.lua**")
-cmd:text("")
-
-cmd:option('-config', '', [[Read options from this file]])
-
-cmd:text("")
-cmd:text("**Data options**")
-cmd:text("")
-
-cmd:option('-dict_file', '', [[Path to outputted dict file from preprocess.lua.]])
-cmd:option('-embed_file', '',[[Path to embedding file. Ignored if auto_lang is used.]])
-cmd:option('-save_data', '',[[Output file path/label]])
-
-cmd:text("")
-cmd:text("**Embedding options**")
-cmd:text("")
-
-cmd:option('-auto_lang', '', [[Wikipedia Language Code to autoload embeddings.]])
-cmd:option('-embed_type', 'word2vec',[['word2vec' or 'glove'. Ignored if auto_lang is used.]])
-cmd:option('-normalize', 'true',[[Boolean to normalize the word vectors, or not.]])
-cmd:option('-report_every', '100000',[[Print stats every this many lines read from embedding file.]])
+cmd:setCmdLineOptions(
+  {
+    {
+      '-auto_lang', '',
+      [[Wikipedia Language Code to autoload embeddings.]]
+    },
+    {
+      '-embed_type', 'word2vec',
+      [['word2vec' or 'glove'. Ignored if auto_lang is used.]]
+    },
+    {
+      '-normalize', 'true',
+      [[Boolean to normalize the word vectors, or not.]]
+    },
+    {
+      '-report_every', '100000',
+      [[Print stats every this many lines read from embedding file.]]
+    }
+  }, 'Embedding')
 
 local opt = cmd:parse(arg)
-
-
 
 -- [[Auto Loads language files from S3]]
 -- [[Embedding files made available by Rami Al-Rfou through Polygot ( Project: https://pypi.python.org/pypi/polyglot Paper: http://www.aclweb.org/anthology/W13-3520 )]]
@@ -309,8 +321,6 @@ end
 
 
 local function main()
-
-  onmt.utils.Opt.init(opt, {"save_data"})
 
   local timer = torch.Timer()
 

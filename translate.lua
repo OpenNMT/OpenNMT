@@ -1,65 +1,60 @@
 require('onmt.init')
 
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
 
-cmd:text("")
-cmd:text("**onmt.translate.lua**")
-cmd:text("")
+local options = {
+  {
+    '-src', '',
+    [[Source sequences to translate.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-tgt', '',
+    [[Optional true target sequences.]]
+  },
+  {
+    '-output', 'pred.txt',
+    [[Output file.]]
+  }
+}
 
-
-cmd:option('-config', '', [[Read options from this file]])
-
-cmd:text("")
-cmd:text("**Data options**")
-cmd:text("")
-
-cmd:option('-src', '', [[Source sequence to decode (one line per sequence)]])
-cmd:option('-tgt', '', [[True target sequence (optional)]])
-cmd:option('-output', 'pred.txt', [[Path to output the predictions (each line will be the decoded sequence]])
+cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
+onmt.utils.Cuda.declareOpts(cmd)
+onmt.utils.Logger.declareOpts(cmd)
 
-cmd:text("")
-cmd:text("**Other options**")
-cmd:text("")
-cmd:option('-gpuid', 0, [[1-based identifier of the GPU to use. CPU is used when the option is < 1]])
-cmd:option('-fallback_to_cpu', false, [[If = true, fallback to CPU if no GPU available]])
-cmd:option('-time', false, [[Measure batch translation time]])
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
 
+cmd:option('-time', false, [[Measure average translation time.]])
 
 local function reportScore(name, scoreTotal, wordsTotal)
-  print(string.format(name .. " AVG SCORE: %.4f, " .. name .. " PPL: %.4f",
-                      scoreTotal / wordsTotal,
-                      math.exp(-scoreTotal/wordsTotal)))
+  _G.logger:info(name .. " AVG SCORE: %.2f, " .. name .. " PPL: %.2f",
+                 scoreTotal / wordsTotal,
+                 math.exp(-scoreTotal/wordsTotal))
 end
 
 local function main()
   local opt = cmd:parse(arg)
 
-  local requiredOptions = {
-    "model",
-    "src"
-  }
-
-  onmt.utils.Opt.init(opt, requiredOptions)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  onmt.utils.Cuda.init(opt)
 
   local srcReader = onmt.utils.FileReader.new(opt.src)
   local srcBatch = {}
-  local srcWordsBatch = {}
-  local srcFeaturesBatch = {}
 
-  local tgtReader
-  local tgtBatch
-  local tgtWordsBatch
-  local tgtFeaturesBatch
+  local goldReader
+  local goldBatch
 
   local withGoldScore = opt.tgt:len() > 0
 
   if withGoldScore then
-    tgtReader = onmt.utils.FileReader.new(opt.tgt)
-    tgtBatch = {}
-    tgtWordsBatch = {}
-    tgtFeaturesBatch = {}
+    goldReader = onmt.utils.FileReader.new(opt.tgt)
+    goldBatch = {}
   end
 
   local translator = onmt.translate.Translator.new(opt)
@@ -83,26 +78,16 @@ local function main()
 
   while true do
     local srcTokens = srcReader:next()
-    local tgtTokens
+    local goldTokens
     if withGoldScore then
-      tgtTokens = tgtReader:next()
+      goldTokens = goldReader:next()
     end
 
     if srcTokens ~= nil then
-      local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
-      table.insert(srcBatch, srcTokens)
-      table.insert(srcWordsBatch, srcWords)
-      if #srcFeats > 0 then
-        table.insert(srcFeaturesBatch, srcFeats)
-      end
+      table.insert(srcBatch, translator:buildInput(srcTokens))
 
       if withGoldScore then
-        local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
-        table.insert(tgtBatch, tgtTokens)
-        table.insert(tgtWordsBatch, tgtWords)
-        if #tgtFeats > 0 then
-          table.insert(tgtFeaturesBatch, tgtFeats)
-        end
+        table.insert(goldBatch, translator:buildInput(goldTokens))
       end
     elseif #srcBatch == 0 then
       break
@@ -113,45 +98,51 @@ local function main()
         timer:resume()
       end
 
-      local predBatch, info = translator:translate(srcWordsBatch, srcFeaturesBatch,
-                                                   tgtWordsBatch, tgtFeaturesBatch)
+      local results = translator:translate(srcBatch, goldBatch)
 
       if opt.time then
         timer:stop()
       end
 
-      for b = 1, #predBatch do
-        local srcSent = table.concat(srcBatch[b], " ")
-        local predSent = table.concat(predBatch[b], " ")
+      for b = 1, #results do
+        if (#srcBatch[b].words == 0) then
+          _G.logger:warning('Line ' .. sentId .. ' is empty.')
+          outFile:write('\n')
+        else
+          _G.logger:info('SENT %d: %s', sentId, translator:buildOutput(srcBatch[b]))
 
-        outFile:write(predSent .. '\n')
+          if withGoldScore then
+            _G.logger:info('GOLD %d: %s', sentId, translator:buildOutput(goldBatch[b]), results[b].goldScore)
+            _G.logger:info("GOLD SCORE: %.2f", results[b].goldScore)
+            goldScoreTotal = goldScoreTotal + results[b].goldScore
+            goldWordsTotal = goldWordsTotal + #goldBatch[b].words
+          end
+          if opt.dump_input_encoding then
+            outFile:write(sentId, ' ', table.concat(torch.totable(results[b]), " "), '\n')
+          else
+            for n = 1, #results[b].preds do
+              local sentence = translator:buildOutput(results[b].preds[n])
+              outFile:write(sentence .. '\n')
+              if n == 1 then
+                predScoreTotal = predScoreTotal + results[b].preds[n].score
+                predWordsTotal = predWordsTotal + #results[b].preds[n].words
 
-        print('SENT ' .. sentId .. ': ' .. srcSent)
-        print('PRED ' .. sentId .. ': ' .. predSent)
-        print(string.format("PRED SCORE: %.4f", info[b].score))
+                if #results[b].preds > 1 then
+                  _G.logger:info('')
+                  _G.logger:info('BEST HYP:')
+                end
+              end
 
-        predScoreTotal = predScoreTotal + info[b].score
-        predWordsTotal = predWordsTotal + #predBatch[b]
-
-        if withGoldScore then
-          local tgtSent = table.concat(tgtBatch[b], " ")
-
-          print('GOLD ' .. sentId .. ': ' .. tgtSent)
-          print(string.format("GOLD SCORE: %.4f", info[b].goldScore))
-
-          goldScoreTotal = goldScoreTotal + info[b].goldScore
-          goldWordsTotal = goldWordsTotal + #tgtBatch[b]
-        end
-
-        if opt.n_best > 1 then
-          print('\nBEST HYP:')
-          for n = 1, #info[b].nBest do
-            local nBest = table.concat(info[b].nBest[n].tokens, " ")
-            print(string.format("[%.4f] %s", info[b].nBest[n].score, nBest))
+              if #results[b].preds > 1 then
+                _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
+              else
+                _G.logger:info("PRED %d: %s", sentId, sentence)
+                _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
+              end
+            end
           end
         end
-
-        print('')
+        _G.logger:info('')
         sentId = sentId + 1
       end
 
@@ -161,12 +152,8 @@ local function main()
 
       batchId = batchId + 1
       srcBatch = {}
-      srcWordsBatch = {}
-      srcFeaturesBatch = {}
       if withGoldScore then
-        tgtBatch = {}
-        tgtWordsBatch = {}
-        tgtFeaturesBatch = {}
+        goldBatch = {}
       end
       collectgarbage()
     end
@@ -175,19 +162,21 @@ local function main()
   if opt.time then
     local time = timer:time()
     local sentenceCount = sentId-1
-    io.stderr:write("Average sentence translation time (in seconds):\n")
-    io.stderr:write("avg real\t" .. time.real / sentenceCount .. "\n")
-    io.stderr:write("avg user\t" .. time.user / sentenceCount .. "\n")
-    io.stderr:write("avg sys\t" .. time.sys / sentenceCount .. "\n")
+    _G.logger:info("Average sentence translation time (in seconds):\n")
+    _G.logger:info("avg real\t" .. time.real / sentenceCount .. "\n")
+    _G.logger:info("avg user\t" .. time.user / sentenceCount .. "\n")
+    _G.logger:info("avg sys\t" .. time.sys / sentenceCount .. "\n")
   end
 
-  reportScore('PRED', predScoreTotal, predWordsTotal)
+  if opt.dump_input_encoding == false then
+    reportScore('PRED', predScoreTotal, predWordsTotal)
 
-  if withGoldScore then
-    reportScore('GOLD', goldScoreTotal, goldWordsTotal)
+    if withGoldScore then
+      reportScore('GOLD', goldScoreTotal, goldWordsTotal)
+    end
   end
-
   outFile:close()
+  _G.logger:shutDown()
 end
 
 main()
