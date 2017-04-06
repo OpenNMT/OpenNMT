@@ -20,23 +20,16 @@ accuracy. Features include:
 
 ## Installation
 
-OpenNMT only requires a vanilla Torch install with few dependencies. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
+OpenNMT only requires a Torch installation with few dependencies.
 
-### Dependencies
+1. [Install Torch](http://torch.ch/docs/getting-started.html)
+2. Install additional packages:
 
-* `nn`
-* `nngraph`
-* `tds`
-* `penlight`
+```bash
+luarocks install tds
+```
 
-GPU training requires:
-
-* `cunn`
-* `cutorch`
-
-Multi-GPU training additionally requires:
-
-* `threads`
+For other installation methods including Docker, visit the [documentation](http://opennmt.net/OpenNMT/installation/).
 
 ## Quickstart
 
