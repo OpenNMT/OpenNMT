@@ -42,6 +42,7 @@ pages:
       - Tokenize: options/tokenize.md
       - "Learn BPE": options/learn_bpe.md
       - "REST server": options/rest_server.md
+      - Embeddings: options/embeddings.md
   - Extensions: extensions.md
   - References: references.md
   - "Common issues": issues.md

@@ -11,11 +11,11 @@ cmd:setCmdLineOptions(
   {
     {
       '-dict_file', '',
-      [[Path to outputted dict file from preprocess.lua.]]
+      [[Path to outputted dict file from `preprocess.lua`.]]
     },
     {
       '-embed_file', '',
-      [[Path to embedding file. Ignored if lang is used.]]
+      [[Path to the embedding file. Ignored if `-lang` is used.]]
     },
     {
       '-save_data', '',
@@ -32,14 +32,17 @@ cmd:setCmdLineOptions(
     },
     {
       '-embed_type', 'word2vec',
-      [['word2vec' or 'glove'. Ignored if lang is used.]]
+      [[Embeddings file origin. Ignored if `-lang` is used.]],
+      {
+        enum = {'word2vec', 'glove'}
+      }
     },
     {
-      '-normalize', 'true',
+      '-normalize', 1,
       [[Boolean to normalize the word vectors, or not.]]
     },
     {
-      '-report_every', '100000',
+      '-report_every', 100000,
       [[Print stats every this many lines read from embedding file.]]
     }
   }, 'Embedding')
@@ -180,7 +183,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         local norm = torch.norm(wordEmbedding, 2)
 
         -- Normalize word embedding.
-        if norm ~= 0 and opt.normalize == true then
+        if norm ~= 0 and opt.normalize == 1 then
           wordEmbedding:div(norm)
         end
 
@@ -250,7 +253,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         local norm = torch.norm(wordEmbedding, 2)
 
         -- Normalize word embedding.
-        if norm ~= 0 and opt.normalize == true then
+        if norm ~= 0 and opt.normalize == 1 then
           wordEmbedding:div(norm)
         end
 
