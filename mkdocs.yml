@@ -40,6 +40,7 @@ pages:
       - Translate: options/translate.md
       - Tag: options/tag.md
       - Tokenize: options/tokenize.md
+      - "Learn BPE": options/learn_bpe.md
       - "REST server": options/rest_server.md
   - Extensions: extensions.md
   - References: references.md
