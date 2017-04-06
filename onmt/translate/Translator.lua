@@ -353,7 +353,7 @@ function Translator:translate(src, gold)
         end
       end
 
-      if next(goldScore) ~= nil then
+      if goldScore and next(goldScore) ~= nil then
         results[b].goldScore = goldScore[b]
       end
     end
