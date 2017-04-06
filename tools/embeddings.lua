@@ -196,6 +196,8 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       -- End File loop
     end
 
+    f:close()
+
     if #loaded ~= dictSize then
       print('Embedding file fully processed. ' .. #loaded .. ' out of ' .. dictSize .. ' dictionary tokens matched.')
       weights = fillGaps(weights, loaded, dictSize, embeddingSize)
