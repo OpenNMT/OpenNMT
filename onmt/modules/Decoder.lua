@@ -26,11 +26,11 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
+function Decoder:__init(args, inputNetwork, rnn, generator, inputFeed, attentionModel)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
-  self.args = {}
+  self.args = args
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
 
@@ -42,7 +42,7 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   -- previous step.
   self.args.inputFeed = inputFeed
 
-  parent.__init(self, self:_buildModel())
+  parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
@@ -107,7 +107,7 @@ Returns: An nn-graph mapping
   ${if}$ is the input feeding, and
   ${a}$ is the context vector computed at this timestep.
 --]]
-function Decoder:_buildModel()
+function Decoder:_buildModel(attentionModel)
   local inputs = {}
   local states = {}
 
@@ -149,14 +149,37 @@ function Decoder:_buildModel()
   outputs = { outputs:split(self.args.numEffectiveLayers) }
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = onmt.GlobalAttention(self.args.rnnSize)
+  local attnLayer = attentionModel
   attnLayer.name = 'decoderAttn'
-  local attnOutput = attnLayer({outputs[#outputs], context})
+  local attnInput = {outputs[#outputs], context}
+  local attnOutput = attnLayer(attnInput)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
   table.insert(outputs, attnOutput)
   return nn.gModule(inputs, outputs)
+end
+
+function Decoder:findAttentionModel()
+  if not self.decoderAttn then
+    self.network:apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttn = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.softmaxAttn = layer
+      end
+    end)
+    self.decoderAttnClones = {}
+  end
+  for t = #self.decoderAttnClones+1, #self.networkClones do
+    self:net(t):apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttnClones[t] = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.decoderAttnClones[t].softmaxAttn = layer
+      end
+    end)
+  end
 end
 
 --[[ Mask padding means that the attention-layer is constrained to
@@ -168,6 +191,7 @@ end
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
 function Decoder:maskPadding(sourceSizes, sourceLength)
+  self:findAttentionModel()
 
   local function substituteSoftmax(module)
     if module.name == 'softmaxAttn' then
@@ -187,26 +211,9 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
     end
   end
 
-  if not self.decoderAttn then
-    self.network:apply(function (layer)
-      if layer.name == 'decoderAttn' then
-        self.decoderAttn = layer
-      end
-    end)
-  end
   self.decoderAttn:replace(substituteSoftmax)
 
-  if not self.decoderAttnClones then
-    self.decoderAttnClones = {}
-  end
   for t = 1, #self.networkClones do
-    if not self.decoderAttnClones[t] then
-      self:net(t):apply(function (layer)
-        if layer.name == 'decoderAttn' then
-          self.decoderAttnClones[t] = layer
-        end
-      end)
-    end
     self.decoderAttnClones[t]:replace(substituteSoftmax)
   end
 end

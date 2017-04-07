@@ -82,9 +82,9 @@ local bitextOptions = {
     '-tgt_words_min_frequency', '0',
     [[Comma-separated list of target words min frequency: `word[,feat1,feat2,...]`.
       If = 0, vocabularies are pruned by size.]],
-   {
-     valid=onmt.utils.ExtendedCmdLine.listUInt
-   }
+    {
+      valid=onmt.utils.ExtendedCmdLine.listUInt
+    }
   },
   {
     '-src_seq_length', 50,
