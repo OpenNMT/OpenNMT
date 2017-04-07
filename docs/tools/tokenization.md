@@ -65,5 +65,5 @@ The output of the previous example would be:
 
 ```text
 Constitution --> con￨C sti￨l tu￨l tion￨l
-constitution --> con|l sti￨l tu￨l tion￨l
+constitution --> con￨l sti￨l tu￨l tion￨l
 ```
