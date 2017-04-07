@@ -1,4 +1,4 @@
-The data prepration (or preprocessing) passes over the data to generate word vocabularies and sequences of indices used by the training.
+The data preparation (or preprocessing) passes over the data to generate word vocabularies and sequences of indices used by the training.
 
 ## Delimiters
 
@@ -13,7 +13,7 @@ The main goal of the preprocessing is to build the word vocabularies and assign 
 
 These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the `-src_vocab` and `-tgt_vocab` options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.
 
-Vocabularies can be generated beforhand with the `tools/build_vocab.lua` script.
+Vocabularies can be generated beforehand with the `tools/build_vocab.lua` script.
 
 !!! note "Note"
     When pruning vocabularies to 50,000, the preprocessing will actually report a vocabulary size of 50,004 because of 4 special tokens that are automatically added.
