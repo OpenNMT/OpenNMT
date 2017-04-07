@@ -73,10 +73,11 @@ local options = {
   },
   {
     '-curriculum', 0,
-    [[For this many epochs, order the minibatches based on source length.
+    [[For this many epochs, order the minibatches based on source length (from smaller to longer).
       Sometimes setting this to 1 will increase convergence speed.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      train_state = true
     }
   }
 }
@@ -137,6 +138,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     local epochProfiler = onmt.utils.Profiler.new(doProfile)
 
     local startI = self.args.start_iteration
+
+    if trainData.sample then
+      trainData:sample()
+    end
 
     local numIterations = trainData:batchCount()
     -- In parallel mode, number of iterations is reduced to reflect larger batch size.
@@ -314,10 +319,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     if needLog then
       epochState:log(numIterations)
-    end
-
-    if trainData.sample then
-      trainData:sample()
     end
 
     return epochState, epochProfiler:dump()

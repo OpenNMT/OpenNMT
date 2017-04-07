@@ -12,7 +12,7 @@ local options = {
   },
   {
     '-param_init', 0.1,
-    [[Parameters are initialized over uniform distribution with support (-param_init, param_init).]],
+    [[Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`).]],
     {
       valid = function(v) return v >= 0 and v <= 1 end,
       init_only = true

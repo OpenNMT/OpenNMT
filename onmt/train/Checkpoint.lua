@@ -88,45 +88,61 @@ end
 function Checkpoint.loadFromCheckpoint(opt)
   local checkpoint = {}
   local paramChanges = {}
+
   if opt.train_from:len() > 0 then
     _G.logger:info('Loading checkpoint \'' .. opt.train_from .. '\'...')
 
     checkpoint = torch.load(opt.train_from)
 
-    -- Reload and check options.
-    for k,v in pairs(opt) do
-      if k:sub(1, 1) ~= '_' then
-        -- If an option was set by the user, check that we can actually change it.
-        local isDefault = opt._is_default and opt._is_default[k]
-
-        if opt._structural[k] then
-          if not isDefault and v ~= checkpoint.options[k] then
-            if opt._structural[k] == 0 then
-              _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
-            else
-              paramChanges[k] = v
-            end
-          end
-          opt[k] = checkpoint.options[k]
-        end
-
-        if opt._init_only[k] == true and not isDefault then
-          _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
-        end
+    local function restoreOption(name)
+      if checkpoint.options[name] ~= nil then
+        opt[name] = checkpoint.options[name]
       end
     end
 
-    -- Resume training from checkpoint
+    if checkpoint.info.rngStates and not (opt._is_default['seed'] or opt.seed == checkpoint.options.seed) then
+      _G.logger:warning('\'-seed\' value has changed - ignoring saved rng states')
+      checkpoint.info.rngStates = nil
+    end
+
+    if opt.continue and (not (opt._is_default['learning_rate'] or opt.learning_rate == checkpoint.options.learning_rate) or
+        not (opt._is_default['start_epoch'] or opt.start_epoch == checkpoint.options.start_epoch)) then
+      _G.logger:warning('\'-continue\' option is used but learning_rate or start_epoch are set and different than previous epoch. Ignoring \'-continue\'')
+      opt.continue = nil
+    end
+
+    -- Reload and check options.
+    for k, v in pairs(opt) do
+      if k:sub(1, 1) ~= '_' then
+
+        if opt.continue and opt._train_state[k] then
+          -- Training states should be retrieved when continuing a training.
+          restoreOption(k)
+        elseif opt._structural[k] or opt._init_only[k] then
+          -- If an option was set by the user, check that we can actually change it.
+          local valueChanged = not opt._is_default[k] and v ~= checkpoint.options[k]
+
+          if valueChanged then
+            if opt._init_only[k] then
+              _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
+              restoreOption(k)
+            elseif opt._structural[k] and opt._structural[k] == 0 then
+              _G.logger:warning('Cannot change dynamically option -%s. Ignoring.', k)
+              restoreOption(k)
+            elseif opt._structural[k] and opt._structural[k] == 1 then
+              paramChanges[k] = v
+            end
+          else
+            restoreOption(k)
+          end
+
+        end
+
+      end
+    end
+
     if opt.continue then
-      opt.optim = checkpoint.options.optim
-      opt.learning_rate_decay = checkpoint.options.learning_rate_decay
-      opt.start_decay_at = checkpoint.options.start_decay_at
-      opt.curriculum = checkpoint.options.curriculum
-
-      opt.decay = checkpoint.options.decay or opt.decay
-      opt.min_learning_rate = checkpoint.options.min_learning_rate or opt.min_learning_rate
-      opt.start_decay_ppl_delta = checkpoint.options.start_decay_ppl_delta or opt.start_decay_ppl_delta
-
+      -- When continuing, some options are initialized with their last known value.
       opt.learning_rate = checkpoint.info.learningRate
       opt.start_epoch = checkpoint.info.epoch
       opt.start_iteration = checkpoint.info.iteration
@@ -134,7 +150,10 @@ function Checkpoint.loadFromCheckpoint(opt)
       _G.logger:info('Resuming training from epoch ' .. opt.start_epoch
                          .. ' at iteration ' .. opt.start_iteration .. '...')
     else
-      checkpoint.info = nil
+      -- Otherwise, we can drop previous training information.
+      checkpoint.info.learningRate = nil
+      checkpoint.info.epoch = nil
+      checkpoint.info.iteration = nil
     end
   end
 
