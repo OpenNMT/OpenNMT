@@ -577,7 +577,7 @@
         }, 
         {
             "location": "/references/", 
-            "text": "This is the list of papers, OpenNMT has been inspired on:\n\n\n\n\nLuong, M. T., Pham, H., \n Manning, C. D. (2015). \nEffective approaches to attention-based neural machine translation\n. arXiv preprint arXiv:1508.04025.\n\n\nSennrich, R., \n Haddow, B. (2016). \nLinguistic input features improve neural machine translation\n. arXiv preprint arXiv:1606.02892.\n\n\nSennrich, R., Haddow, B., \n Birch, A. (2015). \nNeural machine translation of rare words with subword units\n. arXiv preprint arXiv:1508.07909.", 
+            "text": "This is the list of papers, OpenNMT has been inspired on:\n\n\n\n\nLuong, M. T., Pham, H., \n Manning, C. D. (2015). \nEffective approaches to attention-based neural machine translation\n. arXiv preprint arXiv:1508.04025.\n\n\nSennrich, R., \n Haddow, B. (2016). \nLinguistic input features improve neural machine translation\n. arXiv preprint arXiv:1606.02892.\n\n\nSennrich, R., Haddow, B., \n Birch, A. (2015). \nNeural machine translation of rare words with subword units\n. arXiv preprint arXiv:1508.07909.\n\n\nWu, Y., Schuster, M., Chen, Z., Le, Q. V., Norouzi, M., Macherey, W., ... \n Klingner, J. (2016). \nGoogle's Neural Machine Translation System: Bridging the Gap between Human and Machine Translation\n. arXiv preprint arXiv:1609.08144.", 
             "title": "References"
         }, 
         {

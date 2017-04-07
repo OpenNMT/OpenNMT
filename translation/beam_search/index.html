@@ -270,13 +270,13 @@
 </p>
 <p>where <script type="math/tex">X</script> is the source, <script type="math/tex">Y</script> is the current target, and the functions as defined below. An additional penalty on end of sentence tokens can also be added to prioritize longer sentences.</p>
 <h3 id="length-normalization">Length normalization</h3>
-<p>Scores are normalized by the following formula as defined in <a href="https://arxiv.org/pdf/1609.08144.pdf">Wu et al. (2016)</a>:</p>
+<p>Scores are normalized by the following formula as defined in <a href="../../references/#GNMT">Wu et al. (2016)</a>:</p>
 <p>
 <script type="math/tex; mode=display">lp(Y) = \frac{(5+|Y|)^\alpha}{(5+1)^\alpha}</script>
 </p>
 <p>where <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\alpha</script> is the length normalization coefficient <code>-length_norm</code>.</p>
 <h3 id="coverage-normalization">Coverage normalization</h3>
-<p>Scores are penalized by the following formula as defined in <a href="https://arxiv.org/pdf/1609.08144.pdf">Wu et al. (2016)</a>:</p>
+<p>Scores are penalized by the following formula as defined in <a href="../../references/#GNMT">Wu et al. (2016)</a>:</p>
 <p>
 <script type="math/tex; mode=display">cp(X,Y) = \beta\sum_{i=1}^{|X|}\log(\min(\sum_{j=1}^{|Y|}p_{i,j},1.0))</script>
 </p>
