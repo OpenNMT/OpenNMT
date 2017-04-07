@@ -27,8 +27,8 @@
 ## Sequence to Sequence with Attention options
 
 * `-word_vec_size <number>` (default: `0`)<br/>Shared word embedding size. If set, this overrides `-src_word_vec_size` and `-tgt_word_vec_size`.
-* `-src_word_vec_size <string>` (default: `500`)<br/>Comma-separated list of source embedding sizes: `word[,feat1,feat2,...]`.
-* `-tgt_word_vec_size <string>` (default: `500`)<br/>Comma-separated list of target embedding sizes: `word[,feat1,feat2,...]`.
+* `-src_word_vec_size <string>` (default: `500`)<br/>Comma-separated list of source embedding sizes: `word[,feat1[,feat2[,...] ] ]`.
+* `-tgt_word_vec_size <string>` (default: `500`)<br/>Comma-separated list of target embedding sizes: `word[,feat1[,feat2[,...] ] ]`.
 * `-pre_word_vecs_enc <string>`<br/>Path to pretrained word embeddings on the encoder side serialized as a Torch tensor.
 * `-pre_word_vecs_dec <string>`<br/>Path to pretrained word embeddings on the decoder side serialized as a Torch tensor.
 * `-fix_word_vecs_enc <number>` (accepted: `0`, `1`; default: `0`)<br/>Fix word embeddings on the encoder side.
