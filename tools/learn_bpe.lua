@@ -1,27 +1,57 @@
 require('torch')
+require('onmt.init')
 
-local Logger = require('onmt.utils.Logger')
-local unicode = require 'tools.utils.unicode'
+local unicode = require('tools.utils.unicode')
 local tokenizer = require('tools.utils.tokenizer')
 local case = require ('tools.utils.case')
 local separators = require('tools.utils.separators')
 
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new('learn_bpe.lua')
 
-cmd:text("")
-cmd:text("**learn_bpe.lua**")
-cmd:text("")
+local options = {
+  {
+    '-size', '30000',
+    [[The number of merge operations to learn.]]
+  },
+  {
+    '-t', false,
+    [[Tokenize the input with tokenizer, the same options as tokenize.lua,
+      but only `-mode` is taken into account for BPE training.]]
+  },
+  {
+    '-mode', 'conservative',
+    [[Define how aggressive should the tokenization be. `aggressive` only keeps sequences
+      of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65",
+      "soft-landing", etc.]],
+    {
+      enum = {'conservative', 'aggressive'}
+    }
+  },
+  {
+    '-lc', false,
+    [[Lowercase the output from the tokenizer before learning BPE.]]
+  },
+  {
+    '-bpe_mode', 'suffix',
+    [[Define the BPE mode.
+      `prefix`: append `<w>` to the begining of each word to learn prefix-oriented pair statistics;
+      `suffix`: append `</w>` to the end of each word to learn suffix-oriented pair statistics,
+       as in the original Python script;
+      `both`: `suffix` and `prefix`;
+      `none`: no `suffix` nor `prefix`.]],
+    {
+      enum = {'suffix', 'prefix', 'both', 'none'}
+    }
+  },
+  {
+    '-save_bpe', '',
+    [[Path to save the output model.]]
+  }
+}
 
-cmd:option('-size', '30000', [[The number of merge operations to learn]])
-cmd:option('-t', false, [[tokenize the input with tokenizer, the same options as tokenize.lua, but only '-mode' is taken into account for BPE training]])
-cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-lc', false, [[lowercase the output from the tokenizer before BPE learning]])
-cmd:option('-bpe_mode', 'suffix', [[Define the mode for bpe - 'prefix': Append '﹤' to the begining of each word to learn prefix-oriented pair statistics;
-'suffix': Append '﹥' to the end of each word to learn suffix-oriented pair statistics, as in the original python script;
-'both': suffix and prefix; 'none': no suffix nor prefix]])
-cmd:option('-save_bpe', '', [[Path to save the output model]])
+cmd:setCmdLineOptions(options, 'BPE')
 
---Logger.declareOpts(cmd)
+onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
@@ -29,8 +59,6 @@ local function string2word(s)
   local t = {}
   if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, separators.BOT) end
   for _, c in unicode.utf8_iter(s) do
-    if c == separators.BOT then c = separators.BOT_substitute end
-    if c == separators.EOT then c = separators.EOT_substitute end
     table.insert(t, c)
   end
   if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, separators.EOT) end
@@ -233,7 +261,7 @@ end
 
 local function main()
 
-  _G.logger = Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   local bpe_options = {}
   if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end

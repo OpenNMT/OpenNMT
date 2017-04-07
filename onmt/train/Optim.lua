@@ -63,53 +63,71 @@ local options = {
   },
   {
     '-uneven_batches', false,
-    [[If true, batches are filled up to max_batch_size even if source lengths are different.
+    [[If set, batches are filled up to max_batch_size even if source lengths are different.
       Slower but needed for some tasks.]]
   },
   {
     '-optim', 'sgd',
     [[Optimization method.]],
     {
-      enum = {'sgd', 'adagrad', 'adadelta', 'adam'}
+      enum = {'sgd', 'adagrad', 'adadelta', 'adam'},
+      train_state = true
     }
   },
   {
     '-learning_rate', 1,
     [[Starting learning rate. If adagrad or adam is used, then this is the global learning rate.
-      Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002.]]
+      Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002.]],
+    {
+      train_state = true
+    }
   },
   {
     '-min_learning_rate', 0,
-    [[Do not continue the training past this learning rate value.]]
+    [[Do not continue the training past this learning rate value.]],
+    {
+      train_state = true
+    }
   },
   {
     '-max_grad_norm', 5,
-    [[Clip the gradients norm to this value.]]
+    [[Clip the gradients norm to this value.]],
+    {
+      train_state = true
+    }
   },
   {
     '-learning_rate_decay', 0.7,
-    [[Learning rate decay factor: learning_rate = learning_rate * learning_rate_decay.]]
+    [[Learning rate decay factor: `learning_rate = learning_rate * learning_rate_decay`.]],
+    {
+      train_state = true
+    }
   },
   {
     '-start_decay_at', 9,
     [[In "default" decay mode, start decay after this epoch.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      train_state = true
     }
   },
   {
     '-start_decay_ppl_delta', 0,
-    [[Start decay when validation perplexity improvement is lower than this value.]]
+    [[Start decay when validation perplexity improvement is lower than this value.]],
+    {
+      train_state = true
+    }
   },
   {
     '-decay', 'default',
     [[When to apply learning rate decay.
-      "default": decay after each epoch past start_decay_at or as soon as the validation perplexity
-      is not improving more than start_decay_ppl_delta,
-      "perplexity_only": only decay when validation perplexity is not improving more than
-      start_decay_ppl_delta.]],
+      `default`: decay after each epoch past `-start_decay_at` or as soon as the
+      validation perplexity is not improving more than `-start_decay_ppl_delta`,
+      `perplexity_only`: only decay when validation perplexity is not improving more than
+      `-start_decay_ppl_delta`.]],
     {
-      enum = {'default', 'perplexity_only'}
+      enum = {'default', 'perplexity_only'},
+      train_state = true
     }
   }
 }

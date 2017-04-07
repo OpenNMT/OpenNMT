@@ -1,0 +1,47 @@
+site_name: OpenNMT
+repo_url: https://github.com/OpenNMT/OpenNMT
+theme: readthedocs
+docs_dir: docs
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML
+extra_css:
+  - css/extra.css
+markdown_extensions:
+  - math
+  - sane_lists
+  - def_list
+  - fenced_code
+  - admonition
+pages:
+  - Overview: index.md
+  - Installation: installation.md
+  - Quickstart: quickstart.md
+  - Data:
+      - Preparation: data/preparation.md
+      - "Word features": data/word_features.md
+  - Training:
+      - Models: training/models.md
+      - Embeddings: training/embeddings.md
+      - "Mutli GPU": training/multi_gpu.md
+      - Retraining: training/retraining.md
+      - "Decay strategies": training/decay.md
+      - "Data sampling": training/sampling.md
+  - Translation:
+      - Inference: translation/inference.md
+      - "Beam search": translation/beam_search.md
+      - "Unkown words": translation/unknowns.md
+  - Tools:
+      - Tokenization: tools/tokenization.md
+      - Servers: tools/servers.md
+  - "Reference: Options":
+      - "Scripts usage": options/usage.md
+      - "preprocess.lua": options/preprocess.md
+      - "train.lua": options/train.md
+      - "translate.lua": options/translate.md
+      - "tag.lua": options/tag.md
+      - "tools/tokenize.lua": options/tokenize.md
+      - "tools/learn_bpe.lua": options/learn_bpe.md
+      - "tools/rest_translation_server.lua": options/rest_server.md
+  - Extensions: extensions.md
+  - References: references.md
+  - "Common issues": issues.md

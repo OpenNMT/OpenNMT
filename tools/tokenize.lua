@@ -1,27 +1,16 @@
 require('torch')
+require('onmt.init')
 
 local threads = require 'threads'
-local separators = require('tools.utils.separators')
+local tokenizer = require('tools.utils.tokenizer')
+local cmd = onmt.utils.ExtendedCmdLine.new('tokenize.lua')
 
-local cmd = torch.CmdLine()
+tokenizer.declareOpts(cmd)
 
-cmd:text("")
-cmd:text("**tokenize.lua**")
-cmd:text("")
+cmd:text('')
+cmd:text('**Other options**')
+cmd:text('')
 
-cmd:option('-mode', 'conservative', [[Define how aggressive should the tokenization be - 'aggressive' only keeps sequences of letters/numbers,
-  'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing']])
-cmd:option('-joiner_annotate', false, [[Include joiner annotation using 'joiner' character]])
-cmd:option('-joiner', separators.joiner_marker, [[Character used to annotate joiners]])
-cmd:option('-joiner_new', false, [[in joiner_annotate mode, 'joiner' is an independent token]])
-cmd:option('-case_feature', false, [[Generate case feature]])
-cmd:option('-bpe_model', '', [[Apply Byte Pair Encoding if the BPE model path is given. If the option is used, 'mode' will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
-cmd:option('-EOT_marker', separators.EOT, [[Marker used to mark the end of token, use '</w>' for python models, otherwise default value ]])
-cmd:option('-BOT_marker', separators.BOT, [[Marker used to mark the begining of token]])
-cmd:option('-bpe_case_insensitive', false, [[Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua]])
-cmd:option('-bpe_mode', 'suffix', [[Define the mode for bpe. This option will be overridden/set automatically if the BPE model specified by bpe_model is learnt using learn_bpe.lua. - 'prefix': Append '﹤' to the begining of each word to learn prefix-oriented pair statistics;
-'suffix': Append '﹥' to the end of each word to learn suffix-oriented pair statistics, as in the original python script;
-'both': suffix and prefix; 'none': no suffix nor prefix]])
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 

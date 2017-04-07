@@ -1,8 +1,72 @@
+local tokenizer = {}
+
 local unicode = require('tools.utils.unicode')
 local case = require ('tools.utils.case')
 local separators = require('tools.utils.separators')
 
-local tokenizer = {}
+local options = {
+  {
+    '-mode', 'conservative',
+    [[Define how aggressive should the tokenization be. `aggressive` only keeps sequences
+      of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65",
+      "soft-landing", etc.]],
+    {
+      enum = {'conservative', 'aggressive'}
+    }
+  },
+  {
+    '-joiner_annotate', false,
+    [[Include joiner annotation using `-joiner` character.]]
+  },
+  {
+    '-joiner', separators.joiner_marker,
+    [[Character used to annotate joiners.]]
+  },
+  {
+    '-joiner_new', false,
+    [[In `-joiner_annotate` mode, `-joiner` is an independent token.]]
+  },
+  {
+    '-case_feature', false,
+    [[Generate case feature.]]
+  },
+  {
+    '-bpe_model', '',
+    [[Apply Byte Pair Encoding if the BPE model path is given. If the option is used,
+      `-mode` will be overridden/set automatically if the BPE model specified by `-bpe_model`
+      is learnt using `learn_bpe.lua`.]]
+  },
+  {
+    '-EOT_marker', separators.EOT,
+    [[Marker used to mark the end of token.]]
+  },
+  {
+    '-BOT_marker', separators.BOT,
+    [[Marker used to mark the beginning of token.]]
+  },
+  {
+    '-bpe_case_insensitive', false,
+    [[Apply BPE internally in lowercase, but still output the truecase units.
+      This option will be overridden/set automatically if the BPE model specified by `-bpe_model`
+      is learnt using `learn_bpe.lua`.]]
+  },
+  {
+    '-bpe_mode', 'suffix',
+    [[Define the BPE mode. This option will be overridden/set automatically if the BPE model
+      specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-BOT_marker`
+      to the begining of each word to learn prefix-oriented pair statistics;
+      `suffix`: append `-EOT_marker` to the end of each word to learn suffix-oriented pair
+      statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`:
+      no `suffix` nor `prefix`.]],
+    {
+      enum = {'suffix', 'prefix', 'both', 'none'}
+    }
+  }
+}
+
+function tokenizer.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Tokenizer')
+end
 
 -- minimalistic tokenization
 -- - remove utf-8 BOM character
