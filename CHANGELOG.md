@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
+
 ### New features
 
 * Add new encoders: deep bidirectional and pyramidal deep bidirectional
