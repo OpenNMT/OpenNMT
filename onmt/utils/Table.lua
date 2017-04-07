@@ -24,6 +24,14 @@ local function merge(dst, src)
   end
 end
 
+local function empty (self)
+  if next(self) == nil then
+    return true
+  else
+    return false
+  end
+end
+
 --[[ Reorder table `tab` based on the `index` array. ]]
 local function reorder(tab, index, cdata)
   local newTab
@@ -60,5 +68,6 @@ return {
   reorder = reorder,
   append = append,
   merge = merge,
-  hasValue = hasValue
+  hasValue = hasValue,
+  empty = empty
 }

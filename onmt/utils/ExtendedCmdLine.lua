@@ -67,6 +67,15 @@ end
     local opt = cmd:parse(arg)
 
     local optimArgs = cmd.getModuleOpts(opt, options)
+
+  Additional meta-fields:
+
+  * `valid`: validation method
+  * `enum`: enumeration list
+  * `structural`: if defined, mark a structural parameter - 0 means cannot change value, 1 means that it can change dynamically
+  * `init_only`: if true, mark a parameter that can only be set at init time
+  * `train_state`: if true, the option will be automatically reused when continuing a training
+
 ]]
 
 function ExtendedCmdLine:__init(script)
@@ -76,27 +85,41 @@ function ExtendedCmdLine:__init(script)
   self:text('')
   self:option('-h', false, 'This help.')
   self:option('-md', false, 'Dump help in Markdown format.')
-  self:option('-config', '', 'Read options from config file.', {valid=ExtendedCmdLine.fileNullOrExists})
-  self:option('-save_config', '', 'Save options from config file.')
+  self:option('-config', '', 'Load options from this file.', {valid=ExtendedCmdLine.fileNullOrExists})
+  self:option('-save_config', '', 'Save options to this file.')
 
 end
 
 function ExtendedCmdLine:help(arg, doMd)
   if doMd then
-    io.write('# ' .. self.script .. '\n')
+    io.write('`' .. self.script .. '` options:\n')
     for _, option in ipairs(self.helplines) do
       if type(option) == 'table' then
         io.write('* ')
         if option.default ~= nil then -- It is an option.
-          io.write('`' .. option.key .. '`: ')
+          local args = type(option.default) == 'boolean' and '' or ' <' .. type(option.default) .. '>'
+          io.write('`' .. option.key .. args ..'`')
+
+          local valInfo = {}
           if option.meta and option.meta.enum then
-            io.write('(' .. table.concat(option.meta.enum, ', ') .. ') ')
+            for k, v in pairs(option.meta.enum) do
+              option.meta.enum[k] = '`' .. v .. '`'
+            end
+            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
           end
+          if type(option.default) ~= "boolean" and option.default ~= '' then
+            table.insert(valInfo, 'default: `' .. tostring(option.default) .. '`')
+          end
+          if #valInfo > 0 then
+            io.write(' (' .. table.concat(valInfo, '; ') .. ')')
+          end
+
+          io.write('<br/>')
+
           option.help = option.help:gsub(' *\n   *', ' ')
           if option.help then
             io.write(option.help)
           end
-          io.write(' [' .. tostring(option.default) .. ']')
         else -- It is an argument.
           io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
           if option.help then
@@ -149,12 +172,16 @@ function ExtendedCmdLine:help(arg, doMd)
         if option.default ~= nil then -- It is an option.
           io.write(onmt.utils.String.pad(option.key, optsz))
           local msg = ''
-          if option.meta and option.meta.enum then
-            msg = '(' .. table.concat(option.meta.enum, ', ') .. ') '
-          end
           msg = msg .. option.help:gsub('\n', ' ')
+          local valInfo = {}
+          if option.meta and option.meta.enum then
+            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+          end
           if type(option.default) ~= "boolean" and option.default ~= '' then
-            msg = msg .. ' Default [' .. tostring(option.default) .. ']'
+            table.insert(valInfo, 'default: ' .. tostring(option.default))
+          end
+          if #valInfo > 0 then
+            msg = msg .. ' (' .. table.concat(valInfo, '; ') .. ')'
           end
           io.write(' ' .. wrapIndent(msg:gsub('  *', ' '),60,padMultiLine..'     '))
         else -- It is an argument.
@@ -198,6 +225,8 @@ function ExtendedCmdLine:loadConfig(filename, opt)
       assert(opt[key] ~= nil, 'unkown option ' .. key)
 
       opt[key] = convert(key, val, opt[key])
+      opt._is_default[key] = nil
+
     end
   end
 
@@ -205,11 +234,33 @@ function ExtendedCmdLine:loadConfig(filename, opt)
   return opt
 end
 
+function ExtendedCmdLine:logConfig(opt)
+  local keys = {}
+  for key in pairs(opt) do
+    table.insert(keys, key)
+  end
+
+  table.sort(keys)
+  _G.logger:debug('Options:')
+
+  for _, key in ipairs(keys) do
+    if key:sub(1, 1) ~= '_' then
+      local val = opt[key]
+      if type(val) == 'string' then
+        val = '\'' .. val .. '\''
+      end
+      _G.logger:debug(' * ' .. key .. ' = ' .. tostring(val))
+    end
+  end
+end
+
 function ExtendedCmdLine:dumpConfig(opt, filename)
   local file = assert(io.open(filename, 'w'))
 
   for key, val in pairs(opt) do
-    file:write(key .. ' = ' .. tostring(val) .. '\n')
+    if key:sub(1, 1) ~= '_' then
+      file:write(key .. ' = ' .. tostring(val) .. '\n')
+    end
   end
 
   file:close()
@@ -217,7 +268,14 @@ end
 
 function ExtendedCmdLine:parse(arg)
   local i = 1
-  local params = self:default()
+
+  -- set default value
+  local params = { _is_default={}, _structural={}, _init_only={}, _train_state={} }
+  for option,v in pairs(self.options) do
+    local soption = onmt.utils.String.stripHyphens(option)
+    params[soption] = v.default
+    params._is_default[soption] = true
+  end
 
   local nArgument = 0
 
@@ -240,11 +298,13 @@ function ExtendedCmdLine:parse(arg)
       saveConfig = arg[i + 1]
       i = i + 2
     else
+      local sopt = onmt.utils.String.stripHyphens(arg[i])
+      params._is_default[sopt] = nil
       if self.options[arg[i]] then
         i = i + self:__readOption__(params, arg, i)
       else
         nArgument = nArgument + 1
-       i = i + self:__readArgument__(params, arg, i, nArgument)
+        i = i + self:__readArgument__(params, arg, i, nArgument)
       end
     end
   end
@@ -267,17 +327,41 @@ function ExtendedCmdLine:parse(arg)
   end
 
   for k, v in pairs(params) do
-    local K = '-' .. k
-    if not self.options[K] and self.options[k] then
-      K = k
-    end
-    local meta = self.options[K].meta
-    if meta then
-      if meta.valid and not meta.valid(v) then
-        self:error('option \'' .. k .. '\' value is not valid')
+    if k:sub(1, 1) ~= '_' then
+      local K = '-' .. k
+      if not self.options[K] and self.options[k] then
+        K = k
       end
-      if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-        self:error('option \'' .. k.. '\' value is not in possible values')
+      local meta = self.options[K].meta
+      if meta then
+        -- check option validity
+        local isValid = true
+        local reason = nil
+
+        if meta.valid then
+          isValid, reason = meta.valid(v)
+        end
+
+        if not isValid then
+          local msg = 'invalid option -' .. k
+          if reason then
+            msg = msg .. ': ' .. reason
+          end
+          self:error(msg)
+        end
+
+        if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
+          self:error('option -' .. k.. ' is not in accepted values: ' .. table.concat(meta.enum, ', '))
+        end
+        if meta.structural then
+          params._structural[k] = meta.structural
+        end
+        if meta.init_only then
+          params._init_only[k] = meta.init_only
+        end
+        if meta.train_state then
+          params._train_state[k] = meta.train_state
+        end
       end
     end
   end
@@ -326,12 +410,27 @@ end
 -- Validators
 ---------------------------------------------------------------------------------
 
+local function buildRangeError(prefix, minValue, maxValue)
+  local err = 'the ' .. prefix .. ' should be'
+  if minValue then
+    err = err .. ' greater than ' .. minValue
+  end
+  if maxValue then
+    if minValue then
+      err = err .. ' and'
+    end
+    err = err .. ' lower than ' .. maxValue
+  end
+  return err
+end
+
 -- Check if is integer between minValue and maxValue.
 function ExtendedCmdLine.isInt(minValue, maxValue)
   return function(v)
     return (math.floor(v) == v and
       (not minValue or v >= minValue) and
-      (not maxValue or v <= maxValue))
+      (not maxValue or v <= maxValue)),
+      buildRangeError('integer', minValue, maxValue)
     end
 end
 
@@ -363,23 +462,24 @@ function ExtendedCmdLine.isFloat(minValue, maxValue)
   return function(v)
     return (type(v) == 'number' and
       (not minValue or v >= minValue) and
-      (not maxValue or v <= maxValue))
+      (not maxValue or v <= maxValue)),
+      buildRangeError('number', minValue, maxValue)
     end
 end
 
 -- Check if non empty.
 function ExtendedCmdLine.nonEmpty(v)
-  return v and v ~= ''
+  return v and v ~= '', 'the argument should not be empty'
 end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v)
+  return path.exists(v), 'the file should exist'
 end
 
 -- Check non set or if the corresponding file exists.
 function ExtendedCmdLine.fileNullOrExists(v)
-  return v == '' or ExtendedCmdLine.fileExists(v)
+  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file should exist'
 end
 
 -- Check it is a directory and some file exists
@@ -387,7 +487,7 @@ function ExtendedCmdLine.dirStructure(files)
   return function(v)
     for _,f in ipairs(files) do
       if not path.exists(v.."/"..f) then
-        return false
+        return false, 'the directory should exist'
       end
     end
     return true

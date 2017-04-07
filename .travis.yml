@@ -57,7 +57,7 @@ before_script:
 - ${INSTALL_PREFIX}/bin/luarocks install penlight
 script:
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
-- luacheck *lua onmt/ tools/
+- luacheck *lua onmt/ tools/ benchmark/ test/
 - ${INSTALL_PREFIX}/bin/luarocks make rocks/opennmt-scm-1.rockspec
 - echo ${ROOT_TRAVIS_DIR}
 - export TESTLUA=$(which luajit lua | head -n 1)

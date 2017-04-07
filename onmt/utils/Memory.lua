@@ -1,7 +1,10 @@
 local Memory = {}
 
 local options = {
-  {'-disable_mem_optimization', false, [[Disable sharing of internal buffers between clones for visualization or development.]]}
+  {
+    '-disable_mem_optimization', false,
+    [[Disable sharing of internal buffers between clones for visualization or development.]]
+  }
 }
 
 function Memory.declareOpts(cmd)

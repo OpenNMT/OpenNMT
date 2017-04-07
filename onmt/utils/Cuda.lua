@@ -7,15 +7,29 @@ local Cuda = {
 }
 
 local options = {
-  {'-gpuid',     '0',   [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
-                                 {valid=ExtendedCmdLine.listUInt}},
-  {'-fallback_to_cpu', false, [[If GPU can't be use, rollback on the CPU.]]},
-  {'-fp16', false, [[Use half-precision float on GPU.]]},
-  {'-no_nccl', false, [[Disable usage of nccl in parallel mode.]]}
+  {
+    '-gpuid', '0',
+    [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
+    {
+      valid = ExtendedCmdLine.listUInt
+    }
+  },
+  {
+    '-fallback_to_cpu', false,
+    [[If GPU can't be used, rollback on the CPU.]]
+  },
+  {
+    '-fp16', false,
+    [[Use half-precision float on GPU.]]
+  },
+  {
+    '-no_nccl', false,
+    [[Disable usage of nccl in parallel mode.]]
+  }
 }
 
 function Cuda.declareOpts(cmd)
-  cmd:setCmdLineOptions(options)
+  cmd:setCmdLineOptions(options, 'Cuda')
 end
 
 function Cuda.init(opt, masterGPU)
@@ -69,6 +83,33 @@ function Cuda.init(opt, masterGPU)
     end
     if Cuda.fp16 and not cutorch.hasHalf then
       error("installed cutorch does not support half-tensor")
+    end
+  end
+end
+
+-- returns RNGState for CPU and enabled GPUs
+function Cuda.getRNGStates()
+  local rngStates = { torch.getRNGState() }
+  for _,idx in ipairs(Cuda.gpuIds) do
+    table.insert(rngStates, cutorch.getRNGState(idx))
+  end
+  return rngStates
+end
+
+-- set RNGState from saved state
+function Cuda.setRNGStates(rngStates, verbose)
+  if not rngStates then
+    return
+  end
+  if verbose then
+    _G.logger:info("Restoring Random Number Generator states")
+  end
+  torch.setRNGState(rngStates[1])
+  if #rngStates-1 ~= #Cuda.gpuIds then
+    _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
+  else
+    for idx = 2, #rngStates do
+      cutorch.setRNGState(rngStates[idx], idx-1)
     end
   end
 end

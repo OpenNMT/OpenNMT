@@ -1,24 +1,70 @@
 local Translator = torch.class('Translator')
 
 local options = {
-  {'-model', '', [[Path to model .t7 file]], {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-  {'-beam_size', 5, [[Beam size]]},
-  {'-batch_size', 30, [[Batch size]]},
-  {'-max_sent_length', 250, [[Maximum output sentence length.]]},
-  {'-replace_unk', false, [[Replace the generated UNK tokens with the source token that
-                          had the highest attention weight. If phrase_table is provided,
-                          it will lookup the identified source token and give the corresponding
-                          target token. If it is not provided (or the identified source token
-                          does not exist in the table) then it will copy the source token]]},
-  {'-phrase_table', '', [[Path to source-target dictionary to replace UNK
-                        tokens. See README.md for the format this file should be in]]},
-  {'-n_best', 1, [[If > 1, it will also output an n_best list of decoded sentences]]},
-  {'-max_num_unks', math.huge, [[All sequences with more unks than this will be ignored
-                               during beam search]]},
-  {'-pre_filter_factor', 1, [[Optional, set this only if filter is being used. Before
-                            applying filters, hypotheses with top `beamSize * preFilterFactor`
-                            scores will be considered. If the returned hypotheses voilate filters,
-                            then set this to a larger value to consider more.]]}
+  {
+    '-model', '',
+    [[Path to the serialized model file.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-beam_size', 5,
+    [[Beam size.]]
+  },
+  {
+    '-batch_size', 30,
+    [[Batch size.]]
+  },
+  {
+    '-max_sent_length', 250,
+    [[Maximum output sentence length.]]
+  },
+  {
+    '-replace_unk', false,
+    [[Replace the generated <unk> tokens with the source token that
+      has the highest attention weight. If `-phrase_table` is provided,
+      it will lookup the identified source token and give the corresponding
+      target token. If it is not provided (or the identified source token
+      does not exist in the table) then it will copy the source token]]},
+  {
+    '-phrase_table', '',
+    [[Path to source-target dictionary to replace `<unk>` tokens.]]
+  },
+  {
+    '-n_best', 1,
+    [[If > 1, it will also output an n-best list of decoded sentences.]]
+  },
+  {
+    '-max_num_unks', math.huge,
+    [[All sequences with more `<unk>`s than this will be ignored during beam search.]]
+  },
+  {
+    '-pre_filter_factor', 1,
+    [[Optional, set this only if filter is being used. Before
+      applying filters, hypotheses with top `beam_size * pre_filter_factor`
+      scores will be considered. If the returned hypotheses voilate filters,
+      then set this to a larger value to consider more.]]},
+  {
+    '-length_norm', 0.0,
+    [[Length normalization coefficient (alpha). If set to 0, no length normalization.]]
+  },
+  {
+    '-coverage_norm', 0.0,
+    [[Coverage normalization coefficient (beta).
+      An extra coverage term multiplied by beta is added to hypotheses scores.
+      If is set to 0, no coverage normalization.]]
+  },
+  {
+    '-eos_norm', 0.0,
+    [[End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.]]
+  },
+  {
+    '-dump_input_encoding', false,
+    [[Instead of generating target tokens conditional on
+    the source tokens, we print the representation
+    (encoding/embedding) of the input.]]
+  }
 }
 
 function Translator.declareOpts(cmd)
@@ -186,7 +232,10 @@ end
 function Translator:translateBatch(batch)
   self.model:maskPadding()
 
-  local encStates, context = self.model.models.encoder:forward(batch)
+  local encStates, context = self.models.models.encoder:forward(batch)
+  if self.opt.dump_input_encoding then
+    return encStates[#encStates]
+  end
 
   -- Compute gold score.
   local goldScore
@@ -203,6 +252,9 @@ function Translator:translateBatch(batch)
                                                       self.args.max_num_unks,
                                                       encStates,
                                                       self.dicts,
+                                                      self.opt.length_norm,
+                                                      self.opt.coverage_norm,
+                                                      self.opt.eos_norm,
                                                       function(sourceSize, sourceLength)
                                                         return self.model.models.encoder:contextSize(sourceSize, sourceLength)
                                                       end)
@@ -299,21 +351,35 @@ function Translator:translate(src, gold)
   if data:batchCount() > 0 then
     local batch = onmt.utils.Cuda.convert(data:getBatch())
 
-    local pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
+    local encStates = {}
+    local pred = {}
+    local predFeats = {}
+    local predScore = {}
+    local attn = {}
+    local goldScore = {}
+    if self.opt.dump_input_encoding then
+      encStates = self:translateBatch(batch)
+    else
+      pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
+    end
 
     for b = 1, batch.size do
-      results[b] = {}
+      if self.opt.dump_input_encoding then
+        results[b] = encStates[b]
+      else
+        results[b] = {}
 
-      results[b].preds = {}
-      for n = 1, self.args.n_best do
-        results[b].preds[n] = {}
-        results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
-        results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
-        results[b].preds[n].attention = attn[b][n]
-        results[b].preds[n].score = predScore[b][n]
+        results[b].preds = {}
+        for n = 1, self.args.n_best do
+          results[b].preds[n] = {}
+          results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
+          results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
+          results[b].preds[n].attention = attn[b][n]
+          results[b].preds[n].score = predScore[b][n]
+        end
       end
 
-      if goldScore ~= nil then
+      if goldScore and next(goldScore) ~= nil then
         results[b].goldScore = goldScore[b]
       end
     end

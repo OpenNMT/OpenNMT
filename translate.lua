@@ -3,25 +3,38 @@ require('onmt.init')
 local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
 
 local options = {
-  {'-src', '',     [[Source sequence to decode (one line per sequence)]],
-                       {valid=onmt.utils.ExtendedCmdLine.nonEmpty}},
-  {'-tgt', '',     [[True target sequence (optional)]]},
-  {'-output',      'pred.txt', [[Path to output the predictions (each line will be the decoded sequence)]]},
-  {'-idx_files',   false,   [[If set, source and target files are 'key value' with key match between source and target.]]}
+  {
+    '-src', '',
+    [[Source sequences to translate.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
+    '-tgt', '',
+    [[Optional true target sequences.]]
+  },
+  {
+    '-output', 'pred.txt',
+    [[Output file.]]
+  },
+  {
+    '-idx_files', false,
+    [[If set, source and target files are 'key value' with key match between source and target.]]
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
+onmt.utils.Cuda.declareOpts(cmd)
+onmt.utils.Logger.declareOpts(cmd)
 
 cmd:text('')
 cmd:text('**Other options**')
 cmd:text('')
 
-cmd:option('-time', false, [[Measure batch translation time]])
-
-onmt.utils.Cuda.declareOpts(cmd)
-onmt.utils.Logger.declareOpts(cmd)
+cmd:option('-time', false, [[Measure average translation time.]])
 
 local function reportScore(name, scoreTotal, wordsTotal)
   _G.logger:info(name .. " AVG SCORE: %.2f, " .. name .. " PPL: %.2f",
@@ -115,30 +128,31 @@ local function main()
             goldScoreTotal = goldScoreTotal + results[b].goldScore
             goldWordsTotal = goldWordsTotal + #goldBatch[b].words
           end
-
-          for n = 1, #results[b].preds do
-            local sentence = translator:buildOutput(results[b].preds[n])
-
-            if n == 1 then
+          if opt.dump_input_encoding then
+            outFile:write(sentId, ' ', table.concat(torch.totable(results[b]), " "), '\n')
+          else
+            for n = 1, #results[b].preds do
+              local sentence = translator:buildOutput(results[b].preds[n])
               outFile:write(sentence .. '\n')
-              predScoreTotal = predScoreTotal + results[b].preds[n].score
-              predWordsTotal = predWordsTotal + #results[b].preds[n].words
+              if n == 1 then
+                predScoreTotal = predScoreTotal + results[b].preds[n].score
+                predWordsTotal = predWordsTotal + #results[b].preds[n].words
+
+                if #results[b].preds > 1 then
+                  _G.logger:info('')
+                  _G.logger:info('BEST HYP:')
+                end
+              end
 
               if #results[b].preds > 1 then
-                _G.logger:info('')
-                _G.logger:info('BEST HYP:')
+                _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
+              else
+                _G.logger:info("PRED %d: %s", sentId, sentence)
+                _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
               end
-            end
-
-            if #results[b].preds > 1 then
-              _G.logger:info("[%.2f] %s", results[b].preds[n].score, sentence)
-            else
-              _G.logger:info("PRED %d: %s", sentId, sentence)
-              _G.logger:info("PRED SCORE: %.2f", results[b].preds[n].score)
             end
           end
         end
-
         _G.logger:info('')
         sentId = sentId + 1
       end
@@ -166,12 +180,13 @@ local function main()
     _G.logger:info("avg sys\t" .. time.sys / sentenceCount .. "\n")
   end
 
-  reportScore('PRED', predScoreTotal, predWordsTotal)
+  if opt.dump_input_encoding == false then
+    reportScore('PRED', predScoreTotal, predWordsTotal)
 
-  if withGoldScore then
-    reportScore('GOLD', goldScoreTotal, goldWordsTotal)
+    if withGoldScore then
+      reportScore('GOLD', goldScoreTotal, goldWordsTotal)
+    end
   end
-
   outFile:close()
   _G.logger:shutDown()
 end

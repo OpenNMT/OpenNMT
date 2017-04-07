@@ -19,28 +19,67 @@ local function eval(model, data)
   return math.exp(loss / totalWords)
 end
 
-------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 local Trainer = torch.class('Trainer')
 
 local options = {
-  {'-save_every',              0 ,    [[Save intermediate models every this many iterations within an epoch.
-                                            If = 0, will not save models within an epoch. ]],
-                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-report_every',            50,    [[Print stats every this many iterations within an epoch.]],
-                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-async_parallel',          false, [[Use asynchronous parallelism training.]]},
-  {'-async_parallel_minbatch', 1000,  [[For async parallel computing, minimal number of batches before being parallel.]],
-                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-start_iteration',         1,     [[If loading from a checkpoint, the iteration from which to start]],
-                                         {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
-  {'-end_epoch',               13,    [[The final epoch of the training]],
-                                      {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
-  {'-start_epoch',             1,     [[If loading from a checkpoint, the epoch from which to start]],
-                                      {valid=onmt.utils.ExtendedCmdLine.isInt(1)}},
-  {'-curriculum',              0,     [[For this many epochs, order the minibatches based on source
-                                            sequence length. Sometimes setting this to 1 will increase convergence speed.]],
-                                      {valid=onmt.utils.ExtendedCmdLine.isUInt()}}
+  {
+    '-save_every', 5000,
+    [[Save intermediate models every this many iterations within an epoch.
+      If = 0, will not save intermediate models.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
+  },
+  {
+    '-report_every', 50,
+    [[Report progress every this many iterations within an epoch.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
+  },
+  {
+    '-async_parallel', false,
+    [[When training on multiple GPUs, update parameters asynchronously.]]
+  },
+  {
+    '-async_parallel_minbatch', 1000,
+    [[In asynchronous training, minimal number of sequential batches before being parallel.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
+  },
+  {
+    '-start_iteration', 1,
+    [[If loading from a checkpoint, the iteration from which to start.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
+  },
+  {
+    '-start_epoch', 1,
+    [[If loading from a checkpoint, the epoch from which to start.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
+  },
+  {
+    '-end_epoch', 13,
+    [[The final epoch of the training.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
+  },
+  {
+    '-curriculum', 0,
+    [[For this many epochs, order the minibatches based on source length (from smaller to longer).
+      Sometimes setting this to 1 will increase convergence speed.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      train_state = true
+    }
+  }
 }
 
 function Trainer.declareOpts(cmd)
@@ -86,6 +125,11 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     gradParams[idx] = thegradParams
   end)
 
+  if info then
+    -- if we had saved a previous rng state - restore it
+    onmt.utils.Cuda.setRNGStates(info.rngStates, true)
+  end
+
   local checkpoint = onmt.train.Checkpoint.new(self.options, model, optim, dataset.dicts)
 
   optim:setOptimStates(#params[1])
@@ -94,6 +138,10 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     local epochProfiler = onmt.utils.Profiler.new(doProfile)
 
     local startI = self.args.start_iteration
+
+    if trainData.sample then
+      trainData:sample()
+    end
 
     local numIterations = trainData:batchCount()
     -- In parallel mode, number of iterations is reduced to reflect larger batch size.
@@ -271,10 +319,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     if needLog then
       epochState:log(numIterations)
-    end
-
-    if trainData.sample then
-      trainData:sample()
     end
 
     return epochState, epochProfiler:dump()
