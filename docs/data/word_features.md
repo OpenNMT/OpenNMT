@@ -29,6 +29,8 @@ By default, word features on the target side are automatically shifted compared 
 * the inputs are \(words^{(t)}\) and \(features^{(t-1)}\)
 * the outputs are \(words^{(t+1)}\) and \(features^{(t)}\)
 
+To reuse available vocabulary, \(features^{(-1)}\) is set to the end of sentence token.
+
 ## Vocabularies
 
 By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the `-src_vocab_size` and `-tgt_vocab_size` options in the format `word_vocab_size[,feat1_vocab_size[,feat2_vocab_size[...]]]`. For example:
@@ -51,11 +53,11 @@ You can similarly use `-src_words_min_frequency` and `-tgt_words_min_frequency` 
 
 Like words, word features vocabularies can be reused across datasets with the `-features_vocabs_prefix`. For example, if the processing generates theses features dictionaries:
 
-* `data/mydicts.source_feature_1.dict`
-* `data/mydicts.source_feature_2.dict`
-* `data/mydicts.source_feature_3.dict`
+* `data/demo.source_feature_1.dict`
+* `data/demo.source_feature_2.dict`
+* `data/demo.source_feature_3.dict`
 
-you have to set `-features_vocabs_prefix data/mydicts` as command line option.
+you have to set `-features_vocabs_prefix data/demo` as command line option.
 
 ## Embeddings
 
