@@ -71,7 +71,8 @@ local function main()
                                    opt.src_vocab_size or opt.vocab_size,
                                    opt.src_words_min_frequency or opt.words_min_frequency,
                                    opt.features_vocabs_prefix,
-                                   function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end)
+                                   function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end,
+                                   opt.keep_frequency)
   if dataType ~= 'monotext' then
     data.dicts.tgt = Vocabulary.init('target',
                                      opt.train_tgt,
@@ -79,7 +80,8 @@ local function main()
                                      opt.tgt_vocab_size,
                                      opt.tgt_words_min_frequency,
                                      opt.features_vocabs_prefix,
-                                     function(s) return isValid(s, opt.tgt_seq_length) end)
+                                     function(s) return isValid(s, opt.tgt_seq_length) end,
+                                     opt.keep_frequency)
   end
 
   _G.logger:info('Preparing training data...')

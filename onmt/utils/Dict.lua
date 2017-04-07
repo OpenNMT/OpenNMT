@@ -48,7 +48,11 @@ function Dict:writeFile(filename)
 
   for i = 1, self:size() do
     local label = self.idxToLabel[i]
-    file:write(label .. ' ' .. i .. '\n')
+    if self.frequencies then
+      file:write(label .. ' ' .. i .. ' ' .. (self.frequencies[i] or 0) .. '\n')
+    else
+      file:write(label .. ' ' .. i .. '\n')
+    end
   end
 
   file:close()
@@ -72,8 +76,15 @@ end
 --[[ Mark all labels in `labels` as specials (i.e. will not be pruned). ]]
 function Dict:addSpecials(labels)
   for i = 1, #labels do
-    self:addSpecial(labels[i])
+    self:addSpecial(labels[i], nil, 0)
   end
+end
+
+--[[ Set the frequency of a vocab. ]]
+function Dict:setFrequency(label, frequency)
+  local idx = self.labelToIdx[label]
+  assert(idx)
+  self.frequencies[idx] = frequency
 end
 
 --[[ Add `label` in the dictionary. Use `idx` as its index if given. ]]
@@ -110,17 +121,22 @@ function Dict:prune(size)
 
   -- Only keep the `size` most frequent entries.
   local freq = torch.Tensor(self.frequencies)
-  local _, idx = torch.sort(freq, 1, true)
+  local sortedFreq, idx = torch.sort(freq, 1, true)
 
   local newDict = Dict.new()
 
   -- Add special entries in all cases.
   for i = 1, #self.special do
-    newDict:addSpecial(self.idxToLabel[self.special[i]], self.frequencies[self.special[i]])
+    local thevocab = self.idxToLabel[self.special[i]]
+    local thefreq = self.frequencies[self.special[i]]
+    if thevocab == onmt.Constants.UNK_WORD then
+      thefreq = sortedFreq:narrow(1, size+1, sortedFreq:size()[1]-size):sum()
+    end
+    newDict:addSpecial(thevocab, nil, thefreq)
   end
 
   for i = 1, size do
-    newDict:add(self.idxToLabel[idx[i]], self.frequencies[idx[i]])
+    newDict:add(self.idxToLabel[idx[i]], nil, self.frequencies[idx[i]])
   end
 
   return newDict
@@ -139,14 +155,19 @@ function Dict:pruneByMinFrequency(minFrequency)
 
   -- Add special entries in all cases.
   for i = 1, #self.special do
-    newDict:addSpecial(self.idxToLabel[self.special[i]])
+    local thevocab = self.idxToLabel[self.special[i]]
+    local thefreq = self.frequencies[self.special[i]]
+    if thevocab == onmt.Constants.UNK_WORD then
+      thefreq = sortedFreq:narrow(1, size+1, sortedFreq:size()[1]-size):sum()
+    end
+    newDict:addSpecial(thevocab, nil, thefreq)
   end
 
   for i = 1, self:size() do
     if sortedFreq[i] < minFrequency then
       break
     end
-    newDict:add(self.idxToLabel[idx[i]])
+    newDict:add(self.idxToLabel[idx[i]], nil, sortedFreq[i])
   end
 
   return newDict

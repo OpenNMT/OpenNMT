@@ -55,6 +55,10 @@ function Vocabulary.make(filename, validFunc)
       end
     end
 
+    -- keep frequency also for sentences
+    wordVocab:setFrequency(onmt.Constants.BOS_WORD, lineId)
+    wordVocab:setFrequency(onmt.Constants.EOS_WORD, lineId)
+
   end
 
   reader:close()
@@ -154,7 +158,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
   _G.logger:info('')
 
-  if not wordVocab.keepFrequency then
+  if not keepFrequency then
     wordVocab.frequencies = nil
   end
 
