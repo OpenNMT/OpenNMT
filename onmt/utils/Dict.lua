@@ -64,8 +64,8 @@ function Dict:lookup(key)
 end
 
 --[[ Mark this `label` and `idx` as special (i.e. will not be pruned). ]]
-function Dict:addSpecial(label, idx)
-  idx = self:add(label, idx)
+function Dict:addSpecial(label, idx, frequency)
+  idx = self:add(label, idx, frequency)
   table.insert(self.special, idx)
 end
 
@@ -77,7 +77,10 @@ function Dict:addSpecials(labels)
 end
 
 --[[ Add `label` in the dictionary. Use `idx` as its index if given. ]]
-function Dict:add(label, idx)
+function Dict:add(label, idx, frequency)
+  if not frequency then
+    frequency = 1
+  end
   if idx ~= nil then
     self.idxToLabel[idx] = label
     self.labelToIdx[label] = idx
@@ -91,9 +94,9 @@ function Dict:add(label, idx)
   end
 
   if self.frequencies[idx] == nil then
-    self.frequencies[idx] = 1
+    self.frequencies[idx] = frequency
   else
-    self.frequencies[idx] = self.frequencies[idx] + 1
+    self.frequencies[idx] = self.frequencies[idx] + frequency
   end
 
   return idx
@@ -113,11 +116,11 @@ function Dict:prune(size)
 
   -- Add special entries in all cases.
   for i = 1, #self.special do
-    newDict:addSpecial(self.idxToLabel[self.special[i]])
+    newDict:addSpecial(self.idxToLabel[self.special[i]], self.frequencies[self.special[i]])
   end
 
   for i = 1, size do
-    newDict:add(self.idxToLabel[idx[i]])
+    newDict:add(self.idxToLabel[idx[i]], self.frequencies[idx[i]])
   end
 
   return newDict
@@ -149,8 +152,8 @@ function Dict:pruneByMinFrequency(minFrequency)
   return newDict
 end
 
---[[ Return a new dictionary based on provided dictionary. ]]
-function Dict:filterDict(dict)
+--[[ Add frequency to current dictionary from provided dictionary ]]
+function Dict:getFrequencies(dict)
   local newDict = Dict.new()
 
   for i = 1, dict:size() do

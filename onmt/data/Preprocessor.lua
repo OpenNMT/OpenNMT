@@ -162,6 +162,10 @@ local commonOptions = {
     }
   },
   {
+    '-keep_frequency', false,
+    [[Keep frequency of words in dictionary.]]
+  },
+  {
     '-sort', 1,
     [[If = 1, sort the sentences by size to build batches without source padding.]],
     {
