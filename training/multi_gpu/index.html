@@ -245,7 +245,7 @@
           <div role="main">
             <div class="section">
               
-                <p>OpenNMT can make use of multiple GPU during the training by implementing <strong>data parallelism</strong>. This technique trains batches in parallel on different network replicas. To use data parellelism, assign a list of comma-separated GPU identifiers to the <code>-gpuid</code> option. For example:</p>
+                <p>OpenNMT can make use of multiple GPU during the training by implementing <strong>data parallelism</strong>. This technique trains batches in parallel on different network replicas. To use data parallelism, assign a list of comma-separated GPU identifiers to the <code>-gpuid</code> option. For example:</p>
 <pre><code class="bash">th train.lua -data data/demo-train.t7 -save_model demo -gpuid 1,2,4
 </code></pre>
 

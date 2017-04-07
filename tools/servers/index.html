@@ -264,7 +264,7 @@
 <pre><code class="bash">curl -v -H &quot;Content-Type: application/json&quot; -X POST -d '[{ &quot;src&quot; : &quot;Hello World }]' http://IP_address:7784/translator/translate
 </code></pre>
 
-<p>Answer will be embeeded in a JSON format, translated sentence in the <code>tgt</code> section. Additionnally you can get the attention matrix with the <code>-withAttn</code> option in the server command line.</p>
+<p>Answer will be embedded in a JSON format, translated sentence in the <code>tgt</code> section. Additionally you can get the attention matrix with the <code>-withAttn</code> option in the server command line.</p>
 <h2 id="zeromq">ZeroMQ</h2>
 <p>The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubuntu by running:</p>
 <pre><code class="bash">sudo apt-get install libzmq-dev

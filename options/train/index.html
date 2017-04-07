@@ -304,8 +304,8 @@
 <h2 id="sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options</h2>
 <ul>
 <li><code>-word_vec_size &lt;number&gt;</code> (default: <code>0</code>)<br/>Shared word embedding size. If set, this overrides <code>-src_word_vec_size</code> and <code>-tgt_word_vec_size</code>.</li>
-<li><code>-src_word_vec_size &lt;string&gt;</code> (default: <code>500</code>)<br/>Comma-separated list of source embedding sizes: <code>word[,feat1,feat2,...]</code>.</li>
-<li><code>-tgt_word_vec_size &lt;string&gt;</code> (default: <code>500</code>)<br/>Comma-separated list of target embedding sizes: <code>word[,feat1,feat2,...]</code>.</li>
+<li><code>-src_word_vec_size &lt;string&gt;</code> (default: <code>500</code>)<br/>Comma-separated list of source embedding sizes: <code>word[,feat1[,feat2[,...] ] ]</code>.</li>
+<li><code>-tgt_word_vec_size &lt;string&gt;</code> (default: <code>500</code>)<br/>Comma-separated list of target embedding sizes: <code>word[,feat1[,feat2[,...] ] ]</code>.</li>
 <li><code>-pre_word_vecs_enc &lt;string&gt;</code><br/>Path to pretrained word embeddings on the encoder side serialized as a Torch tensor.</li>
 <li><code>-pre_word_vecs_dec &lt;string&gt;</code><br/>Path to pretrained word embeddings on the decoder side serialized as a Torch tensor.</li>
 <li><code>-fix_word_vecs_enc &lt;number&gt;</code> (accepted: <code>0</code>, <code>1</code>; default: <code>0</code>)<br/>Fix word embeddings on the encoder side.</li>

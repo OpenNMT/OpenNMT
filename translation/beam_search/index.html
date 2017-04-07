@@ -258,7 +258,7 @@
                 <p>By default, translation is done using beam search. The <code>-beam_size</code> option can be used to trade-off translation time and search accuracy, with <code>-beam_size 1</code> giving greedy search. The small default beam size is often enough in practice.</p>
 <p>Beam search can also be used to provide an approximate n-best list of translations by setting <code>-n_best</code> greater than 1. For analysis, the translation command also takes an oracle/gold <code>-tgt</code> file and will output a comparison of scores.</p>
 <h2 id="hypotheses-filtering">Hypotheses filtering</h2>
-<p>The beam search provides a built-in filter based on unknown words: <code>-max_num_unks</code>. Hypotheses with for more unkown words than this value are dropped.</p>
+<p>The beam search provides a built-in filter based on unknown words: <code>-max_num_unks</code>. Hypotheses with for more unknown words than this value are dropped.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>As dropped hypotheses temporarily reduce the beam size, the <code>-pre_filter_factor</code> is a way to increase the number of considered hypotheses before applying filters.</p>

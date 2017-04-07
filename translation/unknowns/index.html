@@ -248,7 +248,7 @@
                 <p>The default translation mode allows the model to produce the <code>&lt;unk&gt;</code> symbol when it is not sure of the specific target word.</p>
 <p>Often times <code>&lt;unk&gt;</code> symbols will correspond to proper names that can be directly transposed between languages. The <code>-replace_unk</code> option will substitute <code>&lt;unk&gt;</code> with source words that have the highest attention weight.</p>
 <h2 id="phrase-table">Phrase table</h2>
-<p>Alternatively, advanced users may prefer to provide a preconstructed phrase table from an external aligner (such as <a href="https://github.com/clab/fast_align">fast_align</a>) using the <code>-phrase_table</code> option to allow for non-identity replacement.</p>
+<p>Alternatively, advanced users may prefer to provide a pre-constructed phrase table from an external aligner (such as <a href="https://github.com/clab/fast_align">fast_align</a>) using the <code>-phrase_table</code> option to allow for non-identity replacement.</p>
 <p>Instead of copying the source token with the highest attention, it will lookup in the phrase table for a possible translation. If a valid replacement is not found only then the source token will be copied.</p>
 <p>The phrase table is a file with one translation per line in the format:</p>
 <pre><code class="text">source|||target
@@ -258,8 +258,8 @@
 <h2 id="workarounds">Workarounds</h2>
 <p>Several techniques exist to minimize the out-of-vocabulary issue:</p>
 <ul>
-<li>subtokenization like BPE or wordpiece to simulate <em>open</em> vocabularies</li>
-<li>mixed word/characters model as desribed in <a href="https://arxiv.org/pdf/1609.08144.pdf">Wu et al. (2016)</a></li>
+<li>sub-tokenization like BPE or "wordpiece" to simulate <em>open</em> vocabularies</li>
+<li>mixed word/characters model as described in <a href="https://arxiv.org/pdf/1609.08144.pdf">Wu et al. (2016)</a></li>
 </ul>
               
             </div>

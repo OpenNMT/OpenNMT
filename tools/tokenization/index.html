@@ -281,7 +281,7 @@ tools/tokenize.lua -bpe_model codes &lt; input
 <p><strong>1. Add support for different modes of handling prefixes and/or suffixes: <code>-bpe_mode</code></strong></p>
 <ul>
 <li><code>suffix</code>: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "ent&lt;\w&gt;" at the end of a word. "&lt;\w&gt;" is an artificial marker appended to the end of each token input and treated as a single unit before doing statistics on bigrams. This is the default mode which is useful for most of the languages.</li>
-<li><code>prefix</code>: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "&lt;w>ent" at the begining of a word. "&lt;w>" is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.</li>
+<li><code>prefix</code>: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "&lt;w>ent" at the beginning of a word. "&lt;w>" is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.</li>
 <li><code>both</code>: <code>suffix</code> + <code>prefix</code></li>
 <li><code>none</code>: No artificial marker is appended to input tokens, a sub-token is treated equally whether it is in the middle or at the beginning or at the end of a token.</li>
 </ul>
@@ -301,7 +301,7 @@ tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive &lt; input
 
 <p>The output of the previous example would be:</p>
 <pre><code class="text">Constitution --&gt; con￨C sti￨l tu￨l tion￨l
-constitution --&gt; con|l sti￨l tu￨l tion￨l
+constitution --&gt; con￨l sti￨l tu￨l tion￨l
 </code></pre>
               
             </div>
