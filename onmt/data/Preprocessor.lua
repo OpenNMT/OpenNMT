@@ -319,7 +319,7 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
   _G.logger:info(' * average sequence length: source = %.1f, target = %.1f',
                  avgSrcLength,
                  avgTgtLength)
-  _G.logger:info(' * %% of unkown words: source = %.1f%%, target = %.1f%%',
+  _G.logger:info(' * %% of unknown words: source = %.1f%%, target = %.1f%%',
                  prunedRatioSrc * 100,
                  prunedRatioTgt * 100)
 
