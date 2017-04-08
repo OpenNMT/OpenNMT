@@ -1,7 +1,7 @@
 --[[ Thin layer over Element Research dpnn NCE Module
 --]]
 
-local dpnn, err = pcall(function() return require 'dpnn' end)
+local dpnn, _ = pcall(function() return require 'dpnn' end)
 
 if dpnn then
   local NCEModule, parent = torch.class('onmt.NCEModule', 'nn.NCEModule')
@@ -28,8 +28,8 @@ if dpnn then
     -- fix bug in NCEModule:updateGradInput module
     -- type of gradInput for "target" (long tensor) is a float tensor which is useless but breaks other modules
     local updateGradInput = self.updateGradInput
-    self.updateGradInput = function(self, inputTable, gradOutput)
-      gradInput = updateGradInput(self, inputTable, gradOutput)
+    self.updateGradInput = function(modself, inputTable, gradOutput)
+      local gradInput = updateGradInput(modself, inputTable, gradOutput)
       gradInput[2] = inputTable[2]
       return gradInput
     end

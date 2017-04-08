@@ -1,7 +1,7 @@
 --[[
 --]]
 
-local dpnn, err = pcall(function() return require 'dpnn' end)
+local dpnn, _ = pcall(function() return require 'dpnn' end)
 
 if dpnn then
   local NCECriterion, parent = torch.class('onmt.NCECriterion', 'nn.Criterion')
@@ -37,5 +37,4 @@ if dpnn then
     gradInput[1]:div(n)
     gradInput[2]:div(n)
   end
-
 end

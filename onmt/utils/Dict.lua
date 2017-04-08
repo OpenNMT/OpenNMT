@@ -170,14 +170,12 @@ function Dict:pruneByMinFrequency(minFrequency)
   for i = 1, #self.special do
     local thevocab = self.idxToLabel[self.special[i]]
     local thefreq = self.frequencies[self.special[i]]
-    if thevocab == onmt.Constants.UNK_WORD then
-      thefreq = sortedFreq:narrow(1, size+1, sortedFreq:size()[1]-size):sum()
-    end
     newDict:addSpecial(thevocab, nil, thefreq)
   end
 
   for i = 1, self:size() do
     if sortedFreq[i] < minFrequency then
+      newDict:setFrequency(onmt.Constants.UNK_WORD, sortedFreq:narrow(1, i, sortedFreq:size()[1]-i):sum())
       break
     end
     newDict:add(self.idxToLabel[idx[i]], nil, sortedFreq[i])
