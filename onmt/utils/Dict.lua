@@ -4,6 +4,7 @@ function Dict:__init(data)
   self.idxToLabel = {}
   self.labelToIdx = {}
   self.frequencies = {}
+  self.freqTensor = nil
 
   -- Special entries will not be pruned.
   self.special = {}
@@ -50,12 +51,24 @@ function Dict:writeFile(filename)
     local label = self.idxToLabel[i]
     if self.frequencies then
       file:write(label .. ' ' .. i .. ' ' .. (self.frequencies[i] or 0) .. '\n')
+    elseif self.freqTensor then
+      file:write(label .. ' ' .. i .. ' ' .. self.freqTensor[i] .. '\n')
     else
       file:write(label .. ' ' .. i .. '\n')
     end
   end
 
   file:close()
+end
+
+--[[ Drop or serialize the frequency tensor. ]]
+function Dict:prepFrequency(keep)
+  if not keep then
+    self.freqTensor = nil
+  else
+    self.freqTensor = torch.Tensor(self.frequencies)
+  end
+  self.frequencies = nil
 end
 
 --[[ Lookup `key` in the dictionary: it can be an index or a string. ]]

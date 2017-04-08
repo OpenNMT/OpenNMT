@@ -158,9 +158,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
   _G.logger:info('')
 
-  if not keepFrequency then
-    wordVocab.frequencies = nil
-  end
+  wordVocab:prepFrequency(keepFrequency)
 
   return {
     words = wordVocab,
