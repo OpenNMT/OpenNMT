@@ -105,7 +105,7 @@ function Seq2Seq:__init(args, dicts, verbose)
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.tgt, verbose)
 end
 
 function Seq2Seq.load(args, models, dicts, isReplica)
@@ -117,7 +117,7 @@ function Seq2Seq.load(args, models, dicts, isReplica)
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.tgt)
 
   return self
 end

@@ -235,6 +235,30 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
 end
 
+function Factory.buildCriterion(_, dicts, verbose)
+  if verbose then
+    _G.logger:info(' * Criterion:')
+  end
+
+  local sizes = Factory.getOutputSizes(dicts)
+
+  local criterion = nn.ParallelCriterion(false)
+
+  for i = 1, #sizes do
+    -- Ignores padding value.
+    local w = torch.ones(sizes[i])
+    w[onmt.Constants.PAD] = 0
+
+    local nll = nn.ClassNLLCriterion(w)
+
+    -- Let the training code manage loss normalization.
+    nll.sizeAverage = false
+    criterion:add(nll)
+  end
+
+  return criterion
+end
+
 function Factory.loadDecoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
