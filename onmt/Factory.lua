@@ -242,35 +242,6 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
 end
 
-function Factory.buildCriterion(opt, dicts, verbose)
-  if verbose then
-    _G.logger:info(' * Criterion: '..opt.criterion)
-  end
-
-  local sizes = Factory.getOutputSizes(dicts)
-
-  local criterion = nn.ParallelCriterion(false)
-
-  for i = 1, #sizes do
-    local feat_criterion
-    if i == 1 and opt.criterion == 'nce' then
-      feat_criterion = onmt.NCECriterion()
-    else
-      -- Ignores padding value.
-      local w = torch.ones(sizes[i])
-      w[onmt.Constants.PAD] = 0
-
-      feat_criterion = nn.ClassNLLCriterion(w)
-
-      -- Let the training code manage loss normalization.
-      feat_criterion.sizeAverage = false
-    end
-    criterion:add(feat_criterion)
-  end
-
-  return criterion
-end
-
 function Factory.loadDecoder(pretrained, clone)
   if clone then
     pretrained = onmt.utils.Tensor.deepClone(pretrained)
@@ -298,6 +269,35 @@ function Factory.buildGenerator(opt, dicts)
     generator:add(feat_generator)
   end
   return generator
+end
+
+function Factory.buildCriterion(opt, dicts, verbose)
+  if verbose then
+    _G.logger:info(' * Criterion: '..opt.criterion)
+  end
+
+  local sizes = Factory.getOutputSizes(dicts)
+
+  local criterion = nn.ParallelCriterion(false)
+
+  for i = 1, #sizes do
+    local feat_criterion
+    if i == 1 and opt.criterion == 'nce' then
+      feat_criterion = onmt.NCECriterion()
+    else
+      -- Ignores padding value.
+      local w = torch.ones(sizes[i])
+      w[onmt.Constants.PAD] = 0
+
+      feat_criterion = nn.ClassNLLCriterion(w)
+
+      -- Let the training code manage loss normalization.
+      feat_criterion.sizeAverage = false
+    end
+    criterion:add(feat_criterion)
+  end
+
+  return criterion
 end
 
 function Factory.buildAttention(args)
