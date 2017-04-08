@@ -359,10 +359,17 @@ function Decoder:backward(batch, outputs, criterion)
   local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
   for t = batch.targetLength, 1, -1 do
+    local refOutput = batch:getTargetOutput(t)
+
+    local prepOutputs = outputs[t]
+    -- sampling-based generator need outputs during training
+    -- use generator specific flag to keep backward compatibility
+    if self.generator.needOutput then
+      prepOutputs = { prepOutputs, refOutput }
+    end
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
-    local pred = self.generator:forward(outputs[t])
-    local output = batch:getTargetOutput(t)
+    local pred = self.generator:forward(prepOutputs)
 
     if self.indvLoss then
       for i = 1, pred[1]:size(1) do
@@ -371,7 +378,7 @@ function Decoder:backward(batch, outputs, criterion)
           local tmpOutput = {}
           for j = 1, #pred do
             table.insert(tmpPred, pred[j][{{i}, {}}])
-            table.insert(tmpOutput, output[j][{{i}}])
+            table.insert(tmpOutput, refOutput[j][{{i}}])
           end
           local tmpLoss = criterion:forward(tmpPred, tmpOutput)
           indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
@@ -379,17 +386,30 @@ function Decoder:backward(batch, outputs, criterion)
         end
       end
     else
-      loss = loss + criterion:forward(pred, output)
+      loss = loss + criterion:forward(pred, refOutput)
     end
 
     -- Compute the criterion gradient.
-    local genGradOut = criterion:backward(pred, output)
+    local genGradOut = criterion:backward(pred, refOutput)
+
+    -- normalize gradient - we might have several batches in parallel, so we divide by total size of batch
     for j = 1, #genGradOut do
-      genGradOut[j]:div(batch.totalSize)
+      -- each criterion might have its own normalization function
+      if criterion.normalizationFunc and criterion.normalizationFunc[j] ~= false then
+        criterion.normalizationFunc[j](genGradOut[j], batch.totalSize)
+      else
+        genGradOut[j]:div(batch.totalSize)
+      end
     end
 
     -- Compute the final layer gradient.
-    local decGradOut = self.generator:backward(outputs[t], genGradOut)
+    local decGradOut = self.generator:backward(prepOutputs, genGradOut)
+
+    -- if we sent the output, then get gradient back on the input
+    if self.generator.needOutput then
+      decGradOut = decGradOut[1]
+    end
+
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
     -- Compute the standard backward.
@@ -435,9 +455,17 @@ function Decoder:computeLoss(batch, encoderStates, context, criterion)
 
   local loss = 0
   self:forwardAndApply(batch, encoderStates, context, function (out, t)
-    local pred = self.generator:forward(out)
-    local output = batch:getTargetOutput(t)
-    loss = loss + criterion:forward(pred, output)
+    local refOutput = batch:getTargetOutput(t)
+    local prepOutputs = out
+    -- sampling-based generator need outputs during training
+    -- use generator specific flag to keep backward compatibility
+    if self.generator.needOutput then
+      prepOutputs = { prepOutputs, refOutput }
+    end
+
+    local pred = self.generator:forward(prepOutputs)
+
+    loss = loss + criterion:forward(pred, refOutput)
   end)
 
   return loss

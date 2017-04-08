@@ -44,6 +44,7 @@ function Factory.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
+  onmt.NCEModule.declareOpts(cmd)
 end
 
 -- Return effective embeddings size based on user options.
@@ -255,19 +256,35 @@ end
 function Factory.buildGenerator(opt, dicts)
   local sizes = Factory.getOutputSizes(dicts)
   local generator = nn.ConcatTable()
+
+  local selectInput = nn.Identity()
+
+  if opt.criterion == 'nce' then
+    generator.needOutput = 1
+    selectInput = nn.SelectTable(1)
+  end
+
   for i = 1, #sizes do
     local feat_generator
     if i == 1 and opt.criterion == 'nce' then
       assert(dicts.words.freqTensor)
       assert(onmt.NCEModule)
-      feat_generator = onmt.NCEModule(opt.rnn_size, sizes[i], 25, dicts.words.freqTensor)
+      local selectInputOutput = nn.ConcatTable()
+                          :add(nn.SelectTable(1)) -- first element is the input
+                          :add(nn.Sequential():add(nn.SelectTable(2)):add(nn.SelectTable(i)))
+
+      feat_generator = nn.Sequential()
+                    :add(selectInputOutput)
+                    :add(onmt.NCEModule(opt, opt.rnn_size, sizes[i], dicts.words.freqTensor))
     else
       feat_generator = nn.Sequential()
+                    :add(selectInput)
                     :add(nn.Linear(opt.rnn_size, sizes[i]))
                     :add(nn.LogSoftMax())
     end
     generator:add(feat_generator)
   end
+
   return generator
 end
 
@@ -279,20 +296,23 @@ function Factory.buildCriterion(opt, dicts, verbose)
   local sizes = Factory.getOutputSizes(dicts)
 
   local criterion = nn.ParallelCriterion(false)
+  criterion.normalizationFunc = {}
 
   for i = 1, #sizes do
+    -- Ignores padding value.
+    local w = torch.ones(sizes[i])
+    w[onmt.Constants.PAD] = 0
+
     local feat_criterion
     if i == 1 and opt.criterion == 'nce' then
-      feat_criterion = onmt.NCECriterion()
+      feat_criterion = onmt.NCECriterion(w)
+      table.insert(criterion.normalizationFunc, feat_criterion.normalize)
     else
-      -- Ignores padding value.
-      local w = torch.ones(sizes[i])
-      w[onmt.Constants.PAD] = 0
-
       feat_criterion = nn.ClassNLLCriterion(w)
-
       -- Let the training code manage loss normalization.
       feat_criterion.sizeAverage = false
+      -- no special normalization function
+      table.insert(criterion.normalizationFunc, false)
     end
     criterion:add(feat_criterion)
   end
