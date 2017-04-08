@@ -14,15 +14,17 @@ if dpnn then
     -- for training
     self.nce = nn.NCECriterion()
     self.nce.sizeAverage = false
+    -- for inference
     self.nll = nn.ClassNLLCriterion(w)
     self.nll.sizeAverage = false
-    self.criterions = {self.nce, self.nll }
+    self.criterions = { self.nce, self.nll }
   end
 
   function NCECriterion:updateOutput(input, target)
     if type(input) == 'table' then
       return self.nce:updateOutput(input, target)
     else
+      -- inference time
       return self.nll:updateOutput(input, target)
     end
   end

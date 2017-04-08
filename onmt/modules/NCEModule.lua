@@ -23,7 +23,8 @@ if dpnn then
   function NCEModule:__init(opt, rnnSize, outputSizes, unigrams)
     parent.__init(self, rnnSize, outputSizes, opt.nce_sample_size, unigrams)
     self.normalized = true
-    self.LogSoftMax = true
+    self.logsoftmax = true
+
     -- fix bug in NCEModule:updateGradInput module
     -- type of gradInput for "target" (long tensor) is a float tensor which is useless but breaks other modules
     local updateGradInput = self.updateGradInput
