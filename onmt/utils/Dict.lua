@@ -96,8 +96,9 @@ end
 --[[ Set the frequency of a vocab. ]]
 function Dict:setFrequency(label, frequency)
   local idx = self.labelToIdx[label]
-  assert(idx)
-  self.frequencies[idx] = frequency
+  if idx then
+    self.frequencies[idx] = frequency
+  end
 end
 
 --[[ Add `label` in the dictionary. Use `idx` as its index if given. ]]
