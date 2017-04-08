@@ -4,7 +4,7 @@
 local dpnn, err = pcall(function() return require 'dpnn' end)
 
 if dpnn then
-  local NCEModule, parent = torch.class('onmt.NCECriterion', 'nn.NCECriterion')
+  local NCECriterion, parent = torch.class('onmt.NCECriterion', 'nn.NCECriterion')
 
   --[[
 

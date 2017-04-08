@@ -10,9 +10,9 @@ if dpnn then
 
   --]]
   function NCEModule:__init(rnnSize, outputSizes, k, unigrams)
+    parent.__init(self, rnnSize, outputSizes, k, unigrams)
     self.normalized = true
     self.LogSoftMax = true
-    parent.__init(self, rnnSize, outputSizes, k, unigrams)
   end
 
 end
