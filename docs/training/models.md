@@ -48,14 +48,18 @@ The following components support residual connections with the `-residual` flag:
 
 ## Attention Model
 
-Default attention model implemented is "Global Attention Model (*general*)" from: [Luong (2015)](../references.md#Luong2015).
+Different models are available from [Luong (2015)](../references.md#Luong2015) "Global Attention Model".
 
 ![Global attentional model](../img/global-attention-model.png)
 
 where:
 
-$$a_t(s) = \frac{exp(score(h_t,\bar{h}_s))}{\sum_{s'} exp(score(h_t,\bar{h}_s)}$$
+$$a_t(s) = \frac{\mathrm{exp}(\mathrm{score}(h_t,\bar{h}_s))}{\sum_{s'} \mathrm{exp}(\mathrm{score}(h_t,\bar{h}_s)}$$
 
-and
+and the score function is one of these:
 
-$$score(h_t,\bar{h}_s)=h_t^TW_a\bar{h}_s$$
+* `dot`: $$\mathrm{score}(h_t,\bar{h}_s)=h_t^T\bar{h}_s$$
+* `general`: $$\mathrm{score}(h_t,\bar{h}_s)=h_t^TW_a\bar{h}_s$$
+* `concat`: $$\mathrm{score}(h_t,\bar{h}_s)=\nu_a^T.\mathrm{tanh}(W_a[h_t;\bar{h}_s])$$
+
+The model is selected using `-global_attention` option or can be disabled with `-attention none` option. The default attention model is `general`.

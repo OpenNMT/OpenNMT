@@ -335,11 +335,23 @@ function ExtendedCmdLine:parse(arg)
       local meta = self.options[K].meta
       if meta then
         -- check option validity
-        if meta.valid and not meta.valid(v) then
-          self:error('option \'' .. k .. '\' value is not valid')
+        local isValid = true
+        local reason = nil
+
+        if meta.valid then
+          isValid, reason = meta.valid(v)
         end
+
+        if not isValid then
+          local msg = 'invalid option -' .. k
+          if reason then
+            msg = msg .. ': ' .. reason
+          end
+          self:error(msg)
+        end
+
         if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-          self:error('option \'' .. k.. '\' value is not in possible values')
+          self:error('option -' .. k.. ' is not in accepted values: ' .. table.concat(meta.enum, ', '))
         end
         if meta.structural then
           params._structural[k] = meta.structural
@@ -398,12 +410,27 @@ end
 -- Validators
 ---------------------------------------------------------------------------------
 
+local function buildRangeError(prefix, minValue, maxValue)
+  local err = 'the ' .. prefix .. ' should be'
+  if minValue then
+    err = err .. ' greater than ' .. minValue
+  end
+  if maxValue then
+    if minValue then
+      err = err .. ' and'
+    end
+    err = err .. ' lower than ' .. maxValue
+  end
+  return err
+end
+
 -- Check if is integer between minValue and maxValue.
 function ExtendedCmdLine.isInt(minValue, maxValue)
   return function(v)
     return (math.floor(v) == v and
       (not minValue or v >= minValue) and
-      (not maxValue or v <= maxValue))
+      (not maxValue or v <= maxValue)),
+      buildRangeError('integer', minValue, maxValue)
     end
 end
 
@@ -435,23 +462,24 @@ function ExtendedCmdLine.isFloat(minValue, maxValue)
   return function(v)
     return (type(v) == 'number' and
       (not minValue or v >= minValue) and
-      (not maxValue or v <= maxValue))
+      (not maxValue or v <= maxValue)),
+      buildRangeError('number', minValue, maxValue)
     end
 end
 
 -- Check if non empty.
 function ExtendedCmdLine.nonEmpty(v)
-  return v and v ~= ''
+  return v and v ~= '', 'the argument should not be empty'
 end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v)
+  return path.exists(v), 'the file should exist'
 end
 
 -- Check non set or if the corresponding file exists.
 function ExtendedCmdLine.fileNullOrExists(v)
-  return v == '' or ExtendedCmdLine.fileExists(v)
+  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file should exist'
 end
 
 -- Check it is a directory and some file exists
@@ -459,7 +487,7 @@ function ExtendedCmdLine.dirStructure(files)
   return function(v)
     for _,f in ipairs(files) do
       if not path.exists(v.."/"..f) then
-        return false
+        return false, 'the directory should exist'
       end
     end
     return true

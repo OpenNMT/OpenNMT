@@ -20,23 +20,16 @@ accuracy. Features include:
 
 ## Installation
 
-OpenNMT only requires a vanilla Torch install with few dependencies. Alternatively there is a (CUDA) <a href="https://hub.docker.com/r/harvardnlp/opennmt/">Docker container</a>.
+OpenNMT only requires a Torch installation with few dependencies.
 
-### Dependencies
+1. [Install Torch](http://torch.ch/docs/getting-started.html)
+2. Install additional packages:
 
-* `nn`
-* `nngraph`
-* `tds`
-* `penlight`
+```bash
+luarocks install tds
+```
 
-GPU training requires:
-
-* `cunn`
-* `cutorch`
-
-Multi-GPU training additionally requires:
-
-* `threads`
+For other installation methods including Docker, visit the [documentation](http://opennmt.net/OpenNMT/installation/).
 
 ## Quickstart
 
@@ -75,11 +68,11 @@ A <a href="https://arxiv.org/abs/1701.02810">technical report</a> on OpenNMT is 
 }
 ```
 
-## Documentation
+## Additional resources
 
 * <a href="http://opennmt.github.io/OpenNMT">Documentation</a>
-* <a href="http://opennmt.github.io/Models">Example Models</a>
+* <a href="http://opennmt.github.io/Models">Example models</a>
 * <a href="http://forum.opennmt.net">Forum</a>
-* <a href="https://gitter.im/OpenNMT/openmt">Gitter</a>
-* <a href="https://demo-pnmt.systran.net">Live Demo</a>
+* <a href="https://gitter.im/OpenNMT/openmt">Gitter channel</a>
+* <a href="https://demo-pnmt.systran.net">Live demo</a>
 * <a href="http://opennmt.github.io/about">Bibliography</a>

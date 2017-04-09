@@ -51,20 +51,18 @@ function GlobalAttention:_buildModel(dim, global_attention)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local targetT
-  if global_attention == 'general' then
-    targetT = nn.Linear(dim, dim, false)(inputs[1]) -- batchL x dim
-  else
-    targetT = inputs[1]
-  end
+  local ht = inputs[1]
   local context = inputs[2] -- batchL x sourceTimesteps x dim
 
   -- Get attention.
   local score_ht_hs
   if global_attention ~= 'concat' then
-    score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
+    if global_attention == 'general' then
+      ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
+    end
+    score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
   else
-    local ht2 = nn.Replicate(1,2)(targetT) -- batchL x 1 x dim
+    local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
     local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, context})
     local Wa_ht_hs = nn.Bottle(nn.Linear(dim*2, dim, false),2)(ht_hs)
     local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)

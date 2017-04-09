@@ -11,7 +11,7 @@ markdown_extensions:
   - sane_lists
   - def_list
   - fenced_code
-  - markdown.extensions.admonition
+  - admonition
 pages:
   - Overview: index.md
   - Installation: installation.md
@@ -35,13 +35,13 @@ pages:
       - Servers: tools/servers.md
   - "Reference: Options":
       - "Scripts usage": options/usage.md
-      - Preprocess: options/preprocess.md
-      - Train: options/train.md
-      - Translate: options/translate.md
-      - Tag: options/tag.md
-      - Tokenize: options/tokenize.md
-      - "Learn BPE": options/learn_bpe.md
-      - "REST server": options/rest_server.md
+      - "preprocess.lua": options/preprocess.md
+      - "train.lua": options/train.md
+      - "translate.lua": options/translate.md
+      - "tag.lua": options/tag.md
+      - "tools/tokenize.lua": options/tokenize.md
+      - "tools/learn_bpe.lua": options/learn_bpe.md
+      - "tools/rest_translation_server.lua": options/rest_server.md
   - Extensions: extensions.md
   - References: references.md
   - "Common issues": issues.md

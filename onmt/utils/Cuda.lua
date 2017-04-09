@@ -102,7 +102,7 @@ function Cuda.setRNGStates(rngStates, verbose)
     return
   end
   if verbose then
-    _G.logger:info("Resetting Random Number Generator states")
+    _G.logger:info("Restoring Random Number Generator states")
   end
   torch.setRNGState(rngStates[1])
   if #rngStates-1 ~= #Cuda.gpuIds then

@@ -4,7 +4,7 @@ Beam search can also be used to provide an approximate n-best list of translatio
 
 ## Hypotheses filtering
 
-The beam search provides a built-in filter based on unknown words: `-max_num_unks`. Hypotheses with for more unkown words than this value are dropped.
+The beam search provides a built-in filter based on unknown words: `-max_num_unks`. Hypotheses with for more unknown words than this value are dropped.
 
 !!! note "Note"
     As dropped hypotheses temporarily reduce the beam size, the `-pre_filter_factor` is a way to increase the number of considered hypotheses before applying filters.
@@ -19,7 +19,7 @@ where \(X\) is the source, \(Y\) is the current target, and the functions as def
 
 ### Length normalization
 
-Scores are normalized by the following formula as defined in [Wu et al. (2016)](https://arxiv.org/pdf/1609.08144.pdf):
+Scores are normalized by the following formula as defined in [Wu et al. (2016)](../references.md#GNMT):
 
 $$lp(Y) = \frac{(5+|Y|)^\alpha}{(5+1)^\alpha}$$
 
@@ -27,7 +27,7 @@ where \(|Y|\) is the current target length and \(\alpha\) is the length normaliz
 
 ### Coverage normalization
 
-Scores are penalized by the following formula as defined in [Wu et al. (2016)](https://arxiv.org/pdf/1609.08144.pdf):
+Scores are penalized by the following formula as defined in [Wu et al. (2016)](../references.md#GNMT):
 
 $$cp(X,Y) = \beta\sum_{i=1}^{|X|}\log(\min(\sum_{j=1}^{|Y|}p_{i,j},1.0))$$
 

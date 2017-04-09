@@ -20,10 +20,10 @@
 * `-valid_tgt <string>`<br/>Path to the validation target data.
 * `-src_vocab <string>`<br/>Path to an existing source vocabulary.
 * `-tgt_vocab <string>`<br/>Path to an existing target vocabulary.
-* `-src_vocab_size <string>` (default: `50000`)<br/>Comma-separated list of source vocabularies size: `word[,feat1,feat2,...]`. If = 0, vocabularies are not pruned.
-* `-tgt_vocab_size <string>` (default: `50000`)<br/>Comma-separated list of target vocabularies size: `word[,feat1,feat2,...]`. If = 0, vocabularies are not pruned.
-* `-src_words_min_frequency <string>` (default: `0`)<br/>Comma-separated list of source words min frequency: `word[,feat1,feat2,...]`. If = 0, vocabularies are pruned by size.
-* `-tgt_words_min_frequency <string>` (default: `0`)<br/>Comma-separated list of target words min frequency: `word[,feat1,feat2,...]`. If = 0, vocabularies are pruned by size.
+* `-src_vocab_size <string>` (default: `50000`)<br/>Comma-separated list of source vocabularies size: `word[,feat1[,feat2[,...] ] ]`. If = 0, vocabularies are not pruned.
+* `-tgt_vocab_size <string>` (default: `50000`)<br/>Comma-separated list of target vocabularies size: `word[,feat1[,feat2[,...] ] ]`. If = 0, vocabularies are not pruned.
+* `-src_words_min_frequency <string>` (default: `0`)<br/>Comma-separated list of source words min frequency: `word[,feat1[,feat2[,...] ] ]`. If = 0, vocabularies are pruned by size.
+* `-tgt_words_min_frequency <string>` (default: `0`)<br/>Comma-separated list of target words min frequency: `word[,feat1[,feat2[,...] ] ]`. If = 0, vocabularies are pruned by size.
 * `-src_seq_length <number>` (default: `50`)<br/>Maximum source sequence length.
 * `-tgt_seq_length <number>` (default: `50`)<br/>Maximum target sequence length.
 * `-features_vocabs_prefix <string>`<br/>Path prefix to existing features vocabularies.
