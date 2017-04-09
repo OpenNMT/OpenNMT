@@ -38,7 +38,7 @@ with two additional features:
 **1\. Add support for different modes of handling prefixes and/or suffixes: `-bpe_mode`**
 
 * `suffix`: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "ent<\w>" at the end of a word. "<\w>" is an artificial marker appended to the end of each token input and treated as a single unit before doing statistics on bigrams. This is the default mode which is useful for most of the languages.
-* `prefix`: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "<w\>ent" at the begining of a word. "<w\>" is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.
+* `prefix`: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "<w\>ent" at the beginning of a word. "<w\>" is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.
 * `both`: `suffix` + `prefix`
 * `none`: No artificial marker is appended to input tokens, a sub-token is treated equally whether it is in the middle or at the beginning or at the end of a token.
 
@@ -65,5 +65,5 @@ The output of the previous example would be:
 
 ```text
 Constitution --> con￨C sti￨l tu￨l tion￨l
-constitution --> con|l sti￨l tu￨l tion￨l
+constitution --> con￨l sti￨l tu￨l tion￨l
 ```

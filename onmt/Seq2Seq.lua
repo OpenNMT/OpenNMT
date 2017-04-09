@@ -12,14 +12,14 @@ local options = {
   },
   {
     '-src_word_vec_size', '500',
-    [[Comma-separated list of source embedding sizes: `word[,feat1,feat2,...]`.]],
+    [[Comma-separated list of source embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
     {
       structural = 0
     }
   },
   {
     '-tgt_word_vec_size', '500',
-    [[Comma-separated list of target embedding sizes: `word[,feat1,feat2,...]`.]],
+    [[Comma-separated list of target embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
     {
       structural = 0
     }

@@ -4,7 +4,7 @@ local SeqTagger, parent = torch.class('SeqTagger', 'Model')
 local options = {
   {
     '-word_vec_size', '500',
-    [[Comma-separated list of embedding sizes: `word[,feat1,feat2,...]`.]],
+    [[Comma-separated list of embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
     {
       structural = 0
     }
