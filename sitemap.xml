@@ -56,6 +56,12 @@
     </url>
         
     <url>
+     <loc>/training/logs/</loc>
+     <lastmod>2017-04-10</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
      <loc>/training/multi_gpu/</loc>
      <lastmod>2017-04-10</lastmod>
      <changefreq>daily</changefreq>

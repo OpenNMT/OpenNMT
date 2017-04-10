@@ -166,6 +166,21 @@
             "title": "Extraction"
         }, 
         {
+            "location": "/training/logs/", 
+            "text": "During the training, some information are displayed every \n-report_every\n iterations. These logs are usually needed to evaluate the training progress, efficiency and convergence.\n\n\nMeasurements are reported as an average since the previous print.\n\n\nPerplexity\n\n\nA key information is the \ntraining perplexity\n defined by:\n\n\n\n\nppl=\\exp(\\frac{loss}{|W|})\n\n\n\n\nwith \nloss\n being the cumulated negative log likelihood of the true target data and \n|W|\n the number of target words. You want this value to go down and be low in which case it means your model fits well the training data.\n\n\nAt the end of an epoch, the logs report the \nvalidation perplexity\n with the same formula but applied on the validation data. It shows how well your model fits unseen data.\n\n\n\n\nNote\n\n\nDuring evaluation on the validation dataset, dropout is turned off.\n\n\n\n\nLogs management\n\n\nSome advanced options are available to manage your logs like using a file (\n-log_file\n), or disabling them entirely (\n-disable_logs\n). See the options of the script to learn about them.", 
+            "title": "Logs"
+        }, 
+        {
+            "location": "/training/logs/#perplexity", 
+            "text": "A key information is the  training perplexity  defined by:   ppl=\\exp(\\frac{loss}{|W|})   with  loss  being the cumulated negative log likelihood of the true target data and  |W|  the number of target words. You want this value to go down and be low in which case it means your model fits well the training data.  At the end of an epoch, the logs report the  validation perplexity  with the same formula but applied on the validation data. It shows how well your model fits unseen data.   Note  During evaluation on the validation dataset, dropout is turned off.", 
+            "title": "Perplexity"
+        }, 
+        {
+            "location": "/training/logs/#logs-management", 
+            "text": "Some advanced options are available to manage your logs like using a file ( -log_file ), or disabling them entirely ( -disable_logs ). See the options of the script to learn about them.", 
+            "title": "Logs management"
+        }, 
+        {
             "location": "/training/multi_gpu/", 
             "text": "OpenNMT can make use of multiple GPU during the training by implementing \ndata parallelism\n. This technique trains batches in parallel on different network replicas. To use data parallelism, assign a list of comma-separated GPU identifiers to the \n-gpuid\n option. For example:\n\n\nth train.lua -data data/demo-train.t7 -save_model demo -gpuid 1,2,4\n\n\n\n\nwill use the first, the second and the fourth GPU of the machine as returned by the CUDA API.\n\n\n\n\nNote\n\n\nnvidia-smi\n enumerates devices based on the driver API which can be in a different order than the CUDA API.\n\n\n\n\nSynchronous\n\n\nIn this default mode, each replica processes in parallel a different batch at each iteration. The gradients from each replica are accumulated, and parameters updated and synchronized.\n\n\n\n\nWarning\n\n\nWhen using \nN\n GPU(s), the actual batch size is \nN \\times\n\n\n-max_batch_size\n.\n\n\n\n\nAsynchronous\n\n\n(Also known as asynchronous SGD or downpour SGD.)\n\n\nIn this mode enabled with the \n-async_parallel\n flag, the different replicas are independently\ncalculating their own gradients, updating a master copy of the parameters and getting updated values\nof the parameters. To enable convergence at the beginning of the training, only one replica is working for the first \n-async_parallel_minbatch\n iterations to prepare a better initialization for the asynchronous part.\n\n\n\n\nWarning\n\n\nA GPU core is dedicated to store the master copy of the parameters and is not used for training.\n\n\n\n\n\n\nNote\n\n\nAs training logs and saving require synchronization, consider using higher \n-report_every\n and \n-save_every\n values.", 
             "title": "Multi GPU"
