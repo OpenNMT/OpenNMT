@@ -48,14 +48,17 @@ function GlobalAttentionCoverage:_buildModel(dim)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local ht = inputs[1]
-  local context = inputs[2] -- batchL x sourceTimesteps x dim
-  local coverage = inputs[3] -- coverage vector
+  local ht = inputs[1] -- target context: batchLx dim
+  local hs = inputs[2] -- source context: batchL x sourceTimesteps x dim
+  local coverage = inputs[3] -- coverage vector: batchL x sourceTimesteps
+
+  -- concatenate coverage to hs
+  local hs_cov = nn.JoinTable(3)({hs, nn.Replicate(1,3)(coverage)})
 
   -- Get attention.
   local score_ht_hs
-  ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
-  score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
+  ht = nn.Linear(dim, dim+1, false)(ht) -- batchL x dim
+  score_ht_hs = nn.MM()({hs_cov, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
 
   local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
   local softmaxAttn = nn.SoftMax()
@@ -64,7 +67,7 @@ function GlobalAttentionCoverage:_buildModel(dim)
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
 
   -- Apply attention to context.
-  local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
+  local contextCombined = nn.MM()({attn, hs}) -- batchL x 1 x dim
   contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
   contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
   local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))

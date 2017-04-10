@@ -51,8 +51,8 @@ function GlobalAttention:_buildModel(dim, global_attention)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local ht = inputs[1]
-  local context = inputs[2] -- batchL x sourceTimesteps x dim
+  local ht = inputs[1] -- target context: batchLx dim
+  local hs = inputs[2] -- source context: batchL x sourceTimesteps x dim
 
   -- Get attention.
   local score_ht_hs
@@ -60,10 +60,10 @@ function GlobalAttention:_buildModel(dim, global_attention)
     if global_attention == 'general' then
       ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
     end
-    score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
+    score_ht_hs = nn.MM()({hs, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
   else
     local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
-    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, context})
+    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, hs})
     local Wa_ht_hs = nn.Bottle(nn.Linear(dim*2, dim, false),2)(ht_hs)
     local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)
     score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
@@ -75,7 +75,7 @@ function GlobalAttention:_buildModel(dim, global_attention)
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
 
   -- Apply attention to context.
-  local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
+  local contextCombined = nn.MM()({attn, hs}) -- batchL x 1 x dim
   contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
   contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
   local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
