@@ -23,16 +23,8 @@ local function start(self, check_func, every_sec)
       }
    }
 
---   local ok, err = pcall(xavante.start, function()
---      io.stdout:flush()
---      io.stderr:flush()
---      print("vn here")
---      return false
---   end, 3)
-      
-     local ok, err = pcall(xavante.start, check_func, every_sec)
+   local ok, err = pcall(xavante.start, check_func, every_sec)
 
- 
    if not ok then
       return nil, err
    end

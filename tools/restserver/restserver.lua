@@ -1,3 +1,8 @@
+--[[
+This is a modified version of the Restserver here https://github.com/hishamhm/restserver
+
+]]
+
 
 local restserver = {}
 
@@ -18,9 +23,9 @@ local function add_resource(self, name, entries)
          self.config.paths[path] = methods
          table.insert(self.config.path_list, path)
       end
---      if methods[entry.method] then
---         error("A handler for method "..entry.method.." in path "..path.." is already defined.")
---      end
+      if methods[entry.method] then
+         error("A handler for method "..entry.method.." in path "..path.." is already defined.")
+      end
       methods[entry.method] = entry
    end
 end
@@ -99,7 +104,7 @@ local function wsapi_handler_with_self(self, wsapi_env)
       return fail(405, "Method Not Allowed")
    end
 
-   local input, err
+   local input, output, err
    if wreq.method == "POST" then
       input, err = decode(wreq.POST.post_data, entry.consumes, entry.input_schema)
    elseif wreq.method == "GET" then
@@ -122,11 +127,11 @@ local function wsapi_handler_with_self(self, wsapi_env)
       return fail(500, "Internal Server Error - Server failed to produce a response.")
    end
 
-   local output, err = encode(res.config.entity, entry.produces, entry.output_schema)
+   output, err = encode(res.config.entity, entry.produces, entry.output_schema)
    if not output then
       return fail(500, "Internal Server Error - Server built a response that fails schema validation: "..err)
    end
-   
+
    local wres = response.new(res.config.status, { ["Content-Type"] = entry.produces or "text/plain" })
    wres:write(output)
    return wres:finish()
@@ -139,7 +144,7 @@ local function add_setter(self, var)
    end
 end
 
-function restserver.new(options)
+function restserver.new()
    local server = {
       config = {
          paths = {},

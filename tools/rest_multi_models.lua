@@ -1,7 +1,5 @@
 #!/usr/bin/env lua
 --[[
-  This requires the restserver-xavante rock to run.
-  run server (this file)
   th tools/rest_multi_models.lua -model -gpuid 1
   query the server:
   curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "international migration" , "id" : 1 }]' http://127.0.0.1:7784/translator/translate
@@ -135,7 +133,7 @@ local function translateMessage(server,lines)
 end
 
 local function init_server(options)
-  local server = restserver:new(options):port(options[1].port)
+  local server = restserver:new():port(options[1].port)
 
   server.opt = options
   server:add_resource("translator", {
@@ -148,7 +146,7 @@ local function init_server(options)
         _G.logger:info("receiving request for model id %d",req[1].id)
  -- remember the first item contains also the id of the engine
  -- for backward compatibility maybe if req[1].id not defined, set it to 1
-        if req[1].id = nil then
+        if req[1].id == nil then
            req[1].id = 1
         end
         if not server.model_loaded[req[1].id] then
@@ -182,6 +180,8 @@ local function is_finished(server)
          server.model_loaded[i] = false
        end
      end
+     io.stdout:flush()
+     io.stderr:flush()
    end
   return false
 end
