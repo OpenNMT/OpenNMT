@@ -137,8 +137,8 @@ local function wsapi_handler_with_self(self, wsapi_env)
    return wres:finish()
 end
 
-local function add_setter(self, var)
-   self[var] = function (self, val)
+local function add_setter(self2, var)
+   self2[var] = function (self, val)
       self.config[var] = val
       return self
    end
