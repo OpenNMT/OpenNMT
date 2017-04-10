@@ -16,7 +16,7 @@ end
 
 local function buildStates(count, batchSize, dim)
   local states = {}
-  for i = 1, count do
+  for _ = 1, count do
     table.insert(states, torch.Tensor(batchSize, dim):zero())
   end
   return states
