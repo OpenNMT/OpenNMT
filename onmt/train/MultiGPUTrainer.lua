@@ -21,7 +21,7 @@ end
 
 ------------------------------------------------------------------------------------------------------------------
 
-local Trainer = torch.class('Trainer')
+local Trainer = torch.class('MultiGPUTrainer')
 
 local options = {
   {'-save_every',              0 ,    [[Save intermediate models every this many iterations within an epoch.
