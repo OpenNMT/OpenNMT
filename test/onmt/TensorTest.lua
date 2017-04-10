@@ -4,7 +4,7 @@ local tester = ...
 
 local tensorTest = torch.TestSuite()
 
-local function reuseTest(tester, a, size)
+local function reuseTest(a, size)
   local b = onmt.utils.Tensor.reuseTensor(a, size)
   tester:eq(torch.pointer(b:storage()), torch.pointer(a:storage()))
   tester:eq(b:ne(0):sum(), 0)
@@ -33,18 +33,18 @@ end
 
 function tensorTest.reuse_smaller()
   local a = torch.Tensor(10, 200)
-  reuseTest(tester, a, { 5, 200 })
+  reuseTest(a, { 5, 200 })
 end
 
 function tensorTest.reuse_same()
   local a = torch.Tensor(10, 200)
-  reuseTest(tester, a, a:size())
+  reuseTest(a, a:size())
 end
 
 function tensorTest.reuse_multipleResize()
   local a = torch.Tensor(10, 200)
-  reuseTest(tester, a, { 5, 200 })
-  reuseTest(tester, a, { 10, 200 })
+  reuseTest(a, { 5, 200 })
+  reuseTest(a, { 10, 200 })
 end
 
 

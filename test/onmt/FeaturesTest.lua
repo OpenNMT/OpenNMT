@@ -1,7 +1,5 @@
 require('onmt.init')
 
-local tds = require('tds')
-
 local tester = ...
 
 local featuresTest = torch.TestSuite()
@@ -89,7 +87,7 @@ function featuresTest.annotate_two()
 end
 
 
-local function generateSource(tester, withTds)
+local function generateSource(withTds)
   local features = { { 'C', 'C', 'n' } }
   local dicts = { buildCaseFeatureDict() }
   local ids = onmt.utils.Features.generateSource(dicts, features, withTds)
@@ -110,7 +108,7 @@ function featuresTest.generateSource_defaultWithTds()
 end
 
 
-local function generateTarget(tester, withTds, shifted)
+local function generateTarget(withTds, shifted)
   local features = { { 'C', 'C', 'n' } }
   local dicts = { buildCaseFeatureDict() }
   local ids = onmt.utils.Features.generateTarget(dicts, features, withTds, shifted)
@@ -118,7 +116,7 @@ local function generateTarget(tester, withTds, shifted)
     tester:eq(torch.typename(ids), 'tds.Vec')
   end
   tester:eq(#ids, 1)
-  local seq = {}
+  local seq
   if shifted == 0 then
     seq = {onmt.Constants.BOS,
            dicts[1]:lookup('C'), dicts[1]:lookup('C'), dicts[1]:lookup('n'),
@@ -131,19 +129,19 @@ local function generateTarget(tester, withTds, shifted)
 end
 
 function featuresTest.generateTarget_default()
-  generateTarget(tester)
+  generateTarget()
 end
 
 function featuresTest.generateTarget_defaultWithTds()
-  generateTarget(tester, true)
+  generateTarget(true)
 end
 
 function featuresTest.generateTarget_notShifted()
-  generateTarget(tester, false, 0)
+  generateTarget(false, 0)
 end
 
 function featuresTest.generateTarget_notShiftedWithTds()
-  generateTarget(tester, true, 0)
+  generateTarget(true, 0)
 end
 
 return featuresTest

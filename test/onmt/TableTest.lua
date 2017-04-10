@@ -92,7 +92,7 @@ function tableTest.empty()
 end
 
 
-local function reorder(tester, tab, ind, exp, withTds)
+local function reorder(tab, ind, exp, withTds)
   local res = onmt.utils.Table.reorder(tab, ind, withTds)
   tester:ne(torch.pointer(res), torch.pointer(tab))
 
@@ -113,17 +113,17 @@ local function reorder(tester, tab, ind, exp, withTds)
 end
 
 function tableTest.reorder_empty()
-  reorder(tester, {}, { 4, 3, 2, 1 }, {})
+  reorder({}, { 4, 3, 2, 1 }, {})
 end
 function tableTest.reorder_emptyWithTds()
-  reorder(tester, {}, { 4, 3, 2, 1 }, {}, true)
+  reorder({}, { 4, 3, 2, 1 }, {}, true)
 end
 
 function tableTest.reorder_reversed()
-  reorder(tester, { 1, 2, 3, 4 }, { 4, 3, 2, 1 }, { 4, 3, 2, 1 })
+  reorder({ 1, 2, 3, 4 }, { 4, 3, 2, 1 }, { 4, 3, 2, 1 })
 end
 function tableTest.reorder_reversedWithTds()
-  reorder(tester, { 1, 2, 3, 4 }, { 4, 3, 2, 1 }, { 4, 3, 2, 1 }, true)
+  reorder({ 1, 2, 3, 4 }, { 4, 3, 2, 1 }, { 4, 3, 2, 1 }, true)
 end
 
 
