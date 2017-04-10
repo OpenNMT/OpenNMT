@@ -22,8 +22,11 @@ Constructs a unit mapping:
 --]]
 local GlobalAttentionCoverage, parent = torch.class('onmt.GlobalAttentionCoverage', 'onmt.Network')
 
+local options = {
+}
 
-function GlobalAttentionCoverage.declareOpts(_)
+function GlobalAttentionCoverage.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Global Attention Model')
 end
 
 --[[A nn-style module computing attention.
@@ -32,11 +35,12 @@ end
 
   * `dim` - dimension of the context vectors.
 --]]
-function GlobalAttentionCoverage:__init(_, dim)
+function GlobalAttentionCoverage:__init(opt, dim)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(opt, options)
   parent.__init(self, self:_buildModel(dim))
 end
 
-GlobalAttentionCoverage.needAttnSum = 1
+GlobalAttentionCoverage.hasCoverage = 1
 
 function GlobalAttentionCoverage:_buildModel(dim)
   local inputs = {}
@@ -44,13 +48,25 @@ function GlobalAttentionCoverage:_buildModel(dim)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local targetT = nn.Linear(dim, dim, false)(inputs[1]) -- batchL x dim
-  local context = inputs[2] -- batchL x sourceL x dim
-  local sumAttn = inputs[3] -- batchL x sourceL
+  local ht = inputs[1]
+  local context = inputs[2] -- batchL x sourceTimesteps x dim
+  local coverage = inputs[3] -- coverage vector
 
   -- Get attention.
-  local attn = nn.MM()({context, nn.Replicate(1,3)(targetT)}) -- batchL x sourceL x 1
-  attn = nn.Sum(3)(attn)
+  local score_ht_hs
+  if global_attention ~= 'concat' then
+    if global_attention == 'general' then
+      ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
+    end
+    score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
+  else
+    local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
+    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, context})
+    local Wa_ht_hs = nn.Bottle(nn.Linear(dim*2, dim, false),2)(ht_hs)
+    local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)
+    score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
+  end
+  local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
@@ -59,13 +75,8 @@ function GlobalAttentionCoverage:_buildModel(dim)
   -- Apply attention to context.
   local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
   contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
+  contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
+  local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
 
-  sumAttn = nn.Replicate(1,2)(sumAttn) -- batchL x 1 x sourceL
-  local sumAttnCombined = nn.MM()({sumAttn, context})
-  sumAttnCombined = nn.Sum(2)(sumAttnCombined) -- batchL x dim
-
-  contextCombined = nn.JoinTable(2)({contextCombined, inputs[1], sumAttnCombined}) -- batchL x dim*3
-  local contextOutput = nn.Tanh()(nn.Linear(dim*3, dim, false)(contextCombined))
-
-  return nn.gModule(inputs, {contextOutput})
+  return nn.gModule(inputs, {contextOutput, coverage})
 end

@@ -41,7 +41,7 @@ function Decoder:__init(args, inputNetwork, rnn, generator, inputFeed, attention
   -- vector each time representing the attention at the
   -- previous step.
   self.args.inputFeed = inputFeed
-  self.args.needAttnSum = attentionModel.needAttnSum
+  self.args.hasCoverage = attentionModel.hasCoverage
 
   parent.__init(self, self:_buildModel(attentionModel))
 
@@ -146,10 +146,10 @@ function Decoder:_buildModel(attentionModel)
   end
   table.insert(states, input)
 
-  local attnSum
-  if attentionModel.needAttnSum then
-    attnSum = nn.Identity()()
-    table.insert(inputs, attnSum)
+  local coverage
+  if attentionModel.hasCoverage then
+    coverage = nn.Identity()()
+    table.insert(inputs, coverage)
   end
 
   -- Forward states and input into the RNN.
@@ -161,12 +161,25 @@ function Decoder:_buildModel(attentionModel)
   -- Compute the attention here using h^L as query.
   local attnLayer = attentionModel
   attnLayer.name = 'decoderAttn'
-  local attnInput = {outputs[#outputs], context, attnSum}
-  local attnOutput = attnLayer(attnInput)
+  local attnInput = { outputs[#outputs], context, coverage }
+
+  -- apply the attention layer
+  local attnOutputs = attnLayer(attnInput)
+
+  local attnOutput = attnOutputs
+  if attentionModel.hasCoverage then
+    assert(type(attnOuputs) == 'table')
+    attnOutput = attnOutputs[1]
+    coverage = attnOutputs[2]
+  end
+
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
+
   table.insert(outputs, attnOutput)
+  -- pass back coverage if not nil
+  table.insert(outputs, coverage)
   return nn.gModule(inputs, outputs)
 end
 
@@ -266,9 +279,9 @@ function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
     end
   end
 
-  -- if some module need attn sum, it is the next input
-  if self.args.needAttnSum then
-    table.insert(inputs, prevStates.attnSum)
+  -- if some module need coverage, it is the next input
+  if self.args.hasCoverage then
+    table.insert(inputs, prevStates.coverage)
   end
 
   -- Remember inputs for the backward pass.
@@ -281,24 +294,14 @@ function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
   -- Make sure decoder always returns table.
   if type(outputs) ~= "table" then outputs = { outputs } end
 
+  if self.args.hasCoverage then
+    states.coverage = out.coverage
+  end
+
   local out = outputs[#outputs]
   local states = {}
   for i = 1, #outputs - 1 do
     table.insert(states, outputs[i])
-  end
-
-  -- if need attention sum
-  if self.args.needAttnSum then
-    -- check if we have reference to attention model
-    self:findAttentionModel()
-    local clone = self:cloneId(t)
-    local Attn = self.softmaxAttn
-    if clone and clone > 0 then
-      Attn = self.decoderAttnClones[clone].softmaxAttn
-    end
-    local sourceSizeView = onmt.utils.Cuda.convert(sourceSize:view(sourceSize:size(1),1))
-    states.attnSum = torch.add(prevStates.attnSum, Attn.output)
-        :cdiv(sourceSizeView:expand(prevStates.attnSum:size(1),prevStates.attnSum:size(2)))
   end
 
   return out, states
@@ -312,8 +315,8 @@ end
   * `states` - the states of the decoder. Can use key/value to add states without impact.
 ]]
 function Decoder:initializeSpecialStates(states, _, batch)
-  -- if need attention sum, initialize
-  if self.args.needAttnSum then
+  -- if need coverage, initialize it
+  if self.args.hasCoverage then
     states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
                                                            { batch.size, batch.encoderOutputLength or batch.sourceLength })
   end

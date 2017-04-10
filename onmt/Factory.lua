@@ -260,7 +260,7 @@ function Factory.buildAttention(args)
     return onmt.NoAttention(args, args.rnn_size)
   elseif args.attention == 'temporal' then
     _G.logger:info('   - Global Attention with Coverage')
-    return onmt.GlobalAttentionCoverage
+    return onmt.GlobalAttentionCoverage(args, args.rnn_size)
   else
     _G.logger:info('   - Global Attention: '..args.global_attention)
     return onmt.GlobalAttention(args, args.rnn_size)
