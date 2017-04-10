@@ -54,18 +54,9 @@ function GlobalAttentionCoverage:_buildModel(dim)
 
   -- Get attention.
   local score_ht_hs
-  if global_attention ~= 'concat' then
-    if global_attention == 'general' then
-      ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
-    end
-    score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
-  else
-    local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
-    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, context})
-    local Wa_ht_hs = nn.Bottle(nn.Linear(dim*2, dim, false),2)(ht_hs)
-    local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)
-    score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
-  end
+  ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
+  score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
+
   local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
