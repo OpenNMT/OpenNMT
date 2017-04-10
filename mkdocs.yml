@@ -22,14 +22,14 @@ pages:
   - Training:
       - Models: training/models.md
       - Embeddings: training/embeddings.md
-      - "Mutli GPU": training/multi_gpu.md
+      - "Multi GPU": training/multi_gpu.md
       - Retraining: training/retraining.md
       - "Decay strategies": training/decay.md
       - "Data sampling": training/sampling.md
   - Translation:
       - Inference: translation/inference.md
       - "Beam search": translation/beam_search.md
-      - "Unkown words": translation/unknowns.md
+      - "Unknown words": translation/unknowns.md
   - Tools:
       - Tokenization: tools/tokenization.md
       - Servers: tools/servers.md
