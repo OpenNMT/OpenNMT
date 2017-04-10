@@ -107,7 +107,7 @@
                 </li>
                 <li class="">
                     
-    <a class="" href="../../training/multi_gpu/">Mutli GPU</a>
+    <a class="" href="../../training/multi_gpu/">Multi GPU</a>
                 </li>
                 <li class="">
                     
@@ -138,7 +138,7 @@
                 </li>
                 <li class="">
                     
-    <a class="" href="../../translation/unknowns/">Unkown words</a>
+    <a class="" href="../../translation/unknowns/">Unknown words</a>
                 </li>
     </ul>
 	    </li>
@@ -306,7 +306,7 @@ information that can be useful to optimize its objective function.</p>
 <h2 id="embeddings">Embeddings</h2>
 <p>The feature embedding size is automatically computed based on the number of values the feature takes. This default size reduction works well for features with few values like the case or POS.</p>
 <p>For other features, you may want to manually choose the embedding size with the <code>-src_word_vec_size</code> and <code>-tgt_word_vec_size</code> options. They behave similarly to <code>-src_vocab_size</code> with a comma-separated list of embedding size: <code>word_vec_size[,feat1_vec_size[,feat2_vec_size[...]]]</code>.</p>
-<p>Then, each feature embedding is concatenated to each other by default. You can instead choose to sum them by setting <code>-feat_merge sum</code>. Finally, the resulting merged embedding is concatened to the word embedding.</p>
+<p>Then, each feature embedding is concatenated to each other by default. You can instead choose to sum them by setting <code>-feat_merge sum</code>. Finally, the resulting merged embedding is concatenated to the word embedding.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>In the <code>sum</code> case, each feature embedding must have the same dimension. You can set the common embedding size with <code>-feat_vec_size</code>.</p>
