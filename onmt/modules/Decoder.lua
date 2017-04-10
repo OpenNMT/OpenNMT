@@ -94,8 +94,8 @@ function Decoder:resetPreallocation()
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
 
-  -- Prototype for attention sum
-  self.attnSumProto = torch.Tensor()
+  -- Prototype for attention coverage
+  self.coverageProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -168,9 +168,8 @@ function Decoder:_buildModel(attentionModel)
 
   local attnOutput = attnOutputs
   if attentionModel.hasCoverage then
-    assert(type(attnOuputs) == 'table')
-    attnOutput = attnOutputs[1]
-    coverage = attnOutputs[2]
+    attnOutput = nn.SelectTable(1)(attnOutputs)
+    coverage = nn.SelectTable(2)(attnOutputs)
   end
 
   if self.rnn.dropout > 0 then
@@ -294,12 +293,13 @@ function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
   -- Make sure decoder always returns table.
   if type(outputs) ~= "table" then outputs = { outputs } end
 
+  local states = {}
+
   if self.args.hasCoverage then
-    states.coverage = out.coverage
+    states.coverage = table.remove(outputs)
   end
 
   local out = outputs[#outputs]
-  local states = {}
   for i = 1, #outputs - 1 do
     table.insert(states, outputs[i])
   end
@@ -317,7 +317,7 @@ end
 function Decoder:initializeSpecialStates(states, _, batch)
   -- if need coverage, initialize it
   if self.args.hasCoverage then
-    states.attnSum = onmt.utils.Tensor.reuseTensor(self.attnSumProto,
+    states.coverage = onmt.utils.Tensor.reuseTensor(self.coverageProto,
                                                            { batch.size, batch.encoderOutputLength or batch.sourceLength })
   end
 end
@@ -394,7 +394,11 @@ Parameters:
   -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers + 1,
+    local nOutput = self.args.numEffectiveLayers + 1
+    if self.args.hasCoverage then
+      nOutput = nOutput + 1
+    end
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(nOutput,
                                                               self.gradOutputProto,
                                                               { batch.size, self.args.rnnSize })
   end
@@ -439,18 +443,22 @@ function Decoder:backward(batch, outputs, criterion)
 
     -- Compute the final layer gradient.
     local decGradOut = self.generator:backward(outputs[t], genGradOut)
-    gradStatesInput[#gradStatesInput]:add(decGradOut)
+    gradStatesInput[self.args.numEffectiveLayers + 1]:add(decGradOut)
 
     -- Compute the standard backward.
+    if self.args.hasCoverage then
+      gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength)
+    end
+
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
     -- Accumulate encoder output gradients.
     gradContextInput:add(gradInput[self.args.inputIndex.context])
-    gradStatesInput[#gradStatesInput]:zero()
+    gradStatesInput[self.args.numEffectiveLayers + 1]:zero()
 
     -- Accumulate previous output gradients with input feeding gradients.
     if self.args.inputFeed and t > 1 then
-      gradStatesInput[#gradStatesInput]:add(gradInput[self.args.inputIndex.inputFeed])
+      gradStatesInput[self.args.numEffectiveLayers + 1]:add(gradInput[self.args.inputIndex.inputFeed])
     end
 
     -- Prepare next decoder output gradients.
