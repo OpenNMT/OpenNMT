@@ -61,18 +61,18 @@ local function translateMessage(server,lines)
   local err
  -- first item contains both the src (to translate) AND the id of the engine
  -- these local variables are set to match the previous version of code
-  local opt = server.opt[lines[1].id]
+  local options = server.opt[lines[1].id]
   local translator = server.translator[lines[1].id]
 
   _G.logger:info("Start Tokenization")
-  if opt.bpe_model ~= '' then
-     bpe = BPE.new(opt)
+  if options.bpe_model ~= '' then
+     bpe = BPE.new(options)
   end
   for i = 1, #lines do
     local srcTokenized = {}
     local tokens
     local srcTokens = {}
-    res, err = pcall(function() tokens = tokenizer.tokenize(opt, lines[i].src, bpe) end)
+    res, err = pcall(function() tokens = tokenizer.tokenize(options, lines[i].src, bpe) end)
      -- it can generate an exception if there are utf-8 issues in the text
      if not res then
        if string.find(err, "interrupted") then
@@ -103,7 +103,7 @@ local function translateMessage(server,lines)
       local predSent = translator:buildOutput(results[b].preds[i])
 
       local oline
-      res, err = pcall(function() oline = tokenizer.detokenize(predSent, opt) end)
+      res, err = pcall(function() oline = tokenizer.detokenize(predSent, options) end)
       if not res then
         if string.find(err,"interrupted") then
           error("interrupted")
@@ -118,7 +118,7 @@ local function translateMessage(server,lines)
         n_best = i,
         pred_score = results[b].preds[i].score
       }
-      if opt.withAttn or lines[b].withAttn then
+      if options.withAttn or lines[b].withAttn then
         local attnTable = {}
         for j = 1, #results[b].preds[i].attention do
           table.insert(attnTable, results[b].preds[i].attention[j]:totable())
@@ -156,7 +156,7 @@ local function init_server(options)
           _G.logger:info("Loading model id %d",req[1].id)
           server.translator[req[1].id] = onmt.translate.Translator.new(server.opt[req[1].id])
           server.model_loaded[req[1].id] = true
-        end  
+        end
         server.timer[req[1].id] = torch.Timer()
         local translate = translateMessage(server,req)
         _G.logger:info("sending response model id %d",req[1].id)
@@ -208,7 +208,6 @@ local function main()
 
   -- This loads the restserver.xavante plugin
   server:enable("tools.restserver.restserver.xavante"):start(function() is_finished(server); end,3)
- 
 end
 
 main()
