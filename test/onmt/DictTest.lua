@@ -137,7 +137,7 @@ function dictTest.saveAndLoad()
   d1:add('toto')
 
   d1:writeFile('tmp.dict')
-  path.exists('tmp.dict')
+  tester:ne(path.exists('tmp.dict'), false)
 
   local d2 = onmt.utils.Dict.new('tmp.dict')
 
