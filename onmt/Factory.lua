@@ -267,8 +267,8 @@ function Factory.buildGenerator(opt, dicts)
   for i = 1, #sizes do
     local feat_generator
     if i == 1 and opt.criterion == 'nce' then
-      assert(dicts.words.freqTensor)
-      assert(onmt.NCEModule)
+      assert(dicts.words.freqTensor, "missing frequencies in dictionary - use -keep_frequency in preprocess.lua")
+      assert(onmt.NCEModule, "missing NCE module - install dpnn torch libraries")
       local selectInputOutput = nn.ConcatTable()
                           :add(nn.SelectTable(1)) -- first element is the input
                           :add(nn.Sequential():add(nn.SelectTable(2)):add(nn.SelectTable(i)))
