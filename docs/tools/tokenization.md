@@ -55,7 +55,7 @@ If you want a *caseless* split so that you can take the best from using case fea
 
 ```bash
 # We don't need BPE to care about case
-tools/learn_bpe.lua -s 30000 -save_bpe codes_lc < input_lowercased
+tools/learn_bpe.lua -size 30000 -save_bpe codes_lc < input_lowercased
 
 # The case information is preserved in the true case input
 tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive < input
