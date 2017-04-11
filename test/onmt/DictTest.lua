@@ -1,5 +1,7 @@
 require('onmt.init')
 
+local path = require('pl.path')
+
 local tester = ...
 
 local dictTest = torch.TestSuite()
@@ -125,6 +127,25 @@ function dictTest.pruneByMinFrequency()
   tester:ne(pruned:lookup('bar'), nil)
   tester:ne(pruned:lookup('foobar'), nil)
   tester:eq(pruned:lookup('foo'), nil)
+end
+
+function dictTest.saveAndLoad()
+  local d1 = onmt.utils.Dict.new()
+  d1:add('foo')
+  d1:add('bar')
+  d1:add('foobar')
+  d1:add('toto')
+
+  d1:writeFile('tmp.dict')
+  path.exists('tmp.dict')
+
+  local d2 = onmt.utils.Dict.new('tmp.dict')
+
+  tester:eq(d2:size(), d1:size())
+  tester:eq(d2.idxToLabel, d1.idxToLabel)
+  tester:eq(d2.labelToIdx, d1.labelToIdx)
+
+  os.remove('tmp.dict')
 end
 
 return dictTest
