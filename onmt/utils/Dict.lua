@@ -190,8 +190,8 @@ function Dict:getFrequencies(dict)
   local newDict = Dict.new()
 
   for i = 1, dict:size() do
-    local token = dict:idxToLabel(i)
-    local idx = self:labelToIdx(token)
+    local token = dict.idxToLabel[i]
+    local idx = self.labelToIdx[token]
     local frequency = 0
     if idx then
       frequency = self.frequencies[idx]
