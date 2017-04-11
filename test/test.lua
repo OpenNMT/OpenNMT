@@ -1,4 +1,5 @@
 require('torch')
+require('onmt.init')
 
 local lfs = require('lfs')
 
@@ -25,6 +26,8 @@ end
 local function main()
   local nThreads = torch.getnumthreads()
   torch.setnumthreads(1)
+
+  _G.logger = onmt.utils.Logger.new('', true)
 
   registerTestDirectory(testDir)
   tester:run()
