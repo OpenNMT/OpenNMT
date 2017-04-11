@@ -12,10 +12,10 @@ local function getLength(seq, ignore)
       len = len - ignore
     end
     if max == 0 or len > max then
-      if max ~= 0 then
-        uneven = true
-      end
       max = len
+    end
+    if max ~= len then
+      uneven = true
     end
     sizes[i] = len
   end
