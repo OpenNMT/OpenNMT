@@ -64,9 +64,11 @@ function GlobalAttentionCoverage:_buildModel(dim)
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
-  attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
+
+  -- update coverage - apply GRU cell - coverage_t = f(coverage_t-1, attn_t, h_t, h_s)
 
   -- Apply attention to context.
+  attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
   local contextCombined = nn.MM()({attn, hs}) -- batchL x 1 x dim
   contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
   contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
