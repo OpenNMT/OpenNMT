@@ -41,6 +41,8 @@ local function testRNN(cell, layers, inputSize, hiddenSize, dropout, residual, d
   local outputs = rnn:forward(inputs)
 
   if type(outputs) ~= 'table' then
+    tester:eq(layers, 1)
+    tester:eq(numStates, 1)
     outputs = { outputs }
   end
 
