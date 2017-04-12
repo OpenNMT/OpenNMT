@@ -229,7 +229,8 @@ function Encoder:forward(batch)
     -- Special case padding.
     if self.maskPad then
       for b = 1, batch.size do
-        if batch.sourceInputPadLeft and t <= batch.sourceLength - batch.sourceSize[b] then
+        if (batch.sourceInputPadLeft and t <= batch.sourceLength - batch.sourceSize[b])
+        or (not batch.sourceInputPadLeft and t > batch.sourceSize[b]) then
           for j = 1, #states do
             states[j][b]:zero()
           end

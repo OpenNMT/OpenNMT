@@ -4,7 +4,7 @@ Beam search can also be used to provide an approximate n-best list of translatio
 
 ## Hypotheses filtering
 
-The beam search provides a built-in filter based on unknown words: `-max_num_unks`. Hypotheses with for more unknown words than this value are dropped.
+The beam search provides a built-in filter based on unknown words: `-max_num_unks`. Hypotheses with more unknown words than this value are dropped.
 
 !!! note "Note"
     As dropped hypotheses temporarily reduce the beam size, the `-pre_filter_factor` is a way to increase the number of considered hypotheses before applying filters.
