@@ -4,9 +4,6 @@ local tester = ...
 
 local encoderTest = torch.TestSuite()
 
-local inputNet = nn.LookupTable(10, 20)
-inputNet.inputSize = 20
-
 local function buildEncoder(class, rnnType)
   local cmd = onmt.utils.ExtendedCmdLine.new()
   class.declareOpts(cmd)
@@ -15,6 +12,9 @@ local function buildEncoder(class, rnnType)
   opt.rnn_size = 30
   opt.rnn_type = rnnType or 'LSTM'
   opt.dropout = 0
+
+  local inputNet = nn.LookupTable(10, 20)
+  inputNet.inputSize = 20
 
   return class(opt, inputNet), opt
 end
