@@ -63,7 +63,7 @@ function LanguageModel:__init(args, dicts, verbose)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
-  self.models.generator = onmt.Factory.buildGenerator(args.rnn_size, dicts.src)
+  self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)
 
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
