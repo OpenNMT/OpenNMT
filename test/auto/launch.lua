@@ -9,11 +9,11 @@ local config = yaml.load(content)
 
 local params = config.params
 local tests = config.tests
-local data = config.data
+--local data = config.data
 
 local tmp_dir = params.tmp_dir
 
-function log(message, level)
+local function log(message, level)
   level = level or 'INFO'
   local timeStamp = os.date('%x %X')
   local msgFormatted = string.format('[%s %s] %s', timeStamp, level, message)
@@ -24,7 +24,7 @@ end
 os.execute("rm -rf '"..tmp_dir.."'")
 assert(os.execute("mkdir '"..tmp_dir.."'"))
 
-idx=1
+local idx=1
 
 for _, test in pairs(tests) do
   local command=''
