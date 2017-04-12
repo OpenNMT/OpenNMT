@@ -281,7 +281,10 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
     -- Add context gradients to last hidden states gradients.
     gradStatesInput[#gradStatesInput]:add(gradContextOutput[{{}, t}])
 
-    local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
+    -- nngraph does not accept table of size 1.
+    local timestepGradOutput = #gradStatesInput > 1 and gradStatesInput or gradStatesInput[1]
+
+    local gradInput = self:net(t):backward(self.inputs[t], timestepGradOutput)
 
     -- Prepare next Encoder output gradients.
     for i = 1, #gradStatesInput do
