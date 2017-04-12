@@ -29,7 +29,7 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 OpenNMT's BPE module fully supports the [original BPE](https://github.com/rsennrich/subword-nmt) as default mode:
 
 ```bash
-tools/learn_bpe.lua -s 30000 -save_bpe codes < input
+tools/learn_bpe.lua -size 30000 -save_bpe codes < input
 tools/tokenize.lua -bpe_model codes < input
 ```
 
@@ -70,5 +70,5 @@ constitution --> con￨l sti￨l tu￨l tion￨l
 
 **3\. Troubleshooting**
 
-* Use LUA5.2 if you encounter any memory issue while using learn_bpe.lua (ex: -s too big)
+* Use LUA5.2 if you encounter any memory issue while using learn_bpe.lua (ex: -size too big)
 * Stay with LUA5.1 for better efficiency unless more memory is required
