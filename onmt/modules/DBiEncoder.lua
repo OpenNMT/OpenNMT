@@ -95,7 +95,9 @@ function DBiEncoder:resetPreallocation()
 end
 
 function DBiEncoder:maskPadding()
-  self.layers[1]:maskPadding()
+  for _, layer in ipairs(self.layers) do
+    layer:maskPadding()
+  end
 end
 
 function DBiEncoder:forward(batch)
@@ -115,7 +117,7 @@ function DBiEncoder:forward(batch)
   for i = 1,#self.layers do
     local layerStates, layerContext = self.layers[i]:forward(self.inputs[i])
     if i ~= #self.layers then
-      table.insert(self.inputs, onmt.data.BatchTensor.new(layerContext))
+      table.insert(self.inputs, onmt.data.BatchTensor.new(layerContext, batch.sourceSize))
     else
       context:copy(layerContext)
     end
