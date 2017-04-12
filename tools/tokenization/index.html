@@ -277,7 +277,7 @@
 </ul>
 <h2 id="bpe">BPE</h2>
 <p>OpenNMT's BPE module fully supports the <a href="https://github.com/rsennrich/subword-nmt">original BPE</a> as default mode:</p>
-<pre><code class="bash">tools/learn_bpe.lua -s 30000 -save_bpe codes &lt; input
+<pre><code class="bash">tools/learn_bpe.lua -size 30000 -save_bpe codes &lt; input
 tools/tokenize.lua -bpe_model codes &lt; input
 </code></pre>
 
@@ -307,6 +307,11 @@ tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive &lt; input
 <pre><code class="text">Constitution --&gt; con￨C sti￨l tu￨l tion￨l
 constitution --&gt; con￨l sti￨l tu￨l tion￨l
 </code></pre>
+
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Use Lua 5.2 if you encounter any memory issue while using <code>learn_bpe.lua</code> (e.g. <code>-size</code> is too big). Otherwise, stay with Lua 5.1 for better efficiency.</p>
+</div>
               
             </div>
           </div>
