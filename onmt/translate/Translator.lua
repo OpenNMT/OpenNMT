@@ -22,6 +22,20 @@ local options = {
                             then set this to a larger value to consider more.]]}
 }
 
+local function clearStateModel(model)
+  for _, submodule in pairs(model.modules) do
+    if torch.type(submodule) == 'table' and submodule.modules then
+      clearStateModel(submodule)
+    else
+      submodule:clearState()
+      submodule:apply(function (m)
+        nn.utils.clear(m, 'gradWeight', 'gradBias')
+      end)
+    end
+  end
+end
+
+
 function Translator.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Translator')
 end
@@ -34,10 +48,14 @@ function Translator:__init(args)
   _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
   self.checkpoint = torch.load(self.opt.model)
   _G.logger:info('Done...')
+ 
 
   self.models = {}
   self.models.encoder = onmt.Factory.loadEncoder(self.checkpoint.models.encoder)
   self.models.decoder = onmt.Factory.loadDecoder(self.checkpoint.models.decoder)
+  
+  clearStateModel(self.models.encoder)
+	clearStateModel(self.models.decoder)
 
   self.models.encoder:evaluate()
   self.models.decoder:evaluate()
@@ -50,6 +68,9 @@ function Translator:__init(args)
   if self.opt.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.opt.phrase_table)
   end
+  
+  self.checkpoint = nil
+  collectgarbage()
 end
 
 function Translator:buildInput(tokens)
