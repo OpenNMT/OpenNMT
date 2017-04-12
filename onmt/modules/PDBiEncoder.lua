@@ -72,6 +72,7 @@ function PDBiEncoder.load(pretrained)
 
   for i=1, #pretrained.layers do
     self.layers[i] = onmt.BiEncoder.load(pretrained.layers[i])
+    self:add(self.layers[i])
   end
 
   self.args = pretrained.args
