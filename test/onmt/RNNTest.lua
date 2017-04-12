@@ -57,6 +57,9 @@ end
 function rnnTest.LSTM_oneLayerWithInputDropout()
   testRNN(onmt.LSTM, 1, 10, 20, 0.3, false, true)
 end
+function rnnTest.LSTM_oneLayerWithoutInputDropout()
+  testRNN(onmt.LSTM, 1, 10, 20, 0, false, true)
+end
 function rnnTest.LSTM_twoLayers()
   testRNN(onmt.LSTM, 2, 10, 20)
 end
@@ -72,6 +75,9 @@ function rnnTest.GRU_oneLayer()
 end
 function rnnTest.GRU_oneLayerWithInputDropout()
   testRNN(onmt.GRU, 1, 10, 20, 0.3, false, true)
+end
+function rnnTest.GRU_oneLayerWithoutInputDropout()
+  testRNN(onmt.LSTM, 1, 10, 20, 0, false, true)
 end
 function rnnTest.GRU_twoLayers()
   testRNN(onmt.GRU, 2, 10, 20)
