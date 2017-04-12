@@ -67,3 +67,8 @@ The output of the previous example would be:
 Constitution --> con￨C sti￨l tu￨l tion￨l
 constitution --> con￨l sti￨l tu￨l tion￨l
 ```
+
+**3\. Troubleshooting**
+
+* Use LUA5.2 if you encounter any memory issue while using learn_bpe.lua (ex: -s too big)
+* Stay with LUA5.1 for better efficiency unless more memory is required
