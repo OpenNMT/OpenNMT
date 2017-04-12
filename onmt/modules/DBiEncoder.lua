@@ -129,20 +129,22 @@ function DBiEncoder:forward(batch)
 end
 
 function DBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
+  local gradInputs
+
   for i = #self.layers, 1, -1 do
     local lrange_gradStatesOutput
     if gradStatesOutput then
       lrange_gradStatesOutput = gradStatesOutput[{}]
     end
-    local gradContextInput = self.layers[i]:backward(self.inputs[i], lrange_gradStatesOutput, gradContextOutput)
+    gradInputs = self.layers[i]:backward(self.inputs[i], lrange_gradStatesOutput, gradContextOutput)
     if i ~= 1 then
       gradContextOutput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
-                                              { batch.size, #gradContextInput, self.args.hiddenSize })
-      for t = 1, #gradContextInput do
-        gradContextOutput[{{},t,{}}]:copy(gradContextInput[t])
+                                              { batch.size, #gradInputs, self.args.hiddenSize })
+      for t = 1, #gradInputs do
+        gradContextOutput[{{},t,{}}]:copy(gradInputs[t])
       end
     end
   end
 
-  return gradContextOutput
+  return gradInputs
 end
