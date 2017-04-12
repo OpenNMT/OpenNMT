@@ -1,0 +1,19 @@
+params:
+  path_scripts: test/auto/scripts
+  tmp_dir: tmp
+tests:
+  -
+    name: demo-cpu
+    script: demo.sh
+    params_train: -end_epoch 1
+  -
+    name: demo-gpu
+    script: demo.sh
+    params_train: -gpuid 1
+  -
+    name: baseline1M-enfr
+    script: baseline1M-enfr.sh
+    params_train: -end_epoch 1
+    data: baseline1M-enfr
+data:
+  baseline1M-enfr: s3:xxx
