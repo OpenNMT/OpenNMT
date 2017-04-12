@@ -65,7 +65,7 @@ function LanguageModel:__init(args, dicts, verbose)
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
   self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)
 
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.src, true)
 
   self.eosProto = {}
   for _ = 1, #dicts.src.features + 1 do
@@ -116,8 +116,6 @@ function LanguageModel:forwardComputeLoss(batch)
   local loss = 0
 
   for t = 1, batch.sourceLength do
-    local genOutputs = self.models.generator:forward(context:select(2, t))
-
     -- LanguageModel is supposed to predict the following word.
     local output
     if t ~= batch.sourceLength then
@@ -125,6 +123,15 @@ function LanguageModel:forwardComputeLoss(batch)
     else
       output = eos
     end
+
+    local prepOutputs = context:select(2, t)
+    -- sampling-based generator need outputs during training
+    -- use generator specific flag to keep backward compatibility
+    if self.models.generator.needOutput then
+      prepOutputs = { prepOutputs, output }
+    end
+
+    local genOutputs = self.models.generator:forward(prepOutputs)
 
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
@@ -148,8 +155,6 @@ function LanguageModel:trainNetwork(batch)
 
   -- For each word of the sentence, generate target.
   for t = 1, batch.sourceLength do
-    local genOutputs = self.models.generator:forward(context:select(2, t))
-
     -- LanguageModel is supposed to predict following word.
     local output
     if t ~= batch.sourceLength then
@@ -158,17 +163,44 @@ function LanguageModel:trainNetwork(batch)
       output = eos
     end
 
+    local prepOutputs = context:select(2, t)
+    -- sampling-based generator need outputs during training
+    -- use generator specific flag to keep backward compatibility
+    if self.models.generator.needOutput then
+      if type(output) == 'table' then
+        prepOutputs = { prepOutputs, output }
+      else
+        prepOutputs = { prepOutputs, { output } }
+      end
+    end
+
+    local genOutputs = self.models.generator:forward(prepOutputs)
+
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
 
     loss = loss + self.criterion:forward(genOutputs, output)
 
     local genGradOutput = self.criterion:backward(genOutputs, output)
+
+    -- normalize gradient - we might have several batches in parallel, so we divide by total size of batch
     for j = 1, #genGradOutput do
-      genGradOutput[j]:div(batch.totalSize)
+      -- each criterion might have its own normalization function
+      if self.criterion.normalizationFunc and self.criterion.normalizationFunc[j] ~= false then
+        self.criterion.normalizationFunc[j](genGradOutput[j], batch.totalSize)
+      else
+        genGradOutput[j]:div(batch.totalSize)
+      end
     end
 
-    gradContexts[{{}, t}]:copy(self.models.generator:backward(context:select(2, t), genGradOutput))
+    local decGradOut = self.models.generator:backward(prepOutputs, genGradOutput)
+
+    -- if we sent the output, then get gradient back on the input
+    if self.models.generator.needOutput then
+      decGradOut = decGradOut[1]
+    end
+
+    gradContexts[{{}, t}]:copy(decGradOut)
   end
 
   self.models.encoder:backward(batch, nil, gradContexts)
