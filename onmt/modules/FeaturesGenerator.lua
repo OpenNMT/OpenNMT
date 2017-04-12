@@ -3,51 +3,26 @@ tokens and features.
 
   Implements $$[softmax(W^1 h + b^1), softmax(W^2 h + b^2), ..., softmax(W^n h + b^n)] $$.
 --]]
-
-
-local FeaturesGenerator, parent = torch.class('onmt.FeaturesGenerator', 'nn.Container')
+local FeaturesGenerator, parent = torch.class('onmt.FeaturesGenerator', 'onmt.Network')
 
 --[[
 Parameters:
 
   * `rnnSize` - Input rnn size.
-  * `outputSize` - Output size (number of tokens).
-  * `features` - table of feature sizes.
+  * `outputSizes` - Table of each output size.
 --]]
-function FeaturesGenerator:__init(rnnSize, outputSize, features)
-  parent.__init(self)
-  self.net = self:_buildGenerator(rnnSize, outputSize, features)
-  self:add(self.net)
+function FeaturesGenerator:__init(rnnSize, outputSizes)
+  parent.__init(self, self:_buildGenerator(rnnSize, outputSizes))
 end
 
-function FeaturesGenerator:_buildGenerator(rnnSize, outputSize, features)
+function FeaturesGenerator:_buildGenerator(rnnSize, outputSizes)
   local generator = nn.ConcatTable()
 
-  -- Add default generator.
-  generator:add(nn.Sequential()
-                  :add(onmt.Generator(rnnSize, outputSize))
-                  :add(nn.SelectTable(1)))
-
-  -- Add a generator for each target feature.
-  for i = 1, #features do
+  for i = 1, #outputSizes do
     generator:add(nn.Sequential()
-                    :add(nn.Linear(rnnSize, features[i]:size()))
+                    :add(nn.Linear(rnnSize, outputSizes[i]))
                     :add(nn.LogSoftMax()))
   end
 
   return generator
-end
-
-function FeaturesGenerator:updateOutput(input)
-  self.output = self.net:updateOutput(input)
-  return self.output
-end
-
-function FeaturesGenerator:updateGradInput(input, gradOutput)
-  self.gradInput = self.net:updateGradInput(input, gradOutput)
-  return self.gradInput
-end
-
-function FeaturesGenerator:accGradParameters(input, gradOutput, scale)
-  self.net:accGradParameters(input, gradOutput, scale)
 end

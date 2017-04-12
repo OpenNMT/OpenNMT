@@ -2,51 +2,36 @@
 
 ## Comments
 
-* Comments should follow:
-https://github.com/deepmind/torch-dokx/blob/master/doc/usage.md
-
-* All non-private method should have dokx comments describing input/output.
+* All non-private methods should have a [torch-dokx](https://github.com/deepmind/torch-dokx/blob/master/doc/usage.md) documentation describing input/output.
 
 * All classes should have a class docstring at the top of the file.
 
-* All comments should be on their own line, and be a complete English
-sentence with capitalization.
+* All comments should be on their own line, and be a complete English sentence with capitalization.
 
+The torch-dokx documentation is automatically deployed [here](http://opennmt.net/OpenNMT/).
 
-* Comments are of the form:
+## Design
 
+* All files should pass `luacheck`.
 
---[[ Set target input directly. 
+* Use object-oriented programming whenever appropriate.
 
-Parameters:
-  * `targetInput` - a tensor of size (sequence_length, batch_size). Padded with onmt.Co
---]]
+* Avoid using global variables.
 
-* Use torch-dokx and this command to build docs
+* Avoid writing functions with more than 100 lines.
 
-```
-dokx-build-package-docs -o docs .
-google-chrome doc/index.html
-```
+* Use `onmt.utils.Logger` to log messages for the user.
 
-* Use mkdocs to display the pretty version
+* If a new module relies on command line options, consider defining a static `declareOpts(cmd)` function. See `onmt/translate/Translator.lua` for an example.
 
-```
-pip install mkdocs
-pip install python-markdown-math
-cd doc/
-bash mkdocs.sh
-mkdoc serve
-```
-
-## Style
-
-* Please run and correct all warnings from `luacheck` before sending a pull request.
-
-```
-luacheck *lua onmt
-```
+## Formatting
 
 * All indentation should be 2 spaces.
 
 * All variables, functions and methods should use camelCase.
+
+* Commande line options and scripts name should use snake_case.
+
+* Use spaces around operators to increase readability.
+
+* Avoid lines with more than 100 columns.

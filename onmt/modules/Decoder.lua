@@ -26,11 +26,11 @@ Parameters:
   * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
   * `inputFeed` - bool, enable input feeding.
 --]]
-function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
+function Decoder:__init(args, inputNetwork, rnn, generator, inputFeed, attentionModel)
   self.rnn = rnn
   self.inputNet = inputNetwork
 
-  self.args = {}
+  self.args = args
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
 
@@ -42,7 +42,7 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   -- previous step.
   self.args.inputFeed = inputFeed
 
-  parent.__init(self, self:_buildModel())
+  parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
@@ -50,6 +50,10 @@ function Decoder:__init(inputNetwork, rnn, generator, inputFeed)
   self:add(self.generator)
 
   self:resetPreallocation()
+end
+
+function Decoder:returnIndividualLosses(enable)
+  self.indvLoss = enable
 end
 
 --[[ Return a new Decoder using the serialized data `pretrained`. ]]
@@ -103,7 +107,7 @@ Returns: An nn-graph mapping
   ${if}$ is the input feeding, and
   ${a}$ is the context vector computed at this timestep.
 --]]
-function Decoder:_buildModel()
+function Decoder:_buildModel(attentionModel)
   local inputs = {}
   local states = {}
 
@@ -145,14 +149,37 @@ function Decoder:_buildModel()
   outputs = { outputs:split(self.args.numEffectiveLayers) }
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = onmt.GlobalAttention(self.args.rnnSize)
+  local attnLayer = attentionModel
   attnLayer.name = 'decoderAttn'
-  local attnOutput = attnLayer({outputs[#outputs], context})
+  local attnInput = {outputs[#outputs], context}
+  local attnOutput = attnLayer(attnInput)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
   table.insert(outputs, attnOutput)
   return nn.gModule(inputs, outputs)
+end
+
+function Decoder:findAttentionModel()
+  if not self.decoderAttn then
+    self.network:apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttn = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.softmaxAttn = layer
+      end
+    end)
+    self.decoderAttnClones = {}
+  end
+  for t = #self.decoderAttnClones+1, #self.networkClones do
+    self:net(t):apply(function (layer)
+      if layer.name == 'decoderAttn' then
+        self.decoderAttnClones[t] = layer
+      elseif layer.name == 'softmaxAttn' then
+        self.decoderAttnClones[t].softmaxAttn = layer
+      end
+    end)
+  end
 end
 
 --[[ Mask padding means that the attention-layer is constrained to
@@ -163,20 +190,14 @@ end
 
   * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
 --]]
-function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
-  if not self.decoderAttn then
-    self.network:apply(function (layer)
-      if layer.name == 'decoderAttn' then
-        self.decoderAttn = layer
-      end
-    end)
-  end
+function Decoder:maskPadding(sourceSizes, sourceLength)
+  self:findAttentionModel()
 
-  self.decoderAttn:replace(function(module)
+  local function substituteSoftmax(module)
     if module.name == 'softmaxAttn' then
       local mod
       if sourceSizes ~= nil then
-        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength, beamSize)
+        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength)
       else
         mod = nn.SoftMax()
       end
@@ -188,7 +209,13 @@ function Decoder:maskPadding(sourceSizes, sourceLength, beamSize)
     else
       return module
     end
-  end)
+  end
+
+  self.decoderAttn:replace(substituteSoftmax)
+
+  for t = 1, #self.networkClones do
+    self.decoderAttnClones[t]:replace(substituteSoftmax)
+  end
 end
 
 --[[ Run one step of the decoder.
@@ -235,6 +262,10 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   end
 
   local outputs = self:net(t):forward(inputs)
+
+  -- Make sure decoder always returns table.
+  if type(outputs) ~= "table" then outputs = { outputs } end
+
   local out = outputs[#outputs]
   local states = {}
   for i = 1, #outputs - 1 do
@@ -258,7 +289,7 @@ function Decoder:forwardAndApply(batch, encoderStates, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(#encoderStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.rnnSize })
   end
@@ -322,9 +353,10 @@ function Decoder:backward(batch, outputs, criterion)
   local gradStatesInput = onmt.utils.Tensor.reuseTensorTable(self.gradOutputsProto,
                                                              { batch.size, self.args.rnnSize })
   local gradContextInput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
-                                                         { batch.size, batch.sourceLength, self.args.rnnSize })
+                                                         { batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.rnnSize })
 
   local loss = 0
+  local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
   for t = batch.targetLength, 1, -1 do
     -- Compute decoder output gradients.
@@ -332,7 +364,23 @@ function Decoder:backward(batch, outputs, criterion)
     local pred = self.generator:forward(outputs[t])
     local output = batch:getTargetOutput(t)
 
-    loss = loss + criterion:forward(pred, output)
+    if self.indvLoss then
+      for i = 1, pred[1]:size(1) do
+        if t <= batch.targetSize[i] then
+          local tmpPred = {}
+          local tmpOutput = {}
+          for j = 1, #pred do
+            table.insert(tmpPred, pred[j][{{i}, {}}])
+            table.insert(tmpOutput, output[j][{{i}}])
+          end
+          local tmpLoss = criterion:forward(tmpPred, tmpOutput)
+          indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
+          loss = loss + tmpLoss
+        end
+      end
+    else
+      loss = loss + criterion:forward(pred, output)
+    end
 
     -- Compute the criterion gradient.
     local genGradOut = criterion:backward(pred, output)
@@ -344,7 +392,7 @@ function Decoder:backward(batch, outputs, criterion)
     local decGradOut = self.generator:backward(outputs[t], genGradOut)
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
-    -- Compute the standarad backward.
+    -- Compute the standard backward.
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
     -- Accumulate encoder output gradients.
@@ -362,7 +410,11 @@ function Decoder:backward(batch, outputs, criterion)
     end
   end
 
-  return gradStatesInput, gradContextInput, loss
+  if self.indvLoss then
+    indvAvgLoss = torch.cdiv(indvAvgLoss, batch.targetSize:double())
+  end
+
+  return gradStatesInput, gradContextInput, loss, indvAvgLoss
 end
 
 --[[ Compute the loss on a batch.

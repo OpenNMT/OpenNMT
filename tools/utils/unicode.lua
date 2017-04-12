@@ -65,14 +65,37 @@ function unicode.utf8_iter(s)
     if p > L then
       if nextc then
         nextc = nil
-        return v, c, nil
+        return v, c
       end
       return
     end
     nextv, nextc = unicode._utf8_to_cp(s, p)
     p = p + #nextc
-    return v, c, nextv
+    return v, c, nextv, nextc
   end
+end
+
+
+function unicode.utf8len (s)
+  local length = 0
+  for _, _ in unicode.utf8_iter(s) do
+    length = length + 1
+  end
+  return length
+end
+
+function unicode.utf8substr (s, begin_idx, end_idx)
+  local substr = {}
+  local idx = 1
+  for _, c in unicode.utf8_iter(s) do
+    if begin_idx <= idx and idx <= end_idx then
+      table.insert(substr, c)
+    elseif idx > end_idx then
+      break
+    end
+    idx = idx + 1
+  end
+  return table.concat(substr, "")
 end
 
 local function _find_codepoint(u, utable)
@@ -101,7 +124,9 @@ function unicode.isLetter(u)
   if ((u>=0x4E00 and u<=0x9FD5) -- CJK Unified Ideograph
       or (u>=0x2F00 and u<=0x2FD5) -- Kangxi Radicals
       or (u>=0x2E80 and u<=0x2EFF) -- CJK Radicals Supplement
-      or (u>=0x3040 and u<=0x319F) -- Hiragana, Katakana, Bopomofo, Hangul, Kanbun
+      or (u>=0x3040 and u<=0x319F) -- Hiragana, Katakana, Bopomofo, Hangul Compatibility Jamo, Kanbun
+      or (u>=0x1100 and u<=0x11FF) -- Hangul Jamo
+      or (u>=0xAC00 and u<=0xD7AF) -- Hangul Syllables
       or _find_codepoint(u, unidata.LetterOther)
       ) then
     return true, "other"
@@ -146,10 +171,6 @@ end
 function unicode.isNumber(u)
   if not u then return false end
   return _find_codepoint(u, unidata.Number)
-end
-
-function unicode.isAlnum(u)
-  return unicode.isLetter(u) or unicode.isNumber(u) or u=='_'
 end
 
 return unicode

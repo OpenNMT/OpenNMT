@@ -4,18 +4,22 @@
 local function getLength(seq, ignore)
   local sizes = torch.IntTensor(#seq):zero()
   local max = 0
-  local sum = 0
+  local uneven = false
 
   for i = 1, #seq do
     local len = seq[i]:size(1)
     if ignore ~= nil then
       len = len - ignore
     end
-    max = math.max(max, len)
-    sum = sum + len
+    if max == 0 or len > max then
+      max = len
+    end
+    if max ~= len then
+      uneven = true
+    end
     sizes[i] = len
   end
-  return max, sizes, sum
+  return max, sizes, uneven
 end
 
 --[[ Data management and batch creation.
@@ -31,7 +35,6 @@ Batch interface reference [size]:
   * sourceInputRevFeatures: table of reversed source features sequences
   * targetLength: max length in source batch [1]
   * targetSize: lengths of each source [batch x 1]
-  * targetNonZeros: number of non-ignored words in batch [1]
   * targetInput: input idx's of target (SABCDEPPPPPP) [batch x max]
   * targetInputFeatures: table of target input features sequences
   * targetOutput: expected output idx's of target (ABCDESPPPPPP) [batch x max]
@@ -68,14 +71,16 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
 
   self.size = #src
 
-  self.sourceLength, self.sourceSize = getLength(src)
+  self.sourceLength, self.sourceSize, self.uneven = getLength(src)
 
-  local sourceSeq = torch.IntTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
+  local sourceSeq = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
   self.sourceInput = sourceSeq:clone()
   self.sourceInputRev = sourceSeq:clone()
 
   self.sourceInputFeatures = {}
   self.sourceInputRevFeatures = {}
+  -- will be used to return extra padded value
+  self.padTensor = torch.LongTensor(self.size):fill(onmt.Constants.PAD)
 
   if #srcFeatures > 0 then
     for _ = 1, #srcFeatures[1] do
@@ -85,9 +90,9 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   end
 
   if tgt ~= nil then
-    self.targetLength, self.targetSize, self.targetNonZeros = getLength(tgt, 1)
+    self.targetLength, self.targetSize = getLength(tgt, 1)
 
-    local targetSeq = torch.IntTensor(self.targetLength, self.size):fill(onmt.Constants.PAD)
+    local targetSeq = torch.LongTensor(self.targetLength, self.size):fill(onmt.Constants.PAD)
     self.targetInput = targetSeq:clone()
     self.targetOutput = targetSeq:clone()
 
@@ -194,42 +199,65 @@ function Batch:setTargetOutput(targetOutput)
   return self
 end
 
+local function addInputFeatures(inputs, featuresSeq, t)
+  local features = {}
+  for j = 1, #featuresSeq do
+    local feat
+    if t > featuresSeq[j]:size(1) then
+      feat = onmt.Constants.PAD
+    else
+      feat = featuresSeq[j][t]
+    end
+    table.insert(features, feat)
+  end
+  if #features > 1 then
+    table.insert(inputs, features)
+  else
+    onmt.utils.Table.append(inputs, features)
+  end
+end
 
 --[[ Get source input batch at timestep `t`. --]]
 function Batch:getSourceInput(t)
+  local inputs
+
   -- If a regular input, return word id, otherwise a table with features.
-  if #self.sourceInputFeatures > 0 then
-    local inputs = {self.sourceInput[t]}
-    for j = 1, #self.sourceInputFeatures do
-      table.insert(inputs, self.sourceInputFeatures[j][t])
-    end
-    return inputs
+  if t > self.sourceInput:size(1) then
+    inputs = self.padTensor
   else
-    return self.sourceInput[t]
+    inputs = self.sourceInput[t]
   end
+
+  if #self.sourceInputFeatures > 0 then
+    inputs = { inputs }
+    addInputFeatures(inputs, self.sourceInputFeatures, t)
+  end
+
+  return inputs
 end
 
 --[[ Get target input batch at timestep `t`. --]]
 function Batch:getTargetInput(t)
   -- If a regular input, return word id, otherwise a table with features.
+  local inputs = self.targetInput[t]
+
   if #self.targetInputFeatures > 0 then
-    local inputs = {self.targetInput[t]}
-    for j = 1, #self.targetInputFeatures do
-      table.insert(inputs, self.targetInputFeatures[j][t])
-    end
-    return inputs
-  else
-    return self.targetInput[t]
+    inputs = { inputs }
+    addInputFeatures(inputs, self.targetInputFeatures, t)
   end
+
+  return inputs
 end
 
 --[[ Get target output batch at timestep `t` (values t+1). --]]
 function Batch:getTargetOutput(t)
   -- If a regular input, return word id, otherwise a table with features.
   local outputs = { self.targetOutput[t] }
+
   for j = 1, #self.targetOutputFeatures do
     table.insert(outputs, self.targetOutputFeatures[j][t])
   end
+
   return outputs
 end
 
