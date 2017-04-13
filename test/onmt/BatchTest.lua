@@ -201,4 +201,26 @@ function batchTest.simpleInferenceBatchUneven()
   tester:assertNoError(function () onmt.data.Batch.new(src) end)
 end
 
+function batchTest.unevenAscending()
+  local src = {
+    torch.IntTensor({5, 6}),
+    torch.IntTensor({5, 6, 7}),
+    torch.IntTensor({5, 6, 7, 8})
+  }
+
+  local batch = onmt.data.Batch.new(src)
+  tester:eq(batch.uneven, true)
+end
+
+function batchTest.unevenDescending()
+  local src = {
+    torch.IntTensor({5, 6, 7, 8}),
+    torch.IntTensor({5, 6, 7}),
+    torch.IntTensor({5, 6})
+  }
+
+  local batch = onmt.data.Batch.new(src)
+  tester:eq(batch.uneven, true)
+end
+
 return batchTest
