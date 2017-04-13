@@ -70,6 +70,14 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
 end
 
 local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords, verbose)
+
+  if not dicts then
+    -- if input vector - skip word embbedding
+    local inputNetwork = nn.Identity()
+    inputNetwork.inputSize = opt.dimInputSize
+    return inputNetwork
+  end
+
   local wordEmbSize, featEmbSizes = resolveEmbSizes(opt, dicts, wordSizes)
 
   local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
@@ -167,16 +175,10 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
     _G.logger:info(' * Encoder:')
   end
 
-  local inputNetwork
-  if dicts then
-    inputNetwork = buildInputNetwork(opt, dicts,
-                                     opt.src_word_vec_size or opt.word_vec_size,
-                                     opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
-                                     verbose)
-  else
-    inputNetwork = nn.Identity()
-    inputNetwork.inputSize = opt.dimInputSize
-  end
+  local inputNetwork = buildInputNetwork(opt, dicts,
+                                   opt.src_word_vec_size or opt.word_vec_size,
+                                   opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
+                                   verbose)
 
   return Factory.buildEncoder(opt, inputNetwork, verbose)
 end
