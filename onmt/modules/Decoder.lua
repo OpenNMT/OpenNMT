@@ -73,6 +73,10 @@ end
 
 --[[ Return data to serialize. ]]
 function Decoder:serialize()
+  -- remove generator gradInput to avoid Cuda.convert problem (mix of Long/Float tensor) in NCE mode
+  self.generator:apply(function(m)
+    if type(m.gradInput) == 'table' then m.gradInput = {} end
+  end)
   return {
     modules = self.modules,
     args = self.args

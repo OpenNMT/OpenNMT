@@ -9,29 +9,8 @@ function Generator:__init(opt, dicts, sizes)
   parent.__init(self, self:_buildGenerator(opt, dicts, sizes))
 end
 
-local function mixTypeFunx(self, type)
-   -- find all tensors and convert them
-  for key,param in pairs(self) do
-    if key == 'gradInput' then
-      self.gradInput = onmt.utils.Cuda.convert(self.gradInput)
-    else
-      if torch.typename(param) and torch.typename(param):find('torch%..+Tensor') then
-        self[key] = param:type(type)
-      end
-    end
-  end
-  -- find submodules in classic containers 'modules'
-  if self.modules then
-    for _,module in ipairs(self.modules) do
-      module:type(type)
-    end
-  end
-  return self
-end
-
 function Generator:_buildGenerator(opt, dicts, sizes)
   local generator = nn.ConcatTable()
-  generator.type = mixTypeFunx
 
   local selectInput = nn.Identity()
 
