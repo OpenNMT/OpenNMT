@@ -204,19 +204,7 @@ function Factory.loadEncoder(pretrained, clone)
 end
 
 function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
-  local inputSize = inputNetwork.inputSize
-
-  if opt.input_feed == 1 then
-    inputSize = inputSize + opt.rnn_size
-  end
-
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
-  end
-  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.dropout_input)
-
-  return onmt.Decoder.new(opt, inputNetwork, rnn, generator, opt.input_feed == 1, attnModel)
+  return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
