@@ -35,4 +35,12 @@ if dpnn then
     end
   end
 
+  -- overload fastNoise function to avoid depedency with 'torchx'
+  function NCEModule:fastNoise()
+   -- we use alias to speedup multinomial sampling (see noiseSample method)
+   self.unigrams:div(self.unigrams:sum())
+   self.aliasmultinomial = onmt.AliasMultinomial(self.unigrams)
+   self.aliasmultinomial.dpnn_parameters = {'J', 'q'}
+end
+
 end
