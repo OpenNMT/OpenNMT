@@ -1,11 +1,57 @@
 The data preparation (or preprocessing) passes over the data to generate word vocabularies and sequences of indices used by the training.
 
+## Data Type
+
+By default, data type is `bitext` which are aligned source and target files - alignment is by default done at the line level, but can also be done through aligned index (see Index File type).
+For training language models, data type is `monotext` which is only one language file.
+
+Finally, you can also manipulate `feattext` data type (see below) which is allowing to code sequences of vectors (for instance for devices generating sequence of features in sequence).
+
+!!! note "Note"
+    Input Vectors can only be used for the source.
+
+
 ## Delimiters
 
-Training data are expected to follow the following format:
+Training data (for `bitext` and `monotext` data types) are expected to follow the following format:
 
 * sentences are newline-separated
 * tokens are space-separated
+
+## Index Files
+
+Index files are aligning different files by index and not by line. For instance the following files are aligned by index:
+
+```
+line1 First line
+line2 Second line
+```
+
+```
+line2 Deuxième ligne
+line1 Première ligne
+```
+
+where the first token of each line is an index which must have an equivalent (at any position) in aligned files.
+
+The option `-idx_files` is used (in `preprocess.lua` or `translate.lua`) to enable this feature.
+
+## Input Vectors
+
+OpenNMT supports use of vector sequence instead of word sequence for source.
+
+The data type is `feattext` and is using [Kaldi](http://kaldi-asr.org) text ark dump format. For instance the following entry, indexed by `KEY` is representing a sequence
+of `m` vectors of `n` values:
+
+```
+KEY [
+FEAT1.1 FEAT1.2 FEAT1.3 ... FEAT1.n
+...
+FEATm.1 FEATm.2 FEATm.3 ... FEATm.n ]
+```
+
+!!! warning "Warning"
+    Note that you need to use Index Files for representing Input Vectors.
 
 ## Vocabularies
 
