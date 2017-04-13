@@ -9,9 +9,10 @@ local config = yaml.load(content)
 
 local params = config.params
 local tests = config.tests
---local data = config.data
+local data = config.data
 
 local tmp_dir = params.tmp_dir
+local download_dir = params.download_dir
 
 local function log(message, level)
   level = level or 'INFO'
@@ -21,23 +22,43 @@ local function log(message, level)
 end
 
 -- remove tmp directory
+log('Prepare TMP_DIR', 'INFO')
 os.execute("rm -rf '"..tmp_dir.."'")
 assert(os.execute("mkdir '"..tmp_dir.."'"))
+
+local data_path = {}
+
+log('Download data', 'INFO')
+os.execute("mkdir '"..download_dir.."'")
+-- get associated data
+for k, v in pairs(data) do
+  local file, suffix = string.match(v, ".*/([^/]*)(.tgz)")
+  if not os.execute("tar -tzf '"..download_dir.."/"..file..suffix.."' > /dev/null") then
+    log(' * download '..v)
+    assert(os.execute("wget '"..v.."' -O '"..download_dir.."/"..file..suffix.."'"), "cannot not retrieve data file: '"..v.."'")
+    assert(os.execute("tar -C '"..download_dir.."' -xzf '"..download_dir.."/"..file..suffix.."'", "cannot not untar '"..v.."'"))
+  else
+    log(' * already downloaded '..v)
+  end
+  -- change directory
+  data_path[k]=download_dir.."/"..file
+end
 
 local idx=1
 
 for _, test in pairs(tests) do
   local command=''
   local env = {
-    TMP = tmp_dir..'/t_'..idx,
-    PARAMS_PREPROCESS = '',
-    PARAMS_TRAIN = ''
+    TMP = tmp_dir..'/t_'..idx
   }
-  if test.params_train then
-    env.PARAMS_TRAIN = test.params_train
+  if test.data then
+    assert(data_path[test.data], "missing data file: "..test.data)
+    env.DATA = data_path[test.data]
   end
-  if test.params_preprocess then
-    env.PARAMS_PREPROCESS = test.params_preprocess
+  if test.params then
+    for k,v in pairs(test.params) do
+      env[k] = v
+    end
   end
   assert(os.execute("mkdir '"..env.TMP.."'"))
   for k,v in pairs(env) do
@@ -55,7 +76,7 @@ for _, test in pairs(tests) do
   local timer = torch.Timer()
   local res, info, val = os.execute (command)
   if res then
-    log('test '..idx..' - COMPLETED ('..val..') in '..timer:time().real..' seconds', 'INFO')
+    log('test '..idx..' - COMPLETED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'INFO')
   else
     log('test '..idx..' - FAILED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'ERROR')
   end

@@ -1,19 +1,31 @@
 params:
   path_scripts: test/auto/scripts
+  logs: ~/Downloads/opennmt-logs
   tmp_dir: tmp
+  download_dir: download
 tests:
   -
+    # training on CPU for 2 epochs
     name: demo-cpu
     script: demo.sh
-    params_train: -end_epoch 1
+    params:
+      PARAMS_TRAIN: -end_epoch 2
   -
+    # full training on demo test-set with baseline parameters
     name: demo-gpu
     script: demo.sh
-    params_train: -gpuid 1
+    params:
+      PARAMS_TRAIN: -gpuid 1
   -
+    # one epoch training on real scale data
     name: baseline1M-enfr
-    script: baseline1M-enfr.sh
-    params_train: -end_epoch 1
+    script: baseline.sh
     data: baseline1M-enfr
+    params:
+      PARAMS_TOKENIZE: -joiner_annotate
+      PARAMS_TRAIN: -end_epoch 2
+      NAME: baseline-1M
+      SRC: en
+      TGT: fr
 data:
-  baseline1M-enfr: s3:xxx
+  baseline1M-enfr: https://s3.amazonaws.com/opennmt-trainingdata/baseline-1M-enfr.tgz
