@@ -14,7 +14,7 @@ if [ $? -ne 0 ]; then
   exit err
 fi
 
-th preprocess.lua -train_src ${DATA}/${NAME}_train.${SRC}.tok -train_tgt ${DATA}/${NAME}_train.${TGT}.tok -valid_src ${DATA}/${NAME}_valid.${SRC}.tok -valid_tgt ${DATA}/${NAME}_valid.${TGT}.tok -save_data ${DATA}/${NAME} ${PARAMS_PREPROCESS} > ${TMP}/preprocess.log
+th preprocess.lua -train_src ${DATA}/${NAME}_train.${SRC}.tok -train_tgt ${DATA}/${NAME}_train.${TGT}.tok -valid_src ${DATA}/${NAME}_valid.${SRC}.tok -valid_tgt ${DATA}/${NAME}_valid.${TGT}.tok -save_data ${TMP}/${NAME} ${PARAMS_PREPROCESS} > ${TMP}/preprocess.log
 if [ $? -ne 0 ]; then
   err = $?
   echo "ERROR IN PREPROCESS - EXIT"
