@@ -232,8 +232,8 @@ end
 function Translator:translateBatch(batch)
   self.model:maskPadding()
 
-  local encStates, context = self.models.models.encoder:forward(batch)
-  if self.opt.dump_input_encoding then
+  local encStates, context = self.model.models.encoder:forward(batch)
+  if self.args.dump_input_encoding then
     return encStates[#encStates]
   end
 
@@ -252,9 +252,9 @@ function Translator:translateBatch(batch)
                                                       self.args.max_num_unks,
                                                       encStates,
                                                       self.dicts,
-                                                      self.opt.length_norm,
-                                                      self.opt.coverage_norm,
-                                                      self.opt.eos_norm,
+                                                      self.args.length_norm,
+                                                      self.args.coverage_norm,
+                                                      self.args.eos_norm,
                                                       function(sourceSize, sourceLength)
                                                         return self.model.models.encoder:contextSize(sourceSize, sourceLength)
                                                       end)
@@ -357,14 +357,14 @@ function Translator:translate(src, gold)
     local predScore = {}
     local attn = {}
     local goldScore = {}
-    if self.opt.dump_input_encoding then
+    if self.args.dump_input_encoding then
       encStates = self:translateBatch(batch)
     else
       pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
     end
 
     for b = 1, batch.size do
-      if self.opt.dump_input_encoding then
+      if self.args.dump_input_encoding then
         results[b] = encStates[b]
       else
         results[b] = {}
