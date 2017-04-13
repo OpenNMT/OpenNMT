@@ -128,7 +128,11 @@ function LanguageModel:forwardComputeLoss(batch)
     -- sampling-based generator need outputs during training
     -- use generator specific flag to keep backward compatibility
     if self.models.generator.needOutput then
-      prepOutputs = { prepOutputs, output }
+      if type(output) == 'table' then
+        prepOutputs = { prepOutputs, output }
+      else
+        prepOutputs = { prepOutputs, { output } }
+      end
     end
 
     local genOutputs = self.models.generator:forward(prepOutputs)
