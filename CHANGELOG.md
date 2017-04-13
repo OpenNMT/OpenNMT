@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### New features
+* Display sentence length distribution in preprocess
+
 ### Fixes and improvements
 
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
