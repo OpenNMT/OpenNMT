@@ -171,8 +171,12 @@ function Decoder:_buildModel(attentionModel)
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
 
-  -- The output of a subgraph is a node: split it to access the last RNN output.
-  outputs = { outputs:split(self.args.numEffectiveLayers) }
+  if self.args.numEffectiveLayers > 1 then
+    -- The output of a subgraph is a node: split it to access the last RNN output.
+    outputs = { outputs:split(self.args.numEffectiveLayers) }
+  else
+    outputs = { outputs }
+  end
 
   -- Compute the attention here using h^L as query.
   local attnLayer = attentionModel
