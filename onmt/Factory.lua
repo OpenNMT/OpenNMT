@@ -255,37 +255,7 @@ end
 
 function Factory.buildGenerator(opt, dicts)
   local sizes = Factory.getOutputSizes(dicts)
-  local generator = nn.ConcatTable()
-
-  local selectInput = nn.Identity()
-
-  if opt.criterion == 'nce' then
-    generator.needOutput = 1
-    selectInput = nn.SelectTable(1)
-  end
-
-  for i = 1, #sizes do
-    local feat_generator
-    if i == 1 and opt.criterion == 'nce' then
-      assert(dicts.words.freqTensor, "missing frequencies in dictionary - use -keep_frequency in preprocess.lua")
-      assert(onmt.NCEModule, "missing NCE module - install dpnn torch libraries")
-      local selectInputOutput = nn.ConcatTable()
-                          :add(nn.SelectTable(1)) -- first element is the input
-                          :add(nn.Sequential():add(nn.SelectTable(2)):add(nn.SelectTable(i)))
-
-      feat_generator = nn.Sequential()
-                    :add(selectInputOutput)
-                    :add(onmt.NCEModule(opt, opt.rnn_size, sizes[i], dicts.words.freqTensor))
-    else
-      feat_generator = nn.Sequential()
-                    :add(selectInput)
-                    :add(nn.Linear(opt.rnn_size, sizes[i]))
-                    :add(nn.LogSoftMax())
-    end
-    generator:add(feat_generator)
-  end
-
-  return generator
+  return onmt.Generator(opt, dicts, sizes)
 end
 
 function Factory.buildCriterion(opt, dicts, verbose)
