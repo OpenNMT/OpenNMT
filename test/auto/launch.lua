@@ -1,9 +1,9 @@
 local yaml = require 'yaml'
 
-local file = io.open("test/auto/config.yaml", "rb")
-assert(file)
-local content = file:read "*a"
-file:close()
+local fconfig = io.open("test/auto/config.yaml", "rb")
+assert(fconfig)
+local content = fconfig:read "*a"
+fconfig:close()
 
 local config = yaml.load(content)
 
