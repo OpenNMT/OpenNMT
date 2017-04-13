@@ -1,8 +1,19 @@
 #!/usr/bin/env lua
 --[[
+
+Author: Vincent Nguyen (Ubiqus)
+
+License MIT
+
+Usage
+  Change the section below server_cfg according to your settings
+  When querying, "id" : n , where n is the model index in your config.
+
   th tools/rest_multi_models.lua -model -gpuid 1
   query the server:
   curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "international migration" , "id" : 1 }]' http://127.0.0.1:7784/translator/translate
+
+
 ]]
 
 require('onmt.init')
@@ -12,6 +23,7 @@ local BPE = require ('tools.utils.BPE')
 local restserver = require('tools.restserver.restserver')
 
 --[[
+  TODO
   The following should be in a YAML file instead.
   First item contains the port of the REST server
 ]]
@@ -150,6 +162,7 @@ local function init_server(options)
            req[1].id = 1
         end
         if not server.model_loaded[req[1].id] then
+ -- TODO
  -- I need to test here I f I have enough memory to load the model
  -- if not then I need to unload the oldest one
  -- print(cutorch.getMemoryUsage())
@@ -188,7 +201,7 @@ end
 
 
 local function main()
--- load logger
+  -- load logger
   _G.logger = onmt.utils.Logger.new(nil, false, 'INFO')
 
   onmt.utils.Cuda.init(opt[1])
