@@ -276,7 +276,8 @@ information that can be useful to optimize its objective function.</p>
 
 <p>You can generate this case feature with OpenNMT's tokenization script and the <code>-case_feature</code> flag.</p>
 <h2 id="time-shifting">Time-shifting</h2>
-<p>By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. More precisely at timestep <script type="math/tex">t</script>:</p>
+<p>By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. This way, the decoder architecture is similar to a RNN-based sequence tagger with the output of a timestep being the tag of the input.</p>
+<p>More precisely at timestep <script type="math/tex">t</script>:</p>
 <ul>
 <li>the inputs are <script type="math/tex">words^{(t)}</script> and <script type="math/tex">features^{(t-1)}</script>
 </li>

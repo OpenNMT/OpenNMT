@@ -263,12 +263,16 @@
 <li>tokens are space-separated</li>
 </ul>
 <h2 id="vocabularies">Vocabularies</h2>
-<p>The main goal of the preprocessing is to build the word vocabularies and assign each word to an index within these dictionaries. By default, word vocabularies are limited to 50,000. You can change this value with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code>. Alternatively, you can prune the vocabulary size by setting the minimum frequency of words with the <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> options. The preprocessing script will generate <code>*.dict</code> files containing the vocabularies.</p>
-<p>These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the <code>-src_vocab</code> and <code>-tgt_vocab</code> options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.</p>
-<p>Vocabularies can be generated beforehand with the <code>tools/build_vocab.lua</code> script.</p>
+<p>The main goal of the preprocessing is to build the word vocabularies and assign each word to an index within these dictionaries.</p>
+<p>By default, word vocabularies are limited to 50,000. You can change this value with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code>. Alternatively, you can prune the vocabulary size by setting the minimum frequency of words with the <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> options.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>When pruning vocabularies to 50,000, the preprocessing will actually report a vocabulary size of 50,004 because of 4 special tokens that are automatically added.</p>
+</div>
+<p>The preprocessing script will generate <code>*.dict</code> files containing the vocabularies. These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the <code>-src_vocab</code> and <code>-tgt_vocab</code> options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Vocabularies can be generated beforehand with the <code>tools/build_vocab.lua</code> script.</p>
 </div>
 <h2 id="shuffling-and-sorting">Shuffling and sorting</h2>
 <p>By default, OpenNMT both shuffles and sorts the data before the training. This process comes from 2 constraints of batch training:</p>
@@ -281,7 +285,7 @@
 <p>During the training, batches are also randomly selected unless the <code>-curriculum</code> option is used.</p>
 </div>
 <h2 id="sentence-length">Sentence length</h2>
-<p>During preprocessing, too long sentences (longer than <code>-seq_length</code> option) are discarded from the corpus. You can have an idea of the distribution of sentence length in your training corpus by looking at the preprocess log where a table gives percent of sentences with length 1-10, 11-20, 21-30, ..., 90+:</p>
+<p>During preprocessing, too long sentences (with source longer than <code>-src_seq_length</code> or target longer than <code>-tgt_seq_length</code>) are discarded from the corpus. You can have an idea of the distribution of sentence length in your training corpus by looking at the preprocess log where a table gives percent of sentences with length 1-10, 11-20, 21-30, ..., 90+:</p>
 <pre><code class="text">[04/14/17 00:40:10 INFO]  * Source Sentence Length (range of 10): [ 7% ; 35% ; 32% ; 16% ; 7% ; 0% ; 0% ; 0% ; 0% ; 0% ]
 [04/14/17 00:40:10 INFO]  * Target Sentence Length (range of 10): [ 9% ; 38% ; 30% ; 15% ; 5% ; 0% ; 0% ; 0% ; 0% ; 0% ]
 </code></pre>
