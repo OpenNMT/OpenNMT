@@ -249,7 +249,11 @@ end
 
 function Factory.buildCriterion(opt, dicts, verbose)
   if verbose then
-    _G.logger:info(' * Criterion: '..opt.criterion)
+    local modCriterion = ''
+    if opt.criterion == 'nce' then
+      modCriterion = ' (sample size: ' .. opt.nce_sample_size .. ')'
+    end
+    _G.logger:info(' * Criterion: '..opt.criterion..modCriterion)
   end
 
   local sizes = Factory.getOutputSizes(dicts)
