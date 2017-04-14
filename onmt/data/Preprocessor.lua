@@ -2,8 +2,8 @@
 
 local function vecToTensor(vec)
   local t = torch.Tensor(#vec)
-  for i, v in pairs(vec) do
-    t[i] = v
+  for i = 1, #vec do
+    t[i] = vec[i]
   end
   return t
 end
@@ -178,6 +178,13 @@ local commonOptions = {
     {
       valid = onmt.utils.ExtendedCmdLine.isInt(0,1)
     }
+  },
+  {
+    '-report_every', 100000,
+    [[Report status every this many sentences.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
   }
 }
 
@@ -209,10 +216,13 @@ function Preprocessor:__init(args, mode)
     table.insert(options, v)
   end
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
-  self.args.report_every = args.report_every
 end
 
 function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid)
+    -- sentence length distribution
+  local srcSentenceDist = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  local tgtSentenceDist = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
   local src = tds.Vec()
   local srcFeatures = tds.Vec()
 
@@ -241,6 +251,17 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
       end
       break
     end
+
+    local idxRange = math.floor(#srcTokens/10)+1
+    if idxRange > #srcSentenceDist then
+      idxRange = #srcSentenceDist
+    end
+    srcSentenceDist[idxRange] = srcSentenceDist[idxRange]+1
+    idxRange = math.floor(#tgtTokens/10)+1
+    if idxRange > #tgtSentenceDist then
+      idxRange = #tgtSentenceDist
+    end
+    tgtSentenceDist[idxRange] = tgtSentenceDist[idxRange]+1
 
     if isValid(srcTokens, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
       avgSrcLength = avgSrcLength * (#src / (#src + 1)) + #srcTokens / (#src + 1)
@@ -283,6 +304,12 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     end
   end
 
+  for i=1, #srcSentenceDist do
+    srcSentenceDist[i] = srcSentenceDist[i]/count
+    tgtSentenceDist[i] = tgtSentenceDist[i]/count
+  end
+
+
   srcReader:close()
   tgtReader:close()
 
@@ -322,6 +349,25 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
   _G.logger:info(' * %% of unknown words: source = %.1f%%, target = %.1f%%',
                  prunedRatioSrc * 100,
                  prunedRatioTgt * 100)
+
+  local dist='[ '
+  for i=1,#srcSentenceDist do
+    if i>1 then
+      dist = dist..' ; '
+    end
+    dist = dist..math.floor(srcSentenceDist[i]*100)..'%'
+  end
+  dist = dist..' ]'
+  _G.logger:info(' * Source Sentence Length (range of 10): '..dist)
+  dist='[ '
+  for i=1,#tgtSentenceDist do
+    if i>1 then
+      dist = dist..' ; '
+    end
+    dist = dist..math.floor(tgtSentenceDist[i]*100)..'%'
+  end
+  dist = dist..' ]'
+  _G.logger:info(' * Target Sentence Length (range of 10): '..dist)
 
   local srcData = {
     words = src,

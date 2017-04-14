@@ -4,7 +4,7 @@ Often times `<unk>` symbols will correspond to proper names that can be directly
 
 ## Phrase table
 
-Alternatively, advanced users may prefer to provide a preconstructed phrase table from an external aligner (such as [fast_align](https://github.com/clab/fast_align)) using the `-phrase_table` option to allow for non-identity replacement.
+Alternatively, advanced users may prefer to provide a pre-constructed phrase table from an external aligner (such as [fast_align](https://github.com/clab/fast_align)) using the `-phrase_table` option to allow for non-identity replacement.
 
 Instead of copying the source token with the highest attention, it will lookup in the phrase table for a possible translation. If a valid replacement is not found only then the source token will be copied.
 
@@ -20,5 +20,5 @@ Where `source` and `target` are **case sensitive** and **single** tokens.
 
 Several techniques exist to minimize the out-of-vocabulary issue:
 
-* subtokenization like BPE or wordpiece to simulate *open* vocabularies
-* mixed word/characters model as desribed in [Wu et al. (2016)](https://arxiv.org/pdf/1609.08144.pdf)
+* sub-tokenization like BPE or "wordpiece" to simulate *open* vocabularies
+* mixed word/characters model as described in [Wu et al. (2016)](https://arxiv.org/pdf/1609.08144.pdf)

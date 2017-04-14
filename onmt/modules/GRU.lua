@@ -75,7 +75,7 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropo
         input = nn.CAddTable()({input, prevInput})
       end
     end
-    if dropout_input or (dropout > 0 and L>1) then
+    if dropout > 0 and (dropout_input or L > 1) then
       input = nn.Dropout(dropout)(input)
     end
 

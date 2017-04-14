@@ -24,7 +24,9 @@ You can generate this case feature with OpenNMT's tokenization script and the `-
 
 ## Time-shifting
 
-By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. More precisely at timestep \(t\):
+By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. This way, the decoder architecture is similar to a RNN-based sequence tagger with the output of a timestep being the tag of the input.
+
+More precisely at timestep \(t\):
 
 * the inputs are \(words^{(t)}\) and \(features^{(t-1)}\)
 * the outputs are \(words^{(t+1)}\) and \(features^{(t)}\)
@@ -65,7 +67,7 @@ The feature embedding size is automatically computed based on the number of valu
 
 For other features, you may want to manually choose the embedding size with the `-src_word_vec_size` and `-tgt_word_vec_size` options. They behave similarly to `-src_vocab_size` with a comma-separated list of embedding size: `word_vec_size[,feat1_vec_size[,feat2_vec_size[...]]]`.
 
-Then, each feature embedding is concatened to each other by default. You can instead choose to sum them by setting `-feat_merge sum`. Finally, the resulting merged embedding is concatened to the word embedding.
+Then, each feature embedding is concatenated to each other by default. You can instead choose to sum them by setting `-feat_merge sum`. Finally, the resulting merged embedding is concatenated to the word embedding.
 
 !!! warning "Warning"
     In the `sum` case, each feature embedding must have the same dimension. You can set the common embedding size with `-feat_vec_size`.
