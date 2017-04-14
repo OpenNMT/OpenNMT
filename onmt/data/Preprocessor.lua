@@ -2,8 +2,8 @@
 
 local function vecToTensor(vec)
   local t = torch.Tensor(#vec)
-  for i, v in pairs(vec) do
-    t[i] = v
+  for i = 1, #vec do
+    t[i] = vec[i]
   end
   return t
 end
