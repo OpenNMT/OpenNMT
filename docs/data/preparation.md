@@ -30,7 +30,7 @@ By default, OpenNMT both shuffles and sorts the data before the training. This p
 
 ## Sentence length
 
-During preprocessing, too long sentences (longer than `-seq_length` option) are discarded from the corpus. You can have an idea of the distribution of sentence length in your training corpus by looking at the preprocess log where a table gives percent of sentences with length 1-10, 11-20, 21-30, ..., 90+:
+During preprocessing, too long sentences (with source longer than `-src_seq_length` or target longer than `-tgt_seq_length`) are discarded from the corpus. You can have an idea of the distribution of sentence length in your training corpus by looking at the preprocess log where a table gives percent of sentences with length 1-10, 11-20, 21-30, ..., 90+:
 
 ```text
 [04/14/17 00:40:10 INFO]  * Source Sentence Length (range of 10): [ 7% ; 35% ; 32% ; 16% ; 7% ; 0% ; 0% ; 0% ; 0% ; 0% ]
