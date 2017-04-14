@@ -62,7 +62,8 @@ script:
 - ${INSTALL_PREFIX}/bin/luarocks make rocks/opennmt-scm-1.rockspec
 - echo ${ROOT_TRAVIS_DIR}
 - export TESTLUA=$(which luajit lua | head -n 1)
-- ${TESTLUA} -lluacov test/test.lua
 - sh test/tokenization/test.sh
+- ${TESTLUA} -lluacov test/test.lua
+- luacov
 after_success:
 - bash <(curl -s https://codecov.io/bash)
