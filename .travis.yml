@@ -55,11 +55,14 @@ before_script:
 - ${INSTALL_PREFIX}/bin/luarocks install bit32 || true
 - ${INSTALL_PREFIX}/bin/luarocks install luacheck
 - ${INSTALL_PREFIX}/bin/luarocks install penlight
+- ${INSTALL_PREFIX}/bin/luarocks install luacov
 script:
 - export PATH=${INSTALL_PREFIX}/bin:$PATH
 - luacheck *lua onmt/ tools/ benchmark/ test/
 - ${INSTALL_PREFIX}/bin/luarocks make rocks/opennmt-scm-1.rockspec
 - echo ${ROOT_TRAVIS_DIR}
 - export TESTLUA=$(which luajit lua | head -n 1)
-- ${TESTLUA} test/test.lua
+- ${TESTLUA} -lluacov test/test.lua
 - sh test/tokenization/test.sh
+after_success:
+- bash <(curl -s https://codecov.io/bash)
