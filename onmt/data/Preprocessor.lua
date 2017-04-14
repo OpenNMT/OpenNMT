@@ -174,6 +174,13 @@ local commonOptions = {
     {
       valid = onmt.utils.ExtendedCmdLine.isInt(0,1)
     }
+  },
+  {
+    '-report_every', 100000,
+    [[Report status every this many sentences.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
   }
 }
 
@@ -205,7 +212,6 @@ function Preprocessor:__init(args, mode)
     table.insert(options, v)
   end
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
-  self.args.report_every = args.report_every
 end
 
 function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid)
