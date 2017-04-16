@@ -69,10 +69,10 @@ function Cuda.init(opt, deviceId)
   else
     _G.threadDeviceId = deviceId
     if deviceId > 0 then
-      assert(Cuda.deviceIds[id] <= cutorch.getDeviceCount(),
-                 'GPU ' .. Cuda.deviceIds[id] .. ' is requested but only '
+      assert(deviceId <= cutorch.getDeviceCount(),
+                 'GPU ' .. deviceId .. ' is requested but only '
                    .. cutorch.getDeviceCount() .. ' GPUs are available')
-      cutorch.setDevice(Cuda.deviceIds[id])
+      cutorch.setDevice(deviceId)
     end
   end
 end
@@ -143,7 +143,7 @@ end
   Do nothing otherwise.
 ]]
 function Cuda.synchronize()
-  if _G.threadDevice > 0 then cutorch.synchronize() end
+  if _G.threadDeviceId and _G.threadDeviceId > 0 then cutorch.synchronize() end
 end
 
 --[[
@@ -157,8 +157,8 @@ end
   Free memory on the current GPU device.
 ]]
 function Cuda.freeMemory()
-  if _G.threadDevice > 0 then
-    local freeMemory = cutorch.getMemoryUsage(_G.threadDevice)
+  if _G.threadDeviceId > 0 then
+    local freeMemory = cutorch.getMemoryUsage(_G.threadDeviceId)
     return freeMemory
   end
   return 0
