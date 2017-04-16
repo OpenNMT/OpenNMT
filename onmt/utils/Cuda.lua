@@ -41,6 +41,7 @@ function Cuda.init(opt, deviceId)
       if id > 0 and not usedGpuIds[id] then
         if #Cuda.gpuIds == 0 then
           require('cutorch')
+          require('cunn')
         end
         table.insert(Cuda.gpuIds, id)
         usedGpuIds[id] = true
