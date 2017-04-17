@@ -59,7 +59,7 @@ function Parallel.init(opt)
     Parallel._pool:specific(true)
   end
 
-  if Parallel.count > 1 and #onmt.utils.Cuda.gpuIds > 0 and not opt.no_nccl then
+  if Parallel.count > 1 and #onmt.utils.Cuda.gpuIds > 1 and not opt.no_nccl then
     -- check if we have nccl installed
     local ret
     ret, Parallel.usenccl = pcall(require, 'nccl')
