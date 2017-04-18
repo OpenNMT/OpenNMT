@@ -8,7 +8,7 @@ if dpnn then
 
   local options = {
     {
-      '-nce_sample_size', 25,
+      '-nce_sample_size', 4096,
       [[Size of NCE sample.]],
       {
         valid = onmt.utils.ExtendedCmdLine.isUInt,
