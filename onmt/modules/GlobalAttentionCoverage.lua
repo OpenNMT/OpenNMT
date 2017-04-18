@@ -23,6 +23,13 @@ Constructs a unit mapping:
 local GlobalAttentionCoverage, parent = torch.class('onmt.GlobalAttentionCoverage', 'onmt.Network')
 
 local options = {
+  {
+    '-coverage_model', 'ling1',
+    [[Coverage model type.]],
+    {
+      enum = { 'ling1' }
+    }
+  }
 }
 
 function GlobalAttentionCoverage.declareOpts(cmd)
@@ -37,12 +44,12 @@ end
 --]]
 function GlobalAttentionCoverage:__init(opt, dim)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(opt, options)
-  parent.__init(self, self:_buildModel(dim))
+  parent.__init(self, self:_buildModel(opt, dim))
 end
 
 GlobalAttentionCoverage.hasCoverage = 1
 
-function GlobalAttentionCoverage:_buildModel(dim)
+function GlobalAttentionCoverage:_buildModel(opt, dim)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -65,7 +72,12 @@ function GlobalAttentionCoverage:_buildModel(dim)
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
 
-  -- update coverage - apply GRU cell - coverage_t = f(coverage_t-1, attn_t, h_t, h_s)
+  -- update coverage
+  if opt.coverage_model == 'ling1' then
+    -- linguistic coverage model without fertility model
+    coverage = nn.CAddTable()({coverage, attn})
+  end
+  -- apply GRU cell - coverage_t = f(coverage_t-1, attn_t, h_t, h_s)
 
   -- Apply attention to context.
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
