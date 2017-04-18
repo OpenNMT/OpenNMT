@@ -42,6 +42,26 @@ function Generator:_buildGenerator(opt, dicts, sizes)
   return generator
 end
 
+--[[ Release Generator - if NCE convert to Linear/Logsoftmax. ]]
+function Generator:release()
+  if self.needOutput then
+    _G.logger:info(' * Converting NCE module into regular linear/softmax')
+    local generator = nn.ConcatTable()
+    for i = 1, #self.net.modules do
+      local m = self.net.modules[i]
+      -- m is a Sequential - m.modules[1] is a selector, m.modules[2] is NCEModule or Linear
+      local linear = nn.Linear(m.modules[2].weight:size(2),m.modules[2].weight:size(1))
+      linear.weight = m.modules[2].weight
+      linear.bias = m.modules[2].bias
+      local feat_generator = nn.Sequential()
+                          :add(linear)
+                          :add(nn.LogSoftMax())
+      generator:add(feat_generator)
+    end
+    self.net = generator
+  end
+end
+
 function Generator:updateOutput(input)
   self.output = self.net:updateOutput(input)
   return self.output
