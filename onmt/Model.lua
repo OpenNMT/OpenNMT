@@ -47,6 +47,8 @@ function Model:changeParameters(changes)
           if enc or dec then
             m:fixEmbeddings(v == 1)
           end
+        elseif k == 'nce_sample_size' and torch.typename(m) == 'onmt.NCEModule' then
+          m.k = v
         end
       end)
     end

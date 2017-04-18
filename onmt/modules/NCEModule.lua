@@ -9,7 +9,11 @@ if dpnn then
   local options = {
     {
       '-nce_sample_size', 25,
-      [[Size of NCE sample.]]
+      [[Size of NCE sample.]],
+      {
+        valid = onmt.utils.ExtendedCmdLine.isUInt,
+        structural = 1
+      }
     }
   }
 
