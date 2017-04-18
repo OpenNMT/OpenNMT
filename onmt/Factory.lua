@@ -176,9 +176,9 @@ function Factory.buildWordEncoder(opt, dicts, verbose)
   end
 
   local inputNetwork = buildInputNetwork(opt, dicts,
-                                   opt.src_word_vec_size or opt.word_vec_size,
-                                   opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
-                                   verbose)
+                                         opt.src_word_vec_size or opt.word_vec_size,
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
+                                         verbose)
 
   return Factory.buildEncoder(opt, inputNetwork, verbose)
 end
