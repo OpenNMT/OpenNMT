@@ -9,12 +9,12 @@ local function buildEncoder(class, rnnType)
   class.declareOpts(cmd)
 
   local opt = cmd:parse('')
-  opt.rnn_size = 30
+  opt.rnn_size = 10
   opt.rnn_type = rnnType or 'LSTM'
   opt.dropout = 0
 
-  local inputNet = nn.LookupTable(10, 20)
-  inputNet.inputSize = 20
+  local inputNet = nn.LookupTable(10, 4)
+  inputNet.inputSize = 4
 
   return class(opt, inputNet), opt
 end

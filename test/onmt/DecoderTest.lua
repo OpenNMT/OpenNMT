@@ -12,14 +12,14 @@ local function buildDecoder(inputFeed, rnnType, layers)
   onmt.GlobalAttention.declareOpts(cmd)
 
   local opt = cmd:parse('')
-  opt.rnn_size = 30
+  opt.rnn_size = 10
   opt.rnn_type = rnnType or 'LSTM'
   opt.dropout = 0
   opt.input_feed = inputFeed and 1 or 0
   opt.layers = layers or opt.layers
 
-  local inputNet = nn.LookupTable(10, 20)
-  inputNet.inputSize = 20
+  local inputNet = nn.LookupTable(10, 4)
+  inputNet.inputSize = 4
 
   local generator = onmt.Generator(opt.rnn_size, 10)
   local attention = onmt.GlobalAttention(opt, opt.rnn_size)
