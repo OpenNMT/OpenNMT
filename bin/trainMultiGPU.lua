@@ -50,7 +50,7 @@ local function main()
   local checkpoint
   checkpoint, opt = onmt.train.Checkpoint.loadFromCheckpoint(opt)
 
-  _G.logger:info('Training '..modelClass.modelName()..' model')
+  _G.logger:info('Training '..modelClass.modelName()..' model with Multi GPU(s)')
 
   -- Create the data loader class.
   _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
@@ -94,6 +94,8 @@ local function main()
   
   
   
+  
+  
   -- Build or load model from checkpoint and copy to GPUs.
 	onmt.utils.Parallel.launch(function(idx)
 	local _modelClass = onmt.ModelSelector(modelType)
@@ -134,7 +136,7 @@ local function main()
   local optim = onmt.train.Optim.new(opt, optimStates)
 
   -- Initialize trainer.
-  local trainer = onmt.train.Trainer.new(opt)
+  local trainer = onmt.train.MultiGPUTrainer.new(opt)
 
   -- Launch training.
   trainer:train(model, optim, trainData, validData, dataset, checkpoint.info)

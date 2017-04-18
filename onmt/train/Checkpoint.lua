@@ -43,13 +43,13 @@ function Checkpoint:save(filePath, info)
 end
 
 --[[ Save the model and data in the middle of an epoch sorting the iteration. ]]
-function Checkpoint:saveIteration(iteration, epochState, batchOrder, verbose)
+function Checkpoint:saveIteration(iteration, totalIteration, epochState, batchOrder, validPpl, validBleu, verbose)
   local info = {}
   info.iteration = iteration + 1
-  info.epoch = epochState.epoch
+  info.epoch = epochState.epoch + iteration / totalIteration - 1
   info.batchOrder = batchOrder
 
-  local filePath = string.format('%s_checkpoint.t7', self.savePath)
+  local filePath = string.format('%s_checkpoint_epoch%.2f_ppl=%.2f_bleu=%.2f.t7', self.savePath, info.epoch, validPpl, validBleu)
 
   if verbose then
     _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
@@ -83,18 +83,18 @@ function Checkpoint.loadFromCheckpoint(opt)
 
     checkpoint = torch.load(opt.train_from)
 
-    opt.layers = checkpoint.options.layers
-    opt.rnn_size = checkpoint.options.rnn_size
-    opt.brnn = checkpoint.options.brnn
-    opt.brnn_merge = checkpoint.options.brnn_merge
-    opt.input_feed = checkpoint.options.input_feed
-	opt.word_vec_size = checkpoint.options.word_vec_size
-	opt.rnn_type = checkpoint.options.rnn_type
-	opt.feat_merge = checkpoint.options.feat_merge
-	opt.feat_vec_exponent = checkpoint.options.feat_vec_exponent
-	opt.coverage = checkpoint.options.coverage
-	opt.attention = checkpoint.options.attention
-	opt.dropout = checkpoint.options.dropout
+		opt.layers = checkpoint.options.layers
+		opt.rnn_size = checkpoint.options.rnn_size
+		opt.brnn = checkpoint.options.brnn
+		opt.brnn_merge = checkpoint.options.brnn_merge
+		opt.input_feed = checkpoint.options.input_feed
+		opt.word_vec_size = checkpoint.options.word_vec_size
+		opt.rnn_type = checkpoint.options.rnn_type
+		opt.feat_merge = checkpoint.options.feat_merge
+		opt.feat_vec_exponent = checkpoint.options.feat_vec_exponent
+		opt.coverage = checkpoint.options.coverage
+		opt.attention = checkpoint.options.attention
+		opt.dropout = checkpoint.options.dropout
 
     -- Resume training from checkpoint
     if opt.continue then
