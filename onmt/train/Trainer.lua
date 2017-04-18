@@ -53,7 +53,7 @@ local options = {
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',            100,    [[Print stats every this many iterations within an epoch.]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-loop_epoch',          true, [[Using the older training code to ensure backward-compatibility. Change this to false to use the new training code (save more frequently with bleu)]]},
+  {'-loop_epoch',          1, [[Using the older training code to ensure backward-compatibility. Change this to 0 to use the new training code (save more frequently with bleu)]]},
   {'-async_parallel_minbatch', 1000,  [[For async parallel computing, minimal number of batches before being parallel.]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-start_iteration',         1,     [[If loading from a checkpoint, the iteration from which to start]],
@@ -282,7 +282,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
   for epoch = self.args.start_epoch, self.args.end_epoch do
     _G.logger:info('')
     
-    if self.args.loop_epoch == true then
+    if self.args.loop_epoch == 1 then
 
 			local globalProfiler = onmt.utils.Profiler.new(self.args.profiler)
 
