@@ -270,7 +270,7 @@
 </ul>
 <h2 id="preprocess-options">Preprocess options</h2>
 <ul>
-<li><code>-data_type &lt;string&gt;</code> (accepted: <code>bitext</code>, <code>monotext</code>; default: <code>bitext</code>)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.</li>
+<li><code>-data_type &lt;string&gt;</code> (accepted: <code>bitext</code>, <code>monotext</code>, <code>feattext</code>; default: <code>bitext</code>)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.</li>
 <li><code>-save_data &lt;string&gt;</code><br/>Output file for the prepared data.</li>
 </ul>
 <h2 id="data-options">Data options</h2>
@@ -291,6 +291,8 @@
 <li><code>-time_shift_feature &lt;number&gt;</code> (default: <code>1</code>)<br/>Time shift features on the decoder side.</li>
 <li><code>-sort &lt;number&gt;</code> (default: <code>1</code>)<br/>If = 1, sort the sentences by size to build batches without source padding.</li>
 <li><code>-shuffle &lt;number&gt;</code> (default: <code>1</code>)<br/>If = 1, shuffle data (prior sorting).</li>
+<li><code>-idx_files</code><br/>If set, source and target files are 'key value' with key match between source and target.</li>
+<li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Report status every this many sentences.</li>
 </ul>
 <h2 id="logger-options">Logger options</h2>
 <ul>
@@ -301,7 +303,6 @@
 <h2 id="other-options">Other options</h2>
 <ul>
 <li><code>-seed &lt;number&gt;</code> (default: <code>3425</code>)<br/>Random seed.</li>
-<li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Report status every this many sentences.</li>
 </ul>
               
             </div>

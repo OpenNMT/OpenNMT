@@ -321,13 +321,13 @@
 <li><code>-feat_merge &lt;string&gt;</code> (accepted: <code>concat</code>, <code>sum</code>; default: <code>concat</code>)<br/>Merge action for the features embeddings.</li>
 <li><code>-feat_vec_exponent &lt;number&gt;</code> (default: <code>0.7</code>)<br/>When features embedding sizes are not set and using <code>-feat_merge concat</code>, their dimension will be set to <code>N^feat_vec_exponent</code> where <code>N</code> is the number of values the feature takes.</li>
 <li><code>-feat_vec_size &lt;number&gt;</code> (default: <code>20</code>)<br/>When features embedding sizes are not set and using <code>-feat_merge sum</code>, this is the common embedding size of the features</li>
-<li><code>-input_feed &lt;number&gt;</code> (accepted: <code>0</code>, <code>1</code>; default: <code>1</code>)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.</li>
 <li><code>-layers &lt;number&gt;</code> (default: <code>2</code>)<br/>Number of recurrent layers of the encoder and decoder.</li>
 <li><code>-rnn_size &lt;number&gt;</code> (default: <code>500</code>)<br/>Hidden size of the recurrent unit.</li>
 <li><code>-rnn_type &lt;string&gt;</code> (accepted: <code>LSTM</code>, <code>GRU</code>; default: <code>LSTM</code>)<br/>Type of recurrent cell.</li>
 <li><code>-dropout &lt;number&gt;</code> (default: <code>0.3</code>)<br/>Dropout probability applied between recurrent layers.</li>
 <li><code>-dropout_input</code><br/>Also apply dropout to the input of the recurrent module.</li>
 <li><code>-residual</code><br/>Add residual connections between recurrent layers.</li>
+<li><code>-input_feed &lt;number&gt;</code> (accepted: <code>0</code>, <code>1</code>; default: <code>1</code>)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.</li>
 <li><code>-brnn</code><br/>Use a bidirectional encoder.</li>
 <li><code>-dbrnn</code><br/>Use a deep bidirectional encoder.</li>
 <li><code>-pdbrnn</code><br/>Use a pyramidal deep bidirectional encoder.</li>
