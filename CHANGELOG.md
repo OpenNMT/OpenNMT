@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### New features
+
 * Display sentence length distribution in preprocess
 * Support vectors as inputs using [Kaldi](http://kaldi-asr.org/) input format
 * Support parallel file alignment by index in addition to line-by-line
