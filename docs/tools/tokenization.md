@@ -29,7 +29,7 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 OpenNMT's BPE module fully supports the [original BPE](https://github.com/rsennrich/subword-nmt) as default mode:
 
 ```bash
-tools/learn_bpe.lua -s 30000 -save_bpe codes < input
+tools/learn_bpe.lua -size 30000 -save_bpe codes < input
 tools/tokenize.lua -bpe_model codes < input
 ```
 
@@ -67,3 +67,6 @@ The output of the previous example would be:
 Constitution --> con￨C sti￨l tu￨l tion￨l
 constitution --> con￨l sti￨l tu￨l tion￨l
 ```
+
+!!! note "Note"
+    Use Lua 5.2 if you encounter any memory issue while using `learn_bpe.lua` (e.g. `-size` is too big). Otherwise, stay with Lua 5.1 for better efficiency.

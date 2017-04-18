@@ -80,21 +80,13 @@ local options = {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0
     }
-  },
-  {
-    '-input_feed', 1,
-    [[Feed the context vector at each time step as additional input
-      (via concatenation with the word embeddings) to the decoder.]],
-    {
-      enum = {0, 1},
-      structural = 0
-    }
   }
 }
 
 function Seq2Seq.declareOpts(cmd)
   cmd:setCmdLineOptions(options, Seq2Seq.modelName())
   onmt.Encoder.declareOpts(cmd)
+  onmt.Decoder.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 

@@ -124,13 +124,11 @@ local function main()
   _G.logger:info(' * maximum sequence length: source = %d; target = %d',
                  trainData.maxSourceLength, trainData.maxTargetLength)
   _G.logger:info(' * number of training sentences: %d', #trainData.src)
-  local typeBatch = "(even)"
-  if opt.uneven_batches then
-    typeBatch = "(uneven)"
-  end
-  local avgBatchSize = #trainData.src/nTrainBatch
-  _G.logger:info(' * %d batches, max size: %d %s, avg size: %f, capacity: %d%%',
-                    nTrainBatch, opt.max_batch_size, typeBatch, avgBatchSize, math.ceil(batchUsage*1000)/10)
+  _G.logger:info(' * number of batches: %d',  nTrainBatch)
+  _G.logger:info('   - source sequence lengths: %s', opt.uneven_batches and 'variable' or 'equal')
+  _G.logger:info('   - maximum size: %d', opt.max_batch_size)
+  _G.logger:info('   - average size: %.2f', #trainData.src / nTrainBatch)
+  _G.logger:info('   - capacity: %.2f%%', math.ceil(batchUsage * 1000) / 10)
 
   _G.logger:info('Building model...')
 

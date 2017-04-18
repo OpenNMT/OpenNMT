@@ -14,7 +14,7 @@ local function getLength(seq, ignore)
     if max == 0 or len > max then
       max = len
     end
-    if max ~= len then
+    if i > 1 and sizes[i - 1] ~= len then
       uneven = true
     end
     sizes[i] = len
@@ -70,6 +70,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   end
 
   self.size = #src
+  self.totalSize = self.size -- updated when this batch is part of a larger one (data parallelism).
 
   self.sourceLength, self.sourceSize, self.uneven = getLength(src)
 

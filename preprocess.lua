@@ -36,13 +36,6 @@ local otherOptions = {
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt()
     }
-  },
-  {
-    '-report_every', 100000,
-    [[Report status every this many sentences.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
-    }
   }
 }
 cmd:setCmdLineOptions(otherOptions, 'Other')

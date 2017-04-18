@@ -98,13 +98,13 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   end
 
   if verbose then
-    _G.logger:info('   - with word embeddings size: ' .. wordEmbSize)
+    _G.logger:info('   - word embeddings size: ' .. wordEmbSize)
   end
 
   -- Sequence with features.
   if #dicts.features > 0 then
     if verbose then
-      _G.logger:info('   - with features embeddings sizes: ' .. table.concat(featEmbSizes, ', '))
+      _G.logger:info('   - features embeddings sizes: ' .. table.concat(featEmbSizes, ', '))
     end
 
     local vocabSizes = {}
@@ -142,29 +142,25 @@ end
 
 function Factory.buildEncoder(opt, inputNetwork, verbose)
 
-  if opt.brnn then
+  local function describeEncoder(name)
     if verbose then
-      _G.logger:info('   - Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
+      _G.logger:info('   - type: %s', name)
+      _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+                     opt.rnn_type, opt.layers, opt.rnn_size)
     end
+  end
+
+  if opt.brnn then
+    describeEncoder('bidirectional')
     return onmt.BiEncoder.new(opt, inputNetwork)
   elseif opt.dbrnn then
-    if verbose then
-      _G.logger:info('   - Deep Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
-    end
+    describeEncoder('deep bidirectional')
     return onmt.DBiEncoder.new(opt, inputNetwork)
   elseif opt.pdbrnn then
-    if verbose then
-      _G.logger:info('   - Pyramidal Bidirectional %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
-    end
+    describeEncoder('pyramidal deep bidirectional')
     return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
-    if verbose then
-      _G.logger:info('   - Simple %s Encoder: %d layers, rnn_size %d, dropout %0.1f',
-                     opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
-    end
+    describeEncoder('simple')
     return onmt.Encoder.new(opt, inputNetwork)
   end
 
@@ -211,20 +207,13 @@ function Factory.loadEncoder(pretrained, clone)
   return encoder
 end
 
-function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
-  local inputSize = inputNetwork.inputSize
-
-  if opt.input_feed == 1 then
-    inputSize = inputSize + opt.rnn_size
+function Factory.buildDecoder(opt, inputNetwork, generator, attnModel, verbose)
+  if verbose then
+    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+                   opt.rnn_type, opt.layers, opt.rnn_size)
   end
 
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
-  end
-  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual, opt.dropout_input)
-
-  return onmt.Decoder.new(opt, inputNetwork, rnn, generator, opt.input_feed == 1, attnModel)
+  return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end
 
 function Factory.buildWordDecoder(opt, dicts, verbose)
@@ -240,7 +229,7 @@ function Factory.buildWordDecoder(opt, dicts, verbose)
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
   local attnModel = Factory.buildAttention(opt)
 
-  return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
+  return Factory.buildDecoder(opt, inputNetwork, generator, attnModel, verbose)
 end
 
 function Factory.loadDecoder(pretrained, clone)
@@ -263,10 +252,10 @@ end
 
 function Factory.buildAttention(args)
   if args.attention == 'none' then
-    _G.logger:info('   - No Attention')
+    _G.logger:info('   - attention: none')
     return onmt.NoAttention(args, args.rnn_size)
   else
-    _G.logger:info('   - Global Attention: '..args.global_attention)
+    _G.logger:info('   - attention: global (%s)', args.global_attention)
     return onmt.GlobalAttention(args, args.rnn_size)
   end
 end
