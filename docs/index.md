@@ -1,4 +1,4 @@
-This portal provides a detailled documentation of the OpenNMT toolkit. It desribes how to use the Torch project and how it works.
+This portal provides a detailled documentation of the OpenNMT toolkit. It describes how to use the Torch project and how it works.
 
 *For the PyTorch version, visit the project on [GitHub](https://github.com/OpenNMT/OpenNMT-py).*
 

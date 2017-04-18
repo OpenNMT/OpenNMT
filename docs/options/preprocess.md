@@ -9,7 +9,7 @@
 
 ## Preprocess options
 
-* `-data_type <string>` (accepted: `bitext`, `monotext`; default: `bitext`)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.
+* `-data_type <string>` (accepted: `bitext`, `monotext`, `feattext`; default: `bitext`)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.
 * `-save_data <string>`<br/>Output file for the prepared data.
 
 ## Data options
@@ -30,6 +30,8 @@
 * `-time_shift_feature <number>` (default: `1`)<br/>Time shift features on the decoder side.
 * `-sort <number>` (default: `1`)<br/>If = 1, sort the sentences by size to build batches without source padding.
 * `-shuffle <number>` (default: `1`)<br/>If = 1, shuffle data (prior sorting).
+* `-idx_files`<br/>If set, source and target files are 'key value' with key match between source and target.
+* `-report_every <number>` (default: `100000`)<br/>Report status every this many sentences.
 
 ## Logger options
 
@@ -40,5 +42,4 @@
 ## Other options
 
 * `-seed <number>` (default: `3425`)<br/>Random seed.
-* `-report_every <number>` (default: `100000`)<br/>Report status every this many sentences.
 

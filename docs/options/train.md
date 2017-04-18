@@ -36,13 +36,13 @@
 * `-feat_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action for the features embeddings.
 * `-feat_vec_exponent <number>` (default: `0.7`)<br/>When features embedding sizes are not set and using `-feat_merge concat`, their dimension will be set to `N^feat_vec_exponent` where `N` is the number of values the feature takes.
 * `-feat_vec_size <number>` (default: `20`)<br/>When features embedding sizes are not set and using `-feat_merge sum`, this is the common embedding size of the features
-* `-input_feed <number>` (accepted: `0`, `1`; default: `1`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
 * `-layers <number>` (default: `2`)<br/>Number of recurrent layers of the encoder and decoder.
 * `-rnn_size <number>` (default: `500`)<br/>Hidden size of the recurrent unit.
 * `-rnn_type <string>` (accepted: `LSTM`, `GRU`; default: `LSTM`)<br/>Type of recurrent cell.
 * `-dropout <number>` (default: `0.3`)<br/>Dropout probability applied between recurrent layers.
 * `-dropout_input`<br/>Also apply dropout to the input of the recurrent module.
 * `-residual`<br/>Add residual connections between recurrent layers.
+* `-input_feed <number>` (accepted: `0`, `1`; default: `1`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
 * `-brnn`<br/>Use a bidirectional encoder.
 * `-dbrnn`<br/>Use a deep bidirectional encoder.
 * `-pdbrnn`<br/>Use a pyramidal deep bidirectional encoder.

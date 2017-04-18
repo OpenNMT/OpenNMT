@@ -12,6 +12,7 @@
 * `-src <string>`<br/>Source sequences to translate.
 * `-tgt <string>`<br/>Optional true target sequences.
 * `-output <string>` (default: `pred.txt`)<br/>Output file.
+* `-idx_files`<br/>If set, source and target files are 'key value' with key match between source and target.
 
 ## Translator options
 
