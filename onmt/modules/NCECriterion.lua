@@ -1,4 +1,4 @@
---[[
+--[[ Thin layer over Element Research dpnn NCE Criterion
 --]]
 
 local dpnn, _ = pcall(function() return require 'dpnn' end)
