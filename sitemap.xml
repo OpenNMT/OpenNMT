@@ -175,6 +175,12 @@
      <changefreq>daily</changefreq>
     </url>
         
+    <url>
+     <loc>/options/embeddings/</loc>
+     <lastmod>2017-04-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
