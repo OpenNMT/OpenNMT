@@ -14,5 +14,6 @@ utils.Logger = require('onmt.utils.Logger')
 utils.Profiler = require('onmt.utils.Profiler')
 utils.ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
 utils.BLEU = require('onmt.utils.BLEU')
+utils.Rewarder = require('onmt.utils.Rewarder')
 
 return utils

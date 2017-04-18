@@ -33,10 +33,10 @@ local function evalBLEU(model, data)
 	_G.scorer:accumulateCorpusScoreBatch(sampled, batch.targetOutput)
   end
   
-  local bleuScore = _G.scorer:computeCorpusBLEU()
+  local bleuScore = _G.scorer:computeCorpusScore()
   
   model:training()
-  _G.scorer:resetStats()
+  _G.scorer:resetCorpusStats()
   collectgarbage()
   
   return bleuScore
@@ -80,7 +80,7 @@ function Trainer:__init(args)
 end
 
 function Trainer:train(model, optim, trainData, validData, dataset, info)
-  _G.scorer = onmt.utils.BLEU.new(dataset.dicts.tgt.words, 4, 1)
+ _G.scorer = Rewarder(dataset.dicts.tgt.words, true, 'bleu')
 
   
   local verbose = true
@@ -181,12 +181,12 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     return epochState, epochProfiler:dump()
   end
   
-  if self.args.report_bleu == true then
+  
 	
 	local bleuScore = evalBLEU(model, validData)
-	_G.logger:info('Validation BLEU score: %.2f', bleuScore)
+	_G.logger:info('Initial Validation BLEU score: %.2f', bleuScore)
 	
-  end
+  
 
   _G.logger:info('Start training...')
 
@@ -202,10 +202,14 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     globalProfiler:start('valid')
     local validPpl = eval(model, validData)
+    local validBleu = evalBLEU(model, validData)
+	
+    
     globalProfiler:stop('valid')
 
     if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
     _G.logger:info('Validation perplexity: %.2f', validPpl)
+    _G.logger:info('Validation BLEU score: %.2f', validBleu)
 
     optim:updateLearningRate(validPpl, epoch)
 

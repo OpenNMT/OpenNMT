@@ -90,6 +90,7 @@ build = {
     ["onmt.utils.Table"] = "onmt/utils/Table.lua",
     ["onmt.utils.Tensor"] = "onmt/utils/Tensor.lua",
     ["onmt.utils.BLEU"] = "onmt/utils/BLEU.lua",
+    ["onmt.utils.Rewarder"] = "onmt/utils/Rewarder.lua",
     ["onmt.Constants"] = "onmt/Constants.lua",
     ["onmt.Factory"] = "onmt/Factory.lua",
     ["onmt.ModelSelector"] = "onmt/ModelSelector.lua",
