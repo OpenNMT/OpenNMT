@@ -14,3 +14,4 @@ gen_script_options tag.lua docs/options/tag.md
 gen_script_options tools/tokenize.lua docs/options/tokenize.md
 gen_script_options tools/learn_bpe.lua docs/options/learn_bpe.md
 gen_script_options tools/rest_translation_server.lua docs/options/rest_server.md
+gen_script_options tools/embeddings.lua docs/options/embeddings.md
