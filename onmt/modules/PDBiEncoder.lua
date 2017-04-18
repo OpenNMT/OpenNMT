@@ -110,6 +110,23 @@ function PDBiEncoder:maskPadding()
   self.layers[1]:maskPadding()
 end
 
+-- size of context vector
+function PDBiEncoder:contextSize(sourceSize, sourceLength)
+  local contextLength = math.ceil(sourceLength/self.args.multiplier)
+  local contextSize
+  if type(sourceSize) == 'table' then
+    contextSize = {}
+    for i = 1, #sourceSize do
+      table.insert(contextSize, math.ceil(contextSize[i]/self.args.multiplier))
+    end
+  elseif type(sourceSize) == 'int' then
+    contextSize = math.ceil(sourceSize/self.args.multiplier)
+  else
+    contextSize = torch.ceil(sourceSize/self.args.multiplier)
+  end
+  return contextSize, contextLength
+end
+
 function PDBiEncoder:forward(batch)
   -- adjust batch length so that it can be divided
   local batch_length = batch.sourceLength
