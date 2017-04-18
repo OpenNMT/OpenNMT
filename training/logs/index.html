@@ -250,14 +250,17 @@
             <div class="section">
               
                 <p>During the training, some information are displayed every <code>-report_every</code> iterations. These logs are usually needed to evaluate the training progress, efficiency and convergence.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 <p>Measurements are reported as an average since the previous print.</p>
+</div>
 <h2 id="perplexity">Perplexity</h2>
 <p>A key information is the <strong>training perplexity</strong> defined by:</p>
 <p>
-<script type="math/tex; mode=display">ppl=\exp(\frac{loss}{|W|})</script>
+<script type="math/tex; mode=display">ppl(X,Y)=\exp(\frac{-\sum_{i=1}^{|Y|}\log P(y_i|y_{i-1},\dotsc,y_{1},X)}{|Y|})</script>
 </p>
-<p>with <script type="math/tex">loss</script> being the cumulated negative log likelihood of the true target data and <script type="math/tex">|W|</script> the number of target words. You want this value to go down and be low in which case it means your model fits well the training data.</p>
-<p>At the end of an epoch, the logs report the <strong>validation perplexity</strong> with the same formula but applied on the validation data. It shows how well your model fits unseen data.</p>
+<p>with <script type="math/tex">X</script> being the source sequence, <script type="math/tex">Y</script> the true target sequence and <script type="math/tex">y_i</script> the <script type="math/tex">i</script>-th target word. The numerator is the negative log likelihood and the loss function value.</p>
+<p>You want the perplexity to go down and be low in which case it means your model fits well the training data. At the end of an epoch, the logs report the <strong>validation perplexity</strong> with the same formula but applied on the validation data. It shows how well your model fits unseen data.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>During evaluation on the validation dataset, dropout is turned off.</p>
