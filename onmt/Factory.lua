@@ -70,6 +70,14 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
 end
 
 local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords, verbose)
+
+  if not dicts then
+    -- if input vector - skip word embbedding
+    local inputNetwork = nn.Identity()
+    inputNetwork.inputSize = opt.dimInputSize
+    return inputNetwork
+  end
+
   local wordEmbSize, featEmbSizes = resolveEmbSizes(opt, dicts, wordSizes)
 
   local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size

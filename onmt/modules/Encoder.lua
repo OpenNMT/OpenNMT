@@ -130,6 +130,11 @@ function Encoder:maskPadding()
   self.maskPad = true
 end
 
+-- size of context vector
+function Encoder:contextSize(sourceSize, sourceLength)
+  return sourceSize, sourceLength
+end
+
 --[[ Build one time-step of an Encoder
 
 Returns: An nn-graph mapping
