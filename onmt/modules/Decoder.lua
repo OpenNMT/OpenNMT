@@ -16,17 +16,46 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
 local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
+local options = {
+  {
+    '-input_feed', 1,
+    [[Feed the context vector at each time step as additional input
+      (via concatenation with the word embeddings) to the decoder.]],
+    {
+      enum = {0, 1},
+      structural = 0
+    }
+  }
+}
+
+function Decoder.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+  onmt.Encoder.declareOpts(cmd)
+end
 
 --[[ Construct a decoder layer.
 
 Parameters:
 
+  * `args` - module arguments
   * `inputNetwork` - input nn module.
-  * `rnn` - recurrent module, such as [onmt.LSTM](onmt+modules+LSTM).
-  * `generator` - optional, an output [onmt.Generator](onmt+modules+Generator).
-  * `inputFeed` - bool, enable input feeding.
+  * `generator` - an output generator.
+  * `attentionModel` - attention model to apply on source.
 --]]
-function Decoder:__init(args, inputNetwork, rnn, generator, inputFeed, attentionModel)
+function Decoder:__init(args, inputNetwork, generator, attentionModel)
+  local RNN = onmt.LSTM
+  if args.rnn_type == 'GRU' then
+    RNN = onmt.GRU
+  end
+
+  -- Input feeding means the decoder takes an extra
+  -- vector each time representing the attention at the
+  -- previous step.
+  local inputSize = inputNetwork.inputSize + (args.input_feed * args.rnn_size)
+
+  local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
+                      args.dropout, args.residual, args.dropout_input)
+
   self.rnn = rnn
   self.inputNet = inputNetwork
 
@@ -37,10 +66,7 @@ function Decoder:__init(args, inputNetwork, rnn, generator, inputFeed, attention
   self.args.inputIndex = {}
   self.args.outputIndex = {}
 
-  -- Input feeding means the decoder takes an extra
-  -- vector each time representing the attention at the
-  -- previous step.
-  self.args.inputFeed = inputFeed
+  self.args.inputFeed = (args.input_feed == 1)
 
   parent.__init(self, self:_buildModel(attentionModel))
 
@@ -145,8 +171,12 @@ function Decoder:_buildModel(attentionModel)
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
 
-  -- The output of a subgraph is a node: split it to access the last RNN output.
-  outputs = { outputs:split(self.args.numEffectiveLayers) }
+  if self.args.numEffectiveLayers > 1 then
+    -- The output of a subgraph is a node: split it to access the last RNN output.
+    outputs = { outputs:split(self.args.numEffectiveLayers) }
+  else
+    outputs = { outputs }
+  end
 
   -- Compute the attention here using h^L as query.
   local attnLayer = attentionModel
