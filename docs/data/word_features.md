@@ -24,7 +24,9 @@ You can generate this case feature with OpenNMT's tokenization script and the `-
 
 ## Time-shifting
 
-By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. More precisely at timestep \(t\):
+By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. This way, the decoder architecture is similar to a RNN-based sequence tagger with the output of a timestep being the tag of the input.
+
+More precisely at timestep \(t\):
 
 * the inputs are \(words^{(t)}\) and \(features^{(t-1)}\)
 * the outputs are \(words^{(t+1)}\) and \(features^{(t)}\)

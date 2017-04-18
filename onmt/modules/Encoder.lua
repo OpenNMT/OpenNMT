@@ -224,7 +224,8 @@ function Encoder:forward(batch)
     -- Special case padding.
     if self.maskPad then
       for b = 1, batch.size do
-        if batch.sourceInputPadLeft and t <= batch.sourceLength - batch.sourceSize[b] then
+        if (batch.sourceInputPadLeft and t <= batch.sourceLength - batch.sourceSize[b])
+        or (not batch.sourceInputPadLeft and t > batch.sourceSize[b]) then
           for j = 1, #states do
             states[j][b]:zero()
           end
@@ -280,7 +281,10 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
     -- Add context gradients to last hidden states gradients.
     gradStatesInput[#gradStatesInput]:add(gradContextOutput[{{}, t}])
 
-    local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
+    -- nngraph does not accept table of size 1.
+    local timestepGradOutput = #gradStatesInput > 1 and gradStatesInput or gradStatesInput[1]
+
+    local gradInput = self:net(t):backward(self.inputs[t], timestepGradOutput)
 
     -- Prepare next Encoder output gradients.
     for i = 1, #gradStatesInput do

@@ -1,5 +1,15 @@
 ## [Unreleased]
 
+### New features
+* Display sentence length distribution in preprocess
+
+### Fixes and improvements
+
+* Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
+* Fix translation error of models profiled during training
+* Fix error when using one-layer GRU
+* Do not allow duplicate commandline options and do not print help on errors
+
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
 
 ### New features

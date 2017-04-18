@@ -115,7 +115,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     -- optimize memory of the first clone
     if not self.args.disable_mem_optimization then
       local batch = onmt.utils.Cuda.convert(trainData:getBatch(1))
-      batch.totalSize = batch.size
       onmt.utils.Memory.optimize(_G.model, batch, verbose)
     end
 
@@ -276,7 +275,6 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
             end
 
             _G.batch = trainData:getBatch(batchIdx)
-            _G.batch.totalSize = _G.batch.size
             table.insert(batches, onmt.utils.Tensor.deepClone(_G.batch))
             onmt.utils.Cuda.convert(_G.batch)
 
