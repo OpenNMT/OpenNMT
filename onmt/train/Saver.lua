@@ -36,18 +36,18 @@ function Saver.loadCheckpoint(opt)
     end
   end
 
+  local function optionChanged(name)
+    return not opt._is_default[name] and opt[name] ~= checkpoint.options[name]
+  end
+
   -- Check if we should reuse RNG states.
-  if checkpoint.info.rngStates
-  and not (opt._is_default['seed'] or opt.seed == checkpoint.options.seed) then
+  if checkpoint.info.rngStates and optionChanged('seed') then
     _G.logger:warning('New \'-seed\' value: ignoring saved RNG states.')
     checkpoint.info.rngStates = nil
   end
 
   -- Check if the continue mode can be applied.
-  local learningRateChanged = not (opt._is_default['learning_rate'] or opt.learning_rate == checkpoint.options.learning_rate)
-  local startEpochChanged = not (opt._is_default['start_epoch'] or opt.start_epoch == checkpoint.options.start_epoch)
-
-  if opt.continue and (learningRateChanged or startEpochChanged) then
+  if opt.continue and (optionChanged('learning_rate') or optionChanged('start_epoch')) then
     _G.logger:warning('\'-continue\' option is used but -learning_rate or -start_epoch are set and different than previous epoch. Ignoring \'-continue\'.')
     opt.continue = false
   end
@@ -62,10 +62,9 @@ function Saver.loadCheckpoint(opt)
         -- Training states should be retrieved when continuing a training.
         restoreOption(k)
       elseif opt._structural[k] or opt._init_only[k] then
-        -- If an option was set by the user, check that we can actually change it.
-        local valueChanged = not opt._is_default[k] and v ~= checkpoint.options[k]
 
-        if valueChanged then
+        -- If an option was set by the user, check that we can actually change it.
+        if optionChanged(k) then
           if opt._init_only[k] then
             _G.logger:warning('Cannot change initialization option -%s. Ignoring.', k)
             restoreOption(k)
@@ -94,9 +93,9 @@ function Saver.loadCheckpoint(opt)
                      .. ' at iteration ' .. opt.start_iteration .. '...')
   else
     -- Otherwise, we can drop previous training information.
-    checkpoint.info.learningRate = nil
-    checkpoint.info.epoch = nil
-    checkpoint.info.iteration = nil
+    local rngStates = checkpoint.info.rngStates
+    checkpoint.info = {}
+    checkpoint.info.rngStates = rngStates
   end
 
   return checkpoint, opt, paramChanges
