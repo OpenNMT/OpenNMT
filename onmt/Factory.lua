@@ -26,7 +26,7 @@ local options = {
     '-attention', 'global',
     [[Attention model.]],
     {
-      enum = {'none', 'global', 'temporal'}
+      enum = {'none', 'global', 'coverage'}
     }
   }
 }
@@ -255,7 +255,7 @@ function Factory.buildAttention(args)
   if args.attention == 'none' then
     _G.logger:info('   - attention: none')
     return onmt.NoAttention(args, args.rnn_size)
-  elseif args.attention == 'temporal' then
+  elseif args.attention == 'coverage' then
     _G.logger:info('   - Global Attention with Coverage')
     return onmt.GlobalAttentionCoverage(args, args.rnn_size)
   else
