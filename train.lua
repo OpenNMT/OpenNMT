@@ -162,15 +162,11 @@ local function main()
     trainData:checkModel(model)
   end
 
-  -- Define optimization method.
-  local optimStates = (checkpoint.info and checkpoint.info.optimStates) or nil
-  local optim = onmt.train.Optim.new(opt, optimStates)
-
   -- Initialize trainer.
-  local trainer = onmt.train.Trainer.new(opt)
+  local trainer = onmt.train.Trainer.new(opt, model, dataset.dicts, trainData:getBatch(1), checkpoint.info)
 
   -- Launch training.
-  trainer:train(model, optim, trainData, validData, dataset, checkpoint.info)
+  trainer:train(trainData, validData)
 
   _G.logger:shutDown()
 end
