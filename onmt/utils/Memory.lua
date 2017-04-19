@@ -35,9 +35,7 @@ function Memory.optimize(model, batch, verbose)
   -- Prepare memory optimization
   local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model.models)
 
-  -- Batch of one single word since we optimize the first clone.
-  local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength, uneven = batch.uneven }
-
+  batch = onmt.utils.Tensor.deepClone(batch)
   batch.sourceLength = 1
   batch.targetLength = 1
   batch.uneven = false
@@ -50,11 +48,6 @@ function Memory.optimize(model, batch, verbose)
   if verbose then
     _G.logger:info(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100)
   end
-
-  -- Restore batch to be transparent for the calling code.
-  batch.sourceLength = realSizes.sourceLength
-  batch.targetLength = realSizes.targetLength
-  batch.uneven = realSizes.uneven
 end
 
 return Memory
