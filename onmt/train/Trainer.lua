@@ -77,23 +77,27 @@ function Trainer:__init(args, model, dicts, firstBatch)
   -- Set training mode.
   model:training()
 
-  -- Initialize parameters.
+  local params
+  local gradParams
+
   if not onmt.train.Saver.checkpointDefined(args) then
-    model:initParams()
-  end
+    params, gradParams = model:initParams()
 
-  -- Add profiling hooks.
-  if self.args.profiler then
-    model:enableProfiling()
-  end
-
-  -- If enabled, share internal buffers to optimize for memory.
-  if not self.args.disable_mem_optimization then
-    if not firstBatch then
-      _G.logger:error('A first batch is needed to optimize the computation graph for memory')
-    else
-      onmt.utils.Memory.optimize(model, onmt.utils.Cuda.convert(firstBatch), verbose)
+    -- Add profiling hooks.
+    if self.args.profiler then
+      model:enableProfiling()
     end
+
+    -- If enabled, share internal buffers to optimize for memory.
+    if not self.args.disable_mem_optimization then
+      if not firstBatch then
+        _G.logger:error('A first batch is needed to optimize the computation graph for memory')
+      else
+        onmt.utils.Memory.optimize(model, onmt.utils.Cuda.convert(firstBatch), verbose)
+      end
+    end
+  else
+    params, gradParams = model:getParams()
   end
 
   self.params = {}
@@ -101,12 +105,14 @@ function Trainer:__init(args, model, dicts, firstBatch)
 
   -- Create network replicas.
   onmt.utils.Parallel.launch(function(idx)
-    if idx > 1 then
-      _G.model = onmt.utils.Tensor.deepClone(model)
-    else
+    if idx == 1 then
+      -- First replica is the reference model.
       _G.model = model
+      _G.params, _G.gradParams = params, gradParams
+    else
+      _G.model = onmt.utils.Tensor.deepClone(model)
+      _G.params, _G.gradParams = params:clone(), gradParams:clone()
     end
-    _G.params, _G.gradParams = _G.model:getParams()
     return idx, _G.params, _G.gradParams
   end, function(idx, params, gradParams)
     self.params[idx] = params
