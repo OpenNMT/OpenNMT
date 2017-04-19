@@ -441,6 +441,10 @@ function Decoder:backward(batch, outputs, criterion)
   local loss = 0
   local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
+  if self.args.hasCoverage then
+    gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength)
+  end
+
   for t = batch.targetLength, 1, -1 do
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
@@ -476,15 +480,16 @@ function Decoder:backward(batch, outputs, criterion)
     gradStatesInput[self.args.numEffectiveLayers + 1]:add(decGradOut)
 
     -- Compute the standard backward.
-    if self.args.hasCoverage then
-      gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength)
-    end
-
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
     -- Accumulate encoder output gradients.
     gradContextInput:add(gradInput[self.args.inputIndex.context])
     gradStatesInput[self.args.numEffectiveLayers + 1]:zero()
+
+    -- back propagate coverage gradient
+    if self.args.hasCoverage then
+      gradStatesInput[#gradStatesInput]:copy(gradInput[#gradInput])
+    end
 
     -- Accumulate previous output gradients with input feeding gradients.
     if self.args.inputFeed and t > 1 then
