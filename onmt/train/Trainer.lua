@@ -48,7 +48,7 @@ end
 local Trainer = torch.class('Trainer')
 
 local options = {
-  {'-save_every',              1000 ,    [[Save intermediate models every this many iterations within an epoch.
+  {'-save_every',              0 ,    [[Save intermediate models every this many iterations within an epoch.
                                             If = 0, will not save models within an epoch. ]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',            100,    [[Print stats every this many iterations within an epoch.]],
@@ -257,7 +257,8 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 			end
 					
 			if self.args.save_every > 0 and iter % self.args.save_every == 0 then
-				checkpoint:saveIteration(iter, epochState, batchOrder, true)
+				--~ checkpoint:saveIteration(iter, epochState, batchOrder, true)
+				checkpoint:saveIteration(iter, numIterations, epochState, batchOrder, 9999, 0, true)
 			end
 			iter = iter + 1
         
@@ -308,7 +309,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 			--~ 
 			--~ 
 	--~ 
-			checkpoint:saveEpoch(validPpl, epochState, true)
+			checkpoint:saveEpoch(validPpl, validBleu, epochState, true)
 			
 		else
     

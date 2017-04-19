@@ -60,14 +60,14 @@ function Checkpoint:saveIteration(iteration, totalIteration, epochState, batchOr
   os.rename(filePath .. '.tmp', filePath)
 end
 
-function Checkpoint:saveEpoch(validPpl, epochState, verbose)
+function Checkpoint:saveEpoch(validPpl, validBleu, epochState, verbose)
   local info = {}
   info.validPpl = validPpl
   info.epoch = epochState.epoch + 1
   info.iteration = 1
   info.trainTimeInMinute = epochState:getTime() / 60
 
-  local filePath = string.format('%s_epoch%d_%.2f.t7', self.savePath, epochState.epoch, validPpl)
+  local filePath = string.format('%s_epoch%d_ppl=%.2f,bleu=%.2f.t7', self.savePath, epochState.epoch, validPpl, validBleu)
 
   if verbose then
     _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
