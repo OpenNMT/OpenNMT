@@ -328,7 +328,9 @@ function Trainer:generateBatchOrder(data, epoch, trainStates)
   if trainStates then
     startIteration = self.args.start_iteration
     batchOrder = trainStates.batchOrder
-  elseif epoch > self.args.curriculum then
+  end
+
+  if not batchOrder and epoch > self.args.curriculum then
     batchOrder = torch.randperm(data:batchCount())
   end
 
