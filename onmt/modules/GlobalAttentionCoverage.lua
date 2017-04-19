@@ -27,7 +27,7 @@ local options = {
     '-coverage_model', 'ling1',
     [[Coverage model type.]],
     {
-      enum = { 'ling1' }
+      enum = { 'ling1' ,'ling2' }
     }
   }
 }
@@ -74,8 +74,12 @@ function GlobalAttentionCoverage:_buildModel(opt, dim)
 
   -- update coverage
   if opt.coverage_model == 'ling1' then
-    -- linguistic coverage model without fertility model
+    -- linguistic coverage model without fertility model: phi=1
     coverage = nn.CAddTable()({coverage, attn})
+  elseif opt.coverage_model == 'ling2' then
+    -- fertility model - phi=N.sigma(U.h_s)
+    local phi = nn.Mul()(nn.Sigmoid()(nn.Bottle(nn.Linear(dim, 1))(hs)))
+    coverage = nn.CAddTable()({coverage, nn.CDivTable()({attn, phi})})
   end
   -- apply GRU cell - coverage_t = f(coverage_t-1, attn_t, h_t, h_s)
 
