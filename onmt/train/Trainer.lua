@@ -82,22 +82,22 @@ function Trainer:__init(args, model, dicts, firstBatch)
 
   if not onmt.train.Saver.checkpointDefined(args) then
     params, gradParams = model:initParams()
-
-    -- Add profiling hooks.
-    if self.args.profiler then
-      model:enableProfiling()
-    end
-
-    -- If enabled, share internal buffers to optimize for memory.
-    if not self.args.disable_mem_optimization then
-      if not firstBatch then
-        _G.logger:error('A first batch is needed to optimize the computation graph for memory')
-      else
-        onmt.utils.Memory.optimize(model, onmt.utils.Cuda.convert(firstBatch), verbose)
-      end
-    end
   else
     params, gradParams = model:getParams()
+  end
+
+  -- Add profiling hooks.
+  if self.args.profiler then
+    model:enableProfiling()
+  end
+
+  -- If enabled, share internal buffers to optimize for memory.
+  if not self.args.disable_mem_optimization then
+    if not firstBatch then
+      _G.logger:error('A first batch is needed to optimize the computation graph for memory')
+    else
+      onmt.utils.Memory.optimize(model, onmt.utils.Cuda.convert(firstBatch), verbose)
+    end
   end
 
   self.params = {}
