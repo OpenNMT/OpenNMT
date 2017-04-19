@@ -90,7 +90,7 @@ function Seq2Seq.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 
-function Seq2Seq:__init(args, dicts, verbose)
+function Seq2Seq:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
   self.args.uneven_batches = args.uneven_batches
@@ -100,20 +100,20 @@ function Seq2Seq:__init(args, dicts, verbose)
     args.dimInputSize = dicts.srcInputSize
   end
 
-  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
-  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
+  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
+  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
-function Seq2Seq.load(args, models, dicts, isReplica)
+function Seq2Seq.load(args, models, dicts)
   local self = torch.factory('Seq2Seq')()
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
   self.args.uneven_batches = args.uneven_batches
 
-  self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
-  self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
+  self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
+  self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 
   return self

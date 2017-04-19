@@ -135,27 +135,19 @@ local function main()
   _G.logger:info('Building model...')
 
   local model
+  local modelClass = onmt.ModelSelector(modelType)
 
-  -- Build or load model from checkpoint and copy to GPUs.
-  onmt.utils.Parallel.launch(function(idx)
-    local _modelClass = onmt.ModelSelector(modelType)
-    if checkpoint.models then
-      _G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
-      -- dynamic parameter changes
-      if not onmt.utils.Table.empty(paramChanges) then
-        _G.model:changeParameters(paramChanges)
-      end
-    else
-      local verbose = idx == 1
-      _G.model = _modelClass.new(opt, dataset.dicts, verbose)
+  if checkpoint.models then
+    model = modelClass.load(opt, checkpoint.models, dataset.dicts)
+    -- Change parameters dynamically.
+    if not onmt.utils.Table.empty(paramChanges) then
+      model:changeParameters(paramChanges)
     end
-    onmt.utils.Cuda.convert(_G.model)
-    return idx, _G.model
-  end, function(idx, themodel)
-    if idx == 1 then
-      model = themodel
-    end
-  end)
+  else
+    model = modelClass.new(opt, dataset.dicts)
+  end
+
+  onmt.utils.Cuda.convert(model)
 
   if opt.sample > 0 then
     trainData:checkModel(model)

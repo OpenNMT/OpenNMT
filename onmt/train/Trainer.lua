@@ -73,38 +73,44 @@ function Trainer:__init(args, model, dicts, firstBatch)
   self.saver = onmt.train.Saver.new(args, model, self.optim, dicts)
 
   self.model = model
+
+  -- Set training mode.
+  model:training()
+
+  -- Initialize parameters.
+  if not onmt.train.Saver.checkpointDefined(args) then
+    model:initParams()
+  end
+
+  -- Add profiling hooks.
+  if self.args.profiler then
+    model:enableProfiling()
+  end
+
+  -- If enabled, share internal buffers to optimize for memory.
+  if not self.args.disable_mem_optimization then
+    if not firstBatch then
+      _G.logger:error('A first batch is needed to optimize the computation graph for memory')
+    else
+      onmt.utils.Memory.optimize(model, onmt.utils.Cuda.convert(firstBatch), verbose)
+    end
+  end
+
   self.params = {}
   self.gradParams = {}
 
-  -- Prepare model replicas for training.
+  -- Create network replicas.
   onmt.utils.Parallel.launch(function(idx)
-    -- Only logs information of the first thread.
-    local verbose = idx == 1
-
-    -- Initialize and get model parameters.
-    _G.params, _G.gradParams = _G.model:initParams(verbose)
-
-    -- Switch to training mode.
-    _G.model:training()
-
-    -- Add profiling hooks.
-    if self.args.profiler then
-      _G.model:enableProfiling()
+    if idx > 1 then
+      _G.model = onmt.utils.Tensor.deepClone(model)
+    else
+      _G.model = model
     end
-
-    if not self.args.disable_mem_optimization then
-      -- Share internal buffers to optimize for memory.
-      if not firstBatch then
-        _G.logger:error('A first batch is needed to optimize the computation graph for memory')
-      else
-        onmt.utils.Memory.optimize(_G.model, onmt.utils.Cuda.convert(firstBatch), verbose)
-      end
-    end
-
+    _G.params, _G.gradParams = _G.model:getParams()
     return idx, _G.params, _G.gradParams
-  end, function(idx, theparams, thegradParams)
-    self.params[idx] = theparams
-    self.gradParams[idx] = thegradParams
+  end, function(idx, params, gradParams)
+    self.params[idx] = params
+    self.gradParams[idx] = gradParams
   end)
 end
 
