@@ -34,7 +34,7 @@ onmt.Model.declareOpts(cmd)
 modelClass.declareOpts(cmd)
 onmt.train.Optim.declareOpts(cmd)
 onmt.train.Trainer.declareOpts(cmd)
-onmt.train.Checkpoint.declareOpts(cmd)
+onmt.train.Saver.declareOpts(cmd)
 onmt.utils.CrayonLogger.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
@@ -60,8 +60,11 @@ local function main()
   onmt.utils.Cuda.init(opt)
   onmt.utils.Parallel.init(opt)
 
-  local checkpoint, paramChanges
-  checkpoint, opt, paramChanges = onmt.train.Checkpoint.loadFromCheckpoint(opt)
+  local checkpoint = {}
+  local paramChanges = {}
+  if onmt.train.Saver.checkpointDefined(opt) then
+    checkpoint, opt, paramChanges = onmt.train.Saver.loadCheckpoint(opt)
+  end
 
   cmd:logConfig(opt)
 

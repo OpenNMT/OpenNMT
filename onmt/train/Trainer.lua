@@ -91,7 +91,7 @@ function Trainer:__init(args)
   self.args.profiler = args.profiler
   self.args.disable_mem_optimization = args.disable_mem_optimization
 
-  -- Make a difference with options which is only used in Checkpoint.
+  -- Make a difference with options which is only used in Saver.
   self.options = args
 end
 
@@ -129,7 +129,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     onmt.utils.Cuda.setRNGStates(info.rngStates, true)
   end
 
-  local checkpoint = onmt.train.Checkpoint.new(self.options, model, optim, dataset.dicts)
+  local saver = onmt.train.Saver.new(self.options, model, optim, dataset.dicts)
 
   optim:setOptimStates(#params[1])
 
@@ -228,7 +228,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           needLog = false
         end
         if self.args.save_every > 0 and iter % self.args.save_every == 0 then
-          checkpoint:saveIteration(iter, epochState, batchOrder, true)
+          saver:saveIteration(iter, epochState, batchOrder, true)
         end
         iter = iter + 1
       end
@@ -310,7 +310,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           needLog = false
         end
         if iter % self.args.save_every == 0 then
-          checkpoint:saveIteration(iter, epochState, batchOrder, true)
+          saver:saveIteration(iter, epochState, batchOrder, true)
         end
       end
     end
@@ -343,7 +343,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     local continue = optim:updateLearningRate(validPpl, epoch)
 
-    checkpoint:saveEpoch(validPpl, epochState, true)
+    saver:saveEpoch(validPpl, epochState, true)
 
     if not continue then
       _G.logger:warning('Stopping training due to a too small learning rate value.')
