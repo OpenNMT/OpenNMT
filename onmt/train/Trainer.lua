@@ -108,10 +108,13 @@ function Trainer:__init(args, model, dicts, firstBatch)
     if idx == 1 then
       -- First replica is the reference model.
       _G.model = model
+      _G.params = params
+      _G.gradParams = gradParams
       _G.params, _G.gradParams = params, gradParams
     else
       _G.model = onmt.utils.Tensor.deepClone(model)
-      _G.params, _G.gradParams = params:clone(), gradParams:clone()
+      _G.params = onmt.utils.Tensor.recursiveClone(params)
+      _G.gradParams = onmt.utils.Tensor.recursiveClone(gradParams)
     end
     return idx, _G.params, _G.gradParams
   end, function(idx, params, gradParams)
