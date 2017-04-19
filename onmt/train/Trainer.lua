@@ -72,18 +72,16 @@ function Trainer:__init(args, model, dicts, firstBatch)
   self.optim = onmt.train.Optim.new(args)
   self.saver = onmt.train.Saver.new(args, model, self.optim, dicts)
 
-  self.model = model
-
-  -- Set training mode.
   model:training()
 
-  if not onmt.train.Saver.checkpointDefined(args) then
-    model:initParams()
-  end
+  self.model = model
+  self.params = {}
+  self.gradParams = {}
 
-  -- Add profiling hooks.
-  if self.args.profiler then
-    model:enableProfiling()
+  if not onmt.train.Saver.checkpointDefined(args) then
+    self.params[1], self.gradParams[1] = model:initParams()
+  else
+    self.params[1], self.gradParams[1] = model:getParams()
   end
 
   -- If enabled, share internal buffers to optimize for memory.
@@ -95,17 +93,21 @@ function Trainer:__init(args, model, dicts, firstBatch)
     end
   end
 
-  -- Create network replicas.
-  self.params = {}
-  self.gradParams = {}
+  -- Add profiling hooks.
+  if self.args.profiler then
+    model:enableProfiling()
+  end
 
+  -- Create network replicas.
   onmt.utils.Parallel.launch(function(idx)
-    if idx == 1 then
-      _G.model = model
+    _G.model = idx == 1 and model or onmt.utils.Tensor.deepClone(model)
+
+    if self.params[idx] then
+      _G.params, _G.gradParams = self.params[idx], self.gradParams[idx]
     else
-      _G.model = onmt.utils.Tensor.deepClone(model)
+      _G.params, _G.gradParams = _G.model:getParams()
     end
-    _G.params, _G.gradParams = _G.model:getParams()
+
     return idx, _G.params, _G.gradParams
   end, function(idx, params, gradParams)
     self.params[idx] = params
