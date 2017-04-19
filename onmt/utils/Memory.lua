@@ -16,21 +16,18 @@ end
 Parameters:
   * `model` - a table containing encoder and decoder
   * `batch` - a Batch object
-  * `verbose` - produce output or not
 
 Example:
 
   local model = {}
   model.encoder = onmt.Models.buildEncoder(...)
   model.decoder = onmt.Models.buildDecoder(...)
-  Memory.optimize(model, batch, verbose)
+  Memory.optimize(model, batch)
 
 ]]
-function Memory.optimize(model, batch, verbose)
+function Memory.optimize(model, batch)
 
-  if verbose then
-    _G.logger:info('Preparing memory optimization...')
-  end
+  _G.logger:info('Preparing memory optimization...')
 
   -- Prepare memory optimization
   local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model.models)
@@ -45,9 +42,8 @@ function Memory.optimize(model, batch, verbose)
   -- mark shared tensors
   local sharedSize, totSize = memoryOptimizer:optimize()
 
-  if verbose then
-    _G.logger:info(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100)
-  end
+  _G.logger:info(' * sharing %d%% of output/gradInput tensors memory between clones',
+                 (sharedSize / totSize) * 100)
 end
 
 return Memory

@@ -135,7 +135,7 @@ function Saver:_save(filePath, info)
 end
 
 --[[ Save the model and the current epoch state. ]]
-function Saver:saveIteration(iteration, epochState, batchOrder, verbose)
+function Saver:saveIteration(iteration, epochState, batchOrder)
   local info = {}
   info.iteration = iteration + 1
   info.epoch = epochState.epoch
@@ -143,9 +143,7 @@ function Saver:saveIteration(iteration, epochState, batchOrder, verbose)
 
   local filePath = string.format('%s_checkpoint.t7', self.savePath)
 
-  if verbose then
-    _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
-  end
+  _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
 
   -- Succeed serialization before overriding existing file
   self:_save(filePath .. '.tmp', info)
@@ -153,7 +151,7 @@ function Saver:saveIteration(iteration, epochState, batchOrder, verbose)
 end
 
 --[[ Save the model with validation score. ]]
-function Saver:saveEpoch(validPpl, epochState, verbose)
+function Saver:saveEpoch(validPpl, epochState)
   local info = {}
   info.validPpl = validPpl
   info.epoch = epochState.epoch + 1
@@ -162,9 +160,7 @@ function Saver:saveEpoch(validPpl, epochState, verbose)
 
   local filePath = string.format('%s_epoch%d_%.2f.t7', self.savePath, epochState.epoch, validPpl)
 
-  if verbose then
-    _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
-  end
+  _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
 
   self:_save(filePath, info)
 end
