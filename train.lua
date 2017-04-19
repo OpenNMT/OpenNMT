@@ -32,7 +32,6 @@ cmd:setCmdLineOptions(options, 'Data')
 onmt.data.SampledDataset.declareOpts(cmd)
 onmt.Model.declareOpts(cmd)
 modelClass.declareOpts(cmd)
-onmt.train.Optim.declareOpts(cmd)
 onmt.train.Trainer.declareOpts(cmd)
 onmt.train.Saver.declareOpts(cmd)
 onmt.utils.CrayonLogger.declareOpts(cmd)
@@ -163,10 +162,10 @@ local function main()
   end
 
   -- Initialize trainer.
-  local trainer = onmt.train.Trainer.new(opt, model, dataset.dicts, trainData:getBatch(1), checkpoint.info)
+  local trainer = onmt.train.Trainer.new(opt, model, dataset.dicts, trainData:getBatch(1))
 
   -- Launch training.
-  trainer:train(trainData, validData)
+  trainer:train(trainData, validData, checkpoint.info)
 
   _G.logger:shutDown()
 end

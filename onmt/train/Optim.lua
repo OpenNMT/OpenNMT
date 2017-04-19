@@ -222,11 +222,15 @@ function Optim:updateLearningRate(score, epoch)
     elseif self.args.decay == 'perplexity_only' and decayConditionMet then
       decayLr()
     end
-
-    return self.args.learning_rate >= self.args.min_learning_rate
   end
+end
 
-  return true
+function Optim:isFinished()
+  if self.args.optim == 'sgd' then
+    return self.args.learning_rate < self.args.min_learning_rate
+  else
+    return false
+  end
 end
 
 function Optim:getLearningRate()

@@ -61,18 +61,22 @@ local options = {
 
 function Trainer.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Trainer')
+  onmt.train.Optim.declareOpts(cmd)
 end
 
-function Trainer:__init(args, model, dicts, firstBatch, trainStates)
+function Trainer:__init(args, model, dicts, firstBatch)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.profiler = args.profiler
   self.args.disable_mem_optimization = args.disable_mem_optimization
+
+  self.optim = onmt.train.Optim.new(args)
+  self.saver = onmt.train.Saver.new(args, model, self.optim, dicts)
 
   self.model = model
   self.params = {}
   self.gradParams = {}
 
-  -- Prepare model for training.
+  -- Prepare model replicas for training.
   onmt.utils.Parallel.launch(function(idx)
     -- Only logs information of the first thread.
     local verbose = idx == 1
@@ -102,31 +106,16 @@ function Trainer:__init(args, model, dicts, firstBatch, trainStates)
     self.params[idx] = theparams
     self.gradParams[idx] = thegradParams
   end)
-
-  self.optim = onmt.train.Optim.new(args)
-  self.saver = onmt.train.Saver.new(args, self.model, self.optim, dicts)
-
-  -- Restore previous training states.
-  if trainStates then
-    if trainStates.rngStates then
-      onmt.utils.Cuda.setRNGStates(trainStates.rngStates, true)
-    end
-    if trainStates.optimStates then
-      self.optim:setOptimStates(trainStates.optimStates)
-    end
-
-    self.trainStates = trainStates
-  end
 end
 
-function Trainer:eval(validData)
+function Trainer:eval(data)
   local loss = 0
   local totalWords = 0
 
   self.model:evaluate()
 
-  for i = 1, validData:batchCount() do
-    local batch = onmt.utils.Cuda.convert(validData:getBatch(i))
+  for i = 1, data:batchCount() do
+    local batch = onmt.utils.Cuda.convert(data:getBatch(i))
     loss = loss + self.model:forwardComputeLoss(batch)
     totalWords = totalWords + self.model:getOutputLabelsCount(batch)
   end
@@ -136,18 +125,18 @@ function Trainer:eval(validData)
   return math.exp(loss / totalWords)
 end
 
-function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
+function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   local function getBatchIdx(idx)
     return batchOrder and batchOrder[idx] or idx
   end
 
   startIteration = startIteration or 1
 
-  if trainData.sample then
-    trainData:sample()
+  if data.sample then
+    data:sample()
   end
 
-  local numIterations = trainData:batchCount()
+  local numIterations = data:batchCount()
   -- In parallel mode, the number of iterations is reduced to reflect larger batch size.
   if onmt.utils.Parallel.count > 1 and not self.args.async_parallel then
     numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
@@ -162,14 +151,14 @@ function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
   if not self.args.async_parallel then
     -- Synchronous training.
     local iter = startIteration
-    for i = startIteration, trainData:batchCount(), onmt.utils.Parallel.count do
+    for i = startIteration, data:batchCount(), onmt.utils.Parallel.count do
       local batches = {}
       local totalSize = 0
       needLog = true
 
-      for j = 1, math.min(onmt.utils.Parallel.count, trainData:batchCount() - i + 1) do
+      for j = 1, math.min(onmt.utils.Parallel.count, data:batchCount() - i + 1) do
         local batchIdx = getBatchIdx(i + j - 1)
-        table.insert(batches, trainData:getBatch(batchIdx))
+        table.insert(batches, data:getBatch(batchIdx))
         totalSize = totalSize + batches[#batches].size
       end
 
@@ -195,7 +184,7 @@ function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
       end,
       function(idx, loss, indvAvgLoss, profile)
         losses[idx] = loss
-        if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+        if data.needIndividualLosses and data:needIndividualLosses() then
           indvAvgLosses[idx] = indvAvgLoss
         end
         epochProfiler:add(profile)
@@ -213,8 +202,8 @@ function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
 
       for bi = 1, #batches do
         epochState:update(self.model, batches[bi], losses[bi])
-        if trainData.needIndividualLosses and trainData:needIndividualLosses() then
-          trainData:setLoss(getBatchIdx(i + bi - 1), indvAvgLosses[bi])
+        if data.needIndividualLosses and data:needIndividualLosses() then
+          data:setLoss(getBatchIdx(i + bi - 1), indvAvgLosses[bi])
         end
       end
 
@@ -242,7 +231,7 @@ function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
 
     counter:set(startIteration)
 
-    while counter:get() <= trainData:batchCount() do
+    while counter:get() <= data:batchCount() do
       needLog = true
       local startCounter = counter:get()
 
@@ -260,20 +249,20 @@ function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
 
         while true do
           local i = counter:inc()
-          if i - startCounter >= maxConcurrentIter or i > trainData:batchCount() then
+          if i - startCounter >= maxConcurrentIter or i > data:batchCount() then
             return batches, losses, indvAvgLosses, _G.profiler:dump()
           end
 
           local batchIdx = getBatchIdx(i)
 
-          _G.batch = trainData:getBatch(batchIdx)
+          _G.batch = data:getBatch(batchIdx)
           table.insert(batches, onmt.utils.Tensor.deepClone(_G.batch))
           onmt.utils.Cuda.convert(_G.batch)
 
           self.optim:zeroGrad(_G.gradParams)
           local loss, indvAvgLoss = _G.model:trainNetwork(_G.batch)
           table.insert(losses, loss)
-          if trainData.needIndividualLosses and trainData:needIndividualLosses() then
+          if data.needIndividualLosses and data:needIndividualLosses() then
             indvAvgLosses[batchIdx] = indvAvgLoss
           end
 
@@ -289,8 +278,8 @@ function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
           iter = iter + #batches
           for i = 1, #batches do
             epochState:update(self.model, batches[i], losses[i])
-            if trainData.needIndividualLosses and trainData:needIndividualLosses() then
-              trainData:setLoss(getBatchIdx(i), indvAvgLosses[getBatchIdx(i)])
+            if data.needIndividualLosses and data:needIndividualLosses() then
+              data:setLoss(getBatchIdx(i), indvAvgLosses[getBatchIdx(i)])
             end
           end
           epochProfiler:add(profile)
@@ -320,16 +309,13 @@ function Trainer:trainEpoch(trainData, epoch, startIteration, batchOrder)
   return epochState
 end
 
-function Trainer:getBatchOrder(data, epoch)
+function Trainer:generateBatchOrder(data, epoch, trainStates)
   local startIteration = 1
   local batchOrder = nil
 
-  if self.trainStates then
+  if trainStates then
     startIteration = self.args.start_iteration
-    batchOrder = self.trainStates.batchOrder
-
-    -- We no longer need previous training states.
-    self.trainStates = nil
+    batchOrder = trainStates.batchOrder
   elseif epoch > self.args.curriculum then
     batchOrder = torch.randperm(data:batchCount())
   end
@@ -337,26 +323,37 @@ function Trainer:getBatchOrder(data, epoch)
   return batchOrder, startIteration
 end
 
-function Trainer:train(trainData, validData)
+function Trainer:train(trainData, validData, trainStates)
+  -- Restore previous training states.
+  if trainStates then
+    if trainStates.rngStates then
+      onmt.utils.Cuda.setRNGStates(trainStates.rngStates, true)
+    end
+    if trainStates.optimStates then
+      self.optim:setOptimStates(trainStates.optimStates)
+    end
+  end
+
   _G.logger:info('Start training...')
 
   for epoch = self.args.start_epoch, self.args.end_epoch do
     _G.logger:info('')
 
-    local batchOrder, startIteration = self:getBatchOrder(trainData, epoch)
+    local batchOrder, startIteration = self:generateBatchOrder(trainData, epoch, trainStates)
     local epochState = self:trainEpoch(trainData, epoch, startIteration, batchOrder)
     local validPpl = self:eval(validData)
 
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
-    local continue = self.optim:updateLearningRate(validPpl, epoch)
-
+    self.optim:updateLearningRate(validPpl, epoch)
     self.saver:saveEpoch(validPpl, epochState, true)
 
-    if not continue then
+    if self.optim:isFinished() then
       _G.logger:warning('Stopping training due to a too small learning rate value.')
       break
     end
+
+    trainStates = nil
   end
 end
 
