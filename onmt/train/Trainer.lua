@@ -91,9 +91,10 @@ function Trainer:__init(args, model, dicts, firstBatch, trainStates)
     if not self.args.disable_mem_optimization then
       -- Share internal buffers to optimize for memory.
       if not firstBatch then
-        _G.logger:warning('A first batch is needed to optimize the computation graph for memory')
+        _G.logger:error('A first batch is needed to optimize the computation graph for memory')
+      else
+        onmt.utils.Memory.optimize(_G.model, onmt.utils.Cuda.convert(firstBatch), verbose)
       end
-      onmt.utils.Memory.optimize(_G.model, onmt.utils.Cuda.convert(firstBatch), verbose)
     end
 
     return idx, _G.params, _G.gradParams
