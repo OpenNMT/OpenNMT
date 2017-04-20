@@ -231,6 +231,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           checkpoint:saveIteration(iter, epochState, batchOrder, true)
         end
         iter = iter + 1
+        collectgarbage()
       end
     else
       -- Asynchronous training.
@@ -312,6 +313,7 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
         if iter % self.args.save_every == 0 then
           checkpoint:saveIteration(iter, epochState, batchOrder, true)
         end
+        collectgarbage()
       end
     end
 
