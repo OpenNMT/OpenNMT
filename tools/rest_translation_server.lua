@@ -76,7 +76,7 @@ local function translateMessage(translator, lines)
   local translations = {}
   for b = 1, #lines do
     local ret = {}
-    for i = 1, translator.opt.n_best do
+    for i = 1, translator.args.n_best do
       local srcSent = translator:buildOutput(batch[b])
       local predSent = translator:buildOutput(results[b].preds[i])
 
