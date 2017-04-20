@@ -170,11 +170,7 @@ function Factory.buildWordEncoder(opt, dicts)
   return Factory.buildEncoder(opt, inputNetwork)
 end
 
-function Factory.loadEncoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
+function Factory.loadEncoder(pretrained)
   local encoder
 
   if pretrained.name == 'Encoder' then
@@ -218,14 +214,8 @@ function Factory.buildWordDecoder(opt, dicts)
   return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
 end
 
-function Factory.loadDecoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
-  local decoder = onmt.Decoder.load(pretrained)
-
-  return decoder
+function Factory.loadDecoder(pretrained)
+  return onmt.Decoder.load(pretrained)
 end
 
 function Factory.buildGenerator(rnnSize, dicts)
@@ -246,11 +236,7 @@ function Factory.buildAttention(args)
   end
 end
 
-function Factory.loadGenerator(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
+function Factory.loadGenerator(pretrained)
   return pretrained
 end
 
