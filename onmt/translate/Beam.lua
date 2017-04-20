@@ -343,7 +343,7 @@ function Beam:_normalizeScores(scores)
 
   local function normalizeCoverage(ap)
     local beta = self._params.coverage_norm
-    local result = torch.cmin(ap, 1.0):log1p():sum(3):mul(beta)
+    local result = torch.cmin(ap, 1.0):log():sum(3):mul(beta)
     return result
   end
 
