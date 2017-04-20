@@ -321,30 +321,19 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   return epochState
 end
 
-function Trainer:generateBatchOrder(data, epoch, trainStates)
-  local startIteration = 1
-  local batchOrder = nil
-
-  if trainStates then
-    startIteration = self.args.start_iteration
-    batchOrder = trainStates.batchOrder
-  end
-
-  if not batchOrder and epoch > self.args.curriculum then
-    batchOrder = torch.randperm(data:batchCount())
-  end
-
-  return batchOrder, startIteration
-end
-
 function Trainer:train(trainData, validData, trainStates)
-  -- Restore previous training states.
+  local batchOrder
+
+  -- Restore previous training states if defined.
   if trainStates then
     if trainStates.rngStates then
       onmt.utils.Cuda.setRNGStates(trainStates.rngStates)
     end
     if trainStates.optimStates then
       self.optim:setOptimStates(trainStates.optimStates)
+    end
+    if trainStates.batchOrder and self.args.start_epoch > self.args.curriculum then
+      batchOrder = trainStates.batchOrder
     end
   end
 
@@ -353,8 +342,12 @@ function Trainer:train(trainData, validData, trainStates)
   for epoch = self.args.start_epoch, self.args.end_epoch do
     _G.logger:info('')
 
-    local batchOrder, startIteration = self:generateBatchOrder(trainData, epoch, trainStates)
-    local epochState = self:trainEpoch(trainData, epoch, startIteration, batchOrder)
+    -- Shuffle batch order past the -curriculum first epochs.
+    if not batchOrder and epoch > self.args.curriculum then
+      batchOrder = torch.randperm(trainData:batchCount())
+    end
+
+    local epochState = self:trainEpoch(trainData, epoch, self.args.start_iteration, batchOrder)
     local validPpl = self:eval(validData)
 
     _G.logger:info('Validation perplexity: %.2f', validPpl)
@@ -362,12 +355,15 @@ function Trainer:train(trainData, validData, trainStates)
     self.optim:updateLearningRate(validPpl, epoch)
     self.saver:saveEpoch(validPpl, epochState)
 
+    -- Early stopping?
     if self.optim:isFinished() then
       _G.logger:warning('Stopping training due to a too small learning rate value.')
       break
     end
 
-    trainStates = nil
+    -- Reset batch ordering for the next epoch.
+    batchOrder = nil
+    self.args.start_iteration = 1
   end
 end
 
