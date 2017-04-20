@@ -189,12 +189,12 @@ function Decoder:_buildModel(attentionModel)
   end
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = attentionModel
-  attnLayer.name = 'decoderAttn'
+  self.attnLayer = attentionModel
+  self.attnLayer.name = 'decoderAttn'
   local attnInput = { outputs[#outputs], context, coverage }
 
   -- apply the attention layer
-  local attnOutputs = attnLayer(attnInput)
+  local attnOutputs = self.attnLayer(attnInput)
 
   local attnOutput = attnOutputs
   if attentionModel.hasCoverage then
@@ -348,7 +348,7 @@ function Decoder:initializeSpecialStates(states, _, batch)
   -- if need coverage, initialize it
   if self.args.hasCoverage then
     states.coverage = onmt.utils.Tensor.reuseTensor(self.coverageProto,
-                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength })
+                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength, self.attnLayer.coverageSize })
   end
 end
 
@@ -442,7 +442,7 @@ function Decoder:backward(batch, outputs, criterion)
   local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
   if self.args.hasCoverage then
-    gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength)
+    gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength, self.attnLayer.coverageSize)
   end
 
   for t = batch.targetLength, 1, -1 do

@@ -23,6 +23,7 @@ require('onmt.modules.GlobalAttentionCoverage')
 require('onmt.modules.Generator')
 require('onmt.modules.FeaturesGenerator')
 
+require('onmt.modules.Bottle')
 require('onmt.modules.JoinReplicateTable')
 require('onmt.modules.ParallelClassNLLCriterion')
 

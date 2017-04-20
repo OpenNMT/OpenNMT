@@ -1,25 +1,13 @@
 require('nngraph')
 
---[[ Global attention takes a matrix, a query vector and sum of previous attentions. It
-  then computes a parameterized convex combination of the matrix
-  based on the input query.
+--[[
+  Adding coverage model inside attention according to:
+    - "Modeling Coverage for NMT" (https://arxiv.org/pdf/1601.04811.pdf)
 
-
-    H_1 H_2 H_3 ... H_n
-     q   q   q       q
-      |  |   |       |
-       \ |   |      /
-           .....
-         \   |  /
-             a
-
-Constructs a unit mapping:
-  $$(H_1 .. H_n, q) => (a)$$
-  Where H is of `batch x n x dim` and q is of `batch x dim`.
-
-  The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.
-
+  Coverage is a vector of size Bxlx1 or Bxlx10 for nn10
 --]]
+
+
 local GlobalAttentionCoverage, parent = torch.class('onmt.GlobalAttentionCoverage', 'onmt.Network')
 
 local options = {
@@ -27,7 +15,7 @@ local options = {
     '-coverage_model', 'ling1',
     [[Coverage model type.]],
     {
-      enum = { 'ling1' ,'ling2' }
+      enum = { 'ling1' ,'ling2', 'nn1', 'nn10' }
     }
   }
 }
@@ -44,6 +32,7 @@ end
 --]]
 function GlobalAttentionCoverage:__init(opt, dim)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(opt, options)
+  self.coverageSize = (opt.coverage_model == 'nn10' and 10) or 1
   parent.__init(self, self:_buildModel(opt, dim))
 end
 
@@ -55,16 +44,16 @@ function GlobalAttentionCoverage:_buildModel(opt, dim)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local ht = inputs[1] -- target context: batchLx dim
+  local ht0 = inputs[1] -- target context: batchLx dim
   local hs = inputs[2] -- source context: batchL x sourceTimesteps x dim
   local coverage = inputs[3] -- coverage vector: batchL x sourceTimesteps
 
   -- concatenate coverage to hs
-  local hs_cov = nn.JoinTable(3)({hs, nn.Replicate(1,3)(coverage)})
+  local hs_cov = nn.JoinTable(3)({hs, coverage})
 
   -- Get attention.
   local score_ht_hs
-  ht = nn.Linear(dim, dim+1, false)(ht) -- batchL x dim
+  ht = nn.Linear(dim, dim+self.coverageSize, false)(ht0) -- batchL x dim
   score_ht_hs = nn.MM()({hs_cov, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
 
   local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
@@ -80,8 +69,15 @@ function GlobalAttentionCoverage:_buildModel(opt, dim)
     -- fertility model - phi=N.sigma(U.h_s)
     local phi = nn.Mul()(nn.Sigmoid()(nn.Bottle(nn.Linear(dim, 1))(hs)))
     coverage = nn.CAddTable()({coverage, nn.CDivTable()({attn, phi})})
+  else
+    -- apply GRU cell - coverage_t_i = gru(coverage_t-1, [attn_t_i, h_t, h_s_i])
+    local ht2 = nn.Replicate(1,2)(ht0) -- batchL x 1 x dim
+    local attn2 = nn.Replicate(1,3)(attn) -- batchL x sourceL x 1
+    local ht_hs_attn = onmt.JoinReplicateTable(2,3)({ht2, hs, attn2})
+    local gru = onmt.GRU.new(1, 2*dim+1, self.coverageSize)
+    -- use bottle so that batch and timesteps are together
+    coverage = onmt.Bottle(gru)({coverage, ht_hs_attn})
   end
-  -- apply GRU cell - coverage_t = f(coverage_t-1, attn_t, h_t, h_s)
 
   -- Apply attention to context.
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
