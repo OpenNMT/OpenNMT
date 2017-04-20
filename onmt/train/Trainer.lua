@@ -62,6 +62,7 @@ local options = {
 function Trainer.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Trainer')
   onmt.train.Optim.declareOpts(cmd)
+  onmt.train.Saver.declareOpts(cmd)
 end
 
 function Trainer:__init(args, model, dicts, firstBatch)

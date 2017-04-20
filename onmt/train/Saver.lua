@@ -3,6 +3,14 @@ local Saver = torch.class('Saver')
 
 local options = {
   {
+    '-save_model', '',
+    [[Model filename (the model will be saved as `<save_model>_epochN_PPL.t7`
+      where `PPL` is the validation perplexity.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
+  },
+  {
     '-train_from', '',
     [[Path to a checkpoint.]],
     {
@@ -102,13 +110,13 @@ function Saver.loadCheckpoint(opt)
 end
 
 --[[ Create a new saver holding static data to store in each model. ]]
-function Saver:__init(opt, model, optim, dicts)
-  self.options = opt
+function Saver:__init(args, model, optim, dicts, trainingOptions)
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+
+  self.options = trainingOptions or args
   self.model = model
   self.optim = optim
   self.dicts = dicts
-
-  self.savePath = self.options.save_model
 end
 
 function Saver:_save(filePath, info)
@@ -141,7 +149,7 @@ function Saver:saveIteration(iteration, epochState, batchOrder)
   info.epoch = epochState.epoch
   info.batchOrder = batchOrder
 
-  local filePath = string.format('%s_checkpoint.t7', self.savePath)
+  local filePath = string.format('%s_checkpoint.t7', self.args.save_model)
 
   _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
 
@@ -158,7 +166,7 @@ function Saver:saveEpoch(validPpl, epochState)
   info.iteration = 1
   info.trainTimeInMinute = epochState:getTime() / 60
 
-  local filePath = string.format('%s_epoch%d_%.2f.t7', self.savePath, epochState.epoch, validPpl)
+  local filePath = string.format('%s_epoch%d_%.2f.t7', self.args.save_model, epochState.epoch, validPpl)
 
   _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
 

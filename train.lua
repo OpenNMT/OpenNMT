@@ -15,14 +15,6 @@ local options = {
     {
       valid = onmt.utils.ExtendedCmdLine.nonEmpty
     }
-  },
-  {
-    '-save_model', '',
-    [[Model filename (the model will be saved as `<save_model>_epochN_PPL.t7`
-      where `PPL` is the validation perplexity.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.nonEmpty
-    }
   }
 }
 
@@ -32,7 +24,6 @@ onmt.data.SampledDataset.declareOpts(cmd)
 onmt.Model.declareOpts(cmd)
 modelClass.declareOpts(cmd)
 onmt.train.Trainer.declareOpts(cmd)
-onmt.train.Saver.declareOpts(cmd)
 onmt.utils.CrayonLogger.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
