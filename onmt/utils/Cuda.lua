@@ -98,16 +98,14 @@ function Cuda.getRNGStates()
 end
 
 -- set RNGState from saved state
-function Cuda.setRNGStates(rngStates, verbose)
+function Cuda.setRNGStates(rngStates)
   if not rngStates then
     return
   end
-  if verbose then
-    _G.logger:info("Restoring Random Number Generator states")
-  end
+  _G.logger:info("Restoring random number generator states...")
   torch.setRNGState(rngStates[1])
   if #rngStates-1 ~= #Cuda.gpuIds then
-    _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
+    _G.logger:warning('GPU count does not match for resetting random number generator. Skipping.')
   else
     for idx = 2, #rngStates do
       cutorch.setRNGState(rngStates[idx], idx-1)

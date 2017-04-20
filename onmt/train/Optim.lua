@@ -136,27 +136,13 @@ function Optim.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Optimization')
 end
 
-function Optim:__init(args, optimStates)
+function Optim:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.valPerf = {}
-
-  if self.args.optim == 'sgd' then
-    self.args.start_decay_at = args.start_decay_at
-  else
-    if optimStates ~= nil then
-      self.optimStates = optimStates
-    else
-      self.optimStates = {}
-    end
-  end
 end
 
-function Optim:setOptimStates(num)
-  if self.args.optim ~= 'sgd' then
-    for j = 1, num do
-      self.optimStates[j] = {}
-    end
-  end
+function Optim:setOptimStates(states)
+  self.optimStates = states
 end
 
 function Optim:zeroGrad(gradParams)
@@ -166,6 +152,13 @@ function Optim:zeroGrad(gradParams)
 end
 
 function Optim:prepareGrad(gradParams)
+  if self.args.optim ~= 'sgd' and not self.optimStates then
+    self.optimStates = {}
+    for _ = 1, #gradParams do
+      table.insert(self.optimStates, {})
+    end
+  end
+
   -- Compute gradients norm.
   local gradNorm = 0
   for j = 1, #gradParams do
@@ -229,11 +222,15 @@ function Optim:updateLearningRate(score, epoch)
     elseif self.args.decay == 'perplexity_only' and decayConditionMet then
       decayLr()
     end
-
-    return self.args.learning_rate >= self.args.min_learning_rate
   end
+end
 
-  return true
+function Optim:isFinished()
+  if self.args.optim == 'sgd' then
+    return self.args.learning_rate < self.args.min_learning_rate
+  else
+    return false
+  end
 end
 
 function Optim:getLearningRate()
