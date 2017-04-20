@@ -105,8 +105,8 @@ local function buildData(opt, dataset)
 end
 
 local function loadModel(opt, dicts)
-  local checkpoint = {}
-  local paramChanges = {}
+  local checkpoint
+  local paramChanges
 
   checkpoint, opt, paramChanges = onmt.train.Saver.loadCheckpoint(opt)
 
