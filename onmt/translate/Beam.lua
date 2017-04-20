@@ -350,8 +350,8 @@ function Beam:_normalizeScores(scores)
   local step = self._step
   local lengthPenalty = normalizeLength(step)
 
-  local attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
-  local coveragePenalty = normalizeCoverage(attnProba)
+  local cumAttnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
+  local coveragePenalty = normalizeCoverage(cumAttnProba)
 
   if (scores:nDimension() > 2) then
     coveragePenalty =  coveragePenalty:expand(scores:size())
