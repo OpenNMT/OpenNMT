@@ -5,7 +5,6 @@ local cmd = onmt.utils.ExtendedCmdLine.new('train.lua')
 
 -- First argument define the model type: seq2seq/lm - default is seq2seq.
 local modelType = cmd.getArgument(arg, '-model_type') or 'seq2seq'
-
 local modelClass = onmt.ModelSelector(modelType)
 
 -- Options declaration.
@@ -47,46 +46,25 @@ onmt.utils.Profiler.declareOpts(cmd)
 
 cmd:option('-seed', 3435, [[Random seed.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 
-local opt = cmd:parse(arg)
+local function loadDataset(filename)
+  _G.logger:info('Loading data from \'%s\'...', filename)
 
-local function main()
-
-  torch.manualSeed(opt.seed)
-
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
-  _G.profiler = onmt.utils.Profiler.new(false)
-  _G.crayon_logger = onmt.utils.CrayonLogger.new(opt)
-  onmt.utils.Cuda.init(opt)
-  onmt.utils.Parallel.init(opt)
-
-  local checkpoint = {}
-  local paramChanges = {}
-  if onmt.train.Saver.checkpointDefined(opt) then
-    checkpoint, opt, paramChanges = onmt.train.Saver.loadCheckpoint(opt)
-  end
-
-  cmd:logConfig(opt)
-
-  _G.logger:info('Training '..modelClass.modelName()..' model')
-
-  -- Create the data loader class.
-  _G.logger:info('Loading data from \'' .. opt.data .. '\'...')
-
-  local dataset = torch.load(opt.data, 'binary', false)
+  local dataset = torch.load(filename, 'binary', false)
 
   -- Keep backward compatibility.
   dataset.dataType = dataset.dataType or 'bitext'
 
-  -- Check if data type matches the model.
+  -- Check if data type is compatible with the target model.
   if not modelClass.dataType(dataset.dataType) then
-    _G.logger:error('Data type: \'' .. dataset.dataType .. '\' does not match model type: \'' .. modelClass.modelName() .. '\'')
+    _G.logger:error('Data type `%s\' is incompatible model `%s\'',
+                    dataset.dataType, modelClass.modelName())
     os.exit(0)
   end
 
-  -- record datatype in the options, and preprocessing options if present
-  opt.data_type = dataset.dataType
-  opt.preprocess = dataset.opt
+  return dataset
+end
 
+local function buildData(opt, dataset)
   local trainData
   if opt.sample > 0 then
      trainData = onmt.data.SampledDataset.new(dataset.train.src, dataset.train.tgt, opt)
@@ -132,19 +110,65 @@ local function main()
   _G.logger:info('   - average size: %.2f', #trainData.src / nTrainBatch)
   _G.logger:info('   - capacity: %.2f%%', math.ceil(batchUsage * 1000) / 10)
 
+  return trainData, validData
+end
+
+local function loadModel(opt, dicts)
+  local checkpoint = {}
+  local paramChanges = {}
+
+  checkpoint, opt, paramChanges = onmt.train.Saver.loadCheckpoint(opt)
+
+  cmd:logConfig(opt)
+
+  local model = modelClass.load(opt, checkpoint.models, dicts)
+
+  -- Change parameters dynamically.
+  if not onmt.utils.Table.empty(paramChanges) then
+    model:changeParameters(paramChanges)
+  end
+
+  return model, checkpoint.info
+end
+
+local function buildModel(opt, dicts)
   _G.logger:info('Building model...')
+  return modelClass.new(opt, dicts)
+end
 
+local function main()
+  local opt = cmd:parse(arg)
+
+  torch.manualSeed(opt.seed)
+
+  -- Initialize global context.
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.crayon_logger = onmt.utils.CrayonLogger.new(opt)
+  _G.profiler = onmt.utils.Profiler.new(false)
+
+  onmt.utils.Cuda.init(opt)
+  onmt.utils.Parallel.init(opt)
+
+  _G.logger:info('Training ' .. modelClass.modelName() .. ' model...')
+
+  -- Loading data package.
+  local dataset = loadDataset(opt.data)
+
+  -- Record data type in the options, and preprocessing options if present.
+  opt.data_type = dataset.dataType
+  opt.preprocess = dataset.opt
+
+  -- Building training datasets.
+  local trainData, validData = buildData(opt, dataset)
+
+  -- Building the model.
   local model
-  local modelClass = onmt.ModelSelector(modelType)
+  local trainStates
 
-  if checkpoint.models then
-    model = modelClass.load(opt, checkpoint.models, dataset.dicts)
-    -- Change parameters dynamically.
-    if not onmt.utils.Table.empty(paramChanges) then
-      model:changeParameters(paramChanges)
-    end
+  if onmt.train.Saver.checkpointDefined(opt) then
+    model, trainStates = loadModel(opt, dataset.dicts)
   else
-    model = modelClass.new(opt, dataset.dicts)
+    model = buildModel(opt, dataset.dicts)
   end
 
   onmt.utils.Cuda.convert(model)
@@ -153,11 +177,9 @@ local function main()
     trainData:checkModel(model)
   end
 
-  -- Initialize trainer.
+  -- Start training.
   local trainer = onmt.train.Trainer.new(opt, model, dataset.dicts, trainData:getBatch(1))
-
-  -- Launch training.
-  trainer:train(trainData, validData, checkpoint.info)
+  trainer:train(trainData, validData, trainStates)
 
   _G.logger:shutDown()
 end
