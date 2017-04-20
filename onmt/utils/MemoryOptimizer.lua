@@ -128,7 +128,7 @@ function MemoryOptimizer:__init(modules)
       -- Otherwise, look in submodules instead.
       local i = 1
       mod:apply(function(m)
-        if torch.isTypeOf(mod, 'onmt.Sequencer') then
+        if torch.isTypeOf(m, 'onmt.Sequencer') then
           self.modelDesc[name][i] = {}
           registerNet(self.modelDesc[name][i], m:net(1), m.network)
           i = i + 1
