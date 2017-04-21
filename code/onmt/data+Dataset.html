@@ -1,0 +1,28 @@
+<p><a name="onmt.Dataset.dok"></a></p>
+
+<h2>onmt.Dataset</h2>
+
+<p>Data management and batch creation. Handles data created by <code>preprocess.lua</code>. 
+<a name="onmt.Dataset"></a></p>
+
+<h3>onmt.Dataset(srcData, tgtData)</h3>
+
+<p>Initialize a data object given aligned tables of IntTensors <code>srcData</code>
+  and <code>tgtData</code>.</p>
+
+<p><a name="onmt.Dataset:setBatchSize"></a></p>
+
+<h3>onmt.Dataset:setBatchSize(maxBatchSize, uneven_batches)</h3>
+
+<p>Setup up the training data to respect <code>maxBatchSize</code>.
+     If uneven_batches - then build up batches with different lengths 
+<a name="onmt.Dataset:batchCount"></a></p>
+
+<h3>onmt.Dataset:batchCount()</h3>
+
+<p>Return number of batches. 
+<a name="onmt.Dataset:getBatch"></a></p>
+
+<h3>onmt.Dataset:getBatch(idx)</h3>
+
+<p>Get <code>Batch</code> number <code>idx</code>. If nil make a batch of all the data. </p>

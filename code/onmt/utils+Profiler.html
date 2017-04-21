@@ -1,0 +1,90 @@
+<p><a name="onmt.Profiler.dok"></a></p>
+
+<h2>onmt.Profiler</h2>
+
+<p>Profile is a class used for generating profiling of a training</p>
+
+<p><a name="onmt.Profiler"></a></p>
+
+<h3>onmt.Profiler(opt)</h3>
+
+<p>Profiler object</p>
+
+<p>To avoid concurrency problem for parallel processing, each thread should have its own Profiler.
+Profiles can be embedded.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>doProfile</code> - enable profiling</li>
+</ul>
+
+<p>Documentation:
+  Profile is recording/aggregating time spent in sections. Sections have hierarchical structure.
+  A section is opened with <code>P:start(&quot;name&quot;)</code> and closed with <code>P:close(&quot;name&quot;)</code>.
+  Start and Stop command can be stacked: <code>P:stop(&quot;b&quot;):start(&quot;a&quot;)</code> or combined: <code>P:start(&quot;a.b&quot;)</code></p>
+
+<p>Example:
+    -- global profiler initialization
+    globalProfiler = onmt.utils.Profiler.new(opt)</p>
+
+<pre><code>-- thread-specific profiler
+  _G.profiler = onmt.utils.Profiler.new(opt)
+
+  _G.profiler:reset()
+
+  _G.profiler:start(&quot;encoder&quot;)
+  [...]
+  _G.profiler:stop(&quot;encoder&quot;):start(&quot;decoder&quot;)
+  [...]
+  _G.profiler:stop(&quot;decoder&quot;)
+
+  local profile = _G.profiler.dump()
+
+-- adds up thread profile
+globalProfiler:add(profile)
+
+Logger:info(globalProfiler:log())
+</code></pre>
+
+<p><a name="onmt.Profiler:reset"></a></p>
+
+<h3>onmt.Profiler:reset()</h3>
+
+<p>Reset Profiler.
+<a name="onmt.Profiler:start"></a></p>
+
+<h3>onmt.Profiler:start(name)</h3>
+
+<p>Start recording a section.
+<a name="onmt.Profiler:stop"></a></p>
+
+<h3>onmt.Profiler:stop(name)</h3>
+
+<p>Stop recording a section.
+<a name="onmt.Profiler:dump"></a></p>
+
+<h3>onmt.Profiler:dump()</h3>
+
+<p>Dump profile.
+<a name="onmt.Profiler:add"></a></p>
+
+<h3>onmt.Profiler:add(profile)</h3>
+
+<p>Aggregage profiles with a previous dump in the current namespace
+<a name="onmt.Profiler:log"></a></p>
+
+<h3>onmt.Profiler:log(prefix)</h3>
+
+<p>Returns text string with log structured by sub level.
+e.g. train:{total:23, encoder_fwd:10, encoder_bwd:14}</p>
+
+<h4>Undocumented methods</h4>
+
+<p><a name="onmt.Profiler.declareOpts"></a></p>
+
+<ul>
+<li><code>onmt.Profiler.declareOpts(cmd)</code>
+<a name="onmt.Profiler.addHook"></a></li>
+<li><code>onmt.Profiler.addHook(module, name)</code></li>
+</ul>

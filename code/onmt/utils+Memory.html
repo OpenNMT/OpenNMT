@@ -1,0 +1,28 @@
+<p><a name="onmt.Memory.optimize"></a></p>
+
+<h3>onmt.Memory.optimize(model, batch, verbose)</h3>
+
+<p>Optimize memory usage of Neural Machine Translation.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>model</code> - a table containing encoder and decoder</li>
+<li><code>batch</code> - a Batch object</li>
+<li><code>verbose</code> - produce output or not</li>
+</ul>
+
+<p>Example:</p>
+
+<p>local model = {}
+  model.encoder = onmt.Models.buildEncoder(...)
+  model.decoder = onmt.Models.buildDecoder(...)
+  Memory.optimize(model, batch, verbose)</p>
+
+<h4>Undocumented methods</h4>
+
+<p><a name="onmt.Memory.declareOpts"></a></p>
+
+<ul>
+<li><code>onmt.Memory.declareOpts(cmd)</code></li>
+</ul>
