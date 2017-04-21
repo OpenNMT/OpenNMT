@@ -41,6 +41,7 @@ pages:
       - "train.lua": options/train.md
       - "translate.lua": options/translate.md
       - "tag.lua": options/tag.md
+      - "tools/release_model.lua": options/release_model.md
       - "tools/tokenize.lua": options/tokenize.md
       - "tools/learn_bpe.lua": options/learn_bpe.md
       - "tools/translation_server.lua": options/server.md
