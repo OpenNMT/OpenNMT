@@ -6,18 +6,19 @@ require('onmt.init')
 local cmd = onmt.utils.ExtendedCmdLine.new('translation_server.lua')
 
 local options = {
-  {'-host', '127.0.0.1', [[Host to run the server on]]},
-  {'-port', '5556', [[Port to run the server on]]}
+  {
+    '-host', '127.0.0.1',
+    [[Host to run the server on.]]
+  },
+  {
+    '-port', '5556',
+    [[Port to run the server on.]]
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Server')
 
 onmt.translate.Translator.declareOpts(cmd)
-
-cmd:text('')
-cmd:text('**Other options**')
-cmd:text('')
-
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
@@ -44,7 +45,7 @@ local function translateMessage(translator, lines)
   for b = 1, #lines do
     local ret = {}
 
-    for i = 1, translator.opt.n_best do
+    for i = 1, translator.args.n_best do
       local srcSent = translator:buildOutput(batch[b])
       local predSent = translator:buildOutput(results[b].preds[i])
 
@@ -72,6 +73,7 @@ local function main()
   local opt = cmd:parse(arg)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  onmt.utils.Cuda.init(opt)
 
   _G.logger:info("Loading model")
   local translator = onmt.translate.Translator.new(opt)
@@ -85,7 +87,7 @@ local function main()
   while true do
     -- Input format is a json batch of src strings.
     local recv = s:recv()
-    _G.logger:info("Received... " .. recv)
+    _G.logger:debug("Received... " .. recv)
     local message = json.decode(recv)
 
     local ret
@@ -101,7 +103,7 @@ local function main()
     end
 
     s:send(ret)
-    _G.logger:info("Returning... " .. ret)
+    _G.logger:debug("Returning... " .. ret)
     collectgarbage()
   end
 end

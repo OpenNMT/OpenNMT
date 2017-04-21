@@ -1,5 +1,44 @@
 local Factory = torch.class('Factory')
 
+local options = {
+  {
+    '-brnn', false,
+    [[Use a bidirectional encoder.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-dbrnn', false,
+    [[Use a deep bidirectional encoder.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-pdbrnn', false,
+    [[Use a pyramidal deep bidirectional encoder.]],
+    {
+      structural = 0
+    }
+  },
+  {
+    '-attention', 'global',
+    [[Attention model.]],
+    {
+      enum = {'none', 'global'}
+    }
+  }
+}
+
+function Factory.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+  onmt.BiEncoder.declareOpts(cmd)
+  onmt.DBiEncoder.declareOpts(cmd)
+  onmt.PDBiEncoder.declareOpts(cmd)
+  onmt.GlobalAttention.declareOpts(cmd)
+end
+
 -- Return effective embeddings size based on user options.
 local function resolveEmbSizes(opt, dicts, wordSizes)
   local wordEmbSize
@@ -30,7 +69,15 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
   return wordEmbSize, featEmbSizes
 end
 
-local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords, verbose)
+local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords)
+
+  if not dicts then
+    -- if input vector - skip word embbedding
+    local inputNetwork = nn.Identity()
+    inputNetwork.inputSize = opt.dimInputSize
+    return inputNetwork
+  end
+
   local wordEmbSize, featEmbSizes = resolveEmbSizes(opt, dicts, wordSizes)
 
   local wordEmbedding = onmt.WordEmbedding.new(dicts.words:size(), -- vocab size
@@ -50,15 +97,11 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
     inputs = wordEmbedding
   end
 
-  if verbose then
-    _G.logger:info('   - with word embeddings size: ' .. wordEmbSize)
-  end
+  _G.logger:info('   - word embeddings size: ' .. wordEmbSize)
 
   -- Sequence with features.
   if #dicts.features > 0 then
-    if verbose then
-      _G.logger:info('   - with features embeddings sizes: ' .. table.concat(featEmbSizes, ', '))
-    end
+    _G.logger:info('   - features embeddings sizes: ' .. table.concat(featEmbSizes, ', '))
 
     local vocabSizes = {}
     for i = 1, #dicts.features do
@@ -94,108 +137,84 @@ function Factory.getOutputSizes(dicts)
 end
 
 function Factory.buildEncoder(opt, inputNetwork)
-  local encoder
 
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
+  local function describeEncoder(name)
+    _G.logger:info('   - type: %s', name)
+    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+                   opt.rnn_type, opt.layers, opt.rnn_size)
   end
 
   if opt.brnn then
-    -- Compute rnn hidden size depending on hidden states merge action.
-    local rnnSize = opt.rnn_size
-    if opt.brnn_merge == 'concat' then
-      if opt.rnn_size % 2 ~= 0 then
-        error('in concat mode, rnn_size must be divisible by 2')
-      end
-      rnnSize = rnnSize / 2
-    elseif opt.brnn_merge == 'sum' then
-      rnnSize = rnnSize
-    else
-      error('invalid merge action ' .. opt.brnn_merge)
-    end
-
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, rnnSize, opt.dropout, opt.residual)
-
-    encoder = onmt.BiEncoder.new(inputNetwork, rnn, opt.brnn_merge)
+    describeEncoder('bidirectional')
+    return onmt.BiEncoder.new(opt, inputNetwork)
+  elseif opt.dbrnn then
+    describeEncoder('deep bidirectional')
+    return onmt.DBiEncoder.new(opt, inputNetwork)
+  elseif opt.pdbrnn then
+    describeEncoder('pyramidal deep bidirectional')
+    return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
-    local rnn = RNN.new(opt.layers, inputNetwork.inputSize, opt.rnn_size, opt.dropout, opt.residual)
-
-    encoder = onmt.Encoder.new(inputNetwork, rnn)
+    describeEncoder('simple')
+    return onmt.Encoder.new(opt, inputNetwork)
   end
-  return encoder
+
 end
 
-function Factory.buildWordEncoder(opt, dicts, verbose)
-  if verbose then
-    _G.logger:info(' * Encoder:')
-  end
+function Factory.buildWordEncoder(opt, dicts)
+  _G.logger:info(' * Encoder:')
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc,
-                                         verbose)
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1)
 
   return Factory.buildEncoder(opt, inputNetwork)
 end
 
-function Factory.loadEncoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
+function Factory.loadEncoder(pretrained)
+  local encoder
 
   if pretrained.name == 'Encoder' then
-    return onmt.Encoder.load(pretrained)
-  end
-  if pretrained.name == 'BiEncoder' then
-    return onmt.BiEncoder.load(pretrained)
-  end
-
-  -- Keep for backward compatibility.
-  local brnn = #pretrained.modules == 2
-  if brnn then
-    return onmt.BiEncoder.load(pretrained)
+    encoder = onmt.Encoder.load(pretrained)
+  elseif pretrained.name == 'BiEncoder' then
+    encoder = onmt.BiEncoder.load(pretrained)
+  elseif pretrained.name == 'PDBiEncoder' then
+    encoder = onmt.PDBiEncoder.load(pretrained)
+  elseif pretrained.name == 'DBiEncoder' then
+    encoder = onmt.DBiEncoder.load(pretrained)
   else
-    return onmt.Encoder.load(pretrained)
+    -- Keep for backward compatibility.
+    local brnn = #pretrained.modules == 2
+    if brnn then
+      encoder = onmt.BiEncoder.load(pretrained)
+    else
+      encoder = onmt.Encoder.load(pretrained)
+    end
   end
+
+  return encoder
 end
 
-function Factory.buildDecoder(opt, inputNetwork, generator)
-  local inputSize = inputNetwork.inputSize
+function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
+  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+                 opt.rnn_type, opt.layers, opt.rnn_size)
 
-  if opt.input_feed == 1 then
-    inputSize = inputSize + opt.rnn_size
-  end
-
-  local RNN = onmt.LSTM
-  if opt.rnn_type == 'GRU' then
-    RNN = onmt.GRU
-  end
-  local rnn = RNN.new(opt.layers, inputSize, opt.rnn_size, opt.dropout, opt.residual)
-
-  return onmt.Decoder.new(inputNetwork, rnn, generator, opt.input_feed == 1)
+  return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end
 
-function Factory.buildWordDecoder(opt, dicts, verbose)
-  if verbose then
-    _G.logger:info(' * Decoder:')
-  end
+function Factory.buildWordDecoder(opt, dicts)
+  _G.logger:info(' * Decoder:')
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.tgt_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec,
-                                         verbose)
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec == 1)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
+  local attnModel = Factory.buildAttention(opt)
 
-  return Factory.buildDecoder(opt, inputNetwork, generator)
+  return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
 end
 
-function Factory.loadDecoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
+function Factory.loadDecoder(pretrained)
   return onmt.Decoder.load(pretrained)
 end
 
@@ -205,6 +224,20 @@ function Factory.buildGenerator(rnnSize, dicts)
   else
     return onmt.Generator(rnnSize, dicts.words:size())
   end
+end
+
+function Factory.buildAttention(args)
+  if args.attention == 'none' then
+    _G.logger:info('   - attention: none')
+    return onmt.NoAttention(args, args.rnn_size)
+  else
+    _G.logger:info('   - attention: global (%s)', args.global_attention)
+    return onmt.GlobalAttention(args, args.rnn_size)
+  end
+end
+
+function Factory.loadGenerator(pretrained)
+  return pretrained
 end
 
 return Factory

@@ -12,12 +12,10 @@ Parameters:
   * `fix` - keep the weights of the embeddings fixed.
 --]]
 function WordEmbedding:__init(vocabSize, vecSize, preTrained, fix)
-  self.vocabSize = vocabSize
   parent.__init(self, nn.LookupTable(vocabSize, vecSize, onmt.Constants.PAD))
 
   self.preTrained = preTrained
-  self.fix = fix
-  if self.fix then
+  if fix then
     self.net.gradWeight = nil
   end
 end
@@ -30,6 +28,14 @@ function WordEmbedding:postParametersInitialization()
   end
 
   self.net.weight[onmt.Constants.PAD]:zero()
+end
+
+function WordEmbedding:fixEmbeddings(fix)
+  if fix and self.net.gradWeight then
+    self.net.gradWeight = nil
+  elseif not fix and not self.net.gradWeight then
+    self.net.gradWeight = self.net.weight.new(self.net.weight:size()):zero()
+  end
 end
 
 function WordEmbedding:accGradParameters(input, gradOutput, scale)

@@ -1,8 +1,14 @@
+---------------------------------------------------------------------------------
+-- Local utility functions
+---------------------------------------------------------------------------------
+
 local function reverseInput(batch)
   batch.sourceInput, batch.sourceInputRev = batch.sourceInputRev, batch.sourceInput
   batch.sourceInputFeatures, batch.sourceInputRevFeatures = batch.sourceInputRevFeatures, batch.sourceInputFeatures
   batch.sourceInputPadLeft, batch.sourceInputRevPadLeft = batch.sourceInputRevPadLeft, batch.sourceInputPadLeft
 end
+
+---------------------------------------------------------------------------------
 
 --[[ BiEncoder is a bidirectional Sequencer used for the source language.
 
@@ -34,6 +40,23 @@ Inherits from [onmt.Sequencer](onmt+modules+Sequencer).
 --]]
 local BiEncoder, parent = torch.class('onmt.BiEncoder', 'nn.Container')
 
+local options = {
+  {
+    '-brnn_merge', 'sum',
+    [[Merge action for the bidirectional states.]],
+    {
+      enum = {'concat', 'sum'},
+      structural = 0
+    }
+  }
+}
+
+function BiEncoder.declareOpts(cmd)
+  onmt.Encoder.declareOpts(cmd)
+  cmd:setCmdLineOptions(options)
+end
+
+
 --[[ Create a bi-encoder.
 
 Parameters:
@@ -42,26 +65,38 @@ Parameters:
   * `rnn` - recurrent template module.
   * `merge` - fwd/bwd merge operation {"concat", "sum"}
 ]]
-function BiEncoder:__init(input, rnn, merge)
+function BiEncoder:__init(args, input)
   parent.__init(self)
 
-  self.fwd = onmt.Encoder.new(input, rnn)
-  self.bwd = onmt.Encoder.new(input:clone('weight', 'bias', 'gradWeight', 'gradBias'), rnn:clone())
+  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
 
-  self.args = {}
-  self.args.merge = merge
+  local orgRNNSize = args.rnn_size
 
-  self.args.rnnSize = rnn.outputSize
-  self.args.numEffectiveLayers = rnn.numEffectiveLayers
+  -- Compute rnn hidden size depending on hidden states merge action.
+  if self.args.brnn_merge == 'concat' then
+    if args.rnn_size % 2 ~= 0 then
+      error('in concat mode, rnn_size must be divisible by 2')
+    end
+    args.rnn_size = args.rnn_size / 2
+  end
 
-  if self.args.merge == 'concat' then
-    self.args.hiddenSize = self.args.rnnSize * 2
+  self.args.rnn_size = args.rnn_size
+
+  self.fwd = onmt.Encoder.new(args, input)
+  self.bwd = onmt.Encoder.new(args, input:clone('weight', 'bias', 'gradWeight', 'gradBias'))
+
+  self.args.numEffectiveLayers = self.fwd.args.numEffectiveLayers
+
+  if self.args.brnn_merge == 'concat' then
+    self.args.hiddenSize = self.args.rnn_size * 2
   else
-    self.args.hiddenSize = self.args.rnnSize
+    self.args.hiddenSize = self.args.rnn_size
   end
 
   self:add(self.fwd)
   self:add(self.bwd)
+
+  args.rnn_size = orgRNNSize
 
   self:resetPreallocation()
 end
@@ -75,6 +110,10 @@ function BiEncoder.load(pretrained)
   self.fwd = onmt.Encoder.load(pretrained.modules[1])
   self.bwd = onmt.Encoder.load(pretrained.modules[2])
   self.args = pretrained.args
+
+  -- backward compatibility
+  self.args.rnn_size = self.args.rnn_size or self.args.rnnSize
+  self.args.brnn_merge = self.args.brnn_merge or self.args.merge
 
   self:add(self.fwd)
   self:add(self.bwd)
@@ -114,6 +153,11 @@ function BiEncoder:maskPadding()
   self.bwd:maskPadding()
 end
 
+-- size of context vector
+function BiEncoder:contextSize(sourceSize, sourceLength)
+  return sourceSize, sourceLength
+end
+
 function BiEncoder:forward(batch)
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
@@ -130,18 +174,18 @@ function BiEncoder:forward(batch)
   local bwdStates, bwdContext = self.bwd:forward(batch)
   reverseInput(batch)
 
-  if self.args.merge == 'concat' then
+  if self.args.brnn_merge == 'concat' then
     for i = 1, #fwdStates do
-      states[i]:narrow(2, 1, self.args.rnnSize):copy(fwdStates[i])
-      states[i]:narrow(2, self.args.rnnSize + 1, self.args.rnnSize):copy(bwdStates[i])
+      states[i]:narrow(2, 1, self.args.rnn_size):copy(fwdStates[i])
+      states[i]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwdStates[i])
     end
     for t = 1, batch.sourceLength do
-      context[{{}, t}]:narrow(2, 1, self.args.rnnSize)
+      context[{{}, t}]:narrow(2, 1, self.args.rnn_size)
         :copy(fwdContext[{{}, t}])
-      context[{{}, t}]:narrow(2, self.args.rnnSize + 1, self.args.rnnSize)
+      context[{{}, t}]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size)
         :copy(bwdContext[{{}, batch.sourceLength - t + 1}])
     end
-  elseif self.args.merge == 'sum' then
+  elseif self.args.brnn_merge == 'sum' then
     for i = 1, #states do
       states[i]:copy(fwdStates[i])
       states[i]:add(bwdStates[i])
@@ -167,7 +211,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   local gradStatesOutputFwd = {}
   local gradStatesOutputBwd = {}
 
-  if self.args.merge == 'concat' then
+  if self.args.brnn_merge == 'concat' then
     local gradContextOutputSplit = gradContextOutput:chunk(2, 3)
     gradContextOutputFwd = gradContextOutputSplit[1]
     gradContextOutputBwd = gradContextOutputSplit[2]
@@ -177,7 +221,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
       table.insert(gradStatesOutputFwd, statesSplit[1])
       table.insert(gradStatesOutputBwd, statesSplit[2])
     end
-  elseif self.args.merge == 'sum' then
+  elseif self.args.brnn_merge == 'sum' then
     gradContextOutputFwd = gradContextOutput
     gradContextOutputBwd = gradContextOutput
 
@@ -189,7 +233,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
   -- reverse gradients of the backward context
   local gradContextBwd = onmt.utils.Tensor.reuseTensor(self.gradContextBwdProto,
-                                                       { batch.size, batch.sourceLength, self.args.rnnSize })
+                                                       { batch.size, batch.sourceLength, self.args.rnn_size })
 
   for t = 1, batch.sourceLength do
     gradContextBwd[{{}, t}]:copy(gradContextOutputBwd[{{}, batch.sourceLength - t + 1}])

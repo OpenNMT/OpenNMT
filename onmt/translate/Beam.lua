@@ -181,7 +181,7 @@ Parameters:
   start with `beamSize` hypotheses per sequence. [`token:size(1)`]
 
 --]]
-function Beam:__init(token, state, batchSize)
+function Beam:__init(token, state, params, batchSize)
   self._remaining = batchSize or token:size(1)
 
   if torch.type(token) == 'table' then
@@ -190,6 +190,15 @@ function Beam:__init(token, state, batchSize)
     self._tokens = { token }
   end
   self._state = state
+
+  self._params = {}
+  if params then
+    self._params = params
+  else
+    self._params.length_norm = 0.0
+    self._params.coverage_norm = 0.0
+    self._params.eos_norm = 0.0
+  end
 
   self._scores = torch.zeros(self._remaining)
   self._backPointer = nil
@@ -319,24 +328,78 @@ function Beam:_replicate(beamSize)
   self._scores:add(maskScores:view(-1))
 end
 
+-- Normalize scores by length and coverage
+function Beam:_normalizeScores(scores)
+
+  if #self._state ~= 8 then
+    return scores
+  end
+
+  local function normalizeLength(t)
+    local alpha = self._params.length_norm
+    local norm_term = math.pow((5.0 + t)/6.0, alpha)
+    return norm_term
+  end
+
+  local function normalizeCoverage(ap)
+    local beta = self._params.coverage_norm
+    local result = torch.cmin(ap, 1.0):log():sum(3):mul(beta)
+    return result
+  end
+
+  local normScores = scores
+
+  if self._params.length_norm ~= 0 then
+    local step = self._step
+    local lengthPenalty = normalizeLength(step)
+    normScores = torch.div(normScores, lengthPenalty)
+  end
+
+  if self._params.coverage_norm ~= 0 then
+    local cumAttnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
+    local coveragePenalty = normalizeCoverage(cumAttnProba)
+
+    if (scores:nDimension() > 2) then
+      coveragePenalty =  coveragePenalty:expand(scores:size())
+    else
+      coveragePenalty = coveragePenalty:viewAs(scores)
+    end
+    normScores = torch.add(normScores, coveragePenalty)
+  end
+
+  return normScores
+
+end
+
+
 -- Given new scores, combine that with the previous total scores and find the
 -- top K hypotheses to form the next beam.
 function Beam:_expandScores(scores, beamSize)
   local remaining = math.floor(scores:size(1) / beamSize)
   local vocabSize = scores:size(2)
+
+  if #self._state == 8 and self._params.eos_norm > 0 then
+    local EOS_penalty = torch.div(self._state[6]:view(remaining, beamSize), self._step/self._params.eos_norm)
+    scores:view(remaining, beamSize, -1)[{{},{},onmt.Constants.EOS}]:cmul(EOS_penalty)
+  end
+
   self._scores = self._scores:typeAs(scores)
   local expandedScores
     = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
          + self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize)
-      ):view(remaining, -1)
-  return expandedScores
+      )
+
+  local normExpandedScores = self:_normalizeScores(expandedScores)
+  return expandedScores:view(remaining, -1), normExpandedScores:view(remaining, -1)
 end
 
 -- Create a new beam given new token, scores and backpointer.
 function Beam:_nextBeam(token, scores, backPointer, beamSize)
   local remaining = math.floor(token:size(1) / beamSize)
+  local params = self._params
   local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
                            self:_nextState(backPointer, beamSize),
+                           params,
                            remaining)
   newBeam:setScores(scores)
   newBeam:setBackPointer(backPointer)
@@ -413,6 +476,7 @@ function Beam:_addCompletedHypotheses(batchId, completed)
   self._remaining2Orig[self._remainingId] = origId
   completed = completed:view(self._remaining, -1)
   local scores = self._scores:view(self._remaining, -1)
+  local normScores = self:_normalizeScores(scores)
   local tokens = self._tokens[#self._tokens]:view(self._remaining, -1)
   local backPointers = self._backPointer:view(self._remaining, -1)
 
@@ -422,14 +486,14 @@ function Beam:_addCompletedHypotheses(batchId, completed)
     if completed[batchId][k] == 1 then
       local token = tokens[batchId][k]
       local backPointer = backPointers[batchId][k]
-      local score = scores[batchId][k]
-      local hypothesis = {origId, score, token, backPointer, self._step}
+      local normScore = normScores[batchId][k]
+      local hypothesis = {origId, normScore, token, backPointer, self._step}
 
       -- Maintain a sorted list.
       local id = #Beam._completed[origId] + 1
       Beam._completed[origId][id] = hypothesis
       while id > 1 do
-        if Beam._completed[origId][id - 1][2] < score then
+        if Beam._completed[origId][id - 1][2] < normScore then
           Beam._completed[origId][id - 1], Beam._completed[origId][id]
             = Beam._completed[origId][id], Beam._completed[origId][id - 1]
           id = id - 1
@@ -476,21 +540,22 @@ function Beam:_getTopHypotheses(remainingId, nBest, completed)
   local currId = 1
   completed = completed:view(self._remaining, -1)
   local scores = self._scores:view(self._remaining, -1)
+  local normScores = self:_normalizeScores(scores)
   local tokens = self._tokens[#self._tokens]:view(self._remaining, -1)
   local backPointers = self._backPointer:view(self._remaining, -1)
   for _ = 1, nBest do
     local hypothesis, finished
-    if prevId <= #prevCompleted and prevCompleted[prevId][2] > scores[remainingId][currId] then
+    if prevId <= #prevCompleted and prevCompleted[prevId][2] > normScores[remainingId][currId] then
       hypothesis = prevCompleted[prevId]
       finished = true
       prevId = prevId + 1
     else
       finished = (completed[remainingId][currId] == 1)
       if finished then
-        local score = scores[remainingId][currId]
+        local normScore = normScores[remainingId][currId]
         local token = tokens[remainingId][currId]
         local backPointer = backPointers[remainingId][currId]
-        hypothesis = {origId, score, token, backPointer, self._step}
+        hypothesis = {origId, normScore, token, backPointer, self._step}
       end
       currId = currId + 1
     end

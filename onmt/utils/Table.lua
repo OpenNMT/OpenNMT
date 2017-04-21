@@ -1,6 +1,15 @@
 -- tds is lazy loaded.
 local tds
 
+--[[ Return subset of table ]]
+local function subrange(t, first, count)
+  local sub = {}
+  for i=first,first+count-1 do
+    sub[#sub + 1] = t[i]
+  end
+  return sub
+end
+
 --[[ Append table `src` to `dst`. ]]
 local function append(dst, src)
   for i = 1, #src do
@@ -12,6 +21,14 @@ end
 local function merge(dst, src)
   for k, v in pairs(src) do
     dst[k] = v
+  end
+end
+
+local function empty (self)
+  if next(self) == nil then
+    return true
+  else
+    return false
   end
 end
 
@@ -47,8 +64,10 @@ end
 
 
 return {
+  subrange = subrange,
   reorder = reorder,
   append = append,
   merge = merge,
-  hasValue = hasValue
+  hasValue = hasValue,
+  empty = empty
 }

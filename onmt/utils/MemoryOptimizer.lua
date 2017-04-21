@@ -16,6 +16,7 @@ local protectOutput = {
 local protectInput = {
   'nn.Linear',
   'nn.JoinTable',
+  'onmt.JoinReplicateTable',
   'nn.CMulTable',
   'nn.MM'
 }
@@ -120,7 +121,7 @@ Example:
   local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model) -- prepare memory optimization.
   model:forward(...) -- initialize output tensors
   model:backward(...) -- intialize gradInput tensors
-  memoryOptimizer.optimize(model) -- actual optimization by marking shared tensors
+  memoryOptimizer.optimize() -- actual optimization by marking shared tensors
 
 ]]
 function MemoryOptimizer:__init(modules)
@@ -135,13 +136,19 @@ function MemoryOptimizer:__init(modules)
       registerNet(self.modelDesc[name][1], mod:net(1), mod.network)
     elseif mod.modules then
       -- Otherwise, look in submodules instead.
-      for i = 1, #mod.modules do
-        if mod.modules[i].net then
+      local i = 1
+      mod:apply(function(m)
+        if torch.isTypeOf(m, 'onmt.Sequencer') then
           self.modelDesc[name][i] = {}
-          registerNet(self.modelDesc[name][i], mod.modules[i]:net(1), mod.modules[i].network)
+          registerNet(self.modelDesc[name][i], m:net(1), m.network)
+          i = i + 1
         end
-      end
+      end)
     end
+  end
+
+  if onmt.utils.Table.empty(self.modelDesc) then
+    _G.logger:warning('Only networks inheriting from onmt.Sequencer can be optimized')
   end
 end
 

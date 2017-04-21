@@ -3,7 +3,10 @@
 local Profiler = torch.class('Profiler')
 
 local options = {
-  {'-profiler', false, [[Generate profiling logs.]]}
+  {
+    '-profiler', false,
+    [[Generate profiling logs.]]
+  }
 }
 
 function Profiler.declareOpts(cmd)
@@ -149,9 +152,9 @@ function Profiler.addHook(module, name)
   end
   function module:backward(...)
     _G.profiler:start(name..".bwd")
-    local res, context = self:bwdFunc(...)
+    local res, context, loss = self:bwdFunc(...)
     _G.profiler:stop(name..".bwd")
-    return res, context
+    return res, context, loss
   end
 end
 

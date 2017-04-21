@@ -2,11 +2,61 @@
 
 ### New features
 
+* Display sentence length distribution in preprocess
+* Support vectors as inputs using [Kaldi](http://kaldi-asr.org/) input format
+* Support parallel file alignment by index in addition to line-by-line
+* Add script to convert and/or generate pretrained word embeddings
+
+### Fixes and improvements
+
+* Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
+* Fix translation error of models profiled during training
+* Fix error when using one-layer GRU
+* Fix incorrect coverage normalization formula during the beam search
+* Do not allow duplicate commandline options and do not print help on errors
+
+## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
+
+### New features
+
+* Add new encoders: deep bidirectional and pyramidal deep bidirectional
+* Add attention variants: no attention and *dot*, *general* or *concat* global attention
+* Add alternative learning rate decay strategy for SGD training
+* Introduce dynamic parameter change for dropout and fixed word embeddings
+* Add length and coverage normalization during the beam search
+* Add translation option to dump input sentence encoding
 * Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
+* [*experimental*] Add sequence tagger model
+
+### Fixes and improvements
+
+* [*Breaking, changed option*] `-fix_word_vecs` options now accept `0` and `1` for a better retraining experience
+* Check consistency of option settings when training from checkpoints
+* Save and restore random number generator states from checkpoints
+* Output more dataset metrics during the preprocessing
+* Improve error message on invalid options
+* Fix missing n-best hypotheses list in the output file
+* Fix individual losses that were always computed when using random sampling
+* Fix duplicated logs in parallel mode
+
+## [v0.5.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.3) (2017-03-30)
+
+### Fixes and improvements
+
+* Fix data loading during training
+
+## [v0.5.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.2) (2017-03-29)
+
+### Fixes and improvements
+
+* Improve compatibility with older Torch versions missing the `fmod` implementation
+
+## [v0.5.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.1) (2017-03-28)
 
 ### Fixes and improvements
 
 * Fix translation with FP16 precision
+* Fix regression that make `tds` mandatory for translation
 
 ## [v0.5.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.5.0) (2017-03-06)
 

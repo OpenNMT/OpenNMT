@@ -4,18 +4,22 @@
 local function getLength(seq, ignore)
   local sizes = torch.IntTensor(#seq):zero()
   local max = 0
-  local sum = 0
+  local uneven = false
 
   for i = 1, #seq do
     local len = seq[i]:size(1)
     if ignore ~= nil then
       len = len - ignore
     end
-    max = math.max(max, len)
-    sum = sum + len
+    if max == 0 or len > max then
+      max = len
+    end
+    if i > 1 and sizes[i - 1] ~= len then
+      uneven = true
+    end
     sizes[i] = len
   end
-  return max, sizes, sum
+  return max, sizes, uneven
 end
 
 --[[ Data management and batch creation.
@@ -51,7 +55,7 @@ local Batch = torch.class('Batch')
 
 Parameters:
 
-  * `src` - 2D table of source batch indices
+  * `src` - 2D table of source batch indices or prebuilt source batch vectors
   * `srcFeatures` - 2D table of source batch features (opt)
   * `tgt` - 2D table of target batch indices
   * `tgtFeatures` - 2D table of target batch features (opt)
@@ -66,12 +70,25 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   end
 
   self.size = #src
+  self.totalSize = self.size -- updated when this batch is part of a larger one (data parallelism).
 
-  self.sourceLength, self.sourceSize = getLength(src)
+  self.sourceLength, self.sourceSize, self.uneven = getLength(src)
+
+  -- if input vectors (speech for instance)
+  self.inputVectors = src[1]:dim() > 1
 
   local sourceSeq = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
-  self.sourceInput = sourceSeq:clone()
-  self.sourceInputRev = sourceSeq:clone()
+
+  if not self.inputVectors then
+    self.sourceInput = sourceSeq:clone()
+    self.sourceInputRev = sourceSeq:clone()
+    -- will be used to return extra padded value
+    self.padTensor = torch.LongTensor(self.size):fill(onmt.Constants.PAD)
+  else
+    self.sourceInput = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
+    self.sourceInputRev = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
+    self.padTensor = torch.Tensor(self.size, src[1]:size(2)):zero()
+  end
 
   self.sourceInputFeatures = {}
   self.sourceInputRevFeatures = {}
@@ -196,7 +213,13 @@ end
 local function addInputFeatures(inputs, featuresSeq, t)
   local features = {}
   for j = 1, #featuresSeq do
-    table.insert(features, featuresSeq[j][t])
+    local feat
+    if t > featuresSeq[j]:size(1) then
+      feat = onmt.Constants.PAD
+    else
+      feat = featuresSeq[j][t]
+    end
+    table.insert(features, feat)
   end
   if #features > 1 then
     table.insert(inputs, features)
@@ -207,8 +230,14 @@ end
 
 --[[ Get source input batch at timestep `t`. --]]
 function Batch:getSourceInput(t)
+  local inputs
+
   -- If a regular input, return word id, otherwise a table with features.
-  local inputs = self.sourceInput[t]
+  if t > self.sourceInput:size(1) then
+    inputs = self.padTensor
+  else
+    inputs = self.sourceInput[t]
+  end
 
   if #self.sourceInputFeatures > 0 then
     inputs = { inputs }

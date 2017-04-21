@@ -1,7 +1,10 @@
 local Memory = {}
 
 local options = {
-  {'-disable_mem_optimization', false, [[Disable sharing of internal buffers between clones for visualization or development.]]}
+  {
+    '-disable_mem_optimization', false,
+    [[Disable sharing of internal buffers between clones for visualization or development.]]
+  }
 }
 
 function Memory.declareOpts(cmd)
@@ -13,44 +16,36 @@ end
 Parameters:
   * `model` - a table containing encoder and decoder
   * `batch` - a Batch object
-  * `verbose` - produce output or not
 
 Example:
 
   local model = {}
   model.encoder = onmt.Models.buildEncoder(...)
   model.decoder = onmt.Models.buildDecoder(...)
-  Memory.optimize(model, batch, verbose)
+  Memory.optimize(model, batch)
 
 ]]
-function Memory.optimize(model, batch, verbose)
+function Memory.optimize(model, batch)
 
-  if verbose then
-    _G.logger:info('Preparing memory optimization...')
-  end
+  _G.logger:info('Preparing memory optimization...')
 
   -- Prepare memory optimization
   local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model.models)
 
-  -- Batch of one single word since we optimize the first clone.
-  local realSizes = { sourceLength = batch.sourceLength, targetLength = batch.targetLength }
-
+  batch = onmt.utils.Tensor.deepClone(batch)
   batch.sourceLength = 1
   batch.targetLength = 1
+  batch.uneven = false
 
   model:trainNetwork(batch, true)
 
   -- mark shared tensors
   local sharedSize, vertSharedSize, totSize = memoryOptimizer:optimize()
 
-  if verbose then
-    _G.logger:info(' * recycling %d%% of output/gradInput tensors memory within clones', (vertSharedSize / totSize)*100)
-    _G.logger:info(' * sharing %d%% of output/gradInput tensors memory between clones', (sharedSize / totSize)*100)
-  end
-
-  -- Restore batch to be transparent for the calling code.
-  batch.sourceLength = realSizes.sourceLength
-  batch.targetLength = realSizes.targetLength
+  _G.logger:info(' * recycling %d%% of output/gradInput tensors memory within clones',
+                 (vertSharedSize / totSize) * 100)
+  _G.logger:info(' * sharing %d%% of output/gradInput tensors memory between clones',
+                 (sharedSize / totSize) * 100)
 end
 
 return Memory
