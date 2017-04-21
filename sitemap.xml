@@ -158,6 +158,12 @@
     </url>
         
     <url>
+     <loc>/options/release_model/</loc>
+     <lastmod>2017-04-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
      <loc>/options/tokenize/</loc>
      <lastmod>2017-04-21</lastmod>
      <changefreq>daily</changefreq>
@@ -165,6 +171,12 @@
         
     <url>
      <loc>/options/learn_bpe/</loc>
+     <lastmod>2017-04-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>/options/server/</loc>
      <lastmod>2017-04-21</lastmod>
      <changefreq>daily</changefreq>
     </url>

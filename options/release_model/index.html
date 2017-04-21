@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Preparation - OpenNMT</title>
+  <title>tools/release_model.lua - OpenNMT</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -18,9 +18,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Preparation";
-    var mkdocs_page_input_path = "data/preparation.md";
-    var mkdocs_page_url = "/data/preparation/";
+    var mkdocs_page_name = "tools/release_model.lua";
+    var mkdocs_page_input_path = "options/release_model.md";
+    var mkdocs_page_url = "/options/release_model/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -77,37 +77,13 @@
 		
     <span class="caption-text">Data</span>
     <ul class="subnav">
-                <li class=" current">
+                <li class="">
                     
-    <a class="current" href="./">Preparation</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l3"><a href="#data-type">Data type</a></li>
-    
-
-    <li class="toctree-l3"><a href="#delimiters">Delimiters</a></li>
-    
-
-    <li class="toctree-l3"><a href="#index-files">Index files</a></li>
-    
-
-    <li class="toctree-l3"><a href="#input-vectors">Input vectors</a></li>
-    
-
-    <li class="toctree-l3"><a href="#vocabularies">Vocabularies</a></li>
-    
-
-    <li class="toctree-l3"><a href="#shuffling-and-sorting">Shuffling and sorting</a></li>
-    
-
-    <li class="toctree-l3"><a href="#sentence-length">Sentence length</a></li>
-    
-
-    </ul>
+    <a class="" href="../../data/preparation/">Preparation</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../word_features/">Word features</a>
+    <a class="" href="../../data/word_features/">Word features</a>
                 </li>
     </ul>
 	    </li>
@@ -187,47 +163,59 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="../../options/usage/">Scripts usage</a>
+    <a class="" href="../usage/">Scripts usage</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/preprocess/">preprocess.lua</a>
+    <a class="" href="../preprocess/">preprocess.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/train/">train.lua</a>
+    <a class="" href="../train/">train.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/translate/">translate.lua</a>
+    <a class="" href="../translate/">translate.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/tag/">tag.lua</a>
+    <a class="" href="../tag/">tag.lua</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">tools/release_model.lua</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#model-options">Model options</a></li>
+    
+
+    <li class="toctree-l3"><a href="#cuda-options">Cuda options</a></li>
+    
+
+    <li class="toctree-l3"><a href="#logger-options">Logger options</a></li>
+    
+
+    </ul>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/release_model/">tools/release_model.lua</a>
+    <a class="" href="../tokenize/">tools/tokenize.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/tokenize/">tools/tokenize.lua</a>
+    <a class="" href="../learn_bpe/">tools/learn_bpe.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/learn_bpe/">tools/learn_bpe.lua</a>
+    <a class="" href="../server/">tools/translation_server.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/server/">tools/translation_server.lua</a>
+    <a class="" href="../rest_server/">tools/rest_translation_server.lua</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="../../options/rest_server/">tools/rest_translation_server.lua</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../../options/embeddings/">tools/embeddings.lua</a>
+    <a class="" href="../embeddings/">tools/embeddings.lua</a>
                 </li>
     </ul>
 	    </li>
@@ -269,14 +257,14 @@
     
       
         
-          <li>Data &raquo;</li>
+          <li>Reference: Options &raquo;</li>
         
       
     
-    <li>Preparation</li>
+    <li>tools/release_model.lua</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/data/preparation.md"
+        <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/release_model.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -286,79 +274,34 @@
           <div role="main">
             <div class="section">
               
-                <p>The data preparation (or preprocessing) passes over the data to generate word vocabularies and sequences of indices used by the training.</p>
-<h2 id="data-type">Data type</h2>
-<p>By default, the data type is <code>bitext</code> which are aligned source and target files. Alignment is by default done at the line level, but can also be done through aligned index (see <a href="#index-files">Index files</a>).</p>
-<p>For training language models, data type is <code>monotext</code> which is only one language file.</p>
-<p>Finally, you can also manipulate the <code>feattext</code> data type (see <a href="#input-vectors">Input vectors</a>) which allows to code sequences of vectors (e.g. sequence of features generated by a device).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Input vectors can only be used for the source.</p>
-</div>
-<h2 id="delimiters">Delimiters</h2>
-<p>Training data (for <code>bitext</code> and <code>monotext</code> data types) are expected to follow the following format:</p>
+                <!--- This file was automatically generated. Do not modify it manually but use the docs/options/generate.sh script instead. -->
+
+<p><code>release_model.lua</code> options:</p>
 <ul>
-<li>sentences are newline-separated</li>
-<li>tokens are space-separated</li>
+<li><code>-h</code><br/>This help.</li>
+<li><code>-md</code><br/>Dump help in Markdown format.</li>
+<li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
+<li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
 </ul>
-<h2 id="index-files">Index files</h2>
-<p>Index files are aligning different files by index and not by line. For instance the following files are aligned by index:</p>
-<pre><code class="text">line1 First line
-line2 Second line
-</code></pre>
-
-<pre><code class="text">line2 Deuxième ligne
-line1 Première ligne
-</code></pre>
-
-<p>where the first token of each line is an index which must have an equivalent (at any position) in aligned files.</p>
-<p>The option <code>-idx_files</code> is used (in <code>preprocess.lua</code> or <code>translate.lua</code>) to enable this feature.</p>
-<h2 id="input-vectors">Input vectors</h2>
-<p>OpenNMT supports the use of vector sequence instead of word sequence on the source side.</p>
-<p>The data type is <code>feattext</code> and is using the <a href="http://kaldi-asr.org">Kaldi</a> text format (<code>.ark</code> files). For instance the following entry, indexed by <code>KEY</code> is representing a sequence
-of <code>m</code> vectors of <code>n</code> values:</p>
-<pre><code class="text">KEY [
-FEAT1.1 FEAT1.2 FEAT1.3 ... FEAT1.n
-...
-FEATm.1 FEATm.2 FEATm.3 ... FEATm.n ]
-</code></pre>
-
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Note that you need to use index files for representing input vectors.</p>
-</div>
-<h2 id="vocabularies">Vocabularies</h2>
-<p>The main goal of the preprocessing is to build the word vocabularies and assign each word to an index within these dictionaries.</p>
-<p>By default, word vocabularies are limited to 50,000. You can change this value with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code>. Alternatively, you can prune the vocabulary size by setting the minimum frequency of words with the <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> options.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>When pruning vocabularies to 50,000, the preprocessing will actually report a vocabulary size of 50,004 because of 4 special tokens that are automatically added.</p>
-</div>
-<p>The preprocessing script will generate <code>*.dict</code> files containing the vocabularies. These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the <code>-src_vocab</code> and <code>-tgt_vocab</code> options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Vocabularies can be generated beforehand with the <code>tools/build_vocab.lua</code> script.</p>
-</div>
-<h2 id="shuffling-and-sorting">Shuffling and sorting</h2>
-<p>By default, OpenNMT both shuffles and sorts the data before the training. This process comes from 2 constraints of batch training:</p>
+<h2 id="model-options">Model options</h2>
 <ul>
-<li><strong>shuffling</strong>: sentences within a batch should come from different parts of the corpus</li>
-<li><strong>sorting</strong>: sentences within a batch should have the same source length (i.e. without padding to maximize efficiency)</li>
+<li><code>-model &lt;string&gt;</code><br/>Path to the trained model to release.</li>
+<li><code>-output_model &lt;string&gt;</code><br/>Path the released model. If not set, the <code>release</code> suffix will be automatically added to the model filename.</li>
+<li><code>-force</code><br/>Force output model creation even if the target file exists.</li>
 </ul>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>During the training, batches are also randomly selected unless the <code>-curriculum</code> option is used.</p>
-</div>
-<h2 id="sentence-length">Sentence length</h2>
-<p>During preprocessing, too long sentences (with source longer than <code>-src_seq_length</code> or target longer than <code>-tgt_seq_length</code>) are discarded from the corpus. You can have an idea of the distribution of sentence length in your training corpus by looking at the preprocess log where a table gives percent of sentences with length 1-10, 11-20, 21-30, ..., 90+:</p>
-<pre><code class="text">[04/14/17 00:40:10 INFO]  * Source Sentence Length (range of 10): [ 7% ; 35% ; 32% ; 16% ; 7% ; 0% ; 0% ; 0% ; 0% ; 0% ]
-[04/14/17 00:40:10 INFO]  * Target Sentence Length (range of 10): [ 9% ; 38% ; 30% ; 15% ; 5% ; 0% ; 0% ; 0% ; 0% ; 0% ]
-</code></pre>
-
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Limiting maximal sentence length is a key parameter to reduce the GPU memory footprint used during training: indeed the memory grows linearly with maximal sentence length.</p>
-</div>
+<h2 id="cuda-options">Cuda options</h2>
+<ul>
+<li><code>-gpuid &lt;string&gt;</code> (default: <code>0</code>)<br/>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.</li>
+<li><code>-fallback_to_cpu</code><br/>If GPU can't be used, rollback on the CPU.</li>
+<li><code>-fp16</code><br/>Use half-precision float on GPU.</li>
+<li><code>-no_nccl</code><br/>Disable usage of nccl in parallel mode.</li>
+</ul>
+<h2 id="logger-options">Logger options</h2>
+<ul>
+<li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
+<li><code>-disable_logs</code><br/>If set, output nothing.</li>
+<li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
+</ul>
               
             </div>
           </div>
@@ -366,10 +309,10 @@ FEATm.1 FEATm.2 FEATm.3 ... FEATm.n ]
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../word_features/" class="btn btn-neutral float-right" title="Word features">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../tokenize/" class="btn btn-neutral float-right" title="tools/tokenize.lua">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../../quickstart/" class="btn btn-neutral" title="Quickstart"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../tag/" class="btn btn-neutral" title="tag.lua"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -397,10 +340,10 @@ FEATm.1 FEATm.2 FEATm.3 ... FEATm.n ]
           <a href="https://github.com/OpenNMT/OpenNMT" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
-        <span><a href="../../quickstart/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../tag/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../word_features/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../tokenize/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

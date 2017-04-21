@@ -536,6 +536,26 @@
             "title": "Other options"
         }, 
         {
+            "location": "/options/release_model/", 
+            "text": "release_model.lua\n options:\n\n\n\n\n-h\nThis help.\n\n\n-md\nDump help in Markdown format.\n\n\n-config \nstring\nLoad options from this file.\n\n\n-save_config \nstring\nSave options to this file.\n\n\n\n\nModel options\n\n\n\n\n-model \nstring\nPath to the trained model to release.\n\n\n-output_model \nstring\nPath the released model. If not set, the \nrelease\n suffix will be automatically added to the model filename.\n\n\n-force\nForce output model creation even if the target file exists.\n\n\n\n\nCuda options\n\n\n\n\n-gpuid \nstring\n (default: \n0\n)\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.\n\n\n-fallback_to_cpu\nIf GPU can't be used, rollback on the CPU.\n\n\n-fp16\nUse half-precision float on GPU.\n\n\n-no_nccl\nDisable usage of nccl in parallel mode.\n\n\n\n\nLogger options\n\n\n\n\n-log_file \nstring\nOutput logs to a file under this path instead of stdout.\n\n\n-disable_logs\nIf set, output nothing.\n\n\n-log_level \nstring\n (accepted: \nDEBUG\n, \nINFO\n, \nWARNING\n, \nERROR\n; default: \nINFO\n)\nOutput logs at this level and above.", 
+            "title": "tools/release_model.lua"
+        }, 
+        {
+            "location": "/options/release_model/#model-options", 
+            "text": "-model  string Path to the trained model to release.  -output_model  string Path the released model. If not set, the  release  suffix will be automatically added to the model filename.  -force Force output model creation even if the target file exists.", 
+            "title": "Model options"
+        }, 
+        {
+            "location": "/options/release_model/#cuda-options", 
+            "text": "-gpuid  string  (default:  0 ) List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.  -fallback_to_cpu If GPU can't be used, rollback on the CPU.  -fp16 Use half-precision float on GPU.  -no_nccl Disable usage of nccl in parallel mode.", 
+            "title": "Cuda options"
+        }, 
+        {
+            "location": "/options/release_model/#logger-options", 
+            "text": "-log_file  string Output logs to a file under this path instead of stdout.  -disable_logs If set, output nothing.  -log_level  string  (accepted:  DEBUG ,  INFO ,  WARNING ,  ERROR ; default:  INFO ) Output logs at this level and above.", 
+            "title": "Logger options"
+        }, 
+        {
             "location": "/options/tokenize/", 
             "text": "tokenize.lua\n options:\n\n\n\n\n-h\nThis help.\n\n\n-md\nDump help in Markdown format.\n\n\n-config \nstring\nLoad options from this file.\n\n\n-save_config \nstring\nSave options to this file.\n\n\n\n\nTokenizer options\n\n\n\n\n-mode \nstring\n (accepted: \nconservative\n, \naggressive\n; default: \nconservative\n)\nDefine how aggressive should the tokenization be. \naggressive\n only keeps sequences of letters/numbers, \nconservative\n allows a mix of alphanumeric as in: \"2,000\", \"E65\", \"soft-landing\", etc.\n\n\n-joiner_annotate\nInclude joiner annotation using \n-joiner\n character.\n\n\n-joiner \nstring\n (default: \n\uffed\n)\nCharacter used to annotate joiners.\n\n\n-joiner_new\nIn \n-joiner_annotate\n mode, \n-joiner\n is an independent token.\n\n\n-case_feature\nGenerate case feature.\n\n\n-bpe_model \nstring\nApply Byte Pair Encoding if the BPE model path is given. If the option is used, \n-mode\n will be overridden/set automatically if the BPE model specified by \n-bpe_model\n is learnt using \nlearn_bpe.lua\n.\n\n\n-EOT_marker \nstring\n (default: \n/w\n)\nMarker used to mark the end of token.\n\n\n-BOT_marker \nstring\n (default: \nw\n)\nMarker used to mark the beginning of token.\n\n\n-bpe_case_insensitive\nApply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by \n-bpe_model\n is learnt using \nlearn_bpe.lua\n.\n\n\n-bpe_mode \nstring\n (accepted: \nsuffix\n, \nprefix\n, \nboth\n, \nnone\n; default: \nsuffix\n)\nDefine the BPE mode. This option will be overridden/set automatically if the BPE model specified by \n-bpe_model\n is learnt using \nlearn_bpe.lua\n. \nprefix\n: append \n-BOT_marker\n to the begining of each word to learn prefix-oriented pair statistics; \nsuffix\n: append \n-EOT_marker\n to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; \nboth\n: \nsuffix\n and \nprefix\n; \nnone\n: no \nsuffix\n nor \nprefix\n.\n\n\n\n\nOther options\n\n\n\n\n-nparallel \nnumber\n (default: \n1\n)\nNumber of parallel thread to run the tokenization\n\n\n-batchsize \nnumber\n (default: \n1000\n)\nSize of each parallel batch - you should not change except if low memory", 
             "title": "tools/tokenize.lua"
@@ -562,6 +582,31 @@
         }, 
         {
             "location": "/options/learn_bpe/#logger-options", 
+            "text": "-log_file  string Output logs to a file under this path instead of stdout.  -disable_logs If set, output nothing.  -log_level  string  (accepted:  DEBUG ,  INFO ,  WARNING ,  ERROR ; default:  INFO ) Output logs at this level and above.", 
+            "title": "Logger options"
+        }, 
+        {
+            "location": "/options/server/", 
+            "text": "translation_server.lua\n options:\n\n\n\n\n-h\nThis help.\n\n\n-md\nDump help in Markdown format.\n\n\n-config \nstring\nLoad options from this file.\n\n\n-save_config \nstring\nSave options to this file.\n\n\n\n\nServer options\n\n\n\n\n-host \nstring\n (default: \n127.0.0.1\n)\nHost to run the server on.\n\n\n-port \nstring\n (default: \n5556\n)\nPort to run the server on.\n\n\n\n\nTranslator options\n\n\n\n\n-model \nstring\nPath to the serialized model file.\n\n\n-beam_size \nnumber\n (default: \n5\n)\nBeam size.\n\n\n-batch_size \nnumber\n (default: \n30\n)\nBatch size.\n\n\n-max_sent_length \nnumber\n (default: \n250\n)\nMaximum output sentence length.\n\n\n-replace_unk\nReplace the generated \n tokens with the source token that has the highest attention weight. If \n-phrase_table\n is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token\n\n\n-phrase_table \nstring\nPath to source-target dictionary to replace \nunk\n tokens.\n\n\n-n_best \nnumber\n (default: \n1\n)\nIf \n 1, it will also output an n-best list of decoded sentences.\n\n\n-max_num_unks \nnumber\n (default: \ninf\n)\nAll sequences with more \nunk\ns than this will be ignored during beam search.\n\n\n-pre_filter_factor \nnumber\n (default: \n1\n)\nOptional, set this only if filter is being used. Before applying filters, hypotheses with top \nbeam_size * pre_filter_factor\n scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.\n\n\n-length_norm \nnumber\n (default: \n0\n)\nLength normalization coefficient (alpha). If set to 0, no length normalization.\n\n\n-coverage_norm \nnumber\n (default: \n0\n)\nCoverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.\n\n\n-eos_norm \nnumber\n (default: \n0\n)\nEnd of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.\n\n\n-dump_input_encoding\nInstead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.\n\n\n\n\nCuda options\n\n\n\n\n-gpuid \nstring\n (default: \n0\n)\nList of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.\n\n\n-fallback_to_cpu\nIf GPU can't be used, rollback on the CPU.\n\n\n-fp16\nUse half-precision float on GPU.\n\n\n-no_nccl\nDisable usage of nccl in parallel mode.\n\n\n\n\nLogger options\n\n\n\n\n-log_file \nstring\nOutput logs to a file under this path instead of stdout.\n\n\n-disable_logs\nIf set, output nothing.\n\n\n-log_level \nstring\n (accepted: \nDEBUG\n, \nINFO\n, \nWARNING\n, \nERROR\n; default: \nINFO\n)\nOutput logs at this level and above.", 
+            "title": "tools/translation_server.lua"
+        }, 
+        {
+            "location": "/options/server/#server-options", 
+            "text": "-host  string  (default:  127.0.0.1 ) Host to run the server on.  -port  string  (default:  5556 ) Port to run the server on.", 
+            "title": "Server options"
+        }, 
+        {
+            "location": "/options/server/#translator-options", 
+            "text": "-model  string Path to the serialized model file.  -beam_size  number  (default:  5 ) Beam size.  -batch_size  number  (default:  30 ) Batch size.  -max_sent_length  number  (default:  250 ) Maximum output sentence length.  -replace_unk Replace the generated   tokens with the source token that has the highest attention weight. If  -phrase_table  is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token  -phrase_table  string Path to source-target dictionary to replace  unk  tokens.  -n_best  number  (default:  1 ) If   1, it will also output an n-best list of decoded sentences.  -max_num_unks  number  (default:  inf ) All sequences with more  unk s than this will be ignored during beam search.  -pre_filter_factor  number  (default:  1 ) Optional, set this only if filter is being used. Before applying filters, hypotheses with top  beam_size * pre_filter_factor  scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.  -length_norm  number  (default:  0 ) Length normalization coefficient (alpha). If set to 0, no length normalization.  -coverage_norm  number  (default:  0 ) Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.  -eos_norm  number  (default:  0 ) End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.  -dump_input_encoding Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.", 
+            "title": "Translator options"
+        }, 
+        {
+            "location": "/options/server/#cuda-options", 
+            "text": "-gpuid  string  (default:  0 ) List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.  -fallback_to_cpu If GPU can't be used, rollback on the CPU.  -fp16 Use half-precision float on GPU.  -no_nccl Disable usage of nccl in parallel mode.", 
+            "title": "Cuda options"
+        }, 
+        {
+            "location": "/options/server/#logger-options", 
             "text": "-log_file  string Output logs to a file under this path instead of stdout.  -disable_logs If set, output nothing.  -log_level  string  (accepted:  DEBUG ,  INFO ,  WARNING ,  ERROR ; default:  INFO ) Output logs at this level and above.", 
             "title": "Logger options"
         }, 
