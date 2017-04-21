@@ -1,0 +1,11 @@
+.md-header {
+	background-color:#ac4142
+}
+
+label.md-nav__title.md-nav__title--site {
+	background-color:#ac4142;color:white
+}
+
+.md-nav.md-nav--secondary {
+	border-left-color:#ac4142
+}
