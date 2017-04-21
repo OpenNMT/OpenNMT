@@ -33,7 +33,8 @@ local options = {
     '-criterion', 'nll',
     [[Output criterion.]],
     {
-      enum = {'nll', 'nce'}
+      enum = {'nll', 'nce'},
+      structural = 1
     }
   }
 }

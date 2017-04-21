@@ -49,6 +49,9 @@ function Model:changeParameters(changes)
           end
         elseif k == 'nce_sample_size' and torch.typename(m) == 'onmt.NCEModule' then
           m.k = v
+        elseif k == 'criterion' and torch.typename(m) == 'onmt.Generator' then
+          assert(v == 'nll', "It is not possible to change dynamically from 'nll' criterion to '"..v.."'")
+          m:convertToLogSoftMax()
         end
       end)
     end
