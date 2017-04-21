@@ -286,7 +286,7 @@ Returns:
  1. `out` - Top-layer hidden state.
  2. `states` - All states.
 --]]
-function Decoder:forwardOne(input, sourceSize, prevStates, context, prevOut, t)
+function Decoder:forwardOne(input, _, prevStates, context, prevOut, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `buildNetwork('dec')`).

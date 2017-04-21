@@ -53,7 +53,7 @@ function GlobalAttentionCoverage:_buildModel(opt, dim)
 
   -- Get attention.
   local score_ht_hs
-  ht = nn.Linear(dim, dim+self.coverageSize, false)(ht0) -- batchL x dim
+  local ht = nn.Linear(dim, dim+self.coverageSize, false)(ht0) -- batchL x dim
   score_ht_hs = nn.MM()({hs_cov, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
 
   local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
