@@ -86,7 +86,7 @@ local function main()
   while true do
     -- Input format is a json batch of src strings.
     local recv = s:recv()
-    _G.logger:info("Received... " .. recv)
+    _G.logger:debug("Received... " .. recv)
     local message = json.decode(recv)
 
     local ret
@@ -102,7 +102,7 @@ local function main()
     end
 
     s:send(ret)
-    _G.logger:info("Returning... " .. ret)
+    _G.debug:info("Returning... " .. ret)
     collectgarbage()
   end
 end
