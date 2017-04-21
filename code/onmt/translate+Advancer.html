@@ -1,0 +1,136 @@
+<p><a name="onmt.Advancer.dok"></a></p>
+
+<h2>onmt.Advancer</h2>
+
+<p>Class for specifying how to advance one step. A beam mainly consists of
+  a list of <code>tokens</code> and a <code>state</code>. <code>tokens[t]</code> stores a flat tensors of size
+  <code>batchSize * beamSize</code> representing tokens at step <code>t</code>. <code>state</code> can be either
+  a tensor with first dimension size <code>batchSize * beamSize</code>, or an iterable
+  object containing several such tensors.</p>
+
+<p>Pseudocode:</p>
+
+<pre><code>  finished = []
+
+  beams = {}
+
+  -- Initialize the beam.
+
+  [ beams[1] ] &lt;-- initBeam()
+
+  FOR t = 1, ... DO
+
+    -- Update beam states based on new tokens.
+
+    update([ beams[t] ])
+
+    -- Expand beams by all possible tokens and return the scores.
+
+    [ [scores] ] &lt;-- expand([ beams[t] ])
+
+    -- Find k best next beams (maintained by BeamSearcher).
+
+    _findKBest([beams], [ [scores] ])
+
+    completed &lt;-- isComplete([ beams[t + 1] ])
+
+    -- Remove completed hypotheses (maintained by BeamSearcher).
+
+    finished += _completeHypotheses([beams], completed)
+
+    IF all(completed) THEN
+
+      BREAK
+
+    END
+
+  ENDWHILE
+</code></pre>
+
+<p>==================================================================</p>
+
+<p><a name="onmt.Advancer:initBeam"></a></p>
+
+<h3>onmt.Advancer:initBeam()</h3>
+
+<p>Returns an initial beam.</p>
+
+<p>Returns:</p>
+
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+
+<p><a name="onmt.Advancer:update"></a></p>
+
+<h3>onmt.Advancer:update(beam)</h3>
+
+<p>Updates beam states given new tokens.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>beam</code> - beam with updated token list.</li>
+</ul>
+
+<p><a name="onmt.Advancer:expand"></a></p>
+
+<h3>onmt.Advancer:expand(beam)</h3>
+
+<p>Expands beam by all possible tokens and returns the scores.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+
+<p>Returns:</p>
+
+<ul>
+<li><code>scores</code> - a 2D tensor of size <code>(batchSize * beamSize, numTokens)</code>.</li>
+</ul>
+
+<p><a name="onmt.Advancer:isComplete"></a></p>
+
+<h3>onmt.Advancer:isComplete(beam)</h3>
+
+<p>Checks which hypotheses in the beam are already finished.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+
+<p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
+  which hypotheses are finished.</p>
+
+<p><a name="onmt.Advancer:setKeptStateIndexes"></a></p>
+
+<h3>onmt.Advancer:setKeptStateIndexes(indexes)</h3>
+
+<p>Specifies which states to keep track of. After beam search, those states
+  can be retrieved during all steps along with the tokens. This is used
+  for memory efficiency.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>indexes</code> - a table of iterators, specifying the indexes in the <code>states</code> to track.</li>
+</ul>
+
+<p><a name="onmt.Advancer:filter"></a></p>
+
+<h3>onmt.Advancer:filter()</h3>
+
+<p>Checks which hypotheses in the beam shall be pruned.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>beam</code> - an <code>onmt.translate.Beam</code> object.</li>
+</ul>
+
+<p>Returns: a binary flat tensor of size <code>(batchSize * beamSize)</code>, indicating
+  which beams shall be pruned.</p>
