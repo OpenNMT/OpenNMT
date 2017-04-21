@@ -31,9 +31,9 @@ local function clearStateModel(model)
       clearStateModel(submodule)
     else
       submodule:clearState()
-      submodule:apply(function (m)
-        nn.utils.clear(m, 'gradWeight', 'gradBias')
-      end)
+      --~ submodule:apply(function (m)
+        --~ nn.utils.clear(m, 'gradWeight', 'gradBias')
+      --~ end)
     end
   end
 end
@@ -50,17 +50,9 @@ local function main()
   
   local nModels = #modelFiles
   
-  --~ local checkpoints = {}
-  
   local models = {}
   
-  for i = 1, nModels do
-		
-		
-		end 
-  
-  local models = {}
-  
+  local mainCheckpoint
   for i = 1, nModels do
 		_G.logger:info('Loading \'' .. modelFiles[i] .. '\'...')
 		models[i] = {}
@@ -72,7 +64,13 @@ local function main()
 		for k, v in pairs(models[i]) do
 			clearStateModel(v)
 		end
-		checkpoint = nil
+		 
+		if i > 1 then
+			checkpoint = nil
+		else
+			mainCheckpoint = checkpoint
+			mainCheckpoint.info = nil
+		end
 		collectgarbage() --save memory
   end
   
@@ -81,19 +79,19 @@ local function main()
   local mainModel = models[1]
   
   for key in pairs(mainModel) do
-	
-	local mainP, _ = mainModel[key]:getParameters()
-	
-	for i = 2, nModels do
-		local subModel = models[i]
-		local subP, _ = subModel[key]:getParameters()
+		print(mainModel[key])
+		local mainP, _ = mainModel[key]:getParameters()
 		
-		mainP:add(subP)
-		
-		if i == nModels then
-			mainP:div(nModels)
+		for i = 2, nModels do
+			local subModel = models[i]
+			local subP, _ = subModel[key]:getParameters()
+			
+			mainP:add(subP)
+			
+			if i == nModels then
+				mainP:div(nModels)
+			end
 		end
-	end
   end
   
   _G.logger:info('... done.')
@@ -101,8 +99,8 @@ local function main()
   
   
   
-  local checkpoint = checkpoints[1]
-  checkpoint.info = nil
+  local checkpoint = mainCheckpoint
+  --~ checkpoint.info = nil
   
   for k, v in pairs(mainModel) do
 	--~ print(v)
