@@ -202,7 +202,7 @@ end
 function ExtendedCmdLine:error(msg)
    io.stderr:write(self.script .. ': ' .. msg .. '\n')
    io.stderr:write('Try \'' .. self.script .. ' -h\' for more information.\n')
-   os.exit(0)
+   os.exit(1)
 end
 
 function ExtendedCmdLine:option(key, default, help, _meta_)
