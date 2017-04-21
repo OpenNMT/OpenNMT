@@ -1,6 +1,6 @@
 site_name: OpenNMT
 repo_url: https://github.com/OpenNMT/OpenNMT
-theme: readthedocs
+theme: 'material'
 google_analytics: ['UA-89222039-1', 'opennmt.net']
 docs_dir: docs
 extra_javascript:
