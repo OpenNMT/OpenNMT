@@ -1,6 +1,7 @@
 site_name: OpenNMT
 repo_name: 'OpenNMT/OpenNMT'
 repo_url: https://github.com/OpenNMT/OpenNMT
+edit_uri: edit/master/docs/
 
 docs_dir: docs
 theme: 'material'
