@@ -68,7 +68,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
 
   self.args.inputFeed = (args.input_feed == 1)
   self.args.hasCoverage = attentionModel.hasCoverage
-  self.args.coverage_size = attentionModel.coverage_size
+  self.args.coverageSize = attentionModel.coverageSize
 
   parent.__init(self, self:_buildModel(attentionModel))
 
