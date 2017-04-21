@@ -1,18 +1,32 @@
 site_name: OpenNMT
+repo_name: 'OpenNMT/OpenNMT'
 repo_url: https://github.com/OpenNMT/OpenNMT
-theme: 'material'
-google_analytics: ['UA-89222039-1', 'opennmt.net']
+
 docs_dir: docs
+theme: 'material'
+extra:
+  logo: 'img/logo-alpha.png'
+  social:
+    - type: 'globe'
+      link: 'http://opennmt.net'
+    - type: 'github'
+      link: 'https://github.com/OpenNMT/OpenNMT'
+
+google_analytics: ['UA-89222039-1', 'opennmt.net']
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML
 extra_css:
   - css/extra.css
+
 markdown_extensions:
   - math
   - sane_lists
   - def_list
   - fenced_code
   - admonition
+  - codehilite(guess_lang=false)
+  - toc(permalink=true)
+
 pages:
   - Overview: index.md
   - Installation: installation.md
