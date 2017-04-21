@@ -43,7 +43,7 @@ in the batch.
 function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   self.nBest = nBest or 1
   self.beamSize = beamSize or 1
-  assert (self.nBest <= self.beamSize)
+  assert(self.nBest <= self.beamSize, 'beam size must be greater or equal to the n-best list size')
   self.preFilterFactor = preFilterFactor or 1
   self.keepInitial = keepInitial or false
 
