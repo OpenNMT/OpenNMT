@@ -4,7 +4,6 @@ require('nngraph')
 then computes a parameterized convex combination of the matrix
 based on the input query.
 
-
     H_1 H_2 H_3 ... H_n
      q   q   q       q
       |  |   |       |
@@ -27,8 +26,13 @@ Constructs a unit mapping:
 local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'onmt.Network')
 
 local options = {
-  {'-global_attention', 'general',         [[Global attention model type.]],
-        {enum={'general', 'dot', 'concat'}}}
+  {
+    '-global_attention', 'general',
+    [[Global attention model type.]],
+    {
+      enum={'general', 'dot', 'concat'}
+    }
+  }
 }
 
 function GlobalAttention.declareOpts(cmd)
@@ -68,6 +72,7 @@ function GlobalAttention:_buildModel(dim, global_attention)
     local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)
     score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
   end
+
   local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'

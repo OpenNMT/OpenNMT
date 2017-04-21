@@ -8,7 +8,6 @@ cache:
 sudo: false
 env:
   - TORCH_LUA_VERSION=LUAJIT21
-  - TORCH_LUA_VERSION=LUA51
   - TORCH_LUA_VERSION=LUA52
 addons:
   apt:

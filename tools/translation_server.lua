@@ -44,7 +44,7 @@ local function translateMessage(translator, lines)
   for b = 1, #lines do
     local ret = {}
 
-    for i = 1, translator.opt.n_best do
+    for i = 1, translator.args.n_best do
       local srcSent = translator:buildOutput(batch[b])
       local predSent = translator:buildOutput(results[b].preds[i])
 
@@ -86,7 +86,7 @@ local function main()
   while true do
     -- Input format is a json batch of src strings.
     local recv = s:recv()
-    _G.logger:info("Received... " .. recv)
+    _G.logger:debug("Received... " .. recv)
     local message = json.decode(recv)
 
     local ret
@@ -102,7 +102,7 @@ local function main()
     end
 
     s:send(ret)
-    _G.logger:info("Returning... " .. ret)
+    _G.logger:debug("Returning... " .. ret)
     collectgarbage()
   end
 end

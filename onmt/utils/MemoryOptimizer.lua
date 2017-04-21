@@ -111,7 +111,7 @@ Example:
   local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model) -- prepare memory optimization.
   model:forward(...) -- initialize output tensors
   model:backward(...) -- intialize gradInput tensors
-  memoryOptimizer.optimize(model) -- actual optimization by marking shared tensors
+  memoryOptimizer.optimize() -- actual optimization by marking shared tensors
 
 ]]
 function MemoryOptimizer:__init(modules)
@@ -128,13 +128,17 @@ function MemoryOptimizer:__init(modules)
       -- Otherwise, look in submodules instead.
       local i = 1
       mod:apply(function(m)
-        if m.network then
+        if torch.isTypeOf(m, 'onmt.Sequencer') then
           self.modelDesc[name][i] = {}
           registerNet(self.modelDesc[name][i], m:net(1), m.network)
           i = i + 1
         end
       end)
     end
+  end
+
+  if onmt.utils.Table.empty(self.modelDesc) then
+    _G.logger:warning('Only networks inheriting from onmt.Sequencer can be optimized')
   end
 end
 

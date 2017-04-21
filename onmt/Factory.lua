@@ -70,7 +70,7 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
   return wordEmbSize, featEmbSizes
 end
 
-local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords, verbose)
+local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWords)
 
   if not dicts then
     -- if input vector - skip word embbedding
@@ -98,15 +98,11 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
     inputs = wordEmbedding
   end
 
-  if verbose then
-    _G.logger:info('   - word embeddings size: ' .. wordEmbSize)
-  end
+  _G.logger:info('   - word embeddings size: ' .. wordEmbSize)
 
   -- Sequence with features.
   if #dicts.features > 0 then
-    if verbose then
-      _G.logger:info('   - features embeddings sizes: ' .. table.concat(featEmbSizes, ', '))
-    end
+    _G.logger:info('   - features embeddings sizes: ' .. table.concat(featEmbSizes, ', '))
 
     local vocabSizes = {}
     for i = 1, #dicts.features do
@@ -141,14 +137,12 @@ function Factory.getOutputSizes(dicts)
   return outputSizes
 end
 
-function Factory.buildEncoder(opt, inputNetwork, verbose)
+function Factory.buildEncoder(opt, inputNetwork)
 
   local function describeEncoder(name)
-    if verbose then
-      _G.logger:info('   - type: %s', name)
-      _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
-                     opt.rnn_type, opt.layers, opt.rnn_size)
-    end
+    _G.logger:info('   - type: %s', name)
+    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+                   opt.rnn_type, opt.layers, opt.rnn_size)
   end
 
   if opt.brnn then
@@ -167,24 +161,17 @@ function Factory.buildEncoder(opt, inputNetwork, verbose)
 
 end
 
-function Factory.buildWordEncoder(opt, dicts, verbose)
-  if verbose then
-    _G.logger:info(' * Encoder:')
-  end
+function Factory.buildWordEncoder(opt, dicts)
+  _G.logger:info(' * Encoder:')
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1,
-                                         verbose)
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1)
 
-  return Factory.buildEncoder(opt, inputNetwork, verbose)
+  return Factory.buildEncoder(opt, inputNetwork)
 end
 
-function Factory.loadEncoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
+function Factory.loadEncoder(pretrained)
   local encoder
 
   if pretrained.name == 'Encoder' then
@@ -208,39 +195,28 @@ function Factory.loadEncoder(pretrained, clone)
   return encoder
 end
 
-function Factory.buildDecoder(opt, inputNetwork, generator, attnModel, verbose)
-  if verbose then
-    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
-                   opt.rnn_type, opt.layers, opt.rnn_size)
-  end
+function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
+  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+                 opt.rnn_type, opt.layers, opt.rnn_size)
 
   return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end
 
-function Factory.buildWordDecoder(opt, dicts, verbose)
-  if verbose then
-    _G.logger:info(' * Decoder:')
-  end
+function Factory.buildWordDecoder(opt, dicts)
+  _G.logger:info(' * Decoder:')
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.tgt_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec == 1,
-                                         verbose)
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec == 1)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
   local attnModel = Factory.buildAttention(opt)
 
-  return Factory.buildDecoder(opt, inputNetwork, generator, attnModel, verbose)
+  return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
 end
 
-function Factory.loadDecoder(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
-  local decoder = onmt.Decoder.load(pretrained)
-
-  return decoder
+function Factory.loadDecoder(pretrained)
+  return onmt.Decoder.load(pretrained)
 end
 
 function Factory.buildGenerator(rnnSize, dicts)
@@ -264,11 +240,7 @@ function Factory.buildAttention(args)
   end
 end
 
-function Factory.loadGenerator(pretrained, clone)
-  if clone then
-    pretrained = onmt.utils.Tensor.deepClone(pretrained)
-  end
-
+function Factory.loadGenerator(pretrained)
   return pretrained
 end
 
