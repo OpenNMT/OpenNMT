@@ -15,7 +15,7 @@ extra:
 
 google_analytics: ['UA-89222039-1', 'opennmt.net']
 extra_javascript:
-  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML
 extra_css:
   - css/extra.css
 
