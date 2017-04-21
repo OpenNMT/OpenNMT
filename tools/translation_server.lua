@@ -102,7 +102,7 @@ local function main()
     end
 
     s:send(ret)
-    _G.debug:info("Returning... " .. ret)
+    _G.logger:debug("Returning... " .. ret)
     collectgarbage()
   end
 end
