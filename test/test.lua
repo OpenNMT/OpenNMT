@@ -30,7 +30,16 @@ local function main()
   _G.logger = onmt.utils.Logger.new('', true)
 
   registerTestDirectory(testDir)
-  tester:run()
+
+  if #arg > 0 then
+    local testNames = {}
+    for i = 1, #arg do
+      table.insert(testNames, arg[i])
+    end
+    tester:run(testNames)
+  else
+    tester:run()
+  end
 
   torch.setnumthreads(nThreads)
 
