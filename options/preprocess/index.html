@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -788,8 +791,6 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/preprocess.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>preprocess.lua</h1>
                 
@@ -802,12 +803,12 @@
 <li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
 <li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
 </ul>
-<h2 id="preprocess-options">Preprocess options</h2>
+<h2 id="preprocess-options">Preprocess options<a class="headerlink" href="#preprocess-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-data_type &lt;string&gt;</code> (accepted: <code>bitext</code>, <code>monotext</code>, <code>feattext</code>; default: <code>bitext</code>)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.</li>
 <li><code>-save_data &lt;string&gt;</code><br/>Output file for the prepared data.</li>
 </ul>
-<h2 id="data-options">Data options</h2>
+<h2 id="data-options">Data options<a class="headerlink" href="#data-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-train_src &lt;string&gt;</code><br/>Path to the training source data.</li>
 <li><code>-train_tgt &lt;string&gt;</code><br/>Path to the training target data.</li>
@@ -828,13 +829,13 @@
 <li><code>-idx_files</code><br/>If set, source and target files are 'key value' with key match between source and target.</li>
 <li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Report status every this many sentences.</li>
 </ul>
-<h2 id="logger-options">Logger options</h2>
+<h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
 <li><code>-disable_logs</code><br/>If set, output nothing.</li>
 <li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
 </ul>
-<h2 id="other-options">Other options</h2>
+<h2 id="other-options">Other options<a class="headerlink" href="#other-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-seed &lt;number&gt;</code> (default: <code>3425</code>)<br/>Random seed.</li>
 </ul>
@@ -900,6 +901,16 @@
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

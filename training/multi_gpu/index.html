@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -760,28 +763,27 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/training/multi_gpu.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Multi GPU</h1>
                 
                 <p>OpenNMT can make use of multiple GPU during the training by implementing <strong>data parallelism</strong>. This technique trains batches in parallel on different network replicas. To use data parallelism, assign a list of comma-separated GPU identifiers to the <code>-gpuid</code> option. For example:</p>
-<pre><code class="bash">th train.lua -data data/demo-train.t7 -save_model demo -gpuid 1,2,4
-</code></pre>
+<div class="codehilite"><pre><span></span>th train.lua -data data/demo-train.t7 -save_model demo -gpuid <span class="m">1</span>,2,4
+</pre></div>
+
 
 <p>will use the first, the second and the fourth GPU of the machine as returned by the CUDA API.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p><code>nvidia-smi</code> enumerates devices based on the driver API which can be in a different order than the CUDA API.</p>
 </div>
-<h2 id="synchronous">Synchronous</h2>
+<h2 id="synchronous">Synchronous<a class="headerlink" href="#synchronous" title="Permanent link">&para;</a></h2>
 <p>In this default mode, each replica processes in parallel a different batch at each iteration. The gradients from each replica are accumulated, and parameters updated and synchronized.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>When using <script type="math/tex">N</script> GPU(s), the actual batch size is <script type="math/tex">N \times</script>
 <code>-max_batch_size</code>.</p>
 </div>
-<h2 id="asynchronous">Asynchronous</h2>
+<h2 id="asynchronous">Asynchronous<a class="headerlink" href="#asynchronous" title="Permanent link">&para;</a></h2>
 <p><em>(Also known as asynchronous SGD or downpour SGD.)</em></p>
 <p>In this mode enabled with the <code>-async_parallel</code> flag, the different replicas are independently
 calculating their own gradients, updating a master copy of the parameters and getting updated values
@@ -856,6 +858,16 @@ of the parameters. To enable convergence at the beginning of the training, only 
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

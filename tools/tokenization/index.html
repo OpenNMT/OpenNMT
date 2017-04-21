@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -788,8 +791,6 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/tools/tokenization.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Tokenization</h1>
                 
@@ -798,26 +799,29 @@
 <p class="admonition-title">Note</p>
 <p>For LuaJIT users, tokenization tools require the <code>bit32</code> package.</p>
 </div>
-<h2 id="tokenization">Tokenization</h2>
+<h2 id="tokenization">Tokenization<a class="headerlink" href="#tokenization" title="Permanent link">&para;</a></h2>
 <p>To tokenize a corpus:</p>
-<pre><code class="bash">th tools/tokenize.lua OPTIONS &lt; file &gt; file.tok
-</code></pre>
+<div class="codehilite"><pre><span></span>th tools/tokenize.lua OPTIONS &lt; file &gt; file.tok
+</pre></div>
 
-<h2 id="detokenization">Detokenization</h2>
+
+<h2 id="detokenization">Detokenization<a class="headerlink" href="#detokenization" title="Permanent link">&para;</a></h2>
 <p>If you activate <code>-joiner_annotate</code> marker, the tokenization is reversible. Just use:</p>
-<pre><code class="bash">th tools/detokenize.lua OPTIONS &lt; file.tok &gt; file.detok
-</code></pre>
+<div class="codehilite"><pre><span></span>th tools/detokenize.lua OPTIONS &lt; file.tok &gt; file.detok
+</pre></div>
 
-<h2 id="special-characters">Special characters</h2>
+
+<h2 id="special-characters">Special characters<a class="headerlink" href="#special-characters" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>￨</code> is the feature separator symbol. If such character is used in source text, it is replaced by its non presentation form <code>│</code>.</li>
 <li><code>￭</code> is the default joiner marker (generated in <code>-joiner_annotate marker</code> mode). If such character is used in source text, it is replaced by its non presentation form <code>■</code></li>
 </ul>
-<h2 id="bpe">BPE</h2>
+<h2 id="bpe">BPE<a class="headerlink" href="#bpe" title="Permanent link">&para;</a></h2>
 <p>OpenNMT's BPE module fully supports the <a href="https://github.com/rsennrich/subword-nmt">original BPE</a> as default mode:</p>
-<pre><code class="bash">tools/learn_bpe.lua -size 30000 -save_bpe codes &lt; input
+<div class="codehilite"><pre><span></span>tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes &lt; input
 tools/tokenize.lua -bpe_model codes &lt; input
-</code></pre>
+</pre></div>
+
 
 <p>with two additional features:</p>
 <p><strong>1. Add support for different modes of handling prefixes and/or suffixes: <code>-bpe_mode</code></strong></p>
@@ -829,22 +833,25 @@ tools/tokenize.lua -bpe_model codes &lt; input
 </ul>
 <p><strong>2. Add support for BPE in addition to the case feature: <code>-bpe_case_insensitive</code></strong></p>
 <p>OpenNMT's tokenization flow first applies BPE then add the case feature for each input token. With the standard BPE, "Constitution" and "constitution" may result in the different sequences of sub-tokens:</p>
-<pre><code class="text">Constitution --&gt; con￨C sti￨l tu￨l tion￨l
+<div class="codehilite"><pre><span></span>Constitution --&gt; con￨C sti￨l tu￨l tion￨l
 constitution --&gt; consti￨l tu￨l tion￨l
-</code></pre>
+</pre></div>
+
 
 <p>If you want a <em>caseless</em> split so that you can take the best from using case feature, and you can achieve that with the following command lines:</p>
-<pre><code class="bash"># We don't need BPE to care about case
-tools/learn_bpe.lua -size 30000 -save_bpe codes_lc &lt; input_lowercased
+<div class="codehilite"><pre><span></span><span class="c1"># We don&#39;t need BPE to care about case</span>
+tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes_lc &lt; input_lowercased
 
-# The case information is preserved in the true case input
+<span class="c1"># The case information is preserved in the true case input</span>
 tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive &lt; input
-</code></pre>
+</pre></div>
+
 
 <p>The output of the previous example would be:</p>
-<pre><code class="text">Constitution --&gt; con￨C sti￨l tu￨l tion￨l
+<div class="codehilite"><pre><span></span>Constitution --&gt; con￨C sti￨l tu￨l tion￨l
 constitution --&gt; con￨l sti￨l tu￨l tion￨l
-</code></pre>
+</pre></div>
+
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -912,6 +919,16 @@ constitution --&gt; con￨l sti￨l tu￨l tion￨l
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

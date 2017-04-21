@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -774,8 +777,6 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/training/retraining.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Retraining</h1>
                 
@@ -788,7 +789,7 @@
 <li>starting a training from pre-trained parameters</li>
 <li>etc.</li>
 </ul>
-<h2 id="considerations">Considerations</h2>
+<h2 id="considerations">Considerations<a class="headerlink" href="#considerations" title="Permanent link">&para;</a></h2>
 <p>When training from an existing model, some settings can not be changed:</p>
 <ul>
 <li>the model topology (layers, hidden size, etc.)</li>
@@ -798,18 +799,19 @@
 <p class="admonition-title">Exceptions</p>
 <p><code>-dropout</code>, <code>-fix_word_vecs_enc</code> and <code>-fix_word_vecs_dec</code> are model options that can be changed for a retraining.</p>
 </div>
-<h2 id="resuming-a-stopped-training">Resuming a stopped training</h2>
+<h2 id="resuming-a-stopped-training">Resuming a stopped training<a class="headerlink" href="#resuming-a-stopped-training" title="Permanent link">&para;</a></h2>
 <p>It is common that a training stops: crash, server reboot, user action, etc. In this case, you may want to continue the training for more epochs by using using the <code>-continue</code> flag. For example:</p>
-<pre><code class="bash"># start the initial training
-th train.lua -gpuid 1 -data data/demo-train.t7 -save_model demo -save_every 50
+<div class="codehilite"><pre><span></span><span class="c1"># start the initial training</span>
+th train.lua -gpuid <span class="m">1</span> -data data/demo-train.t7 -save_model demo -save_every <span class="m">50</span>
 
-# train for several epochs...
+<span class="c1"># train for several epochs...</span>
 
-# need to reboot the server!
+<span class="c1"># need to reboot the server!</span>
 
-# continue the training from the last checkpoint
-th train.lua -gpuid 1 -data data/demo-train.t7 -save_model demo -save_every 50 -train_from demo_checkpoint.t7 -continue
-</code></pre>
+<span class="c1"># continue the training from the last checkpoint</span>
+th train.lua -gpuid <span class="m">1</span> -data data/demo-train.t7 -save_model demo -save_every <span class="m">50</span> -train_from demo_checkpoint.t7 -continue
+</pre></div>
+
 
 <p>The <code>-continue</code> flag ensures that the training continues with the same configuration and optimization states. In particular, the following options are set to their last known value:</p>
 <ul>
@@ -835,7 +837,7 @@ th train.lua -gpuid 1 -data data/demo-train.t7 -save_model demo -save_every 50 -
 <li>the random generator states</li>
 <li>the batch order (when continuing from an intermediate checkpoint)</li>
 </ul>
-<h2 id="training-from-pre-trained-parameters">Training from pre-trained parameters</h2>
+<h2 id="training-from-pre-trained-parameters">Training from pre-trained parameters<a class="headerlink" href="#training-from-pre-trained-parameters" title="Permanent link">&para;</a></h2>
 <p>Another use case it to use a base model and train it further with new training options (in particular the optimization method and the learning rate). Using <code>-train_from</code> without <code>-continue</code> will start a new training with parameters initialized from a pre-trained model.</p>
                 
                   
@@ -899,6 +901,16 @@ th train.lua -gpuid 1 -data data/demo-train.t7 -save_model demo -save_every 50 -
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

@@ -1,3 +1,11 @@
+.md-nav__item--active > .md-nav__link, .md-nav__link:active, .md-typeset a {
+    color: #ac4142;
+}
+
+.md-nav__link:focus, .md-nav__link:hover, .md-typeset a:active, .md-typeset a:hover {
+    color: #d67272;
+}
+
 .md-header {
     background-color: #ac4142;
 }

@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href=".." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href=".." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -124,7 +125,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -148,7 +149,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -169,7 +172,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -768,44 +771,48 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/installation.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Installation</h1>
                 
-                <h2 id="standard">Standard</h2>
+                <h2 id="standard">Standard<a class="headerlink" href="#standard" title="Permanent link">&para;</a></h2>
 <p>1. <a href="http://torch.ch/docs/getting-started.html">Install Torch</a></p>
 <p>2. Install additional dependencies:</p>
-<pre><code class="bash">luarocks install tds
-</code></pre>
+<div class="codehilite"><pre><span></span>luarocks install tds
+</pre></div>
+
 
 <p>3. Clone the OpenNMT repository:</p>
-<pre><code class="bash">git clone https://github.com/OpenNMT/OpenNMT
-cd OpenNMT
-</code></pre>
+<div class="codehilite"><pre><span></span>git clone https://github.com/OpenNMT/OpenNMT
+<span class="nb">cd</span> OpenNMT
+</pre></div>
+
 
 <p>And you are ready to go! Take a look at the <a href="../quickstart/">quickstart</a> to familiarize yourself with the main training workflow.</p>
-<h2 id="docker-ubuntu">Docker (Ubuntu)</h2>
+<h2 id="docker-ubuntu">Docker (Ubuntu)<a class="headerlink" href="#docker-ubuntu" title="Permanent link">&para;</a></h2>
 <p>First you need to install <code>nvidia-docker</code>:</p>
-<pre><code class="bash">wget -P /tmp https://github.com/NVIDIA/nvidia-docker/releases/download/v1.0.0-rc.3/nvidia-docker_1.0.0.rc.3-1_amd64.deb
+<div class="codehilite"><pre><span></span>wget -P /tmp https://github.com/NVIDIA/nvidia-docker/releases/download/v1.0.0-rc.3/nvidia-docker_1.0.0.rc.3-1_amd64.deb
 sudo dpkg -i /tmp/nvidia-docker*.deb
-</code></pre>
+</pre></div>
+
 
 <p>If this command does not work, you may need to run the following updates:</p>
-<pre><code class="bash">sudo apt-add-repository 'deb https://apt.dockerproject.org/repo ubuntu-xenial main'
+<div class="codehilite"><pre><span></span>sudo apt-add-repository <span class="s1">&#39;deb https://apt.dockerproject.org/repo ubuntu-xenial main&#39;</span>
 sudo apt-get update
 sudo apt-get install docker-engine nvidia-modprobe
-</code></pre>
+</pre></div>
+
 
 <p>Then simply run our Docker container:</p>
-<pre><code class="bash">sudo nvidia-docker run -it harvardnlp/opennmt:8.0
-</code></pre>
+<div class="codehilite"><pre><span></span>sudo nvidia-docker run -it harvardnlp/opennmt:8.0
+</pre></div>
+
 
 <p>Once in the instance, check out the latest code:</p>
-<pre><code class="bash">git clone https://github.com/OpenNMT/OpenNMT
-</code></pre>
+<div class="codehilite"><pre><span></span>git clone https://github.com/OpenNMT/OpenNMT
+</pre></div>
 
-<h2 id="amazon-ec2">Amazon EC2</h2>
+
+<h2 id="amazon-ec2">Amazon EC2<a class="headerlink" href="#amazon-ec2" title="Permanent link">&para;</a></h2>
 <p>The best way to do this is through Docker. We have a public AMI with the preliminary CUDA drivers installed: <code>ami-c12f86a1</code>. Start a P2/G2 GPU instance with this AMI and run the <code>nvidia-docker</code> command above to get started.</p>
                 
                   
@@ -869,6 +876,16 @@ sudo apt-get install docker-engine nvidia-modprobe
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

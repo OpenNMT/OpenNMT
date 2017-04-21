@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -774,37 +777,38 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/usage.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Scripts usage</h1>
                 
                 <p>By default, OpenNMT's scripts can only be called from the root of OpenNMT's directory. If calling the scripts from any directory is more convenient to you, you need to extend the <code>LUA_PATH</code>:</p>
-<pre><code class="bash">export LUA_PATH=&quot;$LUA_PATH;/path/to/OpenNMT/?.lua&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">LUA_PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$LUA_PATH</span><span class="s2">;/path/to/OpenNMT/?.lua&quot;</span>
+</pre></div>
 
-<h2 id="configuration-files">Configuration files</h2>
+
+<h2 id="configuration-files">Configuration files<a class="headerlink" href="#configuration-files" title="Permanent link">&para;</a></h2>
 <p>You can pass options using a configuration file. The file has a simple key-value syntax with one <code>option = value</code> per line. Here is an example:</p>
-<pre><code class="text">$ cat generic.txt
+<div class="codehilite"><pre><span></span>$ cat generic.txt
 rnn_size = 600
 layers = 4
 brnn = true
 save_model = generic
-</code></pre>
+</pre></div>
+
 
 <p>It handles empty lines and ignores lines prefixed with <code>#</code>.</p>
 <p>You can then pass this file along other options on the command line:</p>
-<pre><code class="bash">th train.lua -config generic.txt -data data/demo-train.t7 -gpuid 1
-</code></pre>
+<div class="codehilite"><pre><span></span>th train.lua -config generic.txt -data data/demo-train.t7 -gpuid <span class="m">1</span>
+</pre></div>
+
 
 <p>If an option appears both in the file and on the command line, the file takes priority.</p>
-<h2 id="boolean-flags">Boolean flags</h2>
+<h2 id="boolean-flags">Boolean flags<a class="headerlink" href="#boolean-flags" title="Permanent link">&para;</a></h2>
 <p>Flags are options that do not take arguments. For example the option <code>-brnn</code> enables bidirectional encoder when added to the command line.</p>
 <p>However, flags that are enabled by default can take <code>0</code> as argument to disable them. For example, input feeding is disabled with <code>-input_feed 0</code>.</p>
-<h2 id="multiple-arguments">Multiple arguments</h2>
+<h2 id="multiple-arguments">Multiple arguments<a class="headerlink" href="#multiple-arguments" title="Permanent link">&para;</a></h2>
 <p>Some options can take multiple arguments. Unless otherwise noted, they accept a list of comma-separated values without spaces:</p>
-<pre><code class="text">-option_name value1,value2,value3
-</code></pre>
+<div class="codehilite"><pre><span></span>-option_name value1,value2,value3
+</pre></div>
                 
                   
                 
@@ -867,6 +871,16 @@ save_model = generic
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

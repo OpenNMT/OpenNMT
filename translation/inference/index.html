@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -760,22 +763,21 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/translation/inference.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Inference</h1>
                 
-                <h2 id="release-models">Release models</h2>
+                <h2 id="release-models">Release models<a class="headerlink" href="#release-models" title="Permanent link">&para;</a></h2>
 <p>After training a model, you may want to release it for inference only by using the <code>tools/release_model.lua</code> script. A released model takes less space on disk and is compatible with both CPU and GPU translation.</p>
-<pre><code class="bash">th tools/release_model.lua -model model.t7 -gpuid 1
-</code></pre>
+<div class="codehilite"><pre><span></span>th tools/release_model.lua -model model.t7 -gpuid <span class="m">1</span>
+</pre></div>
+
 
 <p>By default, it will create a <code>model_release.t7</code> file. See <code>th tools/release_model.lua -h</code> for advanced options.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>A GPU is required to load non released models and released models can no longer be used for training.</p>
 </div>
-<h2 id="inference-engine">Inference engine</h2>
+<h2 id="inference-engine">Inference engine<a class="headerlink" href="#inference-engine" title="Permanent link">&para;</a></h2>
 <p>CTranslate is a C++ implementation of <code>translate.lua</code> for integration in existing products. Take a look at the <a href="https://github.com/OpenNMT/CTranslate">GitHub project</a> for more information.</p>
                 
                   
@@ -839,6 +841,16 @@
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -760,41 +763,44 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/tools/servers.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Servers</h1>
                 
                 <p>OpenNMT provides simple translation servers to easily showcase your results remotely.</p>
-<h3 id="rest">REST</h3>
+<h3 id="rest">REST<a class="headerlink" href="#rest" title="Permanent link">&para;</a></h3>
 <p>You can use an easy REST syntax to simply send plain text. Sentences will be tokenized, translated and then detokenized using OpenNMT tools.</p>
 <p>The server uses the <code>restserver-xavante</code> dependency, you need to install it by running:</p>
-<pre><code class="bash">luarocks install restserver-xavante
-</code></pre>
+<div class="codehilite"><pre><span></span>luarocks install restserver-xavante
+</pre></div>
+
 
 <p>The translation server can be run using any of the arguments from <code>tokenize.lua</code> or <code>translate.lua</code>.</p>
-<pre><code class="bash">th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/model-baseline-1M-enfr_epoch13_3.44.t7 -gpuid 1 -host ... -port -case_feature -bpe_model ...
-</code></pre>
+<div class="codehilite"><pre><span></span>th tools/rest_translation_server.lua -model ../Recipes/baseline-1M-enfr/exp/model-baseline-1M-enfr_epoch13_3.44.t7 -gpuid <span class="m">1</span> -host ... -port -case_feature -bpe_model ...
+</pre></div>
+
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The default host is set to <code>127.0.0.1</code> and default port to <code>7784</code>.</p>
 </div>
 <p>You can test it with a <code>curl</code> command locally or from any other client:</p>
-<pre><code class="bash">curl -v -H &quot;Content-Type: application/json&quot; -X POST -d '[{ &quot;src&quot; : &quot;Hello World }]' http://IP_address:7784/translator/translate
-</code></pre>
+<div class="codehilite"><pre><span></span>curl -v -H <span class="s2">&quot;Content-Type: application/json&quot;</span> -X POST -d <span class="s1">&#39;[{ &quot;src&quot; : &quot;Hello World }]&#39;</span> http://IP_address:7784/translator/translate
+</pre></div>
+
 
 <p>Answer will be embedded in a JSON format, translated sentence in the <code>tgt</code> section. Additionally you can get the attention matrix with the <code>-withAttn</code> option in the server command line.</p>
-<h2 id="zeromq">ZeroMQ</h2>
+<h2 id="zeromq">ZeroMQ<a class="headerlink" href="#zeromq" title="Permanent link">&para;</a></h2>
 <p>The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubuntu by running:</p>
-<pre><code class="bash">sudo apt-get install libzmq-dev
+<div class="codehilite"><pre><span></span>sudo apt-get install libzmq-dev
 luarocks install dkjson
-luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
-</code></pre>
+luarocks install lua-zmq <span class="nv">ZEROMQ_LIBDIR</span><span class="o">=</span>/usr/lib/x86_64-linux-gnu/ <span class="nv">ZEROMQ_INCDIR</span><span class="o">=</span>/usr/include
+</pre></div>
+
 
 <p>The translation server can be run using any of the arguments from <code>translate.lua</code>.</p>
-<pre><code class="bash">th tools/translation_server.lua -host ... -port ... -model ...
-</code></pre>
+<div class="codehilite"><pre><span></span>th tools/translation_server.lua -host ... -port ... -model ...
+</pre></div>
+
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -802,12 +808,13 @@ luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=
 </div>
 <p>It runs as a message queue that takes in a JSON batch of src sentences. For example the following 5 lines of Python
 code can be used to send a single sentence for translation.</p>
-<pre><code class="python">import zmq, sys, json
-sock = zmq.Context().socket(zmq.REQ)
-sock.connect(&quot;tcp://127.0.0.1:5556&quot;)
-sock.send(json.dumps([{&quot;src&quot;: &quot; &quot;.join(sys.argv[1:])}]))
-print sock.recv()
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">zmq</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">json</span>
+<span class="n">sock</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">REQ</span><span class="p">)</span>
+<span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;tcp://127.0.0.1:5556&quot;</span><span class="p">)</span>
+<span class="n">sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([{</span><span class="s2">&quot;src&quot;</span><span class="p">:</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])}]))</span>
+<span class="k">print</span> <span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+</pre></div>
+
 
 <p>For a longer example, see our <a href="http://github.com/OpenNMT/Server/">Python/Flask server</a> in development.</p>
                 
@@ -872,6 +879,16 @@ print sock.recv()
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

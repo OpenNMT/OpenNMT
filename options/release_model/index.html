@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -774,8 +777,6 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/release_model.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>tools/release_model.lua</h1>
                 
@@ -788,20 +789,20 @@
 <li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
 <li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
 </ul>
-<h2 id="model-options">Model options</h2>
+<h2 id="model-options">Model options<a class="headerlink" href="#model-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-model &lt;string&gt;</code><br/>Path to the trained model to release.</li>
 <li><code>-output_model &lt;string&gt;</code><br/>Path the released model. If not set, the <code>release</code> suffix will be automatically added to the model filename.</li>
 <li><code>-force</code><br/>Force output model creation even if the target file exists.</li>
 </ul>
-<h2 id="cuda-options">Cuda options</h2>
+<h2 id="cuda-options">Cuda options<a class="headerlink" href="#cuda-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-gpuid &lt;string&gt;</code> (default: <code>0</code>)<br/>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.</li>
 <li><code>-fallback_to_cpu</code><br/>If GPU can't be used, rollback on the CPU.</li>
 <li><code>-fp16</code><br/>Use half-precision float on GPU.</li>
 <li><code>-no_nccl</code><br/>Disable usage of nccl in parallel mode.</li>
 </ul>
-<h2 id="logger-options">Logger options</h2>
+<h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
 <li><code>-disable_logs</code><br/>If set, output nothing.</li>
@@ -869,6 +870,16 @@
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

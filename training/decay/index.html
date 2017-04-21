@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -760,8 +763,6 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/training/decay.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Decay strategies</h1>
                 
@@ -774,13 +775,13 @@
 <code>-learning_rate</code> and <script type="math/tex">decay=</script>
 <code>-learning_rate_decay</code>.</p>
 <p>If an epoch is a too large unit for your particular use case, consider using <a href="../sampling/">data sampling</a>. Additionally, it may be useful to set a minimum learning rate with <code>-min_learning_rate</code> to stop the training earlier when the learning rate is too small to make a difference.</p>
-<h2 id="default">Default</h2>
+<h2 id="default">Default<a class="headerlink" href="#default" title="Permanent link">&para;</a></h2>
 <p>By default, the decay strategy is binary. There is either no decay or the decay is applied after each epoch until the end of the training. The switch happens when one of the following condition is met first:</p>
 <ol>
 <li>The validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
 <li>The current epoch is past <code>-start_decay_at</code>.</li>
 </ol>
-<h2 id="perplexity-based">Perplexity-based</h2>
+<h2 id="perplexity-based">Perplexity-based<a class="headerlink" href="#perplexity-based" title="Permanent link">&para;</a></h2>
 <p>With the <code>-decay perplexity_only</code> option, learning rate is only decayed when the condition is met on the validation perplexity:</p>
 <ol>
 <li>The validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
@@ -847,6 +848,16 @@
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

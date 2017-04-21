@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href=".." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href=".." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -124,7 +125,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -148,7 +149,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -169,7 +172,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -768,14 +771,13 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/quickstart.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Quickstart</h1>
                 
-                <h2 id="step-1-preprocess-the-data">Step 1: Preprocess the data</h2>
-<pre><code class="bash">th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo
-</code></pre>
+                <h2 id="step-1-preprocess-the-data">Step 1: Preprocess the data<a class="headerlink" href="#step-1-preprocess-the-data" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span>th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data data/demo
+</pre></div>
+
 
 <p>We will be working with some example data in <code>data/</code> folder.</p>
 <p>The data consists of parallel source (<code>src</code>) and target (<code>tgt</code>) data containing one sentence per line with tokens separated by a space:</p>
@@ -786,11 +788,12 @@
 <li><code>tgt-val.txt</code></li>
 </ul>
 <p>Validation files are required and used to evaluate the convergence of the training. It usually contains no more than 5000 sentences.</p>
-<pre><code class="text">$ head -n 3 data/src-train.txt
+<div class="codehilite"><pre><span></span>$ head -n 3 data/src-train.txt
 It is not acceptable that , with the help of the national bureaucracies , Parliament &amp;apos;s legislative prerogative should be made null and void by means of implementing provisions whose content , purpose and extent are not laid down in advance .
 Federal Master Trainer and Senior Instructor of the Italian Federation of Aerobic Fitness , Group Fitness , Postural Gym , Stretching and Pilates; from 2004 , he has been collaborating with Antiche Terme as personal Trainer and Instructor of Stretching , Pilates and Postural Gym .
 &amp;quot; Two soldiers came up to me and told me that if I refuse to sleep with them , they will kill me . They beat me and ripped my clothes .
-</code></pre>
+</pre></div>
+
 
 <p>After running the preprocessing, the following files are generated:</p>
 <ul>
@@ -799,7 +802,7 @@ Federal Master Trainer and Senior Instructor of the Italian Federation of Aerobi
 <li><code>demo-train.t7</code>: serialized Torch file containing vocabulary, training and validation data</li>
 </ul>
 <p>The <code>*.dict</code> files are needed to check or reuse the vocabularies. These files are simple human-readable dictionaries.</p>
-<pre><code class="text">$ head -n 10 data/demo.src.dict
+<div class="codehilite"><pre><span></span>$ head -n 10 data/demo.src.dict
 &lt;blank&gt; 1
 &lt;unk&gt; 2
 &lt;s&gt; 3
@@ -811,24 +814,27 @@ acceptable 8
 that 9
 , 10
 with 11
-</code></pre>
+</pre></div>
+
 
 <p>Internally the system never touches the words themselves, but uses these indices.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If the corpus is not tokenized, you can use <a href="../tools/tokenization/">OpenNMT's tokenizer</a>.</p>
 </div>
-<h2 id="step-2-train-the-model">Step 2: Train the model</h2>
-<pre><code class="bash">th train.lua -data data/demo-train.t7 -save_model demo-model
-</code></pre>
+<h2 id="step-2-train-the-model">Step 2: Train the model<a class="headerlink" href="#step-2-train-the-model" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span>th train.lua -data data/demo-train.t7 -save_model demo-model
+</pre></div>
+
 
 <p>The main train command is quite simple. Minimally it takes a data file
 and a save file.  This will run the default model, which consists of a
 2-layer LSTM with 500 hidden units on both the encoder/decoder. You
 can also add <code>-gpuid 1</code> to use (say) GPU 1.</p>
-<h2 id="step-3-translate">Step 3: Translate</h2>
-<pre><code class="bash">th translate.lua -model demo-model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
-</code></pre>
+<h2 id="step-3-translate">Step 3: Translate<a class="headerlink" href="#step-3-translate" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span>th translate.lua -model demo-model_epochX_PPL.t7 -src data/src-test.txt -output pred.txt
+</pre></div>
+
 
 <p>Now you have a model which you can use to predict on new data. We do this by running beam search. This will output predictions into <code>pred.txt</code>.</p>
 <div class="admonition note">
@@ -897,6 +903,16 @@ can also add <code>-gpuid 1</code> to use (say) GPU 1.</p>
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -802,8 +805,6 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/translate.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>translate.lua</h1>
                 
@@ -816,14 +817,14 @@
 <li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
 <li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
 </ul>
-<h2 id="data-options">Data options</h2>
+<h2 id="data-options">Data options<a class="headerlink" href="#data-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-src &lt;string&gt;</code><br/>Source sequences to translate.</li>
 <li><code>-tgt &lt;string&gt;</code><br/>Optional true target sequences.</li>
 <li><code>-output &lt;string&gt;</code> (default: <code>pred.txt</code>)<br/>Output file.</li>
 <li><code>-idx_files</code><br/>If set, source and target files are 'key value' with key match between source and target.</li>
 </ul>
-<h2 id="translator-options">Translator options</h2>
+<h2 id="translator-options">Translator options<a class="headerlink" href="#translator-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-model &lt;string&gt;</code><br/>Path to the serialized model file.</li>
 <li><code>-beam_size &lt;number&gt;</code> (default: <code>5</code>)<br/>Beam size.</li>
@@ -839,20 +840,20 @@
 <li><code>-eos_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.</li>
 <li><code>-dump_input_encoding</code><br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.</li>
 </ul>
-<h2 id="cuda-options">Cuda options</h2>
+<h2 id="cuda-options">Cuda options<a class="headerlink" href="#cuda-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-gpuid &lt;string&gt;</code> (default: <code>0</code>)<br/>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.</li>
 <li><code>-fallback_to_cpu</code><br/>If GPU can't be used, rollback on the CPU.</li>
 <li><code>-fp16</code><br/>Use half-precision float on GPU.</li>
 <li><code>-no_nccl</code><br/>Disable usage of nccl in parallel mode.</li>
 </ul>
-<h2 id="logger-options">Logger options</h2>
+<h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
 <li><code>-disable_logs</code><br/>If set, output nothing.</li>
 <li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
 </ul>
-<h2 id="other-options">Other options</h2>
+<h2 id="other-options">Other options<a class="headerlink" href="#other-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-time</code><br/>Measure average translation time.</li>
 </ul>
@@ -918,6 +919,16 @@
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>

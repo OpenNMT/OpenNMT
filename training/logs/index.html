@@ -63,7 +63,8 @@
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
         
-          <a href="../.." title="OpenNMT" class="md-icon md-icon--home md-header-nav__button">
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
           </a>
         
       </div>
@@ -128,7 +129,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -152,7 +153,9 @@
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
     
-      <i class="md-icon md-icon--home md-nav__button"></i>
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
     
     OpenNMT
   </label>
@@ -173,7 +176,7 @@
       </div>
     
     <div class="md-source__repository">
-      GitHub
+      OpenNMT/OpenNMT
     </div>
   </a>
 
@@ -760,8 +763,6 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/training/logs.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
-                
                 
                   <h1>Logs</h1>
                 
@@ -770,7 +771,7 @@
 <p class="admonition-title">Note</p>
 <p>Measurements are reported as an average since the previous print.</p>
 </div>
-<h2 id="perplexity">Perplexity</h2>
+<h2 id="perplexity">Perplexity<a class="headerlink" href="#perplexity" title="Permanent link">&para;</a></h2>
 <p>A key information is the <strong>training perplexity</strong> defined by:</p>
 <p>
 <script type="math/tex; mode=display">ppl(X,Y)=\exp(\frac{-\sum_{i=1}^{|Y|}\log P(y_i|y_{i-1},\dotsc,y_{1},X)}{|Y|})</script>
@@ -781,7 +782,7 @@
 <p class="admonition-title">Note</p>
 <p>During evaluation on the validation dataset, dropout is turned off.</p>
 </div>
-<h2 id="logs-management">Logs management</h2>
+<h2 id="logs-management">Logs management<a class="headerlink" href="#logs-management" title="Permanent link">&para;</a></h2>
 <p>Some advanced options are available to manage your logs like using a file (<code>-log_file</code>), or disabling them entirely (<code>-disable_logs</code>). See the options of the script to learn about them.</p>
                 
                   
@@ -845,6 +846,16 @@
       </div>
       
         
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
       
     </div>
   </div>
