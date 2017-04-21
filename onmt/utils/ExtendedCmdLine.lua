@@ -200,8 +200,8 @@ function ExtendedCmdLine:help(arg, doMd)
 end
 
 function ExtendedCmdLine:error(msg)
-   print('ERROR: '..msg)
-   print('> Use -h for help\n')
+   io.stderr:write(self.script .. ': ' .. msg .. '\n')
+   io.stderr:write('Try \'' .. self.script .. ' -h\' for more information.\n')
    os.exit(0)
 end
 
