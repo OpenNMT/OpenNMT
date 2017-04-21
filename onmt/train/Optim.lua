@@ -139,28 +139,37 @@ function Optim:updateParams(params, gradParams)
   end
 end
 
--- decay learning rate if val perf does not improve or we hit the startDecayAt limit
+-- decay learning rate if val perf does not improve limit
 function Optim:updateLearningRate(score, epoch)
-  if self.args.optim == 'sgd' or self.args.optim == 'adam' then
+  if self.args.optim == 'sgd' then
     self.valPerf[#self.valPerf + 1] = score
-
-    if epoch >= self.args.start_decay_at then
-      self.startDecay = true
-    end
-
+    epoch = epoch - 1
+    local decay = false
+    
+    -- sometimes the epoch is not an integer
+    -- so this update only happens when we reach the end of the epoch
+    local function isint(n)
+			return n==math.floor(n)
+		end
+		
+		if isint(epoch) and epoch > self.args.start_decay_at then
+			decay = true
+		end
+		
     if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
       local currPpl = self.valPerf[#self.valPerf]
       local prevPpl = self.valPerf[#self.valPerf-1]
       if currPpl > prevPpl then
-        self.startDecay = true
+        decay = true
       end
     end
 
-    if self.startDecay then
+    if decay then
       self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
     end
   end
 end
+
 
 function Optim:getLearningRate()
   return self.args.learning_rate

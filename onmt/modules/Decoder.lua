@@ -549,6 +549,8 @@ function Decoder:sampleBatch(batch, encoderStates, context, maxLength, argmax)
 	
 	local realMaxLength = maxLength-- Avoid wasting time in sampling too many PAD
 	
+	local stopTensor
+	
 	-- Start sampling
 	for t = 1, maxLength do
 		local input
@@ -570,16 +572,21 @@ function Decoder:sampleBatch(batch, encoderStates, context, maxLength, argmax)
 		
 		sampledSeq[t]:copy(indx:resize(batch.size))
 			
-		local continueFlag = false 
-		for b = 1, batch.size do
-			if input[b] == onmt.Constants.EOS or input[b] == onmt.Constants.PAD then -- stop sampling if input is EOS or PAD
-				sampledSeq[t][b] = onmt.Constants.PAD
-			else
-				continueFlag = true -- one of the sentences is not finished yet
-			end
+		-- if input is EOS or PAD then sample is PAD too
+		local compare = torch.eq(input, onmt.Constants.EOS)
+		compare:add(torch.eq(input, onmt.Constants.PAD))
+		
+		sampledSeq[t]:maskedFill(compare, onmt.Constants.PAD)
+		
+		-- check if all tensors have ended with EOS
+		if stopTensor then
+			stopTensor:add(torch.eq(sampledSeq[t], onmt.Constants.EOS))
+		else
+			stopTensor = torch.eq(sampledSeq[t], onmt.Constants.EOS)
 		end
-	
-		if continueFlag == false then
+		
+		-- if all of them are finished then we stop the RNN from running
+		if stopTensor:sum() == batch.size then
 			realMaxLength = t
 			break
 		end

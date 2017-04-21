@@ -33,10 +33,10 @@ local function evalBLEU(model, data)
 	_G.scorer:accumulateCorpusScoreBatch(sampled, batch.targetOutput)
   end
   
-  local bleuScore = _G.scorer:computeCorpusBLEU()
+  local bleuScore = _G.scorer:computeCorpusScore()
   
   model:training()
-  _G.scorer:resetStats()
+  _G.scorer:resetCorpusStats()
   collectgarbage()
   
   return bleuScore
@@ -53,7 +53,7 @@ local options = {
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-report_every',            100,    [[Print stats every this many iterations within an epoch.]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
-  {'-report_bleu',          false, [[Report BLEU Score for validation data.]]},
+  {'-loop_epoch',          1, [[Using the older training code to ensure backward-compatibility. Change this to 0 to use the new training code (save more frequently with bleu)]]},
   {'-async_parallel_minbatch', 1000,  [[For async parallel computing, minimal number of batches before being parallel.]],
                                       {valid=onmt.utils.ExtendedCmdLine.isUInt()}},
   {'-start_iteration',         1,     [[If loading from a checkpoint, the iteration from which to start]],
@@ -80,7 +80,7 @@ function Trainer:__init(args)
 end
 
 function Trainer:train(model, optim, trainData, validData, dataset, info)
-  _G.scorer = onmt.utils.BLEU.new(dataset.dicts.tgt.words, 4, 1)
+ _G.scorer = Rewarder(dataset.dicts.tgt.words, true, 'bleu')
 
   
   local verbose = true
@@ -95,9 +95,9 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
   
   -- optimize memory of the first clone
   if not self.args.disable_mem_optimization then
-	local batch = onmt.utils.Cuda.convert(trainData:getBatch(1))
-	batch.totalSize = batch.size
-	onmt.utils.Memory.optimize(_G.model, batch, verbose)
+		local batch = onmt.utils.Cuda.convert(trainData:getBatch(1))
+		batch.totalSize = batch.size
+		onmt.utils.Memory.optimize(_G.model, batch, verbose)
   end
   
   
@@ -105,17 +105,107 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
   local checkpoint = onmt.train.Checkpoint.new(self.options, model, optim, dataset.dicts)
 
   optim:setOptimStates(#_G.params)
+  
+  
+  -- this function runs the model regardless of epoch
+  -- and do validation for every n steps
+  local function trainModel()
+		local startI = self.args.start_iteration
+		local numIterationsPerEpoch = trainData:batchCount()
+		
+		local iter = startI
+		local globalIter = 1 -- tracking total steps from the beginning, regardless of current state
+		
+		local batchOrder
+		
+		if startI > 1 and info ~= nil then
+      batchOrder = info.batchOrder
+    else
+      -- Shuffle mini batch order.
+      batchOrder = torch.randperm(trainData:batchCount())
+    end
+		
+		local currentEpoch = self.args.start_epoch
+		local epochState = onmt.train.EpochState.new(currentEpoch, startI, numIterationsPerEpoch, optim:getLearningRate())
+		
+		assert(self.args.save_every > 0, "model must be evaluated after a number of iterations")
+		
+		local function validAndSave()
+			_G.logger:info('')
+			_G.logger:info('Doing validation ...')
+			local validPpl = eval(model, validData)
+			local validBleu = evalBLEU(model, validData)
+			checkpoint:saveIteration(iter, numIterationsPerEpoch, epochState, batchOrder, validPpl, validBleu, true)
+			optim:updateLearningRate(validPpl, currentEpoch)
+			_G.logger:info('')
+		end
+		
+		while currentEpoch <= self.args.end_epoch do
+		
+				
+				
+				local batchOrderIndex = iter 
+								
+				local batchIdx = batchOrder[batchOrderIndex]
+				local batch = trainData:getBatch(batchIdx)
+				totalSize = batch.size
+				
+				local losses = {}
+			
+				_G.batch = batch
+				
+				onmt.utils.Cuda.convert(_G.batch)
+				
+				_G.batch.totalSize = totalSize
+				
+				optim:zeroGrad(_G.gradParams)
+				
+				local loss = _G.model:trainNetwork(_G.batch)
+				
+				optim:prepareGrad(_G.gradParams)
+				optim:updateParams(_G.params, _G.gradParams)
+				
+				epochState:update(model, batch, loss)
+				
+				if globalIter % self.args.report_every == 0 then
+					epochState:log(iter)
+				end
+				
+				if self.args.save_every > 0 and globalIter % self.args.save_every == 0 then
+					validAndSave()
+				end
+				
+				
+				iter = iter + 1
+				globalIter = globalIter + 1
+				
+				if iter > numIterationsPerEpoch then -- we start a new epoch
+					iter = 1
+					currentEpoch = currentEpoch + 1
+					
+					-- reset the stat
+					epochState = onmt.train.EpochState.new(currentEpoch, 1, numIterationsPerEpoch, optim:getLearningRate())
+					
+					optim:updateLearningRate(math.huge, currentEpoch)
+					
+					-- reshuffle the training data every epoch
+					batchOrder = torch.randperm(trainData:batchCount())
+					
+					-- save the last time
+					if currentEpoch - 1 == self.args.end_epoch then
+						validAndSave()
+					end
+					
+				end
+		end
+  end
 
   local function trainEpoch(epoch, doProfile)
-    local epochProfiler = onmt.utils.Profiler.new(doProfile)
+    --~ local epochProfiler = onmt.utils.Profiler.new(doProfile)
 
     local startI = self.args.start_iteration
 
     local numIterations = trainData:batchCount()
-    -- In parallel mode, number of iterations is reduced to reflect larger batch size.
-    if onmt.utils.Parallel.count > 1 and not self.args.async_parallel then
-      numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
-    end
 
     local epochState = onmt.train.EpochState.new(epoch, startI, numIterations, optim:getLearningRate())
     local batchOrder
@@ -133,83 +223,99 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     
     -- Looping over the batches
     for i = startI, trainData:batchCount() do
-		local batches = {}
-		local totalSize = 0
-		
-		-- Take the corresponding batch idx
-		local batchIdx = batchOrder[i]
-		if epoch <= self.args.curriculum then
-			batchIdx = i
-		end
-		
-		local batch = trainData:getBatch(batchIdx)
-		totalSize = batch.size
-		
-		local losses = {}
-		
-		_G.profiler = onmt.utils.Profiler.new(doProfile)
-		
-		_G.batch = batch
-		
-		onmt.utils.Cuda.convert(_G.batch)
-		_G.batch.totalSize = totalSize
-		
-		optim:zeroGrad(_G.gradParams)
-		
-		local loss = _G.model:trainNetwork(_G.batch)
-		
-		optim:prepareGrad(_G.gradParams)
-		optim:updateParams(_G.params, _G.gradParams)
-		
-		epochState:update(model, batch, loss)
-		
-		if iter % self.args.report_every == 0 then
-          epochState:log(iter)
-        end
+			local batches = {}
+			local totalSize = 0
+			
+			-- Take the corresponding batch idx
+			local batchIdx = batchOrder[i]
+			if epoch <= self.args.curriculum then
+				batchIdx = i
+			end
+			local batch = trainData:getBatch(batchIdx)
+			totalSize = batch.size
+			
+			local losses = {}
+			
+			--~ _G.profiler = onmt.utils.Profiler.new(doProfile)
+			
+			_G.batch = batch
+			
+			onmt.utils.Cuda.convert(_G.batch)
+			_G.batch.totalSize = totalSize
+			
+			optim:zeroGrad(_G.gradParams)
+			
+			local loss = _G.model:trainNetwork(_G.batch)
+			
+			optim:prepareGrad(_G.gradParams)
+			optim:updateParams(_G.params, _G.gradParams)
+			
+			epochState:update(model, batch, loss)
+			
+			if iter % self.args.report_every == 0 then
+				epochState:log(iter)
+			end
+					
+			if self.args.save_every > 0 and iter % self.args.save_every == 0 then
+				--~ checkpoint:saveIteration(iter, epochState, batchOrder, true)
+				checkpoint:saveIteration(iter, numIterations, epochState, batchOrder, 9999, 0, true)
+			end
+			iter = iter + 1
         
-        if self.args.save_every > 0 and iter % self.args.save_every == 0 then
-          checkpoint:saveIteration(iter, epochState, batchOrder, true)
-        end
-        iter = iter + 1
-        
-    
     end
     
 
     epochState:log()
-
-    return epochState, epochProfiler:dump()
+	
+		return epochState
+    --~ return epochState, epochProfiler:dump()
   end
   
-  if self.args.report_bleu == true then
+  
 	
 	local bleuScore = evalBLEU(model, validData)
-	_G.logger:info('Validation BLEU score: %.2f', bleuScore)
+	_G.logger:info('Initial Validation BLEU score: %.2f', bleuScore)
 	
-  end
+  
 
   _G.logger:info('Start training...')
 
   for epoch = self.args.start_epoch, self.args.end_epoch do
     _G.logger:info('')
+    
+    if self.args.loop_epoch == 1 then
 
-    local globalProfiler = onmt.utils.Profiler.new(self.args.profiler)
+			local globalProfiler = onmt.utils.Profiler.new(self.args.profiler)
 
-    globalProfiler:start('train')
-    local epochState, epochProfile = trainEpoch(epoch, self.args.profiler)
-    globalProfiler:add(epochProfile)
-    globalProfiler:stop('train')
+			globalProfiler:start('train')
+			local epochState, epochProfile = trainEpoch(epoch)
+			globalProfiler:add(epochProfile)
+			globalProfiler:stop('train')
 
-    globalProfiler:start('valid')
-    local validPpl = eval(model, validData)
-    globalProfiler:stop('valid')
+			globalProfiler:start('valid')
+			local validPpl = eval(model, validData)
+			local validBleu = evalBLEU(model, validData)
+		
+			
+			globalProfiler:stop('valid')
 
-    if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
-    _G.logger:info('Validation perplexity: %.2f', validPpl)
+			if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
+			_G.logger:info('Validation perplexity: %.2f', validPpl)
+			_G.logger:info('Validation BLEU score: %.2f', validBleu)
 
-    optim:updateLearningRate(validPpl, epoch)
-
-    checkpoint:saveEpoch(validPpl, epochState, true)
+			optim:updateLearningRate(validPpl, epoch)
+			--~ 
+			local totalEpochs = self.args.end_epoch - self.args.start_epoch + 1
+			--~ 
+			--~ 
+	--~ 
+			checkpoint:saveEpoch(validPpl, validBleu, epochState, true)
+			
+		else
+    
+			trainModel()
+    
+    end
   end
 end
 
