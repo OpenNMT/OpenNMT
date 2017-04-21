@@ -12,6 +12,7 @@
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
 * Fix translation error of models profiled during training
 * Fix error when using one-layer GRU
+* Fix incorrect coverage normalization formula during the beam search
 * Do not allow duplicate commandline options and do not print help on errors
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
