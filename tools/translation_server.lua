@@ -6,18 +6,19 @@ require('onmt.init')
 local cmd = onmt.utils.ExtendedCmdLine.new('translation_server.lua')
 
 local options = {
-  {'-host', '127.0.0.1', [[Host to run the server on]]},
-  {'-port', '5556', [[Port to run the server on]]}
+  {
+    '-host', '127.0.0.1',
+    [[Host to run the server on.]]
+  },
+  {
+    '-port', '5556',
+    [[Port to run the server on.]]
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Server')
 
 onmt.translate.Translator.declareOpts(cmd)
-
-cmd:text('')
-cmd:text('**Other options**')
-cmd:text('')
-
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
