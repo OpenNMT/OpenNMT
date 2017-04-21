@@ -41,6 +41,7 @@ function Bottle:bottle(input, batchDims)
     local inShape = {}
     local inSize, squeezeSize = nil, nil
     for i=1,#input do
+      local shape
       shape, inSize, squeezeSize = self:bottle(input[i], batchDims)
       table.insert(inShape, shape)
     end
@@ -57,13 +58,13 @@ end
 
 function Bottle:squeeze(input, inShape)
   if torch.type(input) == 'table' then
-     input_ = {}
-     for i=1,#input do
-       input_[i] = self:squeeze(input[i], inShape[i])
-     end
-     return input_
+    local input_ = {}
+    for i=1,#input do
+      input_[i] = self:squeeze(input[i], inShape[i])
+    end
+    return input_
   else
-     return input:view(unpack(inShape:totable()))
+    return input:view(unpack(inShape:totable()))
   end
 end
 
