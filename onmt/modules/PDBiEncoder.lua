@@ -72,6 +72,7 @@ function PDBiEncoder.load(pretrained)
 
   for i=1, #pretrained.layers do
     self.layers[i] = onmt.BiEncoder.load(pretrained.layers[i])
+    self:add(self.layers[i])
   end
 
   self.args = pretrained.args
@@ -107,6 +108,23 @@ end
 
 function PDBiEncoder:maskPadding()
   self.layers[1]:maskPadding()
+end
+
+-- size of context vector
+function PDBiEncoder:contextSize(sourceSize, sourceLength)
+  local contextLength = math.ceil(sourceLength/self.args.multiplier)
+  local contextSize
+  if type(sourceSize) == 'table' then
+    contextSize = {}
+    for i = 1, #sourceSize do
+      table.insert(contextSize, math.ceil(contextSize[i]/self.args.multiplier))
+    end
+  elseif type(sourceSize) == 'int' then
+    contextSize = math.ceil(sourceSize/self.args.multiplier)
+  else
+    contextSize = torch.ceil(sourceSize/self.args.multiplier)
+  end
+  return contextSize, contextLength
 end
 
 function PDBiEncoder:forward(batch)
@@ -160,22 +178,24 @@ function PDBiEncoder:forward(batch)
 end
 
 function PDBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
+  local gradInputs
+
   for i = #self.layers, 1, -1 do
     local lrange_gradStatesOutput
     if gradStatesOutput then
       lrange_gradStatesOutput = onmt.utils.Table.subrange(gradStatesOutput, self.lranges[i][1], self.lranges[i][2])
     end
-    local gradContextInput = self.layers[i]:backward(self.inputs[i], lrange_gradStatesOutput, gradContextOutput)
+    gradInputs = self.layers[i]:backward(self.inputs[i], lrange_gradStatesOutput, gradContextOutput)
     if i ~= 1 then
       gradContextOutput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
-                                              { batch.size, #gradContextInput*self.args.pdbrnn_reduction, self.args.hiddenSize })
-      for t = 1, #gradContextInput do
+                                              { batch.size, #gradInputs*self.args.pdbrnn_reduction, self.args.hiddenSize })
+      for t = 1, #gradInputs do
         for j = 1, self.args.pdbrnn_reduction do
-          gradContextOutput[{{},self.args.pdbrnn_reduction*(t-1)+j,{}}]:copy(gradContextInput[t])
+          gradContextOutput[{{},self.args.pdbrnn_reduction*(t-1)+j,{}}]:copy(gradInputs[t])
         end
       end
     end
   end
 
-  return gradContextOutput
+  return gradInputs
 end

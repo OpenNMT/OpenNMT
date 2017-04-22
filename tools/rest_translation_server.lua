@@ -42,7 +42,7 @@ local function translateMessage(translator, lines)
   local bpe
   local res
   local err
-  _G.logger:info("Start Tokenization")
+  _G.logger:debug("Start Tokenization")
   if opt.bpe_model ~= '' then
      bpe = BPE.new(opt)
   end
@@ -68,15 +68,15 @@ local function translateMessage(translator, lines)
     table.insert(batch, translator:buildInput(srcTokens))
   end
   -- Translate
-  _G.logger:info("Start Translation")
+  _G.logger:debug("Start Translation")
   local results = translator:translate(batch)
-  _G.logger:info("End Translation")
+  _G.logger:debug("End Translation")
 
   -- Return the nbest translations for each in the batch.
   local translations = {}
   for b = 1, #lines do
     local ret = {}
-    for i = 1, translator.opt.n_best do
+    for i = 1, translator.args.n_best do
       local srcSent = translator:buildOutput(batch[b])
       local predSent = translator:buildOutput(results[b].preds[i])
 
@@ -120,9 +120,9 @@ local function init_server(port, translator)
       consumes = "application/json",
       produces = "application/json",
       handler = function(req)
-        _G.logger:info("receiving request")
+        _G.logger:debug("receiving request")
         local translate = translateMessage(translator, req)
-        _G.logger:info("sending response")
+        _G.logger:debug("sending response")
         return restserver.response():status(200):entity(translate)
       end,
     }

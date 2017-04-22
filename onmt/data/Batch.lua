@@ -12,10 +12,10 @@ local function getLength(seq, ignore)
       len = len - ignore
     end
     if max == 0 or len > max then
-      if max ~= 0 then
-        uneven = true
-      end
       max = len
+    end
+    if i > 1 and sizes[i - 1] ~= len then
+      uneven = true
     end
     sizes[i] = len
   end
@@ -55,7 +55,7 @@ local Batch = torch.class('Batch')
 
 Parameters:
 
-  * `src` - 2D table of source batch indices
+  * `src` - 2D table of source batch indices or prebuilt source batch vectors
   * `srcFeatures` - 2D table of source batch features (opt)
   * `tgt` - 2D table of target batch indices
   * `tgtFeatures` - 2D table of target batch features (opt)
@@ -70,17 +70,28 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   end
 
   self.size = #src
+  self.totalSize = self.size -- updated when this batch is part of a larger one (data parallelism).
 
   self.sourceLength, self.sourceSize, self.uneven = getLength(src)
 
+  -- if input vectors (speech for instance)
+  self.inputVectors = src[1]:dim() > 1
+
   local sourceSeq = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
-  self.sourceInput = sourceSeq:clone()
-  self.sourceInputRev = sourceSeq:clone()
+
+  if not self.inputVectors then
+    self.sourceInput = sourceSeq:clone()
+    self.sourceInputRev = sourceSeq:clone()
+    -- will be used to return extra padded value
+    self.padTensor = torch.LongTensor(self.size):fill(onmt.Constants.PAD)
+  else
+    self.sourceInput = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
+    self.sourceInputRev = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
+    self.padTensor = torch.Tensor(self.size, src[1]:size(2)):zero()
+  end
 
   self.sourceInputFeatures = {}
   self.sourceInputRevFeatures = {}
-  -- will be used to return extra padded value
-  self.padTensor = torch.LongTensor(self.size):fill(onmt.Constants.PAD)
 
   if #srcFeatures > 0 then
     for _ = 1, #srcFeatures[1] do

@@ -59,23 +59,23 @@ function SeqTagger.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 
-function SeqTagger:__init(args, dicts, verbose)
+function SeqTagger:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
-  self.models.encoder = onmt.Factory.buildWordEncoder(self.args, dicts.src, verbose)
-  self.models.generator = onmt.Factory.buildGenerator(self.args.rnn_size, dicts.tgt)
+  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
+  self.models.generator = onmt.Factory.buildGenerator(args.rnn_size, dicts.tgt)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
-function SeqTagger.load(args, models, dicts, isReplica)
+function SeqTagger.load(args, models, dicts)
   local self = torch.factory('SeqTagger')()
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
-  self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
-  self.models.generator = onmt.Factory.loadGenerator(models.generator, isReplica)
+  self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
+  self.models.generator = onmt.Factory.loadGenerator(models.generator)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 
   return self

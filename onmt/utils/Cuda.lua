@@ -60,10 +60,11 @@ function Cuda.init(opt, masterGPU)
         end
 
         _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
-      end
 
-      if cutorch.isCachingAllocatorEnabled and cutorch.isCachingAllocatorEnabled() then
-        _G.logger:warning('The caching CUDA memory allocator is enabled. This allocator improves performance at the cost of a higher GPU memory usage. To optimize for memory, consider disabling it by setting the environment variable: THC_CACHING_ALLOCATOR=0')
+        if cutorch.isCachingAllocatorEnabled and cutorch.isCachingAllocatorEnabled() then
+          _G.logger:warning('The caching CUDA memory allocator is enabled. This allocator improves performance at the cost of a higher GPU memory usage. To optimize for memory, consider disabling it by setting the environment variable: THC_CACHING_ALLOCATOR=0')
+        end
+
       end
 
       cutorch.setDevice(Cuda.gpuIds[masterGPU])
@@ -97,16 +98,14 @@ function Cuda.getRNGStates()
 end
 
 -- set RNGState from saved state
-function Cuda.setRNGStates(rngStates, verbose)
+function Cuda.setRNGStates(rngStates)
   if not rngStates then
     return
   end
-  if verbose then
-    _G.logger:info("Restoring Random Number Generator states")
-  end
+  _G.logger:info("Restoring random number generator states...")
   torch.setRNGState(rngStates[1])
   if #rngStates-1 ~= #Cuda.gpuIds then
-    _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
+    _G.logger:warning('GPU count does not match for resetting random number generator. Skipping.')
   else
     for idx = 2, #rngStates do
       cutorch.setRNGState(rngStates[idx], idx-1)

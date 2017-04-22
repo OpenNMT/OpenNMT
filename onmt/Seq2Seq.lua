@@ -80,43 +80,40 @@ local options = {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0
     }
-  },
-  {
-    '-input_feed', 1,
-    [[Feed the context vector at each time step as additional input
-      (via concatenation with the word embeddings) to the decoder.]],
-    {
-      enum = {0, 1},
-      structural = 0
-    }
   }
 }
 
 function Seq2Seq.declareOpts(cmd)
   cmd:setCmdLineOptions(options, Seq2Seq.modelName())
   onmt.Encoder.declareOpts(cmd)
+  onmt.Decoder.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 
-function Seq2Seq:__init(args, dicts, verbose)
+function Seq2Seq:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
   self.args.uneven_batches = args.uneven_batches
 
-  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
-  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt, verbose)
+  if not dicts.src then
+    -- the input is already a vector
+    args.dimInputSize = dicts.srcInputSize
+  end
+
+  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
+  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
-function Seq2Seq.load(args, models, dicts, isReplica)
+function Seq2Seq.load(args, models, dicts)
   local self = torch.factory('Seq2Seq')()
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
   self.args.uneven_batches = args.uneven_batches
 
-  self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
-  self.models.decoder = onmt.Factory.loadDecoder(models.decoder, isReplica)
+  self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
+  self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 
   return self
@@ -154,24 +151,27 @@ function Seq2Seq:getOutput(batch)
 end
 
 function Seq2Seq:maskPadding(batch)
-  if self.args.uneven_batches then
-    self.models.encoder:maskPadding()
-    if batch.uneven then
-      self.models.decoder:maskPadding(batch.sourceSize, batch.sourceLength)
-    else
-      self.models.decoder:maskPadding()
-    end
+  self.models.encoder:maskPadding()
+  if batch and batch.uneven then
+    self.models.decoder:maskPadding(self.models.encoder:contextSize(batch.sourceSize, batch.sourceLength))
+  else
+    self.models.decoder:maskPadding()
   end
 end
 
 function Seq2Seq:forwardComputeLoss(batch)
-  self:maskPadding(batch)
+  if self.args.uneven_batches then
+    self:maskPadding(batch)
+  end
+
   local encoderStates, context = self.models.encoder:forward(batch)
   return self.models.decoder:computeLoss(batch, encoderStates, context, self.criterion)
 end
 
 function Seq2Seq:trainNetwork(batch, dryRun)
-  self:maskPadding(batch)
+  if self.args.uneven_batches then
+    self:maskPadding(batch)
+  end
 
   local encStates, context = self.models.encoder:forward(batch)
 
