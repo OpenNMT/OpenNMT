@@ -17,13 +17,14 @@ tests:
     params:
       PARAMS_TRAIN: -gpuid 1
   -
-    # one epoch training on real scale data
+    # one epoch training on real scale data (100k sentence)
     name: baseline1M-enfr
     script: baseline.sh
     data: baseline1M-enfr
     params:
       PARAMS_TOKENIZE: -joiner_annotate
-      PARAMS_TRAIN: -end_epoch 2
+      PARAMS_MAXSIZE: 100000
+      PARAMS_TRAIN: -end_epoch 6
       NAME: baseline-1M
       SRC: en
       TGT: fr
