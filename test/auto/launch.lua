@@ -22,7 +22,8 @@ log_file:write('running autotest...\n')
 log_file:close()
 
 local handle = io.popen("git rev-parse --short HEAD")
-local git_rev = handle:read("*a")
+local git_rev = handle:read()
+
 handle:close()
 
 local function log(message, level)
@@ -95,7 +96,7 @@ end
 local idx=1
 
 for _, test in pairs(tests) do
-  setbadge(log_file_path..'-status.svg', "yellow", "running: "..idx..'/'..#tests.." on ("..git_rev..")")
+  setbadge(log_file_path..'-status.svg', "yellow", "running: "..idx..'/'..#tests.." ("..git_rev..")")
 
   local command=''
   local env = {
