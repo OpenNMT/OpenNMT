@@ -18,15 +18,18 @@ local download_dir = params.download_dir
 local runname = os.date('%y%m%d-%H%M%S')
 local log_file_path = log_dir..'/'..runname..'.txt'
 local log_file = assert(io.open(log_file_path, 'w'))
-
 log_file:write('running autotest...\n')
 log_file:close()
+
+local handle = io.popen("git rev-parse --short HEAD")
+local git_rev = handle:read("*a")
+handle:close()
 
 local function log(message, level)
   level = level or 'INFO'
   local timeStamp = os.date('%x %X')
   local msgFormatted = string.format('[%s %s] %s', timeStamp, level, message)
-  local log_file = assert(io.open(log_file_path, 'a'))
+  log_file = assert(io.open(log_file_path, 'a'))
   log_file:write(msgFormatted..'\n')
   log_file:close()
 end
@@ -45,7 +48,7 @@ local function osExecute(command)
     log('['..idxCommand..'] - COMPLETED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'INFO')
   else
     log('['..idxCommand..'] - FAILED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'ERROR')
-    setbadge(log_file_path..'-status.svg', "red", "failed")
+    setbadge(log_file_path..'-status.svg', "red", "failed ("..git_rev..")")
     os.exit(0)
   end
   idxCommand = idxCommand+1
@@ -54,12 +57,12 @@ end
 local function osAssert(test, message)
   if not test then
     log(message, 'ERROR')
-    setbadge(log_file_path..'-status.svg', "red", "failed")
+    setbadge(log_file_path..'-status.svg', "red", "failed ("..git_rev..")")
     os.exit(0)
   end
 end
 
-setbadge(log_file_path..'-status.svg', "yellow", "running (prep)")
+setbadge(log_file_path..'-status.svg', "yellow", "running: prep ("..git_rev..")")
 local alllog_file = assert(io.open(log_dir..'/alllog.html', 'a'))
 alllog_file:write("<li><a href='./"..runname..".txt'>"..runname.."</a>: <img src='"..runname..".txt-status.svg'></li>\n")
 alllog_file:close()
@@ -92,7 +95,7 @@ end
 local idx=1
 
 for _, test in pairs(tests) do
-  setbadge(log_file_path..'-status.svg', "yellow", "running ("..idx..'/'..#tests..")")
+  setbadge(log_file_path..'-status.svg', "yellow", "running: "..idx..'/'..#tests.." on ("..git_rev..")")
 
   local command=''
   local env = {
@@ -118,16 +121,8 @@ for _, test in pairs(tests) do
   f:write(command)
   f:close()
 
-  local timer = torch.Timer()
-  local res, info, val = osExecute (command)
-  if res then
-    log('test '..idx..' - COMPLETED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'INFO')
-  else
-    log('test '..idx..' - FAILED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'ERROR')
-    setbadge(log_file_path..'-status.svg', "red", "failed")
-    os.exit(0)
-  end
+  osExecute (command)
   idx = idx + 1
 end
 
-setbadge(log_file_path..'-status.svg', "green", "pass")
+setbadge(log_file_path..'-status.svg', "green", "pass ("..git_rev..")")
