@@ -10,4 +10,9 @@ will be appended with link to both.
 th test/auto/launch.lua
 ```
 
+The default configuration is for run on AWS EC2 with following sequence:
 
+  * launch AMI `ami-8463e892` EC2 p2 instance - the instance has a preconfigured installation of torch and necessary packages
+  * install lua yaml library: `luarocks install yaml`
+  * clone OpenNMT repository: `git clone https://www.github.com/OpenNMT/OpenNMT`
+  * run the test run from OpenNMT directory
