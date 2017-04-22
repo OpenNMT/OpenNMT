@@ -24,7 +24,7 @@ tests:
     params:
       PARAMS_TOKENIZE: -joiner_annotate
       PARAMS_MAXSIZE: 100000
-      PARAMS_TRAIN: -end_epoch 6
+      PARAMS_TRAIN: -end_epoch 6 -gpu_id 1
       NAME: baseline-1M
       SRC: en
       TGT: fr
