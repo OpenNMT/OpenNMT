@@ -12,7 +12,21 @@ local tests = config.tests
 local data = config.data
 
 local tmp_dir = params.tmp_dir
+local log_dir = params.log_dir
 local download_dir = params.download_dir
+
+local function setbadge(path, color, message)
+  assert(os.execute("wget 'https://img.shields.io/badge/autotest-"..message.."-"..color..".svg' -O '"..path.."'"), "cannot set badge'")
+  assert(os.execute("wget 'https://img.shields.io/badge/autotest-"..message.."-"..color..".svg' -O '"..log_dir.."/laststatus.svg'"), "cannot set badge'")
+end
+
+local runname = os.date('%y%m%d-%H%M%S')
+local log_file_path = log_dir..'/'..runname..'.txt'
+local log_file = assert(io.open(log_file_path, 'w'))
+setbadge(log_file_path..'-status.svg', "yellow", "running")
+local alllog_file = assert(io.open(log_dir..'/alllog.html', 'a'))
+alllog_file:write("<li><a href='./"..runname..".txt'>"..runname.."</a>: <img src='"..runname..".txt-status.svg'></li>\n")
+alllog_file:close()
 
 local function log(message, level)
   level = level or 'INFO'
@@ -65,8 +79,7 @@ for _, test in pairs(tests) do
     command = command .. k .. "='" .. v .. "' "
   end
   command = command .. params.path_scripts .. '/' .. test.script
-  command = command .. " > '"..env.TMP.."/stdout'"
-  command = command .. " 2> '"..env.TMP.."/stderr'"
+  command = command .. " 2>&1 >> '"..log_file_path.."'"
 
   log('test '..idx..' - LAUNCH '..test.name,'INFO')
   local f = io.open(env.TMP.."/cmdline", "w")
@@ -79,6 +92,10 @@ for _, test in pairs(tests) do
     log('test '..idx..' - COMPLETED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'INFO')
   else
     log('test '..idx..' - FAILED ('..info..'/'..val..') in '..timer:time().real..' seconds', 'ERROR')
+    setbadge(log_file_path..'-status.svg', "red", "failed")
+    os.exit(0)
   end
   idx = idx + 1
 end
+
+setbadge(log_file_path..'-status.svg', "green", "pass")

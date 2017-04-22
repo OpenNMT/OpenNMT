@@ -1,6 +1,6 @@
 params:
   path_scripts: test/auto/scripts
-  logs: ~/Downloads/opennmt-logs
+  log_dir: /mnt/opennmt-logs/autotest/
   tmp_dir: tmp
   download_dir: download
 tests:
