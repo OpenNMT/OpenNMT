@@ -3,7 +3,7 @@
 set -o xtrace
 
 for i in ${DATA}/*.${SRC} ${DATA}/*.${TGT} ; do
-  th tools/tokenize.lua ${PARAMS_TOKENIZE} < ${i} > ${i}.tok
+  th tools/tokenize.lua ${PARAMS_TOKENIZE} < ${i} | head -${PARAMS_MAXSIZE} > ${i}.tok
   if [ $? -ne 0 ]; then
     err = $?
     echo "-- ERROR IN TOKENIZE - EXIT"
