@@ -25,6 +25,8 @@
 
 ## Sequence to Sequence with Attention options
 
+* `-enc_layers <number>` (default: `0`)<br/>If > 0, number of layers of the encode. This overrides the global `-layers` option.
+* `-dec_layers <number>` (default: `0`)<br/>If > 0, number of layers of the decoder. This overrides the global `-layers` option.
 * `-word_vec_size <number>` (default: `0`)<br/>Shared word embedding size. If set, this overrides `-src_word_vec_size` and `-tgt_word_vec_size`.
 * `-src_word_vec_size <string>` (default: `500`)<br/>Comma-separated list of source embedding sizes: `word[,feat1[,feat2[,...] ] ]`.
 * `-tgt_word_vec_size <string>` (default: `500`)<br/>Comma-separated list of target embedding sizes: `word[,feat1[,feat2[,...] ] ]`.
@@ -35,12 +37,13 @@
 * `-feat_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action for the features embeddings.
 * `-feat_vec_exponent <number>` (default: `0.7`)<br/>When features embedding sizes are not set and using `-feat_merge concat`, their dimension will be set to `N^feat_vec_exponent` where `N` is the number of values the feature takes.
 * `-feat_vec_size <number>` (default: `20`)<br/>When features embedding sizes are not set and using `-feat_merge sum`, this is the common embedding size of the features
-* `-layers <number>` (default: `2`)<br/>Number of recurrent layers of the encoder and decoder.
+* `-layers <number>` (default: `2`)<br/>Number of recurrent layers of the encoder and decoder. See also `-enc_layers`, `-dec_layers` and `-bridge` to assign different layers to the encoder and decoder.
 * `-rnn_size <number>` (default: `500`)<br/>Hidden size of the recurrent unit.
 * `-rnn_type <string>` (accepted: `LSTM`, `GRU`; default: `LSTM`)<br/>Type of recurrent cell.
 * `-dropout <number>` (default: `0.3`)<br/>Dropout probability applied between recurrent layers.
 * `-dropout_input`<br/>Also apply dropout to the input of the recurrent module.
 * `-residual`<br/>Add residual connections between recurrent layers.
+* `-bridge <string>` (accepted: `copy`, `dense`, `dense_nonlinear`, `none`; default: `copy`)<br/>Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder must have the same number of layers.
 * `-input_feed <number>` (accepted: `0`, `1`; default: `1`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
 * `-brnn`<br/>Use a bidirectional encoder.
 * `-dbrnn`<br/>Use a deep bidirectional encoder.
