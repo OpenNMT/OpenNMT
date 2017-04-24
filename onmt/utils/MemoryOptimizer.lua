@@ -6,7 +6,8 @@ local MemoryOptimizer = torch.class('MemoryOptimizer')
 local protectOutput = {
   'nn.Sigmoid',
   'nn.SoftMax',
-  'nn.Tanh'
+  'nn.Tanh',
+  'onmt.Bottle'
 }
 
 -- We cannot share the input of these modules as they use it in their backward pass.
@@ -15,7 +16,8 @@ local protectInput = {
   'nn.JoinTable',
   'onmt.JoinReplicateTable',
   'nn.CMulTable',
-  'nn.MM'
+  'nn.MM',
+  'onmt.Bottle'
 }
 
 local function contains(list, m)
