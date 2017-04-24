@@ -26,9 +26,10 @@ end
 
 function Model:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
-  self.args.criterion = args.criterion
   self.args.train_from = args.train_from
+  self.args.criterion = args.criterion
   self.args.nce_sample_size = args.nce_sample_size
+  self.args.nce_normalization = args.nce_normalization
   self.models = {}
 end
 
@@ -51,6 +52,8 @@ function Model:changeParameters(changes, dicts)
           end
         elseif k == 'nce_sample_size' and torch.typename(m) == 'onmt.NCEModule' then
           m.k = v
+        elseif k == 'nce_normalization' and torch.typename(m) == 'onmt.NCEModule' then
+          m.Z[1] = v
         elseif k == 'criterion' and torch.typename(m) == 'onmt.Generator' then
           m:buildGenerator(self.args, dicts.tgt, nil, true)
         end

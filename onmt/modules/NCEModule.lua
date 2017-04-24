@@ -14,6 +14,13 @@ if dpnn then
         valid = onmt.utils.ExtendedCmdLine.isUInt,
         structural = 1
       }
+    },
+    {
+      '-nce_normalization', -1,
+      [[Size of NCE normalization constant - if -1, will be estimated from first batch.]],
+      {
+        structural = 1
+      }
     }
   }
 
