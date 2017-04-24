@@ -223,4 +223,8 @@ function batchTest.unevenDescending()
   tester:eq(batch.uneven, true)
 end
 
+function batchTest.empty()
+  tester:assertNoError(function () onmt.data.Batch.new() end)
+end
+
 return batchTest
