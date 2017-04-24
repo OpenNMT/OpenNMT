@@ -121,7 +121,7 @@ local function main()
       _G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
       -- dynamic parameter changes
       if not onmt.utils.Table.empty(paramChanges) then
-        _G.model:changeParameters(paramChanges)
+        _G.model:changeParameters(paramChanges, dataset.dicts)
       end
     else
       local verbose = idx == 1

@@ -31,7 +31,7 @@ function Model:__init(args)
 end
 
 -- Dynamically change parameters in the graph.
-function Model:changeParameters(changes)
+function Model:changeParameters(changes, dicts)
   _G.logger:info('Applying new parameters:')
 
   for k, v in pairs(changes) do
@@ -50,8 +50,7 @@ function Model:changeParameters(changes)
         elseif k == 'nce_sample_size' and torch.typename(m) == 'onmt.NCEModule' then
           m.k = v
         elseif k == 'criterion' and torch.typename(m) == 'onmt.Generator' then
-          assert(v == 'nll', "It is not possible to change dynamically from 'nll' criterion to '"..v.."'")
-          m:convertToLogSoftMax()
+          m:buildGenerator(self.args, dicts, nil, true)
         end
       end)
     end
