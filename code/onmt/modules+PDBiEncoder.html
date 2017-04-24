@@ -1,0 +1,50 @@
+<p><a name="onmt.PDBiEncoder.dok"></a></p>
+
+<h2>onmt.PDBiEncoder</h2>
+
+<p>PDBiEncoder is a pyramidal deep bidirectional Sequencer used for the source language.</p>
+
+<p><a name="onmt.PDBiEncoder"></a></p>
+
+<h3>onmt.PDBiEncoder(args, input)</h3>
+
+<p>Create a pyrimal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>args</code> - global arguments</li>
+<li><code>input</code> - input neural network.</li>
+</ul>
+
+<p><a name="onmt.PDBiEncoder.load"></a></p>
+
+<h3>onmt.PDBiEncoder.load(pretrained)</h3>
+
+<p>Return a new PDBiEncoder using the serialized data <code>pretrained</code>. 
+<a name="onmt.PDBiEncoder:serialize"></a></p>
+
+<h3>onmt.PDBiEncoder:serialize()</h3>
+
+<p>Return data to serialize. 
+<a name="onmt.PDBiEncoder:contextSize"></a></p>
+
+<h3>onmt.PDBiEncoder:contextSize(sourceSize, sourceLength)</h3>
+
+<p>size of context vector</p>
+
+<h4>Undocumented methods</h4>
+
+<p><a name="onmt.PDBiEncoder.declareOpts"></a></p>
+
+<ul>
+<li><code>onmt.PDBiEncoder.declareOpts(cmd)</code>
+<a name="onmt.PDBiEncoder:resetPreallocation"></a></li>
+<li><code>onmt.PDBiEncoder:resetPreallocation()</code>
+<a name="onmt.PDBiEncoder:maskPadding"></a></li>
+<li><code>onmt.PDBiEncoder:maskPadding()</code>
+<a name="onmt.PDBiEncoder:forward"></a></li>
+<li><code>onmt.PDBiEncoder:forward(batch)</code>
+<a name="onmt.PDBiEncoder:backward"></a></li>
+<li><code>onmt.PDBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)</code></li>
+</ul>

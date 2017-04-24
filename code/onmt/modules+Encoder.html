@@ -1,0 +1,92 @@
+<p><a name="onmt.Encoder.dok"></a></p>
+
+<h2>onmt.Encoder</h2>
+
+<p>Encoder is a unidirectional Sequencer used for the source language.</p>
+
+<pre><code>h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ .      .      .             .
+ |      |      |             |
+h_1 =&gt; h_2 =&gt; h_3 =&gt; ... =&gt; h_n
+ |      |      |             |
+ |      |      |             |
+x_1    x_2    x_3           x_n
+</code></pre>
+
+<p>Inherits from <a href="onmt+modules+Sequencer">onmt.Sequencer</a>.</p>
+
+<p><a name="onmt.Encoder"></a></p>
+
+<h3>onmt.Encoder(args, inputNetwork)</h3>
+
+<p>Construct an Encoder layer.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>inputNetwork</code> - input module.</li>
+<li><code>rnn</code> - recurrent module.</li>
+</ul>
+
+<p><a name="onmt.Encoder.load"></a></p>
+
+<h3>onmt.Encoder.load(pretrained)</h3>
+
+<p>Return a new Encoder using the serialized data <code>pretrained</code>. 
+<a name="onmt.Encoder:serialize"></a></p>
+
+<h3>onmt.Encoder:serialize()</h3>
+
+<p>Return data to serialize. 
+<a name="onmt.Encoder:contextSize"></a></p>
+
+<h3>onmt.Encoder:contextSize(sourceSize, sourceLength)</h3>
+
+<p>size of context vector
+<a name="onmt.Encoder:forward"></a></p>
+
+<h3>onmt.Encoder:forward(batch)</h3>
+
+<p>Compute the context representation of an input.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>batch</code> - as defined in batch.lua.</li>
+</ul>
+
+<p>Returns:</p>
+
+<ol>
+<li>- final hidden states</li>
+<li>- context matrix H</li>
+</ol>
+
+<p><a name="onmt.Encoder:backward"></a></p>
+
+<h3>onmt.Encoder:backward(batch, gradStatesOutput, gradContextOutput)</h3>
+
+<p>Backward pass (only called during training)</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>batch</code> - must be same as for forward</li>
+<li><code>gradStatesOutput</code> gradient of loss wrt last state - this can be null if states are not used</li>
+<li><p><code>gradContextOutput</code> - gradient of loss wrt full context.</p>
+
+<p>Returns: <code>gradInputs</code> of input network.</p></li>
+</ul>
+
+<h4>Undocumented methods</h4>
+
+<p><a name="onmt.Encoder.declareOpts"></a></p>
+
+<ul>
+<li><code>onmt.Encoder.declareOpts(cmd)</code>
+<a name="onmt.Encoder:resetPreallocation"></a></li>
+<li><code>onmt.Encoder:resetPreallocation()</code>
+<a name="onmt.Encoder:maskPadding"></a></li>
+<li><code>onmt.Encoder:maskPadding()</code></li>
+</ul>

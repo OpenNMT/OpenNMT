@@ -1,0 +1,49 @@
+<p><a name="onmt.BeamSearcher.dok"></a></p>
+
+<h2>onmt.BeamSearcher</h2>
+
+<p>Class for managing the internals of the beam search process.</p>
+
+<pre><code>  hyp1---hyp1---hyp1 -hyp1
+      \             /
+  hyp2 \-hyp2 /-hyp2--hyp2
+             /      \
+  hyp3---hyp3---hyp3 -hyp3
+  ========================
+</code></pre>
+
+<p>Takes care of beams.</p>
+
+<p><a name="onmt.BeamSearcher"></a></p>
+
+<h3>onmt.BeamSearcher(advancer)</h3>
+
+<p>Constructor</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>advancer</code> - an <code>onmt.translate.Advancer</code> object.</li>
+</ul>
+
+<p><a name="onmt.BeamSearcher:search"></a></p>
+
+<h3>onmt.BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)</h3>
+
+<p>Performs beam search.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>beamSize</code> - beam size. [1]</li>
+<li><code>nBest</code> - the <code>nBest</code> top hypotheses will be returned after beam search. [1]</li>
+<li><code>preFilterFactor</code> - optional, set this only if filter is being used. Before
+applying filters, hypotheses with top <code>beamSize * preFilterFactor</code> scores will
+be considered. If the returned hypotheses voilate filters, then set this to a
+larger value to consider more. [1]</li>
+<li><code>keepInitial</code> - optional, whether return the initial token or not. [false]</li>
+</ul>
+
+<p>Returns: a table <code>finished</code>. <code>finished[b][n].score</code>, <code>finished[b][n].tokens</code>
+and <code>finished[b][n].states</code> describe the n-th best hypothesis for b-th sample
+in the batch.</p>

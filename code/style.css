@@ -1,0 +1,73 @@
+@import url(https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700);
+
+body {
+  padding:50px;
+  font:14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color:#000;
+  font-weight:300;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  width: 80%;
+}
+
+h1 {
+  color:#222;
+  margin:0 0 20px;
+  line-height:1.1;
+  font-size:3em;
+}
+
+a {
+  color:#39c;
+  font-weight:400;
+  text-decoration:none;
+}
+
+.packageItem {
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 30px;
+    border-color: #aaa;
+    background-image: -webkit-gradient(
+        linear,
+        left top,
+        left bottom,
+        color-stop(0.19, #FFFFFF),
+        color-stop(1, #EDEDED)
+    );
+    background-image: -o-linear-gradient(bottom, #FFFFFF 19%, #EDEDED 100%);
+    background-image: -moz-linear-gradient(bottom, #FFFFFF 19%, #EDEDED 100%);
+    background-image: -webkit-linear-gradient(bottom, #FFFFFF 19%, #EDEDED 100%);
+    background-image: -ms-linear-gradient(bottom, #FFFFFF 19%, #EDEDED 100%);
+    background-image: linear-gradient(to bottom, #FFFFFF 19%, #EDEDED 100%);
+    padding: 0.2em;
+    margin: 0.2em;
+}
+
+a > .packageItem {
+    font-size: 2em;
+}
+.packageItem > small {
+    font-size: 0.6em;
+    display: block;
+    color: #000;
+}
+
+.searchForm {
+    float: right;
+}
+.packageList {
+    column-width: 300px;
+    -moz-column-width: 300px;
+    -webkit-column-width: 300px;
+}
+.packageSection {
+    -webkit-column-break-inside: avoid;
+    break-inside: avoid-column;
+    page-break-inside: avoid;
+    border: 1px solid #eee;
+    border-radius: 30px;
+    margin-bottom: 10px;
+
+}

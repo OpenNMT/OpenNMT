@@ -1,0 +1,48 @@
+<p><a name="onmt.GlobalAttention.dok"></a></p>
+
+<h2>onmt.GlobalAttention</h2>
+
+<p>Global attention takes a matrix and a query vector. It
+then computes a parameterized convex combination of the matrix
+based on the input query.</p>
+
+<pre><code>H_1 H_2 H_3 ... H_n
+ q   q   q       q
+  |  |   |       |
+   \ |   |      /
+       .....
+     \   |  /
+         a
+</code></pre>
+
+<p>Constructs a unit mapping:
+  $$(H_1 .. H_n, q) =&gt; (a)$$
+  Where H is of <code>batch x n x dim</code> and q is of <code>batch x dim</code>.</p>
+
+<p>The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.</p>
+
+<ul>
+<li>dot: $$score(h_t,{\overline{h}}_s) = h_t<sup>T{\overline{h}}_s$$</sup></li>
+<li>general: $$score(h_t,{\overline{h}}_s) = h_t<sup>T</sup> W_a {\overline{h}}_s$$</li>
+<li>concat: $$score(h_t,{\overline{h}}_s) = \nu_a<sup>T</sup> tanh(W_a[h_t;{\overline{h}}_s])$$</li>
+</ul>
+
+<p><a name="onmt.GlobalAttention"></a></p>
+
+<h3>onmt.GlobalAttention(opt, dim)</h3>
+
+<p>A nn-style module computing attention.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>dim</code> - dimension of the context vectors.</li>
+</ul>
+
+<h4>Undocumented methods</h4>
+
+<p><a name="onmt.GlobalAttention.declareOpts"></a></p>
+
+<ul>
+<li><code>onmt.GlobalAttention.declareOpts(cmd)</code></li>
+</ul>

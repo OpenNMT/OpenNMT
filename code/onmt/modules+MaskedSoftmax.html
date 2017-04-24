@@ -1,0 +1,29 @@
+<p><a name="onmt.MaskedSoftmax.dok"></a></p>
+
+<h2>onmt.MaskedSoftmax</h2>
+
+<p>A batched-softmax wrapper to mask the probabilities of padding.</p>
+
+<p>For instance there may be a batch of instances where A is padding.</p>
+
+<pre><code>AAXXXX
+AAAAXX
+XXXXXX
+</code></pre>
+
+<p>MaskedSoftmax ensures that no probability is given to the A&#39;s.</p>
+
+<p>For this example, <code>sourceSizes</code> is {4, 2, 6} and <code>sourceLength</code> is 6.</p>
+
+<p><a name="onmt.MaskedSoftmax"></a></p>
+
+<h3>onmt.MaskedSoftmax(sourceSizes, sourceLength)</h3>
+
+<p>A nn-style module that applies a softmax on input that gives no weight to the left padding.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>sourceSizes</code> -  the true lengths (with left padding).</li>
+<li><code>sourceLength</code> - the length of the batch.</li>
+</ul>
