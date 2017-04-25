@@ -19,6 +19,30 @@ local function eval(model, data)
   return math.exp(loss / totalWords)
 end
 
+local function evalBLEU(model, data)
+  
+  model:evaluate()
+  
+  local maxLength = onmt.Constants.MAX_TARGET_LENGTH or 50 -- to avoid nil 
+  
+  for i = 1, data:batchCount() do
+	
+	local batch = onmt.utils.Cuda.convert(data:getBatch(i))
+	local sampled = model:sampleBatch(batch, maxLength, true)
+	
+	_G.scorer:accumulateCorpusScoreBatch(sampled, batch.targetOutput)
+  end
+  
+  local bleuScore = _G.scorer:computeCorpusScore()
+  
+  model:training()
+  _G.scorer:resetCorpusStats()
+  collectgarbage()
+  
+  return bleuScore
+
+end
+
 ------------------------------------------------------------------------------------------------------------------
 
 local Trainer = torch.class('MultiGPUTrainer')
@@ -56,6 +80,7 @@ function Trainer:__init(args)
 end
 
 function Trainer:train(model, optim, trainData, validData, dataset, info)
+	_G.scorer = Rewarder(dataset.dicts.tgt.words, true, 'bleu')
   local params, gradParams = {}, {}
 
   onmt.utils.Parallel.launch(function(idx)
@@ -88,6 +113,8 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
   local checkpoint = onmt.train.Checkpoint.new(self.options, model, optim, dataset.dicts)
 
   optim:setOptimStates(#params[1])
+  
+  
 
   local function trainEpoch(epoch, doProfile)
     local epochProfiler = onmt.utils.Profiler.new(doProfile)
@@ -111,6 +138,16 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
     end
 
     self.args.start_iteration = 1
+    
+    local function validAndSave(iter)
+			_G.logger:info('')
+			_G.logger:info('Doing validation ...')
+			local validPpl = eval(model, validData)
+			local validBleu = evalBLEU(model, validData)
+			checkpoint:saveIteration(iter, numIterations, epochState, batchOrder, validPpl, validBleu, true)
+			optim:updateLearningRate(validPpl, currentEpoch)
+			_G.logger:info('')
+		end
 
     if not self.args.async_parallel then
       -- Synchronous training.
@@ -170,7 +207,9 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           epochState:log(iter)
         end
         if self.args.save_every > 0 and iter % self.args.save_every == 0 then
-          checkpoint:saveIteration(iter, epochState, batchOrder, true)
+					
+          --~ checkpoint:saveIteration(iter, numIterations, epochState, batchOrder, 9999, 0, true)
+          validAndSave(iter)
         end
         iter = iter + 1
       end
@@ -244,7 +283,8 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
           epochState:log()
         end
         if iter % self.args.save_every == 0 then
-          checkpoint:saveIteration(iter, epochState, batchOrder, true)
+          --~ checkpoint:saveIteration(iter, numIterations, epochState, batchOrder, 9999, 0, true)
+          validAndSave(iter)
         end
       end
     end
@@ -253,6 +293,9 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     return epochState, epochProfiler:dump()
   end
+  
+  local bleuScore = evalBLEU(model, validData)
+	_G.logger:info('Initial Validation BLEU score: %.2f', bleuScore)
 
   _G.logger:info('Start training...')
 
@@ -268,14 +311,16 @@ function Trainer:train(model, optim, trainData, validData, dataset, info)
 
     globalProfiler:start('valid')
     local validPpl = eval(model, validData)
+    local validBleu = evalBLEU(model, validData)
     globalProfiler:stop('valid')
 
     if self.args.profiler then _G.logger:info('profile: %s', globalProfiler:log()) end
     _G.logger:info('Validation perplexity: %.2f', validPpl)
+    _G.logger:info('Validation BLEU score: %.2f', validBleu)
 
     optim:updateLearningRate(validPpl, epoch)
 
-    checkpoint:saveEpoch(validPpl, epochState, true)
+    checkpoint:saveEpoch(validPpl, validBleu, epochState, true)
   end
 end
 
