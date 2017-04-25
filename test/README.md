@@ -24,6 +24,14 @@ It will be automatically loaded by the test script.
 1. Go to the top-level OpenNMT directory
 2. `th test/test.lua`
 
+You can run a subset of the test suite by passing a list of test name patterns. For example:
+
+```
+th test/test.lua Batch Dataset
+```
+
+will run tests containing `Batch` and `Dataset` in their name.
+
 # Tokenization
 
 ## Adding new tests

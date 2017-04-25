@@ -10,4 +10,4 @@ You can find additional help or tutorials in the following resources:
 * [Gitter channel](https://gitter.im/OpenNMT/openmt)
 
 !!! note "Note"
-    If you find an error in this documentation, please consider [opening an issue](https://github.com/OpenNMT/OpenNMT/issues/new) or directly submitting a modification by clicking on the *Edit on GitHub* link.
+    If you find an error in this documentation, please consider [opening an issue](https://github.com/OpenNMT/OpenNMT/issues/new) or directly submitting a modification by clicking on the edit button at the top of a page.

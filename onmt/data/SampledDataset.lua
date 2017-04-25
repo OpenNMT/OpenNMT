@@ -74,7 +74,6 @@ function SampledDataset:checkModel(model)
     self.samplingProb = torch.ones(#self.src)
     self.ppl = nil
   else
-    _G.logger:info('Current sampling does not require individual loss')
     if model.returnIndividualLosses then
       model:returnIndividualLosses(false)
     end
@@ -90,7 +89,7 @@ function SampledDataset:sample(logLevel)
 
   logLevel = logLevel or 'INFO'
 
-  _G.logger:log('Sampling...', logLevel)
+  _G.logger:log('Sampling dataset...', logLevel)
 
   -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init.
   if self.sample_w_ppl and not self.startedPplSampling then
@@ -169,7 +168,6 @@ function SampledDataset:sample(logLevel)
   end
 
   local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
-  _G.logger:log('Created sampler...', logLevel)
   self.sampled = torch.LongTensor(self.samplingSize)
   self.sampled = sampler:batchdraw(self.sampled)
 
@@ -177,8 +175,6 @@ function SampledDataset:sample(logLevel)
   for i = 1, self.sampled:size(1) do
     self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
   end
-
-  _G.logger:log('Sampled ' .. self.sampled:size(1) .. ' instances', logLevel)
 
   -- Prepares batches in terms of range within self.src and self.tgt.
   local batchesCapacity = 0
@@ -226,7 +222,7 @@ function SampledDataset:sample(logLevel)
     })
   end
 
-  _G.logger:log('Prepared ' .. #self.batchRange .. ' batches', logLevel)
+  _G.logger:log('Sampled ' .. self.sampled:size(1) .. ' instances into ' .. #self.batchRange .. ' batches.', logLevel)
   return #self.batchRange, batchesOccupation / batchesCapacity
 end
 
@@ -288,6 +284,10 @@ function SampledDataset:batchCount()
     end
   end
   return #self.batchRange
+end
+
+function SampledDataset:instanceCount()
+  return self.samplingSize
 end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]

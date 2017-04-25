@@ -98,7 +98,7 @@ local function buildData(opt, dataset)
   _G.logger:info(' * number of batches: %d',  nTrainBatch)
   _G.logger:info('   - source sequence lengths: %s', opt.uneven_batches and 'variable' or 'equal')
   _G.logger:info('   - maximum size: %d', opt.max_batch_size)
-  _G.logger:info('   - average size: %.2f', #trainData.src / nTrainBatch)
+  _G.logger:info('   - average size: %.2f', trainData:instanceCount() / nTrainBatch)
   _G.logger:info('   - capacity: %.2f%%', math.ceil(batchUsage * 1000) / 10)
 
   return trainData, validData
