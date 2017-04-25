@@ -443,7 +443,7 @@ function Decoder:backward(batch, outputs, criterion)
   local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
   if self.args.hasCoverage then
-    gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.coverageSize)
+    gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.coverageSize):zero()
   end
 
   for t = batch.targetLength, 1, -1 do
