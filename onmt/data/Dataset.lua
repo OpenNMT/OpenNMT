@@ -81,6 +81,10 @@ function Dataset:batchCount()
   return #self.batchRange
 end
 
+function Dataset:instanceCount()
+  return #self.src
+end
+
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
 function Dataset:getBatch(idx)
   if #self.src == 0 then
