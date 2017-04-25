@@ -237,11 +237,13 @@ function Translator:translateBatch(batch)
     return encStates[#encStates]
   end
 
+  local decInitStates = self.model.models.bridge:forward(encStates)
+
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
     self.model:maskPadding(batch)
-    goldScore = self.model.models.decoder:computeScore(batch, encStates, context)
+    goldScore = self.model.models.decoder:computeScore(batch, decInitStates, context)
   end
 
   -- Specify how to go one step forward.
@@ -250,7 +252,7 @@ function Translator:translateBatch(batch)
                                                       context,
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
-                                                      encStates,
+                                                      decInitStates,
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,

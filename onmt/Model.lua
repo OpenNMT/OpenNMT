@@ -80,15 +80,17 @@ function Model:initParams()
   local numParams = 0
 
   for i, key in ipairs(orderedIndex) do
-    params[i]:uniform(-self.args.param_init, self.args.param_init)
+    if params[i]:dim() > 0 then
+      params[i]:uniform(-self.args.param_init, self.args.param_init)
 
-    self.models[key]:apply(function (m)
-      if m.postParametersInitialization then
-        m:postParametersInitialization()
-      end
-    end)
+      self.models[key]:apply(function (m)
+        if m.postParametersInitialization then
+          m:postParametersInitialization()
+        end
+      end)
 
-    numParams = numParams + params[i]:size(1)
+      numParams = numParams + params[i]:size(1)
+    end
   end
 
   _G.logger:info(' * number of parameters: ' .. numParams)

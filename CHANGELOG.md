@@ -6,6 +6,7 @@
 * Support vectors as inputs using [Kaldi](http://kaldi-asr.org/) input format
 * Support parallel file alignment by index in addition to line-by-line
 * Add script to convert and/or generate pretrained word embeddings
+* Add a bridge layer between the encoder and decoder
 
 ### Fixes and improvements
 

@@ -41,6 +41,7 @@ build = {
     ["onmt.modules.Decoder"] = "onmt/modules/Decoder.lua",
     ["onmt.modules.Encoder"] = "onmt/modules/Encoder.lua",
     ["onmt.modules.Network"] = "onmt/modules/Network.lua",
+    ["onmt.modules.Bridge"] = "onmt/modules/Bridge.lua",
     ["onmt.modules.FeaturesEmbedding"] = "onmt/modules/FeaturesEmbedding.lua",
     ["onmt.modules.FeaturesGenerator"] = "onmt/modules/FeaturesGenerator.lua",
     ["onmt.modules.Generator"] = "onmt/modules/Generator.lua",
