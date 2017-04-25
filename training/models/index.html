@@ -386,6 +386,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bridges" title="Bridges" class="md-nav__link">
+    Bridges
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#attention-model" title="Attention Model" class="md-nav__link">
     Attention Model
   </a>
@@ -865,6 +872,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bridges" title="Bridges" class="md-nav__link">
+    Bridges
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#attention-model" title="Attention Model" class="md-nav__link">
     Attention Model
   </a>
@@ -917,6 +931,16 @@
 <li>bidirectional encoder</li>
 <li>default decoder</li>
 </ul>
+<h2 id="bridges">Bridges<a class="headerlink" href="#bridges" title="Permanent link">&para;</a></h2>
+<p>A bridge is an additional layer between the encoder and the decoder that defines how to pass the encoder states to the decoder. It can be one of the following:</p>
+<ul>
+<li><code>-bridge copy</code> (default): the encoder states are copied</li>
+<li><code>-bridge dense</code>: the encoder states are forwaded through a dense layer</li>
+<li><code>-bridge dense_nonlinear</code>: the encoder states are forwaded through a dense layer followed by a non-linearity, here <script type="math/tex">tanh</script>
+</li>
+<li><code>-bridge none</code>: the encoder states are not passed and the decoder initial states are set to zero</li>
+</ul>
+<p>With the <code>copy</code> bridge, encoder and decoder should have the same structure (number of layers, final hidden size, etc.).</p>
 <h2 id="attention-model">Attention Model<a class="headerlink" href="#attention-model" title="Permanent link">&para;</a></h2>
 <p>Different models are available from <a href="../../references/#Luong2015">Luong (2015)</a> "Global Attention Model".</p>
 <p><img alt="Global attentional model" src="../../img/global-attention-model.png" /></p>
