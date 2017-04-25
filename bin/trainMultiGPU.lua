@@ -100,20 +100,20 @@ local function main()
 	onmt.utils.Parallel.launch(function(idx)
 	local _modelClass = onmt.ModelSelector(modelType)
 	if checkpoint.models then
-	_G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
+	_	G.model = _modelClass.load(opt, checkpoint.models, dataset.dicts, idx > 1)
 	-- dynamic parameter changes
-	if not onmt.utils.Table.empty(paramChanges) then
-	_G.model:changeParameters(paramChanges)
-	end
+	--~ if not onmt.utils.Table.empty(paramChanges) then
+	--~ _G.model:changeParameters(paramChanges)
+	--~ end
 	else
 	local verbose = idx == 1
-	_G.model = _modelClass.new(opt, dataset.dicts, verbose)
+		G.model = _modelClass.new(opt, dataset.dicts, verbose)
 	end
-	onmt.utils.Cuda.convert(_G.model)
-	return idx, _G.model
+		onmt.utils.Cuda.convert(_G.model)
+		return idx, _G.model
 	end, function(idx, themodel)
-	if idx == 1 then
-	model = themodel
+		if idx == 1 then
+		model = themodel
 	end
 	end)
 
