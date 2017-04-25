@@ -140,10 +140,6 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
 
   startIteration = startIteration or 1
 
-  if data.sample then
-    data:sample()
-  end
-
   local numIterations = data:batchCount()
   -- In parallel mode, the number of iterations is reduced to reflect larger batch size.
   if onmt.utils.Parallel.count > 1 and not self.args.async_parallel then
@@ -342,6 +338,10 @@ function Trainer:train(trainData, validData, trainStates)
 
   for epoch = self.args.start_epoch, self.args.end_epoch do
     _G.logger:info('')
+
+    if trainData.sample then
+      trainData:sample()
+    end
 
     -- Shuffle batch order past the -curriculum first epochs.
     if not batchOrder and epoch > self.args.curriculum then
