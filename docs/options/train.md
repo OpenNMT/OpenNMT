@@ -64,7 +64,7 @@
 * `-async_parallel_minbatch <number>` (default: `1000`)<br/>In asynchronous training, minimal number of sequential batches before being parallel.
 * `-start_iteration <number>` (default: `1`)<br/>If loading from a checkpoint, the iteration from which to start.
 * `-start_epoch <number>` (default: `1`)<br/>If loading from a checkpoint, the epoch from which to start.
-* `-end_epoch <number>` (default: `13`)<br/>The final epoch of the training.
+* `-end_epoch <number>` (default: `13`)<br/>The final epoch of the training. If = 0, train forever unless another stopping condition is met (e.g. `-min_learning_rate` is reached).
 * `-curriculum <number>` (default: `0`)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.
 
 ## Optimization options
