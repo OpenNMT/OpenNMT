@@ -126,9 +126,9 @@ function Seq2Seq:__init(args, dicts)
   self.models.decoder = onmt.Factory.buildWordDecoder(decArgs, dicts.tgt)
 
   self.models.bridge = onmt.Bridge(args.bridge,
-                                   self.models.encoder.args.rnnSize,
+                                   encArgs.rnn_size,
                                    self.models.encoder.args.numEffectiveLayers,
-                                   self.models.decoder.args.rnnSize,
+                                   decArgs.rnn_size,
                                    self.models.decoder.args.numEffectiveLayers)
 
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
