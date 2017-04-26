@@ -33,7 +33,7 @@ local function buildPreprocessor(mode)
 end
 
 local function makeDicts(file)
-  return onmt.data.Vocabulary.init('source', file, '', '0', '0', '', noFilter)
+  return onmt.data.Vocabulary.init('source', file, '', { 0 }, { 0 }, '', noFilter)
 end
 
 function preprocessorTest.bitext()

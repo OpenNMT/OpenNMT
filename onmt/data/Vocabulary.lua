@@ -111,19 +111,16 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
       table.insert(originalSizes, genFeaturesVocabs[i]:size())
     end
 
-    local newSizes = onmt.utils.String.split(vocabSize, ',')
-    local minFrequency = onmt.utils.String.split(wordsMinFrequency, ',')
-
     for i = 1, 1 + #genFeaturesVocabs do
-      newSizes[i] = (newSizes[i] and tonumber(newSizes[i])) or 0
-      minFrequency[i] = (minFrequency[i] and tonumber(minFrequency[i])) or 0
+      vocabSize[i] = vocabSize[i] or 0
+      wordsMinFrequency[i] = wordsMinFrequency[i] or 0
     end
 
     if wordVocab == nil then
-      if minFrequency[1] > 0 then
-        wordVocab = genWordVocab:pruneByMinFrequency(minFrequency[1])
-      elseif newSizes[1] > 0 then
-        wordVocab = genWordVocab:prune(newSizes[1])
+      if wordsMinFrequency[1] > 0 then
+        wordVocab = genWordVocab:pruneByMinFrequency(wordsMinFrequency[1])
+      elseif vocabSize[1] > 0 then
+        wordVocab = genWordVocab:prune(vocabSize[1])
       else
         wordVocab = genWordVocab
       end
@@ -134,10 +131,10 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
     if #featuresVocabs == 0 then
       for i = 1, #genFeaturesVocabs do
-        if minFrequency[i + 1] > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequency(minFrequency[i + 1])
-        elseif newSizes[i + 1] > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:prune(newSizes[i + 1])
+        if wordsMinFrequency[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequency(wordsMinFrequency[i + 1])
+        elseif vocabSize[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:prune(vocabSize[i + 1])
         else
           featuresVocabs[i] = genFeaturesVocabs[i]
         end

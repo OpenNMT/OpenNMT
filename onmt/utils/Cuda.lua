@@ -1,5 +1,3 @@
-local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
-
 local Cuda = {
   fp16 = false,
   gpuIds = {},
@@ -8,11 +6,8 @@ local Cuda = {
 
 local options = {
   {
-    '-gpuid', '0',
-    [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
-    {
-      valid = ExtendedCmdLine.listUInt
-    }
+    '-gpuid', { 0 },
+    [[List of GPU identifiers (1-indexed). CPU is used when set to 0.]]
   },
   {
     '-fallback_to_cpu', false,
@@ -33,9 +28,8 @@ function Cuda.declareOpts(cmd)
 end
 
 function Cuda.init(opt, masterGPU)
-  for _, val in ipairs(onmt.utils.String.split(opt.gpuid, ',')) do
-    local id = tonumber(val)
-    assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. val)
+  for _, id in ipairs(opt.gpuid) do
+    assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. id)
     if id > 0 then
       table.insert(Cuda.gpuIds, id)
     end

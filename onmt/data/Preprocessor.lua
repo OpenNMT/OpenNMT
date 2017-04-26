@@ -55,36 +55,24 @@ local bitextOptions = {
     }
   },
   {
-    '-src_vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-src_vocab_size', { 50000 },
+    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-tgt_vocab_size', '50000',
-    [[Comma-separated list of target vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_vocab_size', { 50000 },
+    [[List of target vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-src_words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-src_words_min_frequency', { 0 },
+    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
-    '-tgt_words_min_frequency', '0',
-    [[Comma-separated list of target words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_words_min_frequency', { 0 },
+    [[List of target words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-src_seq_length', 50,
@@ -125,20 +113,14 @@ local monotextOptions = {
     }
   },
   {
-    '-vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-vocab_size', { 50000 },
+    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-words_min_frequency', { 0 },
+    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-seq_length', 50,
@@ -186,18 +168,14 @@ local feattextOptions = {
     }
   },
   {
-    '-tgt_vocab_size', '50000',
-    [[Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_vocab_size', { 50000 },
+    [[List of target vocabularies size: word[ feat1[ feat2[ ...] ] ].
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-tgt_words_min_frequency', '0',
-    [[Comma-separated list of target words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_words_min_frequency', { 0 },
+    [[List of target words min frequency: word[ feat1[ feat2[ ...] ] ].
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-src_seq_length', 50,
