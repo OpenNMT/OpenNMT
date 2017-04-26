@@ -12,6 +12,7 @@
 
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
 * Fix translation error of models profiled during training
+* Fix translation error of models trained without attention
 * Fix error when using one-layer GRU
 * Fix incorrect coverage normalization formula during the beam search
 * Do not allow duplicate commandline options and do not print help on errors

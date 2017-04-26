@@ -100,9 +100,13 @@ function DecoderAdvancer:update(beam)
   self.decoder:maskPadding(contextSizes, contextLength)
   decOut, decStates = self.decoder:forwardOne(inputs, decStates, context, decOut)
   t = t + 1
-  local softmaxOut = self.decoder.softmaxAttn.output
 
-  cumAttnProba = cumAttnProba:typeAs(softmaxOut):add(softmaxOut)
+  local softmaxOut
+
+  if self.decoder.softmaxAttn then
+    softmaxOut = self.decoder.softmaxAttn.output
+    cumAttnProba = cumAttnProba:typeAs(softmaxOut):add(softmaxOut)
+  end
 
   local nextState = {decStates, decOut, context, softmaxOut, nil, sourceSizes, t, cumAttnProba}
   beam:setState(nextState)
