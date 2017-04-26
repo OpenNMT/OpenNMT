@@ -40,7 +40,19 @@ function Saver.loadCheckpoint(opt)
 
   local function restoreOption(name)
     if checkpoint.options[name] ~= nil then
-      opt[name] = checkpoint.options[name]
+      if type(opt[name]) == 'table' and type(checkpoint.options[name]) == 'string' then
+        -- Backward compatibility with models trained before table options.
+        local values = onmt.utils.String.split(checkpoint.options[name], ',')
+        for i = 1, #values do
+          values[i] = tonumber(values[i])
+        end
+        opt[name] = values
+      elseif type(opt[name]) == 'boolean' and type(checkpoint.options[name]) == 'number' then
+        -- Backward compatibility with models trained before some option were mad boolean.
+        opt[name] = checkpoint.options[name] == 1
+      else
+        opt[name] = checkpoint.options[name]
+      end
     end
   end
 

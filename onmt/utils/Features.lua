@@ -86,7 +86,7 @@ local function generateTarget(dicts, tgt, cdata, shift_feature)
   check('target', dicts, tgt)
 
   -- back compatibility
-  shift_feature = shift_feature or 1
+  shift_feature = shift_feature or shift_feature == nil
   local tgtId
   if cdata then
     if not tds then
@@ -101,14 +101,14 @@ local function generateTarget(dicts, tgt, cdata, shift_feature)
     -- if shift_feature then target features are shifted relative to the target words.
     -- Use EOS tokens as a placeholder.
     table.insert(tgt[j], 1, onmt.Constants.BOS_WORD)
-    if shift_feature == 1 then
+    if shift_feature then
       table.insert(tgt[j], 1, onmt.Constants.EOS_WORD)
     else
       table.insert(tgt[j], onmt.Constants.EOS_WORD)
     end
     tgtId[j] = dicts[j]:convertToIdx(tgt[j], onmt.Constants.UNK_WORD)
     table.remove(tgt[j], 1)
-    if shift_feature == 1 then
+    if shift_feature then
       table.remove(tgt[j], 1)
     else
       table.remove(tgt[j])

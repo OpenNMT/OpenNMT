@@ -27,15 +27,15 @@ local options = {
     }
   },
   {
-    '-src_word_vec_size', '500',
-    [[Comma-separated list of source embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
+    '-src_word_vec_size', { 500 },
+    [[List of source embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.]],
     {
       structural = 0
     }
   },
   {
-    '-tgt_word_vec_size', '500',
-    [[Comma-separated list of target embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
+    '-tgt_word_vec_size', { 500 },
+    [[List of target embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.]],
     {
       structural = 0
     }
@@ -57,18 +57,16 @@ local options = {
     }
   },
   {
-    '-fix_word_vecs_enc', 0,
+    '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },
   {
-    '-fix_word_vecs_dec', 0,
+    '-fix_word_vecs_dec', false,
     [[Fix word embeddings on the decoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },

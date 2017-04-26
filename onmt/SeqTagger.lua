@@ -3,8 +3,8 @@ local SeqTagger, parent = torch.class('SeqTagger', 'Model')
 
 local options = {
   {
-    '-word_vec_size', '500',
-    [[Comma-separated list of embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
+    '-word_vec_size', { 500 },
+    [[List of embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.]],
     {
       structural = 0
     }
@@ -18,10 +18,9 @@ local options = {
     }
   },
   {
-    '-fix_word_vecs_enc', 0,
+    '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },

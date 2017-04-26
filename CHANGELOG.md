@@ -10,6 +10,7 @@
 
 ### Fixes and improvements
 
+* Improve command line parser (space-separated list of values and boolean arguments)
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
 * Fix translation error of models profiled during training
 * Fix translation error of models trained without attention

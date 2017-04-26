@@ -55,36 +55,24 @@ local bitextOptions = {
     }
   },
   {
-    '-src_vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-src_vocab_size', { 50000 },
+    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-tgt_vocab_size', '50000',
-    [[Comma-separated list of target vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_vocab_size', { 50000 },
+    [[List of target vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-src_words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-src_words_min_frequency', { 0 },
+    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
-    '-tgt_words_min_frequency', '0',
-    [[Comma-separated list of target words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_words_min_frequency', { 0 },
+    [[List of target words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-src_seq_length', 50,
@@ -125,20 +113,14 @@ local monotextOptions = {
     }
   },
   {
-    '-vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-vocab_size', { 50000 },
+    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-words_min_frequency', { 0 },
+    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-seq_length', 50,
@@ -186,18 +168,14 @@ local feattextOptions = {
     }
   },
   {
-    '-tgt_vocab_size', '50000',
-    [[Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_vocab_size', { 50000 },
+    [[List of target vocabularies size: word[ feat1[ feat2[ ...] ] ].
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-tgt_words_min_frequency', '0',
-    [[Comma-separated list of target words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_words_min_frequency', { 0 },
+    [[List of target words min frequency: word[ feat1[ feat2[ ...] ] ].
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-src_seq_length', 50,
@@ -221,25 +199,16 @@ local commonOptions = {
     [[Path prefix to existing features vocabularies.]]
   },
   {
-    '-time_shift_feature', 1,
-    [[Time shift features on the decoder side.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
-    }
+    '-time_shift_feature', true,
+    [[Time shift features on the decoder side.]]
   },
   {
-    '-sort', 1,
-    [[If = 1, sort the sentences by size to build batches without source padding.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
-    }
+    '-sort', true,
+    [[If = 1, sort the sentences by size to build batches without source padding.]]
   },
   {
-    '-shuffle', 1,
-    [[If = 1, shuffle data (prior sorting).]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0,1)
-    }
+    '-shuffle', true,
+    [[If = 1, shuffle data (prior sorting).]]
   },
   {
     '-idx_files', false,
@@ -442,14 +411,14 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)
@@ -607,14 +576,14 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)
@@ -691,14 +660,14 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#dataset)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)
