@@ -573,11 +573,12 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
       tgtCount = tgtCount + 1
     end
     if srcCount ~= tgtCount then
-      _G.logger:error('source Idx and target Idx not aligned')
-      os.exit(1)
+      _G.logger:warning('missing '..(srcCount-tgtCount)..' sentences in target')
     end
     for k,v in pairs(srcDict) do
-      processFeatTextSentence(v, tgtDict[k])
+      if tgtDict[k] then
+        processFeatTextSentence(v, tgtDict[k])
+      end
     end
   else
     while true do
