@@ -828,18 +828,18 @@ information that can be useful to optimize its objective function.</p>
 </ul>
 <p>To reuse available vocabulary, <script type="math/tex">features^{(-1)}</script> is set to the end of sentence token.</p>
 <h2 id="vocabularies">Vocabularies<a class="headerlink" href="#vocabularies" title="Permanent link">&para;</a></h2>
-<p>By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code> options in the format <code>word_vocab_size[,feat1_vocab_size[,feat2_vocab_size[...]]]</code>. For example:</p>
+<p>By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code> options in the format <code>word_vocab_size[ feat1_vocab_size[ feat2_vocab_size[ ...]]]</code>. For example:</p>
 <div class="codehilite"><pre><span></span><span class="c1"># unlimited source features vocabulary size</span>
 -src_vocab_size <span class="m">50000</span>
 
 <span class="c1"># first feature vocabulary is limited to 60, others are unlimited</span>
--src_vocab_size <span class="m">50000</span>,60
+-src_vocab_size <span class="m">50000</span> <span class="m">60</span>
 
 <span class="c1"># second feature vocabulary is limited to 100, others are unlimited</span>
--src_vocab_size <span class="m">50000</span>,0,100
+-src_vocab_size <span class="m">50000</span> <span class="m">0</span> <span class="m">100</span>
 
 <span class="c1"># limit vocabulary size of the first and second feature</span>
--src_vocab_size <span class="m">50000</span>,60,100
+-src_vocab_size <span class="m">50000</span> <span class="m">60</span> <span class="m">100</span>
 </pre></div>
 
 
@@ -853,7 +853,7 @@ information that can be useful to optimize its objective function.</p>
 <p>you have to set <code>-features_vocabs_prefix data/demo</code> as command line option.</p>
 <h2 id="embeddings">Embeddings<a class="headerlink" href="#embeddings" title="Permanent link">&para;</a></h2>
 <p>The feature embedding size is automatically computed based on the number of values the feature takes. This default size reduction works well for features with few values like the case or POS.</p>
-<p>For other features, you may want to manually choose the embedding size with the <code>-src_word_vec_size</code> and <code>-tgt_word_vec_size</code> options. They behave similarly to <code>-src_vocab_size</code> with a comma-separated list of embedding size: <code>word_vec_size[,feat1_vec_size[,feat2_vec_size[...]]]</code>.</p>
+<p>For other features, you may want to manually choose the embedding size with the <code>-src_word_vec_size</code> and <code>-tgt_word_vec_size</code> options. They behave similarly to <code>-src_vocab_size</code> with a list of embedding size: <code>word_vec_size[ feat1_vec_size[ feat2_vec_size[ ...]]]</code>.</p>
 <p>Then, each feature embedding is concatenated to each other by default. You can instead choose to sum them by setting <code>-feat_merge sum</code>. Finally, the resulting merged embedding is concatenated to the word embedding.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
