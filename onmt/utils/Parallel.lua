@@ -12,10 +12,12 @@ local Parallel = {
 -- Synchronizes the current stream on dst device with src device. This is only
 -- necessary if we are not on the default stream
 local function waitForDevice(dst, src)
-   local stream = cutorch.getStream()
-   if stream ~= 0 then
+  if dst > 0 and src > 0 then
+    local stream = cutorch.getStream()
+    if stream ~= 0 then
       cutorch.streamWaitForMultiDevice(dst, stream, { [src] = {stream} })
-   end
+    end
+  end
 end
 
 function Parallel.getCounter()
@@ -27,47 +29,47 @@ function Parallel.gmutexId()
 end
 
 function Parallel.init(opt)
-  if onmt.utils.Cuda.activated then
-    Parallel.count = onmt.utils.Cuda.gpuCount()
-    Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
-    Parallel._tds = require('tds')
+  Parallel.count = onmt.utils.Cuda.replicaCount()
+  Parallel.gradBuffer = onmt.utils.Cuda.convert(Parallel.gradBuffer)
+  Parallel._tds = require('tds')
 
-    if Parallel.count > 1 then
-      local globalLogger = _G.logger
-      local globalProfiler = _G.profiler
-      local threads = require('threads')
-      threads.Threads.serialization('threads.sharedserialize')
-      Parallel._gmutex = threads.Mutex()
-      Parallel._pool = threads.Threads(
-        Parallel.count,
-        function()
+  if Parallel.count > 1 then
+    local globalLogger = _G.logger
+    local globalProfiler = _G.profiler
+    local threads = require('threads')
+    threads.Threads.serialization('threads.sharedserialize')
+    Parallel._gmutex = threads.Mutex()
+    local deviceIds = onmt.utils.Cuda.deviceIds
+    Parallel._pool = threads.Threads(
+      Parallel.count,
+      function(threadid)
+        if deviceIds[threadid] > 0 then
           require('cunn')
           require('nngraph')
-          require('onmt.init')
-          _G.threads = require('threads')
-        end,
-        function(threadid)
-          _G.logger = globalLogger
-          _G.profiler = globalProfiler
-          onmt.utils.Cuda.init(opt, threadid)
         end
-      ) -- dedicate threads to GPUs
-      Parallel._pool:specific(true)
-    end
-
-    if Parallel.count > 1 and not opt.no_nccl and not opt.async_parallel then
-      -- check if we have nccl installed
-      local ret
-      ret, Parallel.usenccl = pcall(require, 'nccl')
-      if not ret then
-        _G.logger:warning("For improved efficiency with multiple GPUs, consider installing nccl")
-        Parallel.usenccl = nil
-      elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
-        _G.logger:warning("CUDA_LAUNCH_BLOCKING set - cannot use nccl")
-        Parallel.usenccl = nil
+        require('onmt.init')
+        _G.threads = require('threads')
+      end,
+      function(threadid)
+        _G.logger = globalLogger
+        _G.profiler = globalProfiler
+        onmt.utils.Cuda.init(opt, deviceIds[threadid])
       end
-    end
+    ) -- dedicate threads to devices
+    Parallel._pool:specific(true)
+  end
 
+  if Parallel.count > 1 and #onmt.utils.Cuda.gpuIds > 1 and not opt.no_nccl then
+    -- check if we have nccl installed
+    local ret
+    ret, Parallel.usenccl = pcall(require, 'nccl')
+    if not ret then
+      _G.logger:warning("For improved efficiency with multiple GPUs, consider installing nccl")
+      Parallel.usenccl = nil
+    elseif os.getenv('CUDA_LAUNCH_BLOCKING') == '1' then
+      _G.logger:warning("CUDA_LAUNCH_BLOCKING set - cannot use nccl")
+      Parallel.usenccl = nil
+    end
   end
 end
 
@@ -98,10 +100,10 @@ function Parallel.accGradParams(gradParams, batches)
 
          -- Synchronize before and after copy to ensure that it doesn't overlap
          -- with this add or previous adds
-          waitForDevice(onmt.utils.Cuda.gpuIds[j], onmt.utils.Cuda.gpuIds[1])
+          waitForDevice(onmt.utils.Cuda.deviceIds[j], onmt.utils.Cuda.deviceIds[1])
           local remoteGrads = onmt.utils.Tensor.reuseTensor(Parallel.gradBuffer, gradParams[j][h]:size())
           remoteGrads:copy(gradParams[j][h])
-          waitForDevice(onmt.utils.Cuda.gpuIds[1], onmt.utils.Cuda.gpuIds[j])
+          waitForDevice(onmt.utils.Cuda.deviceIds[1], onmt.utils.Cuda.deviceIds[j])
           gradParams[1][h]:add(remoteGrads)
         else
           table.insert(inputs, gradParams[j][h])
@@ -144,7 +146,7 @@ function Parallel.syncParams(params)
         for h = 1, #params[1] do
           params[j][h]:copy(params[1][h])
         end
-        waitForDevice(onmt.utils.Cuda.gpuIds[j], onmt.utils.Cuda.gpuIds[1])
+        waitForDevice(onmt.utils.Cuda.deviceIds[j], onmt.utils.Cuda.deviceIds[1])
       end
     else
       for h = 1, #params[1] do
