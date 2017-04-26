@@ -34,7 +34,7 @@ function Model:changeParameters(changes)
   _G.logger:info('Applying new parameters:')
 
   for k, v in pairs(changes) do
-    _G.logger:info(' * %s = ' .. v, k)
+    _G.logger:info(' * %s = ' .. tostring(v), k)
 
     for _, model in pairs(self.models) do
       model:apply(function(m)
@@ -44,7 +44,7 @@ function Model:changeParameters(changes)
           local enc = k == 'fix_word_vecs_enc' and torch.typename(model):find('Encoder')
           local dec = k == 'fix_word_vecs_dec' and torch.typename(model):find('Decoder')
           if enc or dec then
-            m:fixEmbeddings(v == 1)
+            m:fixEmbeddings(v)
           end
         end
       end)

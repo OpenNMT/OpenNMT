@@ -18,7 +18,7 @@ function vocabularyTest.filterAll()
 end
 
 function vocabularyTest.initSimple()
-  local vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', '', '1000', '0', '', noFilter)
+  local vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', '', { 1000 }, { 0 }, '', noFilter)
 
   tester:eq(vocabs.words:size(), 1004)
   tester:eq(#vocabs.features, 0)
@@ -26,7 +26,7 @@ function vocabularyTest.initSimple()
   onmt.data.Vocabulary.save('source', vocabs.words, 'src.dict')
   tester:ne(path.exists('src.dict'), false)
 
-  local reused = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', 'src.dict', '50000', '0', '', noFilter)
+  local reused = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', 'src.dict', { 50000 }, '0', '', noFilter)
 
   tester:eq(vocabs.words:size(), reused.words:size())
 
@@ -34,7 +34,7 @@ function vocabularyTest.initSimple()
 end
 
 function vocabularyTest.initFeatures()
-  local vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val-case.txt', '', '1000,4', '0', '', noFilter)
+  local vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val-case.txt', '', { 1000, 4 }, { 0 }, '', noFilter)
 
   tester:eq(#vocabs.features, 1)
   tester:eq(vocabs.features[1]:size(), 8)
@@ -43,12 +43,12 @@ function vocabularyTest.initFeatures()
   onmt.data.Vocabulary.saveFeatures('source', vocabs.features, 'test')
   tester:ne(path.exists('test.source_feature_1.dict'), false)
 
-  local reuseFeatOnly = onmt.data.Vocabulary.init('source', dataDir .. '/src-val-case.txt', '', '2000', '0', 'test', noFilter)
+  local reuseFeatOnly = onmt.data.Vocabulary.init('source', dataDir .. '/src-val-case.txt', '', { 2000 }, { 0 }, 'test', noFilter)
 
   tester:eq(reuseFeatOnly.words:size(), 2004)
   tester:eq(reuseFeatOnly.features[1]:size(), vocabs.features[1]:size())
 
-  local reuseBoth = onmt.data.Vocabulary.init('source', dataDir .. '/src-val-case.txt', 'src.dict', '2000', '0', 'test', noFilter)
+  local reuseBoth = onmt.data.Vocabulary.init('source', dataDir .. '/src-val-case.txt', 'src.dict', { 2000 }, { 0 }, 'test', noFilter)
 
   tester:eq(reuseBoth.words:size(), vocabs.words:size())
   tester:eq(reuseBoth.features[1]:size(), vocabs.features[1]:size())

@@ -44,19 +44,21 @@ local function resolveEmbSizes(opt, dicts, wordSizes)
   local wordEmbSize
   local featEmbSizes = {}
 
-  wordSizes = onmt.utils.String.split(tostring(wordSizes), ',')
+  if type(wordSizes) ~= 'table' then
+    wordSizes = { wordSizes }
+  end
 
   if type(opt.word_vec_size) == 'number' and opt.word_vec_size > 0 then
     wordEmbSize = opt.word_vec_size
   else
-    wordEmbSize = tonumber(wordSizes[1])
+    wordEmbSize = wordSizes[1]
   end
 
   for i = 1, #dicts.features do
     local size
 
     if i + 1 <= #wordSizes then
-      size = tonumber(wordSizes[i + 1])
+      size = wordSizes[i + 1]
     elseif opt.feat_merge == 'sum' then
       size = opt.feat_vec_size
     else
@@ -165,7 +167,7 @@ function Factory.buildWordEncoder(opt, dicts)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1)
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   return Factory.buildEncoder(opt, inputNetwork)
 end
@@ -206,7 +208,7 @@ function Factory.buildWordDecoder(opt, dicts)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.tgt_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec == 1)
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
   local attnModel = Factory.buildAttention(opt)

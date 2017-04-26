@@ -117,7 +117,7 @@ local function generateTarget(withTds, shifted)
   end
   tester:eq(#ids, 1)
   local seq
-  if shifted == 0 then
+  if shifted == false then
     seq = {onmt.Constants.BOS,
            dicts[1]:lookup('C'), dicts[1]:lookup('C'), dicts[1]:lookup('n'),
            onmt.Constants.EOS}
@@ -137,11 +137,11 @@ function featuresTest.generateTarget_defaultWithTds()
 end
 
 function featuresTest.generateTarget_notShifted()
-  generateTarget(false, 0)
+  generateTarget(false, false)
 end
 
 function featuresTest.generateTarget_notShiftedWithTds()
-  generateTarget(true, 0)
+  generateTarget(true, false)
 end
 
 return featuresTest
