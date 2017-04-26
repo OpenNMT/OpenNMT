@@ -57,18 +57,16 @@ local options = {
     }
   },
   {
-    '-fix_word_vecs_enc', 0,
+    '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },
   {
-    '-fix_word_vecs_dec', 0,
+    '-fix_word_vecs_dec', false,
     [[Fix word embeddings on the decoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },

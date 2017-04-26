@@ -18,10 +18,9 @@ local options = {
     }
   },
   {
-    '-fix_word_vecs_enc', 0,
+    '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },

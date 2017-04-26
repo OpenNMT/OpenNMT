@@ -167,7 +167,7 @@ function Factory.buildWordEncoder(opt, dicts)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.src_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc == 1)
+                                         opt.pre_word_vecs_enc, opt.fix_word_vecs_enc)
 
   return Factory.buildEncoder(opt, inputNetwork)
 end
@@ -208,7 +208,7 @@ function Factory.buildWordDecoder(opt, dicts)
 
   local inputNetwork = buildInputNetwork(opt, dicts,
                                          opt.tgt_word_vec_size or opt.word_vec_size,
-                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec == 1)
+                                         opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
   local generator = Factory.buildGenerator(opt.rnn_size, dicts)
   local attnModel = Factory.buildAttention(opt)

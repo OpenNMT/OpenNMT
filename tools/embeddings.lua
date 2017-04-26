@@ -38,7 +38,7 @@ cmd:setCmdLineOptions(
       }
     },
     {
-      '-normalize', 1,
+      '-normalize', true,
       [[Boolean to normalize the word vectors, or not.]]
     },
     {
@@ -183,7 +183,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         local norm = torch.norm(wordEmbedding, 2)
 
         -- Normalize word embedding.
-        if norm ~= 0 and opt.normalize == 1 then
+        if norm ~= 0 and opt.normalize then
           wordEmbedding:div(norm)
         end
 
@@ -253,7 +253,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         local norm = torch.norm(wordEmbedding, 2)
 
         -- Normalize word embedding.
-        if norm ~= 0 and opt.normalize == 1 then
+        if norm ~= 0 and opt.normalize then
           wordEmbedding:div(norm)
         end
 

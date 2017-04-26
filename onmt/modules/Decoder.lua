@@ -18,11 +18,10 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 local options = {
   {
-    '-input_feed', 1,
+    '-input_feed', true,
     [[Feed the context vector at each time step as additional input
       (via concatenation with the word embeddings) to the decoder.]],
     {
-      enum = {0, 1},
       structural = 0
     }
   }
@@ -51,7 +50,10 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
-  local inputSize = inputNetwork.inputSize + (args.input_feed * args.rnn_size)
+  local inputSize = inputNetwork.inputSize
+  if args.input_feed then
+    inputSize = inputSize + args.rnn_size
+  end
 
   local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
                       args.dropout, args.residual, args.dropout_input)
@@ -66,7 +68,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args.inputIndex = {}
   self.args.outputIndex = {}
 
-  self.args.inputFeed = (args.input_feed == 1)
+  self.args.inputFeed = args.input_feed
 
   parent.__init(self, self:_buildModel(attentionModel))
 

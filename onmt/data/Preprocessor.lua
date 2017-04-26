@@ -199,25 +199,16 @@ local commonOptions = {
     [[Path prefix to existing features vocabularies.]]
   },
   {
-    '-time_shift_feature', 1,
-    [[Time shift features on the decoder side.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
-    }
+    '-time_shift_feature', true,
+    [[Time shift features on the decoder side.]]
   },
   {
-    '-sort', 1,
-    [[If = 1, sort the sentences by size to build batches without source padding.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
-    }
+    '-sort', true,
+    [[If = 1, sort the sentences by size to build batches without source padding.]]
   },
   {
-    '-shuffle', 1,
-    [[If = 1, shuffle data (prior sorting).]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0,1)
-    }
+    '-shuffle', true,
+    [[If = 1, shuffle data (prior sorting).]]
   },
   {
     '-idx_files', false,
@@ -420,14 +411,14 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)
@@ -585,14 +576,14 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)
@@ -669,14 +660,14 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#dataset)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)

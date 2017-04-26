@@ -47,6 +47,9 @@ function Saver.loadCheckpoint(opt)
           values[i] = tonumber(values[i])
         end
         opt[name] = values
+      elseif type(opt[name]) == 'boolean' and type(checkpoint.options[name]) == 'number' then
+        -- Backward compatibility with models trained before some option were mad boolean.
+        opt[name] = checkpoint.options[name] == 1
       else
         opt[name] = checkpoint.options[name]
       end

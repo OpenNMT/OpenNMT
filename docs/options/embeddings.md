@@ -17,6 +17,6 @@
 
 * `-lang <string>` (default: `''`)<br/>Wikipedia Language Code to autoload embeddings.
 * `-embed_type <string>` (accepted: `word2vec`, `glove`; default: `word2vec`)<br/>Embeddings file origin. Ignored if `-lang` is used.
-* `-normalize <number>` (default: `1`)<br/>Boolean to normalize the word vectors, or not.
+* `-normalize [<boolean>]` (default: `true`)<br/>Boolean to normalize the word vectors, or not.
 * `-report_every <number>` (default: `100000`)<br/>Print stats every this many lines read from embedding file.
 
