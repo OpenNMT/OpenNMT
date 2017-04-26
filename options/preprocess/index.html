@@ -800,41 +800,41 @@
 
 <p><code>preprocess.lua</code> options:</p>
 <ul>
-<li><code>-h</code><br/>This help.</li>
-<li><code>-md</code><br/>Dump help in Markdown format.</li>
-<li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
-<li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
+<li><code>-h [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>This help.</li>
+<li><code>-md [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Dump help in Markdown format.</li>
+<li><code>-config &lt;string&gt;</code> (default: <code>''</code>)<br/>Load options from this file.</li>
+<li><code>-save_config &lt;string&gt;</code> (default: <code>''</code>)<br/>Save options to this file.</li>
 </ul>
 <h2 id="preprocess-options">Preprocess options<a class="headerlink" href="#preprocess-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-data_type &lt;string&gt;</code> (accepted: <code>bitext</code>, <code>monotext</code>, <code>feattext</code>; default: <code>bitext</code>)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.</li>
-<li><code>-save_data &lt;string&gt;</code><br/>Output file for the prepared data.</li>
+<li><code>-save_data &lt;string&gt;</code> (default: <code>''</code>)<br/>Output file for the prepared data.</li>
 </ul>
 <h2 id="data-options">Data options<a class="headerlink" href="#data-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-train_src &lt;string&gt;</code><br/>Path to the training source data.</li>
-<li><code>-train_tgt &lt;string&gt;</code><br/>Path to the training target data.</li>
-<li><code>-valid_src &lt;string&gt;</code><br/>Path to the validation source data.</li>
-<li><code>-valid_tgt &lt;string&gt;</code><br/>Path to the validation target data.</li>
-<li><code>-src_vocab &lt;string&gt;</code><br/>Path to an existing source vocabulary.</li>
-<li><code>-tgt_vocab &lt;string&gt;</code><br/>Path to an existing target vocabulary.</li>
-<li><code>-src_vocab_size &lt;string&gt;</code> (default: <code>50000</code>)<br/>Comma-separated list of source vocabularies size: <code>word[,feat1[,feat2[,...] ] ]</code>. If = 0, vocabularies are not pruned.</li>
-<li><code>-tgt_vocab_size &lt;string&gt;</code> (default: <code>50000</code>)<br/>Comma-separated list of target vocabularies size: <code>word[,feat1[,feat2[,...] ] ]</code>. If = 0, vocabularies are not pruned.</li>
-<li><code>-src_words_min_frequency &lt;string&gt;</code> (default: <code>0</code>)<br/>Comma-separated list of source words min frequency: <code>word[,feat1[,feat2[,...] ] ]</code>. If = 0, vocabularies are pruned by size.</li>
-<li><code>-tgt_words_min_frequency &lt;string&gt;</code> (default: <code>0</code>)<br/>Comma-separated list of target words min frequency: <code>word[,feat1[,feat2[,...] ] ]</code>. If = 0, vocabularies are pruned by size.</li>
+<li><code>-train_src &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the training source data.</li>
+<li><code>-train_tgt &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the training target data.</li>
+<li><code>-valid_src &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the validation source data.</li>
+<li><code>-valid_tgt &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the validation target data.</li>
+<li><code>-src_vocab &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to an existing source vocabulary.</li>
+<li><code>-tgt_vocab &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to an existing target vocabulary.</li>
+<li><code>-src_vocab_size &lt;table&gt;</code> (default: <code>50000</code>)<br/>List of source vocabularies size: <code>word[ feat1[ feat2[ ...] ] ]</code>. If = 0, vocabularies are not pruned.</li>
+<li><code>-tgt_vocab_size &lt;table&gt;</code> (default: <code>50000</code>)<br/>List of target vocabularies size: <code>word[ feat1[ feat2[ ...] ] ]</code>. If = 0, vocabularies are not pruned.</li>
+<li><code>-src_words_min_frequency &lt;table&gt;</code> (default: <code>0</code>)<br/>List of source words min frequency: <code>word[ feat1[ feat2[ ...] ] ]</code>. If = 0, vocabularies are pruned by size.</li>
+<li><code>-tgt_words_min_frequency &lt;table&gt;</code> (default: <code>0</code>)<br/>List of target words min frequency: <code>word[ feat1[ feat2[ ...] ] ]</code>. If = 0, vocabularies are pruned by size.</li>
 <li><code>-src_seq_length &lt;number&gt;</code> (default: <code>50</code>)<br/>Maximum source sequence length.</li>
 <li><code>-tgt_seq_length &lt;number&gt;</code> (default: <code>50</code>)<br/>Maximum target sequence length.</li>
-<li><code>-features_vocabs_prefix &lt;string&gt;</code><br/>Path prefix to existing features vocabularies.</li>
-<li><code>-time_shift_feature &lt;number&gt;</code> (default: <code>1</code>)<br/>Time shift features on the decoder side.</li>
-<li><code>-sort &lt;number&gt;</code> (default: <code>1</code>)<br/>If = 1, sort the sentences by size to build batches without source padding.</li>
-<li><code>-shuffle &lt;number&gt;</code> (default: <code>1</code>)<br/>If = 1, shuffle data (prior sorting).</li>
-<li><code>-idx_files</code><br/>If set, source and target files are 'key value' with key match between source and target.</li>
+<li><code>-features_vocabs_prefix &lt;string&gt;</code> (default: <code>''</code>)<br/>Path prefix to existing features vocabularies.</li>
+<li><code>-time_shift_feature [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Time shift features on the decoder side.</li>
+<li><code>-sort [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>If = 1, sort the sentences by size to build batches without source padding.</li>
+<li><code>-shuffle [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>If = 1, shuffle data (prior sorting).</li>
+<li><code>-idx_files [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, source and target files are 'key value' with key match between source and target.</li>
 <li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Report status every this many sentences.</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
-<li><code>-disable_logs</code><br/>If set, output nothing.</li>
+<li><code>-log_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Output logs to a file under this path instead of stdout.</li>
+<li><code>-disable_logs [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, output nothing.</li>
 <li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
 </ul>
 <h2 id="other-options">Other options<a class="headerlink" href="#other-options" title="Permanent link">&para;</a></h2>

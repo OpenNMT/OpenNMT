@@ -541,8 +541,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#boolean-flags" title="Boolean flags" class="md-nav__link">
-    Boolean flags
+  <a href="#boolean-options" title="Boolean options" class="md-nav__link">
+    Boolean options
   </a>
   
 </li>
@@ -750,8 +750,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#boolean-flags" title="Boolean flags" class="md-nav__link">
-    Boolean flags
+  <a href="#boolean-options" title="Boolean options" class="md-nav__link">
+    Boolean options
   </a>
   
 </li>
@@ -804,13 +804,15 @@ save_model = generic
 
 
 <p>If an option appears both in the file and on the command line, the file takes priority.</p>
-<h2 id="boolean-flags">Boolean flags<a class="headerlink" href="#boolean-flags" title="Permanent link">&para;</a></h2>
-<p>Flags are options that do not take arguments. For example the option <code>-brnn</code> enables bidirectional encoder when added to the command line.</p>
-<p>However, flags that are enabled by default can take <code>0</code> as argument to disable them. For example, input feeding is disabled with <code>-input_feed 0</code>.</p>
+<h2 id="boolean-options">Boolean options<a class="headerlink" href="#boolean-options" title="Permanent link">&para;</a></h2>
+<p>Boolean options can be used without argument. In this case, their presence on the command line negates their default value. For example the option <code>-brnn</code> enables bidirectional encoder when added to the command line.</p>
+<p>They optionally accept an argument to make it more practical in scripts:</p>
+<ul>
+<li><code>0</code> or <code>false</code></li>
+<li><code>1</code> or <code>true</code></li>
+</ul>
 <h2 id="multiple-arguments">Multiple arguments<a class="headerlink" href="#multiple-arguments" title="Permanent link">&para;</a></h2>
-<p>Some options can take multiple arguments. Unless otherwise noted, they accept a list of comma-separated values without spaces:</p>
-<div class="codehilite"><pre><span></span>-option_name value1,value2,value3
-</pre></div>
+<p>Some options can take multiple arguments (<code>&lt;table&gt;</code> argument type in the option listings). You can either space-separate (<code>value1 value2 value3</code>) or comma-separate (<code>value1,value2,value3</code>) the values.</p>
                 
                   
                 

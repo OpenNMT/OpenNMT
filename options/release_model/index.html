@@ -786,28 +786,28 @@
 
 <p><code>release_model.lua</code> options:</p>
 <ul>
-<li><code>-h</code><br/>This help.</li>
-<li><code>-md</code><br/>Dump help in Markdown format.</li>
-<li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
-<li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
+<li><code>-h [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>This help.</li>
+<li><code>-md [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Dump help in Markdown format.</li>
+<li><code>-config &lt;string&gt;</code> (default: <code>''</code>)<br/>Load options from this file.</li>
+<li><code>-save_config &lt;string&gt;</code> (default: <code>''</code>)<br/>Save options to this file.</li>
 </ul>
 <h2 id="model-options">Model options<a class="headerlink" href="#model-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-model &lt;string&gt;</code><br/>Path to the trained model to release.</li>
-<li><code>-output_model &lt;string&gt;</code><br/>Path the released model. If not set, the <code>release</code> suffix will be automatically added to the model filename.</li>
-<li><code>-force</code><br/>Force output model creation even if the target file exists.</li>
+<li><code>-model &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the trained model to release.</li>
+<li><code>-output_model &lt;string&gt;</code> (default: <code>''</code>)<br/>Path the released model. If not set, the <code>release</code> suffix will be automatically added to the model filename.</li>
+<li><code>-force [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Force output model creation even if the target file exists.</li>
 </ul>
 <h2 id="cuda-options">Cuda options<a class="headerlink" href="#cuda-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-gpuid &lt;string&gt;</code> (default: <code>0</code>)<br/>List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.</li>
-<li><code>-fallback_to_cpu</code><br/>If GPU can't be used, rollback on the CPU.</li>
-<li><code>-fp16</code><br/>Use half-precision float on GPU.</li>
-<li><code>-no_nccl</code><br/>Disable usage of nccl in parallel mode.</li>
+<li><code>-gpuid &lt;table&gt;</code> (default: <code>0</code>)<br/>List of GPU identifiers (1-indexed). CPU is used when set to 0.</li>
+<li><code>-fallback_to_cpu [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If GPU can't be used, rollback on the CPU.</li>
+<li><code>-fp16 [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Use half-precision float on GPU.</li>
+<li><code>-no_nccl [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Disable usage of nccl in parallel mode.</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
-<li><code>-disable_logs</code><br/>If set, output nothing.</li>
+<li><code>-log_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Output logs to a file under this path instead of stdout.</li>
+<li><code>-disable_logs [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, output nothing.</li>
 <li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
 </ul>
                 

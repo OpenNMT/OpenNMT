@@ -772,24 +772,24 @@
 
 <p><code>learn_bpe.lua</code> options:</p>
 <ul>
-<li><code>-h</code><br/>This help.</li>
-<li><code>-md</code><br/>Dump help in Markdown format.</li>
-<li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
-<li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
+<li><code>-h [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>This help.</li>
+<li><code>-md [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Dump help in Markdown format.</li>
+<li><code>-config &lt;string&gt;</code> (default: <code>''</code>)<br/>Load options from this file.</li>
+<li><code>-save_config &lt;string&gt;</code> (default: <code>''</code>)<br/>Save options to this file.</li>
 </ul>
 <h2 id="bpe-options">BPE options<a class="headerlink" href="#bpe-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-size &lt;string&gt;</code> (default: <code>30000</code>)<br/>The number of merge operations to learn.</li>
-<li><code>-t</code><br/>Tokenize the input with tokenizer, the same options as tokenize.lua, but only <code>-mode</code> is taken into account for BPE training.</li>
+<li><code>-t [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Tokenize the input with tokenizer, the same options as tokenize.lua, but only <code>-mode</code> is taken into account for BPE training.</li>
 <li><code>-mode &lt;string&gt;</code> (accepted: <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc.</li>
-<li><code>-lc</code><br/>Lowercase the output from the tokenizer before learning BPE.</li>
+<li><code>-lc [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Lowercase the output from the tokenizer before learning BPE.</li>
 <li><code>-bpe_mode &lt;string&gt;</code> (accepted: <code>suffix</code>, <code>prefix</code>, <code>both</code>, <code>none</code>; default: <code>suffix</code>)<br/>Define the BPE mode. <code>prefix</code>: append <code>&lt;w&gt;</code> to the begining of each word to learn prefix-oriented pair statistics; <code>suffix</code>: append <code>&lt;/w&gt;</code> to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; <code>both</code>: <code>suffix</code> and <code>prefix</code>; <code>none</code>: no <code>suffix</code> nor <code>prefix</code>.</li>
-<li><code>-save_bpe &lt;string&gt;</code><br/>Path to save the output model.</li>
+<li><code>-save_bpe &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to save the output model.</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-log_file &lt;string&gt;</code><br/>Output logs to a file under this path instead of stdout.</li>
-<li><code>-disable_logs</code><br/>If set, output nothing.</li>
+<li><code>-log_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Output logs to a file under this path instead of stdout.</li>
+<li><code>-disable_logs [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, output nothing.</li>
 <li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
 </ul>
                 

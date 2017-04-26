@@ -772,22 +772,22 @@
 
 <p><code>embeddings.lua</code> options:</p>
 <ul>
-<li><code>-h</code><br/>This help.</li>
-<li><code>-md</code><br/>Dump help in Markdown format.</li>
-<li><code>-config &lt;string&gt;</code><br/>Load options from this file.</li>
-<li><code>-save_config &lt;string&gt;</code><br/>Save options to this file.</li>
+<li><code>-h [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>This help.</li>
+<li><code>-md [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Dump help in Markdown format.</li>
+<li><code>-config &lt;string&gt;</code> (default: <code>''</code>)<br/>Load options from this file.</li>
+<li><code>-save_config &lt;string&gt;</code> (default: <code>''</code>)<br/>Save options to this file.</li>
 </ul>
 <h2 id="data-options">Data options<a class="headerlink" href="#data-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-dict_file &lt;string&gt;</code><br/>Path to outputted dict file from <code>preprocess.lua</code>.</li>
-<li><code>-embed_file &lt;string&gt;</code><br/>Path to the embedding file. Ignored if <code>-lang</code> is used.</li>
-<li><code>-save_data &lt;string&gt;</code><br/>Output file path/label.</li>
+<li><code>-dict_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to outputted dict file from <code>preprocess.lua</code>.</li>
+<li><code>-embed_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the embedding file. Ignored if <code>-lang</code> is used.</li>
+<li><code>-save_data &lt;string&gt;</code> (default: <code>''</code>)<br/>Output file path/label.</li>
 </ul>
 <h2 id="embedding-options">Embedding options<a class="headerlink" href="#embedding-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-lang &lt;string&gt;</code><br/>Wikipedia Language Code to autoload embeddings.</li>
+<li><code>-lang &lt;string&gt;</code> (default: <code>''</code>)<br/>Wikipedia Language Code to autoload embeddings.</li>
 <li><code>-embed_type &lt;string&gt;</code> (accepted: <code>word2vec</code>, <code>glove</code>; default: <code>word2vec</code>)<br/>Embeddings file origin. Ignored if <code>-lang</code> is used.</li>
-<li><code>-normalize &lt;number&gt;</code> (default: <code>1</code>)<br/>Boolean to normalize the word vectors, or not.</li>
+<li><code>-normalize [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Boolean to normalize the word vectors, or not.</li>
 <li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Print stats every this many lines read from embedding file.</li>
 </ul>
                 
