@@ -204,11 +204,11 @@ local commonOptions = {
   },
   {
     '-sort', true,
-    [[If = 1, sort the sentences by size to build batches without source padding.]]
+    [[If set, sort the sequences by size to build batches without source padding.]]
   },
   {
     '-shuffle', true,
-    [[If = 1, shuffle data (prior sorting).]]
+    [[If set, shuffle the data (prior sorting).]]
   },
   {
     '-idx_files', false,

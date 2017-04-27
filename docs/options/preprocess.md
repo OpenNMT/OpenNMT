@@ -28,8 +28,8 @@
 * `-tgt_seq_length <number>` (default: `50`)<br/>Maximum target sequence length.
 * `-features_vocabs_prefix <string>` (default: `''`)<br/>Path prefix to existing features vocabularies.
 * `-time_shift_feature [<boolean>]` (default: `true`)<br/>Time shift features on the decoder side.
-* `-sort [<boolean>]` (default: `true`)<br/>If = 1, sort the sentences by size to build batches without source padding.
-* `-shuffle [<boolean>]` (default: `true`)<br/>If = 1, shuffle data (prior sorting).
+* `-sort [<boolean>]` (default: `true`)<br/>If set, sort the sequences by size to build batches without source padding.
+* `-shuffle [<boolean>]` (default: `true`)<br/>If set, shuffle the data (prior sorting).
 * `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
 * `-report_every <number>` (default: `100000`)<br/>Report status every this many sentences.
 

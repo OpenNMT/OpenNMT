@@ -70,9 +70,9 @@
 ## Optimization options
 
 * `-max_batch_size <number>` (default: `64`)<br/>Maximum batch size.
-* `-uneven_batches [<boolean>]` (default: `false`)<br/>If set, batches are filled up to max_batch_size even if source lengths are different. Slower but needed for some tasks.
+* `-uneven_batches [<boolean>]` (default: `false`)<br/>If set, batches are filled up to `-max_batch_size` even if the source lengths are different. Slower but needed for some tasks.
 * `-optim <string>` (accepted: `sgd`, `adagrad`, `adadelta`, `adam`; default: `sgd`)<br/>Optimization method.
-* `-learning_rate <number>` (default: `1`)<br/>Starting learning rate. If adagrad or adam is used, then this is the global learning rate. Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002.
+* `-learning_rate <number>` (default: `1`)<br/>Initial learning rate. If `adagrad` or `adam` is used, then this is the global learning rate. Recommended settings are: `sgd` = 1, `adagrad` = 0.1, `adam` = 0.0002.
 * `-min_learning_rate <number>` (default: `0`)<br/>Do not continue the training past this learning rate value.
 * `-max_grad_norm <number>` (default: `5`)<br/>Clip the gradients norm to this value.
 * `-learning_rate_decay <number>` (default: `0.7`)<br/>Learning rate decay factor: `learning_rate = learning_rate * learning_rate_decay`.

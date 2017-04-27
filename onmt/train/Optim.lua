@@ -63,7 +63,7 @@ local options = {
   },
   {
     '-uneven_batches', false,
-    [[If set, batches are filled up to max_batch_size even if source lengths are different.
+    [[If set, batches are filled up to `-max_batch_size` even if the source lengths are different.
       Slower but needed for some tasks.]]
   },
   {
@@ -76,8 +76,8 @@ local options = {
   },
   {
     '-learning_rate', 1,
-    [[Starting learning rate. If adagrad or adam is used, then this is the global learning rate.
-      Recommended settings are: sgd = 1, adagrad = 0.1, adam = 0.0002.]],
+    [[Initial learning rate. If `adagrad` or `adam` is used, then this is the global learning rate.
+      Recommended settings are: `sgd` = 1, `adagrad` = 0.1, `adam` = 0.0002.]],
     {
       train_state = true
     }
