@@ -102,7 +102,7 @@ function preprocessorTest.feattext()
   tester:eq(torch.typename(tgtData.words), 'tds.Vec')
   tester:eq(torch.typename(tgtData.features), 'tds.Vec')
   tester:eq(srcData.vectors[1]:size(2), 2)
-  tester:eq(#srcData.vectors, 997)
+  tester:eq(#srcData.vectors, 947)
   tester:eq(#tgtData.features, 0)
 end
 

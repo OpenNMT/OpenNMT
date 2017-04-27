@@ -479,23 +479,29 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
 
   local count = 0
   local ignored = 0
+  local emptyCount = 0
 
   local function processFeatTextSentence(srcFeats, tgtTokens)
-    if isValid(srcFeats, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
-      local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
-
-      src:insert(srcFeats)
-      tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
-                                             onmt.Constants.UNK_WORD,
-                                             onmt.Constants.BOS_WORD,
-                                             onmt.Constants.EOS_WORD))
-
-      if #tgtDicts.features > 0 then
-        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
-      end
-      sizes:insert(srcFeats:size(1))
-    else
+    if srcFeats:dim() == 0 or not tgtTokens then
       ignored = ignored + 1
+      emptyCount = emptyCount + 1
+    else
+      if isValid(srcFeats, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
+        local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
+
+        src:insert(srcFeats)
+        tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
+                                               onmt.Constants.UNK_WORD,
+                                               onmt.Constants.BOS_WORD,
+                                               onmt.Constants.EOS_WORD))
+
+        if #tgtDicts.features > 0 then
+          tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
+        end
+        sizes:insert(srcFeats:size(1))
+      else
+        ignored = ignored + 1
+      end
     end
 
     count = count + 1
@@ -545,9 +551,7 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
       _G.logger:warning('missing '..(srcCount-tgtCount)..' sentences in target')
     end
     for k,v in pairs(srcDict) do
-      if tgtDict[k] then
-        processFeatTextSentence(v, tgtDict[k])
-      end
+      processFeatTextSentence(v, tgtDict[k])
     end
   else
     while true do
@@ -591,7 +595,7 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
   end
 
   _G.logger:info('Prepared ' .. #src .. ' sequences (' .. ignored
-                   .. ' ignored due to source length > ' .. self.args.src_seq_length
+                   .. ' ignored: '..emptyCount..' empty, '..(ignored-emptyCount)..' source length > ' .. self.args.src_seq_length
                    .. ' or target length > ' .. self.args.tgt_seq_length .. ')')
 
   local srcData = {
