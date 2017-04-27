@@ -4,7 +4,7 @@ local Seq2Seq, parent = torch.class('Seq2Seq', 'Model')
 local options = {
   {
     '-enc_layers', 0,
-    [[If > 0, number of layers of the encode. This overrides the global `-layers` option.]],
+    [[If > 0, number of layers of the encoder. This overrides the global `-layers` option.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0
