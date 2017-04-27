@@ -1,100 +1,50 @@
-IDX_1 p p m m z p p p m m z m m z z p m m m m z m p m z m
-IDX_2 p p m p m z z m m p z m z m m p p p m
-IDX_3 m m m p p m p z m m p m z p z p p p
-IDX_4 m p p m p p m p p z p m p m p p p m m
-IDX_5 m p p p p p z p p m p z z z p z p m
-IDX_6 m p p m p p m m m m p m
-IDX_7 p m p p p p p p z p m m z m m
-IDX_8 p p p m p z p p z z p m p p p
-IDX_9 m z p p m p m m m z m p p m m m m m z p
-IDX_10 m m m z p p p p m z m z p p m p z
-IDX_11 p z z p p p z p p p m p m
-IDX_12 m z p p p z m m m m m p m p
-IDX_13 z p p z p m p p m
-IDX_14 z m m p m z m m m
-IDX_15 p m m p z z z p p m p
-IDX_16 m m p p p p p m m m p p m m p z m m z p p m p p z z m p p p m m m z p m
-IDX_17 p m p z p p m z z m p m
-IDX_18 z m m p m m m m m p m
-IDX_19 m m m p m m z m p p p p z m
-IDX_20 z m p z p p m m m p p m p p p p m m m z p m p m p m p m p m z z p m p p p z p p
-IDX_21 p m m z p p p z p p p
-IDX_22 z p z m p m z z m m p m m p m z p p m m p m
-IDX_23 p z z p m m p m
-IDX_24 m m z p p p m z z p m m m
-IDX_25 m p z z p p p m m
-IDX_26 p p p z m p z p z p
-IDX_27 p m m p m m p m
-IDX_28 z m z p m z m m m m m p p m
-IDX_29 m m p z z m p z m p
-IDX_30 m p m p m m m m m z p z p p p p m p z m p
-IDX_31 p p m m m p m p z p z m z p m p m m m
-IDX_32 z z p p z z z p p p m p p p
-IDX_33 p m m p p m p m z p m p p m p p z p p m p z z m m p m p m p m m z m p m
-IDX_34 m m p p p m p m m p p m m m p p z m z p m p m z m p m p m p m m m p m p p p p z z p m z z p m m p m m
-IDX_35 p p p z p m p m m p p m m z p p p p p p m p p m m p
-IDX_36 m m p p p m m p z p m p z
-IDX_37 m p p z p p p m m z p
-IDX_38 p m m p p z z z m m m z p
-IDX_39 p p m m p p p p m m p m m m z m p m p m p p p z p m z m p z p m p p p z z m p m m p p p m p m z m m
-IDX_40 p p z z m p p m m z p m p m m m z p m m p p m p z p
-IDX_41 m z z z m m m m p z m
-IDX_42 p m z m m z z m m z m m m
-IDX_43 p m p m m p p m m z m m m z z m m z p z p m m p p
-IDX_44 m z p p z m m m
-IDX_45 p z m p p m z p p p p m m p m m m p p p m m m m p p p p m p m m p m p m p p
-IDX_46 z z m z m p p z p m z p m p z m p m m m p p p m m p m p m m p p z
-IDX_47 p m m z m m p p m m p z p m
-IDX_48 z p m m z p p p
-IDX_49 p p p p m m p p m p p z z m m m p p z p m m m p m m p m z p z z m p m p z m p p p p m m m p p z p p p m m p m z p m m p p z m z
-IDX_50 m m p z m z m p p p m
-IDX_51 m p p m m m m p z m z z z
-IDX_52 p p m p m m z m m p p p p m z
-IDX_53 p p z p m m p p p m z p
-IDX_54 p m p p p p p p m
-IDX_55 p z z m m z z z m m p p m p
-IDX_56 z z m p p m m p m p z m m
-IDX_57 m m m p m m z p p p m z p p p p m z
-IDX_58 p p m p m m m p p m z p z m p m m
-IDX_59 p z p z m m z z p m p z m z z
-IDX_60 p m m z p p m p z p p p p m m m
-IDX_61 m m z p z p m z m p p p z z z m
-IDX_62 p m p p p p p p m p m z p p z m z m p m p p m m z p m m p m m m p m
-IDX_63 m m p m m z p m
-IDX_64 z m z m m p m p
-IDX_65 m p z m p p m m p m z z p
-IDX_66 m m p m m m m p
-IDX_67 z z z m p p m m z p p p p p p m m z p p p p m m p p p m m p z
-IDX_68 p m m m p p m p p p p p z m p m m m p p z m m
-IDX_69 z p z m p z p p m m p z
-IDX_70 m m p m m m p p m p
-IDX_71 m p m p m z m p p p m p
-IDX_72 z m z p z m z m m p z m p p p p z p p m z m p m p
-IDX_73 p m p m m p p p z m z p p p z p p p p z m p m p p z p m p m p p p p m p m p m p z p p z m m z
-IDX_74 m p m m z p p m m p m m p p
-IDX_75 m m z m z p m m m p m z
-IDX_76 p m m p p p p p z p z
-IDX_77 m p p m m m m z m m m m p m
-IDX_78 p p m m z p p m m p p m
-IDX_79 m m m m m z m m p p p m z m m m m p m z m p p z m z p m m z m p p p p p
-IDX_80 p p m p p m p m z z p z p z z p p m z m
-IDX_81 p m m p p p p m p m m p
-IDX_82 m z z p p m z z p m m p p
-IDX_83 p p p p p p m p
-IDX_84 p z p m m m p p z
-IDX_85 m z p p p z p p z m m m z p
-IDX_86 p m p p z m m m m
-IDX_87 m p m m m z p p m m p p p p p p
-IDX_88 p p m p p z m m p m p p p z p p p
-IDX_89 m p m p p m z m p m p p p p p m p z z p p m z m p p m p p m m m p p m
-IDX_90 m p m z z m m m m m p z
-IDX_91 p p m m z z p m p m m m m z z z p m z p p z
-IDX_92 z m m m p p p z p z z p m m
-IDX_93 m p p z z p m z m p m p p p p z z m z z
-IDX_94 p z p p p p m p p p z p z p p m
-IDX_95 p m m p p m p p p z m m m p z m m p p z p
-IDX_96 p z m p p m z m m m p p p m
-IDX_97 p p m p m z z m
-IDX_98 p z p z p p p m p m p m p m z p z p m z m m m p
-IDX_99 p p p p p z z m m m m p p p p m p m p m p p m p
-IDX_100 m m m p m z p p z m z p m m m p p z z m
+IDX_1 p p z p m m z p
+IDX_2 p
+IDX_3 p z m m p p m z
+IDX_4 z z z p m p m
+IDX_5 m m p p m p p m
+IDX_6 z m
+IDX_7 p z m m m p m m
+IDX_8 p z m p m p p m
+IDX_9 m p p m m p p z
+IDX_10 m p z p m
+IDX_11
+IDX_12
+IDX_13 p m p m m p p m
+IDX_14 m m z z m m p p
+IDX_15 z z m p z z z p
+IDX_16 m m m p p m
+IDX_17 p p p m m p p p
+IDX_18
+IDX_19 z p p z m p m m
+IDX_20 p p m m z m z m
+IDX_21 m p z
+IDX_22 z p m
+IDX_23 m m m z p m z z
+IDX_24 p z m m m m z z
+IDX_25 p m m m m m z p
+IDX_26 z
+IDX_27 z m z m m m z m
+IDX_28 p
+IDX_29 p p m p p z z p
+IDX_30 z z m z p z
+IDX_31 p z m
+IDX_32 m m z m p z p m
+IDX_33 m m p p p m m p
+IDX_34 p m z p p z m p
+IDX_35 m m p m p m p p
+IDX_36 m m p p m z z p
+IDX_37 z p p p m m m p
+IDX_38 m m m
+IDX_39 m m m z p p
+IDX_40 p p m m p p m
+IDX_41 p m p p z z m p
+IDX_42 p z p
+IDX_43 p z p m m p p z
+IDX_44 z z p m p z z m
+IDX_45 p
+IDX_46
+IDX_47 m p p p z
+IDX_48 z p m z z z p m
+IDX_49 m
+IDX_50 m p p p z m p m

@@ -23,7 +23,7 @@ function FileReader:next()
   end
 
   local sent = {}
-    if not self.featSequence then
+  if not self.featSequence then
     for word in line:gmatch'([^%s]+)' do
       table.insert(sent, word)
     end
@@ -33,21 +33,23 @@ function FileReader:next()
       p = p + 1
     end
     assert(p <= #line and line:sub(p,p) == '[', 'Invalid feature start line (pos '..p..'): '..line)
-    while true do
-      line = self.file:read()
-      local row = {}
-      for tok in line:gmatch'([^%s]+)' do
-        table.insert(row, tok)
-      end
-      assert(#row ~= 0, 'Empty line in feature description: '..line)
-      if row[#row] == ']' then
-        table.remove(row)
-        if #row > 0 then
-          table.insert(sent, row)
+    if not line:find("]") then
+      while true do
+        line = self.file:read()
+        local row = {}
+        for tok in line:gmatch'([^%s]+)' do
+          table.insert(row, tok)
         end
-        break
+        assert(#row ~= 0, 'Empty line in feature description: '..line)
+        if row[#row] == ']' then
+          table.remove(row)
+          if #row > 0 then
+            table.insert(sent, row)
+          end
+          break
+        end
+        table.insert(sent, row)
       end
-      table.insert(sent, row)
     end
   end
   return sent, idx
