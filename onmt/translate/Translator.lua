@@ -5,20 +5,29 @@ local options = {
     '-model', '',
     [[Path to the serialized model file.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+      valid = onmt.utils.ExtendedCmdLine.fileExists
     }
   },
   {
     '-beam_size', 5,
-    [[Beam size.]]
+    [[Beam size.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
   },
   {
     '-batch_size', 30,
-    [[Batch size.]]
+    [[Batch size.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
   },
   {
     '-max_sent_length', 250,
-    [[Maximum output sentence length.]]
+    [[Maximum output sentence length.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
   },
   {
     '-replace_unk', false,
@@ -29,35 +38,57 @@ local options = {
       does not exist in the table) then it will copy the source token]]},
   {
     '-phrase_table', '',
-    [[Path to source-target dictionary to replace `<unk>` tokens.]]
+    [[Path to source-target dictionary to replace `<unk>` tokens.]],
+    {
+      valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
   },
   {
     '-n_best', 1,
-    [[If > 1, it will also output an n-best list of decoded sentences.]]
+    [[If > 1, it will also output an n-best list of decoded sentences.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
   },
   {
     '-max_num_unks', math.huge,
-    [[All sequences with more `<unk>`s than this will be ignored during beam search.]]
+    [[All sequences with more `<unk>`s than this will be ignored during beam search.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
   },
   {
     '-pre_filter_factor', 1,
     [[Optional, set this only if filter is being used. Before
       applying filters, hypotheses with top `beam_size * pre_filter_factor`
       scores will be considered. If the returned hypotheses voilate filters,
-      then set this to a larger value to consider more.]]},
+      then set this to a larger value to consider more.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
+  },
   {
     '-length_norm', 0.0,
-    [[Length normalization coefficient (alpha). If set to 0, no length normalization.]]
+    [[Length normalization coefficient (alpha). If set to 0, no length normalization.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0),
+    }
   },
   {
     '-coverage_norm', 0.0,
     [[Coverage normalization coefficient (beta).
       An extra coverage term multiplied by beta is added to hypotheses scores.
-      If is set to 0, no coverage normalization.]]
+      If is set to 0, no coverage normalization.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0),
+    }
   },
   {
     '-eos_norm', 0.0,
-    [[End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.]]
+    [[End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0),
+    }
   },
   {
     '-dump_input_encoding', false,

@@ -26,7 +26,8 @@ local options = {
     '-attention', 'global',
     [[Attention model.]],
     {
-      enum = {'none', 'global'}
+      enum = {'none', 'global'},
+      structural = 0
     }
   }
 }

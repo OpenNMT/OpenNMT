@@ -5,12 +5,15 @@ local options = {
     '-model', '',
     [[Path to the serialized model file.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+      valid = onmt.utils.ExtendedCmdLine.fileExists
     }
   },
   {
     '-batch_size', 30,
-    [[Batch size.]]
+    [[Batch size.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
   }
 }
 

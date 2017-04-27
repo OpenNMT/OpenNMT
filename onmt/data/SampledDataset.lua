@@ -5,7 +5,10 @@ local SampledDataset = torch.class("SampledDataset")
 local options = {
   {
     '-sample', 0,
-    [[Number of instances to sample from train data in each epoch.]]
+    [[Number of instances to sample from train data in each epoch.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
   },
   {
     '-sample_w_ppl', false,

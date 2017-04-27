@@ -78,14 +78,14 @@ local bitextOptions = {
     '-src_seq_length', 50,
     [[Maximum source sequence length.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
     '-tgt_seq_length', 50,
     [[Maximum target sequence length.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
@@ -126,7 +126,7 @@ local monotextOptions = {
     '-seq_length', 50,
     [[Maximum source sequence length.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
@@ -181,14 +181,14 @@ local feattextOptions = {
     '-src_seq_length', 50,
     [[Maximum source sequence length.]],
     {
-      valid=onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
     '-tgt_seq_length', 50,
     [[Maximum target sequence length.]],
     {
-      valid=onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
@@ -218,7 +218,7 @@ local commonOptions = {
     '-report_every', 100000,
     [[Report status every this many sentences.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }

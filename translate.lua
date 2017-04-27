@@ -7,7 +7,7 @@ local options = {
     '-src', '',
     [[Source sequences to translate.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+      valid = onmt.utils.ExtendedCmdLine.fileExists
     }
   },
   {

@@ -6,14 +6,14 @@ local options = {
     [[Save intermediate models every this many iterations within an epoch.
       If = 0, will not save intermediate models.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
     '-report_every', 50,
     [[Report progress every this many iterations within an epoch.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {

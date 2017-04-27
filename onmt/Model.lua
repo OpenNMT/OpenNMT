@@ -14,7 +14,7 @@ local options = {
     '-param_init', 0.1,
     [[Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`).]],
     {
-      valid = function(v) return v >= 0 and v <= 1 end,
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0),
       init_only = true
     }
   }

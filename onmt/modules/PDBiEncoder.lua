@@ -9,6 +9,7 @@ local options = {
     '-pdbrnn_reduction', 2,
     [[Time-reduction factor at each layer.]],
     {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1),
       structural = 0
     }
   }

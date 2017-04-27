@@ -197,7 +197,7 @@ function ExtendedCmdLine:error(msg)
     io.stderr:write(self.script .. ': ')
   end
   io.stderr:write(msg .. '\n')
-  io.stderr:write('Try \'' .. self.script .. ' -h\' for more information.\n')
+  io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or visit the online documentation at http://opennmt.net/OpenNMT/.\n')
   os.exit(1)
 end
 
@@ -451,7 +451,7 @@ function ExtendedCmdLine:parse(arg)
         end
 
         if not isValid then
-          local msg = 'invalid option -' .. k
+          local msg = 'invalid argument for option -' .. k
           if reason then
             msg = msg .. ': ' .. reason
           end
@@ -519,7 +519,7 @@ end
 ---------------------------------------------------------------------------------
 
 local function buildRangeError(prefix, minValue, maxValue)
-  local err = 'the ' .. prefix .. ' should be'
+  local err = 'the ' .. prefix .. ' must be'
   if minValue then
     err = err .. ' greater than ' .. minValue
   end
@@ -559,17 +559,17 @@ end
 
 -- Check if non empty.
 function ExtendedCmdLine.nonEmpty(v)
-  return v and v ~= '', 'the argument should not be empty'
+  return v and v ~= '', 'the argument must not be empty'
 end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v), 'the file should exist'
+  return path.exists(v), 'the file must exist'
 end
 
 -- Check non set or if the corresponding file exists.
 function ExtendedCmdLine.fileNullOrExists(v)
-  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file should exist'
+  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file must exist'
 end
 
 -- Check it is a directory and some file exists
@@ -577,7 +577,7 @@ function ExtendedCmdLine.dirStructure(files)
   return function(v)
     for _,f in ipairs(files) do
       if not path.exists(v.."/"..f) then
-        return false, 'the directory should exist'
+        return false, 'the directory must exist'
       end
     end
     return true
