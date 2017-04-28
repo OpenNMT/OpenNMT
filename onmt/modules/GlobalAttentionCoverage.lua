@@ -68,7 +68,7 @@ function GlobalAttentionCoverage:_buildModel(opt, dim)
   elseif opt.coverage_model == 'ling2' then
     -- fertility model - phi=N.sigma(U.h_s)
     local phi = nn.Mul()(nn.Sigmoid()(nn.Bottle(nn.Linear(dim, 1))(hs)))
-    coverage = nn.CAddTable()({coverage, nn.CDivTable()({attn, phi})})
+    coverage = nn.CAddTable()({coverage, nn.CDivTable()({attn, nn.AddConstant(0.00001)(phi)})})
   else
     -- apply GRU cell - coverage_t_i = gru(coverage_t-1, [attn_t_i, h_t, h_s_i])
     local ht2 = nn.Replicate(1,2)(ht0) -- batchL x 1 x dim
