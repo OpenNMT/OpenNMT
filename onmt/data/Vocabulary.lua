@@ -55,6 +55,10 @@ function Vocabulary.make(filename, validFunc, idxFile)
       end
     end
 
+    -- keep frequency also for sentences
+    wordVocab:setFrequency(onmt.Constants.BOS_WORD, lineId)
+    wordVocab:setFrequency(onmt.Constants.EOS_WORD, lineId)
+
   end
 
   reader:close()
@@ -62,7 +66,7 @@ function Vocabulary.make(filename, validFunc, idxFile)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, idxFile)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency, idxFile)
   local wordVocab
   local featuresVocabs = {}
   local numFeatures = countFeatures(dataFile, idxFile)
@@ -101,7 +105,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
              .. ' features but only ' .. #featuresVocabs .. ' dictionaries were found')
   end
 
-  if wordVocab == nil or (#featuresVocabs == 0 and numFeatures > 0) then
+  if wordVocab == nil or keepFrequency or (#featuresVocabs == 0 and numFeatures > 0) then
     -- If a dictionary is still missing, generate it.
     _G.logger:info('Building ' .. name  .. ' vocabularies...')
     local genWordVocab, genFeaturesVocabs = Vocabulary.make(dataFile, validFunc, idxFile)
@@ -127,6 +131,9 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
       _G.logger:info('Created word dictionary of size '
                        .. wordVocab:size() .. ' (pruned from ' .. originalSizes[1] .. ')')
+    elseif keepFrequency then
+      -- if a dictionary was provided get frequency
+      wordVocab = genWordVocab:getFrequencies(wordVocab)
     end
 
     if #featuresVocabs == 0 then
@@ -147,6 +154,8 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
   end
 
   _G.logger:info('')
+
+  wordVocab:prepFrequency(keepFrequency)
 
   return {
     words = wordVocab,

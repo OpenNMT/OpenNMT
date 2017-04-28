@@ -78,6 +78,7 @@ local function main()
                                      opt.src_words_min_frequency or opt.words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end,
+                                     opt.keep_frequency,
                                      opt.idx_files)
   end
   if dataType ~= 'monotext' then
@@ -89,6 +90,7 @@ local function main()
                                      opt.tgt_words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.tgt_seq_length) end,
+                                     opt.keep_frequency,
                                      opt.idx_files)
   end
 
