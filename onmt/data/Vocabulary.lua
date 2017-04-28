@@ -170,7 +170,7 @@ end
 
 function Vocabulary.saveFeatures(name, vocabs, prefix)
   for j = 1, #vocabs do
-    local file = prefix .. '.' .. name .. '_feature_' .. j .. '.dict'
+    local file = prefix .. '_feature_' .. j .. '.dict'
     _G.logger:info('Saving ' .. name .. ' feature ' .. j .. ' vocabulary to \'' .. file .. '\'...')
     vocabs[j]:writeFile(file)
   end

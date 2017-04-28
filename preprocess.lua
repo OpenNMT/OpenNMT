@@ -151,8 +151,8 @@ local function main()
       Vocabulary.save('target', data.dicts.tgt.words, opt.save_data .. '.tgt.dict')
     end
     if opt.features_vocabs_prefix:len() == 0 then
-      Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data)
-      Vocabulary.saveFeatures('target', data.dicts.tgt.features, opt.save_data)
+      Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data..'.source')
+      Vocabulary.saveFeatures('target', data.dicts.tgt.features, opt.save_data..'.target')
     end
   end
 
