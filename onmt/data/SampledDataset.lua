@@ -170,7 +170,7 @@ function SampledDataset:sample(logLevel)
     end
   end
 
-  local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
+  local sampler = onmt.AliasMultinomial.new(self.samplingProb)
   self.sampled = torch.LongTensor(self.samplingSize)
   self.sampled = sampler:batchdraw(self.sampled)
 

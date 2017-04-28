@@ -66,7 +66,7 @@ function Vocabulary.make(filename, validFunc, idxFile)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, idxFile, keepFrequency)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency, idxFile)
   local wordVocab
   local featuresVocabs = {}
   local numFeatures = countFeatures(dataFile, idxFile)

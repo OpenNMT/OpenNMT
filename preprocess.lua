@@ -78,8 +78,8 @@ local function main()
                                      opt.src_words_min_frequency or opt.words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end,
-                                     opt.idx_files,
-                                     opt.keep_frequency)
+                                     opt.keep_frequency,
+                                     opt.idx_files)
   end
   if dataType ~= 'monotext' then
     local tgt_file = opt.train_tgt
@@ -90,8 +90,8 @@ local function main()
                                      opt.tgt_words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.tgt_seq_length) end,
-                                     opt.idx_files,
-                                     opt.keep_frequency)
+                                     opt.keep_frequency,
+                                     opt.idx_files)
   end
 
   _G.logger:info('Preparing training data...')

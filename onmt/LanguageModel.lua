@@ -63,8 +63,7 @@ function LanguageModel:__init(args, dicts)
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
   self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)
-
-  self.criterion = onmt.Factory.buildCriterion(args, dicts.src, true)
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.src)
 
   self.eosProto = {}
   for _ = 1, #dicts.src.features + 1 do
@@ -80,7 +79,7 @@ function LanguageModel.load(args, models, dicts)
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.generator = onmt.Factory.loadGenerator(models.generator)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.src)
 
   return self
 end

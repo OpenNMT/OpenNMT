@@ -129,7 +129,7 @@ function Seq2Seq:__init(args, dicts)
                                    decArgs.rnn_size,
                                    self.models.decoder.args.numEffectiveLayers)
 
-  self.criterion = onmt.Factory.buildCriterion(args, dicts.tgt, verbose)
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.tgt)
 end
 
 function Seq2Seq.load(args, models, dicts)

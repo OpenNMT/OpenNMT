@@ -203,6 +203,10 @@ local commonOptions = {
     [[Time shift features on the decoder side.]]
   },
   {
+    '-keep_frequency', false,
+    [[Keep frequency of words in dictionary.]]
+  },
+  {
     '-sort', true,
     [[If set, sort the sequences by size to build batches without source padding.]]
   },
