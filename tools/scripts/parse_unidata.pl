@@ -122,7 +122,7 @@ sub generate {
         $h=$h+16;
       }
       print "\n}\n";
-      $i=$j;
+      $i=$j-1;
     }
   }
 }

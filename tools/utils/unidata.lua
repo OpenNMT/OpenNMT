@@ -106,6 +106,9 @@ unidata.Separator = {}
 unidata.Separator[0x0020] = {
   0x8000
 }
+unidata.Separator[0x00A0] = {
+  0x8000
+}
 unidata.Separator[0x1680] = {
   0x8000
 }
