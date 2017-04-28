@@ -211,10 +211,6 @@ local commonOptions = {
     [[If set, sort the sequences by size to build batches without source padding.]]
   },
   {
-    '-keep_frequency', false,
-    [[Keep frequency of words in dictionary.]]
-  },
-  {
     '-shuffle', true,
     [[If set, shuffle the data (prior sorting).]]
   },
