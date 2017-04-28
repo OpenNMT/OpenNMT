@@ -50,7 +50,7 @@ if dpnn then
   function NCEModule:fastNoise()
    -- we use alias to speedup multinomial sampling (see noiseSample method)
    self.unigrams:div(self.unigrams:sum())
-   self.aliasmultinomial = onmt.AliasMultinomial(self.unigrams)
+   self.aliasmultinomial = onmt.data.AliasMultinomial(self.unigrams)
    self.aliasmultinomial.dpnn_parameters = {'J', 'q'}
 end
 

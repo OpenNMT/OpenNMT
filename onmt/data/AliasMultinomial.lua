@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ]]
 
 -- ref.: https://hips.seas.harvard.edu/blog/2013/03/03/the-alias-method-efficient-sampling-with-many-discrete-outcomes/
-local AM = torch.class("onmt.AliasMultinomial")
+local AM = torch.class("onmt.data.AliasMultinomial")
 
 function AM:__init(probs)
    self.J, self.q = self:setup(probs)
