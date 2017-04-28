@@ -5,13 +5,26 @@
 use strict;
 use utf8;
 
-print <<___HEADER;
---[[ Class containing unicode data table summarized information]]
-local unidata = {}
-unidata.maplower = {}
+my $cmode=(shift @ARGV) eq 'C';
 
--- the following sections have been generated from UnicodeData.txt and should not be modified manually
+if ($cmode) {
+  print <<___HEADER;
+#include "onmt/unicode/Data.h"
+
+namespace onmt
+{
+  namespace unicode
+  {
 ___HEADER
+} else {
+  print <<___HEADER;
+  --[[ Class containing unicode data table summarized information]]
+  local unidata = {}
+  unidata.maplower = {}
+
+  -- the following sections have been generated from UnicodeData.txt and should not be modified manually
+___HEADER
+}
 
 my @Number;
 my @Separator;
@@ -39,18 +52,47 @@ while(my $l=<STDIN>) {
   }
 }
 
-generate("Number",@Number);
-generate("Separator",@Separator);
-generate("LetterLower",@LetterLower);
-generate("LetterUpper",@LetterUpper);
-generate("LetterOther",@LetterOther);
-generate("Mark",@Mark);
+if ($cmode) {
+  generateC("Separator",@Separator);
+  generateC("LetterLower",@LetterLower);
+  generateC("Number",@Number);
+  generateC("LetterOther",@LetterOther);
+  generateC("LetterUpper",@LetterUpper);
+  generateC("Mark",@Mark);
 
-foreach my $cp (sort {$a<=>$b} keys(%maplower)) {
-  print "unidata.maplower[".ghex($cp)."]=".ghex($maplower{$cp})."\n";
+  print "\n    typedef std::unordered_map<code_point_t, code_point_t> map_unicode;\n";
+  print "    const map_unicode map_lower={";
+  my $first=1;
+  my $count=0;
+  foreach my $cp (sort {$a<=>$b} keys(%maplower)) {
+    print "," if (!$first);
+    if ($count%5==0) { print "\n                  "; }
+    $count++;
+    print "{".ghex($cp).",".ghex($maplower{$cp})."}";
+    $first=0;
+  }
+  print "};\n";
+
+  print <<___FOOTER;
+
+  }
 }
+___FOOTER
+}
+else {
+  generate("Number",@Number);
+  generate("Separator",@Separator);
+  generate("LetterLower",@LetterLower);
+  generate("LetterUpper",@LetterUpper);
+  generate("LetterOther",@LetterOther);
+  generate("Mark",@Mark);
 
-print "\nreturn unidata\n";
+  foreach my $cp (sort {$a<=>$b} keys(%maplower)) {
+    print "unidata.maplower[".ghex($cp)."]=".ghex($maplower{$cp})."\n";
+  }
+
+  print "\nreturn unidata\n";
+}
 
 sub generate {
   my ($s,@t)=@_;
@@ -59,7 +101,7 @@ sub generate {
     if ($t[$i]) {
       my $last=$i;
       my $j=$i+1;
-      while($j-$last<=256) {
+      while($j-$last<128) {
         $last=$j if ($t[$j]);
         $j++;
       }
@@ -83,6 +125,43 @@ sub generate {
       $i=$j;
     }
   }
+}
+
+sub generateC {
+  my ($s,@t)=@_;
+  print "\n    const map_of_list_t unidata_".$s." = {";
+  my $first=1;
+  for(my $i=32; $i<=65536; $i++) {
+    if ($t[$i]) {
+      my $last=$i;
+      my $j=$i+1;
+      while($j-$last<128) {
+        $last=$j if ($t[$j]);
+        $j++;
+      }
+      print "," if (!$first);
+      $first=0;
+      print "\n      {".ghex($i).", {";
+      my $h=$i;
+      my $C=0;
+      my $firstline=1;
+      while($h<=$last) {
+        my $V=0;
+        for(my $c=0;$c<16;$c++) {
+          $V=$V<<1;
+          $V=$V+1 if ($t[$h+$c]);
+        }
+        if ($C==0) { print "," if (!$firstline); print "\n          "; } else { print ", "; }
+        print ghex($V);
+        $C++;
+        if ($C==10) { $C=0; $firstline=0; }
+        $h=$h+16;
+      }
+      print "\n        }}";
+      $i=$j-1;
+    }
+  }
+  print "\n    };\n";
 }
 
 sub ghex {
