@@ -10,9 +10,11 @@
 ## Vocabulary options
 
 * `-data <string>` (default: `''`)<br/>Data file.
-* `-save_vocab <string>` (default: `''`)<br/>Vocabulary files name.
+* `-save_vocab <string>` (default: `''`)<br/>Vocabulary dictionary prefix.
 * `-vocab_size <table>` (default: `50000`)<br/>List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are not pruned.
 * `-words_min_frequency <table>` (default: `0`)<br/>List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are pruned by size.
+* `-keep_frequency [<boolean>]` (default: `false`)<br/>Keep frequency of words in dictionary.
+* `-idx_files [<boolean>]` (default: `false`)<br/>If set, each line of the data file starts with a first field which is the index of the sentence.
 
 ## Logger options
 

@@ -25,7 +25,7 @@
 
 ## Sequence to Sequence with Attention options
 
-* `-enc_layers <number>` (default: `0`)<br/>If > 0, number of layers of the encode. This overrides the global `-layers` option.
+* `-enc_layers <number>` (default: `0`)<br/>If > 0, number of layers of the encoder. This overrides the global `-layers` option.
 * `-dec_layers <number>` (default: `0`)<br/>If > 0, number of layers of the decoder. This overrides the global `-layers` option.
 * `-word_vec_size <number>` (default: `0`)<br/>Shared word embedding size. If set, this overrides `-src_word_vec_size` and `-tgt_word_vec_size`.
 * `-src_word_vec_size <table>` (default: `500`)<br/>List of source embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.
