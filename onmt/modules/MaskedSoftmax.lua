@@ -4,8 +4,8 @@ require('nngraph')
 
   For instance there may be a batch of instances where A is padding.
 
-    XXXXAA
-    XXAAAA
+    AAXXXX
+    AAAAXX
     XXXXXX
 
   MaskedSoftmax ensures that no probability is given to the A's.

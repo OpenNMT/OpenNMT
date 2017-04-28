@@ -1,0 +1,12 @@
+exclude = {
+  "%Test"
+}
+modules = {
+  ["onmt.*"] = ".",
+  ["onmt.data.*"] = ".",
+  ["onmt.modules.*"] = ".",
+  ["onmt.tagger.*"] = ".",
+  ["onmt.train.*"] = ".",
+  ["onmt.translate.*"] = ".",
+  ["onmt.utils.*"] = "."
+}

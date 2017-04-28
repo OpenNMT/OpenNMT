@@ -9,6 +9,8 @@ require('onmt.modules.Decoder')
 
 require('onmt.modules.Network')
 
+require('onmt.modules.Bridge')
+
 require('onmt.modules.GRU')
 require('onmt.modules.LSTM')
 

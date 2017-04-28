@@ -6,6 +6,7 @@ If you want to visualize and deploy the documentation, continue reading the next
 
 ```bash
 pip install mkdocs
+pip install mkdocs-material
 pip install python-markdown-math
 ```
 

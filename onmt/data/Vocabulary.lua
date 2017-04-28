@@ -3,19 +3,19 @@ local path = require('pl.path')
 --[[ Vocabulary management utility functions. ]]
 local Vocabulary = torch.class("Vocabulary")
 
-local function countFeatures(filename)
-  local reader = onmt.utils.FileReader.new(filename)
+local function countFeatures(filename, idxFile)
+  local reader = onmt.utils.FileReader.new(filename, idxFile)
   local _, _, numFeatures = onmt.utils.Features.extract(reader:next())
   reader:close()
   return numFeatures
 end
 
-function Vocabulary.make(filename, validFunc)
+function Vocabulary.make(filename, validFunc, idxFile)
   local wordVocab = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
                                          onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
   local featuresVocabs = {}
 
-  local reader = onmt.utils.FileReader.new(filename)
+  local reader = onmt.utils.FileReader.new(filename, idxFile)
   local lineId = 0
 
   while true do
@@ -66,10 +66,10 @@ function Vocabulary.make(filename, validFunc)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, idxFile, keepFrequency)
   local wordVocab
   local featuresVocabs = {}
-  local numFeatures = countFeatures(dataFile)
+  local numFeatures = countFeatures(dataFile, idxFile)
 
   if vocabFile:len() > 0 then
     -- If given, load existing word dictionary.
@@ -108,26 +108,23 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
   if wordVocab == nil or keepFrequency or (#featuresVocabs == 0 and numFeatures > 0) then
     -- If a dictionary is still missing, generate it.
     _G.logger:info('Building ' .. name  .. ' vocabularies...')
-    local genWordVocab, genFeaturesVocabs = Vocabulary.make(dataFile, validFunc)
+    local genWordVocab, genFeaturesVocabs = Vocabulary.make(dataFile, validFunc, idxFile)
 
     local originalSizes = { genWordVocab:size() }
     for i = 1, #genFeaturesVocabs do
       table.insert(originalSizes, genFeaturesVocabs[i]:size())
     end
 
-    local newSizes = onmt.utils.String.split(vocabSize, ',')
-    local minFrequency = onmt.utils.String.split(wordsMinFrequency, ',')
-
     for i = 1, 1 + #genFeaturesVocabs do
-      newSizes[i] = (newSizes[i] and tonumber(newSizes[i])) or 0
-      minFrequency[i] = (minFrequency[i] and tonumber(minFrequency[i])) or 0
+      vocabSize[i] = vocabSize[i] or 0
+      wordsMinFrequency[i] = wordsMinFrequency[i] or 0
     end
 
     if wordVocab == nil then
-      if minFrequency[1] > 0 then
-        wordVocab = genWordVocab:pruneByMinFrequency(minFrequency[1])
-      elseif newSizes[1] > 0 then
-        wordVocab = genWordVocab:prune(newSizes[1])
+      if wordsMinFrequency[1] > 0 then
+        wordVocab = genWordVocab:pruneByMinFrequency(wordsMinFrequency[1])
+      elseif vocabSize[1] > 0 then
+        wordVocab = genWordVocab:prune(vocabSize[1])
       else
         wordVocab = genWordVocab
       end
@@ -141,10 +138,10 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
     if #featuresVocabs == 0 then
       for i = 1, #genFeaturesVocabs do
-        if minFrequency[i + 1] > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequency(minFrequency[i + 1])
-        elseif newSizes[i + 1] > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:prune(newSizes[i + 1])
+        if wordsMinFrequency[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequency(wordsMinFrequency[i + 1])
+        elseif vocabSize[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:prune(vocabSize[i + 1])
         else
           featuresVocabs[i] = genFeaturesVocabs[i]
         end

@@ -117,6 +117,12 @@ function unicode.isSeparator(u)
   return (u >= 9 and u <= 13) or _find_codepoint(u, unidata.Separator)
 end
 
+function unicode.isMark(u)
+  if not u then return false end
+  -- control character or separator
+  return _find_codepoint(u, unidata.Mark)
+end
+
 -- returns if letter and case "lower", "upper", "other"
 function unicode.isLetter(u)
   if not u then return false end
