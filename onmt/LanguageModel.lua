@@ -3,8 +3,8 @@ local LanguageModel, parent = torch.class('LanguageModel', 'Model')
 
 local options = {
   {
-    '-word_vec_size', '500',
-    [[Comma-separated list of embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
+    '-word_vec_size', { 500 },
+    [[List of embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.]],
     {
       structural = 0
     }
@@ -18,10 +18,9 @@ local options = {
     }
   },
   {
-    '-fix_word_vecs_enc', 0,
+    '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },
@@ -58,14 +57,13 @@ function LanguageModel.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
 
-function LanguageModel:__init(args, dicts, verbose)
+function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
-  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src, verbose)
+  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
   self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)
-
-  self.criterion = onmt.Factory.buildCriterion(args, dicts.src, true)
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.src)
 
   self.eosProto = {}
   for _ = 1, #dicts.src.features + 1 do
@@ -73,15 +71,15 @@ function LanguageModel:__init(args, dicts, verbose)
   end
 end
 
-function LanguageModel.load(args, models, dicts, isReplica)
+function LanguageModel.load(args, models, dicts)
   local self = torch.factory('LanguageModel')()
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
-  self.models.encoder = onmt.Factory.loadEncoder(models.encoder, isReplica)
-  self.models.generator = onmt.Factory.loadGenerator(models.generator, isReplica)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
+  self.models.generator = onmt.Factory.loadGenerator(models.generator)
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.src)
 
   return self
 end

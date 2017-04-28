@@ -49,27 +49,8 @@ function Logger:__init(logFile, disableLogs, logLevel)
   else
     self:setVisibleLevel(logLevel)
   end
-  local openMode = 'w'
-  local f = io.open(logFile, 'r')
-  if f then
-    f:close()
-    local input = nil
-    while not input do
-      print('Logging file exits. Overwrite(o)? Append(a)? Abort(q)?')
-      input = io.read()
-      if input == 'o' or input == 'O' then
-        openMode = 'w'
-      elseif input == 'a' or input == 'A' then
-        openMode = 'a'
-      elseif input == 'q' or input == 'Q' then
-        os.exit()
-      else
-        openMode = 'a'
-      end
-    end
-  end
   if string.len(logFile) > 0 then
-    self.logFile = io.open(logFile, openMode)
+    self.logFile = io.open(logFile, 'a')
   else
     self.logFile = nil
   end

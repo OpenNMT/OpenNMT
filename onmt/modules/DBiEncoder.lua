@@ -101,6 +101,11 @@ function DBiEncoder:maskPadding()
   end
 end
 
+-- size of context vector
+function DBiEncoder:contextSize(sourceSize, sourceLength)
+  return sourceSize, sourceLength
+end
+
 function DBiEncoder:forward(batch)
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,

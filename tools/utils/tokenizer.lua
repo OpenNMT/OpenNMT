@@ -115,22 +115,28 @@ local function tokenize(line, opt)
 
         local is_letter = unicode.isLetter(v)
         local is_number = unicode.isNumber(v)
+        local is_mark = unicode.isMark(v)
+        -- if we have a mark, we keep type of previous character
+        if is_mark then
+          is_letter = letter
+          is_number = number
+        end
         if opt.mode == 'conservative' then
           if is_number or (c == '-' and letter == true) or c == '_' or
                 (letter == true and (c == '.' or c == ',') and (unicode.isNumber(nextv) or unicode.isLetter(nextv))) then
             is_letter = true
           end
-      end
-      if is_letter then
-        if not(letter == true or space == true) then
-          if opt.joiner_annotate and not(opt.joiner_new) then
-            curtok = curtok .. opt.joiner
-          end
-          table.insert(tokens, curtok)
-          if opt.joiner_annotate and opt.joiner_new then
-            table.insert(tokens, opt.joiner)
-          end
-          curtok = ''
+        end
+        if is_letter then
+          if not(letter == true or space == true) then
+            if opt.joiner_annotate and not(opt.joiner_new) then
+              curtok = curtok .. opt.joiner
+            end
+            table.insert(tokens, curtok)
+            if opt.joiner_annotate and opt.joiner_new then
+              table.insert(tokens, opt.joiner)
+            end
+            curtok = ''
           elseif other == true then
             if opt.joiner_annotate then
               if curtok == '' then

@@ -1,5 +1,3 @@
-local ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
-
 local Cuda = {
   fp16 = false,
   gpuIds = {},
@@ -8,11 +6,8 @@ local Cuda = {
 
 local options = {
   {
-    '-gpuid', '0',
-    [[List of comma-separated GPU identifiers (1-indexed). CPU is used when set to 0.]],
-    {
-      valid = ExtendedCmdLine.listUInt
-    }
+    '-gpuid', { 0 },
+    [[List of GPU identifiers (1-indexed). CPU is used when set to 0.]]
   },
   {
     '-fallback_to_cpu', false,
@@ -33,9 +28,8 @@ function Cuda.declareOpts(cmd)
 end
 
 function Cuda.init(opt, masterGPU)
-  for _, val in ipairs(onmt.utils.String.split(opt.gpuid, ',')) do
-    local id = tonumber(val)
-    assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. val)
+  for _, id in ipairs(opt.gpuid) do
+    assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. id)
     if id > 0 then
       table.insert(Cuda.gpuIds, id)
     end
@@ -60,10 +54,11 @@ function Cuda.init(opt, masterGPU)
         end
 
         _G.logger:info('Using GPU(s): ' .. table.concat(Cuda.gpuIds, ', '))
-      end
 
-      if cutorch.isCachingAllocatorEnabled and cutorch.isCachingAllocatorEnabled() then
-        _G.logger:warning('The caching CUDA memory allocator is enabled. This allocator improves performance at the cost of a higher GPU memory usage. To optimize for memory, consider disabling it by setting the environment variable: THC_CACHING_ALLOCATOR=0')
+        if cutorch.isCachingAllocatorEnabled and cutorch.isCachingAllocatorEnabled() then
+          _G.logger:warning('The caching CUDA memory allocator is enabled. This allocator improves performance at the cost of a higher GPU memory usage. To optimize for memory, consider disabling it by setting the environment variable: THC_CACHING_ALLOCATOR=0')
+        end
+
       end
 
       cutorch.setDevice(Cuda.gpuIds[masterGPU])
@@ -97,16 +92,14 @@ function Cuda.getRNGStates()
 end
 
 -- set RNGState from saved state
-function Cuda.setRNGStates(rngStates, verbose)
+function Cuda.setRNGStates(rngStates)
   if not rngStates then
     return
   end
-  if verbose then
-    _G.logger:info("Restoring Random Number Generator states")
-  end
+  _G.logger:info("Restoring random number generator states...")
   torch.setRNGState(rngStates[1])
   if #rngStates-1 ~= #Cuda.gpuIds then
-    _G.logger:warning('GPU count does not match for resetting Random Number Generator - skipping')
+    _G.logger:warning('GPU count does not match for resetting random number generator. Skipping.')
   else
     for idx = 2, #rngStates do
       cutorch.setRNGState(rngStates[idx], idx-1)

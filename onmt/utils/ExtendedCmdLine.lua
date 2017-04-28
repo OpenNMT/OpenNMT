@@ -2,28 +2,6 @@
 -- Local utility functions
 ---------------------------------------------------------------------------------
 
---[[ Convert `val` string to its actual type (boolean, number or string). ]]
-local function convert(key, val, ref)
-  local new
-
-  if type(val) == type(ref) then
-    new = val
-  elseif type(ref) == 'boolean' then
-    if val == 'true' then
-      new = true
-    elseif val == 'false' then
-      new = false
-    else
-      error('option ' .. key .. ' expects a boolean value [true, false]')
-    end
-  elseif type(ref) == 'number' then
-    new = tonumber(val)
-    assert(new ~= nil, 'option ' .. key .. ' expects a number value')
-  end
-
-  return new
-end
-
 local function wrapIndent(text, size, pad)
   local p = 0
   while true do
@@ -97,8 +75,11 @@ function ExtendedCmdLine:help(arg, doMd)
       if type(option) == 'table' then
         io.write('* ')
         if option.default ~= nil then -- It is an option.
-          local args = type(option.default) == 'boolean' and '' or ' <' .. type(option.default) .. '>'
-          io.write('`' .. option.key .. args ..'`')
+          local optType = '<' .. option.type .. '>'
+          if option.type == 'boolean' then
+            optType = '[' .. optType .. ']'
+          end
+          io.write('`' .. option.key .. ' ' .. optType .. '`')
 
           local valInfo = {}
           if option.meta and option.meta.enum then
@@ -107,9 +88,15 @@ function ExtendedCmdLine:help(arg, doMd)
             end
             table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
           end
-          if type(option.default) ~= "boolean" and option.default ~= '' then
-            table.insert(valInfo, 'default: `' .. tostring(option.default) .. '`')
+          local default
+          if type(option.default) == 'table' then
+            default = table.concat(option.default, ', ')
+          elseif option.default == '' then
+            default = '\'\''
+          else
+            default = tostring(option.default)
           end
+          table.insert(valInfo, 'default: `' .. default .. '`')
           if #valInfo > 0 then
             io.write(' (' .. table.concat(valInfo, '; ') .. ')')
           end
@@ -177,9 +164,15 @@ function ExtendedCmdLine:help(arg, doMd)
           if option.meta and option.meta.enum then
             table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
           end
-          if type(option.default) ~= "boolean" and option.default ~= '' then
-            table.insert(valInfo, 'default: ' .. tostring(option.default))
+          local default
+          if type(option.default) == 'table' then
+            default = table.concat(option.default, ', ')
+          elseif option.default == '' then
+            default = '\'\''
+          else
+            default = tostring(option.default)
           end
+          table.insert(valInfo, 'default: ' .. default)
           if #valInfo > 0 then
             msg = msg .. ' (' .. table.concat(valInfo, '; ') .. ')'
           end
@@ -197,6 +190,15 @@ function ExtendedCmdLine:help(arg, doMd)
     end
     io.write('\n')
   end
+end
+
+function ExtendedCmdLine:error(msg)
+  if self.script then
+    io.stderr:write(self.script .. ': ')
+  end
+  io.stderr:write(msg .. '\n')
+  io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or visit the online documentation at http://opennmt.net/OpenNMT/.\n')
+  os.exit(1)
 end
 
 function ExtendedCmdLine:option(key, default, help, _meta_)
@@ -222,11 +224,17 @@ function ExtendedCmdLine:loadConfig(filename, opt)
       local key = onmt.utils.String.strip(field[1])
       local val = onmt.utils.String.strip(field[2])
 
-      assert(opt[key] ~= nil, 'unkown option ' .. key)
+      -- Rely on the command line parser.
+      local arg = { '-' .. key }
 
-      opt[key] = convert(key, val, opt[key])
+      if val == '' then
+        table.insert(arg, '')
+      else
+        onmt.utils.Table.append(arg, onmt.utils.String.split(val, ' '))
+      end
+
+      self:__readOption__(opt, arg, 1)
       opt._is_default[key] = nil
-
     end
   end
 
@@ -248,6 +256,10 @@ function ExtendedCmdLine:logConfig(opt)
       local val = opt[key]
       if type(val) == 'string' then
         val = '\'' .. val .. '\''
+      elseif type(val) == 'table' then
+        val = table.concat(val, ' ')
+      else
+        val = tostring(val)
       end
       _G.logger:debug(' * ' .. key .. ' = ' .. tostring(val))
     end
@@ -259,11 +271,101 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
 
   for key, val in pairs(opt) do
     if key:sub(1, 1) ~= '_' then
-      file:write(key .. ' = ' .. tostring(val) .. '\n')
+      if type(val) == 'table' then
+        val = table.concat(val, ' ')
+      else
+        val = tostring(val)
+      end
+      file:write(key .. ' = ' .. val .. '\n')
     end
   end
 
   file:close()
+end
+
+--[[ Convert `val` string to the target type. ]]
+function ExtendedCmdLine:convert(key, val, type, subtype)
+  if not type or type == 'string' then
+    val = val
+  elseif type == 'table' then
+    local values = {}
+    val = onmt.utils.String.split(val, ' ')
+    for _, v in ipairs(val) do
+      onmt.utils.Table.append(values, onmt.utils.String.split(v, ','))
+    end
+    for i = 1, #values do
+      values[i] = self:convert(key, values[i], subtype)
+    end
+    val = values
+  elseif type == 'number' then
+    val = tonumber(val)
+  elseif type == 'boolean' then
+    if val == '0' or val == 'false' then
+      val = false
+    elseif val == '1' or val == 'true' then
+      val = true
+    else
+      self:error('invalid argument for boolean option ' .. key .. ' (should be 0, 1, false or true)')
+    end
+  else
+    self:error('unknown required option type ' .. type)
+  end
+
+  if val == nil then
+    self:error('invalid type for option ' .. key .. ' (should be ' .. type .. ')')
+  end
+
+  return val
+end
+
+function ExtendedCmdLine:__readOption__(params, arg, i)
+  local key = arg[i]
+  local option = self.options[key]
+  if not option then
+    self:error('unknown option ' .. key)
+  end
+
+  local multiValues = (option.type == 'table')
+  local argumentType
+  if not multiValues then
+    argumentType = option.type
+  elseif #option.default > 0 then
+    argumentType = type(option.default[1])
+  end
+
+  local values = {}
+  local numArguments = 0
+
+  while arg[i + 1] and not self.options[arg[i + 1]] do
+    local value = self:convert(key, arg[i + 1], option.type, argumentType)
+
+    if type(value) == 'table' then
+      onmt.utils.Table.append(values, value)
+    else
+      table.insert(values, value)
+    end
+
+    i = i + 1
+    numArguments = numArguments + 1
+  end
+
+  local optionName = onmt.utils.String.stripHyphens(key)
+
+  if #values == 0 then
+    if argumentType == 'boolean' then
+      params[optionName] = not option.default
+    else
+      self:error('missing argument(s) for option ' .. key)
+    end
+  elseif multiValues then
+    params[optionName] = values
+  elseif #values > 1 then
+    self:error('option ' .. key  .. ' expects 1 argument but ' .. #values .. ' were given')
+  else
+    params[optionName] = values[1]
+  end
+
+  return numArguments + 1
 end
 
 function ExtendedCmdLine:parse(arg)
@@ -284,6 +386,8 @@ function ExtendedCmdLine:parse(arg)
   local readConfig
   local saveConfig
 
+  local cmdlineOptions = {}
+
   while i <= #arg do
     if arg[i] == '-help' or arg[i] == '-h' or arg[i] == '--help' then
       doHelp = true
@@ -301,6 +405,10 @@ function ExtendedCmdLine:parse(arg)
       local sopt = onmt.utils.String.stripHyphens(arg[i])
       params._is_default[sopt] = nil
       if self.options[arg[i]] then
+        if cmdlineOptions[arg[i]] then
+          self:error('duplicate cmdline option: '..arg[i])
+        end
+        cmdlineOptions[arg[i]] = true
         i = i + self:__readOption__(params, arg, i)
       else
         nArgument = nArgument + 1
@@ -343,7 +451,7 @@ function ExtendedCmdLine:parse(arg)
         end
 
         if not isValid then
-          local msg = 'invalid option -' .. k
+          local msg = 'invalid argument for option -' .. k
           if reason then
             msg = msg .. ': ' .. reason
           end
@@ -411,7 +519,7 @@ end
 ---------------------------------------------------------------------------------
 
 local function buildRangeError(prefix, minValue, maxValue)
-  local err = 'the ' .. prefix .. ' should be'
+  local err = 'the ' .. prefix .. ' must be'
   if minValue then
     err = err .. ' greater than ' .. minValue
   end
@@ -439,24 +547,6 @@ function ExtendedCmdLine.isUInt(maxValue)
   return ExtendedCmdLine.isInt(0, maxValue)
 end
 
--- Check if list of positive integers.
-function ExtendedCmdLine.listUInt(v)
-  local sv = tostring(v)
-  local p = 1
-
-  while true do
-    local q
-    p, q = sv:find('%d+',p)
-    if q == #sv then
-      return true
-    end
-    if not p or sv:sub(q+1,q+1) ~= ',' then
-      return false
-    end
-    p = q+2
-  end
-end
-
 -- Check if value between minValue and maxValue.
 function ExtendedCmdLine.isFloat(minValue, maxValue)
   return function(v)
@@ -469,17 +559,17 @@ end
 
 -- Check if non empty.
 function ExtendedCmdLine.nonEmpty(v)
-  return v and v ~= '', 'the argument should not be empty'
+  return v and v ~= '', 'the argument must not be empty'
 end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v), 'the file should exist'
+  return path.exists(v), 'the file must exist'
 end
 
 -- Check non set or if the corresponding file exists.
 function ExtendedCmdLine.fileNullOrExists(v)
-  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file should exist'
+  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file must exist'
 end
 
 -- Check it is a directory and some file exists
@@ -487,7 +577,7 @@ function ExtendedCmdLine.dirStructure(files)
   return function(v)
     for _,f in ipairs(files) do
       if not path.exists(v.."/"..f) then
-        return false, 'the directory should exist'
+        return false, 'the directory must exist'
       end
     end
     return true

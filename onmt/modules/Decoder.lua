@@ -18,11 +18,10 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 local options = {
   {
-    '-input_feed', 1,
+    '-input_feed', true,
     [[Feed the context vector at each time step as additional input
       (via concatenation with the word embeddings) to the decoder.]],
     {
-      enum = {0, 1},
       structural = 0
     }
   }
@@ -51,7 +50,10 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
-  local inputSize = inputNetwork.inputSize + (args.input_feed * args.rnn_size)
+  local inputSize = inputNetwork.inputSize
+  if args.input_feed then
+    inputSize = inputSize + args.rnn_size
+  end
 
   local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
                       args.dropout, args.residual, args.dropout_input)
@@ -66,7 +68,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args.inputIndex = {}
   self.args.outputIndex = {}
 
-  self.args.inputFeed = (args.input_feed == 1)
+  self.args.inputFeed = args.input_feed
 
   parent.__init(self, self:_buildModel(attentionModel))
 
@@ -314,21 +316,21 @@ end
   Parameters:
 
   * `batch` - `Batch` object
-  * `encoderStates` -
+  * `initialStates` - initialization of decoder.
   * `context` -
   * `func` - Calls `func(out, t)` each timestep.
 --]]
 
-function Decoder:forwardAndApply(batch, encoderStates, context, func)
+function Decoder:forwardAndApply(batch, initialStates, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(#encoderStates,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(#initialStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.rnnSize })
   end
 
-  local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, encoderStates)
+  local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, initialStates)
 
   local prevOut
 
@@ -343,13 +345,13 @@ end
   Parameters:
 
   * `batch` - a `Batch` object.
-  * `encoderStates` - a batch of initial decoder states (optional) [0]
+  * `initialStates` - a batch of initial decoder states (optional) [0]
   * `context` - the context to apply attention to.
 
   Returns: Table of top hidden state for each timestep.
 --]]
-function Decoder:forward(batch, encoderStates, context)
-  encoderStates = encoderStates
+function Decoder:forward(batch, initialStates, context)
+  initialStates = initialStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
@@ -359,7 +361,7 @@ function Decoder:forward(batch, encoderStates, context)
 
   local outputs = {}
 
-  self:forwardAndApply(batch, encoderStates, context, function (out)
+  self:forwardAndApply(batch, initialStates, context, function (out)
     table.insert(outputs, out)
   end)
 
@@ -476,19 +478,19 @@ end
 Parameters:
 
   * `batch` - a `Batch` to score.
-  * `encoderStates` - initialization of decoder.
+  * `initialStates` - initialization of decoder.
   * `context` - the attention context.
   * `criterion` - a pointwise criterion.
 
 --]]
-function Decoder:computeLoss(batch, encoderStates, context, criterion)
-  encoderStates = encoderStates
+function Decoder:computeLoss(batch, initialStates, context, criterion)
+  initialStates = initialStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
 
   local loss = 0
-  self:forwardAndApply(batch, encoderStates, context, function (out, t)
+  self:forwardAndApply(batch, initialStates, context, function (out, t)
     local refOutput = batch:getTargetOutput(t)
     local prepOutputs = out
     -- sampling-based generator need outputs during training
@@ -511,19 +513,19 @@ end
 Parameters:
 
   * `batch` - a `Batch` to score.
-  * `encoderStates` - initialization of decoder.
+  * `initialStates` - initialization of decoder.
   * `context` - the attention context.
 
 --]]
-function Decoder:computeScore(batch, encoderStates, context)
-  encoderStates = encoderStates
+function Decoder:computeScore(batch, initialStates, context)
+  initialStates = initialStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
 
   local score = {}
 
-  self:forwardAndApply(batch, encoderStates, context, function (out, t)
+  self:forwardAndApply(batch, initialStates, context, function (out, t)
     local pred = self.generator:forward(out)
     for b = 1, batch.size do
       if t <= batch.targetSize[b] then
