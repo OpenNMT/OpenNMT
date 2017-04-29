@@ -895,16 +895,28 @@ FEATm.1 FEATm.2 FEATm.3 ... FEATm.n ]
 <p>Note that you need to use index files for representing input vectors.</p>
 </div>
 <h2 id="vocabularies">Vocabularies<a class="headerlink" href="#vocabularies" title="Permanent link">&para;</a></h2>
-<p>The main goal of the preprocessing is to build the word vocabularies and assign each word to an index within these dictionaries.</p>
+<p>The main goal of the preprocessing is to build the word and features vocabularies and assign each word to an index within these dictionaries.</p>
 <p>By default, word vocabularies are limited to 50,000. You can change this value with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code>. Alternatively, you can prune the vocabulary size by setting the minimum frequency of words with the <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> options.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>When pruning vocabularies to 50,000, the preprocessing will actually report a vocabulary size of 50,004 because of 4 special tokens that are automatically added.</p>
 </div>
-<p>The preprocessing script will generate <code>*.dict</code> files containing the vocabularies. These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the <code>-src_vocab</code> and <code>-tgt_vocab</code> options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.</p>
+<p>The preprocessing script will generate <code>*.dict</code> files containing the vocabularies: source and target token vocabularies are named <code>PREFIX.src.dict</code> and <code>PREFIX.tgt.dict</code>, while features' vocabulary files are named <code>PREFIX.{source,target}_feature_N.dict</code>.</p>
+<p>These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the <code>-src_vocab</code> and <code>-tgt_vocab</code> options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Vocabularies can be generated beforehand with the <code>tools/build_vocab.lua</code> script.</p>
+</div>
+<p>Each line of dictionary files is space-separated fields:</p>
+<ul>
+<li><code>token</code> the vocab entry.</li>
+<li><code>ID</code> its index used internally to map tokens to integer as an entry of lookup tables.</li>
+<li>(optional) the vocab frequency in the corpus it was extracted form. This field is generated.</li>
+<li>other fields are ignored</li>
+</ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Vocabularies can be generated beforehand with the <code>tools/build_vocab.lua</code> script.</p>
+<p>if you provide your own vocabulary - be sure to integrate the 4 special tokens: <code>&lt;blank&gt; &lt;unk&gt; &lt;s&gt; &lt;/s&gt;</code>. A good practice is to keep them at the beginning of the file with the respective index 1, 2, 3, 4</p>
 </div>
 <h2 id="shuffling-and-sorting">Shuffling and sorting<a class="headerlink" href="#shuffling-and-sorting" title="Permanent link">&para;</a></h2>
 <p>By default, OpenNMT both shuffles and sorts the data before the training. This process comes from 2 constraints of batch training:</p>

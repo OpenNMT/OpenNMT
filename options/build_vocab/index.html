@@ -792,9 +792,11 @@
 <h2 id="vocabulary-options">Vocabulary options<a class="headerlink" href="#vocabulary-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-data &lt;string&gt;</code> (required)<br/>Data file.</li>
-<li><code>-save_vocab &lt;string&gt;</code> (required)<br/>Vocabulary files name.</li>
+<li><code>-save_vocab &lt;string&gt;</code> (required)<br/>Vocabulary dictionary prefix.</li>
 <li><code>-vocab_size &lt;table&gt;</code> (default: <code>50000</code>)<br/>List of source vocabularies size: <code>word[ feat1[ feat2[ ...] ] ]</code>. If = 0, vocabularies are not pruned.</li>
 <li><code>-words_min_frequency &lt;table&gt;</code> (default: <code>0</code>)<br/>List of source words min frequency: <code>word[ feat1[ feat2[ ...] ] ]</code>. If = 0, vocabularies are pruned by size.</li>
+<li><code>-keep_frequency [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Keep frequency of words in dictionary.</li>
+<li><code>-idx_files [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, each line of the data file starts with a first field which is the index of the sentence.</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
