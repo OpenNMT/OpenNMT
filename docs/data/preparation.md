@@ -73,7 +73,7 @@ These files are optional for the rest of the workflow. However, it is common to 
 Each line of dictionary files is space-separated fields:
 
 * `token` the vocab entry.
-* `ID` its index.
+* `ID` its index used internally to map tokens to integer as an entry of lookup tables.
 * (optional) the vocab frequency in the corpus it was extracted form. This field is generated.
 * other fields are ignored
 
