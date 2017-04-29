@@ -7,6 +7,7 @@
 * Support parallel file alignment by index in addition to line-by-line
 * Add script to convert and/or generate pretrained word embeddings
 * Add a bridge layer between the encoder and decoder
+* New feature to keep token frequency in generated dictionaries
 
 ### Fixes and improvements
 

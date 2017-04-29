@@ -93,6 +93,16 @@ function Dict:addSpecials(labels)
   end
 end
 
+--[[ Check if idx is index for special label ]]
+function Dict:isSpecialIdx(idx)
+  for _,v in ipairs(self.special) do
+    if idx == v then
+      return true
+    end
+  end
+  return false
+end
+
 --[[ Set the frequency of a vocab. ]]
 function Dict:setFrequency(label, frequency)
   local idx = self.labelToIdx[label]
@@ -129,7 +139,7 @@ end
 
 --[[ Return a new dictionary with the `size` most frequent entries. ]]
 function Dict:prune(size)
-  if size >= self:size() then
+  if size >= self:size()-#self.special then
     return self
   end
 
@@ -143,15 +153,21 @@ function Dict:prune(size)
   for i = 1, #self.special do
     local thevocab = self.idxToLabel[self.special[i]]
     local thefreq = self.frequencies[self.special[i]]
-    if thevocab == onmt.Constants.UNK_WORD then
-      thefreq = sortedFreq:narrow(1, size+1, sortedFreq:size()[1]-size):sum()
-    end
     newDict:addSpecial(thevocab, nil, thefreq)
   end
 
-  for i = 1, size do
-    newDict:add(self.idxToLabel[idx[i]], nil, self.frequencies[idx[i]])
+  local i = 1
+  local count = 0
+  while count ~= size do
+    if not self:isSpecialIdx(idx[i]) then
+      newDict:add(self.idxToLabel[idx[i]], nil, self.frequencies[idx[i]])
+      count = count + 1
+    end
+    i = i + 1
   end
+
+  -- set UNK frequency
+  newDict:setFrequency(onmt.Constants.UNK_WORD, freq:sum()-torch.Tensor(newDict.frequencies):sum())
 
   return newDict
 end
@@ -182,6 +198,9 @@ function Dict:pruneByMinFrequency(minFrequency)
     newDict:add(self.idxToLabel[idx[i]], nil, sortedFreq[i])
   end
 
+  -- set UNK frequency
+  newDict:setFrequency(onmt.Constants.UNK_WORD, freq:sum()-torch.Tensor(newDict.frequencies):sum())
+
   return newDict
 end
 
@@ -199,7 +218,9 @@ function Dict:getFrequencies(dict)
     newDict:add(token, i)
     newDict.frequencies[i] = frequency
   end
-
+  -- set UNK frequency
+  newDict:setFrequency(onmt.Constants.UNK_WORD,
+                      torch.Tensor(self.frequencies):sum()-torch.Tensor(newDict.frequencies):sum());
   return newDict
 end
 

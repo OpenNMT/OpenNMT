@@ -82,6 +82,9 @@ function ExtendedCmdLine:help(arg, doMd)
           io.write('`' .. option.key .. ' ' .. optType .. '`')
 
           local valInfo = {}
+          if option.meta and option.meta.required then
+            table.insert(valInfo, 'required')
+          end
           if option.meta and option.meta.enum then
             for k, v in pairs(option.meta.enum) do
               option.meta.enum[k] = '`' .. v .. '`'
@@ -96,7 +99,9 @@ function ExtendedCmdLine:help(arg, doMd)
           else
             default = tostring(option.default)
           end
-          table.insert(valInfo, 'default: `' .. default .. '`')
+          if not(option.meta and option.meta.required and default == '\'\'') then
+            table.insert(valInfo, 'default: `' .. default .. '`')
+          end
           if #valInfo > 0 then
             io.write(' (' .. table.concat(valInfo, '; ') .. ')')
           end
@@ -161,6 +166,9 @@ function ExtendedCmdLine:help(arg, doMd)
           local msg = ''
           msg = msg .. option.help:gsub('\n', ' ')
           local valInfo = {}
+          if option.meta and option.meta.required then
+            table.insert(valInfo, 'required')
+          end
           if option.meta and option.meta.enum then
             table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
           end
@@ -172,7 +180,9 @@ function ExtendedCmdLine:help(arg, doMd)
           else
             default = tostring(option.default)
           end
-          table.insert(valInfo, 'default: ' .. default)
+          if not(option.meta and option.meta.required and default == '\'\'') then
+            table.insert(valInfo, 'default: `' .. default .. '`')
+          end
           if #valInfo > 0 then
             msg = msg .. ' (' .. table.concat(valInfo, '; ') .. ')'
           end
@@ -208,6 +218,16 @@ function ExtendedCmdLine:option(key, default, help, _meta_)
     end
   end
   parent.option(self, key, default, help)
+
+  -- check if option correctly defined - if default value does not match validation criterion then it is either
+  -- empty and in that case, is a required option, or is an error
+  if _meta_ and (
+    (_meta_.valid and not _meta_.valid(default)) or
+    (_meta_.enum and not onmt.utils.Table.hasValue(_meta_.enum, default))) then
+    assert(default=='',"Invalid option default definition: "..key.."="..default)
+    _meta_.required = true
+  end
+
   self.options[key].meta = _meta_
 end
 
@@ -336,7 +356,8 @@ function ExtendedCmdLine:__readOption__(params, arg, i)
   local values = {}
   local numArguments = 0
 
-  while arg[i + 1] and not self.options[arg[i + 1]] do
+  -- browse through parameters till next potential option (starting with -Letter)
+  while arg[i + 1] and string.find(arg[i+1],'-%a')~=1 do
     local value = self:convert(key, arg[i + 1], option.type, argumentType)
 
     if type(value) == 'table' then

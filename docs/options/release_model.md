@@ -9,7 +9,7 @@
 
 ## Model options
 
-* `-model <string>` (default: `''`)<br/>Path to the trained model to release.
+* `-model <string>` (required)<br/>Path to the trained model to release.
 * `-output_model <string>` (default: `''`)<br/>Path the released model. If not set, the `release` suffix will be automatically added to the model filename.
 * `-force [<boolean>]` (default: `false`)<br/>Force output model creation even if the target file exists.
 
