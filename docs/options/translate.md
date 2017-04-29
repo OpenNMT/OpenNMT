@@ -9,14 +9,14 @@
 
 ## Data options
 
-* `-src <string>` (default: `''`)<br/>Source sequences to translate.
+* `-src <string>` (required)<br/>Source sequences to translate.
 * `-tgt <string>` (default: `''`)<br/>Optional true target sequences.
 * `-output <string>` (default: `pred.txt`)<br/>Output file.
 * `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
 
 ## Translator options
 
-* `-model <string>` (default: `''`)<br/>Path to the serialized model file.
+* `-model <string>` (required)<br/>Path to the serialized model file.
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
 * `-batch_size <number>` (default: `30`)<br/>Batch size.
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.

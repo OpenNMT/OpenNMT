@@ -9,8 +9,8 @@
 
 ## Vocabulary options
 
-* `-data <string>` (default: `''`)<br/>Data file.
-* `-save_vocab <string>` (default: `''`)<br/>Vocabulary dictionary prefix.
+* `-data <string>` (required)<br/>Data file.
+* `-save_vocab <string>` (required)<br/>Vocabulary dictionary prefix.
 * `-vocab_size <table>` (default: `50000`)<br/>List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are not pruned.
 * `-words_min_frequency <table>` (default: `0`)<br/>List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are pruned by size.
 * `-keep_frequency [<boolean>]` (default: `false`)<br/>Keep frequency of words in dictionary.

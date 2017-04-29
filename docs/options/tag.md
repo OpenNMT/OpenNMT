@@ -9,12 +9,12 @@
 
 ## Data options
 
-* `-src <string>` (default: `''`)<br/>Source sequences to tag.
+* `-src <string>` (required)<br/>Source sequences to tag.
 * `-output <string>` (default: `pred.txt`)<br/>Output file.
 
 ## Tagger options
 
-* `-model <string>` (default: `''`)<br/>Path to the serialized model file.
+* `-model <string>` (required)<br/>Path to the serialized model file.
 * `-batch_size <number>` (default: `30`)<br/>Batch size.
 
 ## Cuda options

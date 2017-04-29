@@ -10,14 +10,14 @@
 ## Preprocess options
 
 * `-data_type <string>` (accepted: `bitext`, `monotext`, `feattext`; default: `bitext`)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.
-* `-save_data <string>` (default: `''`)<br/>Output file for the prepared data.
+* `-save_data <string>` (required)<br/>Output file for the prepared data.
 
 ## Data options
 
-* `-train_src <string>` (default: `''`)<br/>Path to the training source data.
-* `-train_tgt <string>` (default: `''`)<br/>Path to the training target data.
-* `-valid_src <string>` (default: `''`)<br/>Path to the validation source data.
-* `-valid_tgt <string>` (default: `''`)<br/>Path to the validation target data.
+* `-train_src <string>` (required)<br/>Path to the training source data.
+* `-train_tgt <string>` (required)<br/>Path to the training target data.
+* `-valid_src <string>` (required)<br/>Path to the validation source data.
+* `-valid_tgt <string>` (required)<br/>Path to the validation target data.
 * `-src_vocab <string>` (default: `''`)<br/>Path to an existing source vocabulary.
 * `-tgt_vocab <string>` (default: `''`)<br/>Path to an existing target vocabulary.
 * `-src_vocab_size <table>` (default: `50000`)<br/>List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are not pruned.
