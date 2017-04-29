@@ -24,6 +24,13 @@ local options = {
     [[When greater than 0, instances with perplexity above this value will be
       considered as noise and ignored; when less than 0, mode + `-sample_w_ppl_max` * stdev
       will be used as threshold.]]
+  },
+  {
+    '-target_voc_importance_sampling_size', 0,
+    [[If not null, implement importance sampling approach as approximation of fullsoftmax.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
   }
 }
 
@@ -34,7 +41,7 @@ end
 --[[ Initialize a data object given aligned tables of IntTensors `srcData`
   and `tgtData`.
 --]]
-function SampledDataset:__init(srcData, tgtData, opt)
+function SampledDataset:__init(opt, srcData, tgtData)
 
   self.src = srcData.words or srcData.vectors
   self.srcFeatures = srcData.features
@@ -42,6 +49,12 @@ function SampledDataset:__init(srcData, tgtData, opt)
   if tgtData ~= nil then
     self.tgt = tgtData.words  or tgtData.vectors
     self.tgtFeatures = tgtData.features
+    if opt.target_voc_importance_sampling_size > 0 then
+      self.targetVocIndex = {}
+      self.targetVocTensor = torch.LongTensor(opt.target_voc_importance_sampling_size)
+      self.targetVocCount = 0
+      self.targetVocMax = opt.target_voc_importance_sampling_size
+    end
   end
 
   self.samplingSize = opt.sample
@@ -51,6 +64,9 @@ function SampledDataset:__init(srcData, tgtData, opt)
   self.startedPplSampling = false
 
   _G.logger:info(' * sampling ' .. opt.sample .. ' instances from ' .. #self.src .. ' at each epoch')
+  if self.targetVocMax then
+    _G.logger:info(' * with target vocabulary importance sampling ('..self.targetVocMax..')')
+  end
   if opt.sample_w_ppl then
     _G.logger:info(' * using train data perplexity as probability distribution when sampling')
     _G.logger:info(' * sample_w_ppl_init: ' .. opt.sample_w_ppl_init)
@@ -94,6 +110,12 @@ function SampledDataset:sample(logLevel)
 
   _G.logger:log('Sampling dataset...', logLevel)
 
+  if self.targetVocMax then
+    self.targetVocCount = 0
+    self.targetVocTensor:resize(self.targetVocMax)
+    self.targetVocIndex = {}
+  end
+
   -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init.
   if self.sample_w_ppl and not self.startedPplSampling then
     local avgPpl = torch.sum(self.ppl)
@@ -118,7 +140,7 @@ function SampledDataset:sample(logLevel)
       --      x: 6 ~ 100% - 0.000000197%/2
       --  (https://en.wikipedia.org/wiki/Standard_deviation)
       -- We are using mode instead of average, and only samples above mode to calculate stdev, so
-      -- this is not really theoretically valid numbers, but more for emperical uses.
+      -- this is not really theoretically valid numbers, but more for empirical uses.
 
       local x = math.abs(self.sample_w_ppl_max)
 
@@ -177,6 +199,20 @@ function SampledDataset:sample(logLevel)
   self.sampledCnt:zero()
   for i = 1, self.sampled:size(1) do
     self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
+    -- if importance sampling select target vocabs
+    if self.targetVocMax
+         and self.targetVocCount < self.targetVocMax then
+      for j = 1, self.tgt[self.sampled[i]]:size(1) do
+        if not self.targetVocIndex[self.tgt[self.sampled[i]][j]] then
+          self.targetVocIndex[self.tgt[self.sampled[i]][j]] = 1
+          self.targetVocCount = self.targetVocCount + 1
+          self.targetVocTensor[self.targetVocCount] = self.tgt[self.sampled[i]][j]
+          if self.targetVocCount == self.targetVocMax then
+            break
+          end
+        end
+      end
+    end
   end
 
   -- Prepares batches in terms of range within self.src and self.tgt.
@@ -226,6 +262,14 @@ function SampledDataset:sample(logLevel)
   end
 
   _G.logger:log('Sampled ' .. self.sampled:size(1) .. ' instances into ' .. #self.batchRange .. ' batches.', logLevel)
+
+  if self.targetVocMax then
+    if self.targetVocCount < self.targetVocMax then
+      self.targetVocTensor:resize(self.targetVocCount)
+    end
+    _G.logger:log('Importance Sampling - keeping '..self.targetVocCount..' target vocabs.', logLevel)
+  end
+
   return #self.batchRange, batchesOccupation / batchesCapacity
 end
 
