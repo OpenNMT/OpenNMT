@@ -8,6 +8,7 @@ local vocabularyTest = torch.TestSuite()
 
 local dataDir = 'data'
 local noFilter = function (_) return true end
+local filterShortSentences = function(sent) return #sent>10 end
 
 function vocabularyTest.filterAll()
   local filterAll = function (t) return #t == 0 end
@@ -41,6 +42,18 @@ function vocabularyTest.keepFrequency()
   tester:eq(vocabs.words.freqTensor:dim(), 1)
   tester:eq(vocabs.words.freqTensor:size(1), 1004)
   tester:eq(vocabs.words.freqTensor[2],19717)
+end
+
+function vocabularyTest.minFrequency()
+  local vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', '', { 0 }, { 5 }, '', noFilter, true)
+
+  tester:eq(vocabs.words:size(), 1957)
+end
+
+function vocabularyTest.filterSent()
+  local vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', '', { 0 }, { 5 }, '', filterShortSentences)
+
+  tester:eq(vocabs.words:size(), 1864)
 end
 
 function vocabularyTest.initFeatures()
