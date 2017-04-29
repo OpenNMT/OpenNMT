@@ -78,6 +78,7 @@ local function main()
                                      opt.src_words_min_frequency or opt.words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end,
+                                     opt.keep_frequency,
                                      opt.idx_files)
   end
   if dataType ~= 'monotext' then
@@ -89,6 +90,7 @@ local function main()
                                      opt.tgt_words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.tgt_seq_length) end,
+                                     opt.keep_frequency,
                                      opt.idx_files)
   end
 
@@ -149,8 +151,8 @@ local function main()
       Vocabulary.save('target', data.dicts.tgt.words, opt.save_data .. '.tgt.dict')
     end
     if opt.features_vocabs_prefix:len() == 0 then
-      Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data)
-      Vocabulary.saveFeatures('target', data.dicts.tgt.features, opt.save_data)
+      Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data..'.source')
+      Vocabulary.saveFeatures('target', data.dicts.tgt.features, opt.save_data..'.target')
     end
   end
 

@@ -56,17 +56,29 @@ FEATm.1 FEATm.2 FEATm.3 ... FEATm.n ]
 
 ## Vocabularies
 
-The main goal of the preprocessing is to build the word vocabularies and assign each word to an index within these dictionaries.
+The main goal of the preprocessing is to build the word and features vocabularies and assign each word to an index within these dictionaries.
 
 By default, word vocabularies are limited to 50,000. You can change this value with the `-src_vocab_size` and `-tgt_vocab_size`. Alternatively, you can prune the vocabulary size by setting the minimum frequency of words with the `-src_words_min_frequency` and `-tgt_words_min_frequency` options.
 
 !!! note "Note"
     When pruning vocabularies to 50,000, the preprocessing will actually report a vocabulary size of 50,004 because of 4 special tokens that are automatically added.
 
-The preprocessing script will generate `*.dict` files containing the vocabularies. These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the `-src_vocab` and `-tgt_vocab` options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.
+The preprocessing script will generate `*.dict` files containing the vocabularies: source and target token vocabularies are named `PREFIX.src.dict` and `PREFIX.tgt.dict`, while features' vocabulary files are named `PREFIX.{source,target}_feature_N.dict`.
+
+These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the `-src_vocab` and `-tgt_vocab` options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.
+
+!!! tip "Tip"
+    Vocabularies can be generated beforehand with the `tools/build_vocab.lua` script.
+
+Each line of dictionary files is space-separated fields:
+
+* `token` the vocab entry.
+* `ID` its index used internally to map tokens to integer as an entry of lookup tables.
+* (optional) the vocab frequency in the corpus it was extracted form. This field is generated.
+* other fields are ignored
 
 !!! note "Note"
-    Vocabularies can be generated beforehand with the `tools/build_vocab.lua` script.
+    if you provide your own vocabulary - be sure to integrate the 4 special tokens: `<blank> <unk> <s> </s>`. A good practice is to keep them at the beginning of the file with the respective index 1, 2, 3, 4
 
 ## Shuffling and sorting
 

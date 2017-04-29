@@ -203,6 +203,10 @@ local commonOptions = {
     [[Time shift features on the decoder side.]]
   },
   {
+    '-keep_frequency', false,
+    [[Keep frequency of words in dictionary.]]
+  },
+  {
     '-sort', true,
     [[If set, sort the sequences by size to build batches without source padding.]]
   },
@@ -432,7 +436,7 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
   _G.logger:info(' * average sequence length: source = %.1f, target = %.1f',
                  avgSrcLength,
                  avgTgtLength)
-  _G.logger:info(' * %% of unkown words: source = %.1f%%, target = %.1f%%',
+  _G.logger:info(' * %% of unknown words: source = %.1f%%, target = %.1f%%',
                  prunedRatioSrc * 100,
                  prunedRatioTgt * 100)
 
