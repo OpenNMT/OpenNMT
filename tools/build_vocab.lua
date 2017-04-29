@@ -51,8 +51,8 @@ local function main()
 
   local vocab = onmt.data.Vocabulary.init('source', opt.data, '', opt.vocab_size, opt.words_min_frequency, '', isValid, opt.keep_frequency, opt.idx_files)
 
-  onmt.data.Vocabulary.save('data', vocab.words, opt.save_vocab .. '.dict')
-  onmt.data.Vocabulary.saveFeatures('data', vocab.features, opt.save_vocab)
+  onmt.data.Vocabulary.save('source', vocab.words, opt.save_vocab .. '.dict')
+  onmt.data.Vocabulary.saveFeatures('source', vocab.features, opt.save_vocab)
 
   _G.logger:shutDown()
 end
