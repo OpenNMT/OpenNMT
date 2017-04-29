@@ -41,7 +41,22 @@ function vocabularyTest.keepFrequency()
   tester:eq(vocabs.words:size(), 1004)
   tester:eq(vocabs.words.freqTensor:dim(), 1)
   tester:eq(vocabs.words.freqTensor:size(1), 1004)
-  tester:eq(vocabs.words.freqTensor[2],19717)
+  -- checking unknown word frequency
+  tester:eq(vocabs.words.freqTensor[2],19699)
+  tester:eq(vocabs.words.freqTensor[10],1445)
+
+  -- check also that frequency is recalculated when using saved dictionaries
+  vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', '', { 1000 }, { 0 }, '', noFilter, false)
+  tester:eq(vocabs.words.freqTensor, nil)
+  onmt.data.Vocabulary.save('source', vocabs.words, 'src.dict')
+  local reused = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', 'src.dict', { 1000 }, { 0 }, '', noFilter, true)
+
+  tester:ne(reused.words.freqTensor, nil)
+  tester:eq(reused.words.freqTensor[2],19699)
+  tester:eq(reused.words.freqTensor[10],1445)
+
+  os.remove('src.dict')
+
 end
 
 function vocabularyTest.minFrequency()

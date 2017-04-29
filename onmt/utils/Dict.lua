@@ -93,16 +93,6 @@ function Dict:addSpecials(labels)
   end
 end
 
---[[ Check if label is special ]]
-function Dict:isSpecialLabel(label)
-  for _,v in ipairs(self.special) do
-    if label == self.idxToLabel[v] then
-      return true
-    end
-  end
-  return false
-end
-
 --[[ Check if idx is index for special label ]]
 function Dict:isSpecialIdx(idx)
   for _,v in ipairs(self.special) do
@@ -163,9 +153,6 @@ function Dict:prune(size)
   for i = 1, #self.special do
     local thevocab = self.idxToLabel[self.special[i]]
     local thefreq = self.frequencies[self.special[i]]
-    if thevocab == onmt.Constants.UNK_WORD then
-      thefreq = sortedFreq:narrow(1, size+1, sortedFreq:size()[1]-size):sum()
-    end
     newDict:addSpecial(thevocab, nil, thefreq)
   end
 
@@ -178,6 +165,9 @@ function Dict:prune(size)
     end
     i = i + 1
   end
+
+  -- set UNK frequency
+  newDict:setFrequency(onmt.Constants.UNK_WORD, freq:sum()-torch.Tensor(newDict.frequencies):sum())
 
   return newDict
 end
@@ -202,11 +192,13 @@ function Dict:pruneByMinFrequency(minFrequency)
 
   for i = 1, self:size() do
     if sortedFreq[i] < minFrequency then
-      newDict:setFrequency(onmt.Constants.UNK_WORD, sortedFreq:narrow(1, i, sortedFreq:size()[1]-i):sum())
       break
     end
     newDict:add(self.idxToLabel[idx[i]], nil, sortedFreq[i])
   end
+
+  -- set UNK frequency
+  newDict:setFrequency(onmt.Constants.UNK_WORD, freq:sum()-torch.Tensor(newDict.frequencies):sum())
 
   return newDict
 end
@@ -225,7 +217,9 @@ function Dict:getFrequencies(dict)
     newDict:add(token, i)
     newDict.frequencies[i] = frequency
   end
-
+  -- set UNK frequency
+  newDict:setFrequency(onmt.Constants.UNK_WORD,
+                      torch.Tensor(self.frequencies):sum()-torch.Tensor(newDict.frequencies):sum());
   return newDict
 end
 
