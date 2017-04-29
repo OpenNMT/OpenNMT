@@ -97,4 +97,11 @@ function cmdLineTest.parse_multiValue()
   tester:eq(opt.src_word_vec_size, { 500 })
 end
 
+function cmdLineTest.fail_unknown()
+  local cmd = onmt.utils.ExtendedCmdLine.new()
+  onmt.Seq2Seq.declareOpts(cmd)
+
+  tester:assertError(function() cmd:parse({'-src_word_vec_size', '500', '-xxx'}) end)
+end
+
 return cmdLineTest
