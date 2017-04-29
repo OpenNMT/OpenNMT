@@ -336,7 +336,8 @@ function ExtendedCmdLine:__readOption__(params, arg, i)
   local values = {}
   local numArguments = 0
 
-  while arg[i + 1] and not self.options[arg[i + 1]] do
+  -- browse through parameters till next potential option (starting with -Letter)
+  while arg[i + 1] and string.find(arg[i+1],'-%a')~=1 do
     local value = self:convert(key, arg[i + 1], option.type, argumentType)
 
     if type(value) == 'table' then
