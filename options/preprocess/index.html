@@ -624,6 +624,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../build_vocab/" title="tools/build_vocab.lua" class="md-nav__link">
+      tools/build_vocab.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../release_model/" title="tools/release_model.lua" class="md-nav__link">
       tools/release_model.lua
     </a>
@@ -808,14 +820,14 @@
 <h2 id="preprocess-options">Preprocess options<a class="headerlink" href="#preprocess-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-data_type &lt;string&gt;</code> (accepted: <code>bitext</code>, <code>monotext</code>, <code>feattext</code>; default: <code>bitext</code>)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.</li>
-<li><code>-save_data &lt;string&gt;</code> (default: <code>''</code>)<br/>Output file for the prepared data.</li>
+<li><code>-save_data &lt;string&gt;</code> (required)<br/>Output file for the prepared data.</li>
 </ul>
 <h2 id="data-options">Data options<a class="headerlink" href="#data-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-train_src &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the training source data.</li>
-<li><code>-train_tgt &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the training target data.</li>
-<li><code>-valid_src &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the validation source data.</li>
-<li><code>-valid_tgt &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the validation target data.</li>
+<li><code>-train_src &lt;string&gt;</code> (required)<br/>Path to the training source data.</li>
+<li><code>-train_tgt &lt;string&gt;</code> (required)<br/>Path to the training target data.</li>
+<li><code>-valid_src &lt;string&gt;</code> (required)<br/>Path to the validation source data.</li>
+<li><code>-valid_tgt &lt;string&gt;</code> (required)<br/>Path to the validation target data.</li>
 <li><code>-src_vocab &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to an existing source vocabulary.</li>
 <li><code>-tgt_vocab &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to an existing target vocabulary.</li>
 <li><code>-src_vocab_size &lt;table&gt;</code> (default: <code>50000</code>)<br/>List of source vocabularies size: <code>word[ feat1[ feat2[ ...] ] ]</code>. If = 0, vocabularies are not pruned.</li>
@@ -826,8 +838,8 @@
 <li><code>-tgt_seq_length &lt;number&gt;</code> (default: <code>50</code>)<br/>Maximum target sequence length.</li>
 <li><code>-features_vocabs_prefix &lt;string&gt;</code> (default: <code>''</code>)<br/>Path prefix to existing features vocabularies.</li>
 <li><code>-time_shift_feature [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Time shift features on the decoder side.</li>
-<li><code>-sort [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>If = 1, sort the sentences by size to build batches without source padding.</li>
-<li><code>-shuffle [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>If = 1, shuffle data (prior sorting).</li>
+<li><code>-sort [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>If set, sort the sequences by size to build batches without source padding.</li>
+<li><code>-shuffle [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>If set, shuffle the data (prior sorting).</li>
 <li><code>-idx_files [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, source and target files are 'key value' with key match between source and target.</li>
 <li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Report status every this many sentences.</li>
 </ul>

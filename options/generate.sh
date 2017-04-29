@@ -11,6 +11,7 @@ gen_script_options preprocess.lua docs/options/preprocess.md
 gen_script_options train.lua docs/options/train.md
 gen_script_options translate.lua docs/options/translate.md
 gen_script_options tag.lua docs/options/tag.md
+gen_script_options tools/build_vocab.lua docs/options/build_vocab.md
 gen_script_options tools/release_model.lua docs/options/release_model.md
 gen_script_options tools/tokenize.lua docs/options/tokenize.md
 gen_script_options tools/learn_bpe.lua docs/options/learn_bpe.md
