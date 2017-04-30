@@ -1,9 +1,11 @@
---[[ Default decoder generator. Given RNN state, produce categorical distribution.
+--[[ Default decoder generator. Given RNN state, produce categorical distribution for tokens and features
 
-Simply implements $$softmax(W h + b)$$.
+     Simply implements $$softmax(W h b)$$.
 --]]
 local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
 
+-- for back compatibility - still declare FeaturesGenerator - but no need to define it
+torch.class('onmt.FeaturesGenerator', 'onmt.Network')
 
 function Generator:__init(opt, dicts, sizes)
   parent.__init(self)
