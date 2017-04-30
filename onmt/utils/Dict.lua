@@ -145,7 +145,7 @@ function Dict:prune(size)
 
   -- Only keep the `size` most frequent entries.
   local freq = torch.Tensor(self.frequencies)
-  local sortedFreq, idx = torch.sort(freq, 1, true)
+  local _, idx = torch.sort(freq, 1, true)
 
   local newDict = Dict.new()
 
