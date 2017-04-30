@@ -211,7 +211,7 @@ function Factory.buildWordDecoder(opt, dicts)
                                          opt.tgt_word_vec_size or opt.word_vec_size,
                                          opt.pre_word_vecs_dec, opt.fix_word_vecs_dec)
 
-  local generator = Factory.buildGenerator(opt.rnn_size, dicts)
+  local generator = Factory.buildGenerator(opt, dicts)
   local attnModel = Factory.buildAttention(opt)
 
   return Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
@@ -221,12 +221,9 @@ function Factory.loadDecoder(pretrained)
   return onmt.Decoder.load(pretrained)
 end
 
-function Factory.buildGenerator(rnnSize, dicts)
-  if #dicts.features > 0 then
-    return onmt.FeaturesGenerator(rnnSize, Factory.getOutputSizes(dicts))
-  else
-    return onmt.Generator(rnnSize, dicts.words:size())
-  end
+function Factory.buildGenerator(opt, dicts)
+  local sizes = Factory.getOutputSizes(dicts)
+  return onmt.Generator(opt, sizes)
 end
 
 function Factory.buildAttention(args)
