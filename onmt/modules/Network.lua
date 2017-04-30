@@ -7,6 +7,11 @@ function Network:__init(net)
   self:add(net)
 end
 
+function Network:set(net)
+  self.modules = { net }
+  self.net = net
+end
+
 function Network:updateOutput(input)
   self.output = self.net:updateOutput(input)
   return self.output
