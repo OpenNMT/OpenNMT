@@ -1,10 +1,11 @@
---[[ Default decoder generator. Given RNN state, produce categorical distribution for tokens and features
+--[[ Default decoder generator.
+     Given RNN state, produce categorical distribution for tokens and features
 
      Simply implements $$softmax(W h b)$$.
 --]]
 local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
 
--- for back compatibility - still declare FeaturesGenerator - but no need to define it
+-- for backward compatibility - still declare FeaturesGenerator - but no need to define it
 torch.class('onmt.FeaturesGenerator', 'onmt.Network')
 
 function Generator:__init(opt, sizes)
@@ -18,13 +19,26 @@ function Generator:_buildGenerator(opt, sizes)
 
   for i = 1, #sizes do
     local feat_generator
+    local linear
+    if i == 1 and opt.target_voc_importance_sampling_size > 0 then
+      linear = onmt.RIndexLinear(rnn_size, sizes[i])
+      self.rindexLinear = linear
+    else
+      linear = nn.Linear(rnn_size, sizes[i])
+    end
     feat_generator = nn.Sequential()
-                        :add(nn.Linear(rnn_size, sizes[i]))
+                        :add(linear)
                         :add(nn.LogSoftMax())
     generator:add(feat_generator)
   end
 
   self:set(generator)
+end
+
+function Generator:setTargetVoc(tgtVec)
+  if tgtVec and self.rindexLinear then
+    self.rindexLinear:setOutputIndices(tgtVec)
+  end
 end
 
 --[[ Release Generator for inference only ]]

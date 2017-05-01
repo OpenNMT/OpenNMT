@@ -379,7 +379,13 @@ function SampledDataset:getBatch(batchIdx)
     end
   end
 
-  return onmt.data.Batch.new(src, srcFeatures, tgt, tgtFeatures)
+  local batch = onmt.data.Batch.new(src, srcFeatures, tgt, tgtFeatures)
+
+  if self.targetVocTensor then
+    batch.targetVocTensor = self.targetVocTensor
+  end
+
+  return batch
 end
 
 return SampledDataset
