@@ -21,7 +21,7 @@ local function buildDecoder(inputFeed, rnnType, layers)
   local inputNet = nn.LookupTable(10, 4)
   inputNet.inputSize = 4
 
-  local generator = onmt.Generator(opt, 10)
+  local generator = onmt.Generator(opt, {10})
   local attention = onmt.GlobalAttention(opt, opt.rnn_size)
 
   return onmt.Decoder(opt, inputNet, generator, attention), opt

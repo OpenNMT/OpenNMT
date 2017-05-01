@@ -20,7 +20,7 @@ function Generator:_buildGenerator(opt, sizes)
   for i = 1, #sizes do
     local feat_generator
     local linear
-    if i == 1 and opt.target_voc_importance_sampling_size > 0 then
+    if i == 1 and opt.target_voc_importance_sampling_size and opt.target_voc_importance_sampling_size > 0 then
       linear = onmt.RIndexLinear(rnn_size, sizes[i])
       self.rindexLinear = linear
     else
