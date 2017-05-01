@@ -48,7 +48,6 @@ function RIndexLinear:updateOutput(input)
     self.output:indexCopy(1, self.rowIndices, self.restrictedOutput)
   elseif input:dim() == 2 then
     local nbatch = input:size(1)
-    local nElement = self.output:nElement()
     self.output:resize(nbatch, self.weight:size(1)):zero()
     updateAddBuffer(self, input)
     self.restrictedOutput:resize(nbatch, self.restrictedWeight:size(1)):zero()
