@@ -257,7 +257,7 @@
         }, 
         {
             "location": "/training/sampling/", 
-            "text": "Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch.\n\n\nUniform\n\n\nThe simplest data sampling is to uniformly select a subset of the training data. Using the \n-sample N\n option, the training will randomly choose \nN\n training sequences at each epoch.\n\n\nA typical use case is to reduce the length of the epochs for more frequent learning rate updates and validation perplexity computation.\n\n\nPerplexity-based\n\n\nThis approach is an attempt to feed relevant training data at each epoch. When using the flag \n-sample_w_ppl\n, the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.\n\n\nAlternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the \n-sample_w_ppl_init\n option.\n\n\n\n\nWarning\n\n\nThis perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of \neach\n sequence has to be independently computed.", 
+            "text": "Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch. There are different types of sampling that are selected using \n-sample_type\n option.\n\n\nUniform\n\n\nThe simplest data sampling is to uniformly select a subset of the training data. Using the \n-sample N\n option, the training will randomly choose \nN\n training sequences at each epoch.\n\n\nA typical use case is to reduce the length of the epochs for more frequent learning rate updates and validation perplexity computation.\n\n\nPerplexity-based\n\n\nThis approach is an attempt to feed relevant training data at each epoch. When using the flag \n-sample_type perplexity\n, the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.\n\n\nAlternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the \n-sample_perplexity_init\n option.\n\n\n\n\nWarning\n\n\nThis perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of \neach\n sequence has to be independently computed.\n\n\n\n\nPartition\n\n\nWhen using the flag \n-sample_type partition\n, samples are drawn without random, uniformally and incrementally from the corpus training. Use this mode for making sure all training sequences will be sent the same number of time.", 
             "title": "Data sampling"
         }, 
         {
@@ -267,8 +267,13 @@
         }, 
         {
             "location": "/training/sampling/#perplexity-based", 
-            "text": "This approach is an attempt to feed relevant training data at each epoch. When using the flag  -sample_w_ppl , the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.  Alternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the  -sample_w_ppl_init  option.   Warning  This perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of  each  sequence has to be independently computed.", 
+            "text": "This approach is an attempt to feed relevant training data at each epoch. When using the flag  -sample_type perplexity , the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.  Alternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the  -sample_perplexity_init  option.   Warning  This perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of  each  sequence has to be independently computed.", 
             "title": "Perplexity-based"
+        }, 
+        {
+            "location": "/training/sampling/#partition", 
+            "text": "When using the flag  -sample_type partition , samples are drawn without random, uniformally and incrementally from the corpus training. Use this mode for making sure all training sequences will be sent the same number of time.", 
+            "title": "Partition"
         }, 
         {
             "location": "/translation/inference/", 
@@ -667,18 +672,23 @@
         }, 
         {
             "location": "/options/embeddings/", 
-            "text": "embeddings.lua\n options:\n\n\n\n\n-h [\nboolean\n]\n (default: \nfalse\n)\nThis help.\n\n\n-md [\nboolean\n]\n (default: \nfalse\n)\nDump help in Markdown format.\n\n\n-config \nstring\n (default: \n''\n)\nLoad options from this file.\n\n\n-save_config \nstring\n (default: \n''\n)\nSave options to this file.\n\n\n\n\nData options\n\n\n\n\n-dict_file \nstring\n (default: \n''\n)\nPath to outputted dict file from \npreprocess.lua\n.\n\n\n-embed_file \nstring\n (default: \n''\n)\nPath to the embedding file. Ignored if \n-lang\n is used.\n\n\n-save_data \nstring\n (default: \n''\n)\nOutput file path/label.\n\n\n\n\nEmbedding options\n\n\n\n\n-lang \nstring\n (default: \n''\n)\nWikipedia Language Code to autoload embeddings.\n\n\n-embed_type \nstring\n (accepted: \nword2vec\n, \nglove\n; default: \nword2vec\n)\nEmbeddings file origin. Ignored if \n-lang\n is used.\n\n\n-normalize [\nboolean\n]\n (default: \ntrue\n)\nBoolean to normalize the word vectors, or not.\n\n\n-report_every \nnumber\n (default: \n100000\n)\nPrint stats every this many lines read from embedding file.", 
+            "text": "embeddings.lua\n options:\n\n\n\n\n-h [\nboolean\n]\n (default: \nfalse\n)\nThis help.\n\n\n-md [\nboolean\n]\n (default: \nfalse\n)\nDump help in Markdown format.\n\n\n-config \nstring\n (default: \n''\n)\nLoad options from this file.\n\n\n-save_config \nstring\n (default: \n''\n)\nSave options to this file.\n\n\n\n\nData options\n\n\n\n\n-dict_file \nstring\n (required)\nPath to outputted dict file from \npreprocess.lua\n.\n\n\n-embed_file \nstring\n (default: \n''\n)\nPath to the embedding file. Ignored if \n-lang\n is used.\n\n\n-save_data \nstring\n (required)\nOutput file path/label.\n\n\n\n\nEmbedding options\n\n\n\n\n-lang \nstring\n (default: \n''\n)\nWikipedia Language Code to autoload embeddings.\n\n\n-embed_type \nstring\n (accepted: \nword2vec\n, \nglove\n; default: \nword2vec\n)\nEmbeddings file origin. Ignored if \n-lang\n is used.\n\n\n-normalize [\nboolean\n]\n (default: \ntrue\n)\nBoolean to normalize the word vectors, or not.\n\n\n-report_every \nnumber\n (default: \n100000\n)\nPrint stats every this many lines read from embedding file.\n\n\n\n\nLogger options\n\n\n\n\n-log_file \nstring\n (default: \n''\n)\nOutput logs to a file under this path instead of stdout.\n\n\n-disable_logs [\nboolean\n]\n (default: \nfalse\n)\nIf set, output nothing.\n\n\n-log_level \nstring\n (accepted: \nDEBUG\n, \nINFO\n, \nWARNING\n, \nERROR\n; default: \nINFO\n)\nOutput logs at this level and above.", 
             "title": "tools/embeddings.lua"
         }, 
         {
             "location": "/options/embeddings/#data-options", 
-            "text": "-dict_file  string  (default:  '' ) Path to outputted dict file from  preprocess.lua .  -embed_file  string  (default:  '' ) Path to the embedding file. Ignored if  -lang  is used.  -save_data  string  (default:  '' ) Output file path/label.", 
+            "text": "-dict_file  string  (required) Path to outputted dict file from  preprocess.lua .  -embed_file  string  (default:  '' ) Path to the embedding file. Ignored if  -lang  is used.  -save_data  string  (required) Output file path/label.", 
             "title": "Data options"
         }, 
         {
             "location": "/options/embeddings/#embedding-options", 
             "text": "-lang  string  (default:  '' ) Wikipedia Language Code to autoload embeddings.  -embed_type  string  (accepted:  word2vec ,  glove ; default:  word2vec ) Embeddings file origin. Ignored if  -lang  is used.  -normalize [ boolean ]  (default:  true ) Boolean to normalize the word vectors, or not.  -report_every  number  (default:  100000 ) Print stats every this many lines read from embedding file.", 
             "title": "Embedding options"
+        }, 
+        {
+            "location": "/options/embeddings/#logger-options", 
+            "text": "-log_file  string  (default:  '' ) Output logs to a file under this path instead of stdout.  -disable_logs [ boolean ]  (default:  false ) If set, output nothing.  -log_level  string  (accepted:  DEBUG ,  INFO ,  WARNING ,  ERROR ; default:  INFO ) Output logs at this level and above.", 
+            "title": "Logger options"
         }, 
         {
             "location": "/extensions/", 

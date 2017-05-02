@@ -679,6 +679,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#logger-options" title="Logger options" class="md-nav__link">
+    Logger options
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -761,6 +768,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#logger-options" title="Logger options" class="md-nav__link">
+    Logger options
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -791,9 +805,9 @@
 </ul>
 <h2 id="data-options">Data options<a class="headerlink" href="#data-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-dict_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to outputted dict file from <code>preprocess.lua</code>.</li>
+<li><code>-dict_file &lt;string&gt;</code> (required)<br/>Path to outputted dict file from <code>preprocess.lua</code>.</li>
 <li><code>-embed_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the embedding file. Ignored if <code>-lang</code> is used.</li>
-<li><code>-save_data &lt;string&gt;</code> (default: <code>''</code>)<br/>Output file path/label.</li>
+<li><code>-save_data &lt;string&gt;</code> (required)<br/>Output file path/label.</li>
 </ul>
 <h2 id="embedding-options">Embedding options<a class="headerlink" href="#embedding-options" title="Permanent link">&para;</a></h2>
 <ul>
@@ -801,6 +815,12 @@
 <li><code>-embed_type &lt;string&gt;</code> (accepted: <code>word2vec</code>, <code>glove</code>; default: <code>word2vec</code>)<br/>Embeddings file origin. Ignored if <code>-lang</code> is used.</li>
 <li><code>-normalize [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Boolean to normalize the word vectors, or not.</li>
 <li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Print stats every this many lines read from embedding file.</li>
+</ul>
+<h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>-log_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Output logs to a file under this path instead of stdout.</li>
+<li><code>-disable_logs [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, output nothing.</li>
+<li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
 </ul>
                 
                   

@@ -403,6 +403,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#partition" title="Partition" class="md-nav__link">
+    Partition
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -761,6 +768,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#partition" title="Partition" class="md-nav__link">
+    Partition
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -780,17 +794,19 @@
                 
                   <h1>Data sampling</h1>
                 
-                <p>Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch.</p>
+                <p>Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch. There are different types of sampling that are selected using <code>-sample_type</code> option.</p>
 <h2 id="uniform">Uniform<a class="headerlink" href="#uniform" title="Permanent link">&para;</a></h2>
 <p>The simplest data sampling is to uniformly select a subset of the training data. Using the <code>-sample N</code> option, the training will randomly choose <script type="math/tex">N</script> training sequences at each epoch.</p>
 <p>A typical use case is to reduce the length of the epochs for more frequent learning rate updates and validation perplexity computation.</p>
 <h2 id="perplexity-based">Perplexity-based<a class="headerlink" href="#perplexity-based" title="Permanent link">&para;</a></h2>
-<p>This approach is an attempt to feed relevant training data at each epoch. When using the flag <code>-sample_w_ppl</code>, the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.</p>
-<p>Alternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the <code>-sample_w_ppl_init</code> option.</p>
+<p>This approach is an attempt to feed relevant training data at each epoch. When using the flag <code>-sample_type perplexity</code>, the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.</p>
+<p>Alternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the <code>-sample_perplexity_init</code> option.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of <strong>each</strong> sequence has to be independently computed.</p>
 </div>
+<h2 id="partition">Partition<a class="headerlink" href="#partition" title="Permanent link">&para;</a></h2>
+<p>When using the flag <code>-sample_type partition</code>, samples are drawn without random, uniformally and incrementally from the corpus training. Use this mode for making sure all training sequences will be sent the same number of time.</p>
                 
                   
                 
