@@ -33,7 +33,7 @@ local function updateAddBuffer(self, input)
 end
 
 function RIndexLinear:updateOutput(input)
-  if self.train or not self.rowIndices then
+  if not self.train or not self.rowIndices then
     return parent.updateOutput(self, input)
   end
   if input:dim() == 1 then
