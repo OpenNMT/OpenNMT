@@ -11,15 +11,24 @@ cmd:setCmdLineOptions(
   {
     {
       '-dict_file', '',
-      [[Path to outputted dict file from `preprocess.lua`.]]
+      [[Path to outputted dict file from `preprocess.lua`.]],
+      {
+        valid = onmt.utils.ExtendedCmdLine.fileExists
+      }
     },
     {
       '-embed_file', '',
-      [[Path to the embedding file. Ignored if `-lang` is used.]]
+      [[Path to the embedding file. Ignored if `-lang` is used.]],
+      {
+        valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+      }
     },
     {
       '-save_data', '',
-      [[Output file path/label.]]
+      [[Output file path/label.]],
+      {
+        valid = onmt.utils.ExtendedCmdLine.nonEmpty
+      }
     }
   }, 'Data')
 
@@ -43,7 +52,10 @@ cmd:setCmdLineOptions(
     },
     {
       '-report_every', 100000,
-      [[Print stats every this many lines read from embedding file.]]
+      [[Print stats every this many lines read from embedding file.]],
+      {
+        valid = onmt.utils.ExtendedCmdLine.isInt(1)
+      }
     }
   }, 'Embedding')
 
@@ -296,8 +308,6 @@ end
 local function main()
   local timer = torch.Timer()
 
-  assert(path.exists(opt.dict_file), 'dictionary file \'' .. opt.dict_file .. '\' does not exist.')
-
   local dict = onmt.utils.Dict.new(opt.dict_file)
 
   local embedFile = opt.embed_file
@@ -309,7 +319,6 @@ local function main()
     embedType = 'glove'
   end
 
-  assert(path.exists(embedFile), 'embeddings file \'' .. opt.embed_file .. '\' does not exist.')
   local weights, embeddingSize = loadEmbeddings(embedFile, embedType, dict)
 
   print('saving weights: ' .. opt.save_data .. '-embeddings-' .. tostring(embeddingSize) .. '.t7' )
