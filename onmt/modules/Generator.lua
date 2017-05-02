@@ -43,24 +43,18 @@ function Generator.load(generator)
 end
 
 function Generator:updateOutput(input)
-  if type(input) == 'table' then
-    input = input[1]
-  end
+  input = type(input) == 'table' and input[1] or input
   self.output = self.net:updateOutput(input)
   return self.output
 end
 
 function Generator:updateGradInput(input, gradOutput)
-  if type(input) == 'table' then
-    input = input[1]
-  end
+  input = type(input) == 'table' and input[1] or input
   self.gradInput = self.net:updateGradInput(input, gradOutput)
   return self.gradInput
 end
 
 function Generator:accGradParameters(input, gradOutput, scale)
-  if type(input) == 'table' then
-    input = input[1]
-  end
+  input = type(input) == 'table' and input[1] or input
   self.net:accGradParameters(input, gradOutput, scale)
 end
