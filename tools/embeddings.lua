@@ -59,6 +59,8 @@ cmd:setCmdLineOptions(
     }
   }, 'Embedding')
 
+onmt.utils.Logger.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
 --[[ Auto Loads language files from S3.
@@ -178,11 +180,10 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     -- Read content.
     f:binary()
 
-    print('processing embeddding file')
-
     for i = 1, numWords do
       if i % opt.report_every == 0 then
-        print(i .. ' embedding tokens reviewed. ' .. #loaded .. ' out of ' .. dictSize .. ' dictionary tokens matched.' )
+        _G.logger:info('... %d embeddings processed (%d/%d matched with the dictionary)',
+                       i, #loaded, dictSize)
       end
 
       local word = readStringv2(f)
@@ -207,7 +208,6 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       end
 
       if #loaded == dictSize then
-        print('Quitting early. All ' .. dictSize .. ' dictionary tokens matched.')
         break
       end
 
@@ -216,13 +216,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
     f:close()
 
-    if #loaded ~= dictSize then
-      print('Embedding file fully processed. ' .. #loaded .. ' out of ' .. dictSize .. ' dictionary tokens matched.')
-      weights = fillGaps(weights, loaded, dictSize, embeddingSize)
-      print('Remaining randomly assigned according to uniform distribution')
-    end
-
-    return weights, embeddingSize
+    return weights, embeddingSize, loaded
   end
 
   -- Given a glove embedings file name and dictionary, outputs weights.
@@ -236,12 +230,11 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
     local f = io.open(filename, "r")
 
-    print('processing embeddding file')
-
     for line in f:lines() do
       count = count + 1
       if count % opt.report_every == 0 then
-         print(count .. ' embedding tokens reviewed. ' .. #loaded .. ' out of ' .. dictSize .. ' dictionary tokens matched.' )
+        _G.logger:info('... %d embeddings processed (%d/%d matched with the dictionary)',
+                       i, #loaded, dictSize)
       end
 
       local splitLine = line:split(' ')
@@ -277,7 +270,6 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       end
 
       if #loaded == dictSize then
-        print('Quitting early. All ' .. dictSize .. ' dictionary tokens matched.')
         break
       end
 
@@ -286,26 +278,36 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
     f:close()
 
-    if #loaded ~= dictSize then
-      print('Embedding file fully processed. ' .. #loaded .. ' out of ' .. dictSize .. ' dictionary tokens matched.')
-      weights = fillGaps(weights, loaded, dictSize, embeddingSize)
-      print('Remaining randomly assigned according to uniform distribution')
-    end
-
-    return weights, embeddingSize
+    return weights, embeddingSize, loaded
   end
+
+  _G.logger:info('Processing embedddings file \'%s\'...', embeddingFilename)
+
+  local weights
+  local embeddingSize
+  local loaded
 
   if embeddingType == "word2vec" then
-    return loadWord2vec(embeddingFilename, dictionary)
+    weights, embeddingSize, loaded = loadWord2vec(embeddingFilename, dictionary)
   elseif embeddingType == "glove" then
-    return loadGlove(embeddingFilename, dictionary)
-  else
-    error('invalid embed type. \'word2vec\' and \'glove\' are the only options.')
+    weights, embeddingSize, loaded = loadGlove(embeddingFilename, dictionary)
   end
+
+  _G.logger:info('... done.')
+  _G.logger:info(' * %d/%d embeddings matched with dictionary tokens', #loaded, dictionary:size())
+
+  if #loaded ~= dictionary:size() then
+    _G.logger:info(' * %d/%d embeddings randomly assigned with a normal distribution', dictionary:size() - #loaded, dictionary:size())
+    weights = fillGaps(weights, loaded, dictionary:size(), embeddingSize)
+  end
+
+  return weights, embeddingSize
 end
 
 
 local function main()
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
   local timer = torch.Timer()
 
   local dict = onmt.utils.Dict.new(opt.dict_file)
@@ -314,17 +316,21 @@ local function main()
   local embedType = opt.embed_type
 
   if opt.lang and opt.lang:len() > 0 then
-    print('running autoload for ' .. opt.lang)
+    _G.logger:info('Running autoload for %s...', opt.lang)
     embedFile = loadAuto(opt.lang)
     embedType = 'glove'
   end
 
   local weights, embeddingSize = loadEmbeddings(embedFile, embedType, dict)
 
-  print('saving weights: ' .. opt.save_data .. '-embeddings-' .. tostring(embeddingSize) .. '.t7' )
-  torch.save(opt.save_data .. '-embeddings-' .. tostring(embeddingSize) .. '.t7', weights)
+  local targetFile = opt.save_data .. '-embeddings-' .. tostring(embeddingSize) .. '.t7'
+  _G.logger:info('Saving embeddings to \'%s\'...', targetFile)
+  torch.save(targetFile, weights)
 
-  print(string.format('completed in %0.3f seconds. ',timer:time().real) .. ' embedding vector size is: ' .. embeddingSize )
+  _G.logger:info('Completed in %0.3f seconds. ', timer:time().real)
+  _G.logger:info('')
+  _G.logger:info('For source embeddings, set the options \'-pre_word_vecs_enc %s -src_word_vec_size %d\' with train.lua', targetFile, embeddingSize)
+  _G.logger:info('For target embeddings, set the options \'-pre_word_vecs_dec %s -tgt_word_vec_size %d\' with train.lua', targetFile, embeddingSize)
 end
 
 main()
