@@ -31,10 +31,6 @@ function Generator:_buildGenerator(opt, sizes)
   self:set(generator)
 end
 
---[[ Release Generator for inference only ]]
-function Generator:release()
-end
-
 function Generator.load(generator)
   if not generator.version then
     if torch.type(generator)=='onmt.Generator' then
