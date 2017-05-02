@@ -1,6 +1,6 @@
 --[[ Data management and batch creation. Handles data created by `preprocess.lua`. ]]
 
-local SampledDataset = torch.class("SampledDataset")
+local SampledDataset, parent = torch.class("SampledDataset", "Dataset")
 
 local options = {
   {
@@ -40,14 +40,7 @@ end
   and `tgtData`.
 --]]
 function SampledDataset:__init(srcData, tgtData, opt)
-
-  self.src = srcData.words or srcData.vectors
-  self.srcFeatures = srcData.features
-
-  if tgtData ~= nil then
-    self.tgt = tgtData.words  or tgtData.vectors
-    self.tgtFeatures = tgtData.features
-  end
+  parent.__init(self, srcData, tgtData)
 
   self.samplingSize = opt.sample
   self.sample_type = opt.sample_type
@@ -300,18 +293,6 @@ end
 --[[ Return number of sampled instances. ]]
 function SampledDataset:getNumSampled()
   return self.sampled:size(1)
-end
-
---[[ Return number of batches. ]]
-function SampledDataset:batchCount()
-  if self.batchRange == nil then
-    if #self.src > 0 then
-      return 1
-    else
-      return 0
-    end
-  end
-  return #self.batchRange
 end
 
 function SampledDataset:instanceCount()
