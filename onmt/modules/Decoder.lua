@@ -91,7 +91,7 @@ function Decoder.load(pretrained)
   self.args = pretrained.args
 
   parent.__init(self, pretrained.modules[1])
-  self.generator = pretrained.modules[2]
+  self.generator = onmt.Generator.load(pretrained.modules[2])
   self:add(self.generator)
 
   self:resetPreallocation()

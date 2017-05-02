@@ -79,7 +79,7 @@ function LanguageModel.load(args, models, dicts)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
-  self.models.generator = onmt.Factory.loadGenerator(models.generator)
+  self.models.generator = onmt.Generator.load(models.generator)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
   return self
