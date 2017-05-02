@@ -30,6 +30,7 @@ function sampledDatasetTest.sample()
   end
 
   -- random sampling
+  opt.sample_type = 'uniform'
   local dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
 
@@ -39,7 +40,7 @@ function sampledDatasetTest.sample()
   end
 
   -- sampling with ppl
-  opt.sample_w_ppl = true
+  opt.sample_type = 'w_ppl'
 
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
@@ -57,6 +58,21 @@ function sampledDatasetTest.sample()
   dataset:setBatchSize(batchSize)
 
   tester:eq(dataset:getNumSampled(), opt.sample)
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+
+  -- partition sampling
+  opt.sample_type = 'partition'
+  opt.sample = 600
+  dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
+  dataset:setBatchSize(batchSize)
+
+  tester:eq(dataset:getNumSampled(), opt.sample)
+  -- simulate 2 epochs
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
   for i = 1, dataset:batchCount() do
     dataset:getBatch(i)
   end
