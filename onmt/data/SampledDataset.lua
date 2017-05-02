@@ -11,8 +11,13 @@ local options = {
     }
   },
   {
-    '-sample_w_ppl', false,
-    [[If set, ese perplexity as a probability distribution when sampling.]]
+    '-sample_type', 'uniform',
+    [[Define the partition type. `uniform` draws randomly the sample, `w_ppl` uses perplexity
+      as a probability distribution when sampling (with `-sample_w_ppl_init` and `-sample_w_ppl_max`
+      options), `partition` draws different subsets at each epoch.]],
+    {
+      enum = { 'uniform', 'w_ppl', 'partition'}
+    }
   },
   {
     '-sample_w_ppl_init', 15,
@@ -45,23 +50,30 @@ function SampledDataset:__init(srcData, tgtData, opt)
   end
 
   self.samplingSize = opt.sample
-  self.sample_w_ppl = opt.sample_w_ppl
+  self.sample_type = opt.sample_type
   self.sample_w_ppl_init = opt.sample_w_ppl_init
   self.sample_w_ppl_max = opt.sample_w_ppl_max
   self.startedPplSampling = false
 
   _G.logger:info(' * sampling ' .. opt.sample .. ' instances from ' .. #self.src .. ' at each epoch')
-  if opt.sample_w_ppl then
+  if opt.sample_type == 'w_ppl' then
     _G.logger:info(' * using train data perplexity as probability distribution when sampling')
     _G.logger:info(' * sample_w_ppl_init: ' .. opt.sample_w_ppl_init)
     _G.logger:info(' * sample_w_ppl_max: ' .. opt.sample_w_ppl_max)
   end
 
-  if self.sample_w_ppl then
+  if self.sample_type == 'w_ppl' then
     self.samplingProb = torch.Tensor(#self.src)
     self.samplingProb:fill(self.sample_w_ppl_init)
     self.ppl = torch.Tensor(#self.src)
     self.ppl:fill(self.sample_w_ppl_init)
+  elseif self.sample_type == 'partition' then
+    self.partitionStart = 1
+    self.partitionIdx = 1
+    self.partitionStep = math.floor(#self.src/self.samplingSize)
+    if self.partitionStep == 0 then
+      self.partitionStep = 1
+    end
   else
     self.samplingProb = torch.ones(#self.src)
   end
@@ -73,7 +85,7 @@ end
 function SampledDataset:checkModel(model)
   if self:needIndividualLosses() and (not model.returnIndividualLosses or model:returnIndividualLosses(true) == false) then
     _G.logger:info('Current model does not support training with invididual losses; Sampling with individual loss will be disabled.')
-    self.sample_w_ppl = false
+    self.sample_type = 'uniform'
     self.samplingProb = torch.ones(#self.src)
     self.ppl = nil
   else
@@ -84,7 +96,7 @@ function SampledDataset:checkModel(model)
 end
 
 function SampledDataset:needIndividualLosses()
-  return self.sample_w_ppl
+  return self.sample_type == 'w_ppl'
 end
 
 --[[ Initiate sampling. ]]
@@ -95,7 +107,7 @@ function SampledDataset:sample(logLevel)
   _G.logger:log('Sampling dataset...', logLevel)
 
   -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init.
-  if self.sample_w_ppl and not self.startedPplSampling then
+  if self.sample_type == 'w_ppl' and not self.startedPplSampling then
     local avgPpl = torch.sum(self.ppl)
     avgPpl = avgPpl / self.ppl:size(1)
     if avgPpl < self.sample_w_ppl_init then
@@ -170,9 +182,22 @@ function SampledDataset:sample(logLevel)
     end
   end
 
-  local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
   self.sampled = torch.LongTensor(self.samplingSize)
-  self.sampled = sampler:batchdraw(self.sampled)
+  if self.sample_type == 'partition' then
+    -- incremental drawing
+    for i = 1, self.samplingSize do
+      self.sampled[i] = self.partitionIdx
+      self.partitionIdx = self.partitionIdx+self.partitionStep
+      if self.partitionIdx > #self.src then
+        self.partitionStart = (self.partitionStart%self.partitionStep)+1
+        self.partitionIdx = self.partitionStart
+      end
+    end
+  else
+    -- random drawing
+    local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
+    self.sampled = sampler:batchdraw(self.sampled)
+  end
 
   self.sampledCnt:zero()
   for i = 1, self.sampled:size(1) do
