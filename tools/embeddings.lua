@@ -177,6 +177,9 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       local wordEmbedding = f:readFloat(embeddingSize)
       wordEmbedding = torch.FloatTensor(wordEmbedding)
 
+      -- Skip newline.
+      f:readChar()
+
       local idx = locateIdx(word, dict)
 
       if idx ~= nil then
