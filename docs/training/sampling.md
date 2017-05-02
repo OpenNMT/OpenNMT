@@ -17,4 +17,4 @@ Alternatively, perplexity-based sampling can be enabled when an average training
 
 ## Partition
 
-When using the flag `-sample_type partition`, sample are drawn without random, uniformally and incrementally from the corpus training. Use this mode for making sure all training sequences will be sent the same number of time.
+When using the flag `-sample_type partition`, samples are drawn without random, uniformally and incrementally from the corpus training. Use this mode for making sure all training sequences will be sent the same number of time.
