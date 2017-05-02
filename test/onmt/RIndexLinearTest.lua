@@ -22,7 +22,7 @@ function rindexLinearTest.inferenceTensor()
   m_rindex.bias = m_standard.bias
 
   m_rindex:setOutputIndices(torch.LongTensor{3,5,12})
-  m_rindex.train = true
+  m_rindex.train = false
 
   local input = torch.Tensor(5):uniform()
   tester:eq(m_standard:forward(input), m_rindex:forward(input), 1e-8)
@@ -36,7 +36,7 @@ function rindexLinearTest.inferenceTensorBatch()
   m_rindex.bias = m_standard.bias
 
   m_rindex:setOutputIndices(torch.LongTensor{3,5,12})
-  m_rindex.train = true
+  m_rindex.train = false
 
   local input = torch.Tensor(8, 5):uniform()
   tester:eq(m_standard:forward(input), m_rindex:forward(input), 1e-8)
@@ -50,7 +50,7 @@ function rindexLinearTest.trainingTensor()
   m_rindex.bias = m_standard.bias
 
   m_rindex:setOutputIndices(torch.LongTensor{3,5,12})
-  m_rindex.train = false
+  m_rindex.train = true
 
   local input = torch.Tensor(5):uniform()
   local ri_output = m_rindex:forward(input)
@@ -72,7 +72,7 @@ function rindexLinearTest.trainingTensorBatch()
   m_rindex.bias = m_standard.bias
 
   m_rindex:setOutputIndices(torch.LongTensor{3,5,12})
-  m_rindex.train = false
+  m_rindex.train = true
 
   local input = torch.Tensor(8, 5):uniform()
   local ri_output = m_rindex:forward(input)
