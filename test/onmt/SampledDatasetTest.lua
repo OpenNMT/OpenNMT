@@ -13,9 +13,9 @@ function sampledDatasetTest.sample()
 
   local opt = {}
   opt.sample = 100
-  opt.sample_w_ppl = false
-  opt.sample_w_ppl_init = 100
-  opt.sample_w_ppl_max = 1000
+  opt.sample_perplexity = false
+  opt.sample_perplexity_init = 100
+  opt.sample_perplexity_max = 1000
 
   local tds = require('tds')
   local srcData = {words = tds.Vec(), features = tds.Vec()}
@@ -30,6 +30,7 @@ function sampledDatasetTest.sample()
   end
 
   -- random sampling
+  opt.sample_type = 'uniform'
   local dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
 
@@ -39,7 +40,7 @@ function sampledDatasetTest.sample()
   end
 
   -- sampling with ppl
-  opt.sample_w_ppl = true
+  opt.sample_type = 'perplexity'
 
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
@@ -51,12 +52,27 @@ function sampledDatasetTest.sample()
 
   -- oversampling
   opt.sample = 2000
-  opt.sample_w_ppl = false
+  opt.sample_perplexity = false
 
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
 
   tester:eq(dataset:getNumSampled(), opt.sample)
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
+
+  -- partition sampling
+  opt.sample_type = 'partition'
+  opt.sample = 600
+  dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
+  dataset:setBatchSize(batchSize)
+
+  tester:eq(dataset:getNumSampled(), opt.sample)
+  -- simulate 2 epochs
+  for i = 1, dataset:batchCount() do
+    dataset:getBatch(i)
+  end
   for i = 1, dataset:batchCount() do
     dataset:getBatch(i)
   end

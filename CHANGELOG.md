@@ -8,10 +8,11 @@
 * Add script to convert and/or generate pretrained word embeddings
 * Add a bridge layer between the encoder and decoder
 * New feature to keep token frequency in generated dictionaries
+* [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
 
 ### Fixes and improvements
 
-* Improve command line parser (space-separated list of values and boolean arguments), do not allow duplicate commandline 
+* Improve command line parser (space-separated list of values and boolean arguments), do not allow duplicate commandline
 options and do not print help on errors
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
 * Fix translation error of models profiled during training
