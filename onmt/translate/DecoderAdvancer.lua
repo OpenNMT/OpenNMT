@@ -129,9 +129,6 @@ Returns:
 function DecoderAdvancer:expand(beam)
   local state = beam:getState()
   local decOut = state[2]
-  if self.decoder.generator.needOutput then
-    decOut = { decOut, { torch.Tensor(1) } }
-  end
   local out = self.decoder.generator:forward(decOut)
   local features = {}
   for j = 2, #out do

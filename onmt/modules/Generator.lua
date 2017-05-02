@@ -20,16 +20,9 @@ function Generator:_buildGenerator(opt, sizes)
   local generator = nn.ConcatTable()
   local rnn_size = opt.rnn_size
 
-  local selectInput = nn.Identity()
-
-  if self.needOutput then
-    selectInput = nn.SelectTable(1)
-  end
-
   for i = 1, #sizes do
     local feat_generator
     feat_generator = nn.Sequential()
-                        :add(selectInput)
                         :add(nn.Linear(rnn_size, sizes[i]))
                         :add(nn.LogSoftMax())
     generator:add(feat_generator)
@@ -47,4 +40,27 @@ function Generator.load(generator)
     generator.version = 2
   end
   return generator
+end
+
+function Generator:updateOutput(input)
+  if type(input) == 'table' then
+    input = input[1]
+  end
+  self.output = self.net:updateOutput(input)
+  return self.output
+end
+
+function Generator:updateGradInput(input, gradOutput)
+  if type(input) == 'table' then
+    input = input[1]
+  end
+  self.gradInput = self.net:updateGradInput(input, gradOutput)
+  return self.gradInput
+end
+
+function Generator:accGradParameters(input, gradOutput, scale)
+  if type(input) == 'table' then
+    input = input[1]
+  end
+  self.net:accGradParameters(input, gradOutput, scale)
 end
