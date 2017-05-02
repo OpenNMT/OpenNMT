@@ -392,7 +392,7 @@ function Decoder:backward(batch, outputs, criterion)
 
   -- if target vocabulary for the batch is provided and generator support setting target vocabulary
   if batch.targetVocTensor and self.generator.setTargetVoc then
-    self.generator.setTargetVoc(batch.targetVocTensor)
+    self.generator:setTargetVoc(batch.targetVocTensor)
   end
 
   for t = batch.targetLength, 1, -1 do
