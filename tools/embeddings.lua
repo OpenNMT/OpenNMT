@@ -234,7 +234,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       count = count + 1
       if count % opt.report_every == 0 then
         _G.logger:info('... %d embeddings processed (%d/%d matched with the dictionary)',
-                       i, #loaded, dictSize)
+                       count, #loaded, dictSize)
       end
 
       local splitLine = line:split(' ')
