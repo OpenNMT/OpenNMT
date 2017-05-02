@@ -56,6 +56,11 @@ function ISGenerator:release()
 end
 
 function ISGenerator:updateOutput(input)
+  if type(input) == 'table' and #input == 2 and self.rindexLinear.rowIndices then
+    -- find target in the restricted vocabulary
+    local ofind = onmt.utils.Tensor.find(self.rindexLinear.rowIndices, input[2][1])
+    -- print('missing',ofind:ne(0):sum(),'/',ofind:size(1))
+  end
   input = type(input) == 'table' and input or { input }
   self.output = self.net:updateOutput(input)
   return self.output

@@ -120,6 +120,39 @@ local function initTensorTable(size, proto, sizes)
 end
 
 --[[
+  Find `value` in a sorted tensor `t` using binary search, works for 1 or 2 dimension:
+  for one dimensions returns position
+  for two dimensions returns tensor
+]]
+local function find(t, value)
+  assert(t:dim()==1)
+  if type(value) == 'number' then
+    local min=1
+    local max=t:size(1)
+    while max-min > 1 do
+      local mid = math.floor((max+min)/2)
+      if t[mid] == value then
+        return mid
+      end
+      if t[mid] > value then
+        max = mid -1
+      else
+        min = max +1
+      end
+    end
+    return t[max] == value and max or 0
+  elseif torch.isTensor(value) and value:dim()==1 then
+    local res = torch.Tensor(value:size(1))
+    for j = 1, value:size(1) do
+      res[j] = find(t, value[j])
+    end
+    return res
+  else
+    error("find value or 1d-tensor - only")
+  end
+end
+
+--[[
 Copy tensors from `src` reusing all tensors from `proto`.
 
 Parameters:
@@ -146,6 +179,7 @@ return {
   recursiveAdd = recursiveAdd,
   recursiveSet = recursiveSet,
   deepClone = deepClone,
+  find = find,
   reuseTensor = reuseTensor,
   reuseTensorTable = reuseTensorTable,
   initTensorTable = initTensorTable,

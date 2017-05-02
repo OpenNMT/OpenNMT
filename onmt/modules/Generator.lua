@@ -10,11 +10,7 @@ local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
 -- for back compatibility - still declare FeaturesGenerator - but no need to define it
 torch.class('onmt.FeaturesGenerator', 'onmt.Generator')
 
-local options = {
-}
-
 function Generator.declareOpts(cmd)
-  cmd:setCmdLineOptions(options, 'Generator')
   onmt.ISGenerator.declareOpts(cmd)
 end
 
