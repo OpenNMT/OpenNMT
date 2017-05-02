@@ -109,7 +109,7 @@ function Model:getParams()
   local gradParams = {}
   local modelMap = {}
 
-  for i, key in ipairs(orderedIndex) do
+  for _, key in ipairs(orderedIndex) do
     local p, gp = self.models[key]:getParameters()
     if p:dim() > 0 then
       table.insert(params, p)
