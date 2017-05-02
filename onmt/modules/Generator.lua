@@ -20,9 +20,16 @@ function Generator:_buildGenerator(opt, sizes)
   local generator = nn.ConcatTable()
   local rnn_size = opt.rnn_size
 
+  local selectInput = nn.Identity()
+
+  if self.needOutput then
+    selectInput = nn.SelectTable(1)
+  end
+
   for i = 1, #sizes do
     local feat_generator
     feat_generator = nn.Sequential()
+                        :add(selectInput)
                         :add(nn.Linear(rnn_size, sizes[i]))
                         :add(nn.LogSoftMax())
     generator:add(feat_generator)
