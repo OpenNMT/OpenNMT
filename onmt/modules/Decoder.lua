@@ -394,7 +394,7 @@ function Decoder:backward(batch, outputs, criterion)
     local refOutput = batch:getTargetOutput(t)
 
     -- sampling-based generator need outputs during training
-    local prepOutputs = { outputs[t], outputs }
+    local prepOutputs = { outputs[t], refOutput }
 
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
