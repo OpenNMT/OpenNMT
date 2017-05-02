@@ -44,6 +44,7 @@ build = {
     ["onmt.modules.Bridge"] = "onmt/modules/Bridge.lua",
     ["onmt.modules.FeaturesEmbedding"] = "onmt/modules/FeaturesEmbedding.lua",
     ["onmt.modules.Generator"] = "onmt/modules/Generator.lua",
+    ["onmt.modules.ISGenerator"] = "onmt/modules/ISGenerator.lua",
     ["onmt.modules.NoAttention"] = "onmt/modules/NoAttention.lua",
     ["onmt.modules.GlobalAttention"] = "onmt/modules/GlobalAttention.lua",
     ["onmt.modules.LSTM"] = "onmt/modules/LSTM.lua",

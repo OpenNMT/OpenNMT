@@ -29,13 +29,6 @@ local options = {
     [[When greater than 0, instances with perplexity above this value will be
       considered as noise and ignored; when less than 0, mode + `-sample_perplexity_max` * stdev
       will be used as threshold.]]
-  },
-  {
-    '-target_voc_importance_sampling_size', 0,
-    [[If not null, implement importance sampling approach as approximation of fullsoftmax.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
-    }
   }
 }
 
@@ -49,11 +42,11 @@ end
 function SampledDataset:__init(opt, srcData, tgtData)
   parent.__init(self, srcData, tgtData)
 
-  if tgtData and opt.target_voc_importance_sampling_size > 0 then
+  if tgtData and opt.importance_sampling_tgt_voc_size > 0 then
     self.targetVocIndex = {}
-    self.targetVocTensor = torch.LongTensor(opt.target_voc_importance_sampling_size)
+    self.targetVocTensor = torch.LongTensor(opt.importance_sampling_tgt_voc_size)
     self.targetVocCount = 0
-    self.targetVocMax = opt.target_voc_importance_sampling_size
+    self.targetVocMax = opt.importance_sampling_tgt_voc_size
   end
 
   self.samplingSize = opt.sample

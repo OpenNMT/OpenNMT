@@ -50,4 +50,28 @@ function generatorTest.approximate()
   end
 end
 
+function generatorTest.ISGenerator()
+  local opt = {}
+  opt.rnn_size = 100
+  local sizes = { 100, 5 }
+  local generator = onmt.ISGenerator.new(opt, sizes)
+  generator:apply(function(m) m:training() end)
+
+  local context = torch.Tensor(10, opt.rnn_size)
+  local output = generator:forward({context, torch.Tensor{3}})
+
+  tester:eq(#output, #sizes)
+  for i = 1, #sizes do
+    tester:eq( output[i]:dim(), 2)
+    tester:eq( output[i]:size(2), sizes[i])
+  end
+
+  generator:setTargetVoc(torch.LongTensor{1,2})
+  local output_ri = generator:forward({context, torch.Tensor{3}})
+
+  tester:eq(output[1]:narrow(2,1,2), output_ri[1]:narrow(2,1,2))
+  tester:eq(output_ri[1]:narrow(2,3,1):sum(),output_ri[1]:narrow(2,4,1):sum())
+  tester:eq(output[2], output_ri[2])
+end
+
 return generatorTest

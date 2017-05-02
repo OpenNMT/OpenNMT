@@ -16,7 +16,7 @@ function sampledDatasetTest.sample()
   opt.sample_perplexity = false
   opt.sample_perplexity_init = 100
   opt.sample_perplexity_max = 1000
-  opt.target_voc_importance_sampling_size = 0
+  opt.importance_sampling_tgt_voc_size = 0
 
   local tds = require('tds')
   local srcData = {words = tds.Vec(), features = tds.Vec()}
@@ -47,7 +47,7 @@ function sampledDatasetTest.sample()
   tester:eq(dataset.targetVocCount, nil)
 
   -- sampling with target vocabulary importance sampling
-  opt.target_voc_importance_sampling_size = 500
+  opt.importance_sampling_tgt_voc_size = 500
   dataset = onmt.data.SampledDataset.new(opt, srcData, tgtData)
   dataset:setBatchSize(batchSize)
   dataset:getBatch(1)
@@ -55,7 +55,7 @@ function sampledDatasetTest.sample()
   tester:assertle(dataset.targetVocCount, 500)
 
   -- sampling with ppl
-  opt.target_voc_importance_sampling_size = 0
+  opt.importance_sampling_tgt_voc_size = 0
   opt.sample_type = 'perplexity'
 
   dataset = onmt.data.SampledDataset.new(opt, srcData, tgtData)

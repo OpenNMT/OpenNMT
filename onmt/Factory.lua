@@ -38,6 +38,7 @@ function Factory.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
+  onmt.Generator.declareOpts(cmd)
 end
 
 -- Return effective embeddings size based on user options.
@@ -223,7 +224,11 @@ end
 
 function Factory.buildGenerator(opt, dicts)
   local sizes = Factory.getOutputSizes(dicts)
-  return onmt.Generator(opt, sizes)
+  if opt.importance_sampling_tgt_voc_size > 0 then
+    return onmt.ISGenerator(opt, sizes)
+  else
+    return onmt.Generator(opt, sizes)
+  end
 end
 
 function Factory.buildAttention(args)

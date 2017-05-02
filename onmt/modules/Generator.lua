@@ -10,6 +10,14 @@ local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
 -- for back compatibility - still declare FeaturesGenerator - but no need to define it
 torch.class('onmt.FeaturesGenerator', 'onmt.Generator')
 
+local options = {
+}
+
+function Generator.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Generator')
+  onmt.ISGenerator.declareOpts(cmd)
+end
+
 function Generator:__init(opt, sizes)
   parent.__init(self)
   self:_buildGenerator(opt, sizes)
@@ -17,32 +25,25 @@ function Generator:__init(opt, sizes)
   self.version = 2
 end
 
+function Generator:_simpleGeneratorLayer(input, output)
+  return nn.Sequential()
+                      :add(nn.Linear(input, output))
+                      :add(nn.LogSoftMax())
+end
+
 function Generator:_buildGenerator(opt, sizes)
   local generator = nn.ConcatTable()
   local rnn_size = opt.rnn_size
 
   for i = 1, #sizes do
-    local feat_generator
-    local linear
-    if i == 1 and opt.target_voc_importance_sampling_size and opt.target_voc_importance_sampling_size > 0 then
-      linear = onmt.RIndexLinear(rnn_size, sizes[i])
-      self.rindexLinear = linear
-    else
-      linear = nn.Linear(rnn_size, sizes[i])
-    end
-    feat_generator = nn.Sequential()
-                        :add(linear)
-                        :add(nn.LogSoftMax())
-    generator:add(feat_generator)
+    generator:add(self:_simpleGeneratorLayer(rnn_size, sizes[i]))
   end
 
   self:set(generator)
 end
 
-function Generator:setTargetVoc(tgtVec)
-  if tgtVec and self.rindexLinear then
-    self.rindexLinear:setOutputIndices(tgtVec)
-  end
+--[[ If the target vocabulary for the batch is not full vocabulary ]]
+function Generator:setTargetVoc(_)
 end
 
 --[[ Release Generator for inference only ]]
