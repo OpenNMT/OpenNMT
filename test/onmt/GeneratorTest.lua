@@ -39,9 +39,6 @@ function generatorTest.approximate()
   opt.rnn_size = 100
   local sizes = { 100, 5 }
   local generator = onmt.Generator.new(opt, sizes)
-  generator.needOutput = true
-  -- rebuild generator with 'needOutput'
-  generator:_buildGenerator(opt, sizes)
 
   local context = torch.Tensor(opt.rnn_size)
   local output = generator:forward({context, torch.Tensor{3}})

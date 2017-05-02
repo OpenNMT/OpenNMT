@@ -6,7 +6,7 @@ local decoderTest = torch.TestSuite()
 
 local criterion = onmt.ParallelClassNLLCriterion({10})
 
-local function buildDecoder(inputFeed, rnnType, layers, approximateSoftmax)
+local function buildDecoder(inputFeed, rnnType, layers)
   local cmd = onmt.utils.ExtendedCmdLine.new()
   onmt.Encoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
@@ -22,12 +22,6 @@ local function buildDecoder(inputFeed, rnnType, layers, approximateSoftmax)
   inputNet.inputSize = 4
 
   local generator = onmt.Generator(opt, {10})
-
-  if approximateSoftmax then
-    generator.needOutput = true
-    -- rebuild generator with 'needOutput'
-    generator:_buildGenerator(opt, {10})
-  end
 
   local attention = onmt.GlobalAttention(opt, opt.rnn_size)
 
@@ -143,11 +137,6 @@ end
 
 function decoderTest.withoutInputFeeding_GRU()
   local decoder, opt = buildDecoder(false, 'GRU')
-  checkDim(decoder, opt)
-end
-
-function decoderTest.approximateSoftmax()
-  local decoder, opt = buildDecoder(false, 'LSTM', 2, true)
   checkDim(decoder, opt)
 end
 
