@@ -8,7 +8,7 @@
 * Add script to convert and/or generate pretrained word embeddings
 * Add a bridge layer between the encoder and decoder
 * New feature to keep token frequency in generated dictionaries
-* [*Breaking, renamed option*] Introduce `partition` sampling type
+* [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
 
 ### Fixes and improvements
 

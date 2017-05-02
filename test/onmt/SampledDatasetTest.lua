@@ -13,9 +13,9 @@ function sampledDatasetTest.sample()
 
   local opt = {}
   opt.sample = 100
-  opt.sample_w_ppl = false
-  opt.sample_w_ppl_init = 100
-  opt.sample_w_ppl_max = 1000
+  opt.sample_perplexity = false
+  opt.sample_perplexity_init = 100
+  opt.sample_perplexity_max = 1000
 
   local tds = require('tds')
   local srcData = {words = tds.Vec(), features = tds.Vec()}
@@ -40,7 +40,7 @@ function sampledDatasetTest.sample()
   end
 
   -- sampling with ppl
-  opt.sample_type = 'w_ppl'
+  opt.sample_type = 'perplexity'
 
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
@@ -52,7 +52,7 @@ function sampledDatasetTest.sample()
 
   -- oversampling
   opt.sample = 2000
-  opt.sample_w_ppl = false
+  opt.sample_perplexity = false
 
   dataset = onmt.data.SampledDataset.new(srcData, tgtData, opt)
   dataset:setBatchSize(batchSize)
