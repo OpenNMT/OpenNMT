@@ -436,6 +436,11 @@ function Decoder:backward(batch, outputs, criterion)
 
     -- Compute the final layer gradient.
     local decGradOut = self.generator:backward(prepOutputs, genGradOut)
+    -- if we sent the output, then get gradient back on the input
+    if self.generator.needOutput then
+      decGradOut = decGradOut[1]
+    end
+
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
     -- Compute the standard backward.
