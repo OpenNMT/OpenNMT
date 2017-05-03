@@ -936,9 +936,9 @@
 <h2 id="sampled-dataset-options">Sampled dataset options<a class="headerlink" href="#sampled-dataset-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-sample &lt;number&gt;</code> (default: <code>0</code>)<br/>Number of instances to sample from train data in each epoch.</li>
-<li><code>-sample_w_ppl [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, ese perplexity as a probability distribution when sampling.</li>
-<li><code>-sample_w_ppl_init &lt;number&gt;</code> (default: <code>15</code>)<br/>Start perplexity-based sampling when average train perplexity per batch falls below this value.</li>
-<li><code>-sample_w_ppl_max &lt;number&gt;</code> (default: <code>-1.5</code>)<br/>When greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + <code>-sample_w_ppl_max</code> * stdev will be used as threshold.</li>
+<li><code>-sample_type &lt;string&gt;</code> (accepted: <code>uniform</code>, <code>perplexity</code>, <code>partition</code>; default: <code>uniform</code>)<br/>Define the partition type. <code>uniform</code> draws randomly the sample, <code>perplexity</code> uses perplexity as a probability distribution when sampling (with <code>-sample_perplexity_init</code> and <code>-sample_perplexity_max</code> options), <code>partition</code> draws different subsets at each epoch.</li>
+<li><code>-sample_perplexity_init &lt;number&gt;</code> (default: <code>15</code>)<br/>Start perplexity-based sampling when average train perplexity per batch falls below this value.</li>
+<li><code>-sample_perplexity_max &lt;number&gt;</code> (default: <code>-1.5</code>)<br/>When greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + <code>-sample_perplexity_max</code> * stdev will be used as threshold.</li>
 </ul>
 <h2 id="model-options">Model options<a class="headerlink" href="#model-options" title="Permanent link">&para;</a></h2>
 <ul>

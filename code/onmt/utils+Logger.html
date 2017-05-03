@@ -1,0 +1,125 @@
+<p><a name="onmt.Logger.dok"></a></p>
+
+<h2>onmt.Logger</h2>
+
+<p>Logger is a class used for maintaining logs in a log file.</p>
+
+<p><a name="onmt.Logger"></a></p>
+
+<h3>onmt.Logger(logFile, disableLogs, logLevel)</h3>
+
+<p>Construct a Logger object.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>logFile</code> - Outputs logs to a file under this path instead of stdout. [&#39;&#39;]</li>
+<li><code>disableLogs</code> - If = true, output nothing. [false]</li>
+<li><code>logLevel</code> - Outputs logs at this level and above. Possible options are: DEBUG, INFO, WARNING and ERROR. [&#39;INFO&#39;]</li>
+</ul>
+
+<p>Example:</p>
+
+<pre><code>logger = onmt.utils.Logger.new(&#39;log.txt&#39;)
+logger:info(&#39;%s is an extension of OpenNMT.&#39;, &#39;Im2Text&#39;)
+logger:shutDown()
+</code></pre>
+
+<p><a name="onmt.Logger:log"></a></p>
+
+<h3>onmt.Logger:log(message, level)</h3>
+
+<p>Log a message at a specified level.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>message</code> - the message to log.</li>
+<li><code>level</code> - the desired message level. [&#39;INFO&#39;]</li>
+</ul>
+
+<p><a name="onmt.Logger:info"></a></p>
+
+<h3>onmt.Logger:info(...)</h3>
+
+<p>Log a message at &#39;INFO&#39; level.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>message</code> - the message to log. Supports formatting string.</li>
+</ul>
+
+<p><a name="onmt.Logger:warning"></a></p>
+
+<h3>onmt.Logger:warning(...)</h3>
+
+<p>Log a message at &#39;WARNING&#39; level.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>message</code> - the message to log. Supports formatting string.</li>
+</ul>
+
+<p><a name="onmt.Logger:error"></a></p>
+
+<h3>onmt.Logger:error(...)</h3>
+
+<p>Log a message at &#39;ERROR&#39; level.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>message</code> - the message to log. Supports formatting string.</li>
+</ul>
+
+<p><a name="onmt.Logger:debug"></a></p>
+
+<h3>onmt.Logger:debug(...)</h3>
+
+<p>Log a message at &#39;DEBUG&#39; level.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>message</code> - the message to log. Supports formatting string.</li>
+</ul>
+
+<p><a name="onmt.Logger:writeMsg"></a></p>
+
+<h3>onmt.Logger:writeMsg(...)</h3>
+
+<p>Log a message as exactly it is.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>message</code> - the message to log. Supports formatting string.</li>
+</ul>
+
+<p><a name="onmt.Logger:setVisibleLevel"></a></p>
+
+<h3>onmt.Logger:setVisibleLevel(level)</h3>
+
+<p>Set the visible message level. Lower level messages will be muted.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><code>level</code> - &#39;DEBUG&#39;, &#39;INFO&#39;, &#39;WARNING&#39; or &#39;ERROR&#39;.</li>
+</ul>
+
+<p><a name="onmt.Logger:shutDown"></a></p>
+
+<h3>onmt.Logger:shutDown()</h3>
+
+<p>Deconstructor. Close the log file.</p>
+
+<h4>Undocumented methods</h4>
+
+<p><a name="onmt.Logger.declareOpts"></a></p>
+
+<ul>
+<li><code>onmt.Logger.declareOpts(cmd)</code></li>
+</ul>
