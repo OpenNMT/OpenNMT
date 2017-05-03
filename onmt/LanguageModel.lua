@@ -134,12 +134,12 @@ function LanguageModel:forwardComputeLoss(batch)
   return loss
 end
 
-function Seq2Seq:setTargetVoc(t)
+function LanguageModel:setTargetVoc(t)
   self.models.generator:setTargetVoc(t)
   self.criterion.mainCriterion.weights:resize(t:size(1))
 end
 
-function Seq2Seq:unsetTargetVoc(t)
+function LanguageModel:unsetTargetVoc()
   self.models.generator:setTargetVoc()
   self.criterion.mainCriterion.weights:resize(self.tgtVocSize)
 end

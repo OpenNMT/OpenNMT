@@ -175,7 +175,7 @@ function Seq2Seq:setTargetVoc(t)
   self.criterion.mainCriterion.weights:resize(t:size(1))
 end
 
-function Seq2Seq:unsetTargetVoc(t)
+function Seq2Seq:unsetTargetVoc()
   self.models.decoder.generator:setTargetVoc()
   self.criterion.mainCriterion.weights:resize(self.tgtVocSize)
 end

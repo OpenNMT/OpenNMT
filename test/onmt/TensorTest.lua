@@ -201,7 +201,7 @@ function tensorTest.recursiveAdd_nested()
 end
 
 function tensorTest.find()
-  function find(l, v)
+  local function find(l, v)
     for i=1,#l do if l[i]==v then return i end end
     return 0
   end

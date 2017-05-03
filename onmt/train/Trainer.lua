@@ -316,7 +316,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   end
 
   if data.targetVocTensor then
-    _G.model:unsetTargetVoc(data.targetVocTensor)
+    _G.model:unsetTargetVoc()
   end
 
   epochProfiler:stop('train')
