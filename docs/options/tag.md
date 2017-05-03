@@ -33,4 +33,3 @@
 ## Other options
 
 * `-time [<boolean>]` (default: `false`)<br/>Measure average translation time.
-

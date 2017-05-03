@@ -91,7 +91,7 @@ function Decoder.load(pretrained)
   self.args = pretrained.args
 
   parent.__init(self, pretrained.modules[1])
-  self.generator = pretrained.modules[2]
+  self.generator = onmt.Generator.load(pretrained.modules[2])
   self:add(self.generator)
 
   self:resetPreallocation()
@@ -397,12 +397,9 @@ function Decoder:backward(batch, outputs, criterion)
   for t = batch.targetLength, 1, -1 do
     local refOutput = batch:getTargetOutput(t)
 
-    local prepOutputs = outputs[t]
     -- sampling-based generator need outputs during training
-    -- use generator specific flag to keep backward compatibility
-    if self.generator.needOutput then
-      prepOutputs = { prepOutputs, refOutput }
-    end
+    local prepOutputs = { outputs[t], refOutput }
+
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
     local pred = self.generator:forward(prepOutputs)
@@ -440,11 +437,6 @@ function Decoder:backward(batch, outputs, criterion)
 
     -- Compute the final layer gradient.
     local decGradOut = self.generator:backward(prepOutputs, genGradOut)
-
-    -- if we sent the output, then get gradient back on the input
-    if self.generator.needOutput then
-      decGradOut = decGradOut[1]
-    end
 
     gradStatesInput[#gradStatesInput]:add(decGradOut)
 
@@ -491,16 +483,8 @@ function Decoder:computeLoss(batch, initialStates, context, criterion)
 
   local loss = 0
   self:forwardAndApply(batch, initialStates, context, function (out, t)
+    local pred = self.generator:forward(out)
     local refOutput = batch:getTargetOutput(t)
-    local prepOutputs = out
-    -- sampling-based generator need outputs during training
-    -- use generator specific flag to keep backward compatibility
-    if self.generator.needOutput then
-      prepOutputs = { prepOutputs, refOutput }
-    end
-
-    local pred = self.generator:forward(prepOutputs)
-
     loss = loss + criterion:forward(pred, refOutput)
   end)
 

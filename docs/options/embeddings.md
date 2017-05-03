@@ -9,9 +9,9 @@
 
 ## Data options
 
-* `-dict_file <string>` (default: `''`)<br/>Path to outputted dict file from `preprocess.lua`.
+* `-dict_file <string>` (required)<br/>Path to outputted dict file from `preprocess.lua`.
 * `-embed_file <string>` (default: `''`)<br/>Path to the embedding file. Ignored if `-lang` is used.
-* `-save_data <string>` (default: `''`)<br/>Output file path/label.
+* `-save_data <string>` (required)<br/>Output file path/label.
 
 ## Embedding options
 
@@ -20,3 +20,8 @@
 * `-normalize [<boolean>]` (default: `true`)<br/>Boolean to normalize the word vectors, or not.
 * `-report_every <number>` (default: `100000`)<br/>Print stats every this many lines read from embedding file.
 
+## Logger options
+
+* `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout.
+* `-disable_logs [<boolean>]` (default: `false`)<br/>If set, output nothing.
+* `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`; default: `INFO`)<br/>Output logs at this level and above.

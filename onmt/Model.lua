@@ -85,21 +85,20 @@ end
 function Model:initParams()
   _G.logger:info('Initializing parameters...')
 
-  local params, gradParams, orderedIndex = self:getParams()
+  local params, gradParams, modelMap = self:getParams()
   local numParams = 0
 
-  for i, key in ipairs(orderedIndex) do
-    if params[i]:dim() > 0 then
-      params[i]:uniform(-self.args.param_init, self.args.param_init)
+  for i = 1, #params do
+    local name = modelMap[i]
+    params[i]:uniform(-self.args.param_init, self.args.param_init)
 
-      self.models[key]:apply(function (m)
-        if m.postParametersInitialization then
-          m:postParametersInitialization()
-        end
-      end)
+    self.models[name]:apply(function (m)
+      if m.postParametersInitialization then
+        m:postParametersInitialization()
+      end
+    end)
 
-      numParams = numParams + params[i]:size(1)
-    end
+    numParams = numParams + params[i]:size(1)
   end
 
   _G.logger:info(' * number of parameters: ' .. numParams)
@@ -117,12 +116,18 @@ function Model:getParams()
 
   local params = {}
   local gradParams = {}
+  local modelMap = {}
 
-  for i, key in ipairs(orderedIndex) do
-    params[i], gradParams[i] = self.models[key]:getParameters()
+  for _, key in ipairs(orderedIndex) do
+    local p, gp = self.models[key]:getParameters()
+    if p:dim() > 0 then
+      table.insert(params, p)
+      table.insert(gradParams, gp)
+      table.insert(modelMap, key)
+    end
   end
 
-  return params, gradParams, orderedIndex
+  return params, gradParams, modelMap
 end
 
 return Model

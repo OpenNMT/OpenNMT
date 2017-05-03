@@ -43,4 +43,3 @@
 ## Other options
 
 * `-seed <number>` (default: `3425`)<br/>Random seed.
-
