@@ -200,4 +200,18 @@ function tensorTest.recursiveAdd_nested()
   tester:eq(onmt.utils.Tensor.recursiveAdd(a, b), c)
 end
 
+function tensorTest.find()
+  function find(l, v)
+    for i=1,#l do if l[i]==v then return i end end
+    return 0
+  end
+  local l = {1,4,6,13,17,23}
+  local t=torch.LongTensor{1,4,6,13,17,23}
+  for i = 1,30 do
+    tester:eq(onmt.utils.Tensor.find(t,i),find(l,i))
+  end
+  tester:eq(onmt.utils.Tensor.find(t,torch.LongTensor{3,4,5,6,7}),torch.LongTensor{0,2,0,3,0})
+  tester:eq(onmt.utils.Tensor.find(t,100,1),1)
+end
+
 return tensorTest
