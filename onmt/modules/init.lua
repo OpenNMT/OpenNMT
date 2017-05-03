@@ -22,7 +22,6 @@ require('onmt.modules.NoAttention')
 require('onmt.modules.GlobalAttention')
 
 require('onmt.modules.Generator')
-require('onmt.modules.ISGenerator')
 
 require('onmt.modules.JoinReplicateTable')
 require('onmt.modules.ParallelClassNLLCriterion')

@@ -50,11 +50,11 @@ function generatorTest.approximate()
   end
 end
 
-function generatorTest.ISGenerator()
+function generatorTest.GeneratorIS()
   local opt = {}
   opt.rnn_size = 100
   local sizes = { 100, 5 }
-  local generator = onmt.ISGenerator.new(opt, sizes)
+  local generator = onmt.Generator.new(opt, sizes)
   generator:apply(function(m) m:training() end)
 
   local context = torch.Tensor(10, opt.rnn_size)

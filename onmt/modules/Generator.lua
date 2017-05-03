@@ -10,8 +10,24 @@ local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
 -- for back compatibility - still declare FeaturesGenerator - but no need to define it
 torch.class('onmt.FeaturesGenerator', 'onmt.Generator')
 
+local options = {
+  {
+    '-importance_sampling', false,
+    [[Use importance sampling approach as approximation of full softmax, target vocabulary is built using sampling.]],
+    {
+      depends = function(opt)
+                  if opt.importance_sampling then
+                    if opt.model_type and opt.model_type ~= 'seq2seq' then return false, "only works for seq2seq models." end
+                    if opt.sample == 0 then return false, "requires '-sample' option" end
+                  end
+                  return true
+                end
+    }
+  }
+}
+
 function Generator.declareOpts(cmd)
-  onmt.ISGenerator.declareOpts(cmd)
+  cmd:setCmdLineOptions(options, 'Generator')
 end
 
 function Generator:__init(opt, sizes)
@@ -32,22 +48,27 @@ function Generator:_buildGenerator(opt, sizes)
   local rnn_size = opt.rnn_size
 
   for i = 1, #sizes do
-    generator:add(self:_simpleGeneratorLayer(rnn_size, sizes[i]))
+    if i == 1 then
+      self.rindexLinear = nn.Linear(rnn_size, sizes[i])
+      generator:add(nn.Sequential()
+                      :add(self.rindexLinear)
+                      :add(nn.LogSoftMax()))
+    else
+      generator:add(self:_simpleGeneratorLayer(rnn_size, sizes[i]))
+    end
   end
 
   self:set(generator)
 end
 
 --[[ If the target vocabulary for the batch is not full vocabulary ]]
-function Generator:setTargetVoc(_)
-end
-
---[[ If the target vocabulary for the batch is not full vocabulary ]]
-function Generator:unsetTargetVoc(_)
+function Generator:setTargetVoc(t)
+  self.rindexLinear:RIndex_setOutputIndices(t)
 end
 
 --[[ Release Generator for inference only ]]
 function Generator:release()
+  self.rindexLinear:RIndex_clean()
 end
 
 function Generator.load(generator)

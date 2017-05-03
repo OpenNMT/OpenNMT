@@ -2,54 +2,54 @@ require('onmt.init')
 
 local tester = ...
 
-local rindexLinearTest = torch.TestSuite()
+local LinearTest = torch.TestSuite()
 
-function rindexLinearTest.regular()
+function LinearTest.regular()
   local m_standard = nn.Linear(5,20)
   m_standard:getParameters():uniform(-0.1, 0.1)
-  local m_rindex = onmt.RIndexLinear(5,20)
+  local m_rindex = nn.Linear(5,20)
   m_rindex.weight = m_standard.weight
   m_rindex.bias = m_standard.bias
   local input = torch.Tensor(5):uniform()
   tester:eq(m_standard:forward(input), m_rindex:forward(input), 1e-8)
 end
 
-function rindexLinearTest.inferenceTensor()
+function LinearTest.inferenceTensor()
   local m_standard = nn.Linear(5,20)
   m_standard:getParameters():uniform(-0.1, 0.1)
-  local m_rindex = onmt.RIndexLinear(5,20)
+  local m_rindex = nn.Linear(5,20)
   m_rindex.weight = m_standard.weight
   m_rindex.bias = m_standard.bias
 
-  m_rindex:setOutputIndices(torch.LongTensor{3,5,12})
-  m_rindex:setOutputIndices()
+  m_rindex:RIndex_setOutputIndices(torch.LongTensor{3,5,12})
+  m_rindex:RIndex_setOutputIndices()
 
   local input = torch.Tensor(5):uniform()
   tester:eq(m_standard:forward(input), m_rindex:forward(input), 1e-8)
 end
 
-function rindexLinearTest.inferenceTensorBatch()
+function LinearTest.inferenceTensorBatch()
   local m_standard = nn.Linear(5,20)
   m_standard:getParameters():uniform(-0.1, 0.1)
-  local m_rindex = onmt.RIndexLinear(5,20)
-  m_rindex.weight = m_standard.weight
-  m_rindex.bias = m_standard.bias
+  local m_rindex = nn.Linear(5,20)
+  m_rindex.weight:copy(m_standard.weight)
+  m_rindex.bias:copy(m_standard.bias)
 
-  m_rindex:setOutputIndices(torch.LongTensor{3,5,12})
-  m_rindex:setOutputIndices()
+  m_rindex:RIndex_setOutputIndices(torch.LongTensor{3,5,12})
+  m_rindex:RIndex_setOutputIndices()
 
   local input = torch.Tensor(8, 5):uniform()
   tester:eq(m_standard:forward(input), m_rindex:forward(input), 1e-8)
 end
 
-function rindexLinearTest.trainingTensor()
+function LinearTest.trainingTensor()
   local m_standard = nn.Linear(5,20)
   m_standard:getParameters():uniform(-0.1, 0.1)
-  local m_rindex = onmt.RIndexLinear(5,20)
-  m_rindex.fullWeight:copy(m_standard.weight)
-  m_rindex.fullBias:copy(m_standard.bias)
+  local m_rindex = nn.Linear(5,20)
+  m_rindex.weight:copy(m_standard.weight)
+  m_rindex.bias:copy(m_standard.bias)
 
-  m_rindex:setOutputIndices(torch.LongTensor{3,5,12})
+  m_rindex:RIndex_setOutputIndices(torch.LongTensor{3,5,12})
 
   local input = torch.Tensor(5):uniform()
   local ri_output = m_rindex:forward(input)
@@ -63,4 +63,13 @@ function rindexLinearTest.trainingTensor()
 
 end
 
-return rindexLinearTest
+function LinearTest.clean()
+  local m_rindex = nn.Linear(5,20)
+  m_rindex:RIndex_setOutputIndices(torch.LongTensor{3,5,12})
+  m_rindex:RIndex_clean()
+  tester:eq(m_rindex.fullWeight, nil)
+  tester:eq(m_rindex.fullBias, nil)
+  tester:eq(m_rindex.rowIndices, nil)
+end
+
+return LinearTest
