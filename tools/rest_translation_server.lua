@@ -29,7 +29,7 @@ onmt.utils.Logger.declareOpts(cmd)
 tokenizer.declareOpts(cmd)
 
 cmd:text("")
-cmd:text("**Other options**")
+cmd:text("Other options")
 cmd:text("")
 
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory.]])
