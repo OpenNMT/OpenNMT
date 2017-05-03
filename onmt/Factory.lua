@@ -148,7 +148,7 @@ function Factory.buildEncoder(opt, inputNetwork)
       detail = '('..opt.dropout..')'
     end
     _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; regularization = %s '..detail,
-                   opt.rnn_type, opt.layers, opt.rnn_size)
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.regularization)
   end
 
   if opt.brnn then
@@ -207,7 +207,7 @@ function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
     detail = '('..opt.dropout..')'
   end
   _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; regularization = %s '..detail,
-                 opt.rnn_type, opt.layers, opt.rnn_size)
+                 opt.rnn_type, opt.layers, opt.rnn_size, opt.regularization)
 
   return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end
