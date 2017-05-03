@@ -3,8 +3,8 @@ local LanguageModel, parent = torch.class('LanguageModel', 'Model')
 
 local options = {
   {
-    '-word_vec_size', '500',
-    [[Comma-separated list of embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
+    '-word_vec_size', { 500 },
+    [[List of embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.]],
     {
       structural = 0
     }
@@ -18,10 +18,9 @@ local options = {
     }
   },
   {
-    '-fix_word_vecs_enc', 0,
+    '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = {0, 1},
       structural = 1
     }
   },
@@ -80,7 +79,7 @@ function LanguageModel.load(args, models, dicts)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
-  self.models.generator = onmt.Factory.loadGenerator(models.generator)
+  self.models.generator = onmt.Generator.load(models.generator)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
   return self

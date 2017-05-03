@@ -30,7 +30,8 @@ local options = {
     '-global_attention', 'general',
     [[Global attention model type.]],
     {
-      enum={'general', 'dot', 'concat'}
+      enum = {'general', 'dot', 'concat'},
+      structural = 0
     }
   }
 }

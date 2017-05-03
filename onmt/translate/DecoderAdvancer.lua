@@ -51,7 +51,9 @@ function DecoderAdvancer:initBeam()
     end
   end
   local sourceSizes = onmt.utils.Cuda.convert(self.batch.sourceSize)
-  local attnProba = torch.FloatTensor(self.batch.size, self.context:size(2)):fill(0.0001)
+  local attnProba = torch.FloatTensor(self.batch.size, self.context:size(2))
+    :fill(0.0001)
+    :typeAs(self.context)
   -- Mask padding
   for i = 1,self.batch.size do
     local pad_size = self.context:size(2) - sourceSizes[i]
@@ -101,9 +103,13 @@ function DecoderAdvancer:update(beam)
   self.decoder:maskPadding(contextSizes, contextLength)
   decOut, decStates = self.decoder:forwardOne(inputs, contextSizes, decStates, context, decOut)
   t = t + 1
-  local softmaxOut = self.decoder.softmaxAttn.output
 
-  cumAttnProba = cumAttnProba:typeAs(softmaxOut):add(softmaxOut)
+  local softmaxOut
+
+  if self.decoder.softmaxAttn then
+    softmaxOut = self.decoder.softmaxAttn.output
+    cumAttnProba = cumAttnProba:add(softmaxOut)
+  end
 
   local nextState = {decStates, decOut, context, softmaxOut, nil, sourceSizes, t, cumAttnProba}
   beam:setState(nextState)

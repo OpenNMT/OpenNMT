@@ -6,14 +6,14 @@ local options = {
     [[Save intermediate models every this many iterations within an epoch.
       If = 0, will not save intermediate models.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
     '-report_every', 50,
     [[Report progress every this many iterations within an epoch.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
@@ -43,9 +43,10 @@ local options = {
   },
   {
     '-end_epoch', 13,
-    [[The final epoch of the training.]],
+    [[The final epoch of the training. If = 0, train forever unless another stopping condition
+      is met (e.g. `-min_learning_rate` is reached).]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
     }
   },
   {
@@ -336,9 +337,18 @@ function Trainer:train(trainData, validData, trainStates)
     end
   end
 
-  _G.logger:info('Start training...')
+  local startEpoch = self.args.start_epoch
+  local endEpoch
 
-  for epoch = self.args.start_epoch, self.args.end_epoch do
+  if self.args.end_epoch > 0 then
+    endEpoch = self.args.end_epoch
+    _G.logger:info('Start training from epoch %d to %d...', startEpoch, endEpoch)
+  else
+    endEpoch = math.huge
+    _G.logger:info('Start training from epoch %d and indefinitely...', startEpoch)
+  end
+
+  for epoch = startEpoch, endEpoch do
     _G.logger:info('')
 
     if trainData.sample then

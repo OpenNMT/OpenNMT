@@ -62,6 +62,7 @@ install:
     && luarocks install bit32 || true
     && luarocks install luacheck
     && luarocks install penlight
+    && luarocks install optim
     && luarocks install luacov)
 before_script:
   - export LUA=$(which luajit lua | head -n 1)

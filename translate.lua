@@ -7,7 +7,7 @@ local options = {
     '-src', '',
     [[Source sequences to translate.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+      valid = onmt.utils.ExtendedCmdLine.fileExists
     }
   },
   {
@@ -31,7 +31,7 @@ onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
 cmd:text('')
-cmd:text('**Other options**')
+cmd:text('Other options')
 cmd:text('')
 
 cmd:option('-time', false, [[Measure average translation time.]])

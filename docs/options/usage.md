@@ -26,16 +26,15 @@ th train.lua -config generic.txt -data data/demo-train.t7 -gpuid 1
 
 If an option appears both in the file and on the command line, the file takes priority.
 
-## Boolean flags
+## Boolean options
 
-Flags are options that do not take arguments. For example the option `-brnn` enables bidirectional encoder when added to the command line.
+Boolean options can be used without argument. In this case, their presence on the command line negates their default value. For example the option `-brnn` enables bidirectional encoder when added to the command line.
 
-However, flags that are enabled by default can take `0` as argument to disable them. For example, input feeding is disabled with `-input_feed 0`.
+They optionally accept an argument to make it more practical in scripts:
+
+* `0` or `false`
+* `1` or `true`
 
 ## Multiple arguments
 
-Some options can take multiple arguments. Unless otherwise noted, they accept a list of comma-separated values without spaces:
-
-```text
--option_name value1,value2,value3
-```
+Some options can take multiple arguments (`<table>` argument type in the option listings). You can either space-separate (`value1 value2 value3`) or comma-separate (`value1,value2,value3`) the values.

@@ -1,25 +1,33 @@
 --[[ Data management and batch creation. Handles data created by `preprocess.lua`. ]]
 
-local SampledDataset = torch.class("SampledDataset")
+local SampledDataset, parent = torch.class("SampledDataset", "Dataset")
 
 local options = {
   {
     '-sample', 0,
-    [[Number of instances to sample from train data in each epoch.]]
+    [[Number of instances to sample from train data in each epoch.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
   },
   {
-    '-sample_w_ppl', false,
-    [[If set, ese perplexity as a probability distribution when sampling.]]
+    '-sample_type', 'uniform',
+    [[Define the partition type. `uniform` draws randomly the sample, `perplexity` uses perplexity
+      as a probability distribution when sampling (with `-sample_perplexity_init` and `-sample_perplexity_max`
+      options), `partition` draws different subsets at each epoch.]],
+    {
+      enum = { 'uniform', 'perplexity', 'partition'}
+    }
   },
   {
-    '-sample_w_ppl_init', 15,
+    '-sample_perplexity_init', 15,
     [[Start perplexity-based sampling when average train perplexity per batch
       falls below this value.]]
   },
   {
-    '-sample_w_ppl_max', -1.5,
+    '-sample_perplexity_max', -1.5,
     [[When greater than 0, instances with perplexity above this value will be
-      considered as noise and ignored; when less than 0, mode + `-sample_w_ppl_max` * stdev
+      considered as noise and ignored; when less than 0, mode + `-sample_perplexity_max` * stdev
       will be used as threshold.]]
   }
 }
@@ -32,33 +40,33 @@ end
   and `tgtData`.
 --]]
 function SampledDataset:__init(srcData, tgtData, opt)
-
-  self.src = srcData.words or srcData.vectors
-  self.srcFeatures = srcData.features
-
-  if tgtData ~= nil then
-    self.tgt = tgtData.words  or tgtData.vectors
-    self.tgtFeatures = tgtData.features
-  end
+  parent.__init(self, srcData, tgtData)
 
   self.samplingSize = opt.sample
-  self.sample_w_ppl = opt.sample_w_ppl
-  self.sample_w_ppl_init = opt.sample_w_ppl_init
-  self.sample_w_ppl_max = opt.sample_w_ppl_max
+  self.sample_type = opt.sample_type
+  self.sample_perplexity_init = opt.sample_perplexity_init
+  self.sample_perplexity_max = opt.sample_perplexity_max
   self.startedPplSampling = false
 
   _G.logger:info(' * sampling ' .. opt.sample .. ' instances from ' .. #self.src .. ' at each epoch')
-  if opt.sample_w_ppl then
+  if opt.sample_type == 'perplexity' then
     _G.logger:info(' * using train data perplexity as probability distribution when sampling')
-    _G.logger:info(' * sample_w_ppl_init: ' .. opt.sample_w_ppl_init)
-    _G.logger:info(' * sample_w_ppl_max: ' .. opt.sample_w_ppl_max)
+    _G.logger:info(' * sample_perplexity_init: ' .. opt.sample_perplexity_init)
+    _G.logger:info(' * sample_perplexity_max: ' .. opt.sample_perplexity_max)
   end
 
-  if self.sample_w_ppl then
+  if self.sample_type == 'perplexity' then
     self.samplingProb = torch.Tensor(#self.src)
-    self.samplingProb:fill(self.sample_w_ppl_init)
+    self.samplingProb:fill(self.sample_perplexity_init)
     self.ppl = torch.Tensor(#self.src)
-    self.ppl:fill(self.sample_w_ppl_init)
+    self.ppl:fill(self.sample_perplexity_init)
+  elseif self.sample_type == 'partition' then
+    self.partitionStart = 1
+    self.partitionIdx = 1
+    self.partitionStep = math.floor(#self.src/self.samplingSize)
+    if self.partitionStep == 0 then
+      self.partitionStep = 1
+    end
   else
     self.samplingProb = torch.ones(#self.src)
   end
@@ -70,7 +78,7 @@ end
 function SampledDataset:checkModel(model)
   if self:needIndividualLosses() and (not model.returnIndividualLosses or model:returnIndividualLosses(true) == false) then
     _G.logger:info('Current model does not support training with invididual losses; Sampling with individual loss will be disabled.')
-    self.sample_w_ppl = false
+    self.sample_type = 'uniform'
     self.samplingProb = torch.ones(#self.src)
     self.ppl = nil
   else
@@ -81,7 +89,7 @@ function SampledDataset:checkModel(model)
 end
 
 function SampledDataset:needIndividualLosses()
-  return self.sample_w_ppl
+  return self.sample_type == 'perplexity'
 end
 
 --[[ Initiate sampling. ]]
@@ -91,20 +99,20 @@ function SampledDataset:sample(logLevel)
 
   _G.logger:log('Sampling dataset...', logLevel)
 
-  -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_w_ppl_init.
-  if self.sample_w_ppl and not self.startedPplSampling then
+  -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_perplexity_init.
+  if self.sample_type == 'perplexity' and not self.startedPplSampling then
     local avgPpl = torch.sum(self.ppl)
     avgPpl = avgPpl / self.ppl:size(1)
-    if avgPpl < self.sample_w_ppl_init then
+    if avgPpl < self.sample_perplexity_init then
       _G.logger:log('Beginning to sample with ppl as probability distribution...', logLevel)
       self.startedPplSampling = true
     end
   end
 
   if self.startedPplSampling then
-    local threshold = self.sample_w_ppl_max
+    local threshold = self.sample_perplexity_max
 
-    if self.sample_w_ppl_max < 0 then
+    if self.sample_perplexity_max < 0 then
       -- Use mode (instead of mean) and stdev of samples with ppl >= mode to
       -- find max ppl to consider (mode + x * stdev). when x is:
       --      x: 1 ~ 100% - 31.7%/2 of train data are not included (divide by 2 because we cut only one-tail)
@@ -117,13 +125,13 @@ function SampledDataset:sample(logLevel)
       -- We are using mode instead of average, and only samples above mode to calculate stdev, so
       -- this is not really theoretically valid numbers, but more for emperical uses.
 
-      local x = math.abs(self.sample_w_ppl_max)
+      local x = math.abs(self.sample_perplexity_max)
 
       -- Find mode.
       local pplRounded = torch.round(self.ppl * 100) / 100 -- keep up to the second decimal point
       local bin = {}
       for i = 1, pplRounded:size(1) do
-        if self.ppl[i] ~=  self.sample_w_ppl_init then
+        if self.ppl[i] ~=  self.sample_perplexity_init then
           local idx = pplRounded[i]
           if bin[idx] == nil then
             bin[idx] = 0
@@ -142,7 +150,7 @@ function SampledDataset:sample(logLevel)
       local sum = 0
       local cnt = 0
       for i = 1, self.ppl:size(1) do
-        if self.ppl[i] > mode and self.ppl[i] ~= self.sample_w_ppl_init then
+        if self.ppl[i] > mode and self.ppl[i] ~= self.sample_perplexity_init then
           sum = math.pow(self.ppl[i] - mode, 2)
           cnt = cnt + 1
         end
@@ -158,7 +166,7 @@ function SampledDataset:sample(logLevel)
     end
 
     for i = 1, self.ppl:size(1) do
-      if self.ppl[i] ~= self.sample_w_ppl_init and self.ppl[i] > threshold then
+      if self.ppl[i] ~= self.sample_perplexity_init and self.ppl[i] > threshold then
         -- Assign low value to instances with ppl above threshold (outliers).
         self.samplingProb[i] = 1
       else
@@ -167,9 +175,22 @@ function SampledDataset:sample(logLevel)
     end
   end
 
-  local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
   self.sampled = torch.LongTensor(self.samplingSize)
-  self.sampled = sampler:batchdraw(self.sampled)
+  if self.sample_type == 'partition' then
+    -- incremental drawing
+    for i = 1, self.samplingSize do
+      self.sampled[i] = self.partitionIdx
+      self.partitionIdx = self.partitionIdx+self.partitionStep
+      if self.partitionIdx > #self.src then
+        self.partitionStart = (self.partitionStart%self.partitionStep)+1
+        self.partitionIdx = self.partitionStart
+      end
+    end
+  else
+    -- random drawing
+    local sampler = onmt.data.AliasMultinomial.new(self.samplingProb)
+    self.sampled = sampler:batchdraw(self.sampled)
+  end
 
   self.sampledCnt:zero()
   for i = 1, self.sampled:size(1) do
@@ -272,18 +293,6 @@ end
 --[[ Return number of sampled instances. ]]
 function SampledDataset:getNumSampled()
   return self.sampled:size(1)
-end
-
---[[ Return number of batches. ]]
-function SampledDataset:batchCount()
-  if self.batchRange == nil then
-    if #self.src > 0 then
-      return 1
-    else
-      return 0
-    end
-  end
-  return #self.batchRange
 end
 
 function SampledDataset:instanceCount()

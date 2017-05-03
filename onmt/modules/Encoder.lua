@@ -17,7 +17,8 @@ local Encoder, parent = torch.class('onmt.Encoder', 'onmt.Sequencer')
 local options = {
   {
     '-layers', 2,
-    [[Number of recurrent layers of the encoder and decoder.]],
+    [[Number of recurrent layers of the encoder and decoder. See also `-enc_layers`, `-dec_layers`
+      and `-bridge` to assign different layers to the encoder and decoder.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0

@@ -55,49 +55,37 @@ local bitextOptions = {
     }
   },
   {
-    '-src_vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-src_vocab_size', { 50000 },
+    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-tgt_vocab_size', '50000',
-    [[Comma-separated list of target vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_vocab_size', { 50000 },
+    [[List of target vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-src_words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-src_words_min_frequency', { 0 },
+    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
-    '-tgt_words_min_frequency', '0',
-    [[Comma-separated list of target words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_words_min_frequency', { 0 },
+    [[List of target words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-src_seq_length', 50,
     [[Maximum source sequence length.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
     '-tgt_seq_length', 50,
     [[Maximum target sequence length.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
@@ -125,26 +113,20 @@ local monotextOptions = {
     }
   },
   {
-    '-vocab_size', '50000',
-    [[Comma-separated list of source vocabularies size: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are not pruned.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-vocab_size', { 50000 },
+    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-words_min_frequency', '0',
-    [[Comma-separated list of source words min frequency: `word[,feat1[,feat2[,...] ] ]`.
-      If = 0, vocabularies are pruned by size.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-words_min_frequency', { 0 },
+    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-seq_length', 50,
     [[Maximum source sequence length.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
@@ -186,31 +168,27 @@ local feattextOptions = {
     }
   },
   {
-    '-tgt_vocab_size', '50000',
-    [[Comma-separated list of target vocabularies size: word[,feat1,feat2,...]. If = 0, vocabularies are not pruned.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_vocab_size', { 50000 },
+    [[List of target vocabularies size: word[ feat1[ feat2[ ...] ] ].
+      If = 0, vocabularies are not pruned.]]
   },
   {
-    '-tgt_words_min_frequency', '0',
-    [[Comma-separated list of target words min frequency: word[,feat1,feat2,...]. If = 0, vocabularies are pruned by size.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.listUInt
-    }
+    '-tgt_words_min_frequency', { 0 },
+    [[List of target words min frequency: word[ feat1[ feat2[ ...] ] ].
+      If = 0, vocabularies are pruned by size.]]
   },
   {
     '-src_seq_length', 50,
     [[Maximum source sequence length.]],
     {
-      valid=onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
     '-tgt_seq_length', 50,
     [[Maximum target sequence length.]],
     {
-      valid=onmt.utils.ExtendedCmdLine.isUInt
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
@@ -221,25 +199,20 @@ local commonOptions = {
     [[Path prefix to existing features vocabularies.]]
   },
   {
-    '-time_shift_feature', 1,
-    [[Time shift features on the decoder side.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
-    }
+    '-time_shift_feature', true,
+    [[Time shift features on the decoder side.]]
   },
   {
-    '-sort', 1,
-    [[If = 1, sort the sentences by size to build batches without source padding.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0, 1)
-    }
+    '-keep_frequency', false,
+    [[Keep frequency of words in dictionary.]]
   },
   {
-    '-shuffle', 1,
-    [[If = 1, shuffle data (prior sorting).]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(0,1)
-    }
+    '-sort', true,
+    [[If set, sort the sequences by size to build batches without source padding.]]
+  },
+  {
+    '-shuffle', true,
+    [[If set, shuffle the data (prior sorting).]]
   },
   {
     '-idx_files', false,
@@ -249,7 +222,7 @@ local commonOptions = {
     '-report_every', 100000,
     [[Report status every this many sentences.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
@@ -442,14 +415,14 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)
@@ -463,7 +436,7 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
   _G.logger:info(' * average sequence length: source = %.1f, target = %.1f',
                  avgSrcLength,
                  avgTgtLength)
-  _G.logger:info(' * %% of unkown words: source = %.1f%%, target = %.1f%%',
+  _G.logger:info(' * %% of unknown words: source = %.1f%%, target = %.1f%%',
                  prunedRatioSrc * 100,
                  prunedRatioTgt * 100)
 
@@ -510,23 +483,29 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
 
   local count = 0
   local ignored = 0
+  local emptyCount = 0
 
   local function processFeatTextSentence(srcFeats, tgtTokens)
-    if isValid(srcFeats, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
-      local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
-
-      src:insert(srcFeats)
-      tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
-                                             onmt.Constants.UNK_WORD,
-                                             onmt.Constants.BOS_WORD,
-                                             onmt.Constants.EOS_WORD))
-
-      if #tgtDicts.features > 0 then
-        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
-      end
-      sizes:insert(srcFeats:size(1))
-    else
+    if srcFeats:dim() == 0 or not tgtTokens then
       ignored = ignored + 1
+      emptyCount = emptyCount + 1
+    else
+      if isValid(srcFeats, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
+        local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
+
+        src:insert(srcFeats)
+        tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
+                                               onmt.Constants.UNK_WORD,
+                                               onmt.Constants.BOS_WORD,
+                                               onmt.Constants.EOS_WORD))
+
+        if #tgtDicts.features > 0 then
+          tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
+        end
+        sizes:insert(srcFeats:size(1))
+      else
+        ignored = ignored + 1
+      end
     end
 
     count = count + 1
@@ -573,8 +552,7 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
       tgtCount = tgtCount + 1
     end
     if srcCount ~= tgtCount then
-      _G.logger:error('source Idx and target Idx not aligned')
-      os.exit(1)
+      _G.logger:warning('missing '..(srcCount-tgtCount)..' sentences in target')
     end
     for k,v in pairs(srcDict) do
       processFeatTextSentence(v, tgtDict[k])
@@ -607,21 +585,21 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#src)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)
   end
 
   _G.logger:info('Prepared ' .. #src .. ' sequences (' .. ignored
-                   .. ' ignored due to source length > ' .. self.args.src_seq_length
+                   .. ' ignored: '..emptyCount..' empty, '..(ignored-emptyCount)..' source length > ' .. self.args.src_seq_length
                    .. ' or target length > ' .. self.args.tgt_seq_length .. ')')
 
   local srcData = {
@@ -691,14 +669,14 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
     end
   end
 
-  if self.args.shuffle == 1 then
+  if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
     local perm = torch.randperm(#dataset)
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
 
-  if self.args.sort == 1 then
+  if self.args.sort then
     _G.logger:info('... sorting sentences by size')
     local _, perm = torch.sort(vecToTensor(sizes))
     reorderData(perm)

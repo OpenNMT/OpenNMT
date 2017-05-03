@@ -9,6 +9,8 @@ require('onmt.modules.Decoder')
 
 require('onmt.modules.Network')
 
+require('onmt.modules.Bridge')
+
 require('onmt.modules.GRU')
 require('onmt.modules.LSTM')
 
@@ -21,7 +23,6 @@ require('onmt.modules.GlobalAttention')
 require('onmt.modules.GlobalAttentionCoverage')
 
 require('onmt.modules.Generator')
-require('onmt.modules.FeaturesGenerator')
 
 require('onmt.modules.Bottle')
 require('onmt.modules.JoinReplicateTable')

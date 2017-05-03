@@ -18,11 +18,10 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 local options = {
   {
-    '-input_feed', 1,
+    '-input_feed', true,
     [[Feed the context vector at each time step as additional input
       (via concatenation with the word embeddings) to the decoder.]],
     {
-      enum = {0, 1},
       structural = 0
     }
   }
@@ -51,7 +50,10 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   -- Input feeding means the decoder takes an extra
   -- vector each time representing the attention at the
   -- previous step.
-  local inputSize = inputNetwork.inputSize + (args.input_feed * args.rnn_size)
+  local inputSize = inputNetwork.inputSize
+  if args.input_feed then
+    inputSize = inputSize + args.rnn_size
+  end
 
   local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
                       args.dropout, args.residual, args.dropout_input)
@@ -66,7 +68,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args.inputIndex = {}
   self.args.outputIndex = {}
 
-  self.args.inputFeed = (args.input_feed == 1)
+  self.args.inputFeed = args.input_feed
   self.args.hasCoverage = attentionModel.hasCoverage
   self.args.coverageSize = attentionModel.coverageSize
 
@@ -91,7 +93,7 @@ function Decoder.load(pretrained)
   self.args = pretrained.args
 
   parent.__init(self, pretrained.modules[1])
-  self.generator = pretrained.modules[2]
+  self.generator = onmt.Generator.load(pretrained.modules[2])
   self:add(self.generator)
 
   self:resetPreallocation()
@@ -358,21 +360,21 @@ end
   Parameters:
 
   * `batch` - `Batch` object
-  * `encoderStates` -
+  * `initialStates` - initialization of decoder.
   * `context` -
   * `func` - Calls `func(out, t)` each timestep.
 --]]
 
-function Decoder:forwardAndApply(batch, encoderStates, context, func)
+function Decoder:forwardAndApply(batch, initialStates, context, func)
   -- TODO: Make this a private method.
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(#encoderStates,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(#initialStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.rnnSize })
   end
 
-  local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, encoderStates)
+  local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, initialStates)
 
   local prevOut
 
@@ -389,13 +391,13 @@ end
   Parameters:
 
   * `batch` - a `Batch` object.
-  * `encoderStates` - a batch of initial decoder states (optional) [0]
+  * `initialStates` - a batch of initial decoder states (optional) [0]
   * `context` - the context to apply attention to.
 
   Returns: Table of top hidden state for each timestep.
 --]]
-function Decoder:forward(batch, encoderStates, context)
-  encoderStates = encoderStates
+function Decoder:forward(batch, initialStates, context)
+  initialStates = initialStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
@@ -405,7 +407,7 @@ function Decoder:forward(batch, encoderStates, context)
 
   local outputs = {}
 
-  self:forwardAndApply(batch, encoderStates, context, function (out)
+  self:forwardAndApply(batch, initialStates, context, function (out)
     table.insert(outputs, out)
   end)
 
@@ -447,10 +449,14 @@ function Decoder:backward(batch, outputs, criterion)
   end
 
   for t = batch.targetLength, 1, -1 do
+    local refOutput = batch:getTargetOutput(t)
+
+    -- sampling-based generator need outputs during training
+    local prepOutputs = { outputs[t], refOutput }
+
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass.
-    local pred = self.generator:forward(outputs[t])
-    local output = batch:getTargetOutput(t)
+    local pred = self.generator:forward(prepOutputs)
 
     if self.indvLoss then
       for i = 1, pred[1]:size(1) do
@@ -459,7 +465,7 @@ function Decoder:backward(batch, outputs, criterion)
           local tmpOutput = {}
           for j = 1, #pred do
             table.insert(tmpPred, pred[j][{{i}, {}}])
-            table.insert(tmpOutput, output[j][{{i}}])
+            table.insert(tmpOutput, refOutput[j][{{i}}])
           end
           local tmpLoss = criterion:forward(tmpPred, tmpOutput)
           indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
@@ -467,17 +473,24 @@ function Decoder:backward(batch, outputs, criterion)
         end
       end
     else
-      loss = loss + criterion:forward(pred, output)
+      loss = loss + criterion:forward(pred, refOutput)
     end
 
     -- Compute the criterion gradient.
-    local genGradOut = criterion:backward(pred, output)
+    local genGradOut = criterion:backward(pred, refOutput)
+
+    -- normalize gradient - we might have several batches in parallel, so we divide by total size of batch
     for j = 1, #genGradOut do
-      genGradOut[j]:div(batch.totalSize)
+      -- each criterion might have its own normalization function
+      if criterion.normalizationFunc and criterion.normalizationFunc[j] ~= false then
+        criterion.normalizationFunc[j](genGradOut[j], batch.totalSize)
+      else
+        genGradOut[j]:div(batch.totalSize)
+      end
     end
 
     -- Compute the final layer gradient.
-    local decGradOut = self.generator:backward(outputs[t], genGradOut)
+    local decGradOut = self.generator:backward(prepOutputs, genGradOut)
     gradStatesInput[self.args.numEffectiveLayers + 1]:add(decGradOut)
 
     -- Compute the standard backward.
@@ -515,22 +528,22 @@ end
 Parameters:
 
   * `batch` - a `Batch` to score.
-  * `encoderStates` - initialization of decoder.
+  * `initialStates` - initialization of decoder.
   * `context` - the attention context.
   * `criterion` - a pointwise criterion.
 
 --]]
-function Decoder:computeLoss(batch, encoderStates, context, criterion)
-  encoderStates = encoderStates
+function Decoder:computeLoss(batch, initialStates, context, criterion)
+  initialStates = initialStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
 
   local loss = 0
-  self:forwardAndApply(batch, encoderStates, context, function (out, t)
+  self:forwardAndApply(batch, initialStates, context, function (out, t)
     local pred = self.generator:forward(out)
-    local output = batch:getTargetOutput(t)
-    loss = loss + criterion:forward(pred, output)
+    local refOutput = batch:getTargetOutput(t)
+    loss = loss + criterion:forward(pred, refOutput)
   end)
 
   return loss
@@ -542,19 +555,19 @@ end
 Parameters:
 
   * `batch` - a `Batch` to score.
-  * `encoderStates` - initialization of decoder.
+  * `initialStates` - initialization of decoder.
   * `context` - the attention context.
 
 --]]
-function Decoder:computeScore(batch, encoderStates, context)
-  encoderStates = encoderStates
+function Decoder:computeScore(batch, initialStates, context)
+  initialStates = initialStates
     or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
 
   local score = {}
 
-  self:forwardAndApply(batch, encoderStates, context, function (out, t)
+  self:forwardAndApply(batch, initialStates, context, function (out, t)
     local pred = self.generator:forward(out)
     for b = 1, batch.size do
       if t <= batch.targetSize[b] then
