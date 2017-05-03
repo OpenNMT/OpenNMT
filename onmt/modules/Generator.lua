@@ -42,6 +42,10 @@ end
 function Generator:setTargetVoc(_)
 end
 
+--[[ If the target vocabulary for the batch is not full vocabulary ]]
+function Generator:unsetTargetVoc(_)
+end
+
 --[[ Release Generator for inference only ]]
 function Generator:release()
 end

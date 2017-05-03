@@ -130,6 +130,8 @@ function Seq2Seq:__init(args, dicts)
                                    self.models.decoder.args.numEffectiveLayers)
 
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.tgtVocSize = dicts.tgt.words:size(1)
+
 end
 
 function Seq2Seq.load(args, models, dicts)
@@ -143,6 +145,7 @@ function Seq2Seq.load(args, models, dicts)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
   self.models.bridge = onmt.Bridge.load(models.bridge)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.tgtVocSize = dicts.tgt.words:size(1)
 
   return self
 end
@@ -165,6 +168,16 @@ function Seq2Seq:returnIndividualLosses(enable)
     self.models.decoder:returnIndividualLosses(enable)
   end
   return true
+end
+
+function Seq2Seq:setTargetVoc(t)
+  self.models.decoder.generator:setTargetVoc(t)
+  self.criterion.mainCriterion.weights:resize(t:size(1))
+end
+
+function Seq2Seq:unsetTargetVoc(t)
+  self.models.decoder.generator:setTargetVoc()
+  self.criterion.mainCriterion.weights:resize(self.tgtVocSize)
 end
 
 function Seq2Seq:enableProfiling()

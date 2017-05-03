@@ -224,7 +224,7 @@ end
 
 function Factory.buildGenerator(opt, dicts)
   local sizes = Factory.getOutputSizes(dicts)
-  if opt.importance_sampling_tgt_voc_size > 0 then
+  if opt.importance_sampling then
     return onmt.ISGenerator(opt, sizes)
   else
     return onmt.Generator(opt, sizes)

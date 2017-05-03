@@ -142,7 +142,7 @@ local function find(t, value, default)
         min = mid +1
       end
     end
-    return t[max] == value and max or default
+    return (max > 1 and t[max] == value and max) or default
   elseif torch.isTensor(value) and value:dim()==1 then
     local res = torch.LongTensor(value:size(1))
     for j = 1, value:size(1) do

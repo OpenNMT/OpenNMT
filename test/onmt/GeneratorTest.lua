@@ -70,8 +70,8 @@ function generatorTest.ISGenerator()
   local output_ri = generator:forward({context, torch.Tensor{3}})
 
   tester:eq(output[1]:narrow(2,1,2), output_ri[1]:narrow(2,1,2))
-  tester:eq(output_ri[1]:narrow(2,3,1):sum(),output_ri[1]:narrow(2,4,1):sum())
   tester:eq(output[2], output_ri[2])
+  tester:eq(output_ri[1]:size(2),2)
 end
 
 return generatorTest

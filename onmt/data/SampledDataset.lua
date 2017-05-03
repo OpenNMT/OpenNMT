@@ -42,11 +42,9 @@ end
 function SampledDataset:__init(opt, srcData, tgtData)
   parent.__init(self, srcData, tgtData)
 
-  if tgtData and opt.importance_sampling_tgt_voc_size > 0 then
+  if tgtData and opt.importance_sampling then
     self.targetVocIndex = {}
-    self.targetVocTensor = torch.LongTensor(opt.importance_sampling_tgt_voc_size)
-    self.targetVocCount = 0
-    self.targetVocMax = opt.importance_sampling_tgt_voc_size
+    self.targetVocTensor = {}
   end
 
   self.samplingSize = opt.sample
@@ -56,8 +54,8 @@ function SampledDataset:__init(opt, srcData, tgtData)
   self.startedPplSampling = false
 
   _G.logger:info(' * sampling ' .. opt.sample .. ' instances from ' .. #self.src .. ' at each epoch')
-  if self.targetVocMax then
-    _G.logger:info(' * with target vocabulary importance sampling ('..self.targetVocMax..')')
+  if self.targetVocIndex then
+    _G.logger:info(' * with target vocabulary importance sampling')
   end
   if opt.sample_type == 'perplexity' then
     _G.logger:info(' * using train data perplexity as probability distribution when sampling')
@@ -109,10 +107,11 @@ function SampledDataset:sample(logLevel)
 
   _G.logger:log('Sampling dataset...', logLevel)
 
-  if self.targetVocMax then
-    self.targetVocCount = 0
-    self.targetVocTensor:resize(self.targetVocMax)
-    self.targetVocIndex = {}
+  if self.targetVocIndex then
+    self.targetVocTensor = { }
+    self.targetVocIndex = { }
+    self.targetVocIndex[onmt.Constants.PAD]=1
+    table.insert(self.targetVocTensor,onmt.Constants.PAD)
   end
 
   -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_perplexity_init.
@@ -212,16 +211,11 @@ function SampledDataset:sample(logLevel)
   for i = 1, self.sampled:size(1) do
     self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
     -- if importance sampling select target vocabs
-    if self.targetVocMax
-         and self.targetVocCount < self.targetVocMax then
+    if self.targetVocIndex then
       for j = 1, self.tgt[self.sampled[i]]:size(1) do
         if not self.targetVocIndex[self.tgt[self.sampled[i]][j]] then
           self.targetVocIndex[self.tgt[self.sampled[i]][j]] = 1
-          self.targetVocCount = self.targetVocCount + 1
-          self.targetVocTensor[self.targetVocCount] = self.tgt[self.sampled[i]][j]
-          if self.targetVocCount == self.targetVocMax then
-            break
-          end
+          table.insert(self.targetVocTensor, self.tgt[self.sampled[i]][j])
         end
       end
     end
@@ -275,11 +269,9 @@ function SampledDataset:sample(logLevel)
 
   _G.logger:log('Sampled ' .. self.sampled:size(1) .. ' instances into ' .. #self.batchRange .. ' batches.', logLevel)
 
-  if self.targetVocMax then
-    if self.targetVocCount < self.targetVocMax then
-      self.targetVocTensor:resize(self.targetVocCount)
-    end
-    _G.logger:log('Importance Sampling - keeping '..self.targetVocCount..' target vocabs.', logLevel)
+  if self.targetVocIndex then
+    self.targetVocTensor=torch.LongTensor(self.targetVocTensor):sort()
+    _G.logger:log('Importance Sampling - keeping '..self.targetVocTensor:size(1)..' target vocabs.', logLevel)
   end
 
   return #self.batchRange, batchesOccupation / batchesCapacity
@@ -371,7 +363,11 @@ function SampledDataset:getBatch(batchIdx)
         table.insert(srcFeatures, self.srcFeatures[i])
       end
       if self.tgt ~= nil then
-        table.insert(tgt, self.tgt[i])
+        local tgtIdx = self.tgt[i]
+        if self.targetVocTensor then
+          tgtIdx = onmt.utils.Tensor.find(self.targetVocTensor, tgtIdx)
+        end
+        table.insert(tgt, tgtIdx)
         if self.tgtFeatures[i] then
           table.insert(tgtFeatures, self.tgtFeatures[i])
         end
@@ -380,10 +376,6 @@ function SampledDataset:getBatch(batchIdx)
   end
 
   local batch = onmt.data.Batch.new(src, srcFeatures, tgt, tgtFeatures)
-
-  if self.targetVocTensor then
-    batch.targetVocTensor = self.targetVocTensor
-  end
 
   return batch
 end

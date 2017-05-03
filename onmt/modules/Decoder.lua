@@ -390,11 +390,6 @@ function Decoder:backward(batch, outputs, criterion)
   local loss = 0
   local indvAvgLoss = torch.zeros(outputs[1]:size(1))
 
-  -- if target vocabulary for the batch is provided and generator support setting target vocabulary
-  if batch.targetVocTensor and self.generator.setTargetVoc then
-    self.generator:setTargetVoc(batch.targetVocTensor)
-  end
-
   for t = batch.targetLength, 1, -1 do
     local refOutput = batch:getTargetOutput(t)
 
