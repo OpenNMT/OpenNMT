@@ -8,8 +8,13 @@ local options = {
     '-importance_sampling', false,
     [[Use importance sampling approach as approximation of full softmax, target vocabulary is built using sampling.]],
     {
-      depends = function(opt) return opt.importance_sampling_tgt_voc_size == 0 or
-                                     opt.sample ~= 0, "requires '-sample' option" end
+      depends = function(opt)
+                  if opt.importance_sampling then
+                    if opt.model_type and opt.model_type ~= 'seq2seq' then return false, "only works for seq2seq models." end
+                    if opt.sample == 0 then return false, "requires '-sample' option" end
+                  end
+                  return true
+                end
     }
   }
 }

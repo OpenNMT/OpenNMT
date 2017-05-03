@@ -134,16 +134,6 @@ function LanguageModel:forwardComputeLoss(batch)
   return loss
 end
 
-function LanguageModel:setTargetVoc(t)
-  self.models.generator:setTargetVoc(t)
-  self.criterion.mainCriterion.weights:resize(t:size(1))
-end
-
-function LanguageModel:unsetTargetVoc()
-  self.models.generator:setTargetVoc()
-  self.criterion.mainCriterion.weights:resize(self.tgtVocSize)
-end
-
 function LanguageModel:trainNetwork(batch)
   local loss = 0
 

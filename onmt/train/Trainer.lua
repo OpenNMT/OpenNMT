@@ -140,7 +140,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   end
 
   -- if target vocabulary for the batch is provided and generator support setting target vocabulary
-  if data.targetVocTensor then
+  if data.targetVocTensor and _G.model.setTargetVoc then
     _G.model:setTargetVoc(data.targetVocTensor)
   end
 
@@ -315,7 +315,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     epochState:log(numIterations)
   end
 
-  if data.targetVocTensor then
+  if data.targetVocTensor and _G.model.setTargetVoc then
     _G.model:unsetTargetVoc()
   end
 

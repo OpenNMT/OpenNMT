@@ -100,8 +100,11 @@ end
 function cmdLineTest.fail_unknown()
   local cmd = onmt.utils.ExtendedCmdLine.new()
   onmt.Seq2Seq.declareOpts(cmd)
-
+  onmt.data.SampledDataset.declareOpts(cmd)
+  -- will generate error
+  print('')
   tester:assertError(function() cmd:parse({'-src_word_vec_size', '500', '-xxx'}) end)
+  tester:assertError(function() cmd:parse({'-importance_sampling', '-sample', '0'}) end)
 end
 
 return cmdLineTest
