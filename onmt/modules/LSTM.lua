@@ -79,7 +79,7 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, regu
 
     if dropout > 0 then
       if (regularize_input or L > 1) then
-        nn.Dropout(dropout)(input)
+        input = nn.Dropout(dropout)(input)
       end
     else
       if (regularize_input or L > 1) then
