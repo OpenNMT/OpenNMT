@@ -33,8 +33,9 @@ function PDBiEncoder:__init(args, input)
 
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.layers = args.layers
+  self.args.regularization = args.regularization
   self.args.dropout = args.dropout
-  local dropout_input = args.dropout_input
+  local regularization_input = args.regularization_input
 
   self.layers = {}
 
@@ -50,14 +51,14 @@ function PDBiEncoder:__init(args, input)
     if #self.layers ~= 1 then
       self.args.multiplier = self.args.multiplier * self.args.pdbrnn_reduction
     else
-      -- trick to force a dropout on each layer L > 1
-      if args.dropout > 0 then
-        args.dropout_input = true
+      -- trick to force a regularization on each layer L > 1
+      if #self.layers == 1 and args.regularization ~= 'none' then
+        args.regularization_input = true
       end
     end
   end
   args.layers = self.args.layers
-  args.dropout_input = dropout_input
+  args.regularization_input = regularization_input
   self.args.numEffectiveLayers = self.layers[1].args.numEffectiveLayers * self.args.layers
   self.args.hiddenSize = args.rnn_size
 

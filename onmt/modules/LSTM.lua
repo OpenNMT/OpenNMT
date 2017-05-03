@@ -30,22 +30,24 @@ Parameters:
   * `layers` - Number of LSTM layers, L.
   * `inputSize` - Size of input layer
   * `hiddenSize` - Size of the hidden layers.
+  * `regularization` - the regularization type
   * `dropout` - Dropout rate to use (in $$[0,1]$$ range).
   * `residual` - Residual connections between layers.
   * `regularize_input` - if true, add a regularization layer on the first layer (useful for instance in complex encoders)
 --]]
-function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, regularize_input)
+function LSTM:__init(layers, inputSize, hiddenSize, regularization, dropout, residual, regularize_input)
   dropout = dropout or 0
 
+  self.regularization = regularization
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, regularize_input))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, regularize_input))
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, regularize_input)
+function LSTM:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, regularize_input)
   local inputs = {}
   local outputs = {}
 
@@ -77,11 +79,11 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, regu
       end
     end
 
-    if dropout > 0 then
+    if (not regularization or regularization == 'dropout') and dropout > 0 then
       if (regularize_input or L > 1) then
         input = nn.Dropout(dropout)(input)
       end
-    else
+    elseif regularization == 'layernorm' then
       if (regularize_input or L > 1) then
         input = nn.LayerNormalization(inputDim)(input)
       end

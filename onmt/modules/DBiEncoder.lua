@@ -24,8 +24,9 @@ function DBiEncoder:__init(args, input)
 
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.layers = args.layers
+  self.args.regularization = args.regularization
   self.args.dropout = args.dropout
-  local dropout_input = args.dropout_input
+  local regularization_input = args.regularization_input
 
   self.layers = {}
 
@@ -38,15 +39,15 @@ function DBiEncoder:__init(args, input)
     identity.inputSize = args.rnn_size
     input = identity
     self:add(self.layers[#self.layers])
-    -- trick to force a dropout on each layer L > 1
-    if #self.layers == 1 and args.dropout > 0 then
-      args.dropout_input = true
+    -- trick to force a regularization on each layer L > 1
+    if #self.layers == 1 and args.regularization ~= 'none' then
+      args.regularization_input = true
     end
   end
   args.layers = self.args.layers
   self.args.numEffectiveLayers = self.layers[1].args.numEffectiveLayers * self.args.layers
   self.args.hiddenSize = args.rnn_size
-  args.dropout_input = dropout_input
+  args.regularization_input = regularization_input
 
   self:resetPreallocation()
 end

@@ -55,7 +55,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
     inputSize = inputSize + args.rnn_size
   end
 
-  local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
+  local rnn = RNN.new(args.layers, inputSize, args.rnn_size, args.regularization,
                       args.dropout, args.residual, args.dropout_input)
 
   self.rnn = rnn
@@ -185,9 +185,13 @@ function Decoder:_buildModel(attentionModel)
   attnLayer.name = 'decoderAttn'
   local attnInput = {outputs[#outputs], context}
   local attnOutput = attnLayer(attnInput)
-  if self.rnn.dropout > 0 then
+
+  if (not self.rnn.regularization or self.rnn.regularization == 'dropout') and self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
+  elseif self.rnn.regularization == 'layernorm' then
+    attnOutput = nn.LayerNormalization(self.args.rnnSize)(attnOutput)
   end
+
   table.insert(outputs, attnOutput)
   return nn.gModule(inputs, outputs)
 end

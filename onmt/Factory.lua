@@ -143,7 +143,11 @@ function Factory.buildEncoder(opt, inputNetwork)
 
   local function describeEncoder(name)
     _G.logger:info('   - type: %s', name)
-    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+    local detail = ''
+    if opt.regularization == 'dropout' then
+      detail = '('..opt.dropout..')'
+    end
+    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; regularization = %s '..detail,
                    opt.rnn_type, opt.layers, opt.rnn_size)
   end
 
@@ -198,7 +202,11 @@ function Factory.loadEncoder(pretrained)
 end
 
 function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
-  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+  local detail = ''
+  if opt.regularization == 'dropout' then
+    detail = '('..opt.dropout..')'
+  end
+  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; regularization = %s '..detail,
                  opt.rnn_type, opt.layers, opt.rnn_size)
 
   return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
