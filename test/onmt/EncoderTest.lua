@@ -4,13 +4,14 @@ local tester = ...
 
 local encoderTest = torch.TestSuite()
 
-local function buildEncoder(class, rnnType)
+local function buildEncoder(class, rnnType, merge)
   local cmd = onmt.utils.ExtendedCmdLine.new()
   class.declareOpts(cmd)
 
   local opt = cmd:parse('')
   opt.rnn_size = 10
   opt.rnn_type = rnnType or 'LSTM'
+  opt.brnn_merge = merge or 'sum'
   opt.dropout = 0
 
   local inputNet = nn.LookupTable(10, 4)
@@ -122,6 +123,11 @@ end
 
 function encoderTest.brnn_LSTM()
   local encoder, opt = buildEncoder(onmt.BiEncoder, 'LSTM')
+  genericCheckDim(encoder, opt)
+end
+
+function encoderTest.brnn_concat_LSTM()
+  local encoder, opt = buildEncoder(onmt.BiEncoder, 'LSTM', 'concat')
   genericCheckDim(encoder, opt)
 end
 

@@ -3,6 +3,7 @@
 ---------------------------------------------------------------------------------
 
 local function wrapIndent(text, size, pad)
+  text = pad .. text
   local p = 0
   while true do
     local q = text:find(" ", size+p)
@@ -67,68 +68,11 @@ function ExtendedCmdLine:__init(script)
   self:option('-save_config', '', 'Save options to this file.')
 end
 
-function ExtendedCmdLine:help(arg, doMd)
-  if doMd then
-    io.write('`' .. self.script .. '` options:\n')
-    for _, option in ipairs(self.helplines) do
-      if type(option) == 'table' then
-        io.write('* ')
-        if option.default ~= nil then -- It is an option.
-          local optType = '<' .. option.type .. '>'
-          if option.type == 'boolean' then
-            optType = '[' .. optType .. ']'
-          end
-          io.write('`' .. option.key .. ' ' .. optType .. '`')
-
-          local valInfo = {}
-          if option.meta and option.meta.required then
-            table.insert(valInfo, 'required')
-          end
-          if option.meta and option.meta.enum then
-            for k, v in pairs(option.meta.enum) do
-              option.meta.enum[k] = '`' .. v .. '`'
-            end
-            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
-          end
-          local default
-          if type(option.default) == 'table' then
-            default = table.concat(option.default, ', ')
-          elseif option.default == '' then
-            default = '\'\''
-          else
-            default = tostring(option.default)
-          end
-          if not(option.meta and option.meta.required and default == '\'\'') then
-            table.insert(valInfo, 'default: `' .. default .. '`')
-          end
-          if #valInfo > 0 then
-            io.write(' (' .. table.concat(valInfo, '; ') .. ')')
-          end
-
-          io.write('<br/>')
-
-          option.help = option.help:gsub(' *\n   *', ' ')
-          if option.help then
-            io.write(option.help)
-          end
-        else -- It is an argument.
-          io.write('<' .. onmt.utils.String.stripHyphens(option.key) .. '>')
-          if option.help then
-            io.write(' ' .. option.help)
-          end
-        end
-      else
-        local display = option:gsub('%*', '')
-        if display:len() > 0 then
-          io.write('## ')
-        end
-        io.write(display) -- Just some additional help.
-      end
-      io.write('\n')
-    end
-    io.write('\n')
-  else
-    if arg then
+function ExtendedCmdLine:help(arg, md)
+  if arg then
+    if md then
+      io.write('`' .. self.script .. '` options:\n')
+    else
       io.write('Usage: ')
       io.write(arg[0] .. ' ' .. self.script .. ' ')
       io.write('[options] ')
@@ -137,66 +81,76 @@ function ExtendedCmdLine:help(arg, doMd)
       end
       io.write('\n')
     end
+  end
 
-    -- First pass to compute max length.
-    local optsz = 0
-    for _, option in ipairs(self.helplines) do
-      if type(option) == 'table' then
-        if option.default ~= nil then -- It is an option.
-          if #option.key > optsz then
-            optsz = #option.key
-          end
-        else -- It is an argument.
-          local stripOptionKey = onmt.utils.String.stripHyphens(option.key)
-          if #stripOptionKey + 2 > optsz then
-            optsz = #stripOptionKey + 2
-          end
-        end
+  for _, option in ipairs(self.helplines) do
+    if type(option) ~= 'table' then
+      if md and option:len() > 0 then
+        io.write('## ')
       end
-    end
+      io.write(option)
+    else
+      -- Argument type.
+      local argType = '<' .. option.type .. '>'
+      if option.type == 'boolean' then
+        argType = '[' .. argType .. ']'
+      end
 
-    local padMultiLine = onmt.utils.String.pad('', optsz)
-    -- Second pass to print.
-    for _, option in ipairs(self.helplines) do
-      if type(option) == 'table' then
-        io.write('  ')
-        if option.default ~= nil then -- It is an option.
-          io.write(onmt.utils.String.pad(option.key, optsz))
-          local msg = ''
-          msg = msg .. option.help:gsub('\n', ' ')
-          local valInfo = {}
-          if option.meta and option.meta.required then
-            table.insert(valInfo, 'required')
-          end
-          if option.meta and option.meta.enum then
-            table.insert(valInfo, 'accepted: ' .. table.concat(option.meta.enum, ', '))
-          end
-          local default
-          if type(option.default) == 'table' then
-            default = table.concat(option.default, ', ')
-          elseif option.default == '' then
-            default = '\'\''
-          else
-            default = tostring(option.default)
-          end
-          if not(option.meta and option.meta.required and default == '\'\'') then
-            table.insert(valInfo, 'default: `' .. default .. '`')
-          end
-          if #valInfo > 0 then
-            msg = msg .. ' (' .. table.concat(valInfo, '; ') .. ')'
-          end
-          io.write(' ' .. wrapIndent(msg:gsub('  *', ' '),60,padMultiLine..'     '))
-        else -- It is an argument.
-          io.write(onmt.utils.String.pad('<' .. onmt.utils.String.stripHyphens(option.key) .. '>', optsz))
-          if option.help then
-            io.write(' ' .. option.help)
+      local argMeta = {}
+
+      -- Argument constraints.
+      if option.meta and option.meta.required then
+        table.insert(argMeta, 'required')
+      end
+      if option.meta and option.meta.enum then
+        if md then
+          for k, v in pairs(option.meta.enum) do
+            option.meta.enum[k] = '`' .. v .. '`'
           end
         end
+        table.insert(argMeta, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+      end
+
+      -- Default value.
+      local argDefault
+      if type(option.default) == 'table' then
+        argDefault = table.concat(option.default, ', ')
+      elseif option.default == '' then
+        argDefault = '\'\''
       else
-        io.write(option) -- Just some additional help.
+        argDefault = tostring(option.default)
       end
-      io.write('\n')
+      if not (option.meta and option.meta.required and argDefault == '\'\'') then
+        if md then
+          argDefault = '`' .. argDefault .. '`'
+        end
+        table.insert(argMeta, 'default: ' .. argDefault)
+      end
+
+      local optionPattern = option.key .. ' ' .. argType
+
+      if md then
+        io.write('* `' .. optionPattern.. '`')
+      else
+        io.write('  ' .. optionPattern)
+      end
+
+      if #argMeta > 0 then
+        io.write(' ('.. table.concat(argMeta, '; ') .. ')')
+      end
+
+      local description = string.gsub(option.help, ' *\n   *', ' ')
+
+      if md then
+        io.write('<br/>')
+        io.write(description)
+      else
+        io.write('\n')
+        io.write(wrapIndent(description, 60, '      '))
+        io.write('\n')
+      end
     end
+
     io.write('\n')
   end
 end
@@ -511,7 +465,7 @@ end
 function ExtendedCmdLine:setCmdLineOptions(moduleOptions, group)
   if group and group ~= self.prevGroup then
     self:text('')
-    self:text('**' .. group .. ' options**')
+    self:text(group .. ' options')
     self:text('')
     self.prevGroup = group
   end
