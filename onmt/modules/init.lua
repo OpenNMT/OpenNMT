@@ -25,5 +25,6 @@ require('onmt.modules.Generator')
 
 require('onmt.modules.JoinReplicateTable')
 require('onmt.modules.ParallelClassNLLCriterion')
+require('onmt.modules.LayerNormalization')
 
 return onmt
