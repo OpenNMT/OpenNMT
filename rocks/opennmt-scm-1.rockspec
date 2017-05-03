@@ -80,6 +80,7 @@ build = {
     ["onmt.utils.CrayonLogger"] = "onmt/utils/CrayonLogger.lua",
     ["onmt.utils.Cuda"] = "onmt/utils/Cuda.lua",
     ["onmt.utils.Dict"] = "onmt/utils/Dict.lua",
+    ["onmt.utils.SubDict"] = "onmt/utils/SubDict.lua",
     ["onmt.utils.Features"] = "onmt/utils/Features.lua",
     ["onmt.utils.FileReader"] = "onmt/utils/FileReader.lua",
     ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",

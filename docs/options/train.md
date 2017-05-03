@@ -56,6 +56,10 @@
 
 * `-global_attention <string>` (accepted: `general`, `dot`, `concat`; default: `general`)<br/>Global attention model type.
 
+## Generator options
+
+* `-importance_sampling [<boolean>]` (default: `false`)<br/>Use importance sampling approach as approximation of full softmax, target vocabulary is built using sampling.
+
 ## Trainer options
 
 * `-save_every <number>` (default: `5000`)<br/>Save intermediate models every this many iterations within an epoch. If = 0, will not save intermediate models.

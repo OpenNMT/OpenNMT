@@ -79,6 +79,11 @@ function Generator.load(generator)
     end
     generator.version = 2
   end
+  if not generator.rindexLinear then
+    local firstOutput = generator.net.modules[1]
+    assert(torch.type(firstOutput.modules[1])=='nn.Linear')
+    generator.rindexLinear = firstOutput.modules[1]
+  end
   return generator
 end
 
