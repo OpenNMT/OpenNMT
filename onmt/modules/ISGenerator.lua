@@ -52,4 +52,14 @@ end
 
 --[[ Release Generator for inference only ]]
 function ISGenerator:release()
+  self.net:replace(function(m)
+    if torch.type(m) == 'onmt.RIndexLinear' then
+      local l = nn.Linear(m.fullWeight:size(2), m.fullWeight:size(1), m.fullBias)
+      l.weight = m.weight
+      l.bias = m.bias
+      return l
+    else
+      return m
+    end
+  end)
 end
