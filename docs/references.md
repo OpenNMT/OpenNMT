@@ -4,3 +4,4 @@ This is the list of papers, OpenNMT has been inspired on:
 * <a name="Senrich2016-1"></a>Sennrich, R., & Haddow, B. (2016). [Linguistic input features improve neural machine translation](https://arxiv.org/abs/1606.02892). arXiv preprint arXiv:1606.02892.
 * <a name="Senrich2016-2"></a>Sennrich, R., Haddow, B., & Birch, A. (2015). [Neural machine translation of rare words with subword units](https://arxiv.org/abs/1508.07909). arXiv preprint arXiv:1508.07909.
 * <a name="GNMT"></a>Wu, Y., Schuster, M., Chen, Z., Le, Q. V., Norouzi, M., Macherey, W., ... & Klingner, J. (2016). [Google's Neural Machine Translation System: Bridging the Gap between Human and Machine Translation](https://arxiv.org/abs/1609.08144). arXiv preprint arXiv:1609.08144.
+* <a name="NCE"></a>Mnih, A., & Teh, Y. W. (2012). [A fast and simple algorithm for training neural probabilistic language models](https://www.cs.toronto.edu/%7Eamnih/papers/ncelm.pdf). arXiv preprint arXiv:1206.6426.

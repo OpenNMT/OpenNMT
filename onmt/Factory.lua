@@ -29,6 +29,14 @@ local options = {
       enum = {'none', 'global'},
       structural = 0
     }
+  },
+  {
+    '-criterion', 'nll',
+    [[Output criterion.]],
+    {
+      enum = {'nll', 'nce'},
+      structural = 1
+    }
   }
 }
 
@@ -38,6 +46,7 @@ function Factory.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
+  onmt.NCEModule.declareOpts(cmd)
 end
 
 -- Return effective embeddings size based on user options.
@@ -223,7 +232,41 @@ end
 
 function Factory.buildGenerator(opt, dicts)
   local sizes = Factory.getOutputSizes(dicts)
-  return onmt.Generator(opt, sizes)
+  return onmt.Generator(opt, dicts, sizes)
+end
+
+function Factory.buildCriterion(opt, dicts)
+  local modCriterion = ''
+  if opt.criterion == 'nce' then
+    modCriterion = ' (sample size: ' .. opt.nce_sample_size .. ')'
+  end
+  _G.logger:info(' * Criterion: '..opt.criterion..modCriterion)
+
+  local sizes = Factory.getOutputSizes(dicts)
+
+  local criterion = nn.ParallelCriterion(false)
+  criterion.normalizationFunc = {}
+
+  for i = 1, #sizes do
+    -- Ignores padding value.
+    local w = torch.ones(sizes[i])
+    w[onmt.Constants.PAD] = 0
+
+    local feat_criterion
+    if i == 1 and opt.criterion == 'nce' then
+      feat_criterion = onmt.NCECriterion(w)
+      table.insert(criterion.normalizationFunc, feat_criterion.normalize)
+    else
+      feat_criterion = nn.ClassNLLCriterion(w)
+      -- Let the training code manage loss normalization.
+      feat_criterion.sizeAverage = false
+      -- no special normalization function
+      table.insert(criterion.normalizationFunc, false)
+    end
+    criterion:add(feat_criterion)
+  end
+
+  return criterion
 end
 
 function Factory.buildAttention(args)

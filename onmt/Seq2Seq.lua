@@ -129,7 +129,7 @@ function Seq2Seq:__init(args, dicts)
                                    decArgs.rnn_size,
                                    self.models.decoder.args.numEffectiveLayers)
 
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.tgt)
 end
 
 function Seq2Seq.load(args, models, dicts)
@@ -142,7 +142,7 @@ function Seq2Seq.load(args, models, dicts)
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
   self.models.bridge = onmt.Bridge.load(models.bridge)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.criterion = onmt.Factory.buildCriterion(args, dicts.tgt)
 
   return self
 end

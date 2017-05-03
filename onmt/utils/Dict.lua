@@ -192,6 +192,7 @@ function Dict:pruneByMinFrequency(minFrequency)
 
   for i = 1, self:size() do
     if sortedFreq[i] < minFrequency then
+      newDict:setFrequency(onmt.Constants.UNK_WORD, sortedFreq:narrow(1, i, sortedFreq:size()[1]-i):sum())
       break
     end
     newDict:add(self.idxToLabel[idx[i]], nil, sortedFreq[i])

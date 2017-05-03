@@ -116,7 +116,7 @@ local function loadModel(opt, dicts)
 
   -- Change parameters dynamically.
   if not onmt.utils.Table.empty(paramChanges) then
-    model:changeParameters(paramChanges)
+    model:changeParameters(paramChanges, dicts)
   end
 
   return model, checkpoint.info

@@ -74,3 +74,15 @@ and the score function is one of these:
 * `concat`: $$\mathrm{score}(h_t,\bar{h}_s)=\nu_a^T.\mathrm{tanh}(W_a[h_t;\bar{h}_s])$$
 
 The model is selected using `-global_attention` option or can be disabled with `-attention none` option. The default attention model is `general`.
+
+## Generator
+
+The default generator is a Linear+SoftMax layer.
+
+### Noise-Contrastive Estimation
+
+It is possible to use instead NCE ([Noise-Constrastive Estimation](https://www.cs.toronto.edu/%7Eamnih/papers/ncelm.pdf)) for the training - by using the `-criterion nce` parameter. NCE is particularly useful for very large target vocabulary size. The sample size used by NCE is set with `-nce_sample_size` and this parameter can be changed dynamically when reloading a model. When the model is released, the layer is converted into a regular Linear+SoftMax layer.
+
+!!! warning "Warning"
+    To use NCE training, you need to install dpnn libraries - do install the version from [here](https://github.com/jsenellart-systran/dpnn) which contains a patch for recent versions of torch.
+

@@ -1,48 +1,22 @@
 --[[ Default decoder generator. Given RNN state, produce categorical distribution for tokens and features
 
      Simply implements $$softmax(W h b)$$.
+
+     version 2: merge FeaturesGenerator and Generator - the generator nn is a table
 --]]
-local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
+local Generator, parent = torch.class('onmt.SSGenerator', 'onmt.Generator')
 
--- for back compatibility - still declare FeaturesGenerator - but no need to define it
-torch.class('onmt.FeaturesGenerator', 'onmt.Network')
-
-function Generator:__init(opt, dicts, sizes)
+function SSGenerator:__init(opt, dicts, sizes)
   parent.__init(self)
-  self:buildGenerator(opt, dicts, sizes)
 end
 
 --[[ Build or convert a generator - if convert is true, keep the current generator linear parameters.]]
-function Generator:buildGenerator(opt, dicts, sizes, convert)
+function SSGenerator:_buildGenerator(opt, dicts, sizes)
   local rnn_size = opt.rnn_size
-  if convert then
-    local prevgen = (self.needOutput and 'NCE') or 'NLL'
-    local newgen = (opt.criterion == 'nce' and 'NCE') or 'NLL'
-    if newgen == prevgen then
-      return
-    end
-    _G.logger:info(' * Converting '..prevgen..' criterion into '..newgen)
-    if not sizes then
-      sizes = {}
-      for i = 1, #self.net.modules do
-        local m = self.net.modules[i]
-        -- m is a Sequential - m.modules[1] is a selector, m.modules[2] is NCEModule or Linear
-        table.insert(sizes, m.modules[2].weight:size(1))
-        rnn_size = m.modules[2].weight:size(2)
-      end
-    end
-  end
 
   local generator = nn.ConcatTable()
 
-  local selectInput = nn.Identity()
-
-  if opt.criterion == 'nce' then
-    self.needOutput = true
-    selectInput = nn.SelectTable(1)
-  else
-    self.needOutput = false
-  end
+  local selectInput = nn.SelectTable(1)
 
   for i = 1, #sizes do
     local feat_generator
@@ -76,22 +50,19 @@ function Generator:buildGenerator(opt, dicts, sizes, convert)
   self:set(generator)
 end
 
---[[ Release Generator - ie. if NCE convert to Linear/Logsoftmax. ]]
-function Generator:release()
-  local opt = { criterion='nll' }
-  self:buildGenerator(opt, nil, nil, true)
-end
-
 function Generator:updateOutput(input)
+  input = type(input) == 'table' and input or { input }
   self.output = self.net:updateOutput(input)
   return self.output
 end
 
 function Generator:updateGradInput(input, gradOutput)
+  input = type(input) == 'table' and input or { input }
   self.gradInput = self.net:updateGradInput(input, gradOutput)
   return self.gradInput
 end
 
 function Generator:accGradParameters(input, gradOutput, scale)
+  input = type(input) == 'table' and input or { input }
   self.net:accGradParameters(input, gradOutput, scale)
 end
