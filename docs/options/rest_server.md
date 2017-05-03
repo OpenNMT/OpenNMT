@@ -57,4 +57,3 @@
 ## Other options
 
 * `-batchsize <number>` (default: `1000`)<br/>Size of each parallel batch - you should not change except if low memory.
-
