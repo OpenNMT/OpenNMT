@@ -19,8 +19,10 @@ function LayerNormalization:__init(nOutput, bias, eps, affine)
   if affine then
     local biasTransform = nn.Add(nOutput, false)
     biasTransform.bias:fill(bias)
+    biasTransform.postParametersInitialization = function(m) m.bias:fill(bias) end
     local gainTransform = nn.CMul(nOutput)
     gainTransform.weight:fill(1.)
+    gainTransform.postParametersInitialization = function(m) m.weight:fill(1.) end
     self:add(gainTransform)
     self:add(biasTransform)
   end
