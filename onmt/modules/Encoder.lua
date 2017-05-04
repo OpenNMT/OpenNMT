@@ -58,7 +58,7 @@ local options = {
   },
   {
     '-dropout_input', false,
-    [[Also apply regularization to the input of the recurrent module.]],
+    [[Also apply dropout to the input of the recurrent module.]],
     {
       structural = 0
     }
