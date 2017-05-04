@@ -33,7 +33,7 @@ Parameters:
   * `residual` - Residual connections between layers (boolean)
   * `dropout_input` - if true, add a dropout layer on the first layer (useful for instance in complex encoders)
 --]]
-function GRU:__init(layers, inputSize, hiddenSize, regularization, dropout, residual, regularize_input)
+function GRU:__init(layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input)
   dropout = dropout or 0
 
   self.regularization = regularization
@@ -41,11 +41,11 @@ function GRU:__init(layers, inputSize, hiddenSize, regularization, dropout, resi
   self.numEffectiveLayers = layers
   self.outputSize = hiddenSize
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, regularize_input))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input))
 end
 
 --[[ Stack the GRU units. ]]
-function GRU:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, regularize_input)
+function GRU:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input)
   -- inputs: { prevOutput L1, ..., prevOutput Ln, input }
   -- outputs: { output L1, ..., output Ln }
 
@@ -79,11 +79,11 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, regularization, dropout,
     end
 
     if regularization == 'dropout' and dropout > 0 then
-      if (regularize_input or L > 1) then
+      if (dropout_input or L > 1) then
         input = nn.Dropout(dropout)(input)
       end
     elseif regularization == 'layernorm' then
-      if (regularize_input or L > 1) then
+      if (dropout_input or L > 1) then
         input = onmt.LayerNormalization(inputDim)(input)
       end
     end
