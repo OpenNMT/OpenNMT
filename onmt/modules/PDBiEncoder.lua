@@ -35,7 +35,7 @@ function PDBiEncoder:__init(args, input)
   self.args.layers = args.layers
   self.args.regularization = args.regularization
   self.args.dropout = args.dropout
-  local dropout_input = args.regularization_input
+  local dropout_input = args.dropout_input
 
   self.layers = {}
 
@@ -58,7 +58,7 @@ function PDBiEncoder:__init(args, input)
     end
   end
   args.layers = self.args.layers
-  args.dropout_input = regularization_input
+  args.dropout_input = dropout_input
   self.args.numEffectiveLayers = self.layers[1].args.numEffectiveLayers * self.args.layers
   self.args.hiddenSize = args.rnn_size
 
