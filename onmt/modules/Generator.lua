@@ -37,25 +37,18 @@ function Generator:__init(opt, sizes)
   self.version = 2
 end
 
-function Generator:_simpleGeneratorLayer(input, output)
-  return nn.Sequential()
-                      :add(nn.Linear(input, output))
-                      :add(nn.LogSoftMax())
-end
-
 function Generator:_buildGenerator(opt, sizes)
   local generator = nn.ConcatTable()
   local rnn_size = opt.rnn_size
 
   for i = 1, #sizes do
+    local linear = nn.Linear(rnn_size, sizes[i])
     if i == 1 then
-      self.rindexLinear = nn.Linear(rnn_size, sizes[i])
-      generator:add(nn.Sequential()
-                      :add(self.rindexLinear)
-                      :add(nn.LogSoftMax()))
-    else
-      generator:add(self:_simpleGeneratorLayer(rnn_size, sizes[i]))
+      self.rindexLinear = linear
     end
+    generator:add(nn.Sequential()
+                    :add(linear)
+                    :add(nn.LogSoftMax()))
   end
 
   self:set(generator)
