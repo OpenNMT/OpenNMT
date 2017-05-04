@@ -8,7 +8,7 @@ local cmd = onmt.utils.ExtendedCmdLine.new('tokenize.lua')
 tokenizer.declareOpts(cmd)
 
 cmd:text('')
-cmd:text('**Other options**')
+cmd:text('Other options')
 cmd:text('')
 
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])

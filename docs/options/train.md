@@ -14,9 +14,9 @@
 ## Sampled dataset options
 
 * `-sample <number>` (default: `0`)<br/>Number of instances to sample from train data in each epoch.
-* `-sample_w_ppl [<boolean>]` (default: `false`)<br/>If set, ese perplexity as a probability distribution when sampling.
-* `-sample_w_ppl_init <number>` (default: `15`)<br/>Start perplexity-based sampling when average train perplexity per batch falls below this value.
-* `-sample_w_ppl_max <number>` (default: `-1.5`)<br/>When greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + `-sample_w_ppl_max` * stdev will be used as threshold.
+* `-sample_type <string>` (accepted: `uniform`, `perplexity`, `partition`; default: `uniform`)<br/>Define the partition type. `uniform` draws randomly the sample, `perplexity` uses perplexity as a probability distribution when sampling (with `-sample_perplexity_init` and `-sample_perplexity_max` options), `partition` draws different subsets at each epoch.
+* `-sample_perplexity_init <number>` (default: `15`)<br/>Start perplexity-based sampling when average train perplexity per batch falls below this value.
+* `-sample_perplexity_max <number>` (default: `-1.5`)<br/>When greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + `-sample_perplexity_max` * stdev will be used as threshold.
 
 ## Model options
 
@@ -110,4 +110,3 @@
 * `-disable_mem_optimization [<boolean>]` (default: `false`)<br/>Disable sharing of internal buffers between clones for visualization or development.
 * `-profiler [<boolean>]` (default: `false`)<br/>Generate profiling logs.
 * `-seed <number>` (default: `3435`)<br/>Random seed.
-

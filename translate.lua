@@ -31,7 +31,7 @@ onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
 cmd:text('')
-cmd:text('**Other options**')
+cmd:text('Other options')
 cmd:text('')
 
 cmd:option('-time', false, [[Measure average translation time.]])

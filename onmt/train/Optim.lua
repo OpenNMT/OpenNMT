@@ -1,56 +1,3 @@
----------------------------------------------------------------------------------
--- Local utility functions
----------------------------------------------------------------------------------
-
-local function adagradStep(dfdx, lr, state)
-  if not state.var then
-    state.var = torch.Tensor():typeAs(dfdx):resizeAs(dfdx):zero()
-    state.std = torch.Tensor():typeAs(dfdx):resizeAs(dfdx)
-  end
-
-  state.var:addcmul(1, dfdx, dfdx)
-  state.std:sqrt(state.var)
-  dfdx:cdiv(state.std:add(1e-10)):mul(-lr)
-end
-
-local function adamStep(dfdx, lr, state)
-  local beta1 = state.beta1 or 0.9
-  local beta2 = state.beta2 or 0.999
-  local eps = state.eps or 1e-8
-
-  state.t = state.t or 0
-  state.m = state.m or dfdx.new(dfdx:size()):zero()
-  state.v = state.v or dfdx.new(dfdx:size()):zero()
-  state.denom = state.denom or dfdx.new(dfdx:size()):zero()
-
-  state.t = state.t + 1
-  state.m:mul(beta1):add(1-beta1, dfdx)
-  state.v:mul(beta2):addcmul(1-beta2, dfdx, dfdx)
-  state.denom:copy(state.v):sqrt():add(eps)
-
-  local bias1 = 1-beta1^state.t
-  local bias2 = 1-beta2^state.t
-  local stepSize = lr * math.sqrt(bias2)/bias1
-
-  dfdx:copy(state.m):cdiv(state.denom):mul(-stepSize)
-end
-
-local function adadeltaStep(dfdx, state)
-  local rho = state.rho or 0.9
-  local eps = state.eps or 1e-6
-  state.var = state.var or dfdx.new(dfdx:size()):zero()
-  state.std = state.std or dfdx.new(dfdx:size()):zero()
-  state.delta = state.delta or dfdx.new(dfdx:size()):zero()
-  state.accDelta = state.accDelta or dfdx.new(dfdx:size()):zero()
-  state.var:mul(rho):addcmul(1-rho, dfdx, dfdx)
-  state.std:copy(state.var):add(eps):sqrt()
-  state.delta:copy(state.accDelta):add(eps):sqrt():cdiv(state.std):cmul(dfdx)
-  dfdx:copy(state.delta):mul(-1)
-  state.accDelta:mul(rho):addcmul(1-rho, state.delta, state.delta)
-end
-
----------------------------------------------------------------------------------
-
 local Optim = torch.class('Optim')
 
 local options = {
@@ -176,11 +123,11 @@ function Optim:prepareGrad(gradParams)
 
     -- Prepare gradients params according to the optimization method.
     if self.args.optim == 'adagrad' then
-      adagradStep(gradParams[j], self.args.learning_rate, self.optimStates[j])
+      Optim.adagradStep(gradParams[j], self.args.learning_rate, self.optimStates[j])
     elseif self.args.optim == 'adadelta' then
-      adadeltaStep(gradParams[j], self.optimStates[j])
+      Optim.adadeltaStep(gradParams[j], self.optimStates[j])
     elseif self.args.optim == 'adam' then
-      adamStep(gradParams[j], self.args.learning_rate, self.optimStates[j])
+      Optim.adamStep(gradParams[j], self.args.learning_rate, self.optimStates[j])
     else
       gradParams[j]:mul(-self.args.learning_rate)
     end
@@ -223,6 +170,8 @@ function Optim:updateLearningRate(score, epoch)
       decayLr()
     end
   end
+
+  return self.args.learning_rate
 end
 
 function Optim:isFinished()
@@ -239,6 +188,53 @@ end
 
 function Optim:getStates()
   return self.optimStates
+end
+
+function Optim.adagradStep(dfdx, lr, state)
+  if not state.var then
+    state.var = torch.Tensor():typeAs(dfdx):resizeAs(dfdx):zero()
+    state.std = torch.Tensor():typeAs(dfdx):resizeAs(dfdx)
+  end
+
+  state.var:addcmul(1, dfdx, dfdx)
+  state.std:sqrt(state.var)
+  dfdx:cdiv(state.std:add(1e-10)):mul(-lr)
+end
+
+function Optim.adamStep(dfdx, lr, state)
+  local beta1 = state.beta1 or 0.9
+  local beta2 = state.beta2 or 0.999
+  local eps = state.eps or 1e-8
+
+  state.t = state.t or 0
+  state.m = state.m or dfdx.new(dfdx:size()):zero()
+  state.v = state.v or dfdx.new(dfdx:size()):zero()
+  state.denom = state.denom or dfdx.new(dfdx:size()):zero()
+
+  state.t = state.t + 1
+  state.m:mul(beta1):add(1-beta1, dfdx)
+  state.v:mul(beta2):addcmul(1-beta2, dfdx, dfdx)
+  state.denom:copy(state.v):sqrt():add(eps)
+
+  local bias1 = 1-beta1^state.t
+  local bias2 = 1-beta2^state.t
+  local stepSize = lr * math.sqrt(bias2)/bias1
+
+  dfdx:copy(state.m):cdiv(state.denom):mul(-stepSize)
+end
+
+function Optim.adadeltaStep(dfdx, state)
+  local rho = state.rho or 0.9
+  local eps = state.eps or 1e-6
+  state.var = state.var or dfdx.new(dfdx:size()):zero()
+  state.std = state.std or dfdx.new(dfdx:size()):zero()
+  state.delta = state.delta or dfdx.new(dfdx:size()):zero()
+  state.accDelta = state.accDelta or dfdx.new(dfdx:size()):zero()
+  state.var:mul(rho):addcmul(1-rho, dfdx, dfdx)
+  state.std:copy(state.var):add(eps):sqrt()
+  state.delta:copy(state.accDelta):add(eps):sqrt():cdiv(state.std):cmul(dfdx)
+  dfdx:copy(state.delta):mul(-1)
+  state.accDelta:mul(rho):addcmul(1-rho, state.delta, state.delta)
 end
 
 return Optim

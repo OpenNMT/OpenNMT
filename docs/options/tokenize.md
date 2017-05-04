@@ -24,4 +24,3 @@
 
 * `-nparallel <number>` (default: `1`)<br/>Number of parallel thread to run the tokenization
 * `-batchsize <number>` (default: `1000`)<br/>Size of each parallel batch - you should not change except if low memory
-
