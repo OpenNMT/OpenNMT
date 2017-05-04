@@ -13,7 +13,7 @@ Dropout applies on the output of each RNN layer, on the output of the attention 
 
 ## Layer Normalization
 
-Layer Normalization [Ba et al., 2016](https://arxiv.org/abs/1607.06450) is normalizing each neuron weighted input using the full layer for calculating \(\mu^{t,l}\) and \(\sigma^{t,l}\).
+Layer Normalization ([Ba et al., 2016](https://arxiv.org/abs/1607.06450)) is normalizing each neuron weighted input using the full layer for calculating \(\mu^{t,l}\) and \(\sigma^{t,l}\).
 
 Layer Normalization is also including two learnt parameters per neuron: \(\textbf g_i\) which is the gain after normalization, and \(\textbf b_i\) which is the bias according to the formulas:
 
