@@ -22,19 +22,19 @@ function Linear:RIndex_setOutputIndices(rowIndices)
     else
       self.fullWeight:indexCopy(1, self.rowIndices, self.weight)
       self.fullBias:indexCopy(1, self.rowIndices, self.bias)
-      self.weight:resize(self.fullWeight:size()):copy(self.fullWeight)
-      self.bias:resize(self.fullBias:size()):copy(self.fullBias)
+      self.weight:resizeAs(self.fullWeight):copy(self.fullWeight)
+      self.bias:resizeAs(self.fullBias):copy(self.fullBias)
     end
-    self.gradWeight:resize(self.weight:size())
-    self.gradBias:resize(self.bias:size())
+    self.gradWeight:resizeAs(self.weight)
+    self.gradBias:resizeAs(self.bias)
     self.rowIndices = rowIndices
   end
 end
 
 function Linear:RIndex_clean()
   if self.fullWeight then
-    self.weight:resize(self.fullWeight:size()):copy(self.fullWeight)
-    self.bias:resize(self.fullBias:size()):copy(self.fullBias)
+    self.weight:resizeAs(self.fullWeight):copy(self.fullWeight)
+    self.bias:resizeAs(self.fullBias):copy(self.fullBias)
   end
   self.fullWeight = nil
   self.fullBias = nil

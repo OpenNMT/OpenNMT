@@ -116,7 +116,7 @@ function BeamSearcher:_findKBest(beams, scores)
   -- substitute with complete dictionary index
   if self.advancer.dicts.subdict then
     if consideredToken.map then
-      consideredToken:map(function(idx) return self.advancer.dicts.subdict:fullIdx(idx) end)
+      consideredToken:map(consideredToken, function(idx) return self.advancer.dicts.subdict:fullIdx(idx) end)
     else
       for i = 1, consideredToken:size(1) do
         consideredToken[i] = self.advancer.dicts.subdict:fullIdx(consideredToken[i])
