@@ -15,10 +15,14 @@ function SubDict:__init(dict, filePath)
   end
   f:close()
   self.targetVocTensor, self.targetVocInvMap = torch.LongTensor(self.vocabs):sort()
+  for i = 1, self.targetVocInvMap:size(1) do
+    self.targetVocInvMap[i] = self.vocabs[self.targetVocInvMap[i]]
+  end
+  self.vocabs = nil
 end
 
 function SubDict:fullIdx(idx)
-  return self.vocabs[self.targetVocInvMap[idx]]
+  return self.targetVocInvMap[idx]
 end
 
 return SubDict
