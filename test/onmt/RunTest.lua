@@ -7,7 +7,7 @@ function runTest.basic()
   local output = file:read('*all')
   local exit = file:close()
   tester:eq(exit,nil)
-  tester:assertgt(string.find(output,"invalid argument"),0)
+  tester:assertgt(string.find(output, "invalid argument"),0)
 end
 
 function runTest.run_real()
@@ -42,6 +42,8 @@ function runTest.run_real()
       tester:eq(ppls,{9.95,7.19},1)
       tester:assert(string.find(output, "INFO] profile:") > 0, "cannot find profiling information")
     end
+  else
+    print(output)
   end
   os.remove("tiny-train.t7")
   os.remove("tiny.src.dict")
