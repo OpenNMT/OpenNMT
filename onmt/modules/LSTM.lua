@@ -83,16 +83,12 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, regularization, dropout
       if (regularize_input or L > 1) then
         input = nn.Dropout(dropout)(input)
       end
-    elseif regularization == 'layernorm' then
-      if (regularize_input or L > 1) then
-        input = onmt.LayerNormalization(inputDim)(input)
-      end
     end
 
     local prevC = inputs[L*2 - 1]
     local prevH = inputs[L*2]
 
-    nextC, nextH = self:_buildLayer(inputDim, hiddenSize)({prevC, prevH, input}):split(2)
+    nextC, nextH = self:_buildLayer(inputDim, hiddenSize, regularization == 'layernorm')({prevC, prevH, input}):split(2)
     prevInput = input
 
     table.insert(outputs, nextC)
@@ -103,7 +99,7 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, regularization, dropout
 end
 
 --[[ Build a single LSTM unit layer. ]]
-function LSTM:_buildLayer(inputSize, hiddenSize)
+function LSTM:_buildLayer(inputSize, hiddenSize, layerNorm)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -120,6 +116,13 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
 
   local reshaped = nn.Reshape(4, hiddenSize)(allInputSums)
   local n1, n2, n3, n4 = nn.SplitTable(2)(reshaped):split(4)
+
+  if layerNorm then
+    n1 = onmt.LayerNormalization(inputDim)(n1)
+    n2 = onmt.LayerNormalization(inputDim)(n2)
+    n3 = onmt.LayerNormalization(inputDim)(n3)
+    n4 = onmt.LayerNormalization(inputDim)(n4)
+  end
 
   -- Decode the gates.
   local inGate = nn.Sigmoid()(n1)
