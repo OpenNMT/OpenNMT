@@ -149,7 +149,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
 
   local epochState = onmt.train.EpochState.new(epoch, startIteration, numIterations, self.optim:getLearningRate())
   local epochProfiler = onmt.utils.Profiler.new(self.args.profiler)
-  epochProfiler:add('train')
+  epochProfiler:start('train')
 
   local needLog = false
   local optim = self.optim
