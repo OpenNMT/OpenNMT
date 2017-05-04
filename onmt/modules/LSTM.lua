@@ -118,10 +118,10 @@ function LSTM:_buildLayer(inputSize, hiddenSize, layerNorm)
   local n1, n2, n3, n4 = nn.SplitTable(2)(reshaped):split(4)
 
   if layerNorm then
-    n1 = onmt.LayerNormalization(inputDim)(n1)
-    n2 = onmt.LayerNormalization(inputDim)(n2)
-    n3 = onmt.LayerNormalization(inputDim)(n3)
-    n4 = onmt.LayerNormalization(inputDim)(n4)
+    n1 = onmt.LayerNormalization(hiddenSize)(n1)
+    n2 = onmt.LayerNormalization(hiddenSize)(n2)
+    n3 = onmt.LayerNormalization(hiddenSize)(n3)
+    n4 = onmt.LayerNormalization(hiddenSize)(n4)
   end
 
   -- Decode the gates.
