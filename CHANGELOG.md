@@ -9,6 +9,7 @@
 * Add a bridge layer between the encoder and decoder
 * New feature to keep token frequency in generated dictionaries
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
+* Introduce Layer Normalization as alternative regularization
 
 ### Fixes and improvements
 

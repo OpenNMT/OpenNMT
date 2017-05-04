@@ -17,11 +17,11 @@ function LayerNormalization:__init(nOutput, bias, eps, affine)
       :add(nn.MulConstant(torch.sqrt(nOutput)))
 
   if affine then
-     local biasTransform = nn.Add(nOutput, false)
-     biasTransform.bias:fill(bias)
-     local gainTransform = nn.CMul(nOutput)
-     gainTransform.weight:fill(1.)
-     self:add(gainTransform)
-     self:add(biasTransform)
+    local biasTransform = nn.Add(nOutput, false)
+    biasTransform.bias:fill(bias)
+    local gainTransform = nn.CMul(nOutput)
+    gainTransform.weight:fill(1.)
+    self:add(gainTransform)
+    self:add(biasTransform)
   end
 end
