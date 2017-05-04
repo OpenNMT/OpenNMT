@@ -134,9 +134,9 @@ function Translator:__init(args)
   end
 
   if self.args.target_subdict:len() > 0 then
-    self.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
-    self.model:setTargetVoc(self.subdict.targetVocTensor)
-    _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.subdict.targetVocTensor:size(1))
+    self.dicts.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
+    self.model:setTargetVoc(self.dicts.subdict.targetVocTensor)
+    _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.dicts.subdict.targetVocTensor:size(1))
   end
 end
 
@@ -232,11 +232,6 @@ function Translator:buildData(src, gold)
 end
 
 function Translator:buildTargetWords(pred, src, attn)
-  if self.subdict then
-    for i = 1, #pred do
-      pred[i] = self.subdict:fullIdx(pred[i])
-    end
-  end
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
   if self.args.replace_unk then
