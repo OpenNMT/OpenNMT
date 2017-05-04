@@ -136,6 +136,7 @@ function Translator:__init(args)
   if self.args.target_subdict:len() > 0 then
     self.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
     self.model:setTargetVoc(self.subdict.targetVocTensor)
+    _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.self.subdict.targetVocTensor:size(1))
   end
 end
 
