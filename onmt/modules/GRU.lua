@@ -82,15 +82,11 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, regularization, dropout,
       if (dropout_input or L > 1) then
         input = nn.Dropout(dropout)(input)
       end
-    elseif regularization == 'layernorm' then
-      if (dropout_input or L > 1) then
-        input = onmt.LayerNormalization(inputDim)(input)
-      end
     end
 
     local prevH = inputs[L]
 
-    nextH = self:_buildLayer(inputDim, hiddenSize)({prevH, input})
+    nextH = self:_buildLayer(inputDim, hiddenSize, regularization == 'layernorm')({prevH, input})
     prevInput = input
 
     table.insert(outputs, nextH)
@@ -122,7 +118,7 @@ end
 
 
 ]]
-function GRU:_buildLayer(inputSize, hiddenSize)
+function GRU:_buildLayer(inputSize, hiddenSize, layerNorm)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -145,11 +141,23 @@ function GRU:_buildLayer(inputSize, hiddenSize)
   local h2h_r, h2h_i, h2h_n = nn.SplitTable(2)(h2h_reshaped):split(3)
 
   -- Decode the gates.
-  local r = nn.Sigmoid()(nn.CAddTable()({x2h_r, h2h_r}))
-  local i = nn.Sigmoid()(nn.CAddTable()({x2h_i, h2h_i}))
-  local n = nn.Tanh()(nn.CAddTable()({
+  local a_r = nn.CAddTable()({x2h_r, h2h_r})
+  local a_i = nn.CAddTable()({x2h_i, h2h_i})
+
+  if layerNorm then
+    a_r = onmt.LayerNormalization(hiddenSize)(a_r)
+    a_i = onmt.LayerNormalization(hiddenSize)(a_i)
+  end
+
+  local r = nn.Sigmoid()(a_r)
+  local i = nn.Sigmoid()(a_i)
+  local a_n = nn.CAddTable()({
     x2h_n, nn.CMulTable()({r, h2h_n})
-  }))
+  })
+  if layerNorm then
+    a_n = onmt.LayerNormalization(hiddenSize)(a_n)
+  end
+  local n = nn.Tanh()(a_n)
 
   -- Perform the GRU update.
   local nextH = nn.CAddTable()({
