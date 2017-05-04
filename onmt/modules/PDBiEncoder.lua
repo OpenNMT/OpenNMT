@@ -35,7 +35,7 @@ function PDBiEncoder:__init(args, input)
   self.args.layers = args.layers
   self.args.regularization = args.regularization
   self.args.dropout = args.dropout
-  local regularization_input = args.regularization_input
+  local dropout_input = args.regularization_input
 
   self.layers = {}
 
@@ -53,12 +53,12 @@ function PDBiEncoder:__init(args, input)
     else
       -- trick to force a regularization on each layer L > 1
       if #self.layers == 1 and args.regularization ~= 'none' then
-        args.regularization_input = true
+        args.dropout_input = true
       end
     end
   end
   args.layers = self.args.layers
-  args.regularization_input = regularization_input
+  args.dropout_input = regularization_input
   self.args.numEffectiveLayers = self.layers[1].args.numEffectiveLayers * self.args.layers
   self.args.hiddenSize = args.rnn_size
 
