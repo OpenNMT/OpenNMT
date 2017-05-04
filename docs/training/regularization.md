@@ -11,4 +11,10 @@ Dropout is an extremely effective and simple regularization techniques introduce
 
 ## Layer Normalization
 
-Layer Normalization [Ba et al., 2016](https://arxiv.org/abs/1607.06450) is normalizing each neuron output using the full layer for calculating \(\mu^l\) and \(\sigma^l\).
+Layer Normalization [Ba et al., 2016](https://arxiv.org/abs/1607.06450) is normalizing each neuron output using the full layer for calculating \(\mu^{t,l}\) and \(\sigma^{t,l}\).
+
+Layer Normalization is also adding up two learnt parameters per normalized output: \(\textbf g_i\) which the gain after normalization, and \(\textbf b_i\) which is the bias according to the formulas:
+
+$$h'^{t,l}_i=\frac{\textbf g_i}{\sigma^{t,l}}.(h^{t,l}_i-\mu^{t,l})+{\textbf b_i}$$
+$$\sigma^{t,l}=\sqrt{\frac{1}{H}\sum_{i=1}^{H}(h^{t,l}_i-\mu^{t,l})^2}$$
+$$\mu^{t,l}=\frac{1}{H}\sum_{i=1}^{H}h^{t,l}_i$$
