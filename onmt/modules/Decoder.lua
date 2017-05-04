@@ -189,7 +189,7 @@ function Decoder:_buildModel(attentionModel)
   if (not self.rnn.regularization or self.rnn.regularization == 'dropout') and self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   elseif self.rnn.regularization == 'layernorm' then
-    attnOutput = nn.LayerNormalization(self.args.rnnSize)(attnOutput)
+    attnOutput = onmt.LayerNormalization(self.args.rnnSize)(attnOutput)
   end
 
   table.insert(outputs, attnOutput)

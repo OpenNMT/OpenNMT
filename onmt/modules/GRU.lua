@@ -84,7 +84,7 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, regularization, dropout,
       end
     elseif regularization == 'layernorm' then
       if (regularize_input or L > 1) then
-        input = nn.LayerNormalization(inputDim)(input)
+        input = onmt.LayerNormalization(inputDim)(input)
       end
     end
 

@@ -1,6 +1,6 @@
 -- Reference: https://arxiv.org/pdf/1607.06450.pdf (Section 3)
 
-local LayerNormalization, parent = torch.class('nn.LayerNormalization', 'nn.Sequential')
+local LayerNormalization, parent = torch.class('onmt.LayerNormalization', 'nn.Sequential')
 function LayerNormalization:__init(nOutput, bias, eps, affine)
   parent.__init(self)
   eps = eps or 1e-10

@@ -68,6 +68,9 @@ end
 function rnnTest.LSTM_twoLayersWithDropout()
   testRNN(onmt.LSTM, 2, 10, 20, 'dropout', 0.3)
 end
+function rnnTest.LSTM_twoLayersWithLayerNorm()
+  testRNN(onmt.LSTM, 2, 10, 20, 'layernorm', 0)
+end
 function rnnTest.LSTM_twoLayersWithInputDropout()
   testRNN(onmt.LSTM, 2, 10, 20, 'dropout', 0.3, false, true)
 end
