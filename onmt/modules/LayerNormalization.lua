@@ -14,7 +14,6 @@ function LayerNormalization:__init(nOutput, bias, eps, affine)
                        :add(nn.Replicate(nOutput,2))))
       :add(nn.CSubTable())
       :add(nn.Normalize(2, eps))
-      :add(nn.MulConstant(torch.sqrt(nOutput)))
 
   if affine then
     local biasTransform = nn.Add(nOutput, false)
