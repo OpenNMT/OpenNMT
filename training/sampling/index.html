@@ -794,7 +794,12 @@
                 
                   <h1>Data sampling</h1>
                 
-                <p>Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch. There are different types of sampling that are selected using <code>-sample_type</code> option.</p>
+                <p>Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch. There are different types of sampling that are selected using <code>-sample_type</code> option as defined below.</p>
+<p>When sampling, with the option <code>-sample_tgt_vocab</code> it is also possible to restrict the target vocabulary to the current sample which gives an approximate of the full generator as defined here <a href="http://www.aclweb.org/anthology/P15-1001">Jean et al, 2015</a> through a so-called "Importance Sampling" approach.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Importance Sampling is particularly useful when training systems with very large target vocabulary</p>
+</div>
 <h2 id="uniform">Uniform<a class="headerlink" href="#uniform" title="Permanent link">&para;</a></h2>
 <p>The simplest data sampling is to uniformly select a subset of the training data. Using the <code>-sample N</code> option, the training will randomly choose <script type="math/tex">N</script> training sequences at each epoch.</p>
 <p>A typical use case is to reduce the length of the epochs for more frequent learning rate updates and validation perplexity computation.</p>
