@@ -2,8 +2,19 @@ local tester = ...
 
 local runTest = torch.TestSuite()
 
+-- build command line
+local min = 0
+for i in pairs(_G.arg) do
+  if i < min then min = i end
+end
+local args = {}
+for i = min,0 do
+  table.insert(args, "'".._G.arg[i].."'")
+end
+local TH = table.concat(args, " ")
+
 function runTest.basic()
-  local file = io.popen([[th preprocess.lua 2>&1]])
+  local file = io.popen(TH..[[ preprocess.lua 2>&1]])
   local output = file:read('*all')
   local exit = file:close()
   tester:eq(exit,nil)
@@ -11,7 +22,7 @@ function runTest.basic()
 end
 
 function runTest.run_real()
-  local file = io.popen([[th preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt\
+  local file = io.popen(TH..[[ preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt\
                           -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data tiny\
                           -src_vocab_size 50 -tgt_vocab_size 50 -src_seq_length 20 -tgt_seq_length 15\
                           2>&1]])
@@ -22,7 +33,7 @@ function runTest.run_real()
     local v = tonumber(string.match(output, "Prepared (%d+) sentences"))
     tester:eq(v, 2984)
 
-    file = io.popen([[th train.lua -data tiny-train.t7 -save_model tiny -end_epoch 2\
+    file = io.popen(TH..[[ train.lua -data tiny-train.t7 -save_model tiny -end_epoch 2\
                       -rnn_size 10 -word_vec_size 10 -profiler 2>&1]])
     output = file:read('*all')
     status = file:close()
