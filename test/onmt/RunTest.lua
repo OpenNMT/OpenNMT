@@ -16,7 +16,7 @@ end
 function runTest.run_real()
   local file = io.popen(TH..[[ preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt\
                           -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data tiny\
-                          -src_vocab_size 50 -tgt_vocab_size 50 -src_seq_length 10 -tgt_seq_length 10\
+                          -src_vocab_size 30 -tgt_vocab_size 30 -src_seq_length 10 -tgt_seq_length 10\
                           2>&1]])
   local output = file:read('*all')
   local status = file:close()
@@ -26,7 +26,7 @@ function runTest.run_real()
     tester:eq(v, 881)
 
     file = io.popen(TH..[[ train.lua -data tiny-train.t7 -save_model tiny -end_epoch 2\
-                      -rnn_size 10 -word_vec_size 10 -profiler 2>&1]])
+                      -rnn_size 8 -word_vec_size 5 -profiler 2>&1]])
     output = file:read('*all')
     status = file:close()
     tester:assert(status, "train failed")
@@ -42,7 +42,7 @@ function runTest.run_real()
       end
 
       tester:eq(#ppls,2)
-      tester:eq(ppls,{7.99,10.39},1)
+      tester:eq(ppls,{5.68,5.21},1)
       tester:assert(string.find(output, "INFO] profile:") > 0, "cannot find profiling information")
     end
   end
