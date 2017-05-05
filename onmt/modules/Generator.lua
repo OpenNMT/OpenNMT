@@ -10,26 +10,6 @@ local Generator, parent = torch.class('onmt.Generator', 'onmt.Network')
 -- for back compatibility - still declare FeaturesGenerator - but no need to define it
 torch.class('onmt.FeaturesGenerator', 'onmt.Generator')
 
-local options = {
-  {
-    '-importance_sampling', false,
-    [[Use importance sampling approach as approximation of full softmax, target vocabulary is built using sampling.]],
-    {
-      depends = function(opt)
-                  if opt.importance_sampling then
-                    if opt.model_type and opt.model_type ~= 'seq2seq' then return false, "only works for seq2seq models." end
-                    if opt.sample == 0 then return false, "requires '-sample' option" end
-                  end
-                  return true
-                end
-    }
-  }
-}
-
-function Generator.declareOpts(cmd)
-  cmd:setCmdLineOptions(options, 'Generator')
-end
-
 function Generator:__init(opt, sizes)
   parent.__init(self)
   self:_buildGenerator(opt, sizes)

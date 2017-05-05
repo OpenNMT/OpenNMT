@@ -29,6 +29,19 @@ local options = {
     [[When greater than 0, instances with perplexity above this value will be
       considered as noise and ignored; when less than 0, mode + `-sample_perplexity_max` * stdev
       will be used as threshold.]]
+  },
+  {
+    '-sample_tgt_vocab', false,
+    [[Use importance sampling approach as approximation of full softmax: target vocabulary is built using sample.]],
+    {
+      depends = function(opt)
+                  if opt.sample_tgt_vocab then
+                    if opt.model_type and opt.model_type ~= 'seq2seq' then return false, "only works for seq2seq models." end
+                    if opt.sample == 0 then return false, "requires '-sample' option" end
+                  end
+                  return true
+                end
+    }
   }
 }
 
@@ -42,7 +55,7 @@ end
 function SampledDataset:__init(opt, srcData, tgtData)
   parent.__init(self, srcData, tgtData)
 
-  if tgtData and opt.importance_sampling then
+  if tgtData and opt.sample_tgt_vocab then
     self.targetVocIndex = {}
     self.targetVocTensor = {}
   end
