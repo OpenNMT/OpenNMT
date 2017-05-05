@@ -14,8 +14,11 @@
 
 ### Fixes and improvements
 
-* Improve command line parser (space-separated list of values and boolean arguments), do not allow duplicate commandline
-options and do not print help on errors
+* Improve command line and configuration file parser
+  * space-separated list of values
+  * boolean arguments
+  * disallow duplicate command line options
+  * clearer error messages
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
 * Fix translation error of models profiled during training
 * Fix translation error of models trained without attention

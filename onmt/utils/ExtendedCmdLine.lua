@@ -156,12 +156,13 @@ function ExtendedCmdLine:help(arg, md)
 end
 
 function ExtendedCmdLine:error(msg)
-  if self.script then
-    io.stderr:write(self.script .. ': ')
+  if not self.script then
+    error(msg)
+  else
+    io.stderr:write(self.script .. ': ' .. msg .. '\n')
+    io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or visit the online documentation at http://opennmt.net/OpenNMT/.\n')
+    os.exit(1)
   end
-  io.stderr:write(msg .. '\n')
-  io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or visit the online documentation at http://opennmt.net/OpenNMT/.\n')
-  os.exit(1)
 end
 
 function ExtendedCmdLine:option(key, default, help, _meta_)
