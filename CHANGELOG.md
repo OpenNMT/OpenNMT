@@ -9,7 +9,7 @@
 * Add a bridge layer between the encoder and decoder
 * New feature to keep token frequency in generated dictionaries
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
-* Introduce importance sampling
+* Introduce target vocabulary reduction (importance sampling)
 * Optimize decoding with sub-dictionary
 
 ### Fixes and improvements
