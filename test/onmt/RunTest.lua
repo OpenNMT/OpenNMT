@@ -17,7 +17,7 @@ function runTest.run_real()
                           2>&1]])
   local output = file:read('*all')
   local status = file:close()
-  tester:assert(status, "preprocess failed")
+  tester:assert(status ~= nil, "preprocess failed")
   if status then
     local v = tonumber(string.match(output, "Prepared (%d+) sentences"))
     tester:eq(v, 2984)
