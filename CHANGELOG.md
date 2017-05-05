@@ -7,6 +7,7 @@
 * Support parallel file alignment by index in addition to line-by-line
 * Add script to convert and/or generate pretrained word embeddings
 * Add a bridge layer between the encoder and decoder
+* Add `epoch_only` decay strategy
 * New feature to keep token frequency in generated dictionaries
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
 * Introduce target vocabulary reduction (importance sampling)
