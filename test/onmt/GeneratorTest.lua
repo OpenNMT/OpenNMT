@@ -69,8 +69,6 @@ function generatorTest.GeneratorIS()
   generator:setTargetVoc(torch.LongTensor{1,2})
   local output_ri = generator:forward({context, torch.Tensor{3}})
 
-  print('output',output[1])
-  print('output_ri',output_ri[1])
   tester:eq(output_ri[1]:size(2),2)
   tester:assertTensorEq(output[1]:narrow(2,1,2), output_ri[1]:narrow(2,1,2))
   tester:assertTensorEq(output[2], output_ri[2])
