@@ -40,6 +40,7 @@ function beamSearchTest.beamSearch()
   Advancer.isComplete = function(_, beam) return isComplete(beam) end
   local beamSize, nBest, advancer, beamSearcher, results
   advancer = Advancer.new()
+  advancer.dicts = {}
   -- Test different beam sizes
   nBest = 1
   -- Beam size 2
@@ -56,6 +57,15 @@ function beamSearchTest.beamSearch()
   tester:eq(results, { {{tokens = {2, 1, 2}, states = {}, score = math.log(.6*.6*.6)}},
                        {{tokens = {1, 2, 1}, states = {}, score = math.log(.6*.6*.6)}},
                        {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
+
+  -- Test SubDict mapping
+  advancer.dicts.subdict = onmt.utils.SubDict
+  advancer.dicts.subdict.vocabs = {1,2,3}
+  advancer.dicts.subdict.targetVocInvMap = torch.LongTensor{2,1,4,3}
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
+  results = beamSearcher:search(beamSize, nBest)
+  tester:eq(results[1][1].tokens, {1, 1, 1})
+  advancer.dicts.subdict = nil
 
   -- Test nBest = 2
   nBest = 2
@@ -86,6 +96,7 @@ function beamSearchTest.beamSearch()
   end
   Advancer.filter = function(_, beam) return filter(beam) end
   advancer = Advancer.new()
+  advancer.dicts = {}
   nBest = 1
   beamSize = 3
   beamSearcher = onmt.translate.BeamSearcher.new(advancer)

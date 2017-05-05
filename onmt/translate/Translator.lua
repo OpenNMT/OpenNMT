@@ -58,6 +58,13 @@ local options = {
     }
   },
   {
+    '-target_subdict', '',
+    [[Path to target words dictionary corresponding to the source.]],
+    {
+      valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
     '-pre_filter_factor', 1,
     [[Optional, set this only if filter is being used. Before
       applying filters, hypotheses with top `beam_size * pre_filter_factor`
@@ -124,6 +131,12 @@ function Translator:__init(args)
 
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
+  end
+
+  if self.args.target_subdict:len() > 0 then
+    self.dicts.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
+    self.model:setTargetVoc(self.dicts.subdict.targetVocTensor)
+    _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.dicts.subdict.targetVocTensor:size(1))
   end
 end
 
