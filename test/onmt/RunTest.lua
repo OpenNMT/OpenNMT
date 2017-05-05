@@ -53,8 +53,6 @@ function runTest.run_real()
       tester:eq(ppls,{9.95,7.19},1)
       tester:assert(string.find(output, "INFO] profile:") > 0, "cannot find profiling information")
     end
-  else
-    print(output)
   end
   os.remove("tiny-train.t7")
   os.remove("tiny.src.dict")
