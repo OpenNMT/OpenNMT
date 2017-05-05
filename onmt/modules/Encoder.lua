@@ -41,6 +41,14 @@ local options = {
     }
   },
   {
+    '-regularization', 'dropout',
+    [[Regularization type.]],
+    {
+      enum = {'dropout', 'layernorm', 'none'},
+      structural = 0
+    }
+  },
+  {
     '-dropout', 0.3,
     [[Dropout probability applied between recurrent layers.]],
     {
@@ -81,7 +89,8 @@ function Encoder:__init(args, inputNetwork)
     RNN = onmt.GRU
   end
 
-  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input)
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.regularization,
+                      args.dropout, args.residual, args.dropout_input)
 
   self.rnn = rnn
   self.inputNet = inputNetwork

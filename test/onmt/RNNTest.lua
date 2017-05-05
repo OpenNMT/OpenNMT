@@ -22,14 +22,14 @@ local function buildStates(count, batchSize, dim)
   return states
 end
 
-local function testRNN(cell, layers, inputSize, hiddenSize, dropout, residual, dropout_input)
-  local rnn = cell(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
+local function testRNN(cell, layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input)
+  local rnn = cell(layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input)
   local numStates = torch.typename(rnn) == 'onmt.GRU' and 1 or 2
   local inputs = buildStates(layers * numStates, 2, hiddenSize)
   table.insert(inputs, torch.Tensor(2, inputSize):uniform())
 
   local expectedDropout = 0
-  if dropout and dropout > 0 then
+  if (not regularization or regularization=='dropout') and dropout and dropout > 0 then
     expectedDropout = expectedDropout + layers - 1
     if dropout_input then
       expectedDropout = expectedDropout + 1
@@ -57,38 +57,41 @@ function rnnTest.LSTM_oneLayer()
   testRNN(onmt.LSTM, 1, 10, 20)
 end
 function rnnTest.LSTM_oneLayerWithInputDropout()
-  testRNN(onmt.LSTM, 1, 10, 20, 0.3, false, true)
+  testRNN(onmt.LSTM, 1, 10, 20, 'dropout', 0.3, false, true)
 end
 function rnnTest.LSTM_oneLayerWithoutInputDropout()
-  testRNN(onmt.LSTM, 1, 10, 20, 0, false, true)
+  testRNN(onmt.LSTM, 1, 10, 20, 'none', 0.3, false, true)
 end
 function rnnTest.LSTM_twoLayers()
   testRNN(onmt.LSTM, 2, 10, 20)
 end
 function rnnTest.LSTM_twoLayersWithDropout()
-  testRNN(onmt.LSTM, 2, 10, 20, 0.3)
+  testRNN(onmt.LSTM, 2, 10, 20, 'dropout', 0.3)
+end
+function rnnTest.LSTM_twoLayersWithLayerNorm()
+  testRNN(onmt.LSTM, 2, 10, 20, 'layernorm', 0)
 end
 function rnnTest.LSTM_twoLayersWithInputDropout()
-  testRNN(onmt.LSTM, 2, 10, 20, 0.3, false, true)
+  testRNN(onmt.LSTM, 2, 10, 20, 'dropout', 0.3, false, true)
 end
 
 function rnnTest.GRU_oneLayer()
   testRNN(onmt.GRU, 1, 10, 20)
 end
 function rnnTest.GRU_oneLayerWithInputDropout()
-  testRNN(onmt.GRU, 1, 10, 20, 0.3, false, true)
+  testRNN(onmt.GRU, 1, 10, 20, 'dropout', 0.3, false, true)
 end
 function rnnTest.GRU_oneLayerWithoutInputDropout()
-  testRNN(onmt.LSTM, 1, 10, 20, 0, false, true)
+  testRNN(onmt.LSTM, 1, 10, 20, 'dropout', 0, false, true)
 end
 function rnnTest.GRU_twoLayers()
   testRNN(onmt.GRU, 2, 10, 20)
 end
 function rnnTest.GRU_twoLayersWithDropout()
-  testRNN(onmt.GRU, 2, 10, 20, 0.3)
+  testRNN(onmt.GRU, 2, 10, 20, 'dropout', 0.3)
 end
 function rnnTest.GRU_twoLayersWithInputDropout()
-  testRNN(onmt.GRU, 2, 10, 20, 0.3, false, true)
+  testRNN(onmt.GRU, 2, 10, 20, 'dropout', 0.3, false, true)
 end
 
 return rnnTest

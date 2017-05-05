@@ -14,6 +14,7 @@ local protectInput = {
   'nn.Linear',
   'nn.JoinTable',
   'nn.CMulTable',
+  'nn.Normalize',
   'nn.MM'
 }
 

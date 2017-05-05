@@ -53,6 +53,7 @@ build = {
     ["onmt.modules.WordEmbedding"] = "onmt/modules/WordEmbedding.lua",
     ["onmt.modules.JoinReplicateTable"] = "onmt/modules/JoinReplicateTable.lua",
     ["onmt.modules.ParallelClassNLLCriterion"] = "onmt/modules/ParallelClassNLLCriterion.lua",
+    ["onmt.modules.LayerNormalization"] = "onmt/modules/LayerNormalization.lua",
     ["onmt.data.init"] = "onmt/data/init.lua",
     ["onmt.data.Batch"] = "onmt/data/Batch.lua",
     ["onmt.data.BatchTensor"] = "onmt/data/BatchTensor.lua",

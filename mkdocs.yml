@@ -38,6 +38,7 @@ pages:
   - Training:
       - Models: training/models.md
       - Embeddings: training/embeddings.md
+      - Regularization: training/regularization.md
       - Logs: training/logs.md
       - "Multi GPU": training/multi_gpu.md
       - Retraining: training/retraining.md

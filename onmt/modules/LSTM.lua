@@ -30,22 +30,24 @@ Parameters:
   * `layers` - Number of LSTM layers, L.
   * `inputSize` - Size of input layer
   * `hiddenSize` - Size of the hidden layers.
+  * `regularization` - the regularization type
   * `dropout` - Dropout rate to use (in $$[0,1]$$ range).
   * `residual` - Residual connections between layers.
-  * `dropout_input` - if true, add a dropout layer on the first layer (useful for instance in complex encoders)
+  * `dropout_input` - if true, add a regularization layer on the first layer (useful for instance in complex encoders)
 --]]
-function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
+function LSTM:__init(layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input)
   dropout = dropout or 0
 
+  self.regularization = regularization
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input))
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
+function LSTM:_buildModel(layers, inputSize, hiddenSize, regularization, dropout, residual, dropout_input)
   local inputs = {}
   local outputs = {}
 
@@ -76,14 +78,17 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
         input = nn.CAddTable()({input, prevInput})
       end
     end
-    if dropout > 0 and (dropout_input or L > 1) then
-      input = nn.Dropout(dropout)(input)
+
+    if (not regularization or regularization == 'dropout') and dropout > 0 then
+      if (dropout_input or L > 1) then
+        input = nn.Dropout(dropout)(input)
+      end
     end
 
     local prevC = inputs[L*2 - 1]
     local prevH = inputs[L*2]
 
-    nextC, nextH = self:_buildLayer(inputDim, hiddenSize)({prevC, prevH, input}):split(2)
+    nextC, nextH = self:_buildLayer(inputDim, hiddenSize, regularization == 'layernorm')({prevC, prevH, input}):split(2)
     prevInput = input
 
     table.insert(outputs, nextC)
@@ -94,7 +99,7 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
 end
 
 --[[ Build a single LSTM unit layer. ]]
-function LSTM:_buildLayer(inputSize, hiddenSize)
+function LSTM:_buildLayer(inputSize, hiddenSize, layerNorm)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -111,6 +116,13 @@ function LSTM:_buildLayer(inputSize, hiddenSize)
 
   local reshaped = nn.Reshape(4, hiddenSize)(allInputSums)
   local n1, n2, n3, n4 = nn.SplitTable(2)(reshaped):split(4)
+
+  if layerNorm then
+    n1 = onmt.LayerNormalization(hiddenSize)(n1)
+    n2 = onmt.LayerNormalization(hiddenSize)(n2)
+    n3 = onmt.LayerNormalization(hiddenSize)(n3)
+    n4 = onmt.LayerNormalization(hiddenSize)(n4)
+  end
 
   -- Decode the gates.
   local inGate = nn.Sigmoid()(n1)
