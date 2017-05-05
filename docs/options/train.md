@@ -60,6 +60,7 @@
 ## Trainer options
 
 * `-save_every <number>` (default: `5000`)<br/>Save intermediate models every this many iterations within an epoch. If = 0, will not save intermediate models.
+* `-save_every_epochs <number>` (default: `1`)<br/>Save a model every this many epochs. If = 0, will not save a model at each epoch.
 * `-report_every <number>` (default: `50`)<br/>Report progress every this many iterations within an epoch.
 * `-async_parallel [<boolean>]` (default: `false`)<br/>When training on multiple GPUs, update parameters asynchronously.
 * `-async_parallel_minbatch <number>` (default: `1000`)<br/>In asynchronous training, minimal number of sequential batches before being parallel.
