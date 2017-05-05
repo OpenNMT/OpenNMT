@@ -71,9 +71,9 @@ function generatorTest.GeneratorIS()
 
   print('output',output[1])
   print('output_ri',output_ri[1])
-  tester:eq(output[1]:narrow(2,1,2), output_ri[1]:narrow(2,1,2))
-  tester:eq(output[2], output_ri[2])
   tester:eq(output_ri[1]:size(2),2)
+  tester:assertTensorEq(output[1]:narrow(2,1,2), output_ri[1]:narrow(2,1,2))
+  tester:assertTensorEq(output[2], output_ri[2])
 end
 
 return generatorTest
