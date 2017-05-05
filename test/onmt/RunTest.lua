@@ -3,15 +3,7 @@ local tester = ...
 local runTest = torch.TestSuite()
 
 -- build command line
-local min = 0
-for i in pairs(_G.arg) do
-  if i < min then min = i end
-end
-local args = {}
-for i = min,0 do
-  table.insert(args, "'".._G.arg[i].."'")
-end
-local TH = table.concat(args, " ")
+local TH = _G.luacmd or "th"
 
 function runTest.basic()
   local file = io.popen(TH..[[ preprocess.lua 2>&1]])

@@ -70,7 +70,7 @@ script:
   - luacheck *lua onmt/ tools/ benchmark/ test/
   - luarocks make rocks/opennmt-scm-1.rockspec
   - sh test/tokenization/test.sh
-  - ${LUA} -lluacov test/test.lua
+  - ${LUA} -lluacov test/test.lua -e ${LUA}
   - luacov
 after_success:
   - bash <(curl -s https://codecov.io/bash)
