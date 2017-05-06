@@ -25,6 +25,7 @@
 * Fix error when using one-layer GRU
 * Fix incorrect coverage normalization formula during the beam search
 * Improve unicode support for languages using combining marks like Hindi
+* Make epoch models save frequency configurable
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
 

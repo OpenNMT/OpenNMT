@@ -6,7 +6,14 @@ local options = {
     [[Save intermediate models every this many iterations within an epoch.
       If = 0, will not save intermediate models.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+      valid = onmt.utils.ExtendedCmdLine.isInt(0)
+    }
+  },
+  {
+    '-save_every_epochs', 1,
+    [[Save a model every this many epochs. If = 0, will not save a model at each epoch.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(0)
     }
   },
   {
@@ -345,6 +352,7 @@ function Trainer:train(trainData, validData, trainStates)
   end
 
   local startEpoch = self.args.start_epoch
+  local unsavedEpochs = 0
   local endEpoch
 
   if self.args.end_epoch > 0 then
@@ -373,7 +381,12 @@ function Trainer:train(trainData, validData, trainStates)
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
     self.optim:updateLearningRate(validPpl, epoch)
-    self.saver:saveEpoch(validPpl, epochState)
+
+    unsavedEpochs = unsavedEpochs + 1
+    if unsavedEpochs == self.args.save_every_epochs then
+      self.saver:saveEpoch(validPpl, epochState)
+      unsavedEpochs = 0
+    end
 
     -- Early stopping?
     if self.optim:isFinished() then
