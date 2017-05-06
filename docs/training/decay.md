@@ -15,6 +15,12 @@ By default, the decay strategy is binary. There is either no decay or the decay 
 1. The validation perplexity is not improving more than `-start_decay_ppl_delta`.
 2. The current epoch is past `-start_decay_at`.
 
+## Epoch-based
+
+With the `-decay epoch_only` option, learning rate is only decayed when the condition is met on the epoch:
+
+1. The current epoch is past `-start_decay_at`.
+
 ## Perplexity-based
 
 With the `-decay perplexity_only` option, learning rate is only decayed when the condition is met on the validation perplexity:

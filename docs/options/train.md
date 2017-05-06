@@ -80,7 +80,7 @@
 * `-learning_rate_decay <number>` (default: `0.7`)<br/>Learning rate decay factor: `learning_rate = learning_rate * learning_rate_decay`.
 * `-start_decay_at <number>` (default: `9`)<br/>In "default" decay mode, start decay after this epoch.
 * `-start_decay_ppl_delta <number>` (default: `0`)<br/>Start decay when validation perplexity improvement is lower than this value.
-* `-decay <string>` (accepted: `default`, `perplexity_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation perplexity is not improving more than `-start_decay_ppl_delta`, `perplexity_only`: only decay when validation perplexity is not improving more than `-start_decay_ppl_delta`.
+* `-decay <string>` (accepted: `default`, `epoch_only`, `perplexity_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation perplexity is not improving more than `-start_decay_ppl_delta`, `epoch_only`: only decay after each epoch past `-start_decay_at`, `perplexity_only`: only decay when validation perplexity is not improving more than `-start_decay_ppl_delta`.
 
 ## Saver options
 
