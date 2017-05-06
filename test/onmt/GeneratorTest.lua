@@ -57,7 +57,7 @@ function generatorTest.GeneratorIS()
   local generator = onmt.Generator.new(opt, sizes)
   generator:apply(function(m) m:training() end)
 
-  local context = torch.Tensor(10, opt.rnn_size)
+  local context = torch.Tensor(10, opt.rnn_size):uniform(-0.1, 0.1)
   local output = generator:forward({context, torch.Tensor{3}})
 
   tester:eq(#output, #sizes)
