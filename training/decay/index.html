@@ -804,18 +804,19 @@
 <code>-learning_rate_decay</code>.</p>
 <p>If an epoch is a too large unit for your particular use case, consider using <a href="../sampling/">data sampling</a>. Additionally, it may be useful to set a minimum learning rate with <code>-min_learning_rate</code> to stop the training earlier when the learning rate is too small to make a difference.</p>
 <h2 id="default">Default<a class="headerlink" href="#default" title="Permanent link">&para;</a></h2>
-<p>By default, the decay strategy is binary. There is either no decay or the decay is applied after each epoch until the end of the training. The switch happens when one of the following condition is met first:</p>
+<p>By default, the decay is applied when one of the following conditions is met:</p>
 <ol>
 <li>The validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
 <li>The current epoch is past <code>-start_decay_at</code>.</li>
 </ol>
+<p>Once one of the conditions is met, the learning rate is decayed after <strong>each</strong> remaining epoch.</p>
 <h2 id="epoch-based">Epoch-based<a class="headerlink" href="#epoch-based" title="Permanent link">&para;</a></h2>
-<p>With the <code>-decay epoch_only</code> option, learning rate is only decayed when the condition is met on the epoch:</p>
+<p>With the <code>-decay epoch_only</code> option, the learning rate is only decayed when the condition is met on the epoch:</p>
 <ol>
 <li>The current epoch is past <code>-start_decay_at</code>.</li>
 </ol>
 <h2 id="perplexity-based">Perplexity-based<a class="headerlink" href="#perplexity-based" title="Permanent link">&para;</a></h2>
-<p>With the <code>-decay perplexity_only</code> option, learning rate is only decayed when the condition is met on the validation perplexity:</p>
+<p>With the <code>-decay perplexity_only</code> option, the learning rate is only decayed when the condition is met on the validation perplexity:</p>
 <ol>
 <li>The validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
 </ol>

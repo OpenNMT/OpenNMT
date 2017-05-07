@@ -242,22 +242,22 @@
         }, 
         {
             "location": "/training/decay/", 
-            "text": "OpenNMT's training implements empirical learning rate decay strategies. Experiences showed that using stochastic gradient descent (SGD) and a decay strategy yield better performance than optimization methods with adaptive learning rates.\n\n\nLearning rate updates are always computed at the end of an epoch. When a decay condition is met, the following update rule is applied:\n\n\n\n\nlr^{(t+1)} = lr^{(t)} \\times decay\n\n\n\n\nwhere \nlr^{(0)}=\n\n\n-learning_rate\n and \ndecay=\n\n\n-learning_rate_decay\n.\n\n\nIf an epoch is a too large unit for your particular use case, consider using \ndata sampling\n. Additionally, it may be useful to set a minimum learning rate with \n-min_learning_rate\n to stop the training earlier when the learning rate is too small to make a difference.\n\n\nDefault\n\n\nBy default, the decay strategy is binary. There is either no decay or the decay is applied after each epoch until the end of the training. The switch happens when one of the following condition is met first:\n\n\n\n\nThe validation perplexity is not improving more than \n-start_decay_ppl_delta\n.\n\n\nThe current epoch is past \n-start_decay_at\n.\n\n\n\n\nEpoch-based\n\n\nWith the \n-decay epoch_only\n option, learning rate is only decayed when the condition is met on the epoch:\n\n\n\n\nThe current epoch is past \n-start_decay_at\n.\n\n\n\n\nPerplexity-based\n\n\nWith the \n-decay perplexity_only\n option, learning rate is only decayed when the condition is met on the validation perplexity:\n\n\n\n\nThe validation perplexity is not improving more than \n-start_decay_ppl_delta\n.", 
+            "text": "OpenNMT's training implements empirical learning rate decay strategies. Experiences showed that using stochastic gradient descent (SGD) and a decay strategy yield better performance than optimization methods with adaptive learning rates.\n\n\nLearning rate updates are always computed at the end of an epoch. When a decay condition is met, the following update rule is applied:\n\n\n\n\nlr^{(t+1)} = lr^{(t)} \\times decay\n\n\n\n\nwhere \nlr^{(0)}=\n\n\n-learning_rate\n and \ndecay=\n\n\n-learning_rate_decay\n.\n\n\nIf an epoch is a too large unit for your particular use case, consider using \ndata sampling\n. Additionally, it may be useful to set a minimum learning rate with \n-min_learning_rate\n to stop the training earlier when the learning rate is too small to make a difference.\n\n\nDefault\n\n\nBy default, the decay is applied when one of the following conditions is met:\n\n\n\n\nThe validation perplexity is not improving more than \n-start_decay_ppl_delta\n.\n\n\nThe current epoch is past \n-start_decay_at\n.\n\n\n\n\nOnce one of the conditions is met, the learning rate is decayed after \neach\n remaining epoch.\n\n\nEpoch-based\n\n\nWith the \n-decay epoch_only\n option, the learning rate is only decayed when the condition is met on the epoch:\n\n\n\n\nThe current epoch is past \n-start_decay_at\n.\n\n\n\n\nPerplexity-based\n\n\nWith the \n-decay perplexity_only\n option, the learning rate is only decayed when the condition is met on the validation perplexity:\n\n\n\n\nThe validation perplexity is not improving more than \n-start_decay_ppl_delta\n.", 
             "title": "Decay strategies"
         }, 
         {
             "location": "/training/decay/#default", 
-            "text": "By default, the decay strategy is binary. There is either no decay or the decay is applied after each epoch until the end of the training. The switch happens when one of the following condition is met first:   The validation perplexity is not improving more than  -start_decay_ppl_delta .  The current epoch is past  -start_decay_at .", 
+            "text": "By default, the decay is applied when one of the following conditions is met:   The validation perplexity is not improving more than  -start_decay_ppl_delta .  The current epoch is past  -start_decay_at .   Once one of the conditions is met, the learning rate is decayed after  each  remaining epoch.", 
             "title": "Default"
         }, 
         {
             "location": "/training/decay/#epoch-based", 
-            "text": "With the  -decay epoch_only  option, learning rate is only decayed when the condition is met on the epoch:   The current epoch is past  -start_decay_at .", 
+            "text": "With the  -decay epoch_only  option, the learning rate is only decayed when the condition is met on the epoch:   The current epoch is past  -start_decay_at .", 
             "title": "Epoch-based"
         }, 
         {
             "location": "/training/decay/#perplexity-based", 
-            "text": "With the  -decay perplexity_only  option, learning rate is only decayed when the condition is met on the validation perplexity:   The validation perplexity is not improving more than  -start_decay_ppl_delta .", 
+            "text": "With the  -decay perplexity_only  option, the learning rate is only decayed when the condition is met on the validation perplexity:   The validation perplexity is not improving more than  -start_decay_ppl_delta .", 
             "title": "Perplexity-based"
         }, 
         {
