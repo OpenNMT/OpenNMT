@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html class="no-js">
+<html lang="en" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -11,7 +11,7 @@
       
         <link rel="shortcut icon" href="../../assets/images/favicon.png">
       
-      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.5.5">
+      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.6.1">
     
     
       
@@ -22,7 +22,7 @@
       <script src="../../assets/javascripts/modernizr-56ade86843.js"></script>
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/application-b1a1975878.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/application-4d0d3f2fbf.css">
       
     
     
@@ -90,7 +90,7 @@
           <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
           
 <div class="md-search" data-md-component="search">
-  <div class="md-search__overlay"></div>
+  <label class="md-search__overlay" for="search"></label>
   <div class="md-search__inner">
     <form class="md-search__form" name="search">
       <input type="text" class="md-search__input" name="query" required placeholder="Search" accesskey="s" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
@@ -982,6 +982,7 @@
 <h2 id="trainer-options">Trainer options<a class="headerlink" href="#trainer-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-save_every &lt;number&gt;</code> (default: <code>5000</code>)<br/>Save intermediate models every this many iterations within an epoch. If = 0, will not save intermediate models.</li>
+<li><code>-save_every_epochs &lt;number&gt;</code> (default: <code>1</code>)<br/>Save a model every this many epochs. If = 0, will not save a model at each epoch.</li>
 <li><code>-report_every &lt;number&gt;</code> (default: <code>50</code>)<br/>Report progress every this many iterations within an epoch.</li>
 <li><code>-async_parallel [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>When training on multiple GPUs, update parameters asynchronously.</li>
 <li><code>-async_parallel_minbatch &lt;number&gt;</code> (default: <code>1000</code>)<br/>In asynchronous training, minimal number of sequential batches before being parallel.</li>
@@ -1001,7 +1002,7 @@
 <li><code>-learning_rate_decay &lt;number&gt;</code> (default: <code>0.7</code>)<br/>Learning rate decay factor: <code>learning_rate = learning_rate * learning_rate_decay</code>.</li>
 <li><code>-start_decay_at &lt;number&gt;</code> (default: <code>9</code>)<br/>In "default" decay mode, start decay after this epoch.</li>
 <li><code>-start_decay_ppl_delta &lt;number&gt;</code> (default: <code>0</code>)<br/>Start decay when validation perplexity improvement is lower than this value.</li>
-<li><code>-decay &lt;string&gt;</code> (accepted: <code>default</code>, <code>perplexity_only</code>; default: <code>default</code>)<br/>When to apply learning rate decay. <code>default</code>: decay after each epoch past <code>-start_decay_at</code> or as soon as the validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>, <code>perplexity_only</code>: only decay when validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
+<li><code>-decay &lt;string&gt;</code> (accepted: <code>default</code>, <code>epoch_only</code>, <code>perplexity_only</code>; default: <code>default</code>)<br/>When to apply learning rate decay. <code>default</code>: decay after each epoch past <code>-start_decay_at</code> or as soon as the validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>, <code>epoch_only</code>: only decay after each epoch past <code>-start_decay_at</code>, <code>perplexity_only</code>: only decay when validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
 </ul>
 <h2 id="saver-options">Saver options<a class="headerlink" href="#saver-options" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1113,7 +1114,7 @@
       
     </div>
     
-      <script src="../../assets/javascripts/application-ad1183cb07.js"></script>
+      <script src="../../assets/javascripts/application-6b599127bc.js"></script>
       <script>app.initialize({url:{base:"../.."}})</script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
