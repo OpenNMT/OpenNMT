@@ -10,19 +10,21 @@ If an epoch is a too large unit for your particular use case, consider using [da
 
 ## Default
 
-By default, the decay strategy is binary. There is either no decay or the decay is applied after each epoch until the end of the training. The switch happens when one of the following condition is met first:
+By default, the decay is applied when one of the following conditions is met:
 
 1. The validation perplexity is not improving more than `-start_decay_ppl_delta`.
 2. The current epoch is past `-start_decay_at`.
 
+Once one of the conditions is met, the learning rate is decayed after **each** remaining epoch.
+
 ## Epoch-based
 
-With the `-decay epoch_only` option, learning rate is only decayed when the condition is met on the epoch:
+With the `-decay epoch_only` option, the learning rate is only decayed when the condition is met on the epoch:
 
 1. The current epoch is past `-start_decay_at`.
 
 ## Perplexity-based
 
-With the `-decay perplexity_only` option, learning rate is only decayed when the condition is met on the validation perplexity:
+With the `-decay perplexity_only` option, the learning rate is only decayed when the condition is met on the validation perplexity:
 
 1. The validation perplexity is not improving more than `-start_decay_ppl_delta`.
