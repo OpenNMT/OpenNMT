@@ -163,7 +163,7 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   local function fillGaps(weights, dict, loaded, dictSize, embeddingSize, save_unknown_dict)
     local fw
     local approximateCount = 0
-    if save_unknow_dict ~= '' then
+    if save_unknown_dict ~= '' then
       fw = io.open(save_unknown_dict, 'w')
     end
     for idx = 1, dictSize do
@@ -240,11 +240,9 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
   -- Given a word2vec embedings file name and dictionary, outputs weights.
   -- Some portions are courtesy of https://github.com/rotmanmi/word2vec.torch
-  local function loadWord2vec(filename, dict)
+  local function loadWord2vec(f, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
-
-    local f = torch.DiskFile(filename, "r")
 
     -- Read header.
     f:ascii()
@@ -278,21 +276,17 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       -- End File loop
     end
 
-    f:close()
-
     return weights, embeddingSize, loaded
   end
 
   -- Given a glove embedings file name and dictionary, outputs weights.
-  local function loadGlove(filename, dict)
+  local function loadGlove(f, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
     local embeddingSize = nil
     local weights = nil
     local first = true
     local count = 0
-
-    local f = io.open(filename, "r")
 
     for line in f:lines() do
       count = count + 1
@@ -323,31 +317,23 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       -- End File loop
     end
 
-    f:close()
-
     return weights, embeddingSize, loaded
   end
 
   -- Given a glove embedings file name and dictionary, outputs weights.
-  local function loadFasttext(filename, dict)
+  local function loadFasttext(f, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
-    local embeddingSize = nil
-    local weights = nil
-    local first = true
     local count = 0
-
-    local f = io.open(filename, "r")
 
     local header = f:read()
     local splitHeader = header:split(' ')
     assert(#splitHeader==2, "incorrect file format - header should be '#vocab dim'")
     local numWords = tonumber(splitHeader[1])
-    embeddingSize = tonumber(splitHeader[2])
-    weights = torch.Tensor(dictSize, embeddingSize)
+    local embeddingSize = tonumber(splitHeader[2])
+    local weights = torch.Tensor(dictSize, embeddingSize)
     -- Preload constants.
     weights, loaded = preloadSpecial(weights, loaded, dict, embeddingSize)
-
 
     for line in f:lines() do
       count = count + 1
@@ -371,8 +357,6 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
     assert(count==numWords, "invalid line count")
 
-    f:close()
-
     return weights, embeddingSize, loaded
   end
 
@@ -382,13 +366,15 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   local embeddingSize
   local loaded
 
+  local f = io.open(embeddingFilename, "r")
   if embeddingType == "word2vec" then
-    weights, embeddingSize, loaded = loadWord2vec(embeddingFilename, dictionary)
+    weights, embeddingSize, loaded = loadWord2vec(f, dictionary)
   elseif embeddingType == "glove" then
-    weights, embeddingSize, loaded = loadGlove(embeddingFilename, dictionary)
+    weights, embeddingSize, loaded = loadGlove(f, dictionary)
   elseif embeddingType == "fasttext" then
-    weights, embeddingSize, loaded = loadFasttext(embeddingFilename, dictionary)
+    weights, embeddingSize, loaded = loadFasttext(f, dictionary)
   end
+  f:close()
 
   _G.logger:info('... done.')
   _G.logger:info(' * %d/%d embeddings matched with dictionary tokens', #loaded, dictionary:size())
