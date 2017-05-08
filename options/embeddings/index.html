@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+<html class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -11,7 +11,7 @@
       
         <link rel="shortcut icon" href="../../assets/images/favicon.png">
       
-      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.6.1">
+      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.5.5">
     
     
       
@@ -22,7 +22,7 @@
       <script src="../../assets/javascripts/modernizr-56ade86843.js"></script>
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/application-4d0d3f2fbf.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/application-b1a1975878.css">
       
     
     
@@ -90,7 +90,7 @@
           <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
           
 <div class="md-search" data-md-component="search">
-  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__overlay"></div>
   <div class="md-search__inner">
     <form class="md-search__form" name="search">
       <input type="text" class="md-search__input" name="query" required placeholder="Search" accesskey="s" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
@@ -808,12 +808,14 @@
 <li><code>-dict_file &lt;string&gt;</code> (required)<br/>Path to outputted dict file from <code>preprocess.lua</code>.</li>
 <li><code>-embed_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the embedding file. Ignored if <code>-lang</code> is used.</li>
 <li><code>-save_data &lt;string&gt;</code> (required)<br/>Output file path/label.</li>
+<li><code>-save_unknown_dict &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to file for saving vocabs not found in embedding.</li>
 </ul>
 <h2 id="embedding-options">Embedding options<a class="headerlink" href="#embedding-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-lang &lt;string&gt;</code> (default: <code>''</code>)<br/>Wikipedia Language Code to autoload embeddings.</li>
-<li><code>-embed_type &lt;string&gt;</code> (accepted: <code>word2vec</code>, <code>glove</code>; default: <code>word2vec</code>)<br/>Embeddings file origin. Ignored if <code>-lang</code> is used.</li>
+<li><code>-embed_type &lt;string&gt;</code> (accepted: <code>word2vec</code>, <code>glove</code>, <code>fasttext</code>; default: <code>word2vec</code>)<br/>Embeddings file origin. Ignored if <code>-lang</code> is used.</li>
 <li><code>-normalize [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Boolean to normalize the word vectors, or not.</li>
+<li><code>-approximate [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, will also look for variants (case, joiner annotate) to match dictionary and word embedding.</li>
 <li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Print stats every this many lines read from embedding file.</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
@@ -901,7 +903,7 @@
       
     </div>
     
-      <script src="../../assets/javascripts/application-6b599127bc.js"></script>
+      <script src="../../assets/javascripts/application-ad1183cb07.js"></script>
       <script>app.initialize({url:{base:"../.."}})</script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
