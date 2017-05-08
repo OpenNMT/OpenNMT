@@ -9,6 +9,7 @@
 * Add a bridge layer between the encoder and decoder
 * New feature to keep token frequency in generated dictionaries
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
+* Embedding extraction tools also support fasttext format, and look for joiner mark variants
 
 ### Fixes and improvements
 
@@ -23,6 +24,7 @@
 * Fix error when using one-layer GRU
 * Fix incorrect coverage normalization formula during the beam search
 * Improve unicode support for languages using combining marks like Hindi
+* Fix possible incorrect embedding conversion when case variant
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
 
