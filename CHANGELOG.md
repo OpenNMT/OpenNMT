@@ -10,6 +10,7 @@
 * Add `epoch_only` decay strategy
 * New feature to keep token frequency in generated dictionaries
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
+* Embedding extraction tools also support fasttext format, and look for joiner mark variants
 * Introduce target vocabulary reduction (importance sampling)
 * Optimize decoding with sub-dictionary
 
@@ -26,6 +27,7 @@
 * Fix error when using one-layer GRU
 * Fix incorrect coverage normalization formula during the beam search
 * Improve unicode support for languages using combining marks like Hindi
+* Fix possible incorrect embedding conversion when case variant
 * Make epoch models save frequency configurable
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)

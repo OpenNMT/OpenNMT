@@ -29,6 +29,10 @@ cmd:setCmdLineOptions(
       {
         valid = onmt.utils.ExtendedCmdLine.nonEmpty
       }
+    },
+    {
+      '-save_unknown_dict', '',
+      [[Path to file for saving vocabs not found in embedding.]]
     }
   }, 'Data')
 
@@ -43,12 +47,16 @@ cmd:setCmdLineOptions(
       '-embed_type', 'word2vec',
       [[Embeddings file origin. Ignored if `-lang` is used.]],
       {
-        enum = {'word2vec', 'glove'}
+        enum = {'word2vec', 'glove', 'fasttext'}
       }
     },
     {
       '-normalize', true,
       [[Boolean to normalize the word vectors, or not.]]
+    },
+    {
+      '-approximate', false,
+      [[If set, will also look for variants (case, joiner annotate) to match dictionary and word embedding.]]
     },
     {
       '-report_every', 100000,
@@ -113,29 +121,70 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     return str:string()
   end
 
-  -- Looks for cased version and then lower version of matching dictionary word.
-  local function locateIdx(word, dict)
+  -- Looks for cased version and then variants of matching dictionary word.
+  -- mark all variants so that if a exact version is found they are prefered
+  local function locateIdxs(word, dict)
+    local res = {}
     local idx = dict:lookup(word)
 
-    if idx == nil then
-      idx = dict:lookup(word:lower())
+    if idx then
+      res[idx] = true
     end
 
-    return idx
-  end
-
-
-  -- Fills value for unmatched embeddings.
-  local function fillGaps(weights, loaded, dictSize, embeddingSize)
-    for idx = 1, dictSize do
-      if loaded[idx] == nil then
-        for i = 1, embeddingSize do
-          weights[idx][i] = torch.normal(0, 0.9)
+    if opt.approximate then
+      -- looks for variants with joiner marks
+      if word:find("￭") == nil then
+        local res1 = locateIdxs("￭"..word, dict)
+        for i in pairs(res1) do
+          res[i] = false
         end
+        local res2 = locateIdxs(word.."￭", dict)
+        for i in pairs(res2) do
+          res[i] = false
+        end
+        local res3 = locateIdxs("￭"..word.."￭", dict)
+        for i in pairs(res3) do
+          res[i] = false
+        end
+      end
+
+      local lword = word:lower()
+      idx = lword ~= word and dict:lookup(lword)
+      if idx then
+        res[idx] = false
       end
     end
 
-    return weights
+    return res
+  end
+
+
+  -- Fills value for unmatched vocabs.
+  local function fillGaps(weights, dict, loaded, dictSize, embeddingSize, save_unknown_dict)
+    local fw
+    local approximateCount = 0
+    if save_unknown_dict ~= '' then
+      fw = io.open(save_unknown_dict, 'w')
+    end
+    for idx = 1, dictSize do
+      if loaded[idx] == nil then
+        if fw then
+          fw:write(dict:lookup(idx)..' '..idx..'\n')
+        end
+        for i = 1, embeddingSize do
+          weights[idx][i] = torch.normal(0, 0.9)
+        end
+      elseif loaded[idx] == false then
+        approximateCount = approximateCount + 1
+      end
+    end
+
+    if fw then
+      fw:close()
+      _G.logger:info('* saved unknown vocabs in %s', save_unknown_dict)
+    end
+
+    return approximateCount, weights
   end
 
   -- Initializes OpenNMT constants.
@@ -148,24 +197,52 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     }
 
     for i = 1, #specials do
-      local idx = locateIdx(specials[i], dict)
-      for e = 1, embeddingSize do
-        weights[idx][e] = torch.normal(0, 0.9)
+      local res = locateIdxs(specials[i], dict)
+      for idx, t in pairs(res) do
+        -- replace previous approximation
+        if loaded[idx] == nil or (loaded[idx] == false and t == true) then
+          for e = 1, embeddingSize do
+            weights[idx][e] = torch.normal(0, 0.9)
+          end
+          loaded[idx] = t
+        end
       end
-      loaded[idx] = true
     end
 
     return weights, loaded
 
   end
 
+  local function register(word, dict, loaded, weights, getWordEmbedding)
+    local res = locateIdxs(word, dict)
+
+    local wordEmbedding
+
+    for idx, t in pairs(res) do
+      -- replace previous approximation
+      if loaded[idx] == nil or (loaded[idx] == false and t == true) then
+        if not wordEmbedding then
+          wordEmbedding = getWordEmbedding()
+          -- Normalize word embedding.
+          if opt.normalize then
+          local norm = torch.norm(wordEmbedding, 2)
+          if norm ~= 0 then
+            wordEmbedding:div(norm)
+          end
+        end
+
+        end
+        weights[idx] = wordEmbedding
+        loaded[idx] = t
+      end
+    end
+  end
+
   -- Given a word2vec embedings file name and dictionary, outputs weights.
   -- Some portions are courtesy of https://github.com/rotmanmi/word2vec.torch
-  local function loadWord2vec(filename, dict)
+  local function loadWord2vec(f, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
-
-    local f = torch.DiskFile(filename, "r")
 
     -- Read header.
     f:ascii()
@@ -188,47 +265,28 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
       local word = readStringv2(f)
       local wordEmbedding = f:readFloat(embeddingSize)
-      wordEmbedding = torch.FloatTensor(wordEmbedding)
 
       -- Skip newline.
       f:readChar()
 
-      local idx = locateIdx(word, dict)
-
-      if idx ~= nil then
-        local norm = torch.norm(wordEmbedding, 2)
-
-        -- Normalize word embedding.
-        if norm ~= 0 and opt.normalize then
-          wordEmbedding:div(norm)
-        end
-
-        weights[idx] = wordEmbedding
-        loaded[idx] = true
-      end
-
-      if #loaded == dictSize then
-        break
-      end
+      register(word, dict, loaded, weights, function()
+        return torch.FloatTensor(wordEmbedding)
+      end)
 
       -- End File loop
     end
-
-    f:close()
 
     return weights, embeddingSize, loaded
   end
 
   -- Given a glove embedings file name and dictionary, outputs weights.
-  local function loadGlove(filename, dict)
+  local function loadGlove(f, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
     local embeddingSize = nil
     local weights = nil
     local first = true
     local count = 0
-
-    local f = io.open(filename, "r")
 
     for line in f:lines() do
       count = count + 1
@@ -248,35 +306,56 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         first = false
       end
 
-      local word = splitLine[1]
-      local idx = locateIdx(word, dict)
-
-      if idx ~= nil then
+      register(splitLine[1], dict, loaded, weights, function()
         local wordEmbedding = torch.Tensor(embeddingSize)
-
         for j = 2, #splitLine do
           wordEmbedding[j - 1] = tonumber(splitLine[j])
         end
-
-        local norm = torch.norm(wordEmbedding, 2)
-
-        -- Normalize word embedding.
-        if norm ~= 0 and opt.normalize then
-          wordEmbedding:div(norm)
-        end
-
-        weights[idx] = wordEmbedding
-        loaded[idx] = true
-      end
-
-      if #loaded == dictSize then
-        break
-      end
+        return wordEmbedding
+      end)
 
       -- End File loop
     end
 
-    f:close()
+    return weights, embeddingSize, loaded
+  end
+
+  -- Given a glove embedings file name and dictionary, outputs weights.
+  local function loadFasttext(f, dict)
+    local loaded = tds.Hash()
+    local dictSize = dict:size()
+    local count = 0
+
+    local header = f:read()
+    local splitHeader = header:split(' ')
+    assert(#splitHeader==2, "incorrect file format - header should be '#vocab dim'")
+    local numWords = tonumber(splitHeader[1])
+    local embeddingSize = tonumber(splitHeader[2])
+    local weights = torch.Tensor(dictSize, embeddingSize)
+    -- Preload constants.
+    weights, loaded = preloadSpecial(weights, loaded, dict, embeddingSize)
+
+    for line in f:lines() do
+      count = count + 1
+      if count % opt.report_every == 0 then
+        _G.logger:info('... %d embeddings processed (%d/%d matched with the dictionary)',
+                       count, #loaded, dictSize)
+      end
+
+      local splitLine = line:split(' ')
+
+      register(splitLine[1], dict, loaded, weights, function()
+        local wordEmbedding = torch.Tensor(embeddingSize)
+        for j = 2, #splitLine do
+          wordEmbedding[j - 1] = tonumber(splitLine[j])
+        end
+        return wordEmbedding
+      end)
+
+      -- End File loop
+    end
+
+    assert(count==numWords, "invalid line count")
 
     return weights, embeddingSize, loaded
   end
@@ -287,18 +366,26 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   local embeddingSize
   local loaded
 
+  local f = io.open(embeddingFilename, "r")
   if embeddingType == "word2vec" then
-    weights, embeddingSize, loaded = loadWord2vec(embeddingFilename, dictionary)
+    weights, embeddingSize, loaded = loadWord2vec(f, dictionary)
   elseif embeddingType == "glove" then
-    weights, embeddingSize, loaded = loadGlove(embeddingFilename, dictionary)
+    weights, embeddingSize, loaded = loadGlove(f, dictionary)
+  elseif embeddingType == "fasttext" then
+    weights, embeddingSize, loaded = loadFasttext(f, dictionary)
   end
+  f:close()
 
   _G.logger:info('... done.')
   _G.logger:info(' * %d/%d embeddings matched with dictionary tokens', #loaded, dictionary:size())
 
   if #loaded ~= dictionary:size() then
-    _G.logger:info(' * %d/%d embeddings randomly assigned with a normal distribution', dictionary:size() - #loaded, dictionary:size())
-    weights = fillGaps(weights, loaded, dictionary:size(), embeddingSize)
+    local approximateCount
+    approximateCount, weights = fillGaps(weights, dictionary, loaded, dictionary:size(), embeddingSize, opt.save_unknown_dict)
+    if approximateCount then
+      _G.logger:info(' * %d approximate lookup', approximateCount)
+    end
+    _G.logger:info(' * %d/%d vocabs randomly assigned with a normal distribution', dictionary:size() - #loaded, dictionary:size())
   end
 
   return weights, embeddingSize
