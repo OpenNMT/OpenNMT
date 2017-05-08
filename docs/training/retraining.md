@@ -1,4 +1,4 @@
-By default, OpenNMT saves a checkpoint every 5000 iterations and at the end of each epoch. For more frequent or infrequent saves, you can use the `-save_every` option which defines the number of iterations after which the training saves a checkpoint.
+By default, OpenNMT saves a checkpoint every 5000 iterations and at the end of each epoch. For more frequent or infrequent saves, you can use the `-save_every` and `-save_every_epochs` options which define the number of iterations and epochs after which the training saves a checkpoint.
 
 There are several reasons one may want to train from a saved model with the `-train_from` option:
 

@@ -6,7 +6,14 @@ local options = {
     [[Save intermediate models every this many iterations within an epoch.
       If = 0, will not save intermediate models.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+      valid = onmt.utils.ExtendedCmdLine.isInt(0)
+    }
+  },
+  {
+    '-save_every_epochs', 1,
+    [[Save a model every this many epochs. If = 0, will not save a model at each epoch.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(0)
     }
   },
   {
@@ -137,6 +144,11 @@ end
 function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   local function getBatchIdx(idx)
     return batchOrder and batchOrder[idx] or idx
+  end
+
+  -- if target vocabulary for the batch is provided and generator support setting target vocabulary
+  if data.targetVocTensor and _G.model.setTargetVoc then
+    _G.model:setTargetVoc(data.targetVocTensor)
   end
 
   startIteration = startIteration or 1
@@ -310,6 +322,10 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     epochState:log(numIterations)
   end
 
+  if data.targetVocTensor and _G.model.setTargetVoc then
+    _G.model:unsetTargetVoc()
+  end
+
   epochProfiler:stop('train')
 
   if self.args.profiler then
@@ -336,6 +352,7 @@ function Trainer:train(trainData, validData, trainStates)
   end
 
   local startEpoch = self.args.start_epoch
+  local unsavedEpochs = 0
   local endEpoch
 
   if self.args.end_epoch > 0 then
@@ -364,7 +381,12 @@ function Trainer:train(trainData, validData, trainStates)
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
     self.optim:updateLearningRate(validPpl, epoch)
-    self.saver:saveEpoch(validPpl, epochState)
+
+    unsavedEpochs = unsavedEpochs + 1
+    if unsavedEpochs == self.args.save_every_epochs then
+      self.saver:saveEpoch(validPpl, epochState)
+      unsavedEpochs = 0
+    end
 
     -- Early stopping?
     if self.optim:isFinished() then

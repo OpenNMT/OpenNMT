@@ -66,7 +66,6 @@ function ExtendedCmdLine:__init(script)
   self:option('-md', false, 'Dump help in Markdown format.')
   self:option('-config', '', 'Load options from this file.', {valid=ExtendedCmdLine.fileNullOrExists})
   self:option('-save_config', '', 'Save options to this file.')
-
 end
 
 function ExtendedCmdLine:help(arg, md)
@@ -422,6 +421,17 @@ function ExtendedCmdLine:parse(arg)
         local isValid = true
         local reason = nil
 
+        if meta.depends then
+          isValid, reason = meta.depends(params)
+          if not isValid then
+            local msg = 'invalid dependency for option -'..k
+            if reason then
+              msg = msg .. ': ' .. reason
+            end
+            self:error(msg)
+          end
+        end
+
         if meta.valid then
           isValid, reason = meta.valid(v)
         end
@@ -454,10 +464,11 @@ function ExtendedCmdLine:parse(arg)
 end
 
 function ExtendedCmdLine:setCmdLineOptions(moduleOptions, group)
-  if group then
+  if group and group ~= self.prevGroup then
     self:text('')
     self:text(group .. ' options')
     self:text('')
+    self.prevGroup = group
   end
 
   for i = 1, #moduleOptions do

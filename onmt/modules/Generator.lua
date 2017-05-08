@@ -1,4 +1,5 @@
---[[ Default decoder generator. Given RNN state, produce categorical distribution for tokens and features
+--[[ Default decoder generator.
+     Given RNN state, produce categorical distribution for tokens and features
 
      Simply implements $$softmax(W h b)$$.
 
@@ -21,14 +22,26 @@ function Generator:_buildGenerator(opt, sizes)
   local rnn_size = opt.rnn_size
 
   for i = 1, #sizes do
-    local feat_generator
-    feat_generator = nn.Sequential()
-                        :add(nn.Linear(rnn_size, sizes[i]))
-                        :add(nn.LogSoftMax())
-    generator:add(feat_generator)
+    local linear = nn.Linear(rnn_size, sizes[i])
+    if i == 1 then
+      self.rindexLinear = linear
+    end
+    generator:add(nn.Sequential()
+                    :add(linear)
+                    :add(nn.LogSoftMax()))
   end
 
   self:set(generator)
+end
+
+--[[ If the target vocabulary for the batch is not full vocabulary ]]
+function Generator:setTargetVoc(t)
+  self.rindexLinear:RIndex_setOutputIndices(t)
+end
+
+--[[ Release Generator for inference only ]]
+function Generator:release()
+  self.rindexLinear:RIndex_clean()
 end
 
 function Generator.load(generator)
@@ -38,6 +51,11 @@ function Generator.load(generator)
       generator:set(nn.ConcatTable():add(generator.net))
     end
     generator.version = 2
+  end
+  if not generator.rindexLinear then
+    local firstOutput = generator.net.modules[1]
+    assert(torch.type(firstOutput.modules[1])=='nn.Linear')
+    generator.rindexLinear = firstOutput.modules[1]
   end
   return generator
 end
