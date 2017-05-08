@@ -12,12 +12,14 @@
 * `-dict_file <string>` (required)<br/>Path to outputted dict file from `preprocess.lua`.
 * `-embed_file <string>` (default: `''`)<br/>Path to the embedding file. Ignored if `-lang` is used.
 * `-save_data <string>` (required)<br/>Output file path/label.
+* `-save_unknown_dict <string>` (default: `''`)<br/>Path to file for saving vocabs not found in embedding.
 
 ## Embedding options
 
 * `-lang <string>` (default: `''`)<br/>Wikipedia Language Code to autoload embeddings.
-* `-embed_type <string>` (accepted: `word2vec`, `glove`; default: `word2vec`)<br/>Embeddings file origin. Ignored if `-lang` is used.
+* `-embed_type <string>` (accepted: `word2vec`, `glove`, `fasttext`; default: `word2vec`)<br/>Embeddings file origin. Ignored if `-lang` is used.
 * `-normalize [<boolean>]` (default: `true`)<br/>Boolean to normalize the word vectors, or not.
+* `-approximate [<boolean>]` (default: `false`)<br/>If set, will also look for variants (case, joiner annotate) to match dictionary and word embedding.
 * `-report_every <number>` (default: `100000`)<br/>Print stats every this many lines read from embedding file.
 
 ## Logger options
