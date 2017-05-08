@@ -14,7 +14,7 @@ local options = {
     '-param_init', 0.1,
     [[Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`).]],
     {
-      valid = function(v) return v >= 0 and v <= 1 end,
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0),
       init_only = true
     }
   }
@@ -26,7 +26,6 @@ end
 
 function Model:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
-  self.args.train_from = args.train_from
   self.models = {}
 end
 
@@ -35,7 +34,7 @@ function Model:changeParameters(changes)
   _G.logger:info('Applying new parameters:')
 
   for k, v in pairs(changes) do
-    _G.logger:info(' * %s = ' .. v, k)
+    _G.logger:info(' * %s = ' .. tostring(v), k)
 
     for _, model in pairs(self.models) do
       model:apply(function(m)
@@ -45,7 +44,7 @@ function Model:changeParameters(changes)
           local enc = k == 'fix_word_vecs_enc' and torch.typename(model):find('Encoder')
           local dec = k == 'fix_word_vecs_dec' and torch.typename(model):find('Decoder')
           if enc or dec then
-            m:fixEmbeddings(v == 1)
+            m:fixEmbeddings(v)
           end
         end
       end)
@@ -74,15 +73,31 @@ function Model:training()
   end
 end
 
-function Model:initParams(verbose)
-  local numParams = 0
-  local params = {}
-  local gradParams = {}
+function Model:initParams()
+  _G.logger:info('Initializing parameters...')
 
-  if verbose then
-    _G.logger:info('Initializing parameters...')
+  local params, gradParams, modelMap = self:getParams()
+  local numParams = 0
+
+  for i = 1, #params do
+    local name = modelMap[i]
+    params[i]:uniform(-self.args.param_init, self.args.param_init)
+
+    self.models[name]:apply(function (m)
+      if m.postParametersInitialization then
+        m:postParametersInitialization()
+      end
+    end)
+
+    numParams = numParams + params[i]:size(1)
   end
 
+  _G.logger:info(' * number of parameters: ' .. numParams)
+
+  return params, gradParams
+end
+
+function Model:getParams()
   -- Order the model table because we need all replicas to have the same order.
   local orderedIndex = {}
   for key in pairs(self.models) do
@@ -90,30 +105,20 @@ function Model:initParams(verbose)
   end
   table.sort(orderedIndex)
 
+  local params = {}
+  local gradParams = {}
+  local modelMap = {}
+
   for _, key in ipairs(orderedIndex) do
-    local mod = self.models[key]
-    local p, gp = mod:getParameters()
-
-    if self.args.train_from:len() == 0 then
-      p:uniform(-self.args.param_init, self.args.param_init)
-
-      mod:apply(function (m)
-        if m.postParametersInitialization then
-          m:postParametersInitialization()
-        end
-      end)
+    local p, gp = self.models[key]:getParameters()
+    if p:dim() > 0 then
+      table.insert(params, p)
+      table.insert(gradParams, gp)
+      table.insert(modelMap, key)
     end
-
-    numParams = numParams + p:size(1)
-    table.insert(params, p)
-    table.insert(gradParams, gp)
   end
 
-  if verbose then
-    _G.logger:info(' * number of parameters: ' .. numParams)
-  end
-
-  return params, gradParams
+  return params, gradParams, modelMap
 end
 
 return Model

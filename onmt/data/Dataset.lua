@@ -6,11 +6,11 @@ local Dataset = torch.class("Dataset")
 --]]
 function Dataset:__init(srcData, tgtData)
 
-  self.src = srcData.words
+  self.src = srcData.words or srcData.vectors
   self.srcFeatures = srcData.features
 
   if tgtData ~= nil then
-    self.tgt = tgtData.words
+    self.tgt = tgtData.words or tgtData.vectors
     self.tgtFeatures = tgtData.features
   end
 end
@@ -79,6 +79,10 @@ function Dataset:batchCount()
     end
   end
   return #self.batchRange
+end
+
+function Dataset:instanceCount()
+  return #self.src
 end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]

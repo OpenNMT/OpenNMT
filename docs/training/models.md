@@ -46,6 +46,17 @@ The following components support residual connections with the `-residual` flag:
 * bidirectional encoder
 * default decoder
 
+## Bridges
+
+A bridge is an additional layer between the encoder and the decoder that defines how to pass the encoder states to the decoder. It can be one of the following:
+
+* `-bridge copy` (default): the encoder states are copied
+* `-bridge dense`: the encoder states are forwaded through a dense layer
+* `-bridge dense_nonlinear`: the encoder states are forwaded through a dense layer followed by a non-linearity, here \(tanh\)
+* `-bridge none`: the encoder states are not passed and the decoder initial states are set to zero
+
+With the `copy` bridge, encoder and decoder should have the same structure (number of layers, final hidden size, etc.).
+
 ## Attention Model
 
 Different models are available from [Luong (2015)](../references.md#Luong2015) "Global Attention Model".

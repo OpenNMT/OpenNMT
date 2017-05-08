@@ -123,7 +123,7 @@ function JoinReplicateTable:updateGradInput(input, gradOutput)
                currentOutput:size(dimensionJoin))
     if memStrides[i] then
       -- sum along the replicated dimension
-      self.gradInput[i]:copy(currentGradInput:sum(dimensionReplicate))
+      torch.sum(self.gradInput[i], currentGradInput, dimensionReplicate)
     else
       self.gradInput[i]:copy(currentGradInput)
     end

@@ -343,23 +343,29 @@ function Beam:_normalizeScores(scores)
 
   local function normalizeCoverage(ap)
     local beta = self._params.coverage_norm
-    local result = torch.cmin(ap, 1.0):log1p():sum(3):mul(beta)
+    local result = torch.cmin(ap, 1.0):log():sum(3):mul(beta)
     return result
   end
 
-  local step = self._step
-  local lengthPenalty = normalizeLength(step)
+  local normScores = scores
 
-  local attnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
-  local coveragePenalty = normalizeCoverage(attnProba)
-
-  if (scores:nDimension() > 2) then
-    coveragePenalty =  coveragePenalty:expand(scores:size())
-  else
-    coveragePenalty = coveragePenalty:viewAs(scores)
+  if self._params.length_norm ~= 0 then
+    local step = self._step
+    local lengthPenalty = normalizeLength(step)
+    normScores = torch.div(normScores, lengthPenalty)
   end
 
-  local normScores = torch.add(torch.div(scores, lengthPenalty), coveragePenalty)
+  if self._params.coverage_norm ~= 0 then
+    local cumAttnProba = self._state[8]:view(self._remaining, scores:size(2), -1)
+    local coveragePenalty = normalizeCoverage(cumAttnProba)
+
+    if (scores:nDimension() > 2) then
+      coveragePenalty =  coveragePenalty:expand(scores:size())
+    else
+      coveragePenalty = coveragePenalty:viewAs(scores)
+    end
+    normScores = torch.add(normScores, coveragePenalty)
+  end
 
   return normScores
 

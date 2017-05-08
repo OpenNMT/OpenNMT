@@ -5,16 +5,25 @@ local path = require('pl.path')
 local cmd = onmt.utils.ExtendedCmdLine.new('release_model.lua')
 
 local options = {
-  {'-model', '', 'trained model file'},
-  {'-output_model', '', 'released model file'},
-  {'-force', false, 'force output model creation'}
+  {
+    '-model', '',
+    [[Path to the trained model to release.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileExists
+    }
+  },
+  {
+    '-output_model', '',
+    [[Path the released model. If not set, the `release` suffix will be automatically
+      added to the model filename.]]
+  },
+  {
+    '-force', false,
+    [[Force output model creation even if the target file exists.]]
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Model')
-
-cmd:text('')
-cmd:text('**Other options**')
-cmd:text('')
 
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
@@ -24,6 +33,9 @@ local opt = cmd:parse(arg)
 local function releaseModel(model, tensorCache)
   tensorCache = tensorCache or {}
   for _, submodule in pairs(model.modules) do
+    if submodule.release then
+      submodule:release()
+    end
     if torch.type(submodule) == 'table' and submodule.modules then
       releaseModel(submodule, tensorCache)
     else

@@ -7,7 +7,8 @@ function ParallelClassNLLCriterion:__init(outputSizes)
   parent.__init(self, false)
 
   for i = 1, #outputSizes do
-    self:_addCriterion(outputSizes[i])
+    local nll = self:_addCriterion(outputSizes[i])
+    if i == 1 then self.mainCriterion = nll end
   end
 end
 
@@ -21,4 +22,5 @@ function ParallelClassNLLCriterion:_addCriterion(size)
   -- Let the training code manage loss normalization.
   nll.sizeAverage = false
   self:add(nll)
+  return nll
 end
