@@ -17,7 +17,7 @@
 ## Embedding options
 
 * `-lang <string>` (default: `''`)<br/>Wikipedia Language Code to autoload embeddings.
-* `-embed_type <string>` (accepted: `word2vec`, `glove`, `fasttext`; default: `word2vec`)<br/>Embeddings file origin. Ignored if `-lang` is used.
+* `-embed_type <string>` (accepted: `word2vec-bin`, `word2vec-txt`, `glove`; default: `word2vec-bin`)<br/>Embeddings file origin. Ignored if `-lang` is used.
 * `-normalize [<boolean>]` (default: `true`)<br/>Boolean to normalize the word vectors, or not.
 * `-approximate [<boolean>]` (default: `false`)<br/>If set, will also look for variants (case, joiner annotate) to match dictionary and word embedding.
 * `-report_every <number>` (default: `100000`)<br/>Print stats every this many lines read from embedding file.
