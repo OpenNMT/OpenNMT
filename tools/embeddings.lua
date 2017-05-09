@@ -44,10 +44,10 @@ cmd:setCmdLineOptions(
       [[Wikipedia Language Code to autoload embeddings.]]
     },
     {
-      '-embed_type', 'word2vec',
+      '-embed_type', 'word2vec-bin',
       [[Embeddings file origin. Ignored if `-lang` is used.]],
       {
-        enum = {'word2vec', 'glove', 'fasttext'}
+        enum = {'word2vec-bin', 'word2vec-txt', 'glove'}
       }
     },
     {
@@ -238,9 +238,9 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     end
   end
 
-  -- Given a word2vec embedings file name and dictionary, outputs weights.
+  -- Given a binary word2vec embedings file name and dictionary, outputs weights.
   -- Some portions are courtesy of https://github.com/rotmanmi/word2vec.torch
-  local function loadWord2vec(filename, dict)
+  local function loadWord2vecBin(filename, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
 
@@ -328,8 +328,8 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
     return weights, embeddingSize, loaded
   end
 
-  -- Given a glove embedings file name and dictionary, outputs weights.
-  local function loadFasttext(filename, dict)
+  -- Given a text word2vec embedings file name and dictionary, outputs weights.
+  local function loadWord2vecTxt(filename, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
     local count = 0
@@ -362,12 +362,12 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         return wordEmbedding
       end)
 
-      f:close()
-
       -- End File loop
     end
 
     assert(count==numWords, "invalid line count")
+
+    f:close()
 
     return weights, embeddingSize, loaded
   end
@@ -378,12 +378,12 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   local embeddingSize
   local loaded
 
-  if embeddingType == "word2vec" then
-    weights, embeddingSize, loaded = loadWord2vec(embeddingFilename, dictionary)
+  if embeddingType == "word2vec-bin" then
+    weights, embeddingSize, loaded = loadWord2vecBin(embeddingFilename, dictionary)
   elseif embeddingType == "glove" then
     weights, embeddingSize, loaded = loadGlove(embeddingFilename, dictionary)
-  elseif embeddingType == "fasttext" then
-    weights, embeddingSize, loaded = loadFasttext(embeddingFilename, dictionary)
+  elseif embeddingType == "word2vec-txt" then
+    weights, embeddingSize, loaded = loadWord2vecTxt(embeddingFilename, dictionary)
   end
 
   _G.logger:info('... done.')
