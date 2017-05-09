@@ -240,9 +240,11 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
 
   -- Given a word2vec embedings file name and dictionary, outputs weights.
   -- Some portions are courtesy of https://github.com/rotmanmi/word2vec.torch
-  local function loadWord2vec(f, dict)
+  local function loadWord2vec(filename, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
+
+    local f = torch.DiskFile(filename, "r")
 
     -- Read header.
     f:ascii()
@@ -276,17 +278,21 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       -- End File loop
     end
 
+    f:close()
+
     return weights, embeddingSize, loaded
   end
 
   -- Given a glove embedings file name and dictionary, outputs weights.
-  local function loadGlove(f, dict)
+  local function loadGlove(filename, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
     local embeddingSize = nil
     local weights = nil
     local first = true
     local count = 0
+
+    local f = io.open(filename, "r")
 
     for line in f:lines() do
       count = count + 1
@@ -317,14 +323,18 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
       -- End File loop
     end
 
+    f:close()
+
     return weights, embeddingSize, loaded
   end
 
   -- Given a glove embedings file name and dictionary, outputs weights.
-  local function loadFasttext(f, dict)
+  local function loadFasttext(filename, dict)
     local loaded = tds.Hash()
     local dictSize = dict:size()
     local count = 0
+
+    local f = io.open(filename, "r")
 
     local header = f:read()
     local splitHeader = header:split(' ')
@@ -352,6 +362,8 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
         return wordEmbedding
       end)
 
+      f:close()
+
       -- End File loop
     end
 
@@ -366,15 +378,13 @@ local function loadEmbeddings(embeddingFilename, embeddingType, dictionary)
   local embeddingSize
   local loaded
 
-  local f = io.open(embeddingFilename, "r")
   if embeddingType == "word2vec" then
-    weights, embeddingSize, loaded = loadWord2vec(f, dictionary)
+    weights, embeddingSize, loaded = loadWord2vec(embeddingFilename, dictionary)
   elseif embeddingType == "glove" then
-    weights, embeddingSize, loaded = loadGlove(f, dictionary)
+    weights, embeddingSize, loaded = loadGlove(embeddingFilename, dictionary)
   elseif embeddingType == "fasttext" then
-    weights, embeddingSize, loaded = loadFasttext(f, dictionary)
+    weights, embeddingSize, loaded = loadFasttext(embeddingFilename, dictionary)
   end
-  f:close()
 
   _G.logger:info('... done.')
   _G.logger:info(' * %d/%d embeddings matched with dictionary tokens', #loaded, dictionary:size())
