@@ -34,11 +34,13 @@ end
 
 function wordEmbeddingTest.fixedAtConstruction()
   local emb = onmt.WordEmbedding(10, 5, '', true)
+  emb:postParametersInitialization()
   testFixedEmb(emb)
 end
 
 function wordEmbeddingTest.fixedToogled()
   local emb = onmt.WordEmbedding(10, 5)
+  emb:postParametersInitialization()
   emb:fixEmbeddings(true)
   testFixedEmb(emb)
   emb:fixEmbeddings(false)
@@ -53,6 +55,11 @@ function wordEmbeddingTest.pretrained()
   emb:postParametersInitialization()
 
   tester:eq(emb.net.weight:narrow(1, 2, 9), embs:narrow(1, 2, 9))
+
+  local emb = onmt.WordEmbedding(10, 10, 'embs.t7')
+  emb:postParametersInitialization()
+
+  tester:eq(emb.net.weight:narrow(1, 2, 9):narrow(2,1,5), embs:narrow(1, 2, 9))
 
   os.remove('embs.t7')
 end
