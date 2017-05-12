@@ -15,6 +15,25 @@ local function wrapIndent(text, size, pad)
   end
 end
 
+local function concatValues(t)
+  local isBoolean
+  local s = ''
+  for _, v in ipairs(t) do
+    if type(v) == 'boolean' then
+      isBoolean = true
+    else
+      if s ~= '' then
+        s = s .. ', '
+      end
+      s = s .. v
+    end
+  end
+  if isBoolean then
+    s = 'true, false, ' .. s
+  end
+  return s
+end
+
 ---------------------------------------------------------------------------------
 
 local ExtendedCmdLine, parent, path
@@ -93,6 +112,9 @@ function ExtendedCmdLine:help(arg, md)
       -- Argument type.
       local argType = '<' .. option.type .. '>'
       if option.type == 'boolean' then
+        if option.meta and option.meta.enum then
+          argType = argType .. '/<string>'
+        end
         argType = '[' .. argType .. ']'
       end
 
@@ -108,7 +130,7 @@ function ExtendedCmdLine:help(arg, md)
             option.meta.enum[k] = '`' .. v .. '`'
           end
         end
-        table.insert(argMeta, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+        table.insert(argMeta, 'accepted: ' .. concatValues(option.meta.enum))
       end
 
       -- Default value.
@@ -448,7 +470,7 @@ function ExtendedCmdLine:parse(arg)
         end
 
         if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-          self:error('option -' .. k.. ' is not in accepted values: ' .. table.concat(meta.enum, ', '))
+          self:error('option -' .. k.. ' is not in accepted values: ' .. concatValues(meta.enum))
         end
         if meta.structural then
           params._structural[k] = meta.structural
