@@ -56,7 +56,7 @@ function wordEmbeddingTest.pretrained()
 
   tester:eq(emb.net.weight:narrow(1, 2, 9), embs:narrow(1, 2, 9))
 
-  local emb = onmt.WordEmbedding(10, 10, 'embs.t7')
+  emb = onmt.WordEmbedding(10, 10, 'embs.t7')
   emb:postParametersInitialization()
 
   tester:eq(emb.net.weight:narrow(1, 2, 9):narrow(2,1,5), embs:narrow(1, 2, 9))

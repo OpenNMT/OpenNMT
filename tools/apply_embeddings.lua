@@ -1,10 +1,6 @@
 require('torch')
 require('onmt.init')
 
-local tds = require('tds')
-local zlib = require ('zlib')
-local path = require('pl.path')
-
 local cmd = onmt.utils.ExtendedCmdLine.new('apply_embeddings.lua')
 
 cmd:setCmdLineOptions(
@@ -53,17 +49,16 @@ local opt = cmd:parse(arg)
 local function main()
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
-  local timer = torch.Timer()
-
   local embedding_weights = torch.load(opt.embed_data)
 
+  local Vocabulary = onmt.data.Vocabulary
   local dict = Vocabulary.init('source',
                                    opt.txt_src,
                                    opt.dict,
                                    {50000},
                                    {},
                                    '',
-                                   function(s) return true end,
+                                   function() return true end,
                                    false,
                                    false)
 
