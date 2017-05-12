@@ -12,7 +12,8 @@ local options = {
     [[Type of data to preprocess. Use 'monotext' for monolingual data.
       This option impacts all options choices.]],
     {
-      enum = {'bitext', 'monotext', 'feattext'}
+      enum = {'bitext', 'monotext', 'feattext'},
+      depends = function(opt) return opt.data_type ~= 'feattext' or opt.idx_files end
     }
   },
   {
