@@ -60,7 +60,7 @@ local options = {
     '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = { false, true, 'partial' },
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },
@@ -68,7 +68,7 @@ local options = {
     '-fix_word_vecs_dec', false,
     [[Fix word embeddings on the decoder side.]],
     {
-      enum = { false, true, 'partial' },
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },

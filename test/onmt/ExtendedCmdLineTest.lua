@@ -93,8 +93,8 @@ function cmdLineTest.parse_boolean()
   tester:eq(opt.fix_word_vecs_enc, false)
   opt = cmd:parse({'-fix_word_vecs_enc', '0'})
   tester:eq(opt.fix_word_vecs_enc, false)
-  opt = cmd:parse({'-fix_word_vecs_enc', 'partial'})
-  tester:eq(opt.fix_word_vecs_enc, 'partial')
+  opt = cmd:parse({'-fix_word_vecs_enc', 'pretrained'})
+  tester:eq(opt.fix_word_vecs_enc, 'pretrained')
   tester:assertError(function() cmd:parse({'-fix_word_vecs_enc', 'xxx'}) end)
 end
 

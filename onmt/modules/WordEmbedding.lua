@@ -34,7 +34,7 @@ end
 
 function WordEmbedding:fixEmbeddings(fix)
   if fix then
-    if not(self.preTrainedVecSize) or fix ~= 'partial' or self.preTrainedVecSize == self.net.weight:size(2) then
+    if not(self.preTrainedVecSize) or fix ~= 'pretrained' or self.preTrainedVecSize == self.net.weight:size(2) then
       self.net.gradWeight = nil
     end
   elseif not fix and not self.net.gradWeight then
@@ -47,7 +47,7 @@ function WordEmbedding:accGradParameters(input, gradOutput, scale)
   if self.net.gradWeight then
     self.net:accGradParameters(input, gradOutput, scale)
     self.net.gradWeight[onmt.Constants.PAD]:zero()
-    if self.fix == 'partial' and self.preTrainedVecSize and self.preTrainedVecSize ~= self.net.weight:size(2) then
+    if self.fix == 'pretrained' and self.preTrainedVecSize and self.preTrainedVecSize ~= self.net.weight:size(2) then
       -- partial fix on a pretrained - zero the gradient
       self.net.gradWeight:narrow(2,1,self.preTrainedVecSize):zero()
     end
