@@ -258,7 +258,7 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
 end
 
 --[[ Convert `val` string to the target type. ]]
-function ExtendedCmdLine:convert(key, val, type, subtype)
+function ExtendedCmdLine:convert(key, val, type, subtype, meta)
   if not type or type == 'string' then
     val = val
   elseif type == 'table' then
@@ -279,7 +279,10 @@ function ExtendedCmdLine:convert(key, val, type, subtype)
     elseif val == '1' or val == 'true' then
       val = true
     else
-      self:error('invalid argument for boolean option ' .. key .. ' (should be 0, 1, false or true)')
+      -- boolean option can take 3rd values
+      if not (meta and meta.enum) then
+        self:error('invalid argument for boolean option ' .. key .. ' (should be 0, 1, false or true)')
+      end
     end
   else
     self:error('unknown required option type ' .. type)
@@ -312,7 +315,7 @@ function ExtendedCmdLine:__readOption__(params, arg, i)
 
   -- browse through parameters till next potential option (starting with -Letter)
   while arg[i + 1] and string.find(arg[i+1],'-%a')~=1 do
-    local value = self:convert(key, arg[i + 1], option.type, argumentType)
+    local value = self:convert(key, arg[i + 1], option.type, argumentType, option.meta)
 
     if type(value) == 'table' then
       onmt.utils.Table.append(values, value)

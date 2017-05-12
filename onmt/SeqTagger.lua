@@ -21,6 +21,7 @@ local options = {
     '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
+      enum = { false, true, 'partial' },
       structural = 1
     }
   },

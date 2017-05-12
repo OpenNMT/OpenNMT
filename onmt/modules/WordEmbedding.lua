@@ -24,7 +24,7 @@ function WordEmbedding:postParametersInitialization()
     local vecs = torch.load(self.preTrained)
     assert(vecs:size(1)==self.net.weight:size(1), "pretrained embeddings should be exactly on vocabulary")
     assert(vecs:size(2)<= self.net.weight:size(2), "size of pretrained embeddings is larger than embedding size")
-    self.net.weight:narrow(2,1,vec:size(2)):copy(vecs)
+    self.net.weight:narrow(2,1,vecs:size(2)):copy(vecs)
     self.preTrainedVecSize = vecs:size(2)
   end
 
@@ -34,7 +34,7 @@ end
 
 function WordEmbedding:fixEmbeddings(fix)
   if fix then
-    if not(self.preTrainedVecSize) or self.preTrainedVecSize == self.net.weight:size(2) then
+    if not(self.preTrainedVecSize) or fix ~= 'partial' or self.preTrainedVecSize == self.net.weight:size(2) then
       self.net.gradWeight = nil
     end
   elseif not fix and not self.net.gradWeight then
@@ -47,9 +47,9 @@ function WordEmbedding:accGradParameters(input, gradOutput, scale)
   if self.net.gradWeight then
     self.net:accGradParameters(input, gradOutput, scale)
     self.net.gradWeight[onmt.Constants.PAD]:zero()
-    if self.fix and self.preTrainedVecSize and self.preTrainedVecSize ~= self.net.weight:size(2) then
+    if self.fix == 'partial' and self.preTrainedVecSize and self.preTrainedVecSize ~= self.net.weight:size(2) then
       -- partial fix on a pretrained - zero the gradient
-      self.net.gradWeight:narrow(2,1,vec:size(2)):zero()
+      self.net.gradWeight:narrow(2,1,self.preTrainedVecSize):zero()
     end
   end
 end
