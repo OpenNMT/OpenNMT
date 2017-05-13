@@ -70,10 +70,11 @@ local options = {
     [[When to apply learning rate decay.
       `default`: decay after each epoch past `-start_decay_at` or as soon as the
       validation perplexity is not improving more than `-start_decay_ppl_delta`,
+      `epoch_only`: only decay after each epoch past `-start_decay_at`,
       `perplexity_only`: only decay when validation perplexity is not improving more than
       `-start_decay_ppl_delta`.]],
     {
-      enum = {'default', 'perplexity_only'},
+      enum = {'default', 'epoch_only', 'perplexity_only'},
       train_state = true
     }
   }
@@ -149,24 +150,23 @@ function Optim:updateLearningRate(score, epoch)
   if self.args.optim == 'sgd' then
     self.valPerf[#self.valPerf + 1] = score
 
-    if epoch >= self.args.start_decay_at then
-      self.startDecay = true
-    end
-
-    local decayConditionMet = false
+    local epochCondMet = (epoch >= self.args.start_decay_at)
+    local pplCondMet = false
 
     if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
       local currPpl = self.valPerf[#self.valPerf]
       local prevPpl = self.valPerf[#self.valPerf-1]
       if prevPpl - currPpl < self.args.start_decay_ppl_delta then
-        self.startDecay = true
-        decayConditionMet = true
+        pplCondMet = true
       end
     end
 
-    if self.args.decay == 'default' and self.startDecay then
+    if self.args.decay == 'default' and (epochCondMet or pplCondMet or self.startDecay) then
+      self.startDecay = true
       decayLr()
-    elseif self.args.decay == 'perplexity_only' and decayConditionMet then
+    elseif self.args.decay == 'epoch_only' and epochCondMet then
+      decayLr()
+    elseif self.args.decay == 'perplexity_only' and pplCondMet then
       decayLr()
     end
   end

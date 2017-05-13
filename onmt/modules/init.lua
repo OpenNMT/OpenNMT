@@ -27,5 +27,6 @@ require('onmt.modules.Generator')
 require('onmt.modules.Bottle')
 require('onmt.modules.JoinReplicateTable')
 require('onmt.modules.ParallelClassNLLCriterion')
+require('onmt.modules.RIndexLinear')
 
 return onmt

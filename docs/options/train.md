@@ -17,6 +17,7 @@
 * `-sample_type <string>` (accepted: `uniform`, `perplexity`, `partition`; default: `uniform`)<br/>Define the partition type. `uniform` draws randomly the sample, `perplexity` uses perplexity as a probability distribution when sampling (with `-sample_perplexity_init` and `-sample_perplexity_max` options), `partition` draws different subsets at each epoch.
 * `-sample_perplexity_init <number>` (default: `15`)<br/>Start perplexity-based sampling when average train perplexity per batch falls below this value.
 * `-sample_perplexity_max <number>` (default: `-1.5`)<br/>When greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + `-sample_perplexity_max` * stdev will be used as threshold.
+* `-sample_tgt_vocab [<boolean>]` (default: `false`)<br/>Use importance sampling approach as approximation of full softmax: target vocabulary is built using sample.
 
 ## Model options
 
@@ -59,6 +60,7 @@
 ## Trainer options
 
 * `-save_every <number>` (default: `5000`)<br/>Save intermediate models every this many iterations within an epoch. If = 0, will not save intermediate models.
+* `-save_every_epochs <number>` (default: `1`)<br/>Save a model every this many epochs. If = 0, will not save a model at each epoch.
 * `-report_every <number>` (default: `50`)<br/>Report progress every this many iterations within an epoch.
 * `-async_parallel [<boolean>]` (default: `false`)<br/>When training on multiple GPUs, update parameters asynchronously.
 * `-async_parallel_minbatch <number>` (default: `1000`)<br/>In asynchronous training, minimal number of sequential batches before being parallel.
@@ -78,7 +80,7 @@
 * `-learning_rate_decay <number>` (default: `0.7`)<br/>Learning rate decay factor: `learning_rate = learning_rate * learning_rate_decay`.
 * `-start_decay_at <number>` (default: `9`)<br/>In "default" decay mode, start decay after this epoch.
 * `-start_decay_ppl_delta <number>` (default: `0`)<br/>Start decay when validation perplexity improvement is lower than this value.
-* `-decay <string>` (accepted: `default`, `perplexity_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation perplexity is not improving more than `-start_decay_ppl_delta`, `perplexity_only`: only decay when validation perplexity is not improving more than `-start_decay_ppl_delta`.
+* `-decay <string>` (accepted: `default`, `epoch_only`, `perplexity_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation perplexity is not improving more than `-start_decay_ppl_delta`, `epoch_only`: only decay after each epoch past `-start_decay_at`, `perplexity_only`: only decay when validation perplexity is not improving more than `-start_decay_ppl_delta`.
 
 ## Saver options
 

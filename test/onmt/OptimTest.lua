@@ -54,6 +54,19 @@ function optimTest.decay_default_decayByPPL()
   tester:eq(optim:updateLearningRate(11.0, 2), args.learning_rate * optim.args.learning_rate_decay)
 end
 
+function optimTest.decay_default_decayByPPLAgain()
+  local args = {
+    decay = 'default',
+    learning_rate = 1
+  }
+
+  local optim = getOptim(args)
+
+  optim.valPerf[1] = 10.0
+  tester:eq(optim:updateLearningRate(11.0, 2), args.learning_rate * optim.args.learning_rate_decay)
+  tester:eq(optim:updateLearningRate(9.0, 3), args.learning_rate * optim.args.learning_rate_decay * optim.args.learning_rate_decay)
+end
+
 function optimTest.decay_default_decayByPPLDelta()
   local args = {
     decay = 'default',
@@ -91,6 +104,33 @@ function optimTest.decay_perplexityOnly_decay()
 
   optim.valPerf[1] = 10.0
   tester:eq(optim:updateLearningRate(10.75, 2), args.learning_rate * optim.args.learning_rate_decay)
+end
+
+function optimTest.decay_epochOnly_noDecay()
+  local args = {
+    decay = 'epoch_only',
+    learning_rate = 1,
+    start_decay_at = 4
+  }
+
+  local optim = getOptim(args)
+
+  optim:updateLearningRate(10.0, 1)
+  tester:eq(optim:updateLearningRate(11.0, 2), args.learning_rate)
+  tester:eq(optim:updateLearningRate(9.0, 3), args.learning_rate)
+end
+
+function optimTest.decay_epochOnly_decay()
+  local args = {
+    decay = 'epoch_only',
+    learning_rate = 1,
+    start_decay_at = 2
+  }
+
+  local optim = getOptim(args)
+
+  optim.valPerf[1] = 10.0
+  tester:eq(optim:updateLearningRate(9.0, 2), args.learning_rate * optim.args.learning_rate_decay)
 end
 
 -- Test custom optimization methods against torch.optim.

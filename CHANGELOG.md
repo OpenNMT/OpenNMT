@@ -2,24 +2,30 @@
 
 ### New features
 
-* Display sentence length distribution in preprocess
 * Support vectors as inputs using [Kaldi](http://kaldi-asr.org/) input format
 * Support parallel file alignment by index in addition to line-by-line
 * Add script to convert and/or generate pretrained word embeddings
-* Add a bridge layer between the encoder and decoder
-* New feature to keep token frequency in generated dictionaries
+* Add a bridge layer between the encoder and decoder to define how encoder states are passed to the decoder
+* Add `epoch_only` decay strategy
+* Make epoch models save frequency configurable
+* Optimize decoding with target vocabulary reduction (importance sampling)
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
+* Embedding extraction tools also support text word2vec format, and manage for joiner mark variants
 
 ### Fixes and improvements
 
-* Improve command line parser (space-separated list of values and boolean arguments), do not allow duplicate commandline
-options and do not print help on errors
+* Improve command line and configuration file parser
+  * space-separated list of values
+  * boolean arguments
+  * disallow duplicate command line options
+  * clearer error messages
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
+* Improve unicode support for languages using combining marks like Hindi
+* Improve logging during preprocessing with dataset statistics
 * Fix translation error of models profiled during training
 * Fix translation error of models trained without attention
 * Fix error when using one-layer GRU
 * Fix incorrect coverage normalization formula during the beam search
-* Improve unicode support for languages using combining marks like Hindi
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
 

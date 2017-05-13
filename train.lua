@@ -58,7 +58,7 @@ end
 local function buildData(opt, dataset)
   local trainData
   if opt.sample > 0 then
-     trainData = onmt.data.SampledDataset.new(dataset.train.src, dataset.train.tgt, opt)
+     trainData = onmt.data.SampledDataset.new(opt, dataset.train.src, dataset.train.tgt)
   else
      trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   end
