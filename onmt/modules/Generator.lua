@@ -41,7 +41,9 @@ end
 
 --[[ Release Generator for inference only ]]
 function Generator:release()
-  self.rindexLinear:RIndex_clean()
+  if self.rindexLinear then
+    self.rindexLinear:RIndex_clean()
+  end
 end
 
 function Generator.load(generator)
