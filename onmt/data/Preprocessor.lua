@@ -11,188 +11,6 @@ end
 local Preprocessor = torch.class('Preprocessor')
 local tds
 
-local bitextOptions = {
-  {
-    '-train_src', '',
-    [[Path to the training source data.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-train_tgt', '',
-    [[Path to the training target data.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-valid_src', '',
-    [[Path to the validation source data.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-valid_tgt', '',
-    [[Path to the validation target data.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-src_vocab', '',
-    [[Path to an existing source vocabulary.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
-    }
-  },
-  {
-    '-tgt_vocab', '',
-    [[Path to an existing target vocabulary.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
-    }
-  },
-  {
-    '-src_vocab_size', { 50000 },
-    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
-      If = 0, vocabularies are not pruned.]]
-  },
-  {
-    '-tgt_vocab_size', { 50000 },
-    [[List of target vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
-      If = 0, vocabularies are not pruned.]]
-  },
-  {
-    '-src_words_min_frequency', { 0 },
-    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
-      If = 0, vocabularies are pruned by size.]]
-  },
-  {
-    '-tgt_words_min_frequency', { 0 },
-    [[List of target words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
-      If = 0, vocabularies are pruned by size.]]
-  },
-  {
-    '-src_seq_length', 50,
-    [[Maximum source sequence length.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
-    }
-  },
-  {
-    '-tgt_seq_length', 50,
-    [[Maximum target sequence length.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
-    }
-  }
-}
-
-local monotextOptions = {
-  {
-    '-train', '',
-    [[Path to the training source data.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-valid', '',
-    [[Path to the validation source data.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-vocab', '',
-    [[Path to an existing source vocabulary.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
-    }
-  },
-  {
-    '-vocab_size', { 50000 },
-    [[List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
-      If = 0, vocabularies are not pruned.]]
-  },
-  {
-    '-words_min_frequency', { 0 },
-    [[List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
-      If = 0, vocabularies are pruned by size.]]
-  },
-  {
-    '-seq_length', 50,
-    [[Maximum source sequence length.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
-    }
-  }
-}
-
-local feattextOptions = {
-  {
-    '-train_src', '',
-    [[Path to the training source data.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-train_tgt', '',
-    [[Path to the training target data.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-valid_src', '',
-    [[Path to the validation source data.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-valid_tgt', '',
-    [[Path to the validation target data.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.fileExists
-    }
-  },
-  {
-    '-tgt_vocab', '',
-    [[Path to an existing target vocabulary.]],
-    {
-      valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
-    }
-  },
-  {
-    '-tgt_vocab_size', { 50000 },
-    [[List of target vocabularies size: word[ feat1[ feat2[ ...] ] ].
-      If = 0, vocabularies are not pruned.]]
-  },
-  {
-    '-tgt_words_min_frequency', { 0 },
-    [[List of target words min frequency: word[ feat1[ feat2[ ...] ] ].
-      If = 0, vocabularies are pruned by size.]]
-  },
-  {
-    '-src_seq_length', 50,
-    [[Maximum source sequence length.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
-    }
-  },
-  {
-    '-tgt_seq_length', 50,
-    [[Maximum target sequence length.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
-    }
-  }
-}
-
 local commonOptions = {
   {
     '-features_vocabs_prefix', '',
@@ -227,16 +45,91 @@ local commonOptions = {
   }
 }
 
+--[[
+  Generic function to generate options for the different modes
+]]
+local function declareDataOptions(mode)
+  local function prefix(data)
+    if data.short then return data.short.."_" end
+    return ""
+  end
+  local function suffix(data)
+    if data.short then return "_"..data.short end
+    return ""
+  end
+  local function nameWithSpace(data)
+    if data.name then return " "..data.name end
+    return ""
+  end
+  local datalist
+  if mode == 'bitext' then
+    datalist = { {name="source",short="src",hasVocab=true} , {name="target",short="tgt",hasVocab=true} }
+  elseif mode == 'monotext' then
+    datalist = { {hasVocab=true} }
+  else
+    datalist = { {name="source",short="src",hasVocab=false} , {name="target",short="tgt",hasVocab=true} }
+  end
+  local options = {}
+  for i = 1, #datalist do
+    table.insert(options,
+      {
+        '-train'..suffix(datalist[i]), '',
+        "Path to the training"..nameWithSpace(datalist[i]).." data.",
+        {
+          valid=onmt.utils.ExtendedCmdLine.fileExists
+        }
+      })
+  end
+  for i = 1, #datalist do
+    table.insert(options,
+      {
+        '-valid'..suffix(datalist[i]), '',
+        "Path to the validation"..nameWithSpace(datalist[i]).." data.",
+        {
+          valid=onmt.utils.ExtendedCmdLine.fileExists
+        }
+      })
+  end
+  for i = 1, #datalist do
+    if datalist[i].hasVocab then
+      table.insert(options,
+        {
+          '-'..prefix(datalist[i])..'vocab', '',
+          "Path to an existing"..nameWithSpace(datalist[i]).." vocabulary.",
+          {
+            valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
+          }
+        })
+      table.insert(options,
+        {
+          '-'..prefix(datalist[i])..'vocab_size', { 50000 },
+          "List of"..nameWithSpace(datalist[i])..[[ vocabularies size: `word[ feat1[ feat2[ ...] ] ]`.
+            If = 0, vocabularies are not pruned.]]
+        })
+      table.insert(options,
+        {
+          '-'..prefix(datalist[i])..'words_min_frequency', { 0 },
+          "List of"..nameWithSpace(datalist[i])..[[ words min frequency: `word[ feat1[ feat2[ ...] ] ]`.
+            If = 0, vocabularies are pruned by size.]]
+        })
+    end
+  end
+  for i = 1, #datalist do
+    table.insert(options,
+      {
+        '-'..prefix(datalist[i])..'seq_length', 50,
+        "Maximum"..nameWithSpace(datalist[i])..[[ sequence length.]],
+        {
+          valid = onmt.utils.ExtendedCmdLine.isInt(1)
+        }
+      })
+  end
+  return options
+end
+
 function Preprocessor.declareOpts(cmd, mode)
   mode = mode or 'bitext'
-  local options
-  if mode == 'bitext' then
-    options = bitextOptions
-  elseif mode == 'monotext' then
-    options = monotextOptions
-  else
-    options = feattextOptions
-  end
+  local options = declareDataOptions(mode)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
@@ -248,14 +141,7 @@ function Preprocessor:__init(args, mode)
 
   mode = mode or 'bitext'
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, commonOptions)
-  local options
-  if mode == 'bitext' then
-    options = bitextOptions
-  elseif mode == 'monotext' then
-    options = monotextOptions
-  else
-    options = feattextOptions
-  end
+  local options = declareDataOptions(mode)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
