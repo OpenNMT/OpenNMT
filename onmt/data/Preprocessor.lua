@@ -262,69 +262,74 @@ function Preprocessor:__init(args, mode)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
 end
 
-function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid)
-    -- sentence length distribution
-  local srcSentenceDist = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-  local tgtSentenceDist = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-
-  local src = tds.Vec()
-  local srcFeatures = tds.Vec()
-
-  local tgt = tds.Vec()
-  local tgtFeatures = tds.Vec()
-
+--[[
+  Generic data preparation function on multiples source
+  * `files`: table of data source name
+  * `isInputVector`: table of boolean indicating if corresponding source is an vector
+  * `dicts`: table of dictionary data corresponding to source
+  * `nameSources`: table of name of each source - for logging purpose
+  * `constants`: constant to add to the vocabulary for each source
+  * `isValid`: validation function taking prepared table of tokens from each source
+  * `generateFeatures`: table of feature extraction fucnction for each source
+]]
+function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants, isValid, generateFeatures)
+  assert(#files==#dicts, "dict table should match files table")
+  local n = #files
+  local sentenceDists = {}
+  local vectors = {}
+  local features = {}
+  local avgLength = {}
+  local prunedRatio = {}
+  local readers = {}
   local sizes = tds.Vec()
+
+  for i = 1, n do
+    table.insert(sentenceDists, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+    table.insert(vectors, tds.Vec())
+    table.insert(features, tds.Vec())
+    table.insert(avgLength, 0)
+    table.insert(prunedRatio, 0)
+    table.insert(readers, onmt.utils.FileReader.new(files[i], self.args.idx_files, isInputVector[i]))
+  end
 
   local count = 0
   local ignored = 0
-  local avgSrcLength = 0
-  local avgTgtLength = 0
-  local prunedRatioSrc = 0
-  local prunedRatioTgt = 0
+  local emptyCount = 0
 
-
-  local function processBilingualSentence(srcTokens, tgtTokens)
-    local idxRange = math.floor(#srcTokens/10)+1
-    if idxRange > #srcSentenceDist then
-      idxRange = #srcSentenceDist
-    end
-    srcSentenceDist[idxRange] = srcSentenceDist[idxRange]+1
-    idxRange = math.floor(#tgtTokens/10)+1
-    if idxRange > #tgtSentenceDist then
-      idxRange = #tgtSentenceDist
-    end
-    tgtSentenceDist[idxRange] = tgtSentenceDist[idxRange]+1
-
-    if isValid(srcTokens, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
-      avgSrcLength = avgSrcLength * (#src / (#src + 1)) + #srcTokens / (#src + 1)
-      avgTgtLength = avgTgtLength * (#tgt / (#tgt + 1)) + #tgtTokens / (#tgt + 1)
-
-      local srcWords, srcFeats = onmt.utils.Features.extract(srcTokens)
-      local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
-
-      local srcVec = srcDicts.words:convertToIdx(srcWords, onmt.Constants.UNK_WORD)
-      local tgtVec = tgtDicts.words:convertToIdx(tgtWords,
-                                                 onmt.Constants.UNK_WORD,
-                                                 onmt.Constants.BOS_WORD,
-                                                 onmt.Constants.EOS_WORD)
-
-      local srcPruned = srcVec:eq(onmt.Constants.UNK):sum() / srcVec:size(1)
-      local tgtPruned = tgtVec:eq(onmt.Constants.UNK):sum() / tgtVec:size(1)
-
-      prunedRatioSrc = prunedRatioSrc * (#src / (#src + 1)) + srcPruned / (#src + 1)
-      prunedRatioTgt = prunedRatioTgt * (#tgt / (#tgt + 1)) + tgtPruned / (#tgt + 1)
-
-      src:insert(srcVec)
-      tgt:insert(tgtVec)
-
-      if #srcDicts.features > 0 then
-        srcFeatures:insert(onmt.utils.Features.generateSource(srcDicts.features, srcFeats, true))
+  local function processSentence(tokens)
+    for i = 1, n do
+      local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
+      local idxRange = math.floor(length/10)+1
+      if idxRange > #sentenceDists[i] then
+        idxRange = #sentenceDists[i]
       end
-      if #tgtDicts.features > 0 then
-        tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true, self.args.time_shift_feature))
-      end
+      sentenceDists[i][idxRange] = sentenceDists[i][idxRange]+1
+    end
 
-      sizes:insert(#srcWords)
+    if isValid(tokens) then
+      for i = 1, n do
+        local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
+        avgLength[i] = avgLength[i] * (#vectors[i] / (#vectors[i] + 1)) + length / (#vectors[i] + 1)
+
+        if isInputVector[i] then
+          vectors[i]:insert(tokens[i])
+        else
+          local words, feats = onmt.utils.Features.extract(tokens[i])
+          local vec = dicts[i].words:convertToIdx(words, table.unpack(constants[i]))
+          local pruned = vec:eq(onmt.Constants.UNK):sum() / vec:size(1)
+
+          prunedRatio[i] = prunedRatio[i] * (#vectors[i] / (#vectors[i] + 1)) + pruned / (#vectors[i] + 1)
+          vectors[i]:insert(vec)
+
+          if not(isInputVector[i]) and #dicts[i].features > 0 then
+            features[i]:insert(generateFeatures[i](dicts[i].features, feats, true, self.args.time_shift_feature))
+          end
+        end
+
+        if i == 1 then
+          sizes:insert(length)
+        end
+      end
     else
       ignored = ignored + 1
     end
@@ -336,88 +341,84 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     end
   end
 
-  local srcReader = onmt.utils.FileReader.new(srcFile, self.args.idx_files)
-  local tgtReader = onmt.utils.FileReader.new(tgtFile, self.args.idx_files)
-
   if self.args.idx_files then
-    local srcDict = {}
-    local srcCount = 0
-    local tgtDict = {}
-    local tgtCount = 0
-    while true do
-      local srcTokens, srcIdx = srcReader:next()
-      if not srcTokens then
-        break
+    local maps = {}
+    for i = 1, n do
+      table.insert(maps, {})
+      while true do
+        local tokens, idx = readers[i]:next()
+        if not tokens then
+          break
+        end
+        if maps[i][idx] then
+          _G.logger:error('duplicate idx in %s file: '..idx, nameSources[i])
+          os.exit(1)
+        end
+        if i > 1 and not maps[1][idx] then
+          _G.logger:error('%s Idx not defined in %s: '..idx, nameSources[i], nameSources[1])
+          os.exit(1)
+        end
+        if isInputVector[i] then
+          maps[i][idx] = torch.Tensor(tokens)
+        else
+          maps[i][idx] = tokens
+        end
       end
-      if srcDict[srcIdx] then
-        _G.logger:error('duplicate idx in src file: '..srcIdx)
-        os.exit(1)
-      end
-      srcDict[srcIdx] = srcTokens
-      srcCount = srcCount + 1
     end
-    while true do
-      local tgtTokens, tgtIdx = tgtReader:next()
-      if not tgtTokens then
-        break
+    for k,_ in pairs(maps[1]) do
+      local tokens = {}
+      local hasNil = false
+      for i = 1, n do
+        hasNil = hasNil or maps[i][k] == nil
+        table.insert(tokens, maps[i][k])
       end
-      if tgtDict[tgtIdx] then
-        _G.logger:error('duplicate idx in src file: '..tgtIdx)
-        os.exit(1)
+      if not hasNil then
+        processSentence(tokens)
+      else
+        emptyCount = emptyCount + 1
       end
-      if not srcDict[tgtIdx] then
-        _G.logger:error('tgt Idx not defined in source: '..tgtIdx)
-        os.exit(1)
-      end
-      tgtDict[tgtIdx] = tgtTokens
-      tgtCount = tgtCount + 1
-    end
-    if srcCount ~= tgtCount then
-      _G.logger:error('source Idx and target Idx not aligned')
-      os.exit(1)
-    end
-    for k,v in pairs(srcDict) do
-      processBilingualSentence(v, tgtDict[k])
     end
   else
     while true do
-      local srcTokens = srcReader:next()
-      local tgtTokens = tgtReader:next()
+      local tokens = {}
+      local hasNil = false
+      local allNil = true
+      for i = 1, n do
+        tokens[i] = readers[i]:next()
+        hasNil = hasNil or tokens[i] == nil
+        allNil = allNil and tokens[i] == nil
+      end
 
-      if srcTokens == nil or tgtTokens == nil then
-        if srcTokens == nil and tgtTokens ~= nil or srcTokens ~= nil and tgtTokens == nil then
-          _G.logger:error('source and target do not have the same number of sentences')
+      if hasNil then
+        if not allNil then
+          _G.logger:error('all data sources do not have the same number of sentences')
           os.exit(1)
         end
         break
       end
-      processBilingualSentence(srcTokens, tgtTokens)
+      processSentence(tokens)
     end
   end
 
-  for i=1, #srcSentenceDist do
-    srcSentenceDist[i] = srcSentenceDist[i]/count
-    tgtSentenceDist[i] = tgtSentenceDist[i]/count
+  for i = 1, n do
+    for j=1, #sentenceDists[i] do
+      sentenceDists[i][j] = sentenceDists[i][j]/count
+    end
+    readers[i]:close()
   end
-
-  srcReader:close()
-  tgtReader:close()
 
   local function reorderData(perm)
-    src = onmt.utils.Table.reorder(src, perm, true)
-    tgt = onmt.utils.Table.reorder(tgt, perm, true)
-
-    if #srcDicts.features > 0 then
-      srcFeatures = onmt.utils.Table.reorder(srcFeatures, perm, true)
-    end
-    if #tgtDicts.features > 0 then
-      tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm, true)
+    for i = 1, n do
+      vectors[i] = onmt.utils.Table.reorder(vectors[i], perm, true, isInputVector and isInputVector[i])
+      if not(isInputVector[i]) and #dicts[i].features > 0 then
+        features[i] = onmt.utils.Table.reorder(features[i], perm, true)
+      end
     end
   end
 
   if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
-    local perm = torch.randperm(#src)
+    local perm = torch.randperm(#vectors[1])
     sizes = onmt.utils.Table.reorder(sizes, perm, true)
     reorderData(perm)
   end
@@ -428,271 +429,118 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
     reorderData(perm)
   end
 
-  _G.logger:info('Prepared %d sentences:', #src)
-  _G.logger:info(' * %d sequences ignored due to source length > %d or target length > %d',
-                 ignored,
-                 self.args.src_seq_length,
-                 self.args.tgt_seq_length)
-  _G.logger:info(' * average sequence length: source = %.1f, target = %.1f',
-                 avgSrcLength,
-                 avgTgtLength)
-  _G.logger:info(' * %% of unknown words: source = %.1f%%, target = %.1f%%',
-                 prunedRatioSrc * 100,
-                 prunedRatioTgt * 100)
-
-  local dist='[ '
-  for i=1,#srcSentenceDist do
-    if i>1 then
-      dist = dist..' ; '
-    end
-    dist = dist..math.floor(srcSentenceDist[i]*100)..'%'
+  _G.logger:info('Prepared %d sentences:', #vectors[1])
+  _G.logger:info(' * %d sequences not validated (length, other)', ignored)
+  local msgLength = ''
+  local msgPrune = ''
+  for i = 1, n do
+    msgLength = msgLength .. (i==1 and '' or ', ')
+    msgLength = msgLength .. nameSources[i] .. ' = '..string.format("%.1f", avgLength[i])
+    msgPrune = msgPrune .. (i==1 and '' or ', ')
+    msgPrune = msgPrune .. nameSources[i] .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
   end
-  dist = dist..' ]'
-  _G.logger:info(' * Source Sentence Length (range of 10): '..dist)
-  dist='[ '
-  for i=1,#tgtSentenceDist do
-    if i>1 then
-      dist = dist..' ; '
+
+  _G.logger:info(' * average sequence length: '..msgLength)
+  _G.logger:info(' * % of unknown words: '..msgPrune)
+
+  local data = {}
+
+  for i = 1, n do
+    local dist='[ '
+    for j = 1, #sentenceDists[1] do
+      if j>1 then
+        dist = dist..' ; '
+      end
+      dist = dist..math.floor(sentenceDists[i][j]*100)..'%%'
     end
-    dist = dist..math.floor(tgtSentenceDist[i]*100)..'%'
+    dist = dist..' ]'
+    _G.logger:info(' * %s sentence length (range of 10): '..dist, nameSources[i])
+
+    if isInputVector[i] then
+      table.insert(data, { vectors = vectors[i], features = features[i] })
+    else
+      table.insert(data, { words = vectors[i], features = features[i] })
+    end
+
   end
-  dist = dist..' ]'
-  _G.logger:info(' * Target Sentence Length (range of 10): '..dist)
 
-  local srcData = {
-    words = src,
-    features = srcFeatures
-  }
+  return data
+end
 
-  local tgtData = {
-    words = tgt,
-    features = tgtFeatures
-  }
-
-  return srcData, tgtData
+function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid)
+  local data = self:makeGenericData(
+                              { srcFile, tgtFile },
+                              { false, false },
+                              { srcDicts, tgtDicts },
+                              { 'source', 'target' },
+                              {
+                                {
+                                  onmt.Constants.UNK_WORD
+                                },
+                                {
+                                  onmt.Constants.UNK_WORD,
+                                  onmt.Constants.BOS_WORD,
+                                  onmt.Constants.EOS_WORD
+                                }
+                              },
+                              function(tokens)
+                                return #tokens[1] > 0 and
+                                       isValid(tokens[1], self.args.src_seq_length) and
+                                       #tokens[2] > 0 and
+                                       isValid(tokens[2], self.args.tgt_seq_length)
+                              end,
+                              {
+                                onmt.utils.Features.generateSource,
+                                onmt.utils.Features.generateTarget
+                              })
+  return data[1], data[2]
 end
 
 function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
-  local src = tds.Vec()
-  local srcFeatures = tds.Vec()
-
-  local tgt = tds.Vec()
-  local tgtFeatures = tds.Vec()
-
-  local sizes = tds.Vec()
-
-  local count = 0
-  local ignored = 0
-  local emptyCount = 0
-
-  local function processFeatTextSentence(srcFeats, tgtTokens)
-    if srcFeats:dim() == 0 or not tgtTokens then
-      ignored = ignored + 1
-      emptyCount = emptyCount + 1
-    else
-      if isValid(srcFeats, self.args.src_seq_length) and isValid(tgtTokens, self.args.tgt_seq_length) then
-        local tgtWords, tgtFeats = onmt.utils.Features.extract(tgtTokens)
-
-        src:insert(srcFeats)
-        tgt:insert(tgtDicts.words:convertToIdx(tgtWords,
-                                               onmt.Constants.UNK_WORD,
-                                               onmt.Constants.BOS_WORD,
-                                               onmt.Constants.EOS_WORD))
-
-        if #tgtDicts.features > 0 then
-          tgtFeatures:insert(onmt.utils.Features.generateTarget(tgtDicts.features, tgtFeats, true))
-        end
-        sizes:insert(srcFeats:size(1))
-      else
-        ignored = ignored + 1
-      end
-    end
-
-    count = count + 1
-
-    if count % self.args.report_every == 0 then
-      _G.logger:info('... ' .. count .. ' sequences prepared')
-    end
-  end
-
-  local srcReader = onmt.utils.FileReader.new(srcFile, true, true)
-  local tgtReader = onmt.utils.FileReader.new(tgtFile, true)
-
-  if self.args.idx_files then
-    local srcDict = {}
-    local srcCount = 0
-    local tgtDict = {}
-    local tgtCount = 0
-    while true do
-      local srcFeats, srcIdx = srcReader:next()
-      if not srcFeats then
-        break
-      end
-      if srcDict[srcIdx] then
-        _G.logger:error('duplicate idx in src file: '..srcIdx)
-        os.exit(1)
-      end
-      srcDict[srcIdx] = torch.Tensor(srcFeats)
-      srcCount = srcCount + 1
-    end
-    while true do
-      local tgtTokens, tgtIdx = tgtReader:next()
-      if not tgtTokens then
-        break
-      end
-      if tgtDict[tgtIdx] then
-        _G.logger:error('duplicate idx in src file: '..tgtIdx)
-        os.exit(1)
-      end
-      if not srcDict[tgtIdx] then
-        _G.logger:error('tgt Idx not defined in source: '..tgtIdx)
-        os.exit(1)
-      end
-      tgtDict[tgtIdx] = tgtTokens
-      tgtCount = tgtCount + 1
-    end
-    if srcCount ~= tgtCount then
-      _G.logger:warning('missing '..(srcCount-tgtCount)..' sentences in target')
-    end
-    for k,v in pairs(srcDict) do
-      processFeatTextSentence(v, tgtDict[k])
-    end
-  else
-    while true do
-      local srcFeats = srcReader:next()
-      local tgtTokens = tgtReader:next()
-
-      if srcFeats == nil or tgtTokens == nil then
-        if srcFeats == nil and tgtTokens ~= nil or srcFeats ~= nil and tgtTokens == nil then
-          _G.logger:error('source and target do not have the same number of sentences')
-          os.exit(1)
-        end
-        break
-      end
-      processFeatTextSentence(srcFeats, tgtTokens)
-    end
-  end
-
-  srcReader:close()
-  tgtReader:close()
-
-  local function reorderData(perm)
-    src = onmt.utils.Table.reorder(src, perm, true)
-    tgt = onmt.utils.Table.reorder(tgt, perm, true)
-
-    if #tgtDicts.features > 0 then
-      tgtFeatures = onmt.utils.Table.reorder(tgtFeatures, perm, true)
-    end
-  end
-
-  if self.args.shuffle then
-    _G.logger:info('... shuffling sentences')
-    local perm = torch.randperm(#src)
-    sizes = onmt.utils.Table.reorder(sizes, perm, true)
-    reorderData(perm)
-  end
-
-  if self.args.sort then
-    _G.logger:info('... sorting sentences by size')
-    local _, perm = torch.sort(vecToTensor(sizes))
-    reorderData(perm)
-  end
-
-  _G.logger:info('Prepared ' .. #src .. ' sequences (' .. ignored
-                   .. ' ignored: '..emptyCount..' empty, '..(ignored-emptyCount)..' source length > ' .. self.args.src_seq_length
-                   .. ' or target length > ' .. self.args.tgt_seq_length .. ')')
-
-  local srcData = {
-    vectors = src,
-    features = srcFeatures
-  }
-
-  local tgtData = {
-    words = tgt,
-    features = tgtFeatures
-  }
-
-  return srcData, tgtData
+  local data = self:makeGenericData(
+                              { srcFile, tgtFile },
+                              { true, false },
+                              { {}, tgtDicts },
+                              { 'source', 'target' },
+                              {
+                                false,
+                                {
+                                  onmt.Constants.UNK_WORD,
+                                  onmt.Constants.BOS_WORD,
+                                  onmt.Constants.EOS_WORD
+                                }
+                              },
+                              function(tokens)
+                                return tokens[1]:dim() > 0 and
+                                       isValid(tokens[1], self.args.src_seq_length) and
+                                       #tokens[2] > 0 and
+                                       isValid(tokens[2], self.args.tgt_seq_length)
+                              end,
+                              {
+                                false,
+                                onmt.utils.Features.generateTarget
+                              })
+  return data[1], data[2]
 end
 
 function Preprocessor:makeMonolingualData(file, dicts, isValid)
-  local dataset = tds.Vec()
-  local features = tds.Vec()
-
-  local sizes = tds.Vec()
-
-  local count = 0
-  local ignored = 0
-  local avgLength = 0
-  local prunedRatio = 0
-
-  local reader = onmt.utils.FileReader.new(file)
-
-  while true do
-    local tokens = reader:next()
-
-    if tokens == nil then
-      break
-    end
-
-    if isValid(tokens, self.args.seq_length) then
-      avgLength = avgLength * (#dataset / (#dataset + 1)) + #tokens / (#dataset + 1)
-
-      local words, feats = onmt.utils.Features.extract(tokens)
-      local vec = dicts.words:convertToIdx(words, onmt.Constants.UNK_WORD)
-      local pruned = vec:eq(onmt.Constants.UNK):sum() / vec:size(1)
-
-      prunedRatio = prunedRatio * (#dataset / (#dataset + 1)) + pruned / (#dataset + 1)
-
-      dataset:insert(vec)
-
-      if #dicts.features > 0 then
-        features:insert(onmt.utils.Features.generateSource(dicts.features, feats, true))
-      end
-
-      sizes:insert(#words)
-    else
-      ignored = ignored + 1
-    end
-
-    count = count + 1
-
-  end
-
-  reader:close()
-
-  local function reorderData(perm)
-    dataset = onmt.utils.Table.reorder(dataset, perm, true)
-
-    if #dicts.features > 0 then
-      features = onmt.utils.Table.reorder(features, perm, true)
-    end
-  end
-
-  if self.args.shuffle then
-    _G.logger:info('... shuffling sentences')
-    local perm = torch.randperm(#dataset)
-    sizes = onmt.utils.Table.reorder(sizes, perm, true)
-    reorderData(perm)
-  end
-
-  if self.args.sort then
-    _G.logger:info('... sorting sentences by size')
-    local _, perm = torch.sort(vecToTensor(sizes))
-    reorderData(perm)
-  end
-
-  _G.logger:info('Prepared %d sentences:', #dataset)
-  _G.logger:info(' * %d sequences ignored due to length > %d', ignored, self.args.seq_length)
-  _G.logger:info(' * average sequence length = %.1f', avgLength)
-  _G.logger:info(' * %% of unkown words = %.1f%%', prunedRatio * 100)
-
-  local data = {
-    words = dataset,
-    features = features
-  }
-
-  return data
+  local data = self:makeGenericData(
+                              { file },
+                              { false },
+                              { dicts },
+                              { 'source' },
+                              {
+                                {
+                                  onmt.Constants.UNK_WORD
+                                }
+                              },
+                              function(tokens)
+                                return #tokens[1] > 0 and isValid(tokens[1], self.args.seq_length)
+                              end,
+                              {
+                                onmt.utils.Features.generateSource
+                              })
+  return data[1]
 end
 
 return Preprocessor

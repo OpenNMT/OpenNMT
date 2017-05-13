@@ -10,6 +10,7 @@
 * Make epoch models save frequency configurable
 * Optimize decoding with target vocabulary reduction (importance sampling)
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
+* Embedding extraction tools also support text word2vec format, and manage for joiner mark variants
 
 ### Fixes and improvements
 
