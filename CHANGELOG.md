@@ -10,7 +10,7 @@
 * Add `epoch_only` decay strategy
 * New feature to keep token frequency in generated dictionaries
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
-* Embedding extraction tools also support fasttext format, and look for joiner mark variants
+* Embedding extraction tools also support text word2vec format, and manage for joiner mark variants
 * Introduce target vocabulary reduction (importance sampling)
 * Optimize decoding with sub-dictionary
 
