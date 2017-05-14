@@ -73,10 +73,10 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
   if vocabFile:len() > 0 then
     -- If given, load existing word dictionary.
-    _G.logger:info('Reading ' .. name .. ' vocabulary from \'' .. vocabFile .. '\'...')
+    _G.logger:info(' * Reading ' .. name .. ' vocabulary from \'' .. vocabFile .. '\'...')
     wordVocab = onmt.utils.Dict.new()
     wordVocab:loadFile(vocabFile)
-    _G.logger:info('Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
+    _G.logger:info(' * Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
   end
 
   if featuresVocabsFiles:len() > 0 and numFeatures > 0 then
@@ -90,10 +90,10 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
         break
       end
 
-      _G.logger:info('Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
+      _G.logger:info(' * Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
       featuresVocabs[j] = onmt.utils.Dict.new()
       featuresVocabs[j]:loadFile(file)
-      _G.logger:info('Loaded ' .. featuresVocabs[j]:size() .. ' labels')
+      _G.logger:info(' * Loaded ' .. featuresVocabs[j]:size() .. ' labels')
 
       j = j + 1
     end
@@ -107,7 +107,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
   if wordVocab == nil or keepFrequency or (#featuresVocabs == 0 and numFeatures > 0) then
     -- If a dictionary is still missing, generate it.
-    _G.logger:info('Building ' .. name  .. ' vocabularies...')
+    _G.logger:info(' * Building ' .. name  .. ' vocabularies...')
     local genWordVocab, genFeaturesVocabs = Vocabulary.make(dataFile, validFunc, idxFile)
 
     local originalSizes = { genWordVocab:size() }
@@ -129,7 +129,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
         wordVocab = genWordVocab
       end
 
-      _G.logger:info('Created word dictionary of size '
+      _G.logger:info(' * Created word dictionary of size '
                        .. wordVocab:size() .. ' (pruned from ' .. originalSizes[1] .. ')')
     elseif keepFrequency then
       -- if a dictionary was provided get frequency
@@ -146,7 +146,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
           featuresVocabs[i] = genFeaturesVocabs[i]
         end
 
-        _G.logger:info('Created feature ' .. i .. ' dictionary of size '
+        _G.logger:info(' * Created feature ' .. i .. ' dictionary of size '
                          .. featuresVocabs[i]:size() .. ' (pruned from ' .. originalSizes[i + 1] .. ')')
 
       end
