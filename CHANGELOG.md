@@ -13,6 +13,7 @@
 * Embedding extraction tools also support fasttext format, and look for joiner mark variants
 * Introduce target vocabulary reduction (importance sampling)
 * Optimize decoding with sub-dictionary
+* Introduce possibility to fix pretrained word embedding, but keep learning a secondary one.
 
 ### Fixes and improvements
 
