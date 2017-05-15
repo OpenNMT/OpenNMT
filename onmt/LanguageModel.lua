@@ -22,7 +22,7 @@ local options = {
     [[Fix word embeddings on the encoder side.]],
     {
       enum = { false, true, 'pretrained' },
-      structural = 1,
+      structural = 1
     }
   },
   {
