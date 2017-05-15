@@ -50,7 +50,7 @@ th tools/embeddings.lua -embed_type word2vec -embed_file data/GoogleNews-vectors
 By default these embeddings will be updated during training, but they can be held fixed using `-fix_word_vecs_enc` and `-fix_word_vecs_dec` options. These options can be enabled or disabled during a retraining.
 
 !!! tip "Tip"
-    When using pretrained word embeddings, if you declare larger `word_vec_size` - then the difference is uniformally initalized, and you can use `-fix_word_vecs_enc pretrained` to only fix the pretrained embeddings and learn as usual the second part.
+    When using pretrained word embeddings, if you declare a larger `-word_vec_size` then the difference is uniformally initalized and you can use `-fix_word_vecs_enc pretrained` (or `-fix_word_vecs_dec pretrained`) to fix the pretrained part and optimize the remaining part.
 
 ## Extraction
 
