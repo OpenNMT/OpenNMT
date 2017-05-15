@@ -49,53 +49,53 @@ local opt = cmd:parse(arg)
 local function main()
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
-  local embedding_weights = torch.load(opt.embed_data)
+  local embeddingWeights = torch.load(opt.embed_data)
 
   local Vocabulary = onmt.data.Vocabulary
   local dict = Vocabulary.init('source',
-                                   opt.txt_src,
-                                   opt.dict,
-                                   {50000},
-                                   {},
-                                   '',
-                                   function() return true end,
-                                   false,
-                                   false)
+                               opt.txt_src,
+                               opt.dict,
+                               { 50000 },
+                               {},
+                               '',
+                               function() return true end,
+                               false,
+                               false)
 
-  assert(dict.words:size(1)==embedding_weights:size(1))
-  local fsrc = io.open(opt.save_prefix..".src", "w")
+  assert(dict.words:size(1) == embeddingWeights:size(1))
+  local fsrc = io.open(opt.save_prefix .. ".src", "w")
   local ftgt
   if opt.txt_tgt ~= '' then
-    ftgt = io.open(opt.save_prefix..".tgt", "w")
+    ftgt = io.open(opt.save_prefix .. ".tgt", "w")
   end
 
   local wordEmbedding = onmt.WordEmbedding.new(dict.words:size(1),
-                                               embedding_weights:size(2),
-                                               embedding_weights)
+                                               embeddingWeights:size(2),
+                                               embeddingWeights)
 
-  local reader_src = onmt.utils.FileReader.new(opt.txt_src)
+  local readerSrc = onmt.utils.FileReader.new(opt.txt_src)
 
-  local reader_tgt
+  local readerTgt
   if opt.txt_tgt ~= '' then
-    reader_tgt = onmt.utils.FileReader.new(opt.txt_tgt)
+    readerTgt = onmt.utils.FileReader.new(opt.txt_tgt)
   end
 
   local count = 1
 
   while true do
-    local tokens_src = reader_src:next()
+    local tokensSrc = readerSrc:next()
 
-    if tokens_src == nil then
+    if tokensSrc == nil then
       break
     end
-    local IDX = 'IDX'..count;
-    local words, feats = onmt.utils.Features.extract(tokens_src)
+    local IDX = 'IDX' .. count
+    local words, feats = onmt.utils.Features.extract(tokensSrc)
     local vec = dict.words:convertToIdx(words, onmt.Constants.UNK_WORD)
-    assert(#feats==0)
-    fsrc:write(IDX..' [\n')
-    for i = 1,vec:size(1) do
-      local we=wordEmbedding:forward(torch.LongTensor(1):fill(vec[i]))[1]
-      for j = 1, embedding_weights:size(2) do
+    assert(#feats == 0)
+    fsrc:write(IDX .. ' [\n')
+    for i = 1, vec:size(1) do
+      local we = wordEmbedding:forward(torch.LongTensor(1):fill(vec[i]))[1]
+      for j = 1, embeddingWeights:size(2) do
         if j > 1 then
           fsrc:write(" ")
         end
@@ -107,8 +107,8 @@ local function main()
       fsrc:write("\n")
     end
     if ftgt then
-      local tokens_tgt = reader_tgt:next()
-      ftgt:write(IDX..' '..table.concat(tokens_tgt,' ')..'\n')
+      local tokensTgt = readerTgt:next()
+      ftgt:write(IDX .. ' ' .. table.concat(tokensTgt, ' ') .. '\n')
     end
     count = count + 1
   end
