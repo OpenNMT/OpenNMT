@@ -81,6 +81,21 @@ function cmdLineTest.parse_boolean()
 
   opt = cmd:parse({'-brnn', 'false'})
   tester:eq(opt.brnn, false)
+
+  tester:eq(opt.fix_word_vecs_enc, false)
+  opt = cmd:parse({'-fix_word_vecs_enc'})
+  tester:eq(opt.fix_word_vecs_enc, true)
+  opt = cmd:parse({'-fix_word_vecs_enc', 'true'})
+  tester:eq(opt.fix_word_vecs_enc, true)
+  opt = cmd:parse({'-fix_word_vecs_enc', '1'})
+  tester:eq(opt.fix_word_vecs_enc, true)
+  opt = cmd:parse({'-fix_word_vecs_enc', 'false'})
+  tester:eq(opt.fix_word_vecs_enc, false)
+  opt = cmd:parse({'-fix_word_vecs_enc', '0'})
+  tester:eq(opt.fix_word_vecs_enc, false)
+  opt = cmd:parse({'-fix_word_vecs_enc', 'pretrained'})
+  tester:eq(opt.fix_word_vecs_enc, 'pretrained')
+  tester:assertError(function() cmd:parse({'-fix_word_vecs_enc', 'xxx'}) end)
 end
 
 function cmdLineTest.parse_multiValue()

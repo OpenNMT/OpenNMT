@@ -15,6 +15,25 @@ local function wrapIndent(text, size, pad)
   end
 end
 
+local function concatValues(t)
+  local isBoolean
+  local s = ''
+  for _, v in ipairs(t) do
+    if type(v) == 'boolean' then
+      isBoolean = true
+    else
+      if s ~= '' then
+        s = s .. ', '
+      end
+      s = s .. v
+    end
+  end
+  if isBoolean then
+    s = 'true, false, ' .. s
+  end
+  return s
+end
+
 ---------------------------------------------------------------------------------
 
 local ExtendedCmdLine, parent, path
@@ -93,6 +112,9 @@ function ExtendedCmdLine:help(arg, md)
       -- Argument type.
       local argType = '<' .. option.type .. '>'
       if option.type == 'boolean' then
+        if option.meta and option.meta.enum then
+          argType = argType .. '/<string>'
+        end
         argType = '[' .. argType .. ']'
       end
 
@@ -108,7 +130,7 @@ function ExtendedCmdLine:help(arg, md)
             option.meta.enum[k] = '`' .. v .. '`'
           end
         end
-        table.insert(argMeta, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+        table.insert(argMeta, 'accepted: ' .. concatValues(option.meta.enum))
       end
 
       -- Default value.
@@ -258,7 +280,7 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
 end
 
 --[[ Convert `val` string to the target type. ]]
-function ExtendedCmdLine:convert(key, val, type, subtype)
+function ExtendedCmdLine:convert(key, val, type, subtype, meta)
   if not type or type == 'string' then
     val = val
   elseif type == 'table' then
@@ -279,7 +301,10 @@ function ExtendedCmdLine:convert(key, val, type, subtype)
     elseif val == '1' or val == 'true' then
       val = true
     else
-      self:error('invalid argument for boolean option ' .. key .. ' (should be 0, 1, false or true)')
+      -- boolean option can take 3rd values
+      if not (meta and meta.enum) then
+        self:error('invalid argument for boolean option ' .. key .. ' (should be 0, 1, false or true)')
+      end
     end
   else
     self:error('unknown required option type ' .. type)
@@ -312,7 +337,7 @@ function ExtendedCmdLine:__readOption__(params, arg, i)
 
   -- browse through parameters till next potential option (starting with -Letter)
   while arg[i + 1] and string.find(arg[i+1],'-%a')~=1 do
-    local value = self:convert(key, arg[i + 1], option.type, argumentType)
+    local value = self:convert(key, arg[i + 1], option.type, argumentType, option.meta)
 
     if type(value) == 'table' then
       onmt.utils.Table.append(values, value)
@@ -445,7 +470,7 @@ function ExtendedCmdLine:parse(arg)
         end
 
         if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-          self:error('option -' .. k.. ' is not in accepted values: ' .. table.concat(meta.enum, ', '))
+          self:error('option -' .. k.. ' is not in accepted values: ' .. concatValues(meta.enum))
         end
         if meta.structural then
           params._structural[k] = meta.structural

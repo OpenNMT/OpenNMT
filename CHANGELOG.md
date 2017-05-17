@@ -8,9 +8,10 @@
 * Add a bridge layer between the encoder and decoder to define how encoder states are passed to the decoder
 * Add `epoch_only` decay strategy
 * Make epoch models save frequency configurable
-* Optimize decoding with target vocabulary reduction (importance sampling)
+* Optimize decoding and training with target vocabulary reduction (importance sampling)
 * [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
-* Embedding extraction tools also support text word2vec format, and manage for joiner mark variants
+* Embedding extraction tools also support text word2vec format, and look for joiner mark variants
+* Introduce possibility to fix pretrained word embedding, but keep learning a secondary one.
 
 ### Fixes and improvements
 
