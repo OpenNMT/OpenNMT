@@ -127,7 +127,7 @@ function ExtendedCmdLine:help(arg, md)
       if option.meta and option.meta.enum then
         if md then
           for k, v in pairs(option.meta.enum) do
-            option.meta.enum[k] = '`' .. v .. '`'
+            option.meta.enum[k] = '`' .. tostring(v) .. '`'
           end
         end
         table.insert(argMeta, 'accepted: ' .. concatValues(option.meta.enum))

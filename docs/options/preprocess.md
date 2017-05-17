@@ -19,10 +19,10 @@
 * `-valid_src <string>` (required)<br/>Path to the validation source data.
 * `-valid_tgt <string>` (required)<br/>Path to the validation target data.
 * `-src_vocab <string>` (default: `''`)<br/>Path to an existing source vocabulary.
-* `-tgt_vocab <string>` (default: `''`)<br/>Path to an existing target vocabulary.
 * `-src_vocab_size <table>` (default: `50000`)<br/>List of source vocabularies size: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are not pruned.
-* `-tgt_vocab_size <table>` (default: `50000`)<br/>List of target vocabularies size: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are not pruned.
 * `-src_words_min_frequency <table>` (default: `0`)<br/>List of source words min frequency: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are pruned by size.
+* `-tgt_vocab <string>` (default: `''`)<br/>Path to an existing target vocabulary.
+* `-tgt_vocab_size <table>` (default: `50000`)<br/>List of target vocabularies size: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are not pruned.
 * `-tgt_words_min_frequency <table>` (default: `0`)<br/>List of target words min frequency: `word[ feat1[ feat2[ ...] ] ]`. If = 0, vocabularies are pruned by size.
 * `-src_seq_length <number>` (default: `50`)<br/>Maximum source sequence length.
 * `-tgt_seq_length <number>` (default: `50`)<br/>Maximum target sequence length.

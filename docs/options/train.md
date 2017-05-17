@@ -33,8 +33,8 @@
 * `-tgt_word_vec_size <table>` (default: `500`)<br/>List of target embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.
 * `-pre_word_vecs_enc <string>` (default: `''`)<br/>Path to pretrained word embeddings on the encoder side serialized as a Torch tensor.
 * `-pre_word_vecs_dec <string>` (default: `''`)<br/>Path to pretrained word embeddings on the decoder side serialized as a Torch tensor.
-* `-fix_word_vecs_enc [<boolean>]` (default: `false`)<br/>Fix word embeddings on the encoder side.
-* `-fix_word_vecs_dec [<boolean>]` (default: `false`)<br/>Fix word embeddings on the decoder side.
+* `-fix_word_vecs_enc [<boolean>/<string>]` (accepted: `false`, `true`, `pretrained`; default: `false`)<br/>Fix word embeddings on the encoder side.
+* `-fix_word_vecs_dec [<boolean>/<string>]` (accepted: `false`, `true`, `pretrained`; default: `false`)<br/>Fix word embeddings on the decoder side.
 * `-feat_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action for the features embeddings.
 * `-feat_vec_exponent <number>` (default: `0.7`)<br/>When features embedding sizes are not set and using `-feat_merge concat`, their dimension will be set to `N^feat_vec_exponent` where `N` is the number of values the feature takes.
 * `-feat_vec_size <number>` (default: `20`)<br/>When features embedding sizes are not set and using `-feat_merge sum`, this is the common embedding size of the features
