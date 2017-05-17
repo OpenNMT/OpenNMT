@@ -135,6 +135,14 @@ function Optim:prepareGrad(gradParams)
   end
 end
 
+function Optim:status()
+  local status = 'Optim ' .. self.args.optim:upper()
+  if self.args.optim ~= 'adadelta' then
+    status = status .. ' LR '.. string.format("%.4f", self.args.learning_rate)
+  end
+  return status
+end
+
 function Optim:updateParams(params, gradParams)
   for j = 1, #params do
     params[j]:add(gradParams[j])
