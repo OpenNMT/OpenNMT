@@ -118,7 +118,7 @@ function PDBiEncoder:contextSize(sourceSize, sourceLength)
   if type(sourceSize) == 'table' then
     contextSize = {}
     for i = 1, #sourceSize do
-      table.insert(contextSize, math.ceil(contextSize[i]/self.args.multiplier))
+      table.insert(contextSize, math.ceil(sourceSize[i]/self.args.multiplier))
     end
   elseif type(sourceSize) == 'int' then
     contextSize = math.ceil(sourceSize/self.args.multiplier)
