@@ -21,7 +21,7 @@ function PDBiEncoder.declareOpts(cmd)
 end
 
 
---[[ Create a pyrimal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer
+--[[ Create a pyramidal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer
 
 Parameters:
 
@@ -154,12 +154,13 @@ function PDBiEncoder:forward(batch)
       local strideReduced = layerContext:stride()
       strideReduced[2] = strideReduced[2] * self.args.pdbrnn_reduction
       local sizeReduced = layerContext:size()
-      sizeReduced[2] = math.floor(sizeReduced[2] / self.args.pdbrnn_reduction)
+      sizeReduced[2] = sizeReduced[2] / self.args.pdbrnn_reduction
       local reducedContext = layerContext
       reducedContext:set(layerContext:storage(), storageOffset, sizeReduced, strideReduced)
+      -- dimension are #batch x L x rnnsize
       for j = 1, self.args.pdbrnn_reduction-1 do
         local to_add = layerContext
-        to_add:set(layerContext:storage(), storageOffset+j, sizeReduced, strideReduced)
+        to_add:set(layerContext:storage(), storageOffset+j*sizeReduced[2], sizeReduced, strideReduced)
         reducedContext:add(to_add)
       end
       table.insert(self.inputs, onmt.data.BatchTensor.new(reducedContext))
