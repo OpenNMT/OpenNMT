@@ -149,10 +149,10 @@ function PDBiEncoder:forward(batch)
   for i = 1,#self.layers do
     local layerStates, layerContext = self.layers[i]:forward(self.inputs[i])
     if i ~= #self.layers then
-      -- add a dimension corresponding to the new dimension
+      -- add a dimension corresponding to the time-skip step
       local reducedContext = layerContext:reshape(torch.LongStorage{layerContext:size(1),
                                              self.args.pdbrnn_reduction,
-                                             layerContext:size(2)/self.args.pdbrnn_reduction,
+                                             layerContext:size(2) / self.args.pdbrnn_reduction,
                                              layerContext:size(3)})
       -- compress the layer Context along time dimension
       reducedContext = torch.sum(reducedContext,2):reshape(torch.LongStorage{reducedContext:size(1),
