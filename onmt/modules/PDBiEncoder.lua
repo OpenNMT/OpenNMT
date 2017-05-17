@@ -42,7 +42,7 @@ function PDBiEncoder:__init(args, input)
   args.brnn_merge = 'sum'
   self.args.multiplier = 1
   for _ = 1,self.args.layers do
-    table.insert(self.layers, onmt.BiEncoder(args, input))
+    table.insert(self.layers, onmt.DBiEncoder(args, input))
     local identity = nn.Identity()
     identity.inputSize = args.rnn_size
     input = identity
