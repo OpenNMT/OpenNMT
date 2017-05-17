@@ -832,6 +832,7 @@
 <li><code>-phrase_table &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to source-target dictionary to replace <code>&lt;unk&gt;</code> tokens.</li>
 <li><code>-n_best &lt;number&gt;</code> (default: <code>1</code>)<br/>If &gt; 1, it will also output an n-best list of decoded sentences.</li>
 <li><code>-max_num_unks &lt;number&gt;</code> (default: <code>inf</code>)<br/>All sequences with more <code>&lt;unk&gt;</code>s than this will be ignored during beam search.</li>
+<li><code>-target_subdict &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to target words dictionary corresponding to the source.</li>
 <li><code>-pre_filter_factor &lt;number&gt;</code> (default: <code>1</code>)<br/>Optional, set this only if filter is being used. Before applying filters, hypotheses with top <code>beam_size * pre_filter_factor</code> scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.</li>
 <li><code>-length_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Length normalization coefficient (alpha). If set to 0, no length normalization.</li>
 <li><code>-coverage_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.</li>
