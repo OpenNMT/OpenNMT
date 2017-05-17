@@ -16,7 +16,7 @@ local options = {
 }
 
 function PDBiEncoder.declareOpts(cmd)
-  onmt.BiEncoder.declareOpts(cmd)
+  onmt.DBiEncoder.declareOpts(cmd)
   cmd:setCmdLineOptions(options)
 end
 
@@ -72,7 +72,7 @@ function PDBiEncoder.load(pretrained)
   self.layers = {}
 
   for i=1, #pretrained.layers do
-    self.layers[i] = onmt.BiEncoder.load(pretrained.layers[i])
+    self.layers[i] = onmt.DBiEncoder.load(pretrained.layers[i])
     self:add(self.layers[i])
   end
 
@@ -155,7 +155,7 @@ function PDBiEncoder:forward(batch)
                                              layerContext:size(2) / self.args.pdbrnn_reduction,
                                              layerContext:size(3)})
       -- compress the layer Context along time dimension
-      reducedContext = torch.sum(reducedContext,2):reshape(torch.LongStorage{reducedContext:size(1),
+      reducedContext = reducedContext:sum(2):reshape(torch.LongStorage{reducedContext:size(1),
                                              reducedContext:size(3),
                                              reducedContext:size(4)})
       table.insert(self.inputs, onmt.data.BatchTensor.new(reducedContext))
