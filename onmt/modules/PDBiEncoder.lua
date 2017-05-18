@@ -187,6 +187,7 @@ function PDBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
       gradContextOutput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
                                               { batch.size, #gradInputs*self.args.pdbrnn_reduction, self.args.hiddenSize })
       for t = 1, #gradInputs do
+        -- for each t, step gradient is the gradient for the reduced timestep since we went through a sum operation
         for j = 1, self.args.pdbrnn_reduction do
           gradContextOutput[{{},self.args.pdbrnn_reduction*(t-1)+j,{}}]:copy(gradInputs[t])
         end
