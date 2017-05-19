@@ -1,4 +1,4 @@
-## [Unreleased]
+## [v0.7.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.0) (2017-05-19)
 
 ### New features
 
