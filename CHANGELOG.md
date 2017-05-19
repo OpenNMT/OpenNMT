@@ -4,14 +4,15 @@
 
 * Support vectors as inputs using [Kaldi](http://kaldi-asr.org/) input format
 * Support parallel file alignment by index in addition to line-by-line
-* Add script to convert and/or generate pretrained word embeddings
+* Add script to generate pretrained word embeddings:
+  * from [Polyglot](https://sites.google.com/site/rmyeid/projects/polyglot) repository
+  * from pretrained *word2vec*, *GloVe* or *fastText* files
+* Add an option to only fix the pretrained part of word embeddings
 * Add a bridge layer between the encoder and decoder to define how encoder states are passed to the decoder
-* Add `epoch_only` decay strategy
+* Add `epoch_only` decay strategy to only decay learning based on epochs
 * Make epoch models save frequency configurable
 * Optimize decoding and training with target vocabulary reduction (importance sampling)
-* [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
-* Embedding extraction tools also support text word2vec format, and look for joiner mark variants
-* Introduce possibility to fix pretrained word embedding, but keep learning a secondary one.
+* [*Breaking, renamed option*] Introduce `partition` data sampling
 
 ### Fixes and improvements
 
@@ -26,7 +27,7 @@
 * Fix translation error of models profiled during training
 * Fix translation error of models trained without attention
 * Fix error when using one-layer GRU
-* Fix incorrect coverage normalization formula during the beam search
+* Fix incorrect coverage normalization formula applied during the beam search
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
 
