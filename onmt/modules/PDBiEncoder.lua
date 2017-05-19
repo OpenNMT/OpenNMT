@@ -16,12 +16,12 @@ local options = {
 }
 
 function PDBiEncoder.declareOpts(cmd)
-  onmt.BiEncoder.declareOpts(cmd)
+  onmt.DBiEncoder.declareOpts(cmd)
   cmd:setCmdLineOptions(options)
 end
 
 
---[[ Create a pyrimal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer
+--[[ Create a pyramidal deep bidirectional encoder - each layers reconnect before starting another bidirectional layer
 
 Parameters:
 
@@ -42,7 +42,7 @@ function PDBiEncoder:__init(args, input)
   args.brnn_merge = 'sum'
   self.args.multiplier = 1
   for _ = 1,self.args.layers do
-    table.insert(self.layers, onmt.BiEncoder(args, input))
+    table.insert(self.layers, onmt.DBiEncoder(args, input))
     local identity = nn.Identity()
     identity.inputSize = args.rnn_size
     input = identity
@@ -72,7 +72,7 @@ function PDBiEncoder.load(pretrained)
   self.layers = {}
 
   for i=1, #pretrained.layers do
-    self.layers[i] = onmt.BiEncoder.load(pretrained.layers[i])
+    self.layers[i] = onmt.DBiEncoder.load(pretrained.layers[i])
     self:add(self.layers[i])
   end
 
@@ -118,7 +118,7 @@ function PDBiEncoder:contextSize(sourceSize, sourceLength)
   if type(sourceSize) == 'table' then
     contextSize = {}
     for i = 1, #sourceSize do
-      table.insert(contextSize, math.ceil(contextSize[i]/self.args.multiplier))
+      table.insert(contextSize, math.ceil(sourceSize[i]/self.args.multiplier))
     end
   elseif type(sourceSize) == 'int' then
     contextSize = math.ceil(sourceSize/self.args.multiplier)
@@ -149,22 +149,18 @@ function PDBiEncoder:forward(batch)
   for i = 1,#self.layers do
     local layerStates, layerContext = self.layers[i]:forward(self.inputs[i])
     if i ~= #self.layers then
+      -- add a dimension corresponding to the time-skip step
+      local reducedContext = layerContext:reshape(torch.LongStorage{layerContext:size(1),
+                                             self.args.pdbrnn_reduction,
+                                             layerContext:size(2) / self.args.pdbrnn_reduction,
+                                             layerContext:size(3)})
       -- compress the layer Context along time dimension
-      local storageOffset = layerContext:storageOffset()
-      local strideReduced = layerContext:stride()
-      strideReduced[2] = strideReduced[2] * self.args.pdbrnn_reduction
-      local sizeReduced = layerContext:size()
-      sizeReduced[2] = math.floor(sizeReduced[2] / self.args.pdbrnn_reduction)
-      local reducedContext = layerContext
-      reducedContext:set(layerContext:storage(), storageOffset, sizeReduced, strideReduced)
-      for j = 1, self.args.pdbrnn_reduction-1 do
-        local to_add = layerContext
-        to_add:set(layerContext:storage(), storageOffset+j, sizeReduced, strideReduced)
-        reducedContext:add(to_add)
-      end
+      reducedContext = reducedContext:sum(2):reshape(torch.LongStorage{reducedContext:size(1),
+                                             reducedContext:size(3),
+                                             reducedContext:size(4)})
       table.insert(self.inputs, onmt.data.BatchTensor.new(reducedContext))
       -- record what is the size of the last reduction
-      batch.encoderOutputLength = sizeReduced[2]
+      batch.encoderOutputLength = reducedContext:size(2)
     else
       context = onmt.utils.Tensor.reuseTensor(self.contextProto, layerContext:size())
       context:copy(layerContext)
@@ -191,6 +187,7 @@ function PDBiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
       gradContextOutput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
                                               { batch.size, #gradInputs*self.args.pdbrnn_reduction, self.args.hiddenSize })
       for t = 1, #gradInputs do
+        -- for each t, step gradient is the gradient for the reduced timestep since we went through a sum operation
         for j = 1, self.args.pdbrnn_reduction do
           gradContextOutput[{{},self.args.pdbrnn_reduction*(t-1)+j,{}}]:copy(gradInputs[t])
         end

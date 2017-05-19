@@ -54,9 +54,13 @@ function DecoderAdvancer:initBeam()
     :fill(0.0001)
     :typeAs(self.context)
   -- Mask padding
+  local contextSizes = sourceSizes
+  if self.updateSeqLengthFunc then
+    contextSizes = self.updateSeqLengthFunc(contextSizes, 0)
+  end
   for i = 1,self.batch.size do
-    local pad_size = self.context:size(2) - sourceSizes[i]
-    if (pad_size ~= 0) then
+    local pad_size = self.context:size(2) - contextSizes[i]
+    if pad_size ~= 0 then
       attnProba[{ i, {1,pad_size} }] = 1.0
     end
   end
