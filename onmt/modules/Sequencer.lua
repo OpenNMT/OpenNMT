@@ -24,7 +24,7 @@ function Sequencer:__init(network)
 end
 
 function Sequencer:_sharedClone()
-  local clone = self.network:clone('weight', 'gradWeight', 'bias', 'gradBias', 'fullWeight', 'fullBias')
+  local clone = self.network:clone('weight', 'gradWeight', 'bias', 'gradBias', 'fullWeight', 'fullBias', 'sharedNoise', 'noiseInit')
 
   -- Share intermediate tensors if defined.
   if self.networkClones[1] then

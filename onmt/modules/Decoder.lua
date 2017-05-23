@@ -56,7 +56,8 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   end
 
   local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
-                      args.dropout, args.residual, args.dropout_input)
+                      args.dropout, args.residual, args.dropout_input,
+                      args.max_batch_size, args.dropout_type)
 
   self.rnn = rnn
   self.inputNet = inputNetwork
@@ -353,6 +354,7 @@ function Decoder:forward(batch, initialStates, context)
                                          { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
+    self.network:apply(function(m) if m.noiseInit then m.noiseInit[1]=0 end end)
   end
 
   local outputs = {}
