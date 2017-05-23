@@ -77,16 +77,18 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
         input = nn.CAddTable()({input, prevInput})
       end
     end
+
+    local prevC = inputs[L*2 - 1]
+    local prevH = inputs[L*2]
+
     if dropout > 0 and (dropout_input or L > 1) then
       if dropout_type == "variational" then
         input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
+        prevH = onmt.VDropout(dropout, max_batch_size, hiddenSize)(prevH)
       else
         input = nn.Dropout(dropout)(input)
       end
     end
-
-    local prevC = inputs[L*2 - 1]
-    local prevH = inputs[L*2]
 
     nextC, nextH = self:_buildLayer(inputDim, hiddenSize)({prevC, prevH, input}):split(2)
     prevInput = input
