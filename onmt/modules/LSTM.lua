@@ -81,7 +81,7 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
       if dropout_type == "variational" then
         input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
       else
-        input = onmt.Dropout(dropout)(input)
+        input = nn.Dropout(dropout)(input)
       end
     end
 
