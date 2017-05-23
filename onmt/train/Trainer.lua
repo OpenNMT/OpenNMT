@@ -147,8 +147,10 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   end
 
   -- if target vocabulary for the batch is provided and generator support setting target vocabulary
-  if data.targetVocTensor and _G.model.setTargetVoc then
-    _G.model:setTargetVoc(data.targetVocTensor)
+  if data.targetVocTensor and self.model.setTargetVoc then
+    onmt.utils.Parallel.launch(function(_)
+      _G.model:setTargetVoc(data.targetVocTensor)
+    end)
   end
 
   startIteration = startIteration or 1
@@ -322,8 +324,10 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     epochState:log(numIterations)
   end
 
-  if data.targetVocTensor and _G.model.setTargetVoc then
-    _G.model:unsetTargetVoc()
+  if data.targetVocTensor and self.model.setTargetVoc then
+    onmt.utils.Parallel.launch(function(_)
+      _G.model:unsetTargetVoc()
+    end)
   end
 
   epochProfiler:stop('train')
