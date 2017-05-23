@@ -46,8 +46,8 @@ local function loadDataset(filename)
   dataset.dataType = dataset.dataType or 'bitext'
 
   -- Check if data type is compatible with the target model.
-  if not modelClass.dataType(dataset.dataType) then
-    _G.logger:error('Data type `%s\' is incompatible model `%s\'',
+  if modelClass.dataType() ~= dataset.dataType then
+    _G.logger:error('Data type `%s\' is incompatible with `%s\' models',
                     dataset.dataType, modelClass.modelName())
     os.exit(0)
   end
