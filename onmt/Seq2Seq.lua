@@ -157,9 +157,13 @@ function Seq2Seq.modelName()
   return 'Sequence to Sequence with Attention'
 end
 
--- Returns expected dataMode.
-function Seq2Seq.dataType()
-  return 'bitext'
+-- Returns expected default datatype or if passed a parameter, returns if it is supported
+function Seq2Seq.dataType(datatype)
+  if not datatype then
+    return 'bitext'
+  else
+    return datatype == 'bitext' or datatype == 'feattext'
+  end
 end
 
 function Seq2Seq:returnIndividualLosses(enable)
