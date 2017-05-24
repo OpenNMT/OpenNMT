@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-* Support Variational Dropout
+* Support Variational Dropout and dropout on source sequence
 * Fix backward compatibility with older models using target features
 * Fix importance sampling when using multiple GPUs
 * Fix language models training
