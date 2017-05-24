@@ -91,9 +91,13 @@ function LanguageModel.modelName()
   return 'Language'
 end
 
--- Returns expected dataMode.
-function LanguageModel.dataType()
-  return 'monotext'
+-- Returns expected default datatype or if passed a parameter, returns if it is supported
+function LanguageModel.dataType(datatype)
+  if not datatype then
+    return 'monotext'
+  else
+    return datatype == 'monotext'
+  end
 end
 
 function LanguageModel:enableProfiling()
