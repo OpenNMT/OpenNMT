@@ -1,3 +1,10 @@
+## Not released
+
+### New features
+
+### Fixes and improvements
+* SeqTagger supports input vector too
+
 ## [v0.7.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.0) (2017-05-19)
 
 ### New features
