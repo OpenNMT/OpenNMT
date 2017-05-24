@@ -215,6 +215,7 @@ function Encoder:forward(batch)
   end
   if self.train then
     self.inputs = {}
+    self.network:apply(function(m) if m.noiseInit then m.noiseInit[1]=0 end end)
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward

@@ -1,7 +1,6 @@
 local VDropout, Parent = torch.class('onmt.VDropout', 'nn.Module')
 
 function VDropout:__init(p, max_batch_size, layer_size)
-   print(max_batch_size,layer_size)
   Parent.__init(self)
   self.p = p or 0.5
   self.train = true
