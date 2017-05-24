@@ -143,7 +143,7 @@ function Factory.buildEncoder(opt, inputNetwork)
 
   local function describeEncoder(name)
     _G.logger:info('   - type: %s', name)
-    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout .. '('..opt_dropout_type..')',
+    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout .. ' ('..opt.dropout_type..')',
                    opt.rnn_type, opt.layers, opt.rnn_size)
   end
 
