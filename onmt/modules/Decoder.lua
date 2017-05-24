@@ -292,6 +292,7 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   -- Remember inputs for the backward pass.
   if self.train then
     self.inputs[t] = inputs
+    self.network:apply(function(m) if m.noiseInit then m.noiseInit[1]=0 end end)
   end
 
   local outputs = self:net(t):forward(inputs)
