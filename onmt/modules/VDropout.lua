@@ -55,3 +55,24 @@ function VDropout:clearState()
   end
   return Parent.clearState(self)
 end
+
+function VDropout.dropoutWords(p, batch)
+   local vocabMask = torch.Tensor()
+   for i = 1, batch.sourceInput:size(1) do
+      local vocab = {}
+      local vocabMap = {}
+      batch.sourceInput[i]:apply(function(x)
+        if x>onmt.Constants.EOS and not vocab[x] then
+          table.insert(vocabMap, x)
+          vocab[x]=#vocabMap
+        end
+      end)
+      vocabMask:resize(#vocabMap)
+      vocabMask:bernoulli(1-p)
+      batch.sourceInput[i]:apply(function(x)
+        if x > onmt.Constants.EOS and vocabMask[vocab[x]] == 0 then
+          return onmt.Constants.PAD
+        end
+      end)
+   end
+end

@@ -56,6 +56,14 @@ local options = {
     }
   },
   {
+    '-dropout_words', 0,
+    [[Apply dropout on source sequence vocabulary.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0, 1),
+      structural = 1
+    }
+  },
+  {
     '-dropout_type', 'naive',
     [[Dropout type.]],
     {
@@ -98,6 +106,7 @@ function Encoder:__init(args, inputNetwork)
   self.args = {}
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.dropout_words = args.dropout_words
 
   parent.__init(self, self:_buildModel())
 
@@ -134,6 +143,9 @@ function Encoder:resetPreallocation()
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
+
+  -- Prototype for preallocated vocabulary mask
+  self.vocabProto = torch.Tensor()
 end
 
 function Encoder:maskPadding()
@@ -216,6 +228,9 @@ function Encoder:forward(batch)
   if self.train then
     self.inputs = {}
     self.network:apply(function(m) if m.noiseInit then m.noiseInit[1]=0 end end)
+    if self.args.dropout_words > 0 then
+      onmt.VDropout.dropoutWords(self.args.dropout_words, batch)
+    end
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward
