@@ -1,8 +1,8 @@
-## Not released
+## [Unreleased]
 
-### New features
-
-### Fixes and improvements
+* Fix backward compatibility with older models using target features
+* Fix importance sampling when using multiple GPUs
+* Fix language models training
 * SeqTagger supports input vector too
 
 ## [v0.7.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.0) (2017-05-19)
