@@ -41,6 +41,7 @@ pages:
       - Logs: training/logs.md
       - "Multi GPU": training/multi_gpu.md
       - Retraining: training/retraining.md
+      - Regularization: training/regularization.md
       - "Decay strategies": training/decay.md
       - "Data sampling": training/sampling.md
   - Translation:

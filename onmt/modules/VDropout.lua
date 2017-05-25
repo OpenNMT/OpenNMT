@@ -29,7 +29,7 @@ function VDropout:updateOutput(input)
   return self.output
 end
 
-function VDropout:updateGradInput(input, gradOutput)
+function VDropout:updateGradInput(_, gradOutput)
   self.gradInput:resizeAs(gradOutput):copy(gradOutput)
   if self.train then
     if self.p > 0 then
@@ -62,8 +62,8 @@ function VDropout.dropoutWords(p, batch)
       local vocab = {}
       local vocabMap = {}
       for j = 1, batch.sourceInput:size(2) do
-        x = batch.sourceInput[i][j]
-        if x>onmt.Constants.EOS and not vocab[x] then
+        local x = batch.sourceInput[i][j]
+        if x > onmt.Constants.EOS and not vocab[x] then
           table.insert(vocabMap, x)
           vocab[x]=#vocabMap
         end
@@ -71,7 +71,7 @@ function VDropout.dropoutWords(p, batch)
       vocabMask:resize(#vocabMap)
       vocabMask:bernoulli(1-p)
       for j = 1, batch.sourceInput:size(2) do
-        x = batch.sourceInput[i][j]
+        local x = batch.sourceInput[i][j]
         if x > onmt.Constants.EOS and vocabMask[vocab[x]] == 0 then
           batch.sourceInput[i][j] = onmt.Constants.PAD
         end
