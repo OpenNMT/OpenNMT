@@ -33,23 +33,29 @@ function FileReader:next()
       p = p + 1
     end
     assert(p <= #line and line:sub(p,p) == '[', 'Invalid feature start line (pos '..p..'): '..line)
-    if not line:find("]") then
-      while true do
-        line = self.file:read()
-        local row = {}
-        for tok in line:gmatch'([^%s]+)' do
-          table.insert(row, tok)
-        end
-        assert(#row ~= 0, 'Empty line in feature description: '..line)
-        if row[#row] == ']' then
-          table.remove(row)
-          if #row > 0 then
-            table.insert(sent, row)
-          end
+    while p<=#line and line:sub(p,p) == ' ' do
+      p = p + 1
+    end
+    line = line:sub(p+1)
+    if line == '' then
+      line = self.file:read()
+    end
+    while true do
+      local row = {}
+      local hasEOS = false
+      for tok in line:gmatch'([^%s]+)' do
+        if tok == ']' then
+          hasEOS=true
           break
         end
+        table.insert(row, tok)
+      end
+      assert(hasEOS or #row ~= 0, 'Empty line in feature description: '..line)
+      if #row > 0 then
         table.insert(sent, row)
       end
+      if hasEOS then break end
+      line = self.file:read()
     end
   end
   return sent, idx

@@ -179,7 +179,7 @@ function Tagger:tag(src)
   local results = {}
 
   if data:batchCount() > 0 then
-    local batch = data:getBatch()
+    local batch = onmt.utils.Cuda.convert(data:getBatch())
 
     local pred, predFeats = self:tagBatch(batch)
 
