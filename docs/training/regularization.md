@@ -16,7 +16,7 @@ Because of recurrence, applying dropout to recurrent neural networks requires so
 * `naive` (default): implements approach described in [Zaremba et al., 2015](https://arxiv.org/pdf/1409.2329.pdf). The dropout is only applied on non-recurrent connections.
 * `variational`: implements approach described in [Gal et al., 2016]([https://arxiv.org/pdf/1512.05287.pdf]). In this approach, dropout is also applied to the recurrent connections but each timestep applies the same dropout mask.
 
-The following picture (from Gal et al. paper) describes the different approaches. On the left side, the naive dropout, no dropout on recurrent connections, and dropout for each timestep is different. On the right side, the variational dropout, there is some dropout on recurrent connections, but dropout for each timesteps are the same,
+The following picture (from Gal et al. paper) describes the different approaches. On the left side, the naive dropout: no dropout on recurrent connections, and dropout for each timestep is different. On the right side, the variational dropout: there is dropout on recurrent connections, but dropout for each timesteps are the same,
 
 ![Dropout Types](../img/dropout-type.jpg)
 
