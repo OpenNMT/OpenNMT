@@ -158,7 +158,7 @@ end
   * `isValid`: validation function taking prepared table of tokens from each source
   * `generateFeatures`: table of feature extraction fucnction for each source
 ]]
-function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants, isValid, generateFeatures)
+function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants, isValid, generateFeatures, parallelCheck)
   assert(#files==#dicts, "dict table should match files table")
   local n = #files
   local sentenceDists = {}
@@ -182,7 +182,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
   local ignored = 0
   local emptyCount = 0
 
-  local function processSentence(tokens)
+  local function processSentence(idx, tokens)
     for i = 1, n do
       local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
       local idxRange = math.floor(length/10)+1
@@ -190,6 +190,10 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         idxRange = #sentenceDists[i]
       end
       sentenceDists[i][idxRange] = sentenceDists[i][idxRange]+1
+    end
+
+    if parallelCheck then
+      parallelCheck(idx, isInputVector, dicts, tokens)
     end
 
     if isValid(tokens) then
@@ -259,12 +263,13 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         table.insert(tokens, maps[i][k])
       end
       if not hasNil then
-        processSentence(tokens)
+        processSentence(k, tokens)
       else
         emptyCount = emptyCount + 1
       end
     end
   else
+    local idx = 1
     while true do
       local tokens = {}
       local hasNil = false
@@ -282,7 +287,8 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         end
         break
       end
-      processSentence(tokens)
+      processSentence(idx, tokens)
+      idx = idx + 1
     end
   end
 
@@ -353,7 +359,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
   return data
 end
 
-function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid)
+function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid, parallelCheck)
   local data = self:makeGenericData(
                               { srcFile, tgtFile },
                               { false, false },
@@ -378,11 +384,12 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
                               {
                                 onmt.utils.Features.generateSource,
                                 onmt.utils.Features.generateTarget
-                              })
+                              },
+                              parallelCheck)
   return data[1], data[2]
 end
 
-function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
+function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid, parallelCheck)
   local data = self:makeGenericData(
                               { srcFile, tgtFile },
                               { true, false },
@@ -405,7 +412,8 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid)
                               {
                                 false,
                                 onmt.utils.Features.generateTarget
-                              })
+                              },
+                              parallelCheck)
   return data[1], data[2]
 end
 
