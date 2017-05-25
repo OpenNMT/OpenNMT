@@ -4,7 +4,7 @@ local tester = ...
 
 local encoderTest = torch.TestSuite()
 
-local function buildEncoder(class, rnnType, merge)
+local function buildEncoder(class, rnnType, merge, dropout, dropout_type, dropout_input)
   local cmd = onmt.utils.ExtendedCmdLine.new()
   class.declareOpts(cmd)
 
@@ -12,7 +12,10 @@ local function buildEncoder(class, rnnType, merge)
   opt.rnn_size = 10
   opt.rnn_type = rnnType or 'LSTM'
   opt.brnn_merge = merge or 'sum'
-  opt.dropout = 0
+  opt.dropout = dropout or 0
+  opt.dropout_type = dropout_type or 'naive'
+  opt.dropout_input = dropout_input or false
+  opt.max_batch_size = 64
 
   local inputNet = nn.LookupTable(10, 4)
   inputNet.inputSize = 4
@@ -60,6 +63,18 @@ local function genericCheckDim(encoder, opt)
   return states, context
 end
 
+local function justForward(encoder)
+  local src = {
+    torch.IntTensor({5, 6, 7, 8}),
+    torch.IntTensor({5, 6, 7, 8}),
+    torch.IntTensor({5, 6, 7, 8}),
+  }
+  local batch = onmt.data.Batch.new(src)
+  encoder:training()
+  encoder:forward(batch)
+end
+
+
 local function genericCheckMasking(encoder)
   local src = {
     torch.IntTensor({5, 6, 7, 8}),
@@ -94,6 +109,48 @@ end
 function encoderTest.simple_LSTM()
   local encoder, opt = buildEncoder(onmt.Encoder, 'LSTM')
   genericCheckDim(encoder, opt)
+end
+
+function encoderTest.simple_LSTM_dropouts()
+  local dropout_updateOutput= nn.Dropout.updateOutput
+  local count
+  nn.Dropout.updateOutput = function(...) count=count+1;return dropout_updateOutput(...) end
+  local vdropout_updateOutput= onmt.VDropout.updateOutput
+  local vcount
+  onmt.VDropout.updateOutput = function(...) vcount=vcount+1;return vdropout_updateOutput(...) end
+
+  count = 0
+  vcount = 0
+  local encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0)
+  justForward(encoder)
+  tester:eq(count, 0)
+  tester:eq(vcount, 0)
+
+  encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0.2)
+  justForward(encoder)
+  tester:eq(count, 4)
+  tester:eq(vcount, 0)
+
+  count = 0
+  encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0.2, 'variational')
+  justForward(encoder)
+  tester:eq(count, 0)
+  tester:eq(vcount, 12)
+
+  vcount = 0
+  encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0.2, 'naive', true)
+  justForward(encoder)
+  tester:eq(count, 8)
+  tester:eq(vcount, 0)
+
+  count = 0
+  encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0.2, 'variational', true)
+  justForward(encoder)
+  tester:eq(count, 0)
+  tester:eq(vcount, 16)
+
+  nn.Dropout.updateOutput = dropout_updateOutput
+  onmt.VDropout.updateOutput = vdropout_updateOutput
 end
 
 function encoderTest.simple_masking_LSTM()
