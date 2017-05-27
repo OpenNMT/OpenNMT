@@ -228,7 +228,7 @@ function Encoder:forward(batch)
   if self.train then
     self.inputs = {}
     self.network:apply(function(m) if m.noiseInit then m.noiseInit[1]=0 end end)
-    if self.args.dropout_words > 0 then
+    if self.args.dropout_words and self.args.dropout_words > 0 then
       onmt.VDropout.dropoutWords(self.args.dropout_words, batch)
     end
   end
