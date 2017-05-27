@@ -15,26 +15,22 @@ end
 
 function VDropout:updateOutput(input)
   self.output:resizeAs(input):copy(input)
-  if self.p > 0 then
-    if self.train then
-      self.sharedNoise:resizeAs(input)
-      if self.noiseInit[1]==0 then
-         self.sharedNoise:bernoulli(1-self.p)
-         self.sharedNoise:div(1-self.p)
-         self.noiseInit[1] = 1
-      end
-      self.output:cmul(self.sharedNoise)
-    end
+  if self.p > 0 and self.train then
+   self.sharedNoise:resizeAs(input)
+   if self.noiseInit[1]==0 then
+      self.sharedNoise:bernoulli(1-self.p)
+      self.sharedNoise:div(1-self.p)
+      self.noiseInit[1] = 1
+   end
+   self.output:cmul(self.sharedNoise)
   end
   return self.output
 end
 
 function VDropout:updateGradInput(_, gradOutput)
   self.gradInput:resizeAs(gradOutput):copy(gradOutput)
-  if self.train then
-    if self.p > 0 then
-      self.gradInput:cmul(self.sharedNoise) -- simply mask the gradients with the sharedNoise vector
-    end
+  if self.p > 0 and self.train then
+    self.gradInput:cmul(self.sharedNoise) -- simply mask the gradients with the sharedNoise vector
   end
   return self.gradInput
 end

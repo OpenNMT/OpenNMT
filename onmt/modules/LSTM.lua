@@ -81,17 +81,15 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
     local prevC = inputs[L*2 - 1]
     local prevH = inputs[L*2]
 
-    if dropout > 0 then
-      -- apply variational dropout on recurrent connection
+    -- apply variational dropout on recurrent connection
+    if dropout_type == "variational" then
+      prevH = onmt.VDropout(dropout, max_batch_size, hiddenSize)(prevH)
+    end
+    if dropout_input or L > 1 then
       if dropout_type == "variational" then
-        prevH = onmt.VDropout(dropout, max_batch_size, hiddenSize)(prevH)
-      end
-      if dropout_input or L > 1 then
-        if dropout_type == "variational" then
-          input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
-        else
-          input = nn.Dropout(dropout)(input)
-        end
+        input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
+      else
+        input = nn.Dropout(dropout)(input)
       end
     end
 

@@ -78,17 +78,15 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropo
 
     local prevH = inputs[L]
 
-    if dropout > 0 then
-      -- apply variational dropout on recurrent connection
+    -- apply variational dropout on recurrent connection
+    if dropout_type == "variational" then
+      prevH = onmt.VDropout(dropout, max_batch_size, hiddenSize)(prevH)
+    end
+    if dropout_input or L > 1 then
       if dropout_type == "variational" then
-        prevH = onmt.VDropout(dropout, max_batch_size, hiddenSize)(prevH)
-      end
-      if dropout_input or L > 1 then
-        if dropout_type == "variational" then
-          input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
-        else
-          input = nn.Dropout(dropout)(input)
-        end
+        input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
+      else
+        input = nn.Dropout(dropout)(input)
       end
     end
 
