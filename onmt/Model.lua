@@ -38,7 +38,8 @@ function Model:changeParameters(changes)
 
     for _, model in pairs(self.models) do
       model:apply(function(m)
-        if k == 'dropout' and torch.typename(m) == 'nn.Dropout' then
+        if k == 'dropout' and
+          (torch.typename(m) == 'nn.Dropout' or torch.typename(m) == 'onmt.VDropout') then
           m:setp(v)
         elseif k:find('fix_word_vecs') and torch.typename(m) == 'onmt.WordEmbedding' then
           local enc = k == 'fix_word_vecs_enc' and torch.typename(model):find('Encoder')
