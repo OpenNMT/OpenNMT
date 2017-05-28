@@ -123,9 +123,10 @@ function encoderTest.simple_LSTM_dropouts()
   vcount = 0
   local encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0)
   justForward(encoder)
-  tester:eq(count, 0)
+  tester:eq(count, 4)
   tester:eq(vcount, 0)
 
+  count = 0
   encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0.2)
   justForward(encoder)
   tester:eq(count, 4)
