@@ -1,4 +1,6 @@
-## [Unreleased]
+## [v0.7.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.1) (2017-05-29)
+
+### Fixes and improvements
 
 * Fix backward compatibility with older models using target features
 * Fix importance sampling when using multiple GPUs
