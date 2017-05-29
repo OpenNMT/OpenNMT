@@ -283,7 +283,6 @@ end
 function ExtendedCmdLine:convert(key, val, type, subtype, meta)
   local func
   if string.sub(val, 1, 1) == '(' and string.sub(val, -1) == ')' then
-    local v
     func = loadstring('_G.v=' .. string.sub(val,2,-2))
     if not func then
       self:error('cannot parse function value: '..val)
@@ -561,7 +560,7 @@ function ExtendedCmdLine.updateParams(args, states)
     if k:sub(1, 1) ~= '_' then
       if args._func[k] then
         args._func[k]()
-        if _G.v ~= args[k] then
+        if _G.v ~= v then
           args[k] = _G.v
           _G.logger:info(' * Dynamic parameter setting: %s => %s', k, _G.v)
           if args._structural[k] then
