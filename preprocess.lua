@@ -122,13 +122,13 @@ local function main()
   elseif dataType == 'feattext' then
     data.train.src, data.train.tgt = Preprocessor:makeFeatTextData(opt.train_src, opt.train_tgt,
                                                                    data.dicts.tgt,
-                                                                   isValid, parallelCheck)
+                                                                   isValid, parallelValidFunc)
     -- record the size of the input layer
     data.dicts.srcInputSize = data.train.src.vectors[1]:size(2)
   else
     data.train.src, data.train.tgt = Preprocessor:makeBilingualData(opt.train_src, opt.train_tgt,
                                                                     data.dicts.src, data.dicts.tgt,
-                                                                    isValid, parallelCheck)
+                                                                    isValid, parallelValidFunc)
   end
 
   _G.logger:info('')
