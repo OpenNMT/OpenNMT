@@ -1,10 +1,20 @@
 ## [Unreleased]
 
+### New features
+
+* New option in preprocess to check that sizes of source and target are equal (for seqtagging)
+
+### Fixes and improvements
+
+* SeqTagger supports input vector too
+
+## [v0.7.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.1) (2017-05-29)
+
+### Fixes and improvements
+
 * Fix backward compatibility with older models using target features
 * Fix importance sampling when using multiple GPUs
 * Fix language models training
-* SeqTagger supports input vector too
-* New option in preprocess to check that sizes of source and target are equal (for seqtagging)
 
 ## [v0.7.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.0) (2017-05-19)
 
