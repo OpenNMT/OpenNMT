@@ -26,6 +26,10 @@ end
 
 function Model:__init(args)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+
+  -- if there are some dynamic options, calculate their value now
+  onmt.utils.ExtendedCmdLine.updateParams(args, {epoch=1})
+
   self.models = {}
 end
 

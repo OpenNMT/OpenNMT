@@ -281,6 +281,18 @@ end
 
 --[[ Convert `val` string to the target type. ]]
 function ExtendedCmdLine:convert(key, val, type, subtype, meta)
+  local func
+  if string.sub(val, 1, 1) == '(' and string.sub(val, -1) == ')' then
+    local v
+    func = loadstring('_G.v=' .. string.sub(val,2,-2))
+    if not func then
+      self:error('cannot parse function value: '..val)
+    end
+    -- get a value to check the function and type
+    _G.s = { epoch=1, delta_v = 0}
+    func()
+    val = _G.v
+  end
   if not type or type == 'string' then
     val = val
   elseif type == 'table' then
@@ -314,7 +326,7 @@ function ExtendedCmdLine:convert(key, val, type, subtype, meta)
     self:error('invalid type for option ' .. key .. ' (should be ' .. type .. ')')
   end
 
-  return val
+  return val, func
 end
 
 function ExtendedCmdLine:__readOption__(params, arg, i)
@@ -337,9 +349,11 @@ function ExtendedCmdLine:__readOption__(params, arg, i)
 
   -- browse through parameters till next potential option (starting with -Letter)
   while arg[i + 1] and string.find(arg[i+1],'-%a')~=1 do
-    local value = self:convert(key, arg[i + 1], option.type, argumentType, option.meta)
+    local value, func = self:convert(key, arg[i + 1], option.type, argumentType, option.meta)
 
-    if type(value) == 'table' then
+    if func then
+      table.insert(values, func)
+    elseif type(value) == 'table' then
       onmt.utils.Table.append(values, value)
     else
       table.insert(values, value)
@@ -372,7 +386,7 @@ function ExtendedCmdLine:parse(arg)
   local i = 1
 
   -- set default value
-  local params = { _is_default={}, _structural={}, _init_only={}, _train_state={} }
+  local params = { _is_default={}, _structural={}, _init_only={}, _train_state={}, _func={} }
   for option,v in pairs(self.options) do
     local soption = onmt.utils.String.stripHyphens(option)
     params[soption] = v.default
@@ -457,7 +471,7 @@ function ExtendedCmdLine:parse(arg)
           end
         end
 
-        if meta.valid then
+        if meta.valid and type(v) ~= 'function' then
           isValid, reason = meta.valid(v)
         end
 
@@ -467,6 +481,15 @@ function ExtendedCmdLine:parse(arg)
             msg = msg .. ': ' .. reason
           end
           self:error(msg)
+        end
+
+        if type(v) == 'function' then
+          if meta.structural == 0 or meta.init_only then
+            self:error('option -' .. k.. ' can not take function value')
+          else
+            meta.func = v
+            params[k] = '(function)'
+          end
         end
 
         if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
@@ -480,6 +503,9 @@ function ExtendedCmdLine:parse(arg)
         end
         if meta.train_state then
           params._train_state[k] = meta.train_state
+        end
+        if meta.func then
+          params._func[k] = meta.func
         end
       end
     end
@@ -524,6 +550,21 @@ function ExtendedCmdLine.getArgument(args, optName)
     end
   end
   return nil
+end
+
+function ExtendedCmdLine.updateParams(args, states)
+  _G.s = states
+  for k, v in pairs(args) do
+    if k:sub(1, 1) ~= '_' then
+      if args._func[k] then
+        args._func[k]()
+        if _G.v ~= args[k] then
+          args[k] = _G.v
+          _G.logger:info(' * Dynamic parameter setting: %s => %s', k, _G.v)
+        end
+      end
+    end
+  end
 end
 
 ---------------------------------------------------------------------------------

@@ -75,6 +75,8 @@ end
 
 function Trainer:__init(args, model, dicts, firstBatch)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+  self.args._func = args._func
+
   self.args.profiler = args.profiler
   self.args.disable_mem_optimization = args.disable_mem_optimization
 
@@ -145,6 +147,9 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   local function getBatchIdx(idx)
     return batchOrder and batchOrder[idx] or idx
   end
+
+  -- if there are some dynamic options, calculate their value now
+  onmt.utils.ExtendedCmdLine.updateParams(self.args, {epoch=epoch})
 
   -- if target vocabulary for the batch is provided and generator support setting target vocabulary
   if data.targetVocTensor and self.model.setTargetVoc then
