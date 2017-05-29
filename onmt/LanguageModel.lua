@@ -60,7 +60,6 @@ end
 
 function LanguageModel:__init(args, dicts)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
   self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)

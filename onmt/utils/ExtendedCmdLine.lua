@@ -540,6 +540,8 @@ function ExtendedCmdLine.getModuleOpts(args, moduleOptions)
     end
     moduleArgs[optname] = args[optname]
   end
+  moduleArgs._func = args._func
+  moduleArgs._structural = args._structural
   return moduleArgs
 end
 
@@ -553,6 +555,7 @@ function ExtendedCmdLine.getArgument(args, optName)
 end
 
 function ExtendedCmdLine.updateParams(args, states)
+  local paramChanges = {}
   _G.s = states
   for k, v in pairs(args) do
     if k:sub(1, 1) ~= '_' then
@@ -561,10 +564,14 @@ function ExtendedCmdLine.updateParams(args, states)
         if _G.v ~= args[k] then
           args[k] = _G.v
           _G.logger:info(' * Dynamic parameter setting: %s => %s', k, _G.v)
+          if args._structural[k] then
+            paramChanges[k] = _G.v
+          end
         end
       end
     end
   end
+  return paramChanges
 end
 
 ---------------------------------------------------------------------------------

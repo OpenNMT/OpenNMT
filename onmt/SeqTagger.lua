@@ -61,7 +61,6 @@ end
 
 function SeqTagger:__init(args, dicts)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   if not dicts.src then
     -- the input is already a vector
