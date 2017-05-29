@@ -146,6 +146,13 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     return batchOrder and batchOrder[idx] or idx
   end
 
+  -- if there are some dynamic options, calculate their new value now
+  local global_state = { epoch=epoch }
+  onmt.utils.ExtendedCmdLine.updateParams(self.args, global_state)
+  onmt.utils.ExtendedCmdLine.updateParams(self.optim.args, global_state)
+  local paramChanges = onmt.utils.ExtendedCmdLine.updateParams(self.model.args, global_state)
+  self.model:changeParameters(paramChanges)
+
   -- if target vocabulary for the batch is provided and generator support setting target vocabulary
   if data.targetVocTensor and self.model.setTargetVoc then
     onmt.utils.Parallel.launch(function(_)

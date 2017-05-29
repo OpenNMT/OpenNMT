@@ -109,7 +109,7 @@ end
 
 function Seq2Seq:__init(args, dicts)
   parent.__init(self, args)
-  onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
+
   self.args.uneven_batches = args.uneven_batches
 
   if not dicts.src then

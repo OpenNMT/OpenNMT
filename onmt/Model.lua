@@ -25,29 +25,35 @@ function Model.declareOpts(cmd)
 end
 
 function Model:__init(args)
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+  self.args = args
+
+  -- if there are some dynamic options, calculate their value now
+  onmt.utils.ExtendedCmdLine.updateParams(args, {epoch=1})
+
   self.models = {}
 end
 
 -- Dynamically change parameters in the graph.
 function Model:changeParameters(changes)
-  _G.logger:info('Applying new parameters:')
+  if next(changes) then
+    _G.logger:info('Applying new parameters:')
 
-  for k, v in pairs(changes) do
-    _G.logger:info(' * %s = ' .. tostring(v), k)
+    for k, v in pairs(changes) do
+      _G.logger:info(' * %s = ' .. tostring(v), k)
 
-    for _, model in pairs(self.models) do
-      model:apply(function(m)
-        if k == 'dropout' and torch.typename(m) == 'nn.Dropout' then
-          m:setp(v)
-        elseif k:find('fix_word_vecs') and torch.typename(m) == 'onmt.WordEmbedding' then
-          local enc = k == 'fix_word_vecs_enc' and torch.typename(model):find('Encoder')
-          local dec = k == 'fix_word_vecs_dec' and torch.typename(model):find('Decoder')
-          if enc or dec then
-            m:fixEmbeddings(v)
+      for _, model in pairs(self.models) do
+        model:apply(function(m)
+          if k == 'dropout' and torch.typename(m) == 'nn.Dropout' then
+            m:setp(v)
+          elseif k:find('fix_word_vecs') and torch.typename(m) == 'onmt.WordEmbedding' then
+            local enc = k == 'fix_word_vecs_enc' and torch.typename(model):find('Encoder')
+            local dec = k == 'fix_word_vecs_dec' and torch.typename(model):find('Decoder')
+            if enc or dec then
+              m:fixEmbeddings(v)
+            end
           end
-        end
-      end)
+        end)
+      end
     end
   end
 

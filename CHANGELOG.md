@@ -3,6 +3,7 @@
 ### New features
 
 * New option in preprocess to check that sizes of source and target are equal (for seqtagging)
+* Dynamic Options can take a function as value to have their actual value change dynamically at each epoch
 
 ### Fixes and improvements
 
