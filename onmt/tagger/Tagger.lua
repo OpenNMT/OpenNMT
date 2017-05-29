@@ -27,6 +27,7 @@ function Tagger:__init(args)
   _G.logger:info('Loading \'' .. self.opt.model .. '\'...')
   self.checkpoint = torch.load(self.opt.model)
 
+  self.dataType = self.checkpoint.options.data_type or 'bitext'
   if not self.checkpoint.options.model_type or self.checkpoint.options.model_type ~= 'seqtagger' then
     _G.logger:error('Tagger can only process seqtagger models')
     os.exit(0)
@@ -38,14 +39,22 @@ function Tagger:__init(args)
   self.dicts = self.checkpoint.dicts
 end
 
+function Tagger:srcFeat()
+  return self.dataType == 'feattext'
+end
+
 function Tagger:buildInput(tokens)
-  local words, features = onmt.utils.Features.extract(tokens)
-
   local data = {}
-  data.words = words
+  if self.dataType == 'feattext' then
+    data.vectors = torch.Tensor(tokens)
+  else
+    local words, features = onmt.utils.Features.extract(tokens)
 
-  if #features > 0 then
-    data.features = features
+    data.words = words
+
+    if #features > 0 then
+      data.features = features
+    end
   end
 
   return data
@@ -65,18 +74,21 @@ function Tagger:buildData(src)
   local index = 1
 
   for b = 1, #src do
-    if #src[b].words == 0 then
+    if src[b].words and #src[b].words == 0 then
       table.insert(ignored, b)
     else
       indexMap[index] = b
       index = index + 1
 
-      table.insert(srcData.words,
+      if self.dicts.src then
+        table.insert(srcData.words,
                    self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD))
-
-      if #self.dicts.src.features > 0 then
-        table.insert(srcData.features,
-                     onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
+        if #self.dicts.src.features > 0 then
+          table.insert(srcData.features,
+                       onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
+        end
+      else
+        table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
       end
     end
   end
@@ -167,7 +179,7 @@ function Tagger:tag(src)
   local results = {}
 
   if data:batchCount() > 0 then
-    local batch = data:getBatch()
+    local batch = onmt.utils.Cuda.convert(data:getBatch())
 
     local pred, predFeats = self:tagBatch(batch)
 

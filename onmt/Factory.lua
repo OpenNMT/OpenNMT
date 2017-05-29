@@ -226,6 +226,10 @@ function Factory.buildGenerator(opt, dicts)
   return onmt.Generator(opt, sizes)
 end
 
+function Factory.loadGenerator(pretrained)
+  return onmt.Generator.load(pretrained)
+end
+
 function Factory.buildAttention(args)
   if args.attention == 'none' then
     _G.logger:info('   - attention: none')
