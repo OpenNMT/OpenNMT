@@ -52,7 +52,7 @@
 * `-attention <string>` (accepted: `none`, `global`; default: `global`)<br/>Attention model.
 * `-brnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action for the bidirectional states.
 * `-pdbrnn_reduction <number>` (default: `2`)<br/>Time-reduction factor at each layer.
-* `-pdbrnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action when reducing time.
+* `-pdbrnn_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action when reducing time.
 
 ## Global Attention Model options
 

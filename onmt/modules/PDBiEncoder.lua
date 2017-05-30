@@ -15,7 +15,7 @@ local options = {
     }
   },
   {
-    '-pdbrnn_merge', 'sum',
+    '-pdbrnn_merge', 'concat',
     [[Merge action when reducing time.]],
     {
       enum = {'concat', 'sum'},
