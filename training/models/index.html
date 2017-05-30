@@ -340,15 +340,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#deep-bidirectional-encoder" title="Deep bidirectional encoder" class="md-nav__link">
-    Deep bidirectional encoder
+  <a href="#pyramidal-deep-bidirectional-encoder" title="Pyramidal deep bidirectional encoder" class="md-nav__link">
+    Pyramidal deep bidirectional encoder
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyramidal-deep-bidirectional-encoder" title="Pyramidal deep bidirectional encoder" class="md-nav__link">
-    Pyramidal deep bidirectional encoder
+  <a href="#deep-bidirectional-encoder" title="Deep bidirectional encoder" class="md-nav__link">
+    Deep bidirectional encoder
   </a>
   
 </li>
@@ -838,15 +838,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#deep-bidirectional-encoder" title="Deep bidirectional encoder" class="md-nav__link">
-    Deep bidirectional encoder
+  <a href="#pyramidal-deep-bidirectional-encoder" title="Pyramidal deep bidirectional encoder" class="md-nav__link">
+    Pyramidal deep bidirectional encoder
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyramidal-deep-bidirectional-encoder" title="Pyramidal deep bidirectional encoder" class="md-nav__link">
-    Pyramidal deep bidirectional encoder
+  <a href="#deep-bidirectional-encoder" title="Deep bidirectional encoder" class="md-nav__link">
+    Deep bidirectional encoder
   </a>
   
 </li>
@@ -923,12 +923,12 @@
 <h3 id="bidirectional-encoder">Bidirectional encoder<a class="headerlink" href="#bidirectional-encoder" title="Permanent link">&para;</a></h3>
 <p>The bidirectional encoder (<code>-brnn</code>) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the <code>-brnn_merge</code> option.</p>
 <p><img alt="Bidirectional encoder" src="../../img/brnn.png" /></p>
-<h3 id="deep-bidirectional-encoder">Deep bidirectional encoder<a class="headerlink" href="#deep-bidirectional-encoder" title="Permanent link">&para;</a></h3>
-<p>The deep bidirectional encoder (<code>-dbrnn</code>) is an alternative bidirectional encoder where the output of <strong>every</strong> layers are summed (or concatenated) prior feeding to the next layer.</p>
-<p><img alt="Deep bidirectional encoder" src="../../img/dbrnn.png" /></p>
 <h3 id="pyramidal-deep-bidirectional-encoder">Pyramidal deep bidirectional encoder<a class="headerlink" href="#pyramidal-deep-bidirectional-encoder" title="Permanent link">&para;</a></h3>
-<p>The pyramidal deep bidirectional encoder (<code>-pdbrnn</code>) is an alternative deep bidirectional encoder that reduces the time dimension at each layer based on <code>-pdbrnn_reduction</code>.</p>
+<p>The pyramidal deep bidirectional encoder (<code>-pdbrnn</code>) is an alternative bidirectional encoder that reduces the time dimension after <strong>each</strong> layer based on the <code>-pdbrnn_reduction</code> factor and using <code>-pdbrnn_merge</code> as the reduction action (sum or concatenation).</p>
 <p><img alt="Pyramidal deep bidirectional encoder" src="../../img/pdbrnn.png" /></p>
+<h3 id="deep-bidirectional-encoder">Deep bidirectional encoder<a class="headerlink" href="#deep-bidirectional-encoder" title="Permanent link">&para;</a></h3>
+<p>The deep bidirectional encoder (<code>-dbrnn</code>) is an alternative bidirectional encoder where the outputs of every layers are summed (or concatenated) prior feeding to the next layer. It a special case of a pyramidal deep bidirectional encoder without time reduction (i.e. <code>-pdbrnn_reduction = 1</code>).</p>
+<p><img alt="Deep bidirectional encoder" src="../../img/dbrnn.png" /></p>
 <h2 id="decoders">Decoders<a class="headerlink" href="#decoders" title="Permanent link">&para;</a></h2>
 <h3 id="default-decoder">Default decoder<a class="headerlink" href="#default-decoder" title="Permanent link">&para;</a></h3>
 <p>The default decoder applies attention over the source sequence and implements input feeding by default.</p>
