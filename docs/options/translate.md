@@ -16,7 +16,7 @@
 
 ## Translator options
 
-* `-model <string>` (required)<br/>Path to the serialized model file.
+* `-model <table>` (default: ``)<br/>List of trained models.
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
 * `-batch_size <number>` (default: `30`)<br/>Batch size.
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
