@@ -80,7 +80,7 @@ function DecoderAdvancer:initBeam()
   params.eos_norm = self.eos_norm
   if self.beam_accum then
     self.beam_accum_idx_base = #self.beam_accum.predicted_ids
-    for i = 1, self.batch.size do
+    for _ = 1, self.batch.size do
       table.insert(self.beam_accum.predicted_ids,{})
       table.insert(self.beam_accum.beam_parent_ids,{})
       table.insert(self.beam_accum.scores,{})
