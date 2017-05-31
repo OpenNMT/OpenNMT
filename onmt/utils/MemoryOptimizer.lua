@@ -212,6 +212,10 @@ end
 -- we check if there is another tensor with exactly the same shape and without any overlap in the
 -- calculation graph that we can use
 local function getSharedTensor(idx, t, tShape, tSize, depthStorageFwd, depthStorageBwd, MapVShare)
+  if not depthStorageFwd then
+    return idx + 1, idx, 0
+  end
+
   local fwdDepth = getMaxDepthStorage(t, depthStorageFwd)
   local bwdDepth = getMaxDepthStorage(t, depthStorageBwd)
   local vSave = 0
@@ -267,19 +271,23 @@ function MemoryOptimizer:optimize()
       local base = desc[i].base
       local mempool = {}
 
-      -- calculate depth of the nodes, and storages used in the graph
-      -- it will be used to recycle vertically storages
-      local depthsFwd = {}
-      local depthStorageFwd = {}
-      local roots = net.fg:roots()
-      for j,_ in ipairs(roots) do
-        calculateDepths(roots[j], 0, depthsFwd, depthStorageFwd)
-      end
-      local depthsBwd = {}
-      local depthStorageBwd = {}
-      roots = net.bg:roots()
-      for j,_ in ipairs(roots) do
-        calculateDepths(roots[j], 0, depthsBwd, depthStorageBwd)
+      local depthsFwd, depthStorageFwd
+      local depthsBwd, depthStorageBwd
+      if net.fg then
+        -- calculate depth of the nodes, and storages used in the graph
+        -- it will be used to recycle vertically storages
+        depthsFwd = {}
+        depthStorageFwd = {}
+        local roots = net.fg:roots()
+        for j,_ in ipairs(roots) do
+          calculateDepths(roots[j], 0, depthsFwd, depthStorageFwd)
+        end
+        depthsBwd = {}
+        depthStorageBwd = {}
+        roots = net.bg:roots()
+        for j,_ in ipairs(roots) do
+          calculateDepths(roots[j], 0, depthsBwd, depthStorageBwd)
+        end
       end
 
       -- Some modules are using output when performing updateGradInput so we cannot share these.
