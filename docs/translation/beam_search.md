@@ -45,3 +45,5 @@ where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\
 
 To visualize beam search exploration, you can use the option `-dump_beam FILE.json` that will generate a json representation of the beam search. This representation can be turned into dynamic HTML svg using `generate_beam_viz.py` from [`OpenNMT/VisTools`](https://github.com/OpenNMT/VisTools) repository.
 
+![Beam Search visualization](../img/beam_search.png)
+
