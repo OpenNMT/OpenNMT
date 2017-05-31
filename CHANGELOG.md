@@ -3,6 +3,7 @@
 ### New features
 
 * New option in preprocess to check that sizes of source and target are equal (for seqtagging)
+* visual beam dumper option
 
 ### Fixes and improvements
 
