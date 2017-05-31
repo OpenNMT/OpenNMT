@@ -3,8 +3,8 @@ onmt = onmt or {}
 require('onmt.modules.Sequencer')
 require('onmt.modules.Encoder')
 require('onmt.modules.BiEncoder')
-require('onmt.modules.DBiEncoder')
 require('onmt.modules.PDBiEncoder')
+require('onmt.modules.DBiEncoder')
 require('onmt.modules.Decoder')
 
 require('onmt.modules.Network')

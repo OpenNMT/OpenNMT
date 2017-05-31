@@ -1,9 +1,14 @@
 ## [Unreleased]
 
+### Breaking changes
+
+* Models previously trained with `-pdbrnn` or `-dbrnn` are no more compatible
+
 ### New features
 
 * New option in preprocess to check that sizes of source and target are equal (for seqtagging)
 * visual beam dumper option
+* Add `-pdbrnn_merge` option to define how to reduce the time dimension
 
 ### Fixes and improvements
 
