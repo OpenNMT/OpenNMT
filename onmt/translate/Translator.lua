@@ -102,6 +102,10 @@ local options = {
     [[Instead of generating target tokens conditional on
     the source tokens, we print the representation
     (encoding/embedding) of the input.]]
+  },
+  {
+    '-dump_beam', '',
+    [[Path to a file where beam search exploration will be dumped.]]
   }
 }
 
@@ -131,6 +135,17 @@ function Translator:__init(args)
 
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
+  end
+
+  if self.args.dump_beam ~= '' then
+    self.dump_beam_file = io.open(self.args.dump_beam, "w")
+    assert(self.dump_beam_file, "Cannot not open: "..self.args.dump_beam)
+    self.beam_accum = {
+             predicted_ids = {},
+             beam_parent_ids= {},
+             scores= {},
+             log_probs= {}
+    }
   end
 
   if self.args.target_subdict:len() > 0 then
@@ -297,7 +312,8 @@ function Translator:translateBatch(batch)
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,
-                                                      self.args.eos_norm)
+                                                      self.args.eos_norm,
+                                                      self.beam_accum)
 
   -- Save memory by only keeping track of necessary elements in the states.
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.

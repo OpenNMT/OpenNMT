@@ -117,7 +117,23 @@ function BeamSearcher:_findKBest(beams, scores)
   if self.advancer.dicts.subdict then
     self.advancer.dicts.subdict:fullIdx(consideredToken)
   end
+
+  -- if we keep a debug trace of the beam search
+  if self.advancer.beam_accum then
+    local idx_base = self.advancer.beam_accum_idx_base
+    local activeBatches = consideredToken:size(1) / self.beamSize
+    for i = 1, activeBatches do
+      local rangeStart = (i-1)*self.beamSize+1
+      local batchId = i
+      if #beams[t]:remaining2Orig()>0 then
+        batchId = beams[t]:remaining2Orig(i)
       end
+      table.insert(self.advancer.beam_accum["predicted_ids"][idx_base+batchId],
+                   torch.totable(consideredToken:narrow(1,rangeStart,self.beamSize)))
+      table.insert(self.advancer.beam_accum["beam_parent_ids"][idx_base+batchId],
+                   torch.totable((consideredBackPointer[i]-1)))
+      table.insert(self.advancer.beam_accum["scores"][idx_base+batchId],
+                   torch.totable(consideredScores[i]))
     end
   end
 
