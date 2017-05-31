@@ -6,14 +6,21 @@ local options = {
     [[Save intermediate models every this many iterations within an epoch.
       If = 0, will not save intermediate models.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(0)
+    }
+  },
+  {
+    '-save_every_epochs', 1,
+    [[Save a model every this many epochs. If = 0, will not save a model at each epoch.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(0)
     }
   },
   {
     '-report_every', 50,
     [[Report progress every this many iterations within an epoch.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   },
   {
@@ -43,9 +50,10 @@ local options = {
   },
   {
     '-end_epoch', 13,
-    [[The final epoch of the training.]],
+    [[The final epoch of the training. If = 0, train forever unless another stopping condition
+      is met (e.g. `-min_learning_rate` is reached).]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
     }
   },
   {
@@ -138,11 +146,14 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     return batchOrder and batchOrder[idx] or idx
   end
 
-  startIteration = startIteration or 1
-
-  if data.sample then
-    data:sample()
+  -- if target vocabulary for the batch is provided and generator support setting target vocabulary
+  if data.targetVocTensor and self.model.setTargetVoc then
+    onmt.utils.Parallel.launch(function(_)
+      _G.model:setTargetVoc(data.targetVocTensor)
+    end)
   end
+
+  startIteration = startIteration or 1
 
   local numIterations = data:batchCount()
   -- In parallel mode, the number of iterations is reduced to reflect larger batch size.
@@ -150,9 +161,9 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
   end
 
-  local epochState = onmt.train.EpochState.new(epoch, startIteration, numIterations, self.optim:getLearningRate())
+  local epochState = onmt.train.EpochState.new(epoch, startIteration, numIterations, self.optim:getLearningRate(), self.optim:status())
   local epochProfiler = onmt.utils.Profiler.new(self.args.profiler)
-  epochProfiler:add('train')
+  epochProfiler:start('train')
 
   local needLog = false
   local optim = self.optim
@@ -313,6 +324,12 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     epochState:log(numIterations)
   end
 
+  if data.targetVocTensor and self.model.setTargetVoc then
+    onmt.utils.Parallel.launch(function(_)
+      _G.model:unsetTargetVoc()
+    end)
+  end
+
   epochProfiler:stop('train')
 
   if self.args.profiler then
@@ -338,10 +355,24 @@ function Trainer:train(trainData, validData, trainStates)
     end
   end
 
-  _G.logger:info('Start training...')
+  local startEpoch = self.args.start_epoch
+  local unsavedEpochs = 0
+  local endEpoch
 
-  for epoch = self.args.start_epoch, self.args.end_epoch do
+  if self.args.end_epoch > 0 then
+    endEpoch = self.args.end_epoch
+    _G.logger:info('Start training from epoch %d to %d...', startEpoch, endEpoch)
+  else
+    endEpoch = math.huge
+    _G.logger:info('Start training from epoch %d and indefinitely...', startEpoch)
+  end
+
+  for epoch = startEpoch, endEpoch do
     _G.logger:info('')
+
+    if trainData.sample then
+      trainData:sample()
+    end
 
     -- Shuffle batch order past the -curriculum first epochs.
     if not batchOrder and epoch > self.args.curriculum then
@@ -354,7 +385,12 @@ function Trainer:train(trainData, validData, trainStates)
     _G.logger:info('Validation perplexity: %.2f', validPpl)
 
     self.optim:updateLearningRate(validPpl, epoch)
-    self.saver:saveEpoch(validPpl, epochState)
+
+    unsavedEpochs = unsavedEpochs + 1
+    if unsavedEpochs == self.args.save_every_epochs then
+      self.saver:saveEpoch(validPpl, epochState)
+      unsavedEpochs = 0
+    end
 
     -- Early stopping?
     if self.optim:isFinished() then

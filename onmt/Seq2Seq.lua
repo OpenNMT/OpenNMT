@@ -3,6 +3,22 @@ local Seq2Seq, parent = torch.class('Seq2Seq', 'Model')
 
 local options = {
   {
+    '-enc_layers', 0,
+    [[If > 0, number of layers of the encoder. This overrides the global `-layers` option.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
+    '-dec_layers', 0,
+    [[If > 0, number of layers of the decoder. This overrides the global `-layers` option.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
+      structural = 0
+    }
+  },
+  {
     '-word_vec_size', 0,
     [[Shared word embedding size. If set, this overrides `-src_word_vec_size` and `-tgt_word_vec_size`.]],
     {
@@ -11,15 +27,15 @@ local options = {
     }
   },
   {
-    '-src_word_vec_size', '500',
-    [[Comma-separated list of source embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
+    '-src_word_vec_size', { 500 },
+    [[List of source embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.]],
     {
       structural = 0
     }
   },
   {
-    '-tgt_word_vec_size', '500',
-    [[Comma-separated list of target embedding sizes: `word[,feat1[,feat2[,...] ] ]`.]],
+    '-tgt_word_vec_size', { 500 },
+    [[List of target embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.]],
     {
       structural = 0
     }
@@ -41,18 +57,18 @@ local options = {
     }
   },
   {
-    '-fix_word_vecs_enc', 0,
+    '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
-      enum = {0, 1},
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },
   {
-    '-fix_word_vecs_dec', 0,
+    '-fix_word_vecs_dec', false,
     [[Fix word embeddings on the decoder side.]],
     {
-      enum = {0, 1},
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },
@@ -86,6 +102,7 @@ local options = {
 function Seq2Seq.declareOpts(cmd)
   cmd:setCmdLineOptions(options, Seq2Seq.modelName())
   onmt.Encoder.declareOpts(cmd)
+  onmt.Bridge.declareOpts(cmd)
   onmt.Decoder.declareOpts(cmd)
   onmt.Factory.declareOpts(cmd)
 end
@@ -100,9 +117,23 @@ function Seq2Seq:__init(args, dicts)
     args.dimInputSize = dicts.srcInputSize
   end
 
-  self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
-  self.models.decoder = onmt.Factory.buildWordDecoder(args, dicts.tgt)
+  local encArgs = onmt.utils.Tensor.deepClone(args)
+  encArgs.layers = encArgs.enc_layers > 0 and encArgs.enc_layers or encArgs.layers
+  self.models.encoder = onmt.Factory.buildWordEncoder(encArgs, dicts.src)
+
+  local decArgs = onmt.utils.Tensor.deepClone(args)
+  decArgs.layers = decArgs.dec_layers > 0 and decArgs.dec_layers or decArgs.layers
+  self.models.decoder = onmt.Factory.buildWordDecoder(decArgs, dicts.tgt)
+
+  self.models.bridge = onmt.Bridge(args.bridge,
+                                   encArgs.rnn_size,
+                                   self.models.encoder.args.numEffectiveLayers,
+                                   decArgs.rnn_size,
+                                   self.models.decoder.args.numEffectiveLayers)
+
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.tgtVocSize = dicts.tgt.words:size(1)
+
 end
 
 function Seq2Seq.load(args, models, dicts)
@@ -114,7 +145,9 @@ function Seq2Seq.load(args, models, dicts)
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
+  self.models.bridge = onmt.Bridge.load(models.bridge)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.tgtVocSize = dicts.tgt.words:size(1)
 
   return self
 end
@@ -124,9 +157,13 @@ function Seq2Seq.modelName()
   return 'Sequence to Sequence with Attention'
 end
 
--- Returns expected dataMode.
-function Seq2Seq.dataType()
-  return 'bitext'
+-- Returns expected default datatype or if passed a parameter, returns if it is supported
+function Seq2Seq.dataType(datatype)
+  if not datatype then
+    return 'bitext'
+  else
+    return datatype == 'bitext' or datatype == 'feattext'
+  end
 end
 
 function Seq2Seq:returnIndividualLosses(enable)
@@ -137,6 +174,16 @@ function Seq2Seq:returnIndividualLosses(enable)
     self.models.decoder:returnIndividualLosses(enable)
   end
   return true
+end
+
+function Seq2Seq:setTargetVoc(t)
+  self.models.decoder.generator:setTargetVoc(t)
+  self.criterion.mainCriterion.weights:resize(t:size(1))
+end
+
+function Seq2Seq:unsetTargetVoc()
+  self.models.decoder.generator:setTargetVoc()
+  self.criterion.mainCriterion.weights:resize(self.tgtVocSize)
 end
 
 function Seq2Seq:enableProfiling()
@@ -165,7 +212,8 @@ function Seq2Seq:forwardComputeLoss(batch)
   end
 
   local encoderStates, context = self.models.encoder:forward(batch)
-  return self.models.decoder:computeLoss(batch, encoderStates, context, self.criterion)
+  local decoderInitStates = self.models.bridge:forward(encoderStates)
+  return self.models.decoder:computeLoss(batch, decoderInitStates, context, self.criterion)
 end
 
 function Seq2Seq:trainNetwork(batch, dryRun)
@@ -174,15 +222,16 @@ function Seq2Seq:trainNetwork(batch, dryRun)
   end
 
   local encStates, context = self.models.encoder:forward(batch)
-
-  local decOutputs = self.models.decoder:forward(batch, encStates, context)
+  local decInitStates = self.models.bridge:forward(encStates)
+  local decOutputs = self.models.decoder:forward(batch, decInitStates, context)
 
   if dryRun then
     decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
   end
 
-  local encGradStatesOut, gradContext, loss, indvLoss = self.models.decoder:backward(batch, decOutputs, self.criterion)
-  self.models.encoder:backward(batch, encGradStatesOut, gradContext)
+  local decGradInputStates, gradContext, loss, indvLoss = self.models.decoder:backward(batch, decOutputs, self.criterion)
+  local encGradOutputStates = self.models.bridge:backward(encStates, decGradInputStates)
+  self.models.encoder:backward(batch, encGradOutputStates, gradContext)
 
   return loss, indvLoss
 end

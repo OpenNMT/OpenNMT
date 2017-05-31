@@ -13,6 +13,10 @@ local options = {
   {
     '-output', 'pred.txt',
     [[Output file.]]
+  },
+  {
+    '-idx_files', false,
+    [[If set, source and target files are 'key value' with key match between source and target.]]
   }
 }
 
@@ -23,7 +27,7 @@ onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
 cmd:text('')
-cmd:text('**Other options**')
+cmd:text('Other options')
 cmd:text('')
 
 cmd:option('-time', false, [[Measure average translation time.]])
@@ -34,10 +38,11 @@ local function main()
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   onmt.utils.Cuda.init(opt)
 
-  local srcReader = onmt.utils.FileReader.new(opt.src)
-  local srcBatch = {}
-
   local tagger = onmt.tagger.Tagger.new(opt)
+
+  local srcReader = onmt.utils.FileReader.new(opt.src, opt.idx_files, tagger:srcFeat())
+  local srcBatch = {}
+  local srcIdBatch = {}
 
   local outFile = io.open(opt.output, 'w')
 
@@ -52,10 +57,11 @@ local function main()
   end
 
   while true do
-    local srcTokens = srcReader:next()
+    local srcTokens, srcSeqId = srcReader:next()
 
     if srcTokens ~= nil then
       table.insert(srcBatch, tagger:buildInput(srcTokens))
+      table.insert(srcIdBatch, srcSeqId)
     elseif #srcBatch == 0 then
       break
     end
@@ -72,11 +78,15 @@ local function main()
       end
 
       for b = 1, #results do
-        if (#srcBatch[b].words == 0) then
+        if (srcBatch[b].words and #srcBatch[b].words == 0) then
           _G.logger:warning('Line ' .. sentId .. ' is empty.')
           outFile:write('\n')
         else
-          _G.logger:info('SENT %d: %s', sentId, tagger:buildOutput(srcBatch[b]))
+          if srcBatch[b].words then
+            _G.logger:info('SENT %d: %s', sentId, tagger:buildOutput(srcBatch[b]))
+          else
+            _G.logger:info('FEATS %d: IDX - %s - SIZE %d', sentId, srcIdBatch[b], srcBatch[b].vectors:size(1))
+          end
 
           local sentence = tagger:buildOutput(results[b])
 

@@ -21,10 +21,25 @@ local function buildDecoder(inputFeed, rnnType, layers)
   local inputNet = nn.LookupTable(10, 4)
   inputNet.inputSize = 4
 
-  local generator = onmt.Generator(opt.rnn_size, 10)
+  local generator = onmt.Generator(opt, {10})
   local attention = onmt.GlobalAttention(opt, opt.rnn_size)
 
   return onmt.Decoder(opt, inputNet, generator, attention), opt
+end
+
+local function buildBatch()
+  local src = {
+    torch.IntTensor({5, 6, 7, 8}),
+    torch.IntTensor({5, 6}),
+    torch.IntTensor({5, 6, 7}),
+  }
+  local tgt = {
+    torch.IntTensor({onmt.Constants.BOS, 5, 6, 7, 8, 9, onmt.Constants.EOS}),
+    torch.IntTensor({onmt.Constants.BOS, 5, 6, 7, onmt.Constants.EOS}),
+    torch.IntTensor({onmt.Constants.BOS, 5, 6, 7, 8, onmt.Constants.EOS}),
+  }
+
+  return onmt.data.Batch.new(src, {}, tgt, {})
 end
 
 local function generateEncoderStates(batchSize, timesteps, opt)
@@ -40,18 +55,7 @@ local function generateEncoderStates(batchSize, timesteps, opt)
 end
 
 local function checkDim(decoder, opt, encoderStates, withIndLosses)
-  local src = {
-    torch.IntTensor({5, 6, 7, 8}),
-    torch.IntTensor({5, 6}),
-    torch.IntTensor({5, 6, 7}),
-  }
-  local tgt = {
-    torch.IntTensor({onmt.Constants.BOS, 5, 6, 7, 8, 9, onmt.Constants.EOS}),
-    torch.IntTensor({onmt.Constants.BOS, 5, 6, 7, onmt.Constants.EOS}),
-    torch.IntTensor({onmt.Constants.BOS, 5, 6, 7, 8, onmt.Constants.EOS}),
-  }
-
-  local batch = onmt.data.Batch.new(src, {}, tgt, {})
+  local batch = buildBatch()
 
   decoder:training()
 
@@ -154,6 +158,24 @@ end
 function decoderTest.individualLosses()
   local decoder, opt = buildDecoder(true, 'LSTM')
   checkDim(decoder, opt, nil, true)
+end
+
+function decoderTest.computeLoss()
+  local decoder, opt = buildDecoder(true, 'LSTM')
+  local batch = buildBatch()
+  local encoderStates = generateEncoderStates(3, 4, opt)
+
+  local loss = decoder:computeLoss(batch, encoderStates[1], encoderStates[2], criterion)
+  tester:eq(type(loss), 'number')
+end
+
+function decoderTest.computeScore()
+  local decoder, opt = buildDecoder(true, 'LSTM')
+  local batch = buildBatch()
+  local encoderStates = generateEncoderStates(3, 4, opt)
+
+  local score = decoder:computeScore(batch, encoderStates[1], encoderStates[2], criterion)
+  tester:eq(#score, 3)
 end
 
 return decoderTest

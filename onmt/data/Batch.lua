@@ -75,7 +75,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   self.sourceLength, self.sourceSize, self.uneven = getLength(src)
 
   -- if input vectors (speech for instance)
-  self.inputVectors = src[1]:dim() > 1
+  self.inputVectors = #src > 0 and src[1]:dim() > 1
 
   local sourceSeq = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
 

@@ -14,7 +14,7 @@ local options = {
     '-param_init', 0.1,
     [[Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`).]],
     {
-      valid = function(v) return v >= 0 and v <= 1 end,
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0),
       init_only = true
     }
   }
@@ -34,7 +34,7 @@ function Model:changeParameters(changes)
   _G.logger:info('Applying new parameters:')
 
   for k, v in pairs(changes) do
-    _G.logger:info(' * %s = ' .. v, k)
+    _G.logger:info(' * %s = ' .. tostring(v), k)
 
     for _, model in pairs(self.models) do
       model:apply(function(m)
@@ -44,7 +44,7 @@ function Model:changeParameters(changes)
           local enc = k == 'fix_word_vecs_enc' and torch.typename(model):find('Encoder')
           local dec = k == 'fix_word_vecs_dec' and torch.typename(model):find('Decoder')
           if enc or dec then
-            m:fixEmbeddings(v == 1)
+            m:fixEmbeddings(v)
           end
         end
       end)
@@ -76,13 +76,14 @@ end
 function Model:initParams()
   _G.logger:info('Initializing parameters...')
 
-  local params, gradParams, orderedIndex = self:getParams()
+  local params, gradParams, modelMap = self:getParams()
   local numParams = 0
 
-  for i, key in ipairs(orderedIndex) do
+  for i = 1, #params do
+    local name = modelMap[i]
     params[i]:uniform(-self.args.param_init, self.args.param_init)
 
-    self.models[key]:apply(function (m)
+    self.models[name]:apply(function (m)
       if m.postParametersInitialization then
         m:postParametersInitialization()
       end
@@ -106,12 +107,18 @@ function Model:getParams()
 
   local params = {}
   local gradParams = {}
+  local modelMap = {}
 
-  for i, key in ipairs(orderedIndex) do
-    params[i], gradParams[i] = self.models[key]:getParameters()
+  for _, key in ipairs(orderedIndex) do
+    local p, gp = self.models[key]:getParameters()
+    if p:dim() > 0 then
+      table.insert(params, p)
+      table.insert(gradParams, gp)
+      table.insert(modelMap, key)
+    end
   end
 
-  return params, gradParams, orderedIndex
+  return params, gradParams, modelMap
 end
 
 return Model

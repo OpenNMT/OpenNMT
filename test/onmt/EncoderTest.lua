@@ -4,13 +4,14 @@ local tester = ...
 
 local encoderTest = torch.TestSuite()
 
-local function buildEncoder(class, rnnType)
+local function buildEncoder(class, rnnType, merge)
   local cmd = onmt.utils.ExtendedCmdLine.new()
   class.declareOpts(cmd)
 
   local opt = cmd:parse('')
   opt.rnn_size = 10
   opt.rnn_type = rnnType or 'LSTM'
+  opt.brnn_merge = merge or 'sum'
   opt.dropout = 0
 
   local inputNet = nn.LookupTable(10, 4)
@@ -125,6 +126,11 @@ function encoderTest.brnn_LSTM()
   genericCheckDim(encoder, opt)
 end
 
+function encoderTest.brnn_concat_LSTM()
+  local encoder, opt = buildEncoder(onmt.BiEncoder, 'LSTM', 'concat')
+  genericCheckDim(encoder, opt)
+end
+
 function encoderTest.brnn_masking_LSTM()
   local encoder, _ = buildEncoder(onmt.BiEncoder, 'LSTM')
   genericCheckMasking(encoder)
@@ -183,6 +189,12 @@ end
 function encoderTest.pdbrnn_LSTM()
   local encoder, opt = buildEncoder(onmt.PDBiEncoder, 'LSTM')
   genericCheckDim(encoder, opt)
+  local t = torch.Tensor{10,7,21}
+  local tred, length = encoder:contextSize(t, 21)
+  tester:assertTensorEq(tred, torch.Tensor{5,4,11})
+  tester:eq(length, 11)
+  local table_red = encoder:contextSize({10,7,21},0)
+  tester:eq(table_red, {5,4,11})
 end
 
 function encoderTest.pdbrnn_saveAndLoad_LSTM()

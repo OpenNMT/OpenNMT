@@ -35,20 +35,20 @@ To reuse available vocabulary, \(features^{(-1)}\) is set to the end of sentence
 
 ## Vocabularies
 
-By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the `-src_vocab_size` and `-tgt_vocab_size` options in the format `word_vocab_size[,feat1_vocab_size[,feat2_vocab_size[...]]]`. For example:
+By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the `-src_vocab_size` and `-tgt_vocab_size` options in the format `word_vocab_size[ feat1_vocab_size[ feat2_vocab_size[ ...]]]`. For example:
 
 ```bash
 # unlimited source features vocabulary size
 -src_vocab_size 50000
 
 # first feature vocabulary is limited to 60, others are unlimited
--src_vocab_size 50000,60
+-src_vocab_size 50000 60
 
 # second feature vocabulary is limited to 100, others are unlimited
--src_vocab_size 50000,0,100
+-src_vocab_size 50000 0 100
 
 # limit vocabulary size of the first and second feature
--src_vocab_size 50000,60,100
+-src_vocab_size 50000 60 100
 ```
 
 You can similarly use `-src_words_min_frequency` and `-tgt_words_min_frequency` to limit vocabulary by frequency instead of absolute size.
@@ -65,7 +65,7 @@ you have to set `-features_vocabs_prefix data/demo` as command line option.
 
 The feature embedding size is automatically computed based on the number of values the feature takes. This default size reduction works well for features with few values like the case or POS.
 
-For other features, you may want to manually choose the embedding size with the `-src_word_vec_size` and `-tgt_word_vec_size` options. They behave similarly to `-src_vocab_size` with a comma-separated list of embedding size: `word_vec_size[,feat1_vec_size[,feat2_vec_size[...]]]`.
+For other features, you may want to manually choose the embedding size with the `-src_word_vec_size` and `-tgt_word_vec_size` options. They behave similarly to `-src_vocab_size` with a list of embedding size: `word_vec_size[ feat1_vec_size[ feat2_vec_size[ ...]]]`.
 
 Then, each feature embedding is concatenated to each other by default. You can instead choose to sum them by setting `-feat_merge sum`. Finally, the resulting merged embedding is concatenated to the word embedding.
 

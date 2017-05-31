@@ -12,7 +12,8 @@ local options = {
     [[Type of data to preprocess. Use 'monotext' for monolingual data.
       This option impacts all options choices.]],
     {
-      enum = {'bitext', 'monotext', 'feattext'}
+      enum = {'bitext', 'monotext', 'feattext'},
+      depends = function(opt) return opt.data_type ~= 'feattext' or opt.idx_files end
     }
   },
   {
@@ -21,6 +22,10 @@ local options = {
     {
       valid = onmt.utils.ExtendedCmdLine.nonEmpty
     }
+  },
+  {
+    '-check_plength', false,
+    [[Check source and target have same length (for seq tagging).]]
   }
 }
 
@@ -47,6 +52,16 @@ local function isValid(seq, maxSeqLength)
     return seq:size(1) > 0 and seq:size(1) <= maxSeqLength
   end
   return #seq > 0 and #seq <= maxSeqLength
+end
+
+local function parallelCheck(idx, _, _, tokens)
+  local length1 = (type(tokens[1])=='table' and #tokens[1]) or (tokens[1]:dim()==0 and 0) or tokens[1]:size(1)
+  local length2 = (type(tokens[2])=='table' and #tokens[2]) or (tokens[2]:dim()==0 and 0) or tokens[2]:size(1)
+  if length1~=length2 then
+    _G.logger:warning('SENT %s: source/target not aligned (%d/%d)', tostring(idx), length1, length2)
+    return false
+  end
+  return true
 end
 
 local function main()
@@ -78,6 +93,7 @@ local function main()
                                      opt.src_words_min_frequency or opt.words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end,
+                                     opt.keep_frequency,
                                      opt.idx_files)
   end
   if dataType ~= 'monotext' then
@@ -89,23 +105,30 @@ local function main()
                                      opt.tgt_words_min_frequency,
                                      opt.features_vocabs_prefix,
                                      function(s) return isValid(s, opt.tgt_seq_length) end,
+                                     opt.keep_frequency,
                                      opt.idx_files)
   end
 
   _G.logger:info('Preparing training data...')
+
+  local parallelValidFunc = nil
+  if opt.check_plength then
+    parallelValidFunc = parallelCheck
+  end
+
   data.train = {}
   if dataType == 'monotext' then
     data.train.src = Preprocessor:makeMonolingualData(opt.train, data.dicts.src, isValid)
   elseif dataType == 'feattext' then
     data.train.src, data.train.tgt = Preprocessor:makeFeatTextData(opt.train_src, opt.train_tgt,
                                                                    data.dicts.tgt,
-                                                                   isValid)
+                                                                   isValid, parallelValidFunc)
     -- record the size of the input layer
     data.dicts.srcInputSize = data.train.src.vectors[1]:size(2)
   else
     data.train.src, data.train.tgt = Preprocessor:makeBilingualData(opt.train_src, opt.train_tgt,
                                                                     data.dicts.src, data.dicts.tgt,
-                                                                    isValid)
+                                                                    isValid, parallelValidFunc)
   end
 
   _G.logger:info('')
@@ -149,8 +172,8 @@ local function main()
       Vocabulary.save('target', data.dicts.tgt.words, opt.save_data .. '.tgt.dict')
     end
     if opt.features_vocabs_prefix:len() == 0 then
-      Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data)
-      Vocabulary.saveFeatures('target', data.dicts.tgt.features, opt.save_data)
+      Vocabulary.saveFeatures('source', data.dicts.src.features, opt.save_data..'.source')
+      Vocabulary.saveFeatures('target', data.dicts.tgt.features, opt.save_data..'.target')
     end
   end
 

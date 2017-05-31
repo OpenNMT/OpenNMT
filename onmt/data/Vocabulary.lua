@@ -55,6 +55,10 @@ function Vocabulary.make(filename, validFunc, idxFile)
       end
     end
 
+    -- keep frequency also for sentences
+    wordVocab:setFrequency(onmt.Constants.BOS_WORD, lineId)
+    wordVocab:setFrequency(onmt.Constants.EOS_WORD, lineId)
+
   end
 
   reader:close()
@@ -62,17 +66,17 @@ function Vocabulary.make(filename, validFunc, idxFile)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, idxFile)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency, idxFile)
   local wordVocab
   local featuresVocabs = {}
   local numFeatures = countFeatures(dataFile, idxFile)
 
   if vocabFile:len() > 0 then
     -- If given, load existing word dictionary.
-    _G.logger:info('Reading ' .. name .. ' vocabulary from \'' .. vocabFile .. '\'...')
+    _G.logger:info(' * Reading ' .. name .. ' vocabulary from \'' .. vocabFile .. '\'...')
     wordVocab = onmt.utils.Dict.new()
     wordVocab:loadFile(vocabFile)
-    _G.logger:info('Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
+    _G.logger:info(' * Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
   end
 
   if featuresVocabsFiles:len() > 0 and numFeatures > 0 then
@@ -86,10 +90,10 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
         break
       end
 
-      _G.logger:info('Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
+      _G.logger:info(' * Reading ' .. name .. ' feature ' .. j .. ' vocabulary from \'' .. file .. '\'...')
       featuresVocabs[j] = onmt.utils.Dict.new()
       featuresVocabs[j]:loadFile(file)
-      _G.logger:info('Loaded ' .. featuresVocabs[j]:size() .. ' labels')
+      _G.logger:info(' * Loaded ' .. featuresVocabs[j]:size() .. ' labels')
 
       j = j + 1
     end
@@ -101,9 +105,9 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
              .. ' features but only ' .. #featuresVocabs .. ' dictionaries were found')
   end
 
-  if wordVocab == nil or (#featuresVocabs == 0 and numFeatures > 0) then
+  if wordVocab == nil or keepFrequency or (#featuresVocabs == 0 and numFeatures > 0) then
     -- If a dictionary is still missing, generate it.
-    _G.logger:info('Building ' .. name  .. ' vocabularies...')
+    _G.logger:info(' * Building ' .. name  .. ' vocabularies...')
     local genWordVocab, genFeaturesVocabs = Vocabulary.make(dataFile, validFunc, idxFile)
 
     local originalSizes = { genWordVocab:size() }
@@ -111,38 +115,38 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
       table.insert(originalSizes, genFeaturesVocabs[i]:size())
     end
 
-    local newSizes = onmt.utils.String.split(vocabSize, ',')
-    local minFrequency = onmt.utils.String.split(wordsMinFrequency, ',')
-
     for i = 1, 1 + #genFeaturesVocabs do
-      newSizes[i] = (newSizes[i] and tonumber(newSizes[i])) or 0
-      minFrequency[i] = (minFrequency[i] and tonumber(minFrequency[i])) or 0
+      vocabSize[i] = vocabSize[i] or 0
+      wordsMinFrequency[i] = wordsMinFrequency[i] or 0
     end
 
     if wordVocab == nil then
-      if minFrequency[1] > 0 then
-        wordVocab = genWordVocab:pruneByMinFrequency(minFrequency[1])
-      elseif newSizes[1] > 0 then
-        wordVocab = genWordVocab:prune(newSizes[1])
+      if wordsMinFrequency[1] > 0 then
+        wordVocab = genWordVocab:pruneByMinFrequency(wordsMinFrequency[1])
+      elseif vocabSize[1] > 0 then
+        wordVocab = genWordVocab:prune(vocabSize[1])
       else
         wordVocab = genWordVocab
       end
 
-      _G.logger:info('Created word dictionary of size '
+      _G.logger:info(' * Created word dictionary of size '
                        .. wordVocab:size() .. ' (pruned from ' .. originalSizes[1] .. ')')
+    elseif keepFrequency then
+      -- if a dictionary was provided get frequency
+      wordVocab = genWordVocab:getFrequencies(wordVocab)
     end
 
     if #featuresVocabs == 0 then
       for i = 1, #genFeaturesVocabs do
-        if minFrequency[i + 1] > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequency(minFrequency[i + 1])
-        elseif newSizes[i + 1] > 0 then
-          featuresVocabs[i] = genFeaturesVocabs[i]:prune(newSizes[i + 1])
+        if wordsMinFrequency[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:pruneByMinFrequency(wordsMinFrequency[i + 1])
+        elseif vocabSize[i + 1] > 0 then
+          featuresVocabs[i] = genFeaturesVocabs[i]:prune(vocabSize[i + 1])
         else
           featuresVocabs[i] = genFeaturesVocabs[i]
         end
 
-        _G.logger:info('Created feature ' .. i .. ' dictionary of size '
+        _G.logger:info(' * Created feature ' .. i .. ' dictionary of size '
                          .. featuresVocabs[i]:size() .. ' (pruned from ' .. originalSizes[i + 1] .. ')')
 
       end
@@ -150,6 +154,8 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
   end
 
   _G.logger:info('')
+
+  wordVocab:prepFrequency(keepFrequency)
 
   return {
     words = wordVocab,
@@ -164,7 +170,7 @@ end
 
 function Vocabulary.saveFeatures(name, vocabs, prefix)
   for j = 1, #vocabs do
-    local file = prefix .. '.' .. name .. '_feature_' .. j .. '.dict'
+    local file = prefix .. '_feature_' .. j .. '.dict'
     _G.logger:info('Saving ' .. name .. ' feature ' .. j .. ' vocabulary to \'' .. file .. '\'...')
     vocabs[j]:writeFile(file)
   end

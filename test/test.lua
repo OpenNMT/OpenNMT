@@ -29,8 +29,23 @@ local function main()
 
   _G.logger = onmt.utils.Logger.new('', true)
 
+  local argstart = 0
+  if #arg > 1 and arg[1] == '-e' then
+    _G.luacmd = arg[2]
+    argstart = 2
+  end
+
   registerTestDirectory(testDir)
-  tester:run()
+
+  if #arg > argstart then
+    local testNames = {}
+    for i = argstart+1, #arg do
+      table.insert(testNames, arg[i])
+    end
+    tester:run(testNames)
+  else
+    tester:run()
+  end
 
   torch.setnumthreads(nThreads)
 

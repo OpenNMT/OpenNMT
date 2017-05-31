@@ -4,11 +4,12 @@
 local EpochState = torch.class('EpochState')
 
 --[[ Initialize for epoch `epoch`]]
-function EpochState:__init(epoch, startIterations, numIterations, learningRate)
+function EpochState:__init(epoch, startIterations, numIterations, learningRate, optimStatus)
   self.epoch = epoch
   self.iterations = startIterations - 1
   self.numIterations = numIterations
   self.learningRate = learningRate
+  self.optimStatus = optimStatus
 
   self.globalTimer = torch.Timer()
 
@@ -35,10 +36,10 @@ end
 function EpochState:log(iteration)
   local ppl = math.exp(self.trainLoss / self.targetWords)
   local tokpersec = self.sourceWords / self.timer:time().real
-  _G.logger:info('Epoch %d ; Iteration %d/%d ; Learning rate %.4f ; Source tokens/s %d ; Perplexity %.2f',
+  _G.logger:info('Epoch %d ; Iteration %d/%d ; %s ; Source tokens/s %d ; Perplexity %.2f',
                   self.epoch,
                   iteration or self.iterations, self.numIterations,
-                  self.learningRate,
+                  self.optimStatus,
                   tokpersec,
                   ppl)
   if _G.crayon_logger.on == true then
