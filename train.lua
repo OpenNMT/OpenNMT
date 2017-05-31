@@ -36,6 +36,7 @@ onmt.utils.Memory.declareOpts(cmd)
 onmt.utils.Profiler.declareOpts(cmd)
 
 cmd:option('-seed', 3435, [[Random seed.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
+cmd:option('-dump_graph', false, [[Dump computation graphs]])
 
 local function loadDataset(filename)
   _G.logger:info('Loading data from \'%s\'...', filename)
@@ -160,6 +161,10 @@ local function main()
     model, trainStates = loadModel(opt, dataset.dicts)
   else
     model = buildModel(opt, dataset.dicts)
+  end
+
+  if opt.dump_graph then
+    model:dumpGraphs()
   end
 
   onmt.utils.Cuda.convert(model)

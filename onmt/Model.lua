@@ -53,6 +53,17 @@ function Model:changeParameters(changes)
 
 end
 
+function Model:dumpGraphs()
+  for name, desc in pairs(self.models) do
+    local net = desc.network or desc
+    if net.fg then
+      _G.logger:info('Generate graph '..name..'.dot')
+      MemoryGraph:dumpGraph(net.fg, name..'.dot')
+    end
+  end
+  os.exit()
+end
+
 function Model:getInputLabelsCount(batch)
   return batch.sourceInput:ne(onmt.Constants.PAD):sum()
 end
