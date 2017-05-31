@@ -19,7 +19,7 @@ Returns: `(batchSize, beamSize)` tensor or a table containing such tensors.
 
 --]]
 local function flatToRc(v, beamSize)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
+  return onmt.utils.Tensor.recursiveApplyOnDevice(v, function (h)
     local batchSize = math.floor(h:size(1) / beamSize)
     local sizes = {}
     for j = 2, #h:size() do
@@ -42,7 +42,7 @@ Returns: `batchSize * beamSize` tensor or a table containing such tensors.
 
 --]]
 local function rcToFlat(v)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
+  return onmt.utils.Tensor.recursiveApplyOnDevice(v, function (h)
     local sizes = {}
     sizes[1] = h:size(1) * h:size(2)
     for j = 3, #h:size() do
@@ -64,7 +64,7 @@ Returns: Indexed `(newBatchSize, ...)` tensor or a table containing such tensors
 
 --]]
 local function selectBatch(v, remaining)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
+  return onmt.utils.Tensor.recursiveApplyOnDevice(v, function (h)
     if not torch.isTensor(remaining) then
       remaining = torch.LongTensor(remaining)
     end
@@ -87,7 +87,7 @@ Returns: Indexed `(...)` tensor or a table containing such tensors
 
 --]]
 local function selectBatchBeam(v, beamSize, batch, beam)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
+  return onmt.utils.Tensor.recursiveApplyOnDevice(v, function (h)
     local batchSize = math.floor(h:size(1) / beamSize)
     local sizes = {}
     for j = 2, #h:size() do
@@ -112,7 +112,15 @@ Returns: Indexed `(batchSize * k, ...)` tensor or a table containing such tensor
 
 --]]
 local function selectBeam(v, indexes, beamSize)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
+  return onmt.utils.Tensor.recursiveApplyOnDevice(v, function (h)
+    if not h.getDevice then
+      indexes = indexes:long()
+    elseif not indexes.getDevice then
+      indexes = indexes:cuda()
+    elseif h:getDevice() ~= indexes:getDevice() then
+      cutorch.withDevice(h:getDevice(), function() indexes = indexes:clone() end)
+    end
+
     local batchSize = indexes:size(1)
     local k = indexes:size(2)
     beamSize = beamSize or k
@@ -145,7 +153,7 @@ Returns: Expanded `(batchSize * beamSize, ...)` tensor or a table containing
 
 --]]
 local function replicateBeam(v, beamSize)
-  return onmt.utils.Tensor.recursiveApply(v, function (h)
+  return onmt.utils.Tensor.recursiveApplyOnDevice(v, function (h)
     local batchSize = h:size(1)
     local sizes = {}
     for j = 2, #h:size() do

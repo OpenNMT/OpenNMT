@@ -46,6 +46,7 @@ pages:
       - "Data sampling": training/sampling.md
   - Translation:
       - Inference: translation/inference.md
+      - Ensemble: translation/ensemble.md
       - "Beam search": translation/beam_search.md
       - "Unknown words": translation/unknowns.md
   - Tools:

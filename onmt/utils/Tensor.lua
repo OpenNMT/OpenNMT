@@ -16,6 +16,20 @@ local function recursiveApply(out, func, ...)
   return res
 end
 
+--[[ Recursively call `func()` on all tensors within `out`. ]]
+local function recursiveApplyOnDevice(out, func, ...)
+  local arg = {...}
+  return recursiveApply(out, function (t)
+    local res
+    if t.getDevice then
+      cutorch.withDevice(t:getDevice(), function () res = func(t, table.unpack(arg)) end)
+    else
+      res = func(t, table.unpack(arg))
+    end
+    return res
+  end)
+end
+
 --[[ Recursively call `clone()` on all tensors within `out`. ]]
 local function recursiveClone(out)
   return recursiveApply(out, function (h) return h:clone() end)
@@ -185,6 +199,7 @@ end
 
 return {
   recursiveApply = recursiveApply,
+  recursiveApplyOnDevice = recursiveApplyOnDevice,
   recursiveClone = recursiveClone,
   recursiveAdd = recursiveAdd,
   recursiveSet = recursiveSet,

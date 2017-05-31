@@ -96,6 +96,7 @@ build = {
     ["onmt.utils.String"] = "onmt/utils/String.lua",
     ["onmt.utils.Table"] = "onmt/utils/Table.lua",
     ["onmt.utils.Tensor"] = "onmt/utils/Tensor.lua",
+    ["onmt.utils.ThreadPool"] = "onmt/utils/ThreadPool.lua",
     ["onmt.Constants"] = "onmt/Constants.lua",
     ["onmt.Factory"] = "onmt/Factory.lua",
     ["onmt.ModelSelector"] = "onmt/ModelSelector.lua",

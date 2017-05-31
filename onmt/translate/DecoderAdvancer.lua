@@ -7,29 +7,60 @@ local DecoderAdvancer = torch.class('DecoderAdvancer', 'Advancer')
 
 Parameters:
 
-  * `decoder` - an `onmt.Decoder` object.
+  * `decoders` - a table of decoders or nil to rely on threads' context.
   * `batch` - an `onmt.data.Batch` object.
-  * `context` - encoder output (batch x n x rnnSize).
+  * `contexts` - a table of encoder outputs (batch x T x rnnSize).
   * `max_sent_length` - optional, maximum output sentence length.
   * `max_num_unks` - optional, maximum number of UNKs.
-  * `decStates` - optional, initial decoder states.
+  * `decStates` - optional, a tablea of initial decoder states.
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts, length_norm, coverage_norm, eos_norm)
-  self.decoder = decoder
+function DecoderAdvancer:__init(
+    decoders,
+    batch,
+    contexts,
+    max_sent_length,
+    max_num_unks,
+    decStates,
+    dicts,
+    length_norm,
+    coverage_norm,
+    eos_norm)
+  self.dicts = dicts
   self.batch = batch
-  self.context = context
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
   self.length_norm = length_norm or 0.0
   self.coverage_norm = coverage_norm or 0.0
   self.eos_norm = eos_norm or 0.0
-  self.decStates = decStates or onmt.utils.Tensor.initTensorTable(
-    decoder.args.numEffectiveLayers,
-    onmt.utils.Cuda.convert(torch.Tensor()),
-    { self.batch.size, decoder.args.rnnSize })
-  self.dicts = dicts
+
+  self.decoders = decoders or {}
+  self.contexts = type(contexts) == 'table' and contexts or { contexts }
+
+  if decStates then
+    self.decStates = type(decStates) == 'table' and decStates or { decStates }
+  else
+    -- Generate states for each decoder.
+    self.decStates = {}
+
+    onmt.utils.ThreadPool.dispatch(
+      function(i)
+        local decoder = decoders[i] or _G.model.models.decoder
+        local states = onmt.utils.Tensor.initTensorTable(
+          decoder.args.numEffectiveLayers,
+          onmt.utils.Cuda.convert(torch.Tensor()),
+          { self.batch.size, decoder.args.rnnSize })
+        return i, states
+      end,
+      function(i, states)
+        self.decStates[i] = states
+      end
+    )
+  end
+
+  self.attnBuffer = onmt.utils.Cuda.convert(torch.Tensor())
+  self.logProbsBuffer = onmt.utils.Cuda.convert(torch.Tensor())
 end
 
 --[[Returns an initial beam.
@@ -48,16 +79,16 @@ function DecoderAdvancer:initBeam()
     end
   end
   local sourceSizes = onmt.utils.Cuda.convert(self.batch.sourceSize)
-  local attnProba = torch.FloatTensor(self.batch.size, self.context:size(2))
+  local attnProba = torch.FloatTensor(self.batch.size, self.contexts[1]:size(2))
     :fill(0.0001)
-    :typeAs(self.context)
+    :typeAs(self.contexts[1])
   -- Assign maximum attention proba on padding for it to not interfer during coverage normalization.
   for i = 1, self.batch.size do
     local sourceSize = sourceSizes[i]
-    if self.batch.sourceLength ~= self.context:size(2) then
-      sourceSize = math.ceil(sourceSize / (self.batch.sourceLength / self.context:size(2)))
+    if self.batch.sourceLength ~= self.contexts[1]:size(2) then
+      sourceSize = math.ceil(sourceSize / (self.batch.sourceLength / self.contexts[1]:size(2)))
     end
-    local padSize = self.context:size(2) - sourceSize
+    local padSize = self.contexts[1]:size(2) - sourceSize
     if padSize ~= 0 then
       attnProba[{i, {1, padSize}}] = 1.0
     end
@@ -65,7 +96,7 @@ function DecoderAdvancer:initBeam()
 
   -- Define state to be { decoder states, decoder output, context,
   -- attentions, features, sourceSizes, step, cumulated attention probablities }.
-  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba }
+  local state = { self.decStates, {}, self.contexts, nil, features, sourceSizes, 1, attnProba }
   local params = {}
   params.length_norm = self.length_norm
   params.coverage_norm = self.coverage_norm
@@ -82,7 +113,7 @@ Parameters:
 ]]
 function DecoderAdvancer:update(beam)
   local state = beam:getState()
-  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba
+  local decStates, decOut, contexts, _, features, sourceSizes, t, cumAttnProba
     = table.unpack(state, 1, 8)
   local tokens = beam:getTokens()
   local token = tokens[#tokens]
@@ -96,21 +127,50 @@ function DecoderAdvancer:update(beam)
     table.insert(inputs, features)
   end
 
-  decOut, decStates = self.decoder:forwardOne(inputs,
-                                              decStates,
-                                              context,
-                                              decOut,
-                                              nil,
-                                              sourceSizes,
-                                              self.batch.sourceLength)
-  t = t + 1
+  local attentions = {}
 
-  local attention = self.decoder:getAttention()
-  if attention then
-    cumAttnProba = cumAttnProba:add(attention)
+  local sourceLength = self.batch.sourceLength
+  local decoders = self.decoders
+
+  -- Run decoders in parallel.
+  onmt.utils.ThreadPool.dispatch(
+    function(i)
+      local decoder = decoders[i] or _G.model.models.decoder
+
+      local out, states = decoder:forwardOne(onmt.utils.Tensor.recursiveClone(inputs),
+                                             decStates[i],
+                                             contexts[i],
+                                             decOut[i],
+                                             nil,
+                                             sourceSizes,
+                                             sourceLength)
+
+      local attention = decoder:getAttention()
+
+      return i, out, states, attention
+    end,
+    function(i, out, states, attention)
+      decOut[i] = out
+      decStates[i] = states
+      attentions[i] = attention
+    end
+  )
+
+  if attentions[1] then
+    self.attnBuffer:resizeAs(attentions[1])
+
+    -- Accumulate attention as an average.
+    for i = 2, #attentions do
+      self.attnBuffer:copy(attentions[i])
+      attentions[1]:mul(i - 1):add(self.attnBuffer):div(i)
+    end
+
+    cumAttnProba:add(attentions[1])
   end
 
-  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba}
+  t = t + 1
+
+  local nextState = {decStates, decOut, contexts, attentions[1], nil, sourceSizes, t, cumAttnProba}
   beam:setState(nextState)
 end
 
@@ -129,14 +189,41 @@ Returns:
 function DecoderAdvancer:expand(beam)
   local state = beam:getState()
   local decOut = state[2]
-  local out = self.decoder.generator:forward(decOut)
+
+  local decoders = self.decoders
+  local logProbs = {}
+
+  onmt.utils.ThreadPool.dispatch(
+    function(i)
+      local decoder = decoders[i] or _G.model.models.decoder
+      return i, decoder.generator:forward(decOut[i])
+    end,
+    function(i, logProb)
+      logProbs[i] = logProb
+    end
+  )
+
+  for i = 2, #logProbs do
+    for j = 1, #logProbs[i] do
+      self.logProbsBuffer:resizeAs(logProbs[i][j])
+      self.logProbsBuffer:copy(logProbs[i][j])
+
+      logProbs[1][j]
+        :exp()
+        :mul(i - 1)
+        :add(self.logProbsBuffer:exp())
+        :div(i)
+        :log()
+    end
+  end
+
   local features = {}
-  for j = 2, #out do
-    local _, best = out[j]:max(2)
+  for j = 2, #logProbs[1] do
+    local _, best = logProbs[1][j]:max(2)
     features[j - 1] = best:view(-1)
   end
   state[5] = features
-  local scores = out[1]
+  local scores = logProbs[1][1]
   return scores
 end
 
