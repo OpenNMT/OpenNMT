@@ -386,8 +386,7 @@ function Decoder:backward(batch, outputs, criterion)
 
   local gradStatesInput = onmt.utils.Tensor.reuseTensorTable(self.gradOutputsProto,
                                                              { batch.size, self.args.rnnSize })
-  local gradContextInput = onmt.utils.Tensor.reuseTensor(self.gradContextProto,
-                                                         { batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.rnnSize })
+  local gradContextInput
 
   local loss = 0
   local indvAvgLoss = torch.zeros(outputs[1]:size(1))
@@ -440,6 +439,12 @@ function Decoder:backward(batch, outputs, criterion)
 
     -- Compute the standard backward.
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
+
+    if not gradContextInput then
+      gradContextInput = onmt.utils.Tensor.reuseTensor(
+        self.gradContextProto,
+        { batch.size, gradInput[self.args.inputIndex.context]:size(2), self.args.rnnSize })
+    end
 
     -- Accumulate encoder output gradients.
     gradContextInput:add(gradInput[self.args.inputIndex.context])
