@@ -576,7 +576,7 @@ end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v), 'the file must exist'
+  return path.exists(v) and true, 'the file must exist'
 end
 
 -- Check non set or if the corresponding file exists.
