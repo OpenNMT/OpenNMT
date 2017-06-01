@@ -232,7 +232,9 @@ function tokenizer.tokenize(opt, line, bpe)
 
   -- apply segmetn feature if requested
   if opt.segment_case then
-    tokens = case.segmentCase(tokens, opt.joiner)
+    local sep = ''
+    if opt.joiner_annotate then sep = opt.joiner end
+    tokens = case.segmentCase(tokens, sep)
   end
 
   -- apply bpe if requested
