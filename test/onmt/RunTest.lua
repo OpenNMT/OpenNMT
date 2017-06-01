@@ -25,6 +25,20 @@ function runTest.run_real()
     local v = tonumber(string.match(output, "Prepared (%d+) sentences"))
     tester:eq(v, 881)
 
+    file = io.popen(TH..[[ train.lua -data tiny-train.t7 -save_model tiny -end_epoch 2 -dump_graphs .\
+                      -rnn_size 8 -word_vec_size 5 -profiler 2>&1]])
+    file:read('*all')
+    file:close()
+
+    file=io.open('encoder.dot')
+    tester:assert(file ~= nil, "cannot find: encoder.dot")
+    file:close()
+    os.remove('encoder.dot')
+    file=io.open('decoder.dot')
+    tester:assert(file ~= nil, "cannot find: decoder.dot")
+    file:close()
+    os.remove('decoder.dot')
+
     file = io.popen(TH..[[ train.lua -data tiny-train.t7 -save_model tiny -end_epoch 2\
                       -rnn_size 8 -word_vec_size 5 -profiler 2>&1]])
     output = file:read('*all')

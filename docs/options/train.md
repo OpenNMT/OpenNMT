@@ -113,3 +113,4 @@
 * `-disable_mem_optimization [<boolean>]` (default: `false`)<br/>Disable sharing of internal buffers between clones for visualization or development.
 * `-profiler [<boolean>]` (default: `false`)<br/>Generate profiling logs.
 * `-seed <number>` (default: `3435`)<br/>Random seed.
+* `-dump_graphs <string>` (default: `''`)<br/>Dump computation graphs

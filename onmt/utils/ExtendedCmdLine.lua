@@ -576,7 +576,7 @@ end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v), 'the file must exist'
+  return path.exists(v) and true, 'the file must exist'
 end
 
 -- Check non set or if the corresponding file exists.
@@ -584,12 +584,26 @@ function ExtendedCmdLine.fileNullOrExists(v)
   return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file must exist'
 end
 
+-- Check non set or if the corresponding directory exists.
+function ExtendedCmdLine.dirNullOrExists(v)
+  return v == '' or ExtendedCmdLine.dirStructure()(v), 'if set, the file must exist'
+end
+
 -- Check it is a directory and some file exists
 function ExtendedCmdLine.dirStructure(files)
   return function(v)
-    for _,f in ipairs(files) do
-      if not path.exists(v.."/"..f) then
-        return false, 'the directory must exist'
+    local fdir = io.open(v, "r")
+    local _, _, code = fdir:read(1)
+    fdir:close()
+    -- not a directory
+    if code ~= 21 then
+      return false
+    end
+    if files then
+      for _,f in ipairs(files) do
+        if not path.exists(v.."/"..f) then
+          return false, 'the directory must exist'
+        end
       end
     end
     return true

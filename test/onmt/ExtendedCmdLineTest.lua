@@ -120,4 +120,16 @@ function cmdLineTest.fail_unknown()
   tester:assertError(function() cmd:parse({'-sample_tgt_vocab', '-sample', '0'}) end)
 end
 
+function cmdLineTest.checkUtilities()
+  tester:assert(onmt.utils.ExtendedCmdLine.fileNullOrExists('') == true)
+  tester:assert(onmt.utils.ExtendedCmdLine.fileNullOrExists('xyx') == false)
+  tester:assert(onmt.utils.ExtendedCmdLine.fileNullOrExists('train.lua') == true)
+  tester:assert(onmt.utils.ExtendedCmdLine.dirNullOrExists('.') == true)
+  tester:assert(onmt.utils.ExtendedCmdLine.dirNullOrExists('') == true)
+  tester:assert(onmt.utils.ExtendedCmdLine.dirNullOrExists('train.lua') == false)
+  tester:assert(onmt.utils.ExtendedCmdLine.dirNullOrExists('train.lua') == false)
+  tester:assert(onmt.utils.ExtendedCmdLine.dirStructure({'train.lua'})('.') == true)
+  tester:assert(onmt.utils.ExtendedCmdLine.dirStructure({'train.lua'})('data') == false)
+end
+
 return cmdLineTest

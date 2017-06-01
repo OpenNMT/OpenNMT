@@ -53,6 +53,27 @@ function Model:changeParameters(changes)
 
 end
 
+function Model:dumpGraphs(path)
+  for name, desc in pairs(self.models) do
+    local net = desc.network or desc
+    if net.fg then
+      _G.logger:info('Generate graph '..name..'.dot')
+      local MG=onmt.utils.MemoryGraph.new(net.fg)
+      MG:dump(path..'/'..name..'.dot')
+    end
+    if desc.fwd and desc.fwd.network and desc.fwd.network.fg then
+      _G.logger:info('Generate graph '..name..'-fwd.dot')
+      local MG=onmt.utils.MemoryGraph.new(desc.fwd.network.fg)
+      MG:dump(path..'/'..name..'.dot')
+    end
+    if desc.bwd and desc.bwd.network and desc.fwd.network.bg then
+      _G.logger:info('Generate graph '..name..'-bwd.dot')
+      local MG=onmt.utils.MemoryGraph.new(desc.bwd.network.fg)
+      MG:dump(path..'/'..name..'.dot')
+    end
+  end
+end
+
 function Model:getInputLabelsCount(batch)
   return batch.sourceInput:ne(onmt.Constants.PAD):sum()
 end

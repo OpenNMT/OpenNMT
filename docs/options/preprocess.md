@@ -11,6 +11,7 @@
 
 * `-data_type <string>` (accepted: `bitext`, `monotext`, `feattext`; default: `bitext`)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.
 * `-save_data <string>` (required)<br/>Output file for the prepared data.
+* `-check_plength [<boolean>]` (default: `false`)<br/>Check source and target have same length (for seq tagging).
 
 ## Data options
 
