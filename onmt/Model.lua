@@ -58,7 +58,7 @@ function Model:dumpGraphs(path)
     local net = desc.network or desc
     if net.fg then
       _G.logger:info('Generate graph '..name..'.dot')
-      local MG=MemoryGraph.new(net.fg)
+      local MG=onmt.utils.MemoryGraph.new(net.fg)
       MG:dump(path..'/'..name..'.dot')
     end
   end

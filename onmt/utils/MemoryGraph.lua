@@ -62,7 +62,7 @@ function MemoryGraph:__init(gModule)
 end
 
 function MemoryGraph:dump(filename)
-  file = io.open(filename, "w")
+  local file = io.open(filename, "w")
   assert(file, "cannot open '"..filename.."' for writing")
   local gnStack = { 0 }
   file:write("digraph G { FINAL ; \n")
@@ -90,3 +90,5 @@ function MemoryGraph:dump(filename)
   file:write("}")
   file:close()
 end
+
+return MemoryGraph

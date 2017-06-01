@@ -592,9 +592,9 @@ end
 -- Check it is a directory and some file exists
 function ExtendedCmdLine.dirStructure(files)
   return function(v)
-    local f = io.open(v, "r")
-    local _, _, code = f:read(1)
-    f:close()
+    local fdir = io.open(v, "r")
+    local _, _, code = fdir:read(1)
+    fdir:close()
     -- not a directory
     if code ~= 21 then
       return false
