@@ -2,7 +2,8 @@
 ]]
 local MemoryGraph = torch.class('MemoryGraph')
 
--- explore gModule to build global graph
+-- explore gModule to build unique global graph by exploring iteratively on gNodes
+-- add mg_nodes and mg_parent to gModules
 local function exploreGModule(currentGN, fromN, fromGN, nodes, gNodes, nodeMap)
   local function exploreNodes(current, from, currentgNode)
     local last
@@ -13,7 +14,7 @@ local function exploreGModule(currentGN, fromN, fromGN, nodes, gNodes, nodeMap)
       local last_node = from
       if m or #current.children==0 then
         table.insert(nodes, { ptr=ptr, from={}, gnode=currentgNode })
-        table.insert(gNodes[currentgNode]._nodes, #nodes)
+        table.insert(gNodes[currentgNode].mg_nodes, #nodes)
         nodeId = #nodes
         nodeMap[ptr] = nodeId
         nodes[nodeId].moduleName= m and torch.type(m) or '<>'
@@ -43,8 +44,8 @@ local function exploreGModule(currentGN, fromN, fromGN, nodes, gNodes, nodeMap)
   end
 
   table.insert(gNodes, currentGN)
-  currentGN._nodes = {}
-  currentGN._parentGNode = fromGN
+  currentGN.mg_nodes = {}
+  currentGN.mg_parent = fromGN
   local roots = currentGN:roots()
   local last
   for _, r in ipairs(roots) do
@@ -53,22 +54,26 @@ local function exploreGModule(currentGN, fromN, fromGN, nodes, gNodes, nodeMap)
   return last
 end
 
-function MemoryGraph:dumpGraph(gModule, filename)
+function MemoryGraph:__init(gModule)
+  self.nodes = {}
+  self.gNodes = {}
+  self.nodeMap = {}
+  self.lastNode = exploreGModule(gModule, 'START', 0, self.nodes, self.gNodes, self.nodeMap)
+end
+
+function MemoryGraph:dump(filename)
   file = io.open(filename, "w")
-  local nodes = {}
-  local gNodes = {}
-  local nodeMap = {}
-  local last = exploreGModule(gModule, 'START', 0, nodes, gNodes, nodeMap)
+  assert(file, "cannot open '"..filename.."' for writing")
   local gnStack = { 0 }
   file:write("digraph G { FINAL ; \n")
-  for i,n in ipairs(gNodes) do
-    while n._parentGNode ~= gnStack[#gnStack] do
+  for i,n in ipairs(self.gNodes) do
+    while n.mg_parent ~= gnStack[#gnStack] do
       file:write('}\n')
       table.remove(gnStack)
     end
     file:write("subgraph cluster_"..i.." { color=blue; \n")
-    for _, k in ipairs(n._nodes) do
-      file:write('  '..k..' [ label="'..nodes[k].moduleName..'" ];\n')
+    for _, k in ipairs(n.mg_nodes) do
+      file:write('  '..k..' [ label="'..self.nodes[k].moduleName..'" ];\n')
     end
     table.insert(gnStack, i)
   end
@@ -76,11 +81,12 @@ function MemoryGraph:dumpGraph(gModule, filename)
     file:write('}\n')
     table.remove(gnStack)
   end
-  for i,n in ipairs(nodes) do
+  for i,n in ipairs(self.nodes) do
     for _,j in ipairs(n.from) do
       file:write(j..' -> '..i..'\n')
     end
   end
-  file:write(last..' -> FINAL\n')
+  file:write(self.lastNode..' -> FINAL\n')
   file:write("}")
+  file:close()
 end
