@@ -114,7 +114,7 @@ function Trainer:__init(args, model, dicts, firstBatch)
     if self.params[idx] then
       _G.params, _G.gradParams = self.params[idx], self.gradParams[idx]
     else
-      _G.params, _G.gradParams = _G.model:getParams()
+      _G.params, _G.gradParams = _G.model:getParams(true)
     end
 
     return idx, _G.params, _G.gradParams
