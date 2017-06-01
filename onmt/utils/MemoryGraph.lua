@@ -12,11 +12,12 @@ local function exploreGModule(currentGN, fromN, fromGN, nodes, gNodes, nodeMap)
     if not nodeId then
       local m = current.data.module
       local last_node = from
-      if m or #current.children==0 then
+      if m or #current.children == 0 then
         table.insert(nodes, { ptr=ptr, from={}, gnode=currentgNode })
         table.insert(gNodes[currentgNode].mg_nodes, #nodes)
         nodeId = #nodes
         nodeMap[ptr] = nodeId
+        -- some gNode modules are just intermediate
         nodes[nodeId].moduleName= m and torch.type(m) or '<>'
         last_node = #nodes
         if m and m.net and torch.type(m.net) == 'nn.gModule' then
@@ -28,7 +29,7 @@ local function exploreGModule(currentGN, fromN, fromGN, nodes, gNodes, nodeMap)
         nodeId = '<0>'
         nodes[nodeId] = { }
       end
-      if current.children and #current.children>0 then
+      if current.children and #current.children > 0 then
         for _, n in ipairs(current.children) do
           last = exploreNodes(n, last_node, currentgNode)
         end

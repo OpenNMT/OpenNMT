@@ -27,8 +27,8 @@ function runTest.run_real()
 
     file = io.popen(TH..[[ train.lua -data tiny-train.t7 -save_model tiny -end_epoch 2 -dump_graphs .\
                       -rnn_size 8 -word_vec_size 5 -profiler 2>&1]])
-    output = file:read('*all')
-    status = file:close()
+    file:read('*all')
+    file:close()
 
     file=io.open('encoder.dot')
     tester:assert(file ~= nil, "cannot find: encoder.dot")
