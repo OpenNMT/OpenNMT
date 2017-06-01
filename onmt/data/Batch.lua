@@ -4,7 +4,6 @@
 local function getLength(seq, ignore)
   local sizes = torch.IntTensor(#seq):zero()
   local max = 0
-  local uneven = false
 
   for i = 1, #seq do
     local len = seq[i]:size(1)
@@ -14,12 +13,9 @@ local function getLength(seq, ignore)
     if max == 0 or len > max then
       max = len
     end
-    if i > 1 and sizes[i - 1] ~= len then
-      uneven = true
-    end
     sizes[i] = len
   end
-  return max, sizes, uneven
+  return max, sizes
 end
 
 --[[ Data management and batch creation.
@@ -72,7 +68,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   self.size = #src
   self.totalSize = self.size -- updated when this batch is part of a larger one (data parallelism).
 
-  self.sourceLength, self.sourceSize, self.uneven = getLength(src)
+  self.sourceLength, self.sourceSize = getLength(src)
 
   -- if input vectors (speech for instance)
   self.inputVectors = #src > 0 and src[1]:dim() > 1
@@ -270,6 +266,10 @@ function Batch:getTargetOutput(t)
   end
 
   return outputs
+end
+
+function Batch:variableLengths()
+  return torch.any(torch.ne(self.sourceSize, self.sourceLength))
 end
 
 return Batch

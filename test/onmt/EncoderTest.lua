@@ -69,8 +69,6 @@ local function genericCheckMasking(encoder)
 
   local batch = onmt.data.Batch.new(src)
 
-  encoder:maskPadding()
-
   local _, context = encoder:forward(batch)
 
   tester:eq(context[2][1]:ne(0):sum(), 0)
@@ -189,12 +187,6 @@ end
 function encoderTest.pdbrnn_LSTM()
   local encoder, opt = buildEncoder(onmt.PDBiEncoder, 'LSTM')
   genericCheckDim(encoder, opt)
-  local t = torch.Tensor{10,7,21}
-  local tred, length = encoder:contextSize(t, 21)
-  tester:assertTensorEq(tred, torch.Tensor{5,4,11})
-  tester:eq(length, 11)
-  local table_red = encoder:contextSize({10,7,21},0)
-  tester:eq(table_red, {5,4,11})
 end
 
 function encoderTest.pdbrnn_saveAndLoad_LSTM()

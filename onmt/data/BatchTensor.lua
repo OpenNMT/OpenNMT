@@ -21,4 +21,8 @@ function BatchTensor:getSourceInput(t)
   return self.sourceInput:select(2, t)
 end
 
+function BatchTensor:variableLengths()
+  return torch.any(torch.ne(self.sourceSize, self.sourceLength))
+end
+
 return BatchTensor

@@ -38,7 +38,7 @@ function batchTest.simpleTrainingBatch()
 
   tester:eq(batch.sourceLength, 4)
   tester:eq(batch.sourceSize, torch.IntTensor({4, 4, 4}))
-  tester:eq(batch.uneven, false)
+  tester:eq(batch:variableLengths(), false)
   tester:eq(batch.sourceInput,
             torch.LongTensor({
               {5, 5, 5},
@@ -96,7 +96,7 @@ function batchTest.simpleTrainingBatchUneven()
 
   tester:eq(batch.sourceLength, 4)
   tester:eq(batch.sourceSize, torch.IntTensor({4, 2, 3}))
-  tester:eq(batch.uneven, true)
+  tester:eq(batch:variableLengths(), true)
   tester:eq(batch.sourceInput,
             torch.LongTensor({
               {5, onmt.Constants.PAD, onmt.Constants.PAD},
@@ -209,7 +209,7 @@ function batchTest.unevenAscending()
   }
 
   local batch = onmt.data.Batch.new(src)
-  tester:eq(batch.uneven, true)
+  tester:eq(batch:variableLengths(), true)
 end
 
 function batchTest.unevenDescending()
@@ -220,7 +220,7 @@ function batchTest.unevenDescending()
   }
 
   local batch = onmt.data.Batch.new(src)
-  tester:eq(batch.uneven, true)
+  tester:eq(batch:variableLengths(), true)
 end
 
 function batchTest.empty()

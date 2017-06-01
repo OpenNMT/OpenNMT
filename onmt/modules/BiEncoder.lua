@@ -148,16 +148,6 @@ function BiEncoder:resetPreallocation()
   self.gradContextBwdProto = torch.Tensor()
 end
 
-function BiEncoder:maskPadding()
-  self.fwd:maskPadding()
-  self.bwd:maskPadding()
-end
-
--- size of context vector
-function BiEncoder:contextSize(sourceSize, sourceLength)
-  return sourceSize, sourceLength
-end
-
 function BiEncoder:forward(batch)
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,

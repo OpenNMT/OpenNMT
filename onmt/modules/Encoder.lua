@@ -127,15 +127,6 @@ function Encoder:resetPreallocation()
   self.contextProto = torch.Tensor()
 end
 
-function Encoder:maskPadding()
-  self.maskPad = true
-end
-
--- size of context vector
-function Encoder:contextSize(sourceSize, sourceLength)
-  return sourceSize, sourceLength
-end
-
 --[[ Build one time-step of an Encoder
 
 Returns: An nn-graph mapping
@@ -201,7 +192,7 @@ function Encoder:forward(batch)
   local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
                                                 { batch.size, batch.sourceLength, outputSize })
 
-  if self.maskPad and not batch.sourceInputPadLeft then
+  if batch:variableLengths() and not batch.sourceInputPadLeft then
     finalStates = onmt.utils.Tensor.recursiveClone(states)
   end
   if self.train then
@@ -228,7 +219,7 @@ function Encoder:forward(batch)
     if type(states) ~= "table" then states = { states } end
 
     -- Special case padding.
-    if self.maskPad then
+    if batch:variableLengths() then
       for b = 1, batch.size do
         if (batch.sourceInputPadLeft and t <= batch.sourceLength - batch.sourceSize[b])
         or (not batch.sourceInputPadLeft and t > batch.sourceSize[b]) then

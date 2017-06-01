@@ -214,26 +214,19 @@ function Decoder:findAttentionModel()
   end
 end
 
---[[ Mask padding means that the attention-layer is constrained to
-  give zero-weight to padding. This is done by storing a reference
-  to the softmax attention-layer.
+--[[ Replace the attention softmax with the module returned by calling the given builder.
 
-  Parameters:
+Paramters:
 
-  * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
+  * `builder` - a callable that returns a new module.
+
 --]]
-function Decoder:maskPadding(sourceSizes, sourceLength)
+function Decoder:replaceAttentionSoftmax(builder)
   self:findAttentionModel()
 
   local function substituteSoftmax(module)
     if module.name == 'softmaxAttn' then
-      local mod
-      if sourceSizes ~= nil then
-        mod = onmt.MaskedSoftmax(sourceSizes, sourceLength)
-      else
-        mod = nn.SoftMax()
-      end
-
+      local mod = builder()
       mod.name = 'softmaxAttn'
       mod:type(module._type)
       self.softmaxAttn = mod
@@ -245,8 +238,37 @@ function Decoder:maskPadding(sourceSizes, sourceLength)
 
   self.decoderAttn:replace(substituteSoftmax)
 
+  -- Also replace it in every clones during training.
   for t = 1, #self.networkClones do
     self.decoderAttnClones[t]:replace(substituteSoftmax)
+  end
+end
+
+--[[ Mask padding means that the attention-layer is constrained to
+  give zero-weight to padding on the source side.
+
+Parameters:
+
+  * See  [onmt.MaskedSoftmax](onmt+modules+MaskedSoftmax).
+--]]
+function Decoder:addPaddingMask(sourceSizes, sourceLength)
+  -- If there is no padding on the source side, no need for a mask.
+  if torch.all(torch.eq(sourceSizes, sourceLength)) then
+    self:removePaddingMask()
+  -- Otherwise, invalidate the padding mask if needed.
+  elseif not self.paddingMask
+      or not sourceSizes:isSameSizeAs(self.paddingMask)
+      or torch.any(torch.ne(sourceSizes, self.paddingMask)) then
+    self.paddingMask = sourceSizes
+    self:replaceAttentionSoftmax(function() return onmt.MaskedSoftmax(sourceSizes, sourceLength) end)
+  end
+end
+
+--[[ Remove mask applied to the attention softmax. ]]
+function Decoder:removePaddingMask()
+  if self.paddingMask then
+    self.paddingMask = nil
+    self:replaceAttentionSoftmax(function() return nn.SoftMax() end)
   end
 end
 
@@ -259,16 +281,30 @@ Parameters:
   * `context` - encoder output (batch x n x rnnSize)
   * `prevOut` - previous distribution (batch x #words)
   * `t` - current timestep
+  * `sourceSizes` - a Tensor with the length of source sequences
+  * `sourceLength` - the source batch sequence length
 
 Returns:
 
  1. `out` - Top-layer hidden state.
  2. `states` - All states.
 --]]
-function Decoder:forwardOne(input, prevStates, context, prevOut, t)
-  local inputs = {}
+function Decoder:forwardOne(input, prevStates, context, prevOut, t, sourceSizes, sourceLength)
+  if sourceSizes then
+    -- If the encoder reduced the time dimension, resize the padding mask accordingly.
+    if sourceLength ~= context:size(2) then
+      local multiplier = math.ceil(sourceLength / context:size(2))
+      sourceLength = context:size(2)
+      sourceSizes = sourceSizes:float():div(multiplier):ceil():typeAs(sourceSizes)
+    end
 
-  -- Create RNN input (see sequencer.lua `buildNetwork('dec')`).
+    self:addPaddingMask(sourceSizes, sourceLength)
+  else
+    self:removePaddingMask()
+  end
+
+  -- Create the graph input.
+  local inputs = {}
   onmt.utils.Table.append(inputs, prevStates)
   table.insert(inputs, input)
   table.insert(inputs, context)
@@ -331,7 +367,13 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   local prevOut
 
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
+    prevOut, states = self:forwardOne(batch:getTargetInput(t),
+                                      states,
+                                      context,
+                                      prevOut,
+                                      t,
+                                      batch.sourceSize,
+                                      batch.sourceLength)
     func(prevOut, t)
   end
 end
