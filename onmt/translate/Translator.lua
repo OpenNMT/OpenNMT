@@ -125,6 +125,7 @@ function Translator:__init(args)
     end
   )
 
+  local sourceVocabSize
   local targetVocabSize
 
   -- Load models into their own thread.
@@ -137,10 +138,12 @@ function Translator:__init(args)
       return i, ckpt, _G.model, self.args.model[i]
     end,
     function(i, ckpt, model, modelFile)
-      -- Check target vocabulary size.
-      if not targetVocabSize then
+      -- Check vocabulary.
+      if not sourceVocabSize then
+        sourceVocabSize = ckpt.dicts.src.words:size()
         targetVocabSize = ckpt.dicts.tgt.words:size()
       else
+        assert(ckpt.dicts.src.words:size() == sourceVocabSize, 'source vocabulary must be the same')
         assert(ckpt.dicts.tgt.words:size() == targetVocabSize, 'target vocabulary must be the same')
       end
 
