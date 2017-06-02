@@ -209,11 +209,9 @@ function DecoderAdvancer:expand(beam)
       self.logProbsBuffer:copy(logProbs[i][j])
 
       logProbs[1][j]
-        :exp()
         :mul(i - 1)
-        :add(self.logProbsBuffer:exp())
+        :add(self.logProbsBuffer)
         :div(i)
-        :log()
     end
   end
 
