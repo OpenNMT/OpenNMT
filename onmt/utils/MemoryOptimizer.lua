@@ -158,13 +158,13 @@ function MemoryOptimizer:optimize()
       local mempool = {}
 
       -- Some modules are using output when performing updateGradInput so we cannot share these.
-      local protectedOutput = { desc[i].input }
+      local protectedInputBuffer = { desc[i].input }
       net:apply(function(m)
         if contains(protectOutput, m) then
-          table.insert(protectedOutput, m.output)
+          table.insert(protectedInputBuffer, m.output)
         end
         if contains(protectInput, m) then
-          table.insert(protectedOutput, m.input)
+          table.insert(protectedInputBuffer, m.input)
         end
       end)
 
@@ -186,7 +186,7 @@ function MemoryOptimizer:optimize()
           gradInputMap[globalIdx] = idx
           idx = idx + 1
         end
-        if canShare(m.output, net, protectedOutput) then
+        if canShare(m.output, net, protectedInputBuffer) then
           sharedSize = sharedSize + oSize
           m.outputSharedIdx = idx
           outputMap[globalIdx] = idx
