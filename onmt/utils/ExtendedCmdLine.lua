@@ -207,7 +207,7 @@ function ExtendedCmdLine:option(key, default, help, _meta_)
 
   if _meta_ and _meta_.enum and type(default) == 'table' then
     for _,k in ipairs(default) do
-      assert(onmt.utils.Table.hasValue(_meta_.enum, default), "table option not compatible with enum: "..key)
+      assert(onmt.utils.Table.hasValue(_meta_.enum, k), "table option not compatible with enum: "..key)
     end
   end
 
