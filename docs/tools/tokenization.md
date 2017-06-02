@@ -27,8 +27,8 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 ## Mixed casing words
 `-segment_case` feature enables tokenizer to segment words into subwords with one of 3 casing types (truecase ('House'), uppercase ('HOUSE') or lowercase ('house')), which helps  restore right casing during  detokenization. This feature is especially useful for texts with a signficant number of words with mixed casing ('WiFi' -> 'Wi' and 'Fi').
 ```text
-WiFi --> Wi￨C Fi￨C
-TVs --> Tv￨C s￨l
+WiFi --> wi￨C fi￨C
+TVs --> tv￨C s￨l
 ```
 
 ## BPE
