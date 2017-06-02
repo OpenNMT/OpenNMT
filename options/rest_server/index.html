@@ -887,6 +887,7 @@
 <li><code>-joiner &lt;string&gt;</code> (default: <code>￭</code>)<br/>Character used to annotate joiners.</li>
 <li><code>-joiner_new [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>In <code>-joiner_annotate</code> mode, <code>-joiner</code> is an independent token.</li>
 <li><code>-case_feature [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Generate case feature.</li>
+<li><code>-segment_case [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment case feature, splits AbC to Ab C to be able to restore case</li>
 <li><code>-bpe_model &lt;string&gt;</code> (default: <code>''</code>)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, <code>-mode</code> will be overridden/set automatically if the BPE model specified by <code>-bpe_model</code> is learnt using <code>learn_bpe.lua</code>.</li>
 <li><code>-EOT_marker &lt;string&gt;</code> (default: <code>&lt;/w&gt;</code>)<br/>Marker used to mark the end of token.</li>
 <li><code>-BOT_marker &lt;string&gt;</code> (default: <code>&lt;w&gt;</code>)<br/>Marker used to mark the beginning of token.</li>

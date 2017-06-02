@@ -507,6 +507,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mixed-casing-words" title="Mixed casing words" class="md-nav__link">
+    Mixed casing words
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bpe" title="BPE" class="md-nav__link">
     BPE
   </a>
@@ -783,6 +790,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mixed-casing-words" title="Mixed casing words" class="md-nav__link">
+    Mixed casing words
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bpe" title="BPE" class="md-nav__link">
     BPE
   </a>
@@ -830,6 +844,13 @@
 <li><code>￨</code> is the feature separator symbol. If such character is used in source text, it is replaced by its non presentation form <code>│</code>.</li>
 <li><code>￭</code> is the default joiner marker (generated in <code>-joiner_annotate marker</code> mode). If such character is used in source text, it is replaced by its non presentation form <code>■</code></li>
 </ul>
+<h2 id="mixed-casing-words">Mixed casing words<a class="headerlink" href="#mixed-casing-words" title="Permanent link">&para;</a></h2>
+<p><code>-segment_case</code> feature enables tokenizer to segment words into subwords with one of 3 casing types (truecase ('House'), uppercase ('HOUSE') or lowercase ('house')), which helps  restore right casing during  detokenization. This feature is especially useful for texts with a signficant number of words with mixed casing ('WiFi' -&gt; 'Wi' and 'Fi').</p>
+<div class="codehilite"><pre><span></span>WiFi --&gt; wi￨C fi￨C
+TVs --&gt; tv￨U s￨L
+</pre></div>
+
+
 <h2 id="bpe">BPE<a class="headerlink" href="#bpe" title="Permanent link">&para;</a></h2>
 <p>OpenNMT's BPE module fully supports the <a href="https://github.com/rsennrich/subword-nmt">original BPE</a> as default mode:</p>
 <div class="codehilite"><pre><span></span>tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes &lt; input
