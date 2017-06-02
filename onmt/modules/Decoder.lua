@@ -295,7 +295,7 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t, sourceSizes,
     if sourceLength ~= context:size(2) then
       local multiplier = math.ceil(sourceLength / context:size(2))
       sourceLength = context:size(2)
-      sourceSizes = sourceSizes:float():div(multiplier):ceil():typeAs(sourceSizes)
+      sourceSizes = sourceSizes:clone():float():div(multiplier):ceil():typeAs(sourceSizes)
     end
 
     self:addPaddingMask(sourceSizes, sourceLength)

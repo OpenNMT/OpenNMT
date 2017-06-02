@@ -27,8 +27,6 @@ Batch interface reference [size]:
   * sourceSize:  lengths of each source [batch x 1]
   * sourceInput:  left-padded idx's of source (PPPPPPABCDE) [batch x max]
   * sourceInputFeatures: table of source features sequences
-  * sourceInputRev: right-padded  idx's of source rev (EDCBAPPPPPP) [batch x max]
-  * sourceInputRevFeatures: table of reversed source features sequences
   * targetLength: max length in source batch [1]
   * targetSize: lengths of each source [batch x 1]
   * targetInput: input idx's of target (SABCDEPPPPPP) [batch x max]
@@ -65,37 +63,26 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
     assert(#src == #tgt, "source and target must have the same batch size")
   end
 
-  self.size = #src
-  self.totalSize = self.size -- updated when this batch is part of a larger one (data parallelism).
-
-  self.sourceLength, self.sourceSize = getLength(src)
-
-  -- if input vectors (speech for instance)
   self.inputVectors = #src > 0 and src[1]:dim() > 1
-
-  local sourceSeq = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
-
-  if not self.inputVectors then
-    self.sourceInput = sourceSeq:clone()
-    self.sourceInputRev = sourceSeq:clone()
-    -- will be used to return extra padded value
-    self.padTensor = torch.LongTensor(self.size):fill(onmt.Constants.PAD)
-  else
-    self.sourceInput = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
-    self.sourceInputRev = torch.Tensor(self.sourceLength, self.size, src[1]:size(2))
-    self.padTensor = torch.Tensor(self.size, src[1]:size(2)):zero()
-  end
-
+  self.size = #src
+  self.totalSize = self.size -- Used for loss normalization.
+  self.sourceLength, self.sourceSize = getLength(src)
   self.sourceInputFeatures = {}
-  self.sourceInputRevFeatures = {}
 
-  if #srcFeatures > 0 then
-    for _ = 1, #srcFeatures[1] do
-      table.insert(self.sourceInputFeatures, sourceSeq:clone())
-      table.insert(self.sourceInputRevFeatures, sourceSeq:clone())
+  -- Allocate source tensors.
+  if self.inputVectors then
+    self.sourceInput = torch.Tensor(self.sourceLength, self.size, src[1]:size(2)):fill(0.0)
+  else
+    self.sourceInput = torch.LongTensor(self.sourceLength, self.size):fill(onmt.Constants.PAD)
+
+    if #srcFeatures > 0 then
+      for _ = 1, #srcFeatures[1] do
+        table.insert(self.sourceInputFeatures, self.sourceInput:clone())
+      end
     end
   end
 
+  -- Allocate target tensors if defined.
   if tgt ~= nil then
     self.targetLength, self.targetSize = getLength(tgt, 1)
 
@@ -114,44 +101,27 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
     end
   end
 
+  -- Batch sequences.
   for b = 1, self.size do
-    local sourceOffset = self.sourceLength - self.sourceSize[b] + 1
-    local sourceInput = src[b]
-    local sourceInputRev = src[b]:index(1, torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long())
+    -- Source input is left padded [PPPPPPABCDE].
+    local window = {{self.sourceLength - self.sourceSize[b] + 1, self.sourceLength}, b}
 
-    -- Source input is left padded [PPPPPPABCDE] .
-    self.sourceInput[{{sourceOffset, self.sourceLength}, b}]:copy(sourceInput)
-    self.sourceInputPadLeft = true
-
-    -- Rev source input is right padded [EDCBAPPPPPP] .
-    self.sourceInputRev[{{1, self.sourceSize[b]}, b}]:copy(sourceInputRev)
-    self.sourceInputRevPadLeft = false
+    self.sourceInput[window]:copy(src[b])
 
     for i = 1, #self.sourceInputFeatures do
-      local sourceInputFeatures = srcFeatures[b][i]
-      local sourceInputRevFeatures = srcFeatures[b][i]:index(1, torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long())
-
-      self.sourceInputFeatures[i][{{sourceOffset, self.sourceLength}, b}]:copy(sourceInputFeatures)
-      self.sourceInputRevFeatures[i][{{1, self.sourceSize[b]}, b}]:copy(sourceInputRevFeatures)
+      self.sourceInputFeatures[i][window]:copy(srcFeatures[b][i])
     end
 
     if tgt ~= nil then
-      -- Input: [<s>ABCDE]
-      -- Ouput: [ABCDE</s>]
       local targetLength = tgt[b]:size(1) - 1
-      local targetInput = tgt[b]:narrow(1, 1, targetLength)
-      local targetOutput = tgt[b]:narrow(1, 2, targetLength)
+      window = {{1, targetLength}, b}
 
-      -- Target is right padded [<S>ABCDEPPPPPP] .
-      self.targetInput[{{1, targetLength}, b}]:copy(targetInput)
-      self.targetOutput[{{1, targetLength}, b}]:copy(targetOutput)
+      self.targetInput[window]:copy(tgt[b]:narrow(1, 1, targetLength)) -- [<s>ABCDE]
+      self.targetOutput[window]:copy(tgt[b]:narrow(1, 2, targetLength)) -- [ABCDE</s>]
 
       for i = 1, #self.targetInputFeatures do
-        local targetInputFeatures = tgtFeatures[b][i]:narrow(1, 1, targetLength)
-        local targetOutputFeatures = tgtFeatures[b][i]:narrow(1, 2, targetLength)
-
-        self.targetInputFeatures[i][{{1, targetLength}, b}]:copy(targetInputFeatures)
-        self.targetOutputFeatures[i][{{1, targetLength}, b}]:copy(targetOutputFeatures)
+        self.targetInputFeatures[i][window]:copy(tgtFeatures[b][i]:narrow(1, 1, targetLength))
+        self.targetOutputFeatures[i][window]:copy(tgtFeatures[b][i]:narrow(1, 2, targetLength))
       end
     end
   end
@@ -170,9 +140,7 @@ function Batch:setSourceInput(sourceInput)
   self.size = sourceInput:size(2)
   self.sourceLength = sourceInput:size(1)
   self.sourceInputFeatures = {}
-  self.sourceInputRevReatures = {}
   self.sourceInput = sourceInput
-  self.sourceInputRev = self.sourceInput:index(1, torch.linspace(self.sourceLength, 1, self.sourceLength):long())
   return self
 end
 
@@ -226,14 +194,8 @@ end
 
 --[[ Get source input batch at timestep `t`. --]]
 function Batch:getSourceInput(t)
-  local inputs
-
   -- If a regular input, return word id, otherwise a table with features.
-  if t > self.sourceInput:size(1) then
-    inputs = self.padTensor
-  else
-    inputs = self.sourceInput[t]
-  end
+  local inputs = self.sourceInput[t]
 
   if #self.sourceInputFeatures > 0 then
     inputs = { inputs }
@@ -268,8 +230,73 @@ function Batch:getTargetOutput(t)
   return outputs
 end
 
+--[[ Return true if the batch contains sequences of variable lengths. ]]
 function Batch:variableLengths()
   return torch.any(torch.ne(self.sourceSize, self.sourceLength))
+end
+
+--[[ Resize the source sequences, adding padding as needed. ]]
+function Batch:resizeSource(newLength)
+  if newLength == self.sourceLength then
+    return
+  end
+
+  if newLength < self.sourceLength then
+    local lengthDelta = self.sourceLength - newLength
+    self.sourceInput = self.sourceInput:narrow(1, lengthDelta + 1, newLength)
+
+    if self.sourceInputFeatures then
+      for i = 1, #self.sourceInputFeatures do
+        self.sourceInputFeatures[i] = self.sourceInputFeatures[i]
+          :narrow(1, lengthDelta + 1, newLength)
+      end
+    end
+
+    self.sourceSize:cmin(newLength)
+  else
+    local lengthDelta = newLength - self.sourceLength
+    local newSourceInput
+
+    if self.inputVectors then
+      newSourceInput =
+        self.sourceInput.new(newLength, self.sourceInput:size(2), self.sourceInput:size(3)):fill(0.0)
+    else
+      newSourceInput =
+        self.sourceInput.new(newLength, self.sourceInput:size(2)):fill(onmt.Constants.PAD)
+
+      if self.sourceInputFeatures then
+        for i = 1, #self.sourceInputFeatures do
+          local newSourceInputFeature = self.sourceInputFeatures[i].new(newLength, self.size)
+            :fill(onmt.Constants.PAD)
+            :narrow(1, lengthDelta + 1, newLength - lengthDelta)
+            :copy(self.sourceInputFeatures[i])
+          self.sourceInputFeatures[i] = newSourceInputFeature
+        end
+      end
+    end
+
+    newSourceInput:narrow(1, lengthDelta + 1, newLength - lengthDelta):copy(self.sourceInput)
+    self.sourceInput = newSourceInput
+  end
+
+  self.sourceLength = newLength
+end
+
+function Batch:reverseSourceInPlace()
+  for b = 1, self.size do
+    local reversedIndices = torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long()
+    local window = {{self.sourceLength - self.sourceSize[b] + 1, self.sourceLength}, b}
+
+    self.sourceInput[window]:copy(self.sourceInput[window]:index(1, reversedIndices))
+
+    if self.sourceInputFeatures then
+      self.sourceInputFeaturesRev = {}
+      for i = 1, #self.sourceInputFeatures do
+        self.sourceInputFeatures[i][window]
+          :copy(self.sourceInputFeatures[i][window]:index(1, reversedIndices))
+      end
+    end
+  end
 end
 
 return Batch

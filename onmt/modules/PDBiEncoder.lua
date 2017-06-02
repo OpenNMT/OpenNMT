@@ -114,7 +114,7 @@ end
 
 function PDBiEncoder:forward(batch)
   -- Make source length divisible by the total reduction.
-  batch.sourceLength = math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier
+  batch:resizeSource(math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier)
 
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
@@ -165,11 +165,12 @@ function PDBiEncoder:forward(batch)
                 context:size(3) * self.args.pdbrnn_reduction)
       end
 
-      local newSizes = batch.sourceSize
+      local newSizes = self.inputs[i].sourceSize
+        :clone()
         :float()
         :div(self.args.pdbrnn_reduction)
         :ceil()
-        :typeAs(batch.sourceSize)
+        :typeAs(self.inputs[i].sourceSize)
       table.insert(self.inputs, onmt.data.BatchTensor.new(nextContext, newSizes))
     end
   end

@@ -176,7 +176,6 @@ function Encoder:forward(batch)
 
   -- TODO: Change `batch` to `input`.
 
-  local finalStates
   local outputSize = self.args.rnnSize
 
   if self.statesProto == nil then
@@ -192,9 +191,6 @@ function Encoder:forward(batch)
   local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
                                                 { batch.size, batch.sourceLength, outputSize })
 
-  if batch:variableLengths() and not batch.sourceInputPadLeft then
-    finalStates = onmt.utils.Tensor.recursiveClone(states)
-  end
   if self.train then
     self.inputs = {}
   end
@@ -221,14 +217,9 @@ function Encoder:forward(batch)
     -- Special case padding.
     if batch:variableLengths() then
       for b = 1, batch.size do
-        if (batch.sourceInputPadLeft and t <= batch.sourceLength - batch.sourceSize[b])
-        or (not batch.sourceInputPadLeft and t > batch.sourceSize[b]) then
+        if t <= batch.sourceLength - batch.sourceSize[b] then
           for j = 1, #states do
             states[j][b]:zero()
-          end
-        elseif not batch.sourceInputPadLeft and t == batch.sourceSize[b] then
-          for j = 1, #states do
-            finalStates[j][b]:copy(states[j][b])
           end
         end
       end
@@ -238,11 +229,7 @@ function Encoder:forward(batch)
     context[{{}, t}]:copy(states[#states])
   end
 
-  if finalStates == nil then
-    finalStates = states
-  end
-
-  return finalStates, context
+  return states, context
 end
 
 --[[ Backward pass (only called during training)
