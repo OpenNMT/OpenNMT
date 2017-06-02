@@ -9,6 +9,7 @@
 * New option in preprocess to check that sizes of source and target are equal (for seqtagging)
 * Add `-pdbrnn_merge` option to define how to reduce the time dimension
 * Add option to segment mixed cased words
+* Add options to segment words of given alphabets or when switching alphabets
 
 ### Fixes and improvements
 

@@ -11,6 +11,7 @@
 
 * `-src <string>` (required)<br/>Source sequences to tag.
 * `-output <string>` (default: `pred.txt`)<br/>Output file.
+* `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
 
 ## Tagger options
 

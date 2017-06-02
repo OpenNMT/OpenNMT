@@ -142,7 +142,8 @@ function ExtendedCmdLine:help(arg, md)
       else
         argDefault = tostring(option.default)
       end
-      if not (option.meta and option.meta.required and argDefault == '\'\'') then
+      if not (option.meta and option.meta.required and argDefault == '\'\'') and
+         not (type(option.default == 'table') and argDefault == '') then
         if md then
           argDefault = '`' .. argDefault .. '`'
         end
@@ -199,9 +200,15 @@ function ExtendedCmdLine:option(key, default, help, _meta_)
   -- empty and in that case, is a required option, or is an error
   if _meta_ and (
     (_meta_.valid and not _meta_.valid(default)) or
-    (_meta_.enum and not onmt.utils.Table.hasValue(_meta_.enum, default))) then
+    (_meta_.enum and type(default) ~= 'table' and not onmt.utils.Table.hasValue(_meta_.enum, default))) then
     assert(default=='',"Invalid option default definition: "..key.."="..default)
     _meta_.required = true
+  end
+
+  if _meta_ and _meta_.enum and type(default) == 'table' then
+    for _,k in ipairs(default) do
+      assert(onmt.utils.Table.hasValue(_meta_.enum, k), "table option not compatible with enum: "..key)
+    end
   end
 
   self.options[key].meta = _meta_
@@ -469,8 +476,15 @@ function ExtendedCmdLine:parse(arg)
           self:error(msg)
         end
 
-        if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
+        if meta.enum and type(self.options[K].default) ~= 'table' and not onmt.utils.Table.hasValue(meta.enum, v) then
           self:error('option -' .. k.. ' is not in accepted values: ' .. concatValues(meta.enum))
+        end
+        if meta.enum and type(self.options[K].default) == 'table' then
+          for _, v1 in ipairs(v) do
+            if not onmt.utils.Table.hasValue(meta.enum, v1) then
+              self:error('option -' .. k.. ' is not in accepted values: ' .. concatValues(meta.enum))
+            end
+          end
         end
         if meta.structural then
           params._structural[k] = meta.structural
