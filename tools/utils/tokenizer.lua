@@ -31,6 +31,10 @@ local options = {
     [[Generate case feature.]]
   },
   {
+    '-segment_case', false,
+    [[Segment case feature, splits AbC to Ab C to be able to restore case]]
+  },
+  {
     '-bpe_model', '',
     [[Apply Byte Pair Encoding if the BPE model path is given. If the option is used,
       `-mode` will be overridden/set automatically if the BPE model specified by `-bpe_model`
@@ -225,6 +229,13 @@ end
 function tokenizer.tokenize(opt, line, bpe)
   -- tokenize
   local tokens = tokenize(line, opt)
+
+  -- apply segmetn feature if requested
+  if opt.segment_case then
+    local sep = ''
+    if opt.joiner_annotate then sep = opt.joiner end
+    tokens = case.segmentCase(tokens, sep)
+  end
 
   -- apply bpe if requested
   if bpe then
