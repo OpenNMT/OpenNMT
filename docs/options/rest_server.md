@@ -49,6 +49,7 @@
 * `-joiner <string>` (default: `￭`)<br/>Character used to annotate joiners.
 * `-joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
 * `-case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
+* `-segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
 * `-bpe_model <string>` (default: `''`)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, `-mode` will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
 * `-EOT_marker <string>` (default: `</w>`)<br/>Marker used to mark the end of token.
 * `-BOT_marker <string>` (default: `<w>`)<br/>Marker used to mark the beginning of token.
