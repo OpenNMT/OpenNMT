@@ -20,8 +20,10 @@ function memoryGraphTest.read()
 
   local encoder = buildEncoder(onmt.Encoder)
 
-  local MG=onmt.utils.MemoryGraph.new(encoder.network.fg)
-  MG:dump('encoder.dot')
+  local MG = onmt.utils.MemoryGraph.new()
+
+  MG:add("encoder", encoder.network)
+  MG:dump('.')
 
   local file = io.open('encoder.dot')
 
@@ -29,6 +31,12 @@ function memoryGraphTest.read()
 
   file:close()
   os.remove('encoder.dot')
+end
+
+function memoryGraphTest.checkProtected()
+  local m = nn.Linear(50,50)
+  tester:assert(onmt.utils.MemoryGraph.protected(m, "input")==true)
+  tester:assert(onmt.utils.MemoryGraph.protected(m, "output")==false)
 end
 
 return memoryGraphTest

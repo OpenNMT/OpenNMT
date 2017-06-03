@@ -2,30 +2,6 @@
 --]]
 local MemoryOptimizer = torch.class('MemoryOptimizer')
 
--- We cannot share the output of these modules as they use it in their backward pass.
-local protectOutput = {
-  'nn.Sigmoid',
-  'nn.SoftMax',
-  'nn.Tanh'
-}
-
--- We cannot share the input of these modules as they use it in their backward pass.
-local protectInput = {
-  'nn.Linear',
-  'nn.JoinTable',
-  'nn.CMulTable',
-  'nn.MM'
-}
-
-local function contains(list, m)
-  for i = 1, #list do
-    if torch.typename(m) == list[i] then
-      return true
-    end
-  end
-  return false
-end
-
 local function tensorIncluded(t, l)
   if torch.isTensor(l) then
     return torch.pointer(t:storage()) == torch.pointer(l:storage())
@@ -116,6 +92,7 @@ Example:
 function MemoryOptimizer:__init(modules)
   self.modelDesc = {}
 
+  self.MG=onmt.utils.MemoryGraph.new()
   for name, mod in pairs(modules) do
     self.modelDesc[name] = {}
 
@@ -123,6 +100,7 @@ function MemoryOptimizer:__init(modules)
       -- If the module directly contains a network, take the first clone.
       self.modelDesc[name][1] = {}
       registerNet(self.modelDesc[name][1], mod:net(1), mod.network)
+      self.MG:add(name, mod:net(1))
     elseif mod.modules then
       -- Otherwise, look in submodules instead.
       local i = 1
@@ -130,6 +108,7 @@ function MemoryOptimizer:__init(modules)
         if torch.isTypeOf(m, 'onmt.Sequencer') then
           self.modelDesc[name][i] = {}
           registerNet(self.modelDesc[name][i], m:net(1), m.network)
+          self.MG:add(name, m:net(1))
           i = i + 1
         end
       end)
@@ -149,6 +128,8 @@ Returns:
   2. `totSize` - total tensor size
 ]]
 function MemoryOptimizer:optimize()
+  self.MG:optimize()
+
   local totSize = 0
   local sharedSize = 0
   for _, desc in pairs(self.modelDesc) do
@@ -160,10 +141,10 @@ function MemoryOptimizer:optimize()
       -- Some modules are using output when performing updateGradInput so we cannot share these.
       local protectedInputBuffer = { desc[i].input }
       net:apply(function(m)
-        if contains(protectOutput, m) then
+        if MemoryGraph.protected(m, "output") then
           table.insert(protectedInputBuffer, m.output)
         end
-        if contains(protectInput, m) then
+        if MemoryGraph.protected(m, "input") then
           table.insert(protectedInputBuffer, m.input)
         end
       end)

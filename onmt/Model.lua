@@ -59,15 +59,15 @@ function Model:dumpGraphs(path)
     local net = desc.network or desc
     if net.fg then
       _G.logger:info('Generate graph '..name..'.dot')
-      MG:add(name, net.fg)
+      MG:add(name, net)
     end
     if desc.fwd and desc.fwd.network and desc.fwd.network.fg then
       _G.logger:info('Generate graph '..name..'-fwd.dot')
-      MG:add(name..'-fwd', desc.fwd.network.fg)
+      MG:add(name..'-fwd', desc.fwd.network)
     end
     if desc.bwd and desc.bwd.network and desc.fwd.network.bg then
       _G.logger:info('Generate graph '..name..'-bwd.dot')
-      MG:add(name..'-bwd', desc.bwd.network.fg)
+      MG:add(name..'-bwd', desc.bwd.network)
     end
   end
   MG:dump(path)
