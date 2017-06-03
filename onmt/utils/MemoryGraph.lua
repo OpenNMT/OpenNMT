@@ -1,7 +1,10 @@
---[[MemoryGraph is a class for finding memory usage dependency within a graph
+--[[
+  MemoryGraph is a class for finding and optimizing memory usage (storage) dependency within all the computation graphs
 ]]
+
 local MemoryGraph = torch.class('MemoryGraph')
 
+-- inspired from nngraph.simple_print
 local function removeNodeFromEdges(node_id, edges)
   local from_nodes = {}
   local to_nodes = {}
@@ -108,35 +111,11 @@ local function cleanGraph(nodes, edges)
   return reIndexNodes(nodes, new_edges)
 end
 
-local pidx=1
-function plot(nodes, edges)
-    local str = {}
-  table.insert(str,'digraph G {\n')
-  if title then
-    table.insert(str,'labelloc="t";\nlabel="' .. title .. '";\n')
-  end
-  table.insert(str,'node [shape = oval]; ')
-  local nodelabels = {}
-  for i,node in ipairs(nodes) do
-    local true_node = node.orig_node
-    local l =  '"' .. ( 'Node' .. true_node.id .. '\\n' .. true_node:label() ) .. '"'
-    nodelabels[node.id] = 'n' .. true_node.id
-    table.insert(str, '\n' .. nodelabels[node.id] .. '[label=' .. l .. '];')
-  end
-  table.insert(str,'\n')
-  for i,edge in ipairs(edges) do
-    table.insert(str,nodelabels[edge.source] .. ' -> ' .. nodelabels[edge.target] .. ';\n')
-  end
-  table.insert(str,'}')
-  local fgv = io.open('p'..pidx..'.dot','w')
-  pidx=pidx+1
-  fgv:write(table.concat(str,''))
-  fgv:close()
-end
-
+-- transform (recursively a nngraph into a nodes/edges graph)
 local function loadGraph(graph)
   local nodes = {}
   local edges = {}
+
   for _, node in ipairs(graph.nodes) do
    local idx = node.id
    local processed = false
@@ -148,7 +127,7 @@ local function loadGraph(graph)
      for _, vn in ipairs(vnodes) do
       local vidx = idx .. '_' .. vn.id
       if vn.id == vfirst then vidx = idx end
-      vn.orig_node.id = vidx
+      vn.orig_node.id = idx .. '_' .. vn.orig_node.id
       table.insert(nodes, {id = vidx, orig_node = vn.orig_node})
      end
      for _, ve in ipairs(vedges) do
@@ -174,36 +153,43 @@ local function loadGraph(graph)
   return nodes , edges, first, last
 end
 
-function MemoryGraph:__init(gModule, storageDep)
-  self.nodes, self.edges, self.first, self.last = loadGraph(gModule)
+function MemoryGraph:__init()
+  self.graphs = {}
 end
 
-function MemoryGraph:dump(filename)
-  print('-->',filename)
-  local file = io.open(filename, "w")
-  assert(file, "cannot open '"..filename.."' for writing")
+function MemoryGraph:add(name, gModule)
+  local nodes , edges, first, last = loadGraph(gModule)
+  table.insert(self.graphs, { name=name, nodes=nodes, edges=edges, first=first, last=last })
+end
 
-  local str = {}
-  table.insert(str,'digraph G {\n')
-  if title then
-    table.insert(str,'labelloc="t";\nlabel="' .. filename .. '";\n')
-  end
-  table.insert(str,'node [shape = oval]; ')
-  local nodelabels = {}
-  for i,node in ipairs(self.nodes) do
-    local true_node = node.orig_node
-    local l =  '"' .. ( 'Node' .. true_node.id .. '\\n' .. true_node:label() ) .. '"'
-    nodelabels[i] = 'n' .. true_node.id
-    table.insert(str, '\n' .. nodelabels[i] .. '[label=' .. l .. '];')
-  end
-  table.insert(str,'\n')
-  for i,edge in ipairs(self.edges) do
-    table.insert(str,nodelabels[edge.source] .. ' -> ' .. nodelabels[edge.target] .. ';\n')
-  end
-  table.insert(str,'}')
+function MemoryGraph:dump(path)
+  for _, g in ipairs(self.graphs) do
+    local filename = path..'/'..g.name..'.dot'
+    local file = io.open(filename, "w")
+    assert(file, "cannot open '"..filename.."' for writing")
 
-  file:write(table.concat(str,''))
-  file:close()
+    local str = {}
+    table.insert(str,'digraph G {\n')
+    if title then
+      table.insert(str,'labelloc="t";\nlabel="' .. filename .. '";\n')
+    end
+    table.insert(str,'node [shape = oval]; ')
+    local nodelabels = {}
+    for i,node in ipairs(g.nodes) do
+      local true_node = node.orig_node
+      local l =  '"' .. ( 'Node' .. true_node.id .. '\\n' .. true_node:label() ) .. '"'
+      nodelabels[i] = 'n' .. true_node.id
+      table.insert(str, '\n' .. nodelabels[i] .. '[label=' .. l .. '];')
+    end
+    table.insert(str,'\n')
+    for i,edge in ipairs(g.edges) do
+      table.insert(str,nodelabels[edge.source] .. ' -> ' .. nodelabels[edge.target] .. ';\n')
+    end
+    table.insert(str,'}')
+
+    file:write(table.concat(str,''))
+    file:close()
+  end
 end
 
 return MemoryGraph
