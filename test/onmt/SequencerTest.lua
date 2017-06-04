@@ -22,6 +22,8 @@ end
 
 function sequencerTest.unrollWithSharing()
   local net = nn.Linear(10, 20)
+  net.gradInput = torch.Tensor(10)
+  net.output = torch.Tensor(20)
   net.gradInputSharedIdx = 1
   net.outputSharedIdx = 2
 
@@ -33,8 +35,8 @@ function sequencerTest.unrollWithSharing()
   local net2 = sequencer:net(2)
 
   tester:ne(torch.pointer(net2), torch.pointer(net1))
-  tester:eq(torch.pointer(net2.gradInput), torch.pointer(net1.gradInput))
-  tester:eq(torch.pointer(net2.output), torch.pointer(net1.output))
+  tester:eq(torch.pointer(net2.gradInput:storage()), torch.pointer(net1.gradInput:storage()))
+  tester:eq(torch.pointer(net2.output:storage()), torch.pointer(net1.output:storage()))
 end
 
 function sequencerTest.inference()

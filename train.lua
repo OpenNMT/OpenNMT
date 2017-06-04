@@ -175,7 +175,7 @@ local function main()
   end
 
   -- Start training.
-  local trainer = onmt.train.Trainer.new(opt, model, dataset.dicts, trainData:getBatch(opt.max_batch_size))
+  local trainer = onmt.train.Trainer.new(opt, model, dataset.dicts, trainData:getBatch(1))
   trainer:train(trainData, validData, trainStates)
 
   _G.logger:shutDown()

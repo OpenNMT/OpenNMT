@@ -31,11 +31,7 @@ local function assignSharedStorage(buffer, sharedTensors, sharedIdx)
     end
     for i, tidx in ipairs(sharedIdx) do
       if tidx then
-        if type(sharedTensors[tidx]) == 'torch.FloatTensor' then
-          result[i] = torch.FloatTensor(sharedTensors[tidx]:storage())
-        elseif type(sharedTensors[tidx]) == 'torch.LongTensor' then
-          result[i] = torch.LongTensor(sharedTensors[tidx]:storage())
-        end
+        result[i] = assignSharedStorage(result[i], sharedTensors, sharedTensors[tidx])
       else
         if not result[i] then
           result[i] = torch.FloatTensor()
@@ -43,9 +39,11 @@ local function assignSharedStorage(buffer, sharedTensors, sharedIdx)
       end
     end
   else
-    if type(sharedTensors[sharedIdx]) == 'torch.FloatTensor' then
+    if torch.type(sharedTensors[sharedIdx]) == 'torch.FloatTensor' then
       result = torch.FloatTensor(sharedTensors[sharedIdx]:storage())
-    elseif type(sharedTensors[sharedIdx]) == 'torch.LongTensor' then
+    elseif torch.type(sharedTensors[sharedIdx]) == 'torch.DoubleTensor' then
+      result = torch.DoubleTensor(sharedTensors[sharedIdx]:storage())
+    elseif torch.type(sharedTensors[sharedIdx]) == 'torch.LongTensor' then
       result = torch.LongTensor(sharedTensors[sharedIdx]:storage())
     end
   end
