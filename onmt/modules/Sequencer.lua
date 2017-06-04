@@ -23,6 +23,35 @@ function Sequencer:__init(network)
   self.networkClones = {}
 end
 
+local function assignSharedStorage(buffer, sharedTensors, sharedIdx)
+  local result = buffer
+  if type(sharedIdx) == 'table' then
+    if type(result) ~= 'table' then
+      result = {}
+    end
+    for i, tidx in ipairs(sharedIdx) do
+      if tidx then
+        if type(sharedTensors[tidx]) == 'torch.FloatTensor' then
+          result[i] = torch.FloatTensor(sharedTensors[tidx]:storage())
+        elseif type(sharedTensors[tidx]) == 'torch.LongTensor' then
+          result[i] = torch.LongTensor(sharedTensors[tidx]:storage())
+        end
+      else
+        if not result[i] then
+          result[i] = torch.FloatTensor()
+        end
+      end
+    end
+  else
+    if type(sharedTensors[sharedIdx]) == 'torch.FloatTensor' then
+      result = torch.FloatTensor(sharedTensors[sharedIdx]:storage())
+    elseif type(sharedTensors[sharedIdx]) == 'torch.LongTensor' then
+      result = torch.LongTensor(sharedTensors[sharedIdx]:storage())
+    end
+  end
+  return result
+end
+
 function Sequencer:_sharedClone()
   local clone = self.network:clone('weight', 'gradWeight', 'bias', 'gradBias', 'fullWeight', 'fullBias')
 
@@ -57,26 +86,10 @@ function Sequencer:_sharedClone()
 
     clone:apply(function(m)
       if m.gradInputSharedIdx then
-        if type(m.gradInputSharedIdx) == 'table' then
-          for i, tidx in ipairs(m.gradInputSharedIdx) do
-            if tidx then
-              m.gradInput[i] = sharedTensors[tidx]
-            end
-          end
-        else
-          m.gradInput = sharedTensors[m.gradInputSharedIdx]
-        end
+        m.gradInput = assignSharedStorage(m.gradInput, sharedTensors, m.gradInputSharedIdx)
       end
       if m.outputSharedIdx then
-        if type(m.outputSharedIdx) == 'table' then
-          for i, tidx in ipairs(m.outputSharedIdx) do
-            if tidx then
-              m.output[i] = sharedTensors[tidx]
-            end
-          end
-        else
-          m.output = sharedTensors[m.outputSharedIdx]
-        end
+        m.output = assignSharedStorage(m.output, sharedTensors, m.outputSharedIdx)
       end
     end)
   end
