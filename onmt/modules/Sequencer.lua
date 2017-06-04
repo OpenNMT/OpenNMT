@@ -45,6 +45,14 @@ local function assignSharedStorage(buffer, sharedTensors, sharedIdx)
       result = torch.DoubleTensor(sharedTensors[sharedIdx]:storage())
     elseif torch.type(sharedTensors[sharedIdx]) == 'torch.LongTensor' then
       result = torch.LongTensor(sharedTensors[sharedIdx]:storage())
+    elseif torch.type(sharedTensors[sharedIdx]) == 'torch.CudaTensor' then
+      result = torch.CudaTensor(sharedTensors[sharedIdx]:storage())
+    elseif torch.type(sharedTensors[sharedIdx]) == 'torch.CudaDoubleTensor' then
+      result = torch.CudaDoubleTensor(sharedTensors[sharedIdx]:storage())
+    elseif torch.type(sharedTensors[sharedIdx]) == 'torch.CudaLongTensor' then
+      result = torch.CudaLongTensor(sharedTensors[sharedIdx]:storage())
+    elseif torch.type(sharedTensors[sharedIdx]) == 'torch.CudaHalfTensor' then
+      result = torch.CudaHalfTensor(sharedTensors[sharedIdx]:storage())
     end
   end
   return result
