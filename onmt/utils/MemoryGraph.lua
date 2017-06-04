@@ -371,6 +371,7 @@ function MemoryGraph:optimize()
   local totalSize = 0
   local saveSize = 0
   local protectedSize = 0
+  local globalIdx = 1
   for ptr, storage in pairs(storageMap) do
     local storageType = torch.typename(storage.st) .. ':' .. storage.size
     totalSize = totalSize + storage.size
@@ -394,12 +395,14 @@ function MemoryGraph:optimize()
       if foundShareCluster then
         saveSize = saveSize + storage.size
         table.insert(storageCluster[foundShareCluster], ptr)
-
+        storageMap[ptr].clusterId = storageCluster[foundShareCluster].idx
       else
         table.insert(shareStorageMap[storageType], ptr)
         storageCluster[ptr] = { ptr }
+        storageCluster[ptr].idx = globalIdx
+        storageMap[ptr].clusterId = globalIdx
+        globalIdx = globalIdx + 1
       end
-      storage.clusterId = #storageCluster
     else
       protectedSize = protectedSize + storage.size
     end
