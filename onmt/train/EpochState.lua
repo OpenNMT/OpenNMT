@@ -42,7 +42,7 @@ function EpochState:log(iteration)
                   self.optimStatus,
                   tokpersec,
                   ppl,
-                  Cuda.freeMemory())
+                  onmt.utils.Cuda.freeMemory())
   if _G.crayon_logger.on == true then
      _G.crayon_logger.exp:add_scalar_value("learning_rate", self.learningRate)
      _G.crayon_logger.exp:add_scalar_value("perplexity", ppl)
