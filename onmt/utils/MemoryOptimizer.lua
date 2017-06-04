@@ -2,6 +2,15 @@
 --]]
 local MemoryOptimizer = torch.class('MemoryOptimizer')
 
+local function contains(list, m)
+  for i = 1, #list do
+    if torch.typename(m) == list[i] then
+      return true
+    end
+  end
+  return false
+end
+
 local function tensorIncluded(t, l)
   if torch.isTensor(l) then
     return torch.pointer(t:storage()) == torch.pointer(l:storage())
@@ -93,6 +102,7 @@ function MemoryOptimizer:__init(modules)
   self.modelDesc = {}
 
   self.MG=onmt.utils.MemoryGraph.new()
+
   for name, mod in pairs(modules) do
     self.modelDesc[name] = {}
 
@@ -128,77 +138,88 @@ Returns:
   2. `totSize` - total tensor size
 ]]
 function MemoryOptimizer:optimize()
-  self.MG:optimize()
-
   local totSize = 0
   local sharedSize = 0
+  if #self.MG.graphs > 0 then
+    -- using memgraph module to explore computation graph and improve memory sharing
+    local protectedSize
+    totSize, protectedSize, _ = self.MG:optimize()
+    sharedSize = totSize - protectedSize
+  else
+    for _, desc in pairs(self.modelDesc) do
+      for i = 1, #desc do
+        local net = desc[i].net
+        local base = desc[i].base
+        local mempool = {}
+
+        -- Some modules are using output when performing updateGradInput so we cannot share these.
+        local protectedInputBuffer = { desc[i].input }
+        net:apply(function(m)
+          if MemoryGraph.protected(m, "output") then
+            table.insert(protectedInputBuffer, m.output)
+          end
+          if MemoryGraph.protected(m, "input") then
+            table.insert(protectedInputBuffer, m.input)
+          end
+        end)
+
+        local globalIdx = 1
+        local idx = 1
+
+        local gradInputMap = {}
+        local outputMap = {}
+
+        -- Go over the network to determine which tensors can be shared.
+        net:apply(function(m)
+          local giSize = getSize(m.gradInput, mempool)
+          local oSize = getSize(m.output, mempool)
+          totSize = totSize + giSize
+          totSize = totSize + oSize
+          if canShare(m.gradInput, net, desc[i].gradOutput) then
+            sharedSize = sharedSize + giSize
+            m.gradInputSharedIdx = idx
+            gradInputMap[globalIdx] = idx
+            idx = idx + 1
+          end
+          if canShare(m.output, net, protectedInputBuffer) then
+            sharedSize = sharedSize + oSize
+            m.outputSharedIdx = idx
+            outputMap[globalIdx] = idx
+            idx = idx + 1
+          end
+
+          -- Remove the wrapper around updateOutput to catch the module input.
+          m.updateOutput = nil
+          m.input = nil
+
+          globalIdx = globalIdx + 1
+        end)
+
+        globalIdx = 1
+
+        -- Mark shareable tensors in the base network.
+        base:apply(function (m)
+          if gradInputMap[globalIdx] then
+            m.gradInputSharedIdx = gradInputMap[globalIdx]
+          end
+          if outputMap[globalIdx] then
+            m.outputSharedIdx = outputMap[globalIdx]
+          end
+          globalIdx = globalIdx + 1
+        end)
+      end
+    end
+  end
+
   for _, desc in pairs(self.modelDesc) do
     for i = 1, #desc do
       local net = desc[i].net
-      local base = desc[i].base
-      local mempool = {}
-
-      -- Some modules are using output when performing updateGradInput so we cannot share these.
-      local protectedInputBuffer = { desc[i].input }
-      net:apply(function(m)
-        if MemoryGraph.protected(m, "output") then
-          table.insert(protectedInputBuffer, m.output)
-        end
-        if MemoryGraph.protected(m, "input") then
-          table.insert(protectedInputBuffer, m.input)
-        end
-      end)
-
-      local globalIdx = 1
-      local idx = 1
-
-      local gradInputMap = {}
-      local outputMap = {}
-
-      -- Go over the network to determine which tensors can be shared.
-      net:apply(function(m)
-        local giSize = getSize(m.gradInput, mempool)
-        local oSize = getSize(m.output, mempool)
-        totSize = totSize + giSize
-        totSize = totSize + oSize
-        if canShare(m.gradInput, net, desc[i].gradOutput) then
-          sharedSize = sharedSize + giSize
-          m.gradInputSharedIdx = idx
-          gradInputMap[globalIdx] = idx
-          idx = idx + 1
-        end
-        if canShare(m.output, net, protectedInputBuffer) then
-          sharedSize = sharedSize + oSize
-          m.outputSharedIdx = idx
-          outputMap[globalIdx] = idx
-          idx = idx + 1
-        end
-
-        -- Remove the wrapper around updateOutput to catch the module input.
-        m.updateOutput = nil
-        m.input = nil
-
-        globalIdx = globalIdx + 1
-      end)
-
-      globalIdx = 1
-
-      -- Mark shareable tensors in the base network.
-      base:apply(function (m)
-        if gradInputMap[globalIdx] then
-          m.gradInputSharedIdx = gradInputMap[globalIdx]
-        end
-        if outputMap[globalIdx] then
-          m.outputSharedIdx = outputMap[globalIdx]
-        end
-        globalIdx = globalIdx + 1
-      end)
-
       -- Restore function on network backward/forward interception input.
       net.backward = nil
       net.forward = nil
     end
   end
+
   return sharedSize, totSize
 end
 

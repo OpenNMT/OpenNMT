@@ -32,19 +32,51 @@ function Sequencer:_sharedClone()
 
     self.networkClones[1]:apply(function(m)
       if m.gradInputSharedIdx then
-        sharedTensors[m.gradInputSharedIdx] = m.gradInput
+        if type(m.gradInputSharedIdx) == 'table' then
+          for i, tidx in ipairs(m.gradInputSharedIdx) do
+            if tidx then
+              sharedTensors[tidx] = m.gradInput[i]
+            end
+          end
+        else
+          sharedTensors[m.gradInputSharedIdx] = m.gradInput
+        end
       end
       if m.outputSharedIdx then
-        sharedTensors[m.outputSharedIdx] = m.output
+        if type(m.outputSharedIdx) == 'table' then
+          for i, tidx in ipairs(m.outputSharedIdx) do
+            if tidx then
+              sharedTensors[tidx] = m.output[i]
+            end
+          end
+        else
+          sharedTensors[m.outputSharedIdx] = m.output
+        end
       end
     end)
 
     clone:apply(function(m)
       if m.gradInputSharedIdx then
-        m.gradInput = sharedTensors[m.gradInputSharedIdx]
+        if type(m.gradInputSharedIdx) == 'table' then
+          for i, tidx in ipairs(m.gradInputSharedIdx) do
+            if tidx then
+              m.gradInput[i] = sharedTensors[tidx]
+            end
+          end
+        else
+          m.gradInput = sharedTensors[m.gradInputSharedIdx]
+        end
       end
       if m.outputSharedIdx then
-        m.output = sharedTensors[m.outputSharedIdx]
+        if type(m.outputSharedIdx) == 'table' then
+          for i, tidx in ipairs(m.outputSharedIdx) do
+            if tidx then
+              m.output[i] = sharedTensors[tidx]
+            end
+          end
+        else
+          m.output = sharedTensors[m.outputSharedIdx]
+        end
       end
     end)
   end

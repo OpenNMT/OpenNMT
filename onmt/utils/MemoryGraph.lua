@@ -116,14 +116,14 @@ local function cleanGraph(nodes, edges)
    map_from[edge.source] = map_from[edge.source]+1
    map_to[edge.target] = map_to[edge.target]+1
   end
-  local idx = 1
-  while idx <= #nodes do
-   local node = nodes[idx]
+  local idx2 = 1
+  while idx2 <= #nodes do
+   local node = nodes[idx2]
    if isNodeGood(node.orig_node) or map_from[node.id]==0 or map_to[node.id]==0 then
-    idx = idx + 1
+    idx2 = idx2 + 1
    else
     local id = node.id
-    table.remove(nodes, idx)
+    table.remove(nodes, idx2)
     edges = removeNodeFromEdges(id, edges)
    end
   end
@@ -145,6 +145,8 @@ end
 local function loadGraph(graph)
   local nodes = {}
   local edges = {}
+  local first
+  local last
 
   for _, node in ipairs(graph.fg.nodes) do
    local idx = node.id
@@ -191,8 +193,27 @@ end
   Register a new module
 ]]
 function MemoryGraph:add(name, gModule)
-  local nodes , edges, first, last = loadGraph(gModule)
-  table.insert(self.graphs, { name=name, nodes=nodes, edges=edges, first=first, last=last })
+  if torch.type(gModule) == "nn.gModule" then
+    local nodes , edges, first, last = loadGraph(gModule)
+
+    -- index edges forward and backward
+    local fromEdgeMap = {}
+    local toEdgeMap = {}
+
+    for _, e in ipairs(edges) do
+      if not fromEdgeMap[e.source] then
+        fromEdgeMap[e.source] = {}
+      end
+      table.insert(fromEdgeMap[e.source], e.target)
+      if not toEdgeMap[e.target] then
+        toEdgeMap[e.target] = {}
+      end
+      table.insert(toEdgeMap[e.target], e.source)
+    end
+
+    table.insert(self.graphs, { name=name, nodes=nodes, edges=edges, first=first, last=last,
+                                fromEdgeMap=fromEdgeMap, toEdgeMap=toEdgeMap })
+  end
 end
 
 -- first input and output modules of a graph (the first module nodes)
@@ -202,10 +223,8 @@ local function findInputModules(graph, nId, input_modules)
     input_modules[nId]=true
     return
   end
-  for _, e in ipairs(graph.edges) do
-    if e.source == nId then
-      findInputModules(graph, e.target, input_modules)
-    end
+  for _, to in ipairs(graph.fromEdgeMap[nId]) do
+    findInputModules(graph, to, input_modules)
   end
 end
 
@@ -215,30 +234,118 @@ local function findOutputModules(graph, nId, output_modules)
     output_modules[nId]=true
     return
   end
-  for _, e in ipairs(graph.edges) do
-    if e.target == nId then
-      findOutputModules(graph, e.source, output_modules)
+  for _, from in ipairs(graph.toEdgeMap[nId]) do
+    findOutputModules(graph, from, output_modules)
+  end
+end
+
+function MemoryGraph:differentComputationGraph(st1, st2)
+  local graphs1 = {}
+  local direction1 = {}
+  for _, i1 in ipairs(st1) do
+    graphs1[i1[1]] = true
+    local dir = i1[3] == "gradInput" and "bwd" or "fwd"
+    direction1[dir] = true
+  end
+  local foundSameGraph = false
+  local foundSameDirection = false
+  local idx2 = 1
+  while (not foundSameGraph or not foundSameDirection) and idx2 <= #st2 do
+    foundSameGraph = graphs1[st2[idx2][1]]
+    local dir = st2[idx2][3] == "gradInput" and "bwd" or "fwd"
+    foundSameDirection = direction1[dir]
+    idx2 = idx2 + 1
+  end
+  if not foundSameGraph or not foundSameDirection then
+    return true
+  end
+  return false
+end
+
+-- check if we can reach n2-b2 from n1-b1 - forward and the minimal distance for doing so
+function MemoryGraph:pathReachFwd(gid, n1, b1, n2, b2)
+  if n1 == n2 then
+    if b1 == "output" and b2 == "input" then return false end
+    if b1 == "input" and b2 == "output" then return 1 end
+    return 0
+  end
+  if self.graphs[gid].fromEdgeMap[n1] then
+    local ld = 100
+    for _, to in ipairs(self.graphs[gid].fromEdgeMap[n1]) do
+      local d = self:pathReachFwd(gid, to, "output", n2, b2)
+      if not d then return false end
+      if d < ld then ld = d end
+    end
+    return ld + 1
+  end
+  return false
+end
+
+-- check if we can reach n2-b2 from n1-b1 - backward
+function MemoryGraph:pathReachBwd(gid, n1, n2)
+  if n1 == n2 then return 0 end
+  if self.graphs[gid].toEdgeMap[n1] then
+    local ld = 100
+    for _, from in ipairs(self.graphs[gid].toEdgeMap[n1]) do
+      local d = self:pathReachBwd(gid, from, n2)
+      if not d then return false end
+      if d < ld then ld = d end
+    end
+    return ld + 1
+  end
+  return false
+end
+
+-- st1 inherits from st2 if all instances of st1 reach st2, in same graphs and direction, in more than 2 operations
+function MemoryGraph:inherits(st1, st2)
+  for _, i1 in ipairs(st1) do
+    for _, i2 in ipairs(st2) do
+      -- same graph
+      if i1[1] == i2[1] then
+        if i1[3] == "gradInput" and i2[3] == "gradInput" then
+          local d = self:pathReachBwd(i1[1], i1[2], i2[2])
+          if not d or d < 2 then return false end
+        elseif i1[3] ~= "gradInput" and i2[3] ~= "gradInput" then
+          local d = self:pathReachFwd(i1[1], i1[2], i1[3], i2[2], i2[3])
+          if not d or d < 2 then return false end
+        end
+      end
     end
   end
+  return true
 end
 
 function MemoryGraph:optimize()
   -- for each storage find where it is used (graph, node - input/output/gradInput), and if it is protected
   local storageMap = {}
-  function register(t, protected, gid, nid, bid)
+  local function register(t, protected, gid, nid, bid, norigid)
     if torch.isTensor(t) and t:storage() then
       local ptr = torch.pointer(t:storage())
       if not storageMap[ptr] then
-        storageMap[ptr] = {protected=false, st=t:storage()}
+        storageMap[ptr] = {protected=false, st=t:storage(),size=t:storage():size()*t:elementSize()}
       end
       storageMap[ptr].protected = storageMap[ptr].protected or protected
-      table.insert(storageMap[ptr], {gid, nid, bid})
+      table.insert(storageMap[ptr], {gid, nid, bid, norigid})
     elseif torch.type(t) == 'table' then
       for _, v in ipairs(t) do
-        register(v, protected, gid, nid, bid)
+        register(v, protected, gid, nid, bid, norigid)
       end
     end
   end
+  -- main function checking if a storage can be shared
+  local function shareableStorages(ptr1, ptr2)
+    -- 2 storages can be shared if:
+    -- a/ none of their instance are on the same graph, or same fwd/backward path
+    -- b/ if one inherits completely from the other, with at least 2 operations in between
+    if self:differentComputationGraph(storageMap[ptr2], storageMap[ptr1]) then
+      return true
+    end
+    if self:inherits(storageMap[ptr1], storageMap[ptr2]) or self:inherits(storageMap[ptr2], storageMap[ptr1]) then
+      return true
+    end
+    return false
+  end
+
   for graphId, g in ipairs(self.graphs) do
     local input_modules = {}
     local output_modules = {}
@@ -252,40 +359,98 @@ function MemoryGraph:optimize()
           -- to be safe, protect also input and output buffers of the complete graph
           protected = protected or (buf == "input" and input_modules[nodeId])
           protected = protected or (buf == "output" and output_modules[nodeId])
-          register(n.orig_node.data.module[buf], protected, graphId, nodeId, buf)
+          register(n.orig_node.data[buf] or n.orig_node.data.module[buf], protected, graphId, nodeId, buf, n.orig_node.id)
         end
       end
     end
   end
-  -- go through all unprotected storage and share the ones with similar shape
+
+  -- go through all unprotected storage and assign to each of them a cluster id
   local shareStorageMap = {}
-  local protectedStorageMap = {}
+  local storageCluster = {}
   local totalSize = 0
   local saveSize = 0
-  for _, storage in pairs(storageMap) do
-    local storageType = torch.typename(storage.st) .. ':' .. storage.st:size()
-    totalSize = totalSize + storage.st:size()
+  local protectedSize = 0
+  for ptr, storage in pairs(storageMap) do
+    local storageType = torch.typename(storage.st) .. ':' .. storage.size
+    totalSize = totalSize + storage.size
     if not storage.protected then
       if not shareStorageMap[storageType] then
-        shareStorageMap[storageType] = 0
+        shareStorageMap[storageType] = {}
+      end
+      local i = 1
+      local foundShareCluster
+      while not foundShareCluster and i <= #shareStorageMap[storageType] do
+        local clusterptr = shareStorageMap[storageType][i]
+        local clusterisok = true
+        local j = 1
+        while clusterisok and j <= #storageCluster[clusterptr] do
+          clusterisok=shareableStorages(storageCluster[clusterptr][j], ptr)
+          j = j + 1
+        end
+        foundShareCluster = clusterisok and clusterptr
+        i = i + 1
+      end
+      if foundShareCluster then
+        saveSize = saveSize + storage.size
+        table.insert(storageCluster[foundShareCluster], ptr)
+
       else
-        saveSize = saveSize + storage.st:size()
+        table.insert(shareStorageMap[storageType], ptr)
+        storageCluster[ptr] = { ptr }
       end
-      shareStorageMap[storageType] = shareStorageMap[storageType] + 1
+      storage.clusterId = #storageCluster
     else
-      if not protectedStorageMap[storageType] then
-        protectedStorageMap[storageType] = 0
-      end
-      protectedStorageMap[storageType] = protectedStorageMap[storageType] + 1
+      protectedSize = protectedSize + storage.size
     end
   end
-  for shape, count in pairs(shareStorageMap) do
-    print('share',count,shape)
+
+  if _G.logger:_isVisible("DEBUG") then
+    _G.logger:debug("MemoryGraph optimized clusters")
+    for _, cl in pairs(storageCluster) do
+      local cluster = { }
+      for _, ptr in ipairs(cl) do
+        local ts = {}
+        for _, t in ipairs(storageMap[ptr]) do
+          table.insert(ts,'('..table.concat({self.graphs[t[1]].name,t[4],t[3]}, ':')..')')
+        end
+        table.insert(cluster,table.concat(ts, ','))
+      end
+      _G.logger:debug(table.concat(cluster, ' '))
+    end
   end
-  for shape, count in pairs(protectedStorageMap) do
-    print('protect',count,shape)
+
+  -- assign to each tensor its share index
+  local function share(t)
+    if torch.isTensor(t) and t:storage() then
+      local ptr = torch.pointer(t:storage())
+      if storageMap[ptr].protected then
+        return false
+      end
+      return storageMap[ptr].clusterId
+    elseif torch.type(t) == 'table' then
+      local shareIdx = {}
+      for _, v in ipairs(t) do
+        table.insert(shareIdx, share(v))
+      end
+      return shareIdx
+    end
   end
-  print('total:', totalSize, 'save:', saveSize, 'ratio:', saveSize/totalSize)
+
+  -- last, go back through all of the modules and assigned sharing ids to output and gradInput table or tensors
+  for _, g in ipairs(self.graphs) do
+    for _, n in ipairs(g.nodes) do
+      if n.orig_node.data.module then
+        local m = n.orig_node.data.module
+        m.outputSharedIdx = share(m.output)
+        m.gradInputSharedIdx = share(m.gradInput)
+      end
+    end
+  end
+
+  _G.logger:info('MemoryGraph optimization: total %d, protected %d (%0.2f%%), saved %d (%0.2f%%)',
+                  totalSize, protectedSize, 100*protectedSize/totalSize, saveSize, 100*saveSize/totalSize)
+  return totalSize, protectedSize, saveSize
 end
 
 --[[
@@ -299,12 +464,10 @@ function MemoryGraph:dump(path)
 
     local str = {}
     table.insert(str,'digraph G {\n')
-    if title then
-      table.insert(str,'labelloc="t";\nlabel="' .. filename .. '";\n')
-    end
+    table.insert(str,'labelloc="t";\nlabel="' .. filename .. '";\n')
     table.insert(str,'node [shape = oval]; ')
     local nodelabels = {}
-    for i,node in ipairs(g.nodes) do
+    for i, node in ipairs(g.nodes) do
       local true_node = node.orig_node
       local label = true_node:label()
       label = string.gsub(label, 'reverseMap = .*', '')
@@ -313,7 +476,7 @@ function MemoryGraph:dump(path)
       table.insert(str, '\n' .. nodelabels[i] .. '[label=' .. l .. '];')
     end
     table.insert(str,'\n')
-    for i,edge in ipairs(g.edges) do
+    for _, edge in ipairs(g.edges) do
       table.insert(str,nodelabels[edge.source] .. ' -> ' .. nodelabels[edge.target] .. ';\n')
     end
     table.insert(str,'}')
