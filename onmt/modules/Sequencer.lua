@@ -23,6 +23,8 @@ function Sequencer:__init(network)
   self.networkClones = {}
 end
 
+-- share a storage, sharedTensor is the array of tensor or table of tensor to share
+-- sharedIdx is the idx or table of idx of tensors to assign to buffer
 local function assignSharedStorage(buffer, sharedTensors, sharedIdx)
   local result = buffer
   if type(sharedIdx) == 'table' then
@@ -31,7 +33,7 @@ local function assignSharedStorage(buffer, sharedTensors, sharedIdx)
     end
     for i, tidx in ipairs(sharedIdx) do
       if tidx then
-        result[i] = assignSharedStorage(result[i], sharedTensors, sharedTensors[tidx])
+        result[i] = assignSharedStorage(result[i], sharedTensors, tidx)
       else
         if not result[i] then
           result[i] = torch.FloatTensor()
@@ -53,6 +55,9 @@ local function assignSharedStorage(buffer, sharedTensors, sharedIdx)
       result = torch.CudaLongTensor(sharedTensors[sharedIdx]:storage())
     elseif torch.type(sharedTensors[sharedIdx]) == 'torch.CudaHalfTensor' then
       result = torch.CudaHalfTensor(sharedTensors[sharedIdx]:storage())
+    elseif torch.type(sharedTensors[sharedIdx]) == 'table' then
+      -- backward compatibility - table sharing
+      result = sharedTensors[sharedIdx]
     end
   end
   return result
