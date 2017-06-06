@@ -20,7 +20,7 @@ The pyramidal deep bidirectional encoder (`-pdbrnn`) is an alternative bidirecti
 
 ### Deep bidirectional encoder
 
-The deep bidirectional encoder (`-dbrnn`) is an alternative bidirectional encoder where the outputs of every layers are summed (or concatenated) prior feeding to the next layer. It a special case of a pyramidal deep bidirectional encoder without time reduction (i.e. `-pdbrnn_reduction = 1`).
+The deep bidirectional encoder (`-dbrnn`) is an alternative bidirectional encoder where the outputs of every layers are summed (or concatenated) prior feeding to the next layer. It is a special case of a pyramidal deep bidirectional encoder without time reduction (i.e. `-pdbrnn_reduction = 1`).
 
 ![Deep bidirectional encoder](../img/dbrnn.png)
 
