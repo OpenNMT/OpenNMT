@@ -214,7 +214,7 @@ function Encoder:forward(batch)
     -- Make sure it always returns table.
     if type(states) ~= "table" then states = { states } end
 
-    -- Special case padding.
+    -- Zero states of timesteps with padding.
     if batch:variableLengths() then
       for b = 1, batch.size do
         if t <= batch.sourceLength - batch.sourceSize[b] then
@@ -264,6 +264,17 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
   for t = batch.sourceLength, 1, -1 do
     -- Add context gradients to last hidden states gradients.
     gradStatesInput[#gradStatesInput]:add(gradContextOutput[{{}, t}])
+
+    -- Zero gradients of timesteps with padding.
+    if batch:variableLengths() then
+      for b = 1, batch.size do
+        if t <= batch.sourceLength - batch.sourceSize[b] then
+          for j = 1, #gradStatesInput do
+            gradStatesInput[j][b]:zero()
+          end
+        end
+      end
+    end
 
     -- nngraph does not accept table of size 1.
     local timestepGradOutput = #gradStatesInput > 1 and gradStatesInput or gradStatesInput[1]
