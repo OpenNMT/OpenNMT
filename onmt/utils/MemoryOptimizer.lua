@@ -19,7 +19,8 @@ local protectInput = {
   'nn.Linear',
   'nn.JoinTable',
   'nn.CMulTable',
-  'nn.MM'
+  'nn.MM',
+  'onmt.Bottle'
 }
 
 local function useSameStorage(t, l)

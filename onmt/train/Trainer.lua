@@ -236,6 +236,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
         self.saver:saveIteration(iter, epochState, batchOrder)
       end
       iter = iter + 1
+      collectgarbage()
     end
   else
     -- Asynchronous training.
@@ -317,6 +318,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
       if iter % self.args.save_every == 0 then
         self.saver:saveIteration(iter, epochState, batchOrder)
       end
+      collectgarbage()
     end
   end
 

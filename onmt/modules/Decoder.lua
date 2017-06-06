@@ -69,6 +69,8 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args.outputIndex = {}
 
   self.args.inputFeed = args.input_feed
+  self.args.hasCoverage = attentionModel.hasCoverage
+  self.args.coverageSize = attentionModel.coverageSize
 
   parent.__init(self, self:_buildModel(attentionModel))
 
@@ -120,6 +122,9 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+
+  -- Prototype for attention coverage
+  self.coverageProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -170,6 +175,12 @@ function Decoder:_buildModel(attentionModel)
   end
   table.insert(states, input)
 
+  local coverage
+  if attentionModel.hasCoverage then
+    coverage = nn.Identity()()
+    table.insert(inputs, coverage)
+  end
+
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
 
@@ -181,14 +192,26 @@ function Decoder:_buildModel(attentionModel)
   end
 
   -- Compute the attention here using h^L as query.
-  local attnLayer = attentionModel
-  attnLayer.name = 'decoderAttn'
-  local attnInput = {outputs[#outputs], context}
-  local attnOutput = attnLayer(attnInput)
+  self.attnLayer = attentionModel
+  self.attnLayer.name = 'decoderAttn'
+  local attnInput = { outputs[#outputs], context, coverage }
+
+  -- apply the attention layer
+  local attnOutputs = self.attnLayer(attnInput)
+
+  local attnOutput = attnOutputs
+  if attentionModel.hasCoverage then
+    attnOutput = nn.SelectTable(1)(attnOutputs)
+    coverage = nn.SelectTable(2)(attnOutputs)
+  end
+
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
+
   table.insert(outputs, attnOutput)
+  -- pass back coverage if not nil
+  table.insert(outputs, coverage)
   return nn.gModule(inputs, outputs)
 end
 
@@ -265,7 +288,7 @@ Returns:
  1. `out` - Top-layer hidden state.
  2. `states` - All states.
 --]]
-function Decoder:forwardOne(input, prevStates, context, prevOut, t)
+function Decoder:forwardOne(input, _, prevStates, context, prevOut, t)
   local inputs = {}
 
   -- Create RNN input (see sequencer.lua `buildNetwork('dec')`).
@@ -288,6 +311,11 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
     end
   end
 
+  -- if some module need coverage, it is the next input
+  if self.args.hasCoverage then
+    table.insert(inputs, prevStates.coverage)
+  end
+
   -- Remember inputs for the backward pass.
   if self.train then
     self.inputs[t] = inputs
@@ -298,13 +326,33 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t)
   -- Make sure decoder always returns table.
   if type(outputs) ~= "table" then outputs = { outputs } end
 
-  local out = outputs[#outputs]
   local states = {}
+
+  if self.args.hasCoverage then
+    states.coverage = table.remove(outputs)
+  end
+
+  local out = outputs[#outputs]
   for i = 1, #outputs - 1 do
     table.insert(states, outputs[i])
   end
 
   return out, states
+end
+
+--[[Initial special states of the decoder that be used by specific modules
+
+  Parameters:
+
+  * `batch` - `Batch` object
+  * `states` - the states of the decoder. Can use key/value to add states without impact.
+]]
+function Decoder:initializeSpecialStates(states, _, batch)
+  -- if need coverage, initialize it
+  if self.args.hasCoverage then
+    states.coverage = onmt.utils.Tensor.reuseTensor(self.coverageProto,
+                                                           { batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.coverageSize })
+  end
 end
 
 --[[Compute all forward steps.
@@ -330,8 +378,10 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
 
   local prevOut
 
+  self:initializeSpecialStates(states, context, batch)
+
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t), states, context, prevOut, t)
+    prevOut, states = self:forwardOne(batch:getTargetInput(t), batch.sourceSize, states, context, prevOut, t)
     func(prevOut, t)
   end
 end
@@ -377,7 +427,11 @@ Parameters:
   -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers + 1,
+    local nOutput = self.args.numEffectiveLayers + 1
+    if self.args.hasCoverage then
+      nOutput = nOutput + 1
+    end
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(nOutput,
                                                               self.gradOutputProto,
                                                               { batch.size, self.args.rnnSize })
   end
@@ -388,6 +442,10 @@ function Decoder:backward(batch, outputs, criterion)
 
   local loss = 0
   local indvAvgLoss = torch.zeros(outputs[1]:size(1))
+
+  if self.args.hasCoverage then
+    gradStatesInput[#gradStatesInput]:resize(batch.size, batch.encoderOutputLength or batch.sourceLength, self.args.coverageSize):zero()
+  end
 
   for t = batch.targetLength, 1, -1 do
     local refOutput = batch:getTargetOutput(t)
@@ -432,8 +490,7 @@ function Decoder:backward(batch, outputs, criterion)
 
     -- Compute the final layer gradient.
     local decGradOut = self.generator:backward(prepOutputs, genGradOut)
-
-    gradStatesInput[#gradStatesInput]:add(decGradOut)
+    gradStatesInput[self.args.numEffectiveLayers + 1]:add(decGradOut)
 
     -- Compute the standard backward.
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
@@ -446,11 +503,16 @@ function Decoder:backward(batch, outputs, criterion)
 
     -- Accumulate encoder output gradients.
     gradContextInput:add(gradInput[self.args.inputIndex.context])
-    gradStatesInput[#gradStatesInput]:zero()
+    gradStatesInput[self.args.numEffectiveLayers + 1]:zero()
+
+    -- back propagate coverage gradient
+    if self.args.hasCoverage then
+      gradStatesInput[#gradStatesInput]:copy(gradInput[#gradInput])
+    end
 
     -- Accumulate previous output gradients with input feeding gradients.
     if self.args.inputFeed and t > 1 then
-      gradStatesInput[#gradStatesInput]:add(gradInput[self.args.inputIndex.inputFeed])
+      gradStatesInput[self.args.numEffectiveLayers + 1]:add(gradInput[self.args.inputIndex.inputFeed])
     end
 
     -- Prepare next decoder output gradients.

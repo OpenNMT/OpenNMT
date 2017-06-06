@@ -20,9 +20,11 @@ require('onmt.modules.FeaturesEmbedding')
 
 require('onmt.modules.NoAttention')
 require('onmt.modules.GlobalAttention')
+require('onmt.modules.GlobalAttentionCoverage')
 
 require('onmt.modules.Generator')
 
+require('onmt.modules.Bottle')
 require('onmt.modules.JoinReplicateTable')
 require('onmt.modules.ParallelClassNLLCriterion')
 require('onmt.modules.RIndexLinear')

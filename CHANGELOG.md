@@ -63,6 +63,7 @@
 * Add alternative learning rate decay strategy for SGD training
 * Introduce dynamic parameter change for dropout and fixed word embeddings
 * Add length and coverage normalization during the beam search
+* Add multiple attention option: no attention, global attention dot/general/concat, temporal attention
 * Add translation option to dump input sentence encoding
 * Add TensorBoard metrics visualisation with [Crayon](https://github.com/torrvision/crayon)
 * [*experimental*] Add sequence tagger model

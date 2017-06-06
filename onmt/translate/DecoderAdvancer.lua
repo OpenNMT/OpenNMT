@@ -30,6 +30,7 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
     decoder.args.numEffectiveLayers,
     onmt.utils.Cuda.convert(torch.Tensor()),
     { self.batch.size, decoder.args.rnnSize })
+  decoder:initializeSpecialStates(self.decStates, context, batch)
   self.dicts = dicts
   self.updateSeqLengthFunc = updateSeqLengthFunc
 end
@@ -104,7 +105,7 @@ function DecoderAdvancer:update(beam)
   end
 
   self.decoder:maskPadding(contextSizes, contextLength)
-  decOut, decStates = self.decoder:forwardOne(inputs, decStates, context, decOut)
+  decOut, decStates = self.decoder:forwardOne(inputs, contextSizes, decStates, context, decOut)
   t = t + 1
 
   local softmaxOut
