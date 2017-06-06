@@ -14,6 +14,7 @@
 ### Fixes and improvements
 
 * SeqTagger supports input vector too
+* Fix incorrect gradients when using variable length batches and bidirectional encoders
 
 ## [v0.7.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.1) (2017-05-29)
 

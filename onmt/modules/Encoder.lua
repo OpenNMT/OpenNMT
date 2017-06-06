@@ -127,15 +127,6 @@ function Encoder:resetPreallocation()
   self.contextProto = torch.Tensor()
 end
 
-function Encoder:maskPadding()
-  self.maskPad = true
-end
-
--- size of context vector
-function Encoder:contextSize(sourceSize, sourceLength)
-  return sourceSize, sourceLength
-end
-
 --[[ Build one time-step of an Encoder
 
 Returns: An nn-graph mapping
@@ -185,7 +176,6 @@ function Encoder:forward(batch)
 
   -- TODO: Change `batch` to `input`.
 
-  local finalStates
   local outputSize = self.args.rnnSize
 
   if self.statesProto == nil then
@@ -201,9 +191,6 @@ function Encoder:forward(batch)
   local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
                                                 { batch.size, batch.sourceLength, outputSize })
 
-  if self.maskPad and not batch.sourceInputPadLeft then
-    finalStates = onmt.utils.Tensor.recursiveClone(states)
-  end
   if self.train then
     self.inputs = {}
   end
@@ -227,17 +214,12 @@ function Encoder:forward(batch)
     -- Make sure it always returns table.
     if type(states) ~= "table" then states = { states } end
 
-    -- Special case padding.
-    if self.maskPad then
+    -- Zero states of timesteps with padding.
+    if batch:variableLengths() then
       for b = 1, batch.size do
-        if (batch.sourceInputPadLeft and t <= batch.sourceLength - batch.sourceSize[b])
-        or (not batch.sourceInputPadLeft and t > batch.sourceSize[b]) then
+        if t <= batch.sourceLength - batch.sourceSize[b] then
           for j = 1, #states do
             states[j][b]:zero()
-          end
-        elseif not batch.sourceInputPadLeft and t == batch.sourceSize[b] then
-          for j = 1, #states do
-            finalStates[j][b]:copy(states[j][b])
           end
         end
       end
@@ -247,11 +229,7 @@ function Encoder:forward(batch)
     context[{{}, t}]:copy(states[#states])
   end
 
-  if finalStates == nil then
-    finalStates = states
-  end
-
-  return finalStates, context
+  return states, context
 end
 
 --[[ Backward pass (only called during training)
@@ -286,6 +264,17 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
   for t = batch.sourceLength, 1, -1 do
     -- Add context gradients to last hidden states gradients.
     gradStatesInput[#gradStatesInput]:add(gradContextOutput[{{}, t}])
+
+    -- Zero gradients of timesteps with padding.
+    if batch:variableLengths() then
+      for b = 1, batch.size do
+        if t <= batch.sourceLength - batch.sourceSize[b] then
+          for j = 1, #gradStatesInput do
+            gradStatesInput[j][b]:zero()
+          end
+        end
+      end
+    end
 
     -- nngraph does not accept table of size 1.
     local timestepGradOutput = #gradStatesInput > 1 and gradStatesInput or gradStatesInput[1]
