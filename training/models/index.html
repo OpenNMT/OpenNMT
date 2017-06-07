@@ -921,13 +921,13 @@
 <h3 id="default-encoder">Default encoder<a class="headerlink" href="#default-encoder" title="Permanent link">&para;</a></h3>
 <p>The default encoder is a simple recurrent neural network (LSTM or GRU).</p>
 <h3 id="bidirectional-encoder">Bidirectional encoder<a class="headerlink" href="#bidirectional-encoder" title="Permanent link">&para;</a></h3>
-<p>The bidirectional encoder (<code>-brnn</code>) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the <code>-brnn_merge</code> option.</p>
+<p>The bidirectional encoder (<code>-encoder_type brnn</code>) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the <code>-brnn_merge</code> option.</p>
 <p><img alt="Bidirectional encoder" src="../../img/brnn.png" /></p>
 <h3 id="pyramidal-deep-bidirectional-encoder">Pyramidal deep bidirectional encoder<a class="headerlink" href="#pyramidal-deep-bidirectional-encoder" title="Permanent link">&para;</a></h3>
-<p>The pyramidal deep bidirectional encoder (<code>-pdbrnn</code>) is an alternative bidirectional encoder that reduces the time dimension after <strong>each</strong> layer based on the <code>-pdbrnn_reduction</code> factor and using <code>-pdbrnn_merge</code> as the reduction action (sum or concatenation).</p>
+<p>The pyramidal deep bidirectional encoder (<code>-encoder_type pdbrnn</code>) is an alternative bidirectional encoder that reduces the time dimension after <strong>each</strong> layer based on the <code>-pdbrnn_reduction</code> factor and using <code>-pdbrnn_merge</code> as the reduction action (sum or concatenation).</p>
 <p><img alt="Pyramidal deep bidirectional encoder" src="../../img/pdbrnn.png" /></p>
 <h3 id="deep-bidirectional-encoder">Deep bidirectional encoder<a class="headerlink" href="#deep-bidirectional-encoder" title="Permanent link">&para;</a></h3>
-<p>The deep bidirectional encoder (<code>-dbrnn</code>) is an alternative bidirectional encoder where the outputs of every layers are summed (or concatenated) prior feeding to the next layer. It a special case of a pyramidal deep bidirectional encoder without time reduction (i.e. <code>-pdbrnn_reduction = 1</code>).</p>
+<p>The deep bidirectional encoder (<code>-encoder_type dbrnn</code>) is an alternative bidirectional encoder where the outputs of every layers are summed (or concatenated) prior feeding to the next layer. It is a special case of a pyramidal deep bidirectional encoder without time reduction (i.e. <code>-pdbrnn_reduction = 1</code>).</p>
 <p><img alt="Deep bidirectional encoder" src="../../img/dbrnn.png" /></p>
 <h2 id="decoders">Decoders<a class="headerlink" href="#decoders" title="Permanent link">&para;</a></h2>
 <h3 id="default-decoder">Default decoder<a class="headerlink" href="#default-decoder" title="Permanent link">&para;</a></h3>
