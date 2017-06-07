@@ -4,6 +4,10 @@
 
 * Models previously trained with `-pdbrnn` or `-dbrnn` are no more compatible
 
+### Deprecations
+
+* `-brnn`, `-dbrnn` and `-pdbrnn` options are replaced by `-encoder_type <type>` for future extensions
+
 ### New features
 
 * New option in preprocess to check that sizes of source and target are equal (for seqtagging)

@@ -108,7 +108,8 @@ function ExtendedCmdLine:help(arg, md)
         io.write('## ')
       end
       io.write(option)
-    else
+      io.write('\n')
+    elseif not option.meta or not option.meta.deprecatedBy then
       -- Argument type.
       local argType = '<' .. option.type .. '>'
       if option.type == 'boolean' then
@@ -172,9 +173,9 @@ function ExtendedCmdLine:help(arg, md)
         io.write(wrapIndent(description, 60, '      '))
         io.write('\n')
       end
-    end
 
-    io.write('\n')
+      io.write('\n')
+    end
   end
 end
 
@@ -452,6 +453,13 @@ function ExtendedCmdLine:parse(arg)
         -- check option validity
         local isValid = true
         local reason = nil
+
+        if not params._is_default[k] and meta.deprecatedBy then
+          local newOption = meta.deprecatedBy[1]
+          local newValue = meta.deprecatedBy[2]
+          io.stderr:write('DEPRECATION WARNING: option \'-' .. k .. '\' is replaced by \'-' .. newOption .. ' ' .. newValue .. '\'.\n')
+          params[newOption] = newValue
+        end
 
         if meta.depends then
           isValid, reason = meta.depends(params)
