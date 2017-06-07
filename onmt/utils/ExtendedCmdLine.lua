@@ -122,7 +122,7 @@ function ExtendedCmdLine:help(arg, md)
       local argMeta = {}
 
       -- Argument constraints.
-      if option.meta and option.meta.required then
+      if option.meta and not option.meta.argument and option.meta.required then
         table.insert(argMeta, 'required')
       end
       if option.meta and option.meta.enum then
@@ -134,24 +134,30 @@ function ExtendedCmdLine:help(arg, md)
         table.insert(argMeta, 'accepted: ' .. concatValues(option.meta.enum))
       end
 
-      -- Default value.
-      local argDefault
-      if type(option.default) == 'table' then
-        argDefault = table.concat(option.default, ', ')
-      elseif option.default == '' then
-        argDefault = '\'\''
-      else
-        argDefault = tostring(option.default)
-      end
-      if not (option.meta and option.meta.required and argDefault == '\'\'') and
-         not (type(option.default == 'table') and argDefault == '') then
-        if md then
-          argDefault = '`' .. argDefault .. '`'
+      if not option.meta or not option.meta.argument then
+        -- Default value.
+        local argDefault
+        if type(option.default) == 'table' then
+          argDefault = table.concat(option.default, ', ')
+        elseif option.default == '' then
+          argDefault = '\'\''
+        else
+          argDefault = tostring(option.default)
         end
-        table.insert(argMeta, 'default: ' .. argDefault)
+        if not (option.meta and option.meta.required and argDefault == '\'\'') and
+           not (type(option.default == 'table') and argDefault == '') then
+          if md then
+            argDefault = '`' .. argDefault .. '`'
+          end
+          table.insert(argMeta, 'default: ' .. argDefault)
+        end
       end
 
       local optionPattern = option.key .. ' ' .. argType
+
+      if option.meta and option.meta.argument then
+        optionPattern = '<' .. option.key .. '>'
+      end
 
       if md then
         io.write('* `' .. optionPattern.. '`')
@@ -189,12 +195,34 @@ function ExtendedCmdLine:error(msg)
   end
 end
 
+function ExtendedCmdLine:argument(key, type, help, _meta_)
+  for _,v in ipairs(self.helplines) do
+    if v.key == key then
+      return
+    end
+  end
+
+  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+
+  parent.argument(self, key, help, type)
+
+  if not _meta_ then
+    _meta_ = {}
+  end
+  _meta_.argument = true
+  self.arguments[#self.arguments].meta = _meta_
+  self.options[key] = { meta=_meta_}
+end
+
 function ExtendedCmdLine:option(key, default, help, _meta_)
   for _,v in ipairs(self.helplines) do
     if v.key == key then
       return
     end
   end
+
+  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+
   parent.option(self, key, default, help)
 
   -- check if option correctly defined - if default value does not match validation criterion then it is either
@@ -325,6 +353,21 @@ function ExtendedCmdLine:convert(key, val, type, subtype, meta)
   return val
 end
 
+function ExtendedCmdLine:__readArgument__(params, arg, i, nArgument)
+   local argument = self.arguments[nArgument]
+   local value = arg[i]
+
+   if nArgument > #self.arguments then
+      self:error('invalid argument: ' .. value)
+   end
+   if argument.type and type(value) ~= argument.type then
+      self:error('invalid argument type for argument ' .. argument.key .. ' (should be ' .. argument.type .. ')')
+   end
+
+   params[argument.key] = value
+   return 1
+end
+
 function ExtendedCmdLine:__readOption__(params, arg, i)
   local key = arg[i]
   local option = self.options[key]
@@ -412,7 +455,7 @@ function ExtendedCmdLine:parse(arg)
     else
       local sopt = onmt.utils.String.stripHyphens(arg[i])
       params._is_default[sopt] = nil
-      if self.options[arg[i]] then
+      if arg[i]:sub(1,1) == '-' then
         if cmdlineOptions[arg[i]] then
           self:error('duplicate cmdline option: '..arg[i])
         end
@@ -431,7 +474,7 @@ function ExtendedCmdLine:parse(arg)
   end
 
   if nArgument ~= #self.arguments then
-    self:error('not enough arguments')
+    self:error('not enough arguments ')
   end
 
   if readConfig then
@@ -444,9 +487,9 @@ function ExtendedCmdLine:parse(arg)
 
   for k, v in pairs(params) do
     if k:sub(1, 1) ~= '_' then
-      local K = '-' .. k
-      if not self.options[K] and self.options[k] then
-        K = k
+      local K = k
+      if not self.options[k] and self.options['-' .. k] then
+        K = '-' .. k
       end
       local meta = self.options[K].meta
       if meta then
@@ -519,10 +562,10 @@ function ExtendedCmdLine:setCmdLineOptions(moduleOptions, group)
   end
 
   for i = 1, #moduleOptions do
-    if type(moduleOptions[i]) == 'table' then
+    if moduleOptions[i][1]:sub(1,1) == '-' then
       self:option(table.unpack(moduleOptions[i]))
     else
-      self:argument(moduleOptions[i])
+      self:argument(table.unpack(moduleOptions[i]))
     end
   end
 end
