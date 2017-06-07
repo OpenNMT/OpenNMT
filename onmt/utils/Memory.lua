@@ -34,8 +34,8 @@ function Memory.optimize(model, batch)
 
   batch = onmt.utils.Tensor.deepClone(batch)
   batch.sourceLength = 1
+  batch.sourceSize:fill(1)
   batch.targetLength = 1
-  batch.uneven = false
 
   model:trainNetwork(batch, true)
 

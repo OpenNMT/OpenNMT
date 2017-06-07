@@ -289,8 +289,6 @@ function Translator:buildTargetFeatures(predFeats)
 end
 
 function Translator:translateBatch(batch)
-  self.model:maskPadding()
-
   local encStates, context = self.model.models.encoder:forward(batch)
   if self.args.dump_input_encoding then
     return encStates[#encStates]
@@ -301,7 +299,6 @@ function Translator:translateBatch(batch)
   -- Compute gold score.
   local goldScore
   if batch.targetInput ~= nil then
-    self.model:maskPadding(batch)
     goldScore = self.model.models.decoder:computeScore(batch, decInitStates, context)
   end
 
@@ -316,9 +313,6 @@ function Translator:translateBatch(batch)
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,
                                                       self.args.eos_norm,
-                                                      function(sourceSize, sourceLength)
-                                                        return self.model.models.encoder:contextSize(sourceSize, sourceLength)
-                                                      end,
                                                       self.beam_accum)
 
   -- Save memory by only keeping track of necessary elements in the states.
@@ -357,15 +351,14 @@ function Translator:translateBatch(batch)
       table.remove(tokens)
       if #attn > 0 then
         table.remove(attn)
-      end
 
-      -- Remove unnecessary values from the attention vectors.
-      if batch.size > 1 then
-        local size = batch.sourceSize[b]
-        local length = batch.sourceLength
-        size, length = self.model.models.encoder:contextSize(size, length)
-        for j = 1, #attn do
-          attn[j] = attn[j]:narrow(1, length - size + 1, size)
+        -- Remove unnecessary values from the attention vectors.
+        if batch.size > 1 and batch.sourceLength == attn[1]:size(1) then
+          local size = batch.sourceSize[b]
+          local length = batch.sourceLength
+          for j = 1, #attn do
+            attn[j] = attn[j]:narrow(1, length - size + 1, size)
+          end
         end
       end
 

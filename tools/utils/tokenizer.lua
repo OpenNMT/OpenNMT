@@ -3,6 +3,12 @@ local tokenizer = {}
 local unicode = require('tools.utils.unicode')
 local case = require ('tools.utils.case')
 local separators = require('tools.utils.separators')
+local alphabet = require('tools.utils.alphabets')
+
+local alphabet_list = {}
+for k,_ in pairs(alphabet.ranges) do
+  table.insert(alphabet_list, k)
+end
 
 local options = {
   {
@@ -29,6 +35,21 @@ local options = {
   {
     '-case_feature', false,
     [[Generate case feature.]]
+  },
+  {
+    '-segment_case', false,
+    [[Segment case feature, splits AbC to Ab C to be able to restore case]]
+  },
+  {
+    '-segment_alphabet', {},
+    [[Segment all letters from indicated alphabet.]],
+    {
+      enum = alphabet_list,
+    }
+  },
+  {
+    '-segment_alphabet_change', false,
+    [[Segment if alphabet change between 2 letters.]]
   },
   {
     '-bpe_model', '',
@@ -68,6 +89,15 @@ function tokenizer.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Tokenizer')
 end
 
+local function inTable(v, t)
+  for _, vt in ipairs(t) do
+    if v == vt then
+      return true
+    end
+  end
+  return false
+end
+
 -- minimalistic tokenization
 -- - remove utf-8 BOM character
 -- - turn sequences of separators into single space
@@ -80,6 +110,7 @@ local function tokenize(line, opt)
   -- keep category of the previous character
   local space = true
   local letter = false
+  local prev_alphabet
   local number = false
   local other = false
 
@@ -113,7 +144,13 @@ local function tokenize(line, opt)
         if c == separators.joiner_marker then c = separators.joiner_marker_substitute end
         if c == separators.feat_marker then c = separators.feat_marker_substitute end
 
+
         local is_letter = unicode.isLetter(v)
+        local is_alphabet
+        if is_letter and (opt.segment_alphabet_change or #opt.segment_alphabet>0) then
+          is_alphabet = alphabet.findAlphabet(v)
+        end
+
         local is_number = unicode.isNumber(v)
         local is_mark = unicode.isMark(v)
         -- if we have a mark, we keep type of previous character
@@ -128,7 +165,9 @@ local function tokenize(line, opt)
           end
         end
         if is_letter then
-          if not(letter == true or space == true) then
+          if not(letter == true or space == true) or
+             (letter == true and not is_mark and prev_alphabet == is_alphabet and inTable(is_alphabet, opt.segment_alphabet)) or
+             (letter == true and not is_mark and prev_alphabet ~= is_alphabet and opt.segment_alphabet_change) then
             if opt.joiner_annotate and not(opt.joiner_new) then
               curtok = curtok .. opt.joiner
             end
@@ -150,6 +189,7 @@ local function tokenize(line, opt)
           number = false
           other = false
           letter = true
+          prev_alphabet = is_alphabet
         elseif is_number then
           if not(number == true or space == true) then
             local addjoiner = false
@@ -225,6 +265,13 @@ end
 function tokenizer.tokenize(opt, line, bpe)
   -- tokenize
   local tokens = tokenize(line, opt)
+
+  -- apply segmetn feature if requested
+  if opt.segment_case then
+    local sep = ''
+    if opt.joiner_annotate then sep = opt.joiner end
+    tokens = case.segmentCase(tokens, sep)
+  end
 
   -- apply bpe if requested
   if bpe then

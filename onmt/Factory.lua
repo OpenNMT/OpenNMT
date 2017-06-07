@@ -2,9 +2,18 @@ local Factory = torch.class('Factory')
 
 local options = {
   {
+    '-encoder_type', 'rnn',
+    [[Encoder type.]],
+    {
+      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn' },
+      structural = 0
+    }
+  },
+  {
     '-brnn', false,
     [[Use a bidirectional encoder.]],
     {
+      deprecatedBy = { 'encoder_type', 'brnn' },
       structural = 0
     }
   },
@@ -12,6 +21,7 @@ local options = {
     '-dbrnn', false,
     [[Use a deep bidirectional encoder.]],
     {
+      deprecatedBy = { 'encoder_type', 'dbrnn' },
       structural = 0
     }
   },
@@ -19,6 +29,7 @@ local options = {
     '-pdbrnn', false,
     [[Use a pyramidal deep bidirectional encoder.]],
     {
+      deprecatedBy = { 'encoder_type', 'pdbrnn' },
       structural = 0
     }
   },
@@ -147,17 +158,17 @@ function Factory.buildEncoder(opt, inputNetwork)
                    opt.rnn_type, opt.layers, opt.rnn_size)
   end
 
-  if opt.brnn then
-    describeEncoder('bidirectional')
+  if opt.encoder_type == 'brnn' then
+    describeEncoder('bidirectional RNN')
     return onmt.BiEncoder.new(opt, inputNetwork)
-  elseif opt.dbrnn then
-    describeEncoder('deep bidirectional')
+  elseif opt.encoder_type == 'dbrnn' then
+    describeEncoder('deep bidirectional RNN')
     return onmt.DBiEncoder.new(opt, inputNetwork)
-  elseif opt.pdbrnn then
-    describeEncoder('pyramidal deep bidirectional')
+  elseif opt.encoder_type == 'pdbrnn' then
+    describeEncoder('pyramidal deep bidirectional RNN')
     return onmt.PDBiEncoder.new(opt, inputNetwork)
   else
-    describeEncoder('simple')
+    describeEncoder('unidirectional RNN')
     return onmt.Encoder.new(opt, inputNetwork)
   end
 

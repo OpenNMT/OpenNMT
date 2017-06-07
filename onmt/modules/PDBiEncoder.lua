@@ -112,36 +112,9 @@ function PDBiEncoder:resetPreallocation()
   self.gradContextProto = torch.Tensor()
 end
 
-function PDBiEncoder:maskPadding()
-  for i, layer in ipairs(self.modules) do
-    if i == 1 or self.args.pdbrnn_reduction == 1 then
-      layer:maskPadding()
-    end
-  end
-end
-
--- size of context vector
-function PDBiEncoder:contextSize(sourceSize, sourceLength)
-  local contextLength = math.ceil(sourceLength / self.args.multiplier)
-  local contextSize
-
-  if type(sourceSize) == 'table' then
-    contextSize = {}
-    for i = 1, #sourceSize do
-      table.insert(contextSize, math.ceil(sourceSize[i] / self.args.multiplier))
-    end
-  elseif type(sourceSize) == 'int' then
-    contextSize = math.ceil(sourceSize / self.args.multiplier)
-  else
-    contextSize = torch.ceil(sourceSize / self.args.multiplier)
-  end
-
-  return contextSize, contextLength
-end
-
 function PDBiEncoder:forward(batch)
   -- Make source length divisible by the total reduction.
-  batch.sourceLength = math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier
+  batch:resizeSource(math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier)
 
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
@@ -192,7 +165,13 @@ function PDBiEncoder:forward(batch)
                 context:size(3) * self.args.pdbrnn_reduction)
       end
 
-      table.insert(self.inputs, onmt.data.BatchTensor.new(nextContext, batch.sourceSize))
+      local newSizes = self.inputs[i].sourceSize
+        :clone()
+        :float()
+        :div(self.args.pdbrnn_reduction)
+        :ceil()
+        :typeAs(self.inputs[i].sourceSize)
+      table.insert(self.inputs, onmt.data.BatchTensor.new(nextContext, newSizes))
     end
   end
 

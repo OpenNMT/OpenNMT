@@ -124,8 +124,6 @@ function Tagger:buildTargetFeatures(predFeats)
 end
 
 function Tagger:tagBatch(batch)
-  self.model.models.encoder:maskPadding()
-
   local pred = {}
   local feats = {}
   for _ = 1, batch.size do

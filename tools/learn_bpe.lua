@@ -28,6 +28,10 @@ local options = {
     }
   },
   {
+    '-segment_case', false,
+    [[Segment case feature, splits AbC to Ab C to be able to restore case]]
+  },
+  {
     '-lc', false,
     [[Lowercase the output from the tokenizer before learning BPE.]]
   },
