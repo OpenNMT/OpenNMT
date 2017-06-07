@@ -83,6 +83,11 @@ function LanguageModel.load(args, models, dicts)
   self.models.generator = onmt.Generator.load(models.generator)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
+  self.eosProto = {}
+  for _ = 1, #dicts.src.features + 1 do
+    table.insert(self.eosProto, torch.LongTensor())
+  end
+
   return self
 end
 
@@ -110,7 +115,7 @@ function LanguageModel:getOutput(batch)
   return batch.sourceInput
 end
 
-function LanguageModel:forwardComputeLoss(batch)
+function LanguageModel:forwardComputeLoss(batch, indvLoss)
   local _, context = self.models.encoder:forward(batch)
   local eos = onmt.utils.Tensor.reuseTensorTable(self.eosProto, { batch.size })
   for i = 1, #eos do
@@ -118,6 +123,8 @@ function LanguageModel:forwardComputeLoss(batch)
   end
 
   local loss = 0
+
+  local indvAvgLoss = torch.zeros(batch.size)
 
   for t = 1, batch.sourceLength do
     local genOutputs = self.models.generator:forward(context:select(2, t))
@@ -133,10 +140,28 @@ function LanguageModel:forwardComputeLoss(batch)
     -- Same format with and without features.
     if torch.type(output) ~= 'table' then output = { output } end
 
-    loss = loss + self.criterion:forward(genOutputs, output)
+    if indvLoss then
+      for i = 1, batch.size do
+        local tmpPred = {}
+        local tmpOutput = {}
+        for j = 1, #genOutputs do
+          table.insert(tmpPred, genOutputs[j][{{i}, {}}])
+          table.insert(tmpOutput, output[j][{{i}}])
+        end
+        local tmpLoss = self.criterion:forward(tmpPred, tmpOutput)
+        indvAvgLoss[i] = indvAvgLoss[i] + tmpLoss
+        loss = loss + tmpLoss
+      end
+    else
+      loss = loss + self.criterion:forward(genOutputs, output)
+    end
   end
 
-  return loss
+  if indvLoss then
+    indvAvgLoss = torch.cdiv(indvAvgLoss, batch.sourceSize:double())
+  end
+
+  return loss, indvAvgLoss
 end
 
 function LanguageModel:trainNetwork(batch)
