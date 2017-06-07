@@ -120,4 +120,21 @@ function cmdLineTest.fail_unknown()
   tester:assertError(function() cmd:parse({'-sample_tgt_vocab', '-sample', '0'}) end)
 end
 
+function cmdLineTest.arguments()
+  local cmd = onmt.utils.ExtendedCmdLine.new()
+  local options = {
+    {
+      'mode', 'string',
+      [['score' apply lm to input text, 'sample' samples output based on input text.]],
+      {
+        enum = { 'score', 'sample' }
+      }
+    }
+  }
+
+  cmd:setCmdLineOptions(options, 'Data')
+  tester:assertError(function() cmd:parse({''}) end)
+  tester:assertNoError(function() cmd:parse({'score'}) end)
+end
+
 return cmdLineTest
