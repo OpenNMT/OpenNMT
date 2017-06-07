@@ -14,6 +14,7 @@
 * Add `-pdbrnn_merge` option to define how to reduce the time dimension
 * Add option to segment mixed cased words
 * Add options to segment words of given alphabets or when switching alphabets
+* Add Google's NMT encoder
 
 ### Fixes and improvements
 
