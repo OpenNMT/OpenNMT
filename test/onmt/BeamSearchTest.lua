@@ -114,7 +114,7 @@ function beamSearchTest.beamSearch()
   }
   advancer.beam_accum_idx_base = 0
   beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  results = beamSearcher:search(beamSize, nBest)
+  beamSearcher:search(beamSize, nBest)
   tester:eq(#advancer.beam_accum.predicted_ids[1][1],3)
 end
 
