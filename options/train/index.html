@@ -968,7 +968,7 @@
 <li><code>-residual [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Add residual connections between recurrent layers.</li>
 <li><code>-bridge &lt;string&gt;</code> (accepted: <code>copy</code>, <code>dense</code>, <code>dense_nonlinear</code>, <code>none</code>; default: <code>copy</code>)<br/>Define how to pass encoder states to the decoder. With <code>copy</code>, the encoder and decoder must have the same number of layers.</li>
 <li><code>-input_feed [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.</li>
-<li><code>-encoder_type &lt;string&gt;</code> (accepted: <code>rnn</code>, <code>brnn</code>, <code>dbrnn</code>, <code>pdbrnn</code>; default: <code>rnn</code>)<br/>Encoder type.</li>
+<li><code>-encoder_type &lt;string&gt;</code> (accepted: <code>rnn</code>, <code>brnn</code>, <code>dbrnn</code>, <code>pdbrnn</code>, <code>gnmt</code>; default: <code>rnn</code>)<br/>Encoder type.</li>
 <li><code>-attention &lt;string&gt;</code> (accepted: <code>none</code>, <code>global</code>; default: <code>global</code>)<br/>Attention model.</li>
 <li><code>-brnn_merge &lt;string&gt;</code> (accepted: <code>concat</code>, <code>sum</code>; default: <code>sum</code>)<br/>Merge action for the bidirectional states.</li>
 <li><code>-pdbrnn_reduction &lt;number&gt;</code> (default: <code>2</code>)<br/>Time-reduction factor at each layer.</li>
