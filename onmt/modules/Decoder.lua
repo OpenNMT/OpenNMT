@@ -372,8 +372,8 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
                                       context,
                                       prevOut,
                                       t,
-                                      batch.sourceSize,
-                                      batch.sourceLength)
+                                      batch:variableLengths() and batch.sourceSize or nil,
+                                      batch:variableLengths() and batch.sourceLength or nil)
     func(prevOut, t)
   end
 end
