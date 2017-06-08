@@ -164,20 +164,34 @@ function BiEncoder:forward(batch)
   end
 
   -- Merge outputs.
-  for b = 1, batch.size do
-    local window = {b, {batch.sourceLength - batch.sourceSize[b] + 1, batch.sourceLength}}
-    local reversedIndices = torch.linspace(batch.sourceSize[b], 1, batch.sourceSize[b]):long()
+  if batch:variableLengths() then
+    for b = 1, batch.size do
+      local window = {b, {batch.sourceLength - batch.sourceSize[b] + 1, batch.sourceLength}}
+      local reversedIndices = torch.linspace(batch.sourceSize[b], 1, batch.sourceSize[b]):long()
 
-    -- Reverse outputs of the reversed encoder to align them with the regular outputs.
-    local bwdOutputs = bwdContext[window]:index(1, reversedIndices)
-    local fwdOutputs = fwdContext[window]
+      -- Reverse outputs of the reversed encoder to align them with the regular outputs.
+      local bwdOutputs = bwdContext[window]:index(1, reversedIndices)
+      local fwdOutputs = fwdContext[window]
 
-    if self.args.brnn_merge == 'concat' then
-      context[window]:narrow(2, 1, self.args.rnn_size):copy(fwdOutputs)
-      context[window]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwdOutputs)
-    elseif self.args.brnn_merge == 'sum' then
-      context[window]:copy(fwdOutputs)
-      context[window]:add(bwdOutputs)
+      if self.args.brnn_merge == 'concat' then
+        context[window]:narrow(2, 1, self.args.rnn_size):copy(fwdOutputs)
+        context[window]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwdOutputs)
+      elseif self.args.brnn_merge == 'sum' then
+        context[window]:copy(fwdOutputs)
+        context[window]:add(bwdOutputs)
+      end
+    end
+  else
+    for t = 1, batch.sourceLength do
+      if self.args.brnn_merge == 'concat' then
+        context[{{}, t, {1, self.args.rnn_size}}]
+          :copy(fwdContext[{{}, t}])
+        context[{{}, t, {self.args.rnn_size + 1, self.args.rnn_size * 2}}]
+          :copy(bwdContext[{{}, -t}])
+      elseif self.args.brnn_merge == 'sum' then
+        context[{{}, t}]:copy(fwdContext[{{}, t}])
+        context[{{}, t}]:add(bwdContext[{{}, -t}])
+      end
     end
   end
 
@@ -221,10 +235,16 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
     { batch.size, batch.sourceLength, self.args.rnn_size })
 
   -- Reverse output gradients.
-  for b = 1, batch.size do
-    local window = {b, {batch.sourceLength - batch.sourceSize[b] + 1, batch.sourceLength}}
-    local reversedIndices = torch.linspace(batch.sourceSize[b], 1, batch.sourceSize[b]):long()
-    gradContextBwd[window]:copy(gradContextOutputBwd[window]:index(1, reversedIndices))
+  if batch:variableLengths() then
+    for b = 1, batch.size do
+      local window = {b, {batch.sourceLength - batch.sourceSize[b] + 1, batch.sourceLength}}
+      local reversedIndices = torch.linspace(batch.sourceSize[b], 1, batch.sourceSize[b]):long()
+      gradContextBwd[window]:copy(gradContextOutputBwd[window]:index(1, reversedIndices))
+    end
+  else
+    for t = 1, batch.sourceLength do
+      gradContextBwd[{{}, t}]:copy(gradContextOutputBwd[{{}, -t}])
+    end
   end
 
   batch:reverseSourceInPlace()
@@ -232,11 +252,17 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   batch:reverseSourceInPlace()
 
   -- Add gradients coming from both directions.
-  for b = 1, batch.size do
-    local padSize = batch.sourceLength - batch.sourceSize[b]
-    for t = padSize + 1, batch.sourceLength do
-      onmt.utils.Tensor.recursiveAdd(gradInputFwd[t],
-                                     gradInputBwd[batch.sourceLength - t + 1 + padSize], b)
+  if batch:variableLengths() then
+    for b = 1, batch.size do
+      local padSize = batch.sourceLength - batch.sourceSize[b]
+      for t = padSize + 1, batch.sourceLength do
+        onmt.utils.Tensor.recursiveAdd(gradInputFwd[t],
+                                       gradInputBwd[batch.sourceLength - t + 1 + padSize], b)
+      end
+    end
+  else
+    for t = 1, batch.sourceLength do
+      onmt.utils.Tensor.recursiveAdd(gradInputFwd[t], gradInputBwd[batch.sourceLength - t + 1])
     end
   end
 
