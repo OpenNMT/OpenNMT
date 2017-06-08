@@ -184,6 +184,36 @@ function encoderTest.dbrnn_saveAndLoad_GRU()
   genericCheckSerial(encoder, opt)
 end
 
+function encoderTest.gnmt_LSTM()
+  local encoder, opt = buildEncoder(onmt.GoogleEncoder, 'LSTM')
+  genericCheckDim(encoder, opt)
+end
+
+function encoderTest.gnmt_masking_LSTM()
+  local encoder, _ = buildEncoder(onmt.GoogleEncoder, 'LSTM')
+  genericCheckMasking(encoder)
+end
+
+function encoderTest.gnmt_saveAndLoad_LSTM()
+  local encoder, opt = buildEncoder(onmt.GoogleEncoder, 'LSTM')
+  genericCheckSerial(encoder, opt)
+end
+
+function encoderTest.gnmt_GRU()
+  local encoder, opt = buildEncoder(onmt.GoogleEncoder, 'GRU')
+  genericCheckDim(encoder, opt)
+end
+
+function encoderTest.gnmt_masking_GRU()
+  local encoder, _ = buildEncoder(onmt.GoogleEncoder, 'GRU')
+  genericCheckMasking(encoder)
+end
+
+function encoderTest.gnmt_saveAndLoad_GRU()
+  local encoder, opt = buildEncoder(onmt.GoogleEncoder, 'GRU')
+  genericCheckSerial(encoder, opt)
+end
+
 function encoderTest.pdbrnn_LSTM()
   local encoder, opt = buildEncoder(onmt.PDBiEncoder, 'LSTM')
   genericCheckDim(encoder, opt)
