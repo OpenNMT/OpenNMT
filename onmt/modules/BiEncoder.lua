@@ -236,7 +236,7 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
     local padSize = batch.sourceLength - batch.sourceSize[b]
     for t = padSize + 1, batch.sourceLength do
       onmt.utils.Tensor.recursiveAdd(gradInputFwd[t],
-                                     gradInputBwd[batch.sourceLength - t + 1 + padSize])
+                                     gradInputBwd[batch.sourceLength - t + 1 + padSize], b)
     end
   end
 

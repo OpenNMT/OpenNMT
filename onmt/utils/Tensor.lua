@@ -22,12 +22,20 @@ local function recursiveClone(out)
 end
 
 --[[ Recursively add `b` tensors into `a`'s. ]]
-local function recursiveAdd(a, b)
+local function recursiveAdd(a, b, index)
   if torch.isTensor(a) then
-    a:add(b)
+    if index then
+      if a:dim() > 1 then
+        a[index]:add(b[index])
+      else
+        a[index] = a[index] + b[index]
+      end
+    else
+      a:add(b)
+    end
   else
     for i = 1, #a do
-      recursiveAdd(a[i], b[i])
+      recursiveAdd(a[i], b[i], index)
     end
   end
   return a
