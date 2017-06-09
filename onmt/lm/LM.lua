@@ -14,6 +14,22 @@ local options = {
     {
       valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
+  },
+  {
+    '-max_length', 100,
+    [[Maximal length of sentences in sample mode.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt,
+      depends = function(params) return params.mode == 'sample' end
+    }
+  },
+  {
+    '-temperature', 1,
+    [[For `sample` mode, higher temperatures cause the model to take more chances and increase diversity of results, but at a cost of more mistakes.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0.0001, 1),
+      depends = function(params) return params.mode == 'sample' end
+    }
   }
 }
 
