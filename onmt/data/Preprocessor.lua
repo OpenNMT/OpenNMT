@@ -425,7 +425,9 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
                               { 'source' },
                               {
                                 {
-                                  onmt.Constants.UNK_WORD
+                                  onmt.Constants.UNK_WORD,
+                                  onmt.Constants.BOS_WORD,
+                                  onmt.Constants.EOS_WORD
                                 }
                               },
                               function(tokens)
