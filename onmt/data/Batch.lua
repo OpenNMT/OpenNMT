@@ -60,7 +60,7 @@ Parameters:
   * `tgt` - 2D table of target batch indices
   * `tgtFeatures` - 2D table of target batch features (opt)
 --]]
-function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
+function Batch:__init(src, srcFeatures, tgt, tgtFeatures, dropout_words)
   src = src or {}
   srcFeatures = srcFeatures or {}
   tgtFeatures = tgtFeatures or {}
@@ -159,6 +159,11 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
       end
     end
   end
+
+  if dropout_words and dropout_words > 0 then
+    onmt.VDropout.dropoutWords(dropout_words, self)
+  end
+
 end
 
 --[[ Set source input directly,

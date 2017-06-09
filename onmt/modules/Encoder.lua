@@ -142,9 +142,6 @@ function Encoder:resetPreallocation()
 
   -- Prototype for preallocated context vector.
   self.contextProto = torch.Tensor()
-
-  -- Prototype for preallocated vocabulary mask
-  self.vocabProto = torch.Tensor()
 end
 
 function Encoder:maskPadding()
@@ -226,10 +223,6 @@ function Encoder:forward(batch)
   end
   if self.train then
     self.inputs = {}
-    self.network:apply(function(m) if m.noiseInit then m.noiseInit[1]=0 end end)
-    if self.args.dropout_words and self.args.dropout_words > 0 then
-      onmt.VDropout.dropoutWords(self.args.dropout_words, batch)
-    end
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward

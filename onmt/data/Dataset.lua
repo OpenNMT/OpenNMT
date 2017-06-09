@@ -86,7 +86,7 @@ function Dataset:instanceCount()
 end
 
 --[[ Get `Batch` number `idx`. If nil make a batch of all the data. ]]
-function Dataset:getBatch(idx)
+function Dataset:getBatch(idx, dropout_words)
   if #self.src == 0 then
     return nil
   end
@@ -124,7 +124,7 @@ function Dataset:getBatch(idx)
     end
   end
 
-  return onmt.data.Batch.new(src, srcFeatures, tgt, tgtFeatures)
+  return onmt.data.Batch.new(src, srcFeatures, tgt, tgtFeatures, dropout_words)
 end
 
 return Dataset
