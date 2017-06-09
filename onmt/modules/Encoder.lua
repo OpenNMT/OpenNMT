@@ -172,22 +172,26 @@ Returns:
   1. - final hidden states
   2. - context matrix H
 --]]
-function Encoder:forward(batch)
+function Encoder:forward(batch, initial_states)
 
   -- TODO: Change `batch` to `input`.
 
   local outputSize = self.args.rnnSize
 
-  if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
-                                                         self.stateProto,
-                                                         { batch.size, outputSize })
+  local states = initial_states
+  -- if states is not passed, start with empty state
+  if not states then
+    if self.statesProto == nil then
+      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+                                                           self.stateProto,
+                                                           { batch.size, outputSize })
+    end
+
+    -- Make initial states h_0.
+    states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, outputSize })
   end
 
-  -- Make initial states h_0.
-  local states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, outputSize })
-
-  -- Preallocated output matrix.
+    -- Preallocated output matrix.
   local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
                                                 { batch.size, batch.sourceLength, outputSize })
 
