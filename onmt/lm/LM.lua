@@ -61,7 +61,7 @@ function LM:buildOutput(data)
   return table.concat(onmt.utils.Features.annotate(data.words, data.features), ' ')
 end
 
-function LM:buildData(src, ignoreEmpty)
+function LM:buildData(src, ignoreEmpty, onlyPrefix)
   local srcData = {}
   srcData.words = {}
   srcData.features = {}
@@ -78,7 +78,7 @@ function LM:buildData(src, ignoreEmpty)
       index = index + 1
 
       table.insert(srcData.words,
-                 self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD))
+                 self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD, onmt.Constants.BOS_WORD, not onlyPrefix))
       if #self.dicts.src.features > 0 then
         table.insert(srcData.features,
                      onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
@@ -109,11 +109,10 @@ function LM:evaluate(src)
   if data:batchCount() > 0 then
     local batch = onmt.utils.Cuda.convert(data:getBatch())
 
-    local ppl
-    _, ppl = self.model:forwardComputeLoss(batch, true)
+    local indvPpl = select(2, self.model:forwardComputeLoss(batch, true))
 
     for i = 1, batch.size do
-      table.insert(results, ppl[i])
+      table.insert(results, indvPpl[i])
     end
   end
 
@@ -136,12 +135,12 @@ Returns:
 
   * `results` - a batch of source tokens
 ]]
-function LM:sample(src)
-  local data = self:buildData(src)
+function LM:sample()
+  --local data = self:buildData(src, false, true)
 
 
 
-  return results
+  --return results
 end
 
 return LM
