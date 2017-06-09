@@ -151,11 +151,12 @@ function LM:sample(src, max_length, temperature)
   local t = 0
 
   while foundEOS ~= #data.src and t < max_length do
-    local genOutputs = self.model.models.generator:forward(context:select(2, context:size(2)-1))
+    local genOutputs = self.model.models.generator:forward(context:select(2, context:size(2)))
     genOutputs[1]:div(temperature) -- scale by temperature
-    local probs = torch.exp(genOutputs[1]):squeeze()
+    local probs = torch.exp(genOutputs[1])
     probs:div(torch.sum(probs)) -- renormalize so probs sum to one
     local words = torch.multinomial(probs:float(), 1)
+    local nextsrc = {}
     for i = 1, #data.src do
       if not results[i] then
         results[i] = {}
@@ -167,9 +168,10 @@ function LM:sample(src, max_length, temperature)
         end
         table.insert(results[i], words[i][1])
       end
+      table.insert(nextsrc, words[i])
     end
-    --foundEOS = word == onmt.Constants.EOS_WORD
-    --print(genOutputs[1]:size(), word)
+    local batch = onmt.data.Batch.new(nextsrc)
+    states, context = self.model.models.encoder:forward(batch, states)
     t = t + 1
   end
 
