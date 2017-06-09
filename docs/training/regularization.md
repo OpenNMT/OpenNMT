@@ -21,15 +21,3 @@ The following picture (from Gal et al. paper) describes the different approaches
 ![Dropout Types](../img/dropout-type.jpg)
 
 Finally dropout can also be applied to word embeddings, in that case, for each sentence in a minibatch, set of individual words randomly selected with probability \(p_{words}\) are replaced by a padding tokens. You can apply this option using `-dropout_words pwords` with a non zero value.
-
-## Layer Normalization
-
-Layer Normalization ([Ba et al., 2016](https://arxiv.org/abs/1607.06450)) is normalizing each neuron weighted input using the full layer for calculating \(\mu^{t,l}\) and \(\sigma^{t,l}\).
-
-Layer Normalization is also including two learnt parameters per neuron: \(\textbf g_i\) which is the gain after normalization, and \(\textbf b_i\) which is the bias according to the formulas:
-
-$$a'^{t,l}_i=\frac{\textbf g_i}{\sigma^{t,l}}.(a^{t,l}_i-\mu^{t,l})+{\textbf b_i}$$
-$$\sigma^{t,l}=\sqrt{\frac{1}{H}\sum_{i=1}^{H}(a^{t,l}_i-\mu^{t,l})^2}$$
-$$\mu^{t,l}=\frac{1}{H}\sum_{i=1}^{H}a^{t,l}_i$$
-
-Where: \(a^{t,l}\) is a neuron weighted input before activation in a layer \(l\) with \(H\) neuron at timestep \(t\).
