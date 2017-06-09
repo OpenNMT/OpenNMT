@@ -32,18 +32,18 @@ Parameters:
   * `residual` - Residual connections between layers (boolean)
   * `dropout_input` - if true, add a dropout layer on the first layer (useful for instance in complex encoders)
 --]]
-function GRU:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input, max_batch_size, dropout_type)
+function GRU:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = layers
   self.outputSize = hiddenSize
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, max_batch_size, dropout_type))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type))
 end
 
 --[[ Stack the GRU units. ]]
-function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, max_batch_size, dropout_type)
+function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
   -- inputs: { prevOutput L1, ..., prevOutput Ln, input }
   -- outputs: { output L1, ..., output Ln }
 
@@ -80,11 +80,11 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropo
 
     -- apply variational dropout on recurrent connection
     if dropout_type == "variational" then
-      prevH = onmt.VDropout(dropout, max_batch_size, hiddenSize)(prevH)
+      prevH = onmt.VDropout(dropout)(prevH)
     end
     if dropout_input or L > 1 then
       if dropout_type == "variational" then
-        input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
+        input = onmt.VDropout(dropout)(input)
       else
         input = nn.Dropout(dropout)(input)
       end

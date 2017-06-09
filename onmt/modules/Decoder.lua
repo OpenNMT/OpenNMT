@@ -56,8 +56,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   end
 
   local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
-                      args.dropout, args.residual, args.dropout_input,
-                      args.max_batch_size, args.dropout_type)
+                      args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
   self.inputNet = inputNetwork

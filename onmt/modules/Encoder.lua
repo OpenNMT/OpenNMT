@@ -97,8 +97,7 @@ function Encoder:__init(args, inputNetwork)
     RNN = onmt.GRU
   end
 
-  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input,
-                      args.max_batch_size, args.dropout_type)
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
   self.inputNet = inputNetwork

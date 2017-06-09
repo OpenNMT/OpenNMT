@@ -35,18 +35,18 @@ Parameters:
   * `dropout_input` - if true, add a dropout layer on the first layer (useful for instance in complex encoders)
   * `dropout_type` - naive dropout applies independently of each connection, variational applies uniformally on all timesteps
 --]]
-function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input, max_batch_size, dropout_type)
+function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, max_batch_size, dropout_type))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type))
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, max_batch_size, dropout_type)
+function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
   local inputs = {}
   local outputs = {}
 
@@ -83,11 +83,11 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
 
     -- apply variational dropout on recurrent connection
     if dropout_type == "variational" then
-      prevH = onmt.VDropout(dropout, max_batch_size, hiddenSize)(prevH)
+      prevH = onmt.VDropout(dropout)(prevH)
     end
     if dropout_input or L > 1 then
       if dropout_type == "variational" then
-        input = onmt.VDropout(dropout, max_batch_size, hiddenSize)(input)
+        input = onmt.VDropout(dropout)(input)
       else
         input = nn.Dropout(dropout)(input)
       end

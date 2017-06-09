@@ -1,6 +1,6 @@
 local VDropout, Parent = torch.class('onmt.VDropout', 'nn.Module')
 
-function VDropout:__init(p, max_batch_size, layer_size)
+function VDropout:__init(p)
   Parent.__init(self)
   self.p = p or 0.5
   self.train = true
@@ -8,8 +8,7 @@ function VDropout:__init(p, max_batch_size, layer_size)
     error('<Dropout> illegal percentage, must be 0 <= p < 1')
   end
   self.noiseInit = torch.Tensor(1):zero()
-  -- need to dimension it, otherwise won't keep its sharedness through resizing
-  self.sharedNoise = torch.Tensor(max_batch_size, layer_size)
+  self.sharedNoise = torch.Tensor(1,1)
 end
 
 
