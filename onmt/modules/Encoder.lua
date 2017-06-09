@@ -223,6 +223,8 @@ function Encoder:forward(batch)
   end
   if self.train then
     self.inputs = {}
+    -- initialize noise for variational dropout
+    onmt.VDropout.initializeNetwork(self.network)
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward

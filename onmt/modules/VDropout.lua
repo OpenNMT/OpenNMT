@@ -11,6 +11,11 @@ function VDropout:__init(p)
   self.sharedNoise = torch.Tensor(1,1)
 end
 
+function VDropout.initializeNetwork(net)
+  net:apply(function(m)
+    if m.noiseInit then m.noiseInit[1]=0 end
+  end)
+end
 
 function VDropout:updateOutput(input)
   self.output:resizeAs(input):copy(input)
