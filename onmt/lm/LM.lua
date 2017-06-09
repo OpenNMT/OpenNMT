@@ -135,12 +135,49 @@ Returns:
 
   * `results` - a batch of source tokens
 ]]
-function LM:sample()
-  --local data = self:buildData(src, false, true)
+function LM:sample(src, max_length, temperature)
+  local data = self:buildData(src, false, true)
 
+  local states, context = self.model.models.encoder:forward(data:getBatch())
 
+  local foundEOS = 0
+  local results = {}
 
-  --return results
+  for i = 1, #data.src do
+    table.insert(results, torch.totable(data.src[i]))
+  end
+
+  local completed = {}
+  local t = 0
+
+  while foundEOS ~= #data.src and t < max_length do
+    local genOutputs = self.model.models.generator:forward(context:select(2, context:size(2)-1))
+    genOutputs[1]:div(temperature) -- scale by temperature
+    local probs = torch.exp(genOutputs[1]):squeeze()
+    probs:div(torch.sum(probs)) -- renormalize so probs sum to one
+    local words = torch.multinomial(probs:float(), 1)
+    for i = 1, #data.src do
+      if not results[i] then
+        results[i] = {}
+      end
+      if not completed[i] then
+        if words[i][1] == onmt.Constants.EOS_WORD then
+          if not completed[i] then foundEOS = foundEOS +1 end
+          completed[i] = 1
+        end
+        table.insert(results[i], words[i][1])
+      end
+    end
+    --foundEOS = word == onmt.Constants.EOS_WORD
+    --print(genOutputs[1]:size(), word)
+    t = t + 1
+  end
+
+  for i = 1, #data.src do
+    results[i] = table.concat(self.dicts.src.words:convertToLabels(results[i], onmt.Constants.EOS), ' ')
+  end
+
+  return results
 end
 
 return LM

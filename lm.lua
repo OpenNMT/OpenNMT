@@ -20,6 +20,22 @@ local options = {
   {
     '-output', 'output.txt',
     [[Output file depend on `<mode>`.]]
+  },
+  {
+    '-max_length', 100,
+    [[Maximal length of sentences in sample mode.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt,
+      depends = function(params) return params.mode == 'sample' end
+    }
+  },
+  {
+    '-temperature', 1,
+    [[For `sample` mode, higher temperatures cause the model to take more chances and increase diversity of results, but at a cost of more mistakes.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0.0001, 1),
+      depends = function(params) return params.mode == 'sample' end
+    }
   }
 }
 
@@ -72,7 +88,12 @@ local function main()
         timer:resume()
       end
 
-      local results = lm:evaluate(srcBatch)
+      local results
+      if opt.mode == 'score' then
+        results = lm:evaluate(srcBatch)
+      else
+        results = lm:sample(srcBatch, opt.max_length, opt.temperature)
+      end
 
       if opt.time then
         timer:stop()
