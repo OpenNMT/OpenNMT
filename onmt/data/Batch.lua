@@ -141,6 +141,7 @@ function Batch:setSourceInput(sourceInput)
   self.sourceLength = sourceInput:size(1)
   self.sourceInputFeatures = {}
   self.sourceInput = sourceInput
+  self:resetCache()
   return self
 end
 
@@ -232,7 +233,11 @@ end
 
 --[[ Return true if the batch contains sequences of variable lengths. ]]
 function Batch:variableLengths()
-  return torch.any(torch.ne(self.sourceSize, self.sourceLength))
+  if self.variableLen == nil then
+    self.variableLen = torch.any(torch.ne(self.sourceSize, self.sourceLength))
+  end
+
+  return self.variableLen
 end
 
 --[[ Resize the source sequences, adding padding as needed. ]]
@@ -280,23 +285,39 @@ function Batch:resizeSource(newLength)
   end
 
   self.sourceLength = newLength
+  self:resetCache()
+end
+
+function Batch:resetCache()
+  self.sourceInputRev = nil
+  self.sourceInputFeaturesRev = nil
+  self.variableLen = nil
 end
 
 function Batch:reverseSourceInPlace()
-  for b = 1, self.size do
-    local reversedIndices = torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long()
-    local window = {{self.sourceLength - self.sourceSize[b] + 1, self.sourceLength}, b}
-
-    self.sourceInput[window]:copy(self.sourceInput[window]:index(1, reversedIndices))
-
+  if not self.sourceInputRev then
+    self.sourceInputRev = self.sourceInput:clone()
     if self.sourceInputFeatures then
-      self.sourceInputFeaturesRev = {}
-      for i = 1, #self.sourceInputFeatures do
-        self.sourceInputFeatures[i][window]
-          :copy(self.sourceInputFeatures[i][window]:index(1, reversedIndices))
+      self.sourceInputFeaturesRev = onmt.utils.Tensor.recursiveClone(self.sourceInputFeatures)
+    end
+
+    for b = 1, self.size do
+      local reversedIndices = torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long()
+      local window = {{self.sourceLength - self.sourceSize[b] + 1, self.sourceLength}, b}
+
+      self.sourceInputRev[window]:copy(self.sourceInput[window]:index(1, reversedIndices))
+
+      if self.sourceInputFeatures then
+        for i = 1, #self.sourceInputFeatures do
+          self.sourceInputFeaturesRev[i][window]
+            :copy(self.sourceInputFeatures[i][window]:index(1, reversedIndices))
+        end
       end
     end
   end
+
+  self.sourceInput, self.sourceInputRev = self.sourceInputRev, self.sourceInput
+  self.sourceInputFeatures, self.sourceInputFeaturesRev = self.sourceInputFeaturesRev, self.sourceInputFeatures
 end
 
 return Batch

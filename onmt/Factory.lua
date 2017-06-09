@@ -5,7 +5,7 @@ local options = {
     '-encoder_type', 'rnn',
     [[Encoder type.]],
     {
-      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn' },
+      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn', 'gnmt' },
       structural = 0
     }
   },
@@ -48,6 +48,7 @@ function Factory.declareOpts(cmd)
   onmt.BiEncoder.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
+  onmt.GoogleEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
 end
 
@@ -167,6 +168,9 @@ function Factory.buildEncoder(opt, inputNetwork)
   elseif opt.encoder_type == 'pdbrnn' then
     describeEncoder('pyramidal deep bidirectional RNN')
     return onmt.PDBiEncoder.new(opt, inputNetwork)
+  elseif opt.encoder_type == 'gnmt' then
+    describeEncoder('GNMT')
+    return onmt.GoogleEncoder.new(opt, inputNetwork)
   else
     describeEncoder('unidirectional RNN')
     return onmt.Encoder.new(opt, inputNetwork)
@@ -195,6 +199,8 @@ function Factory.loadEncoder(pretrained)
     encoder = onmt.PDBiEncoder.load(pretrained)
   elseif pretrained.name == 'DBiEncoder' then
     encoder = onmt.DBiEncoder.load(pretrained)
+  elseif pretrained.name == 'GoogleEncoder' then
+    encoder = onmt.GoogleEncoder.load(pretrained)
   else
     -- Keep for backward compatibility.
     local brnn = #pretrained.modules == 2

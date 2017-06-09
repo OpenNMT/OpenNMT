@@ -105,14 +105,12 @@ function DecoderAdvancer:update(beam)
                                               self.batch.sourceLength)
   t = t + 1
 
-  local softmaxOut
-
-  if self.decoder.softmaxAttn then
-    softmaxOut = self.decoder.softmaxAttn.output
-    cumAttnProba = cumAttnProba:add(softmaxOut)
+  local attention = self.decoder:getAttention()
+  if attention then
+    cumAttnProba = cumAttnProba:add(attention)
   end
 
-  local nextState = {decStates, decOut, context, softmaxOut, nil, sourceSizes, t, cumAttnProba}
+  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba}
   beam:setState(nextState)
 end
 
