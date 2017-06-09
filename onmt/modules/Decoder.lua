@@ -244,6 +244,13 @@ function Decoder:replaceAttentionSoftmax(builder)
   end
 end
 
+function Decoder:getAttention()
+  self:findAttentionModel()
+  if self.softmaxAttn then
+    return self.softmaxAttn.output
+  end
+end
+
 --[[ Mask padding means that the attention-layer is constrained to
   give zero-weight to padding on the source side.
 
