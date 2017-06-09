@@ -247,7 +247,7 @@ end
 function Decoder:getAttention()
   self:findAttentionModel()
   if self.softmaxAttn then
-    return self.softmaxAttn.output
+    return self.softmaxAttn.output:clone()
   end
 end
 
