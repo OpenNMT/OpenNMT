@@ -61,7 +61,7 @@ function LM:buildOutput(data)
   return table.concat(onmt.utils.Features.annotate(data.words, data.features), ' ')
 end
 
-function LM:buildData(src)
+function LM:buildData(src, ignoreEmpty)
   local srcData = {}
   srcData.words = {}
   srcData.features = {}
@@ -71,7 +71,7 @@ function LM:buildData(src)
   local index = 1
 
   for b = 1, #src do
-    if src[b].words and #src[b].words == 0 then
+    if ignoreEmpty and src[b].words and #src[b].words == 0 then
       table.insert(ignored, b)
     else
       indexMap[index] = b
@@ -95,16 +95,14 @@ Parameters:
 
   * `src` - a batch of tables containing:
     - `words`: the table of source words
-    - `features`: the table of feaures sequences (`src.features[i][j]` is the value of the ith feature of the jth token)
+    - `features`: the table of features sequences (`src.features[i][j]` is the value of the ith feature of the jth token)
 
 Returns:
 
-  * `results` - a batch of tables containing:
-      - `words`: the table of target words
-      - `features`: the table of target features sequences
+  * `results` - a batch of ppl
 ]]
 function LM:evaluate(src)
-  local data, ignored = self:buildData(src)
+  local data, ignored = self:buildData(src, true)
 
   local results = {}
 
@@ -122,6 +120,26 @@ function LM:evaluate(src)
   for i = 1, #ignored do
     table.insert(results, ignored[i], {})
   end
+
+  return results
+end
+
+--[[ Sample
+
+Parameters:
+
+  * `src` - a batch of tables containing:
+    - `words`: table of source token sequences - possibly empty
+    - `features`: table of features sequences (`src.features[i][j]` is the value of the ith feature of the jth token)
+
+Returns:
+
+  * `results` - a batch of source tokens
+]]
+function LM:sample(src)
+  local data = self:buildData(src)
+
+
 
   return results
 end
