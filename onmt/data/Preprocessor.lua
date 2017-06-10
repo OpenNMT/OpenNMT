@@ -434,7 +434,7 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
                                 return #tokens[1] > 0 and isValid(tokens[1], self.args.seq_length)
                               end,
                               {
-                                onmt.utils.Features.generateSource
+                                onmt.utils.Features.generateTarget
                               })
   return data[1]
 end
