@@ -42,7 +42,7 @@ local server_options = {
      '-unload_time', 10,
      [[Unload unused model from memory after this time.]]
    },
-   { 
+   {
      '-model_config', 'tools/rest_config.yml',
      [[Path to yaml configuration file.]],
      {
