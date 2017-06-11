@@ -33,8 +33,8 @@
 * `-tgt_word_vec_size <table>` (default: `500`)<br/>List of target embedding sizes: `word[ feat1[ feat2[ ...] ] ]`.
 * `-pre_word_vecs_enc <string>` (default: `''`)<br/>Path to pretrained word embeddings on the encoder side serialized as a Torch tensor.
 * `-pre_word_vecs_dec <string>` (default: `''`)<br/>Path to pretrained word embeddings on the decoder side serialized as a Torch tensor.
-* `-fix_word_vecs_enc [<boolean>]` (default: `false`)<br/>Fix word embeddings on the encoder side.
-* `-fix_word_vecs_dec [<boolean>]` (default: `false`)<br/>Fix word embeddings on the decoder side.
+* `-fix_word_vecs_enc [<boolean>/<string>]` (accepted: `false`, `true`, `pretrained`; default: `false`)<br/>Fix word embeddings on the encoder side.
+* `-fix_word_vecs_dec [<boolean>/<string>]` (accepted: `false`, `true`, `pretrained`; default: `false`)<br/>Fix word embeddings on the decoder side.
 * `-feat_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action for the features embeddings.
 * `-feat_vec_exponent <number>` (default: `0.7`)<br/>When features embedding sizes are not set and using `-feat_merge concat`, their dimension will be set to `N^feat_vec_exponent` where `N` is the number of values the feature takes.
 * `-feat_vec_size <number>` (default: `20`)<br/>When features embedding sizes are not set and using `-feat_merge sum`, this is the common embedding size of the features
@@ -46,12 +46,11 @@
 * `-residual [<boolean>]` (default: `false`)<br/>Add residual connections between recurrent layers.
 * `-bridge <string>` (accepted: `copy`, `dense`, `dense_nonlinear`, `none`; default: `copy`)<br/>Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder must have the same number of layers.
 * `-input_feed [<boolean>]` (default: `true`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
-* `-brnn [<boolean>]` (default: `false`)<br/>Use a bidirectional encoder.
-* `-dbrnn [<boolean>]` (default: `false`)<br/>Use a deep bidirectional encoder.
-* `-pdbrnn [<boolean>]` (default: `false`)<br/>Use a pyramidal deep bidirectional encoder.
+* `-encoder_type <string>` (accepted: `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`; default: `rnn`)<br/>Encoder type.
 * `-attention <string>` (accepted: `none`, `global`; default: `global`)<br/>Attention model.
 * `-brnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action for the bidirectional states.
 * `-pdbrnn_reduction <number>` (default: `2`)<br/>Time-reduction factor at each layer.
+* `-pdbrnn_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action when reducing time.
 
 ## Global Attention Model options
 

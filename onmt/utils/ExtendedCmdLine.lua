@@ -15,6 +15,25 @@ local function wrapIndent(text, size, pad)
   end
 end
 
+local function concatValues(t)
+  local isBoolean
+  local s = ''
+  for _, v in ipairs(t) do
+    if type(v) == 'boolean' then
+      isBoolean = true
+    else
+      if s ~= '' then
+        s = s .. ', '
+      end
+      s = s .. v
+    end
+  end
+  if isBoolean then
+    s = 'true, false, ' .. s
+  end
+  return s
+end
+
 ---------------------------------------------------------------------------------
 
 local ExtendedCmdLine, parent, path
@@ -89,45 +108,56 @@ function ExtendedCmdLine:help(arg, md)
         io.write('## ')
       end
       io.write(option)
-    else
+      io.write('\n')
+    elseif not option.meta or not option.meta.deprecatedBy then
       -- Argument type.
       local argType = '<' .. option.type .. '>'
       if option.type == 'boolean' then
+        if option.meta and option.meta.enum then
+          argType = argType .. '/<string>'
+        end
         argType = '[' .. argType .. ']'
       end
 
       local argMeta = {}
 
       -- Argument constraints.
-      if option.meta and option.meta.required then
+      if option.meta and not option.meta.argument and option.meta.required then
         table.insert(argMeta, 'required')
       end
       if option.meta and option.meta.enum then
         if md then
           for k, v in pairs(option.meta.enum) do
-            option.meta.enum[k] = '`' .. v .. '`'
+            option.meta.enum[k] = '`' .. tostring(v) .. '`'
           end
         end
-        table.insert(argMeta, 'accepted: ' .. table.concat(option.meta.enum, ', '))
+        table.insert(argMeta, 'accepted: ' .. concatValues(option.meta.enum))
       end
 
-      -- Default value.
-      local argDefault
-      if type(option.default) == 'table' then
-        argDefault = table.concat(option.default, ', ')
-      elseif option.default == '' then
-        argDefault = '\'\''
-      else
-        argDefault = tostring(option.default)
-      end
-      if not (option.meta and option.meta.required and argDefault == '\'\'') then
-        if md then
-          argDefault = '`' .. argDefault .. '`'
+      if not option.meta or not option.meta.argument then
+        -- Default value.
+        local argDefault
+        if type(option.default) == 'table' then
+          argDefault = table.concat(option.default, ', ')
+        elseif option.default == '' then
+          argDefault = '\'\''
+        else
+          argDefault = tostring(option.default)
         end
-        table.insert(argMeta, 'default: ' .. argDefault)
+        if not (option.meta and option.meta.required and argDefault == '\'\'') and
+           not (type(option.default == 'table') and argDefault == '') then
+          if md then
+            argDefault = '`' .. argDefault .. '`'
+          end
+          table.insert(argMeta, 'default: ' .. argDefault)
+        end
       end
 
       local optionPattern = option.key .. ' ' .. argType
+
+      if option.meta and option.meta.argument then
+        optionPattern = '<' .. option.key .. '>'
+      end
 
       if md then
         io.write('* `' .. optionPattern.. '`')
@@ -149,9 +179,9 @@ function ExtendedCmdLine:help(arg, md)
         io.write(wrapIndent(description, 60, '      '))
         io.write('\n')
       end
-    end
 
-    io.write('\n')
+      io.write('\n')
+    end
   end
 end
 
@@ -165,21 +195,49 @@ function ExtendedCmdLine:error(msg)
   end
 end
 
+function ExtendedCmdLine:argument(key, type, help, _meta_)
+  for _,v in ipairs(self.helplines) do
+    if v.key == key then
+      return
+    end
+  end
+
+  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+
+  parent.argument(self, key, help, type)
+
+  if not _meta_ then
+    _meta_ = {}
+  end
+  _meta_.argument = true
+  self.arguments[#self.arguments].meta = _meta_
+  self.options[key] = { meta=_meta_}
+end
+
 function ExtendedCmdLine:option(key, default, help, _meta_)
   for _,v in ipairs(self.helplines) do
     if v.key == key then
       return
     end
   end
+
+  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+
   parent.option(self, key, default, help)
 
   -- check if option correctly defined - if default value does not match validation criterion then it is either
   -- empty and in that case, is a required option, or is an error
   if _meta_ and (
     (_meta_.valid and not _meta_.valid(default)) or
-    (_meta_.enum and not onmt.utils.Table.hasValue(_meta_.enum, default))) then
+    (_meta_.enum and type(default) ~= 'table' and not onmt.utils.Table.hasValue(_meta_.enum, default))) then
     assert(default=='',"Invalid option default definition: "..key.."="..default)
     _meta_.required = true
+  end
+
+  if _meta_ and _meta_.enum and type(default) == 'table' then
+    for _,k in ipairs(default) do
+      assert(onmt.utils.Table.hasValue(_meta_.enum, k), "table option not compatible with enum: "..key)
+    end
   end
 
   self.options[key].meta = _meta_
@@ -258,7 +316,7 @@ function ExtendedCmdLine:dumpConfig(opt, filename)
 end
 
 --[[ Convert `val` string to the target type. ]]
-function ExtendedCmdLine:convert(key, val, type, subtype)
+function ExtendedCmdLine:convert(key, val, type, subtype, meta)
   if not type or type == 'string' then
     val = val
   elseif type == 'table' then
@@ -279,7 +337,10 @@ function ExtendedCmdLine:convert(key, val, type, subtype)
     elseif val == '1' or val == 'true' then
       val = true
     else
-      self:error('invalid argument for boolean option ' .. key .. ' (should be 0, 1, false or true)')
+      -- boolean option can take 3rd values
+      if not (meta and meta.enum) then
+        self:error('invalid argument for boolean option ' .. key .. ' (should be 0, 1, false or true)')
+      end
     end
   else
     self:error('unknown required option type ' .. type)
@@ -290,6 +351,21 @@ function ExtendedCmdLine:convert(key, val, type, subtype)
   end
 
   return val
+end
+
+function ExtendedCmdLine:__readArgument__(params, arg, i, nArgument)
+   local argument = self.arguments[nArgument]
+   local value = arg[i]
+
+   if nArgument > #self.arguments then
+      self:error('invalid argument: ' .. value)
+   end
+   if argument.type and type(value) ~= argument.type then
+      self:error('invalid argument type for argument ' .. argument.key .. ' (should be ' .. argument.type .. ')')
+   end
+
+   params[argument.key] = value
+   return 1
 end
 
 function ExtendedCmdLine:__readOption__(params, arg, i)
@@ -312,7 +388,7 @@ function ExtendedCmdLine:__readOption__(params, arg, i)
 
   -- browse through parameters till next potential option (starting with -Letter)
   while arg[i + 1] and string.find(arg[i+1],'-%a')~=1 do
-    local value = self:convert(key, arg[i + 1], option.type, argumentType)
+    local value = self:convert(key, arg[i + 1], option.type, argumentType, option.meta)
 
     if type(value) == 'table' then
       onmt.utils.Table.append(values, value)
@@ -379,7 +455,7 @@ function ExtendedCmdLine:parse(arg)
     else
       local sopt = onmt.utils.String.stripHyphens(arg[i])
       params._is_default[sopt] = nil
-      if self.options[arg[i]] then
+      if arg[i]:sub(1,1) == '-' then
         if cmdlineOptions[arg[i]] then
           self:error('duplicate cmdline option: '..arg[i])
         end
@@ -398,7 +474,7 @@ function ExtendedCmdLine:parse(arg)
   end
 
   if nArgument ~= #self.arguments then
-    self:error('not enough arguments')
+    self:error('not enough arguments ')
   end
 
   if readConfig then
@@ -411,15 +487,22 @@ function ExtendedCmdLine:parse(arg)
 
   for k, v in pairs(params) do
     if k:sub(1, 1) ~= '_' then
-      local K = '-' .. k
-      if not self.options[K] and self.options[k] then
-        K = k
+      local K = k
+      if not self.options[k] and self.options['-' .. k] then
+        K = '-' .. k
       end
       local meta = self.options[K].meta
       if meta then
         -- check option validity
         local isValid = true
         local reason = nil
+
+        if not params._is_default[k] and meta.deprecatedBy then
+          local newOption = meta.deprecatedBy[1]
+          local newValue = meta.deprecatedBy[2]
+          io.stderr:write('DEPRECATION WARNING: option \'-' .. k .. '\' is replaced by \'-' .. newOption .. ' ' .. newValue .. '\'.\n')
+          params[newOption] = newValue
+        end
 
         if meta.depends then
           isValid, reason = meta.depends(params)
@@ -444,8 +527,15 @@ function ExtendedCmdLine:parse(arg)
           self:error(msg)
         end
 
-        if meta.enum and not onmt.utils.Table.hasValue(meta.enum, v) then
-          self:error('option -' .. k.. ' is not in accepted values: ' .. table.concat(meta.enum, ', '))
+        if meta.enum and type(self.options[K].default) ~= 'table' and not onmt.utils.Table.hasValue(meta.enum, v) then
+          self:error('option -' .. k.. ' is not in accepted values: ' .. concatValues(meta.enum))
+        end
+        if meta.enum and type(self.options[K].default) == 'table' then
+          for _, v1 in ipairs(v) do
+            if not onmt.utils.Table.hasValue(meta.enum, v1) then
+              self:error('option -' .. k.. ' is not in accepted values: ' .. concatValues(meta.enum))
+            end
+          end
         end
         if meta.structural then
           params._structural[k] = meta.structural
@@ -472,10 +562,10 @@ function ExtendedCmdLine:setCmdLineOptions(moduleOptions, group)
   end
 
   for i = 1, #moduleOptions do
-    if type(moduleOptions[i]) == 'table' then
+    if moduleOptions[i][1]:sub(1,1) == '-' then
       self:option(table.unpack(moduleOptions[i]))
     else
-      self:argument(moduleOptions[i])
+      self:argument(table.unpack(moduleOptions[i]))
     end
   end
 end

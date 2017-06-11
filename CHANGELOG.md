@@ -1,17 +1,49 @@
 ## [Unreleased]
 
+### Breaking changes
+
+* Models previously trained with `-pdbrnn` or `-dbrnn` are no more compatible
+
+### Deprecations
+
+* `-brnn`, `-dbrnn` and `-pdbrnn` options are replaced by `-encoder_type <type>` for future extensions
+
 ### New features
 
-* Display sentence length distribution in preprocess
+* New option in preprocess to check that sizes of source and target are equal (for seqtagging)
+* Add `-pdbrnn_merge` option to define how to reduce the time dimension
+* Add option to segment mixed cased words
+* Add options to segment words of given alphabets or when switching alphabets
+* Add Google's NMT encoder
+
+### Fixes and improvements
+
+* SeqTagger supports input vector too
+* Fix incorrect gradients when using variable length batches and bidirectional encoders
+
+## [v0.7.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.1) (2017-05-29)
+
+### Fixes and improvements
+
+* Fix backward compatibility with older models using target features
+* Fix importance sampling when using multiple GPUs
+* Fix language models training
+
+## [v0.7.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.0) (2017-05-19)
+
+### New features
+
 * Support vectors as inputs using [Kaldi](http://kaldi-asr.org/) input format
 * Support parallel file alignment by index in addition to line-by-line
-* Add script to convert and/or generate pretrained word embeddings
-* Add a bridge layer between the encoder and decoder
-* Add `epoch_only` decay strategy
-* New feature to keep token frequency in generated dictionaries
-* [*Breaking, renamed option*] Introduce `partition` sampling type, rename sampling perplexity options.
-* Introduce target vocabulary reduction (importance sampling)
-* Optimize decoding with sub-dictionary
+* Add script to generate pretrained word embeddings:
+  * from [Polyglot](https://sites.google.com/site/rmyeid/projects/polyglot) repository
+  * from pretrained *word2vec*, *GloVe* or *fastText* files
+* Add an option to only fix the pretrained part of word embeddings
+* Add a bridge layer between the encoder and decoder to define how encoder states are passed to the decoder
+* Add `epoch_only` decay strategy to only decay learning based on epochs
+* Make epoch models save frequency configurable
+* Optimize decoding and training with target vocabulary reduction (importance sampling)
+* [*Breaking, renamed option*] Introduce `partition` data sampling
 
 ### Fixes and improvements
 
@@ -21,12 +53,12 @@
   * disallow duplicate command line options
   * clearer error messages
 * Improve correctness of `DBiEncoder` and `PDBiEncoder` implementation
+* Improve unicode support for languages using combining marks like Hindi
+* Improve logging during preprocessing with dataset statistics
 * Fix translation error of models profiled during training
 * Fix translation error of models trained without attention
 * Fix error when using one-layer GRU
-* Fix incorrect coverage normalization formula during the beam search
-* Improve unicode support for languages using combining marks like Hindi
-* Make epoch models save frequency configurable
+* Fix incorrect coverage normalization formula applied during the beam search
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
 

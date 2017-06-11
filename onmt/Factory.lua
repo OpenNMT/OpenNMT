@@ -2,9 +2,18 @@ local Factory = torch.class('Factory')
 
 local options = {
   {
+    '-encoder_type', 'rnn',
+    [[Encoder type.]],
+    {
+      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn', 'gnmt' },
+      structural = 0
+    }
+  },
+  {
     '-brnn', false,
     [[Use a bidirectional encoder.]],
     {
+      deprecatedBy = { 'encoder_type', 'brnn' },
       structural = 0
     }
   },
@@ -12,6 +21,7 @@ local options = {
     '-dbrnn', false,
     [[Use a deep bidirectional encoder.]],
     {
+      deprecatedBy = { 'encoder_type', 'dbrnn' },
       structural = 0
     }
   },
@@ -19,6 +29,7 @@ local options = {
     '-pdbrnn', false,
     [[Use a pyramidal deep bidirectional encoder.]],
     {
+      deprecatedBy = { 'encoder_type', 'pdbrnn' },
       structural = 0
     }
   },
@@ -37,6 +48,7 @@ function Factory.declareOpts(cmd)
   onmt.BiEncoder.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
+  onmt.GoogleEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
 end
 
@@ -147,17 +159,20 @@ function Factory.buildEncoder(opt, inputNetwork)
                    opt.rnn_type, opt.layers, opt.rnn_size)
   end
 
-  if opt.brnn then
-    describeEncoder('bidirectional')
+  if opt.encoder_type == 'brnn' then
+    describeEncoder('bidirectional RNN')
     return onmt.BiEncoder.new(opt, inputNetwork)
-  elseif opt.dbrnn then
-    describeEncoder('deep bidirectional')
+  elseif opt.encoder_type == 'dbrnn' then
+    describeEncoder('deep bidirectional RNN')
     return onmt.DBiEncoder.new(opt, inputNetwork)
-  elseif opt.pdbrnn then
-    describeEncoder('pyramidal deep bidirectional')
+  elseif opt.encoder_type == 'pdbrnn' then
+    describeEncoder('pyramidal deep bidirectional RNN')
     return onmt.PDBiEncoder.new(opt, inputNetwork)
+  elseif opt.encoder_type == 'gnmt' then
+    describeEncoder('GNMT')
+    return onmt.GoogleEncoder.new(opt, inputNetwork)
   else
-    describeEncoder('simple')
+    describeEncoder('unidirectional RNN')
     return onmt.Encoder.new(opt, inputNetwork)
   end
 
@@ -184,6 +199,8 @@ function Factory.loadEncoder(pretrained)
     encoder = onmt.PDBiEncoder.load(pretrained)
   elseif pretrained.name == 'DBiEncoder' then
     encoder = onmt.DBiEncoder.load(pretrained)
+  elseif pretrained.name == 'GoogleEncoder' then
+    encoder = onmt.GoogleEncoder.load(pretrained)
   else
     -- Keep for backward compatibility.
     local brnn = #pretrained.modules == 2
@@ -224,6 +241,10 @@ end
 function Factory.buildGenerator(opt, dicts)
   local sizes = Factory.getOutputSizes(dicts)
   return onmt.Generator(opt, sizes)
+end
+
+function Factory.loadGenerator(pretrained)
+  return onmt.Generator.load(pretrained)
 end
 
 function Factory.buildAttention(args)

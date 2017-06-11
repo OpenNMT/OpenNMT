@@ -41,22 +41,35 @@ end
 
 --[[ Release Generator for inference only ]]
 function Generator:release()
-  self.rindexLinear:RIndex_clean()
+  if self.rindexLinear then
+    self.rindexLinear:RIndex_clean()
+  end
 end
 
 function Generator.load(generator)
+  -- Ensure backward compatibility with previous generators.
+
   if not generator.version then
-    if torch.type(generator)=='onmt.Generator' then
-      -- convert previous generator
+    if torch.typename(generator) == 'onmt.Generator' then
       generator:set(nn.ConcatTable():add(generator.net))
+    elseif torch.typename(generator) == 'onmt.FeaturesGenerator' then
+      if torch.typename(generator.net.modules[1]:get(1)) == 'onmt.Generator' then
+        generator.net.modules[1] = generator.net.modules[1]:get(1).net
+      end
     end
     generator.version = 2
   end
+
   if not generator.rindexLinear then
-    local firstOutput = generator.net.modules[1]
-    assert(torch.type(firstOutput.modules[1])=='nn.Linear')
-    generator.rindexLinear = firstOutput.modules[1]
+    generator:apply(function(m)
+      if torch.typename(m) == 'nn.Linear' then
+        if not generator.rindexLinear then
+          generator.rindexLinear = m
+        end
+      end
+    end)
   end
+
   return generator
 end
 

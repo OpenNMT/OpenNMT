@@ -60,6 +60,7 @@ local options = {
     '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },
@@ -67,6 +68,7 @@ local options = {
     '-fix_word_vecs_dec', false,
     [[Fix word embeddings on the decoder side.]],
     {
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },
@@ -108,7 +110,6 @@ end
 function Seq2Seq:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
-  self.args.uneven_batches = args.uneven_batches
 
   if not dicts.src then
     -- the input is already a vector
@@ -139,7 +140,6 @@ function Seq2Seq.load(args, models, dicts)
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
-  self.args.uneven_batches = args.uneven_batches
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
@@ -155,9 +155,13 @@ function Seq2Seq.modelName()
   return 'Sequence to Sequence with Attention'
 end
 
--- Returns expected dataMode.
-function Seq2Seq.dataType()
-  return 'bitext'
+-- Returns expected default datatype or if passed a parameter, returns if it is supported
+function Seq2Seq.dataType(datatype)
+  if not datatype then
+    return 'bitext'
+  else
+    return datatype == 'bitext' or datatype == 'feattext'
+  end
 end
 
 function Seq2Seq:returnIndividualLosses(enable)
@@ -191,30 +195,13 @@ function Seq2Seq:getOutput(batch)
   return batch.targetOutput
 end
 
-function Seq2Seq:maskPadding(batch)
-  self.models.encoder:maskPadding()
-  if batch and batch.uneven then
-    self.models.decoder:maskPadding(self.models.encoder:contextSize(batch.sourceSize, batch.sourceLength))
-  else
-    self.models.decoder:maskPadding()
-  end
-end
-
 function Seq2Seq:forwardComputeLoss(batch)
-  if self.args.uneven_batches then
-    self:maskPadding(batch)
-  end
-
   local encoderStates, context = self.models.encoder:forward(batch)
   local decoderInitStates = self.models.bridge:forward(encoderStates)
   return self.models.decoder:computeLoss(batch, decoderInitStates, context, self.criterion)
 end
 
 function Seq2Seq:trainNetwork(batch, dryRun)
-  if self.args.uneven_batches then
-    self:maskPadding(batch)
-  end
-
   local encStates, context = self.models.encoder:forward(batch)
   local decInitStates = self.models.bridge:forward(encStates)
   local decOutputs = self.models.decoder:forward(batch, decInitStates, context)

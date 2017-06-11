@@ -67,20 +67,35 @@ function cmdLineTest.parse_boolean()
   local cmd = onmt.utils.ExtendedCmdLine.new()
   onmt.Seq2Seq.declareOpts(cmd)
 
-  local opt = cmd:parse({'-brnn'})
-  tester:eq(opt.brnn, true)
+  local opt = cmd:parse({'-input_feed'})
+  tester:eq(opt.input_feed, false)
 
-  opt = cmd:parse({'-brnn', '1'})
-  tester:eq(opt.brnn, true)
+  opt = cmd:parse({'-input_feed', '1'})
+  tester:eq(opt.input_feed, true)
 
-  opt = cmd:parse({'-brnn', 'true'})
-  tester:eq(opt.brnn, true)
+  opt = cmd:parse({'-input_feed', 'true'})
+  tester:eq(opt.input_feed, true)
 
-  opt = cmd:parse({'-brnn', '0'})
-  tester:eq(opt.brnn, false)
+  opt = cmd:parse({'-input_feed', '0'})
+  tester:eq(opt.input_feed, false)
 
-  opt = cmd:parse({'-brnn', 'false'})
-  tester:eq(opt.brnn, false)
+  opt = cmd:parse({'-input_feed', 'false'})
+  tester:eq(opt.input_feed, false)
+
+  tester:eq(opt.fix_word_vecs_enc, false)
+  opt = cmd:parse({'-fix_word_vecs_enc'})
+  tester:eq(opt.fix_word_vecs_enc, true)
+  opt = cmd:parse({'-fix_word_vecs_enc', 'true'})
+  tester:eq(opt.fix_word_vecs_enc, true)
+  opt = cmd:parse({'-fix_word_vecs_enc', '1'})
+  tester:eq(opt.fix_word_vecs_enc, true)
+  opt = cmd:parse({'-fix_word_vecs_enc', 'false'})
+  tester:eq(opt.fix_word_vecs_enc, false)
+  opt = cmd:parse({'-fix_word_vecs_enc', '0'})
+  tester:eq(opt.fix_word_vecs_enc, false)
+  opt = cmd:parse({'-fix_word_vecs_enc', 'pretrained'})
+  tester:eq(opt.fix_word_vecs_enc, 'pretrained')
+  tester:assertError(function() cmd:parse({'-fix_word_vecs_enc', 'xxx'}) end)
 end
 
 function cmdLineTest.parse_multiValue()
@@ -103,6 +118,23 @@ function cmdLineTest.fail_unknown()
   onmt.data.SampledDataset.declareOpts(cmd)
   tester:assertError(function() cmd:parse({'-src_word_vec_size', '500', '-xxx'}) end)
   tester:assertError(function() cmd:parse({'-sample_tgt_vocab', '-sample', '0'}) end)
+end
+
+function cmdLineTest.arguments()
+  local cmd = onmt.utils.ExtendedCmdLine.new()
+  local options = {
+    {
+      'mode', 'string',
+      [['score' apply lm to input text, 'sample' samples output based on input text.]],
+      {
+        enum = { 'score', 'sample' }
+      }
+    }
+  }
+
+  cmd:setCmdLineOptions(options, 'Data')
+  tester:assertError(function() cmd:parse({''}) end)
+  tester:assertNoError(function() cmd:parse({'score'}) end)
 end
 
 return cmdLineTest

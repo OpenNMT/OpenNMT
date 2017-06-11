@@ -114,7 +114,7 @@ function Trainer:__init(args, model, dicts, firstBatch)
     if self.params[idx] then
       _G.params, _G.gradParams = self.params[idx], self.gradParams[idx]
     else
-      _G.params, _G.gradParams = _G.model:getParams()
+      _G.params, _G.gradParams = _G.model:getParams(true)
     end
 
     return idx, _G.params, _G.gradParams
@@ -147,8 +147,10 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   end
 
   -- if target vocabulary for the batch is provided and generator support setting target vocabulary
-  if data.targetVocTensor and _G.model.setTargetVoc then
-    _G.model:setTargetVoc(data.targetVocTensor)
+  if data.targetVocTensor and self.model.setTargetVoc then
+    onmt.utils.Parallel.launch(function(_)
+      _G.model:setTargetVoc(data.targetVocTensor)
+    end)
   end
 
   startIteration = startIteration or 1
@@ -159,7 +161,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     numIterations = math.ceil(numIterations / onmt.utils.Parallel.count)
   end
 
-  local epochState = onmt.train.EpochState.new(epoch, startIteration, numIterations, self.optim:getLearningRate())
+  local epochState = onmt.train.EpochState.new(epoch, startIteration, numIterations, self.optim:getLearningRate(), self.optim:status())
   local epochProfiler = onmt.utils.Profiler.new(self.args.profiler)
   epochProfiler:start('train')
 
@@ -322,8 +324,10 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     epochState:log(numIterations)
   end
 
-  if data.targetVocTensor and _G.model.setTargetVoc then
-    _G.model:unsetTargetVoc()
+  if data.targetVocTensor and self.model.setTargetVoc then
+    onmt.utils.Parallel.launch(function(_)
+      _G.model:unsetTargetVoc()
+    end)
   end
 
   epochProfiler:stop('train')

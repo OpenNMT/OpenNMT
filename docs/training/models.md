@@ -8,21 +8,27 @@ The default encoder is a simple recurrent neural network (LSTM or GRU).
 
 ### Bidirectional encoder
 
-The bidirectional encoder (`-brnn`) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the `-brnn_merge` option.
+The bidirectional encoder (`-encoder_type brnn`) consists of two independent encoders: one encoding the normal sequence and the other the reversed sequence. The output and final states are concatenated or summed depending on the `-brnn_merge` option.
 
 ![Bidirectional encoder](../img/brnn.png)
 
+### Pyramidal deep bidirectional encoder
+
+The pyramidal deep bidirectional encoder (`-encoder_type pdbrnn`) is an alternative bidirectional encoder that reduces the time dimension after **each** layer based on the `-pdbrnn_reduction` factor and using `-pdbrnn_merge` as the reduction action (sum or concatenation).
+
+![Pyramidal deep bidirectional encoder](../img/pdbrnn.png)
+
 ### Deep bidirectional encoder
 
-The deep bidirectional encoder (`-dbrnn`) is an alternative bidirectional encoder where the output of **every** layers are summed (or concatenated) prior feeding to the next layer.
+The deep bidirectional encoder (`-encoder_type dbrnn`) is an alternative bidirectional encoder where the outputs of every layers are summed (or concatenated) prior feeding to the next layer. It is a special case of a pyramidal deep bidirectional encoder without time reduction (i.e. `-pdbrnn_reduction = 1`).
 
 ![Deep bidirectional encoder](../img/dbrnn.png)
 
-### Pyramidal deep bidirectional encoder
+### Google's NMT encoder
 
-The pyramidal deep bidirectional encoder (`-pdbrnn`) is an alternative deep bidirectional encoder that reduces the time dimension at each layer based on `-pdbrnn_reduction`.
+The Google encoder (`-encoder_type gnmt`) is an encoder with a single bidirectional layer as described in [Wu et al. (2016)](../references.md#GNMT). The bidirectional states are concatenated and residual connections are enabled by default.
 
-![Pyramidal deep bidirectional encoder](../img/pdbrnn.png)
+![Google's NMT encoder](../img/gnmt-encoder.png)
 
 ## Decoders
 

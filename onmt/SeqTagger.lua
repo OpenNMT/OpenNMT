@@ -21,6 +21,7 @@ local options = {
     '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },
@@ -62,8 +63,13 @@ function SeqTagger:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
+  if not dicts.src then
+    -- the input is already a vector
+    args.dimInputSize = dicts.srcInputSize
+  end
+
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
-  self.models.generator = onmt.Factory.buildGenerator(args.rnn_size, dicts.tgt)
+  self.models.generator = onmt.Factory.buildGenerator(args, dicts.tgt)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
 end
 
@@ -85,9 +91,13 @@ function SeqTagger.modelName()
   return 'Sequence Tagger'
 end
 
--- Returns expected dataMode
-function SeqTagger.dataType()
-  return 'bitext'
+-- Returns expected default datatype or if passed a parameter, returns if it is supported
+function SeqTagger.dataType(datatype)
+  if not datatype then
+    return 'bitext'
+  else
+    return datatype == 'bitext' or datatype == 'feattext'
+  end
 end
 
 function SeqTagger:enableProfiling()

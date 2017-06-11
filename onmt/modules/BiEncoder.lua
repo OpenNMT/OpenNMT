@@ -1,15 +1,3 @@
----------------------------------------------------------------------------------
--- Local utility functions
----------------------------------------------------------------------------------
-
-local function reverseInput(batch)
-  batch.sourceInput, batch.sourceInputRev = batch.sourceInputRev, batch.sourceInput
-  batch.sourceInputFeatures, batch.sourceInputRevFeatures = batch.sourceInputRevFeatures, batch.sourceInputFeatures
-  batch.sourceInputPadLeft, batch.sourceInputRevPadLeft = batch.sourceInputRevPadLeft, batch.sourceInputPadLeft
-end
-
----------------------------------------------------------------------------------
-
 --[[ BiEncoder is a bidirectional Sequencer used for the source language.
 
 
@@ -148,16 +136,6 @@ function BiEncoder:resetPreallocation()
   self.gradContextBwdProto = torch.Tensor()
 end
 
-function BiEncoder:maskPadding()
-  self.fwd:maskPadding()
-  self.bwd:maskPadding()
-end
-
--- size of context vector
-function BiEncoder:contextSize(sourceSize, sourceLength)
-  return sourceSize, sourceLength
-end
-
 function BiEncoder:forward(batch)
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
@@ -170,29 +148,50 @@ function BiEncoder:forward(batch)
                                                 { batch.size, batch.sourceLength, self.args.hiddenSize })
 
   local fwdStates, fwdContext = self.fwd:forward(batch)
-  reverseInput(batch)
+  batch:reverseSourceInPlace()
   local bwdStates, bwdContext = self.bwd:forward(batch)
-  reverseInput(batch)
+  batch:reverseSourceInPlace()
 
-  if self.args.brnn_merge == 'concat' then
-    for i = 1, #fwdStates do
+  -- Merge final states.
+  for i = 1, #states do
+    if self.args.brnn_merge == 'concat' then
       states[i]:narrow(2, 1, self.args.rnn_size):copy(fwdStates[i])
       states[i]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwdStates[i])
-    end
-    for t = 1, batch.sourceLength do
-      context[{{}, t}]:narrow(2, 1, self.args.rnn_size)
-        :copy(fwdContext[{{}, t}])
-      context[{{}, t}]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size)
-        :copy(bwdContext[{{}, batch.sourceLength - t + 1}])
-    end
-  elseif self.args.brnn_merge == 'sum' then
-    for i = 1, #states do
+    elseif self.args.brnn_merge == 'sum' then
       states[i]:copy(fwdStates[i])
       states[i]:add(bwdStates[i])
     end
+  end
+
+  -- Merge outputs.
+  if batch:variableLengths() then
+    for b = 1, batch.size do
+      local window = {b, {batch.sourceLength - batch.sourceSize[b] + 1, batch.sourceLength}}
+      local reversedIndices = torch.linspace(batch.sourceSize[b], 1, batch.sourceSize[b]):long()
+
+      -- Reverse outputs of the reversed encoder to align them with the regular outputs.
+      local bwdOutputs = bwdContext[window]:index(1, reversedIndices)
+      local fwdOutputs = fwdContext[window]
+
+      if self.args.brnn_merge == 'concat' then
+        context[window]:narrow(2, 1, self.args.rnn_size):copy(fwdOutputs)
+        context[window]:narrow(2, self.args.rnn_size + 1, self.args.rnn_size):copy(bwdOutputs)
+      elseif self.args.brnn_merge == 'sum' then
+        context[window]:copy(fwdOutputs)
+        context[window]:add(bwdOutputs)
+      end
+    end
+  else
     for t = 1, batch.sourceLength do
-      context[{{}, t}]:copy(fwdContext[{{}, t}])
-      context[{{}, t}]:add(bwdContext[{{}, batch.sourceLength - t + 1}])
+      if self.args.brnn_merge == 'concat' then
+        context[{{}, t, {1, self.args.rnn_size}}]
+          :copy(fwdContext[{{}, t}])
+        context[{{}, t, {self.args.rnn_size + 1, self.args.rnn_size * 2}}]
+          :copy(bwdContext[{{}, -t}])
+      elseif self.args.brnn_merge == 'sum' then
+        context[{{}, t}]:copy(fwdContext[{{}, t}])
+        context[{{}, t}]:add(bwdContext[{{}, -t}])
+      end
     end
   end
 
@@ -231,18 +230,40 @@ function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
   local gradInputFwd = self.fwd:backward(batch, gradStatesOutputFwd, gradContextOutputFwd)
 
-  -- reverse gradients of the backward context
-  local gradContextBwd = onmt.utils.Tensor.reuseTensor(self.gradContextBwdProto,
-                                                       { batch.size, batch.sourceLength, self.args.rnn_size })
+  local gradContextBwd = onmt.utils.Tensor.reuseTensor(
+    self.gradContextBwdProto,
+    { batch.size, batch.sourceLength, self.args.rnn_size })
 
-  for t = 1, batch.sourceLength do
-    gradContextBwd[{{}, t}]:copy(gradContextOutputBwd[{{}, batch.sourceLength - t + 1}])
+  -- Reverse output gradients.
+  if batch:variableLengths() then
+    for b = 1, batch.size do
+      local window = {b, {batch.sourceLength - batch.sourceSize[b] + 1, batch.sourceLength}}
+      local reversedIndices = torch.linspace(batch.sourceSize[b], 1, batch.sourceSize[b]):long()
+      gradContextBwd[window]:copy(gradContextOutputBwd[window]:index(1, reversedIndices))
+    end
+  else
+    for t = 1, batch.sourceLength do
+      gradContextBwd[{{}, t}]:copy(gradContextOutputBwd[{{}, -t}])
+    end
   end
 
+  batch:reverseSourceInPlace()
   local gradInputBwd = self.bwd:backward(batch, gradStatesOutputBwd, gradContextBwd)
+  batch:reverseSourceInPlace()
 
-  for t = 1, batch.sourceLength do
-    onmt.utils.Tensor.recursiveAdd(gradInputFwd[t], gradInputBwd[batch.sourceLength - t + 1])
+  -- Add gradients coming from both directions.
+  if batch:variableLengths() then
+    for b = 1, batch.size do
+      local padSize = batch.sourceLength - batch.sourceSize[b]
+      for t = padSize + 1, batch.sourceLength do
+        onmt.utils.Tensor.recursiveAdd(gradInputFwd[t],
+                                       gradInputBwd[batch.sourceLength - t + 1 + padSize], b)
+      end
+    end
+  else
+    for t = 1, batch.sourceLength do
+      onmt.utils.Tensor.recursiveAdd(gradInputFwd[t], gradInputBwd[batch.sourceLength - t + 1])
+    end
   end
 
   return gradInputFwd

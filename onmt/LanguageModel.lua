@@ -21,6 +21,7 @@ local options = {
     '-fix_word_vecs_enc', false,
     [[Fix word embeddings on the encoder side.]],
     {
+      enum = { false, true, 'pretrained' },
       structural = 1
     }
   },
@@ -62,7 +63,7 @@ function LanguageModel:__init(args, dicts)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
-  self.models.generator = onmt.Factory.buildGenerator(args.rnn_size, dicts.src)
+  self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)
 
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
@@ -90,9 +91,13 @@ function LanguageModel.modelName()
   return 'Language'
 end
 
--- Returns expected dataMode.
-function LanguageModel.dataType()
-  return 'monotext'
+-- Returns expected default datatype or if passed a parameter, returns if it is supported
+function LanguageModel.dataType(datatype)
+  if not datatype then
+    return 'monotext'
+  else
+    return datatype == 'monotext'
+  end
 end
 
 function LanguageModel:enableProfiling()

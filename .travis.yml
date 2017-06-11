@@ -69,7 +69,6 @@ before_script:
 script:
   - luacheck *lua onmt/ tools/ benchmark/ test/
   - luarocks make rocks/opennmt-scm-1.rockspec
-  - sh test/tokenization/test.sh
   - ${LUA} -lluacov test/test.lua -e "${LUA} -lluacov"
   - luacov
 after_success:
