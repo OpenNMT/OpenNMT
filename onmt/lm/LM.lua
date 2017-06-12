@@ -237,9 +237,14 @@ function LM:sample(src, max_length, temperature)
 
   for i = 1, #data.src do
     results[i] = self.dicts.src.words:convertToLabels(results[i], onmt.Constants.EOS)
+    -- remove BOS/EOS
+    table.remove(results[i], 1)
+    table.remove(results[i])
     if data.srcFeatures and data.srcFeatures[i] then
       for k = 1, #data.srcFeatures[i] do
         resultFeats[i][k] = self.dicts.src.features[k]:convertToLabels(resultFeats[i][k], onmt.Constants.EOS)
+        table.remove(resultFeats[i][k], 1)
+        table.remove(resultFeats[i][k])
       end
     end
     results[i] = self:buildOutput({words=results[i],features=resultFeats[i]})
