@@ -19,16 +19,14 @@ local options = {
     '-max_length', 100,
     [[Maximal length of sentences in sample mode.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isUInt,
-      depends = function(params) return params.mode == 'sample' end
+      valid = onmt.utils.ExtendedCmdLine.isUInt
     }
   },
   {
     '-temperature', 1,
     [[For `sample` mode, higher temperatures cause the model to take more chances and increase diversity of results, but at a cost of more mistakes.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.isFloat(0.0001, 1),
-      depends = function(params) return params.mode == 'sample' end
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0.0001, 1)
     }
   }
 }
@@ -65,10 +63,7 @@ function LM:buildInput(tokens)
   local words, features = onmt.utils.Features.extract(tokens)
 
   data.words = words
-
-  if #features > 0 then
-    data.features = features
-  end
+  data.features = features
 
   return data
 end
@@ -78,6 +73,12 @@ function LM:buildOutput(data)
 end
 
 function LM:buildData(src, ignoreEmpty, onlyPrefix)
+  if onlyPrefix then
+    onlyPrefix = nil
+  else
+    onlyPrefix = '<eos>'
+  end
+
   local srcData = {}
   srcData.words = {}
   srcData.features = {}
@@ -94,10 +95,21 @@ function LM:buildData(src, ignoreEmpty, onlyPrefix)
       index = index + 1
 
       table.insert(srcData.words,
-                 self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD, onmt.Constants.BOS_WORD, not onlyPrefix))
+                 self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD, onmt.Constants.BOS_WORD, onlyPrefix))
+
       if #self.dicts.src.features > 0 then
-        table.insert(srcData.features,
-                     onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
+        if #src[b].words == 0 and #src[b].features == 0 then
+          for _ = 1, #self.dicts.src.features do
+            table.insert(src[b].features, {})
+          end
+        end
+        local features = onmt.utils.Features.generateTarget(self.dicts.src.features, src[b].features, false, false)
+        if not onlyPrefix then
+          for i = 1, #features do
+            features[i] = features[i]:narrow(1,1,features[i]:size(1)-1)
+          end
+        end
+        table.insert(srcData.features, features)
       end
     end
   end
@@ -158,41 +170,79 @@ function LM:sample(src, max_length, temperature)
 
   local foundEOS = 0
   local results = {}
+  local resultFeats = {}
 
   for i = 1, #data.src do
     table.insert(results, torch.totable(data.src[i]))
+    table.insert(resultFeats, {})
+    if data.srcFeatures and data.srcFeatures[i] then
+      for k = 1, #data.srcFeatures[i] do
+        table.insert(resultFeats[i], torch.totable(data.srcFeatures[i][k]))
+      end
+    end
   end
 
   local completed = {}
   local t = 0
 
   while foundEOS ~= #data.src and t < max_length do
-    local genOutputs = self.model.models.generator:forward(context:select(2, context:size(2)))
-    genOutputs[1]:div(temperature) -- scale by temperature
-    local probs = torch.exp(genOutputs[1])
-    probs:div(torch.sum(probs)) -- renormalize so probs sum to one
-    local words = torch.multinomial(probs:float(), 1)
     local nextsrc = {}
-    for i = 1, #data.src do
-      if not results[i] then
-        results[i] = {}
-      end
-      if not completed[i] then
-        if words[i][1] == onmt.Constants.EOS_WORD then
-          if not completed[i] then foundEOS = foundEOS +1 end
-          completed[i] = 1
-        end
-        table.insert(results[i], words[i][1])
-      end
-      table.insert(nextsrc, words[i])
+    -- prepare empty features
+    local nextsrcFeats = {}
+    for _ = 1, #data.srcFeatures do
+      table.insert(nextsrcFeats, {})
     end
-    local batch = onmt.data.Batch.new(nextsrc)
+
+    local genOutputs = self.model.models.generator:forward(context:select(2, context:size(2)))
+
+    local justCompleted = {}
+    for k = 1, #genOutputs do
+      genOutputs[k]:div(temperature) -- scale by temperature
+      local probs = torch.exp(genOutputs[k])
+      probs:div(torch.sum(probs)) -- renormalize so probs sum to one
+      local tokens = torch.multinomial(probs:float(), 1)
+
+      for i = 1, #data.src do
+        local token = tokens[i][1]
+        if k == 1 then
+          local changeComplete = false
+          if not completed[i] then
+            if token == onmt.Constants.EOS then
+              if not completed[i] then foundEOS = foundEOS +1 end
+              changeComplete = true
+              completed[i] = 1
+            end
+            table.insert(results[i], token)
+          end
+          table.insert(nextsrc, torch.IntTensor{token})
+          table.insert(justCompleted, changeComplete)
+        else
+          if not completed[i] or justCompleted[i] then
+            if justCompleted[i] then
+              token = onmt.Constants.EOS
+            end
+            table.insert(resultFeats[i][k-1], token)
+          end
+          table.insert(nextsrcFeats[i], torch.IntTensor{token})
+        end
+      end
+    end
+
+    local batch = onmt.data.Batch.new(nextsrc, nextsrcFeats)
+    onmt.utils.Cuda.convert(batch)
+
     states, context = self.model.models.encoder:forward(batch, states)
     t = t + 1
   end
 
   for i = 1, #data.src do
-    results[i] = table.concat(self.dicts.src.words:convertToLabels(results[i], onmt.Constants.EOS), ' ')
+    results[i] = self.dicts.src.words:convertToLabels(results[i], onmt.Constants.EOS)
+    if data.srcFeatures and data.srcFeatures[i] then
+      for k = 1, #data.srcFeatures[i] do
+        resultFeats[i][k] = self.dicts.src.features[k]:convertToLabels(resultFeats[i][k], onmt.Constants.EOS)
+      end
+    end
+    results[i] = self:buildOutput({words=results[i],features=resultFeats[i]})
   end
 
   return results
