@@ -40,8 +40,10 @@ function Memory.optimize(model, batch)
   model:trainNetwork(batch, true)
 
   -- mark shared tensors
-  local sharedSize, totSize = memoryOptimizer:optimize()
+  local sharedSize, vertSharedSize, totSize = memoryOptimizer:optimize()
 
+  _G.logger:info(' * recycling %d%% of output/gradInput tensors memory within clones',
+                 (vertSharedSize / totSize) * 100)
   _G.logger:info(' * sharing %d%% of output/gradInput tensors memory between clones',
                  (sharedSize / totSize) * 100)
 end
