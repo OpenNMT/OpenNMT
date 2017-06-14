@@ -13,6 +13,14 @@ function runTest.basic()
   tester:assertgt(string.find(output, "invalid argument"),0)
 end
 
+function runTest.tokenization()
+  local file = io.popen(TH..[[ tools/tokenize.lua < tools/utils/alphabets.lua 2>&1]])
+  local output = file:read('*all')
+  local exit = file:close()
+  tester:eq(exit,true)
+  tester:assertgt(string.find(output, "Mongolian = { { 0x1800,0x18AF } } ,"),0)
+end
+
 function runTest.run_real()
   local file = io.popen(TH..[[ preprocess.lua -train_src data/src-train.txt -train_tgt data/tgt-train.txt\
                           -valid_src data/src-val.txt -valid_tgt data/tgt-val.txt -save_data tiny\

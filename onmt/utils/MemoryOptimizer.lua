@@ -1,6 +1,11 @@
---[[ MemoryOptimizer is a class used for optimizing memory usage
+--[[ MemoryOptimizer is a class used for optimizing memory usage of a replicated network.
 --]]
 local MemoryOptimizer = torch.class('MemoryOptimizer')
+
+-- We cannot share every internal tensors (that is why we need to replicate in the first place).
+-- The general rule is to not share tensors whose content is used in the backward pass
+-- We allow the sharing when only the size is queried as it is constant during the
+-- forward and backward passes.
 
 -- We cannot share the output of these modules as they use it in their backward pass.
 local protectOutput = {
@@ -17,21 +22,12 @@ local protectInput = {
   'nn.MM'
 }
 
-local function contains(list, m)
-  for i = 1, #list do
-    if torch.typename(m) == list[i] then
-      return true
-    end
-  end
-  return false
-end
-
-local function tensorIncluded(t, l)
+local function useSameStorage(t, l)
   if torch.isTensor(l) then
     return torch.pointer(t:storage()) == torch.pointer(l:storage())
   elseif torch.type(l) == 'table' then
     for _, m in ipairs(l) do
-      if tensorIncluded(t, m) then
+      if useSameStorage(t, m) then
         return true
       end
     end
@@ -43,7 +39,7 @@ end
 -- otherwise we could generate side-effects.
 local function canShare(t, net, protected)
   if torch.isTensor(t) and t:storage() then
-    if not tensorIncluded(t, net.gradInput) and not tensorIncluded(t, net.output) and not tensorIncluded(t, protected) then
+    if not useSameStorage(t, net.gradInput) and not useSameStorage(t, net.output) and not useSameStorage(t, protected) then
       return true
     end
   elseif torch.type(t) == 'table' then
@@ -160,10 +156,10 @@ function MemoryOptimizer:optimize()
       -- Some modules are using output when performing updateGradInput so we cannot share these.
       local protectedOutput = { desc[i].input }
       net:apply(function(m)
-        if contains(protectOutput, m) then
+        if onmt.utils.Table.hasValue(protectOutput, torch.typename(m)) then
           table.insert(protectedOutput, m.output)
         end
-        if contains(protectInput, m) then
+        if onmt.utils.Table.hasValue(protectInput, torch.typename(m)) then
           table.insert(protectedOutput, m.input)
         end
       end)

@@ -10,6 +10,7 @@ onmt.data = require('onmt.data.init')
 onmt.train = require('onmt.train.init')
 onmt.translate = require('onmt.translate.init')
 onmt.tagger = require('onmt.tagger.init')
+onmt.lm = require('onmt.lm.init')
 
 onmt.Constants = require('onmt.Constants')
 onmt.Factory = require('onmt.Factory')

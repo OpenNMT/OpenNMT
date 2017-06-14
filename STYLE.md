@@ -2,13 +2,9 @@
 
 ## Comments
 
-* All non-private methods should have a [torch-dokx](https://github.com/deepmind/torch-dokx/blob/master/doc/usage.md) documentation describing input/output.
-
-* All classes should have a class docstring at the top of the file.
+* When documenting an interface, use [torch-dokx](https://github.com/deepmind/torch-dokx/blob/master/doc/usage.md) documentation style.
 
 * All comments should be on their own line, and be a complete English sentence with capitalization.
-
-The torch-dokx documentation is automatically deployed [here](http://opennmt.net/OpenNMT/).
 
 ## Design
 

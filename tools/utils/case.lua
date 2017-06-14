@@ -63,6 +63,31 @@ function case.addCase (toks)
   return toks
 end
 
+-- Segment tokens by case in order to have only Abc abc ABC words
+function case.segmentCase (toks, separator)
+  local caseSegment = {}
+  for i=1, #toks do
+    local casefeat = 'N'
+    local newTok = ''
+
+    for v, c in unicode.utf8_iter(toks[i]) do
+      local is_letter, thecase = unicode.isLetter(v)
+      if is_letter then
+        if case.combineCase(casefeat, thecase) == 'M' then
+          table.insert(caseSegment, newTok..separator)
+          newTok = ''
+          casefeat = case.combineCase('N', thecase)
+        else
+          casefeat = case.combineCase(casefeat, thecase)
+        end
+      end
+      newTok = newTok..c
+    end
+    table.insert(caseSegment, newTok)
+  end
+  return caseSegment
+end
+
 function case.restoreCase(w, feats)
   assert(#feats>=1)
   if feats[1] == 'L' or feats[1] == 'N' then

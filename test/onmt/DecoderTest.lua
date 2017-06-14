@@ -148,10 +148,10 @@ function decoderTest.masking()
 
   decoder:evaluate()
 
-  decoder:maskPadding(torch.LongTensor({2,5,3,5}), 5)
+  decoder:addPaddingMask(torch.LongTensor({2,5,3,5}), 5)
   tester:eq(moduleExists(decoder, 'onmt.MaskedSoftmax'), true)
 
-  decoder:maskPadding()
+  decoder:removePaddingMask()
   tester:eq(moduleExists(decoder, 'onmt.MaskedSoftmax'), false)
 end
 
