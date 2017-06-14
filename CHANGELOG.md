@@ -11,16 +11,17 @@
 
 ### New features
 
-* New option in preprocess to check that sizes of source and target are equal (for seqtagging)
+* Implement inference for language models
+* Add option in preprocessing to check that lengths of source and target are equal (e.g. for sequence tagging)
 * Add `-pdbrnn_merge` option to define how to reduce the time dimension
 * Add option to segment mixed cased words
-* Add options to segment words of given alphabets or when switching alphabets
+* Add option to segment words of given alphabets or when switching alphabets
 * Add Google's NMT encoder
 * New application `lm.lua` to apply language model for scoring or sampling
 
 ### Fixes and improvements
 
-* SeqTagger supports input vector too
+* Support input vectors for sequence tagging
 * Fix incorrect gradients when using variable length batches and bidirectional encoders
 
 ## [v0.7.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.1) (2017-05-29)

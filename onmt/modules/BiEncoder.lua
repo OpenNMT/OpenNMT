@@ -136,7 +136,9 @@ function BiEncoder:resetPreallocation()
   self.gradContextBwdProto = torch.Tensor()
 end
 
-function BiEncoder:forward(batch)
+function BiEncoder:forward(batch, initial_states)
+  assert(not initial_states, "Cannot apply bidirectional Encoder incrementally")
+
   if self.statesProto == nil then
     self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
                                                          self.stateProto,
