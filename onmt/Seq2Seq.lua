@@ -174,13 +174,13 @@ function Seq2Seq:returnIndividualLosses(enable)
   return true
 end
 
-function Seq2Seq:setTargetVoc(t)
-  self.models.decoder.generator:setTargetVoc(t)
+function Seq2Seq:setGeneratorVoc(t)
+  self.models.decoder.generator:setGeneratorVoc(t)
   self.criterion.mainCriterion.weights:resize(t:size(1))
 end
 
-function Seq2Seq:unsetTargetVoc()
-  self.models.decoder.generator:setTargetVoc()
+function Seq2Seq:unsetGeneratorVoc()
+  self.models.decoder.generator:setGeneratorVoc()
   self.criterion.mainCriterion.weights:resize(self.tgtVocSize)
 end
 

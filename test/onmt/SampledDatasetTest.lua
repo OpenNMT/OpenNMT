@@ -44,15 +44,15 @@ function sampledDatasetTest.sample()
     dataset:getBatch(i)
   end
 
-  tester:eq(dataset.targetVocTensor, nil)
+  tester:eq(dataset.VocTensor, nil)
 
   -- sampling with target vocabulary importance sampling
-  opt.sample_tgt_vocab = true
+  opt.sample_vocab = true
   dataset = onmt.data.SampledDataset.new(opt, srcData, tgtData)
   dataset:setBatchSize(batchSize)
   dataset:getBatch(1)
-  tester:assertgt(dataset.targetVocTensor:size(1), 100)
-  tester:assertle(dataset.targetVocTensor:size(1), 500)
+  tester:assertgt(dataset.VocTensor:size(1), 100)
+  tester:assertle(dataset.VocTensor:size(1), 500)
 
   -- sampling with ppl
   opt.sample_tgt_vocab = false

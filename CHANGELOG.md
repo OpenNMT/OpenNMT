@@ -7,6 +7,7 @@
 ### Deprecations
 
 * `-brnn`, `-dbrnn` and `-pdbrnn` options are replaced by `-encoder_type <type>` for future extensions
+* `-sample_target_vocab` option is renamed `-sample_vocab` and is extended to language models
 
 ### New features
 
@@ -15,6 +16,7 @@
 * Add option to segment mixed cased words
 * Add options to segment words of given alphabets or when switching alphabets
 * Add Google's NMT encoder
+* New application `lm.lua` to apply language model for scoring or sampling
 
 ### Fixes and improvements
 
