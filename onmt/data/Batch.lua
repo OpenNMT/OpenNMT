@@ -127,6 +127,7 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures, dropout_words)
   end
 
   if dropout_words and dropout_words > 0 then
+    assert(not self.inputVectors, "`dropout_words` option cannot be used with input vectors")
     onmt.VDropout.dropoutWords(dropout_words, self)
   end
 
