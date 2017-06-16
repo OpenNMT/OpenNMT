@@ -53,7 +53,6 @@ Parameters:
   * `srcFeatures` - 2D table of source batch features (opt)
   * `tgt` - 2D table of target batch indices
   * `tgtFeatures` - 2D table of target batch features (opt)
-  * `dropoutWords` - words dropout probability
 --]]
 function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
   src = src or {}
