@@ -12,6 +12,8 @@ onmt.translate = require('onmt.translate.init')
 onmt.tagger = require('onmt.tagger.init')
 onmt.lm = require('onmt.lm.init')
 
+onmt.scorers = require('onmt.scorers.init')
+
 onmt.Constants = require('onmt.Constants')
 onmt.Factory = require('onmt.Factory')
 onmt.Model = require('onmt.Model')
