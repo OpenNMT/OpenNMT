@@ -53,8 +53,9 @@ Parameters:
   * `srcFeatures` - 2D table of source batch features (opt)
   * `tgt` - 2D table of target batch indices
   * `tgtFeatures` - 2D table of target batch features (opt)
+  * `dropoutWords` - words dropout probability
 --]]
-function Batch:__init(src, srcFeatures, tgt, tgtFeatures, dropout_words)
+function Batch:__init(src, srcFeatures, tgt, tgtFeatures, dropoutWords)
   src = src or {}
   srcFeatures = srcFeatures or {}
   tgtFeatures = tgtFeatures or {}
@@ -126,9 +127,9 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures, dropout_words)
     end
   end
 
-  if dropout_words and dropout_words > 0 then
-    assert(not self.inputVectors, "`dropout_words` option cannot be used with input vectors")
-    onmt.VDropout.dropoutWords(dropout_words, self)
+  if dropoutWords and dropoutWords > 0 then
+    assert(not self.inputVectors, "-dropout_words option cannot be used with input vectors")
+    self:dropoutWords(dropoutWords)
   end
 
 end
@@ -324,6 +325,29 @@ function Batch:reverseSourceInPlace()
 
   self.sourceInput, self.sourceInputRev = self.sourceInputRev, self.sourceInput
   self.sourceInputFeatures, self.sourceInputFeaturesRev = self.sourceInputFeaturesRev, self.sourceInputFeatures
+end
+
+function Batch:dropoutWords(p)
+  local vocabMask = torch.Tensor()
+  for i = 1, batch.sourceInput:size(1) do
+    local vocab = {}
+    local vocabMap = {}
+    for j = 1, batch.sourceInput:size(2) do
+      local x = batch.sourceInput[i][j]
+      if x > onmt.Constants.EOS and not vocab[x] then
+        table.insert(vocabMap, x)
+        vocab[x]=#vocabMap
+      end
+    end
+    vocabMask:resize(#vocabMap)
+    vocabMask:bernoulli(1-p)
+    for j = 1, batch.sourceInput:size(2) do
+      local x = batch.sourceInput[i][j]
+      if x > onmt.Constants.EOS and vocabMask[vocab[x]] == 0 then
+        batch.sourceInput[i][j] = onmt.Constants.PAD
+      end
+    end
+  end
 end
 
 return Batch
