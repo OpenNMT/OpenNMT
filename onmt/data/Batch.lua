@@ -325,12 +325,12 @@ function Batch:dropoutWords(p)
 
   local vocabMask = torch.Tensor()
 
-  for i = 1, batch.sourceInput:size(1) do
+  for i = 1, self.sourceInput:size(1) do
     local vocab = {}
     local vocabMap = {}
 
-    for j = 1, batch.sourceInput:size(2) do
-      local x = batch.sourceInput[i][j]
+    for j = 1, self.sourceInput:size(2) do
+      local x = self.sourceInput[i][j]
       if x > onmt.Constants.EOS and not vocab[x] then
         table.insert(vocabMap, x)
         vocab[x] = #vocabMap
@@ -340,10 +340,10 @@ function Batch:dropoutWords(p)
     vocabMask:resize(#vocabMap)
     vocabMask:bernoulli(1-p)
 
-    for j = 1, batch.sourceInput:size(2) do
-      local x = batch.sourceInput[i][j]
+    for j = 1, self.sourceInput:size(2) do
+      local x = self.sourceInput[i][j]
       if x > onmt.Constants.EOS and vocabMask[vocab[x]] == 0 then
-        batch.sourceInput[i][j] = onmt.Constants.PAD
+        self.sourceInput[i][j] = onmt.Constants.PAD
       end
     end
   end
