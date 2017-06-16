@@ -102,6 +102,8 @@ build = {
     ["onmt.LanguageModel"] = "onmt/LanguageModel.lua",
     ["onmt.Seq2Seq"] = "onmt/Seq2Seq.lua",
     ["onmt.SeqTagger"] = "onmt/SeqTagger.lua",
-    ["onmt.Model"] = "onmt/Model.lua"
+    ["onmt.Model"] = "onmt/Model.lua",
+    ["onmt.scorers.init"] = "onmt/scorers/init.lua",
+    ["onmt.scorers.bleu"] = "onmt/scorers/bleu.lua"
   }
 }

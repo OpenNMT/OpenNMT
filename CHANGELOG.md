@@ -17,6 +17,7 @@
 * Add option to segment mixed cased words
 * Add option to segment words of given alphabets or when switching alphabets
 * Add Google's NMT encoder
+* Add scorer tool (BLEU supported)
 
 ### Fixes and improvements
 
