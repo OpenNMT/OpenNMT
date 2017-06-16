@@ -11,6 +11,7 @@
 ### New features
 
 * Implement inference for language models
+* Support variational dropout and dropout on source sequence
 * Add option in preprocessing to check that lengths of source and target are equal (e.g. for sequence tagging)
 * Add `-pdbrnn_merge` option to define how to reduce the time dimension
 * Add option to segment mixed cased words

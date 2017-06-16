@@ -78,6 +78,11 @@ function LanguageModel.load(args, models, dicts)
   self.models.generator = onmt.Generator.load(models.generator)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
 
+  self.eosProto = {}
+  for _ = 1, #dicts.src.features + 1 do
+    table.insert(self.eosProto, torch.LongTensor())
+  end
+
   return self
 end
 
