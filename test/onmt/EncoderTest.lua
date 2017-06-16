@@ -113,9 +113,9 @@ function encoderTest.simple_LSTM_dropouts()
   local dropout_updateOutput= nn.Dropout.updateOutput
   local count
   nn.Dropout.updateOutput = function(...) count=count+1;return dropout_updateOutput(...) end
-  local vdropout_updateOutput= onmt.VDropout.updateOutput
+  local vdropout_updateOutput= onmt.VariationalDropout.updateOutput
   local vcount
-  onmt.VDropout.updateOutput = function(...) vcount=vcount+1;return vdropout_updateOutput(...) end
+  onmt.VariationalDropout.updateOutput = function(...) vcount=vcount+1;return vdropout_updateOutput(...) end
 
   count = 0
   vcount = 0
@@ -149,7 +149,7 @@ function encoderTest.simple_LSTM_dropouts()
   tester:eq(vcount, 16)
 
   nn.Dropout.updateOutput = dropout_updateOutput
-  onmt.VDropout.updateOutput = vdropout_updateOutput
+  onmt.VariationalDropout.updateOutput = vdropout_updateOutput
 end
 
 function encoderTest.simple_masking_LSTM()

@@ -402,8 +402,8 @@ function Decoder:forward(batch, initialStates, context)
                                          { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
-    -- initialize noise for variational dropout
-    onmt.VDropout.initializeNetwork(self.network)
+    -- Initialize noise for variational dropout.
+    onmt.VariationalDropout.initializeNetwork(self.network)
   end
 
   local outputs = {}

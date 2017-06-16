@@ -42,8 +42,8 @@
 * `-rnn_size <number>` (default: `500`)<br/>Hidden size of the recurrent unit.
 * `-rnn_type <string>` (accepted: `LSTM`, `GRU`; default: `LSTM`)<br/>Type of recurrent cell.
 * `-dropout <number>` (default: `0.3`)<br/>Dropout probability applied between recurrent layers.
-* `-dropout_input [<boolean>]` (default: `false`)<br/>Also apply dropout to the input of the recurrent module.
-* `-dropout_words <number>` (default: `0`)<br/>Apply dropout on source sequence vocabulary.
+* `-dropout_input [<boolean>]` (default: `false`)<br/>Dropout probability applied to the input of the recurrent module.
+* `-dropout_words <number>` (default: `0`)<br/>Dropout probability applied to the source sequence.
 * `-dropout_type <string>` (accepted: `naive`, `variational`; default: `naive`)<br/>Dropout type.
 * `-residual [<boolean>]` (default: `false`)<br/>Add residual connections between recurrent layers.
 * `-bridge <string>` (accepted: `copy`, `dense`, `dense_nonlinear`, `none`; default: `copy`)<br/>Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder must have the same number of layers.

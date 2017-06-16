@@ -50,14 +50,14 @@ local options = {
   },
   {
     '-dropout_input', false,
-    [[Also apply dropout to the input of the recurrent module.]],
+    [[Dropout probability applied to the input of the recurrent module.]],
     {
       structural = 0
     }
   },
   {
     '-dropout_words', 0,
-    [[Apply dropout on source sequence vocabulary.]],
+    [[Dropout probability applied to the source sequence.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isFloat(0, 1),
       structural = 1
@@ -105,7 +105,6 @@ function Encoder:__init(args, inputNetwork)
   self.args = {}
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
-  self.args.dropout_words = args.dropout_words
 
   parent.__init(self, self:_buildModel())
 
@@ -214,8 +213,8 @@ function Encoder:forward(batch, initial_states)
 
   if self.train then
     self.inputs = {}
-    -- initialize noise for variational dropout
-    onmt.VDropout.initializeNetwork(self.network)
+    -- Initialize noise for variational dropout.
+    onmt.VariationalDropout.initializeNetwork(self.network)
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward
