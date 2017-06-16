@@ -1,75 +1,146 @@
-local function get_ngrams(s, n, count)
-  local ngrams = {}
-  count = count or 0
+local function get_ngrams(ngrams, s, n)
   for i = 1, #s do
     for j = i, math.min(i+n-1, #s) do
       local ngram = table.concat(s, ' ', i, j)
       local l = j-i+1 -- keep track of ngram length
-      if count == 0 then
-        table.insert(ngrams, ngram)
+      if ngrams[ngram] == nil then
+        ngrams[ngram] = {1, l}
       else
-        if ngrams[ngram] == nil then
-          ngrams[ngram] = {1, l}
-        else
-          ngrams[ngram][1] = ngrams[ngram][1] + 1
-        end
+        ngrams[ngram][1] = ngrams[ngram][1] + 1
       end
     end
   end
   return ngrams
 end
 
-local function get_ngram_prec(cand, ref, n)
-  -- n = number of ngrams to consider
-  local results = {}
-  for i = 1, n do
-    results[i] = {0, 0} -- total, correct
+local function my_log(v)
+  if v == 0 then
+    return -9999999999
   end
-  local cand_ngrams = get_ngrams(cand, n, 1)
-  local ref_ngrams = get_ngrams(ref, n, 1)
-  for ngram, d in pairs(cand_ngrams) do
-    local count = d[1]
-    local l = d[2]
-    results[l][1] = results[l][1] + count
-    local actual
-    if ref_ngrams[ngram] == nil then
-      actual = 0
-    else
-      actual = ref_ngrams[ngram][1]
-    end
-    results[l][2] = results[l][2] + math.min(actual, count)
-  end
-  return results
+  return math.log(v)
 end
 
-local function get_bleu(cand, ref, n)
-  n = n or 4
-  local m = 1
-  if type(cand) ~= 'table' then
-    cand = cand:totable()
-  end
-  if type(ref) ~= 'table' then
-    ref = ref:totable()
-  end
-  local r = get_ngram_prec(cand, ref, n)
-  local bp = math.exp(1-math.max(1, #ref/#cand))
-  local correct = 0
-  local total = 0
-  local bleu = 1
-  for i = 1, n do
-    if r[i][1] > 0 then
-      if r[i][2] == 0 then
-        m = m*0.5
-        r[i][2] = m
+local function calculate_bleu_excludeminmax(cand, refs, N, min, max)
+  local length_translation = 0
+  local length_reference = 0
+  local total = {}
+  local correct = {}
+
+  local actual_size = 0
+  for i = 1, #cand do
+    if not min or i < min or i > max then
+      local cand_length = #cand[i]
+      local closest_diff = 9999
+      local closest_length = 9999
+
+      local ref_ngram = {}
+
+      for _, ref in ipairs(refs) do
+        local ref_length = #ref[i]
+        local diff = math.abs(cand_length-ref_length)
+        if diff < closest_diff then
+          closest_diff = diff
+          closest_length = ref_length
+        elseif diff == closest_diff then
+          if ref_length < closest_length then
+            closest_length = ref_length
+          end
+        end
+
+        local ref_ngrams_n = {}
+        get_ngrams(ref_ngrams_n, ref[i], N)
+
+        for k, v in pairs(ref_ngrams_n) do
+          if not ref_ngram[k] or ref_ngram[k][1] < v[1] then
+            ref_ngram[k] = v
+          end
+        end
       end
-      local prec = r[i][2]/r[i][1]
-      bleu = bleu * prec
+
+      length_translation = length_translation + cand_length
+      length_reference = length_reference+ closest_length
+
+      local t_gram = {}
+      get_ngrams(t_gram, cand[i], N)
+
+      for k,v in pairs(t_gram) do
+        local n = v[2]
+        total[n] = (total[n] or 0) + v[1]
+        if ref_ngram[k] then
+          correct[n] = (correct[n] or 0) + math.min(v[1], ref_ngram[k][1])
+        end
+      end
+      actual_size = actual_size + 1
     end
-    correct = correct + r[i][2]
-    total = total + r[i][1]
   end
-  bleu = bleu ^ (1/n)
-  return bleu * bp
+
+  local nbleu = {}
+
+  for n = 1, N do
+    if total[n] then
+      nbleu[n] = (correct[n] or 0) / total[n]
+    else
+      nbleu[n] = 0
+    end
+  end
+
+  if length_reference == 0 then
+    return 0, nbleu, -1, -1, length_translation, length_reference
+  end
+
+  local brevity_penalty = 1;
+
+  if length_translation < length_reference then
+    brevity_penalty = math.exp(1-length_reference/length_translation)
+  end
+
+  local bleu = 0
+
+  for n = 1, N do
+    bleu = bleu + my_log(nbleu[n])
+  end
+
+  bleu = brevity_penalty * math.exp(bleu/N)
+
+  return bleu, nbleu, brevity_penalty, length_translation / length_reference, length_translation, length_reference
 end
 
-return get_bleu
+
+local function calculate_bleu(cand, refs, sample, N)
+  N = N or 4
+  sample = sample or 1
+
+  local bleu, nbleu, bp, lratio, ltrans, lref = calculate_bleu_excludeminmax(cand, refs, N)
+
+  local margin = 0
+
+  if sample > 1 then
+    local s = #cand
+    for k = 1, sample do
+      local sbleu = select(1, calculate_bleu_excludeminmax(cand, refs, N, (k-1)*s/sample, k*s/sample))
+      if math.abs(sbleu-bleu) > margin then
+        margin = math.abs(sbleu-bleu)
+      end
+    end
+  end
+
+  local vs = { bleu*100, margin*100 }
+  local format = "BLEU = %.2f +/- %.2f, "
+  for n = 1, N do
+    if n > 1 then format = format .. '/' end
+    format = format .. "%.1f"
+    table.insert(vs, nbleu[n]*100)
+  end
+  table.insert(vs, bp)
+  table.insert(vs, lratio)
+  table.insert(vs, ltrans)
+  table.insert(vs, lref)
+
+  format = format .. " (BP=%.3f, ratio=%.3f, hyp_len=%d, ref_len=%d)"
+
+  table.insert(vs, 1, format)
+
+  return bleu, string.format(table.unpack(vs))
+end
+
+return calculate_bleu

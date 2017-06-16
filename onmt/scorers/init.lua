@@ -1,6 +1,7 @@
 local scorers = {}
 
 scorers.bleu = require 'onmt.scorers.bleu'
-scorers.gleu = require 'onmt.scorers.gleu'
+
+scorers.list = { 'bleu' }
 
 return scorers

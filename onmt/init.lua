@@ -5,13 +5,12 @@ onmt = {}
 onmt.utils = require('onmt.utils.init')
 
 require('onmt.modules.init')
+onmt.scorers = require('onmt.scorers.init')
 
 onmt.data = require('onmt.data.init')
 onmt.train = require('onmt.train.init')
 onmt.translate = require('onmt.translate.init')
 onmt.tagger = require('onmt.tagger.init')
-
-onmt.scorers = require('onmt.scorers.init')
 
 onmt.Constants = require('onmt.Constants')
 onmt.Factory = require('onmt.Factory')
