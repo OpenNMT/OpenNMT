@@ -353,6 +353,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../../training/regularization/" title="Regularization" class="md-nav__link">
+      Regularization
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../../training/decay/" title="Decay strategies" class="md-nav__link">
       Decay strategies
     </a>
@@ -463,6 +475,18 @@
   <li class="md-nav__item">
     <a href="../../tools/tokenization/" title="Tokenization" class="md-nav__link">
       Tokenization
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../tools/scorer/" title="Scorer" class="md-nav__link">
+      Scorer
     </a>
   </li>
 
@@ -964,7 +988,9 @@
 <li><code>-rnn_size &lt;number&gt;</code> (default: <code>500</code>)<br/>Hidden size of the recurrent unit.</li>
 <li><code>-rnn_type &lt;string&gt;</code> (accepted: <code>LSTM</code>, <code>GRU</code>; default: <code>LSTM</code>)<br/>Type of recurrent cell.</li>
 <li><code>-dropout &lt;number&gt;</code> (default: <code>0.3</code>)<br/>Dropout probability applied between recurrent layers.</li>
-<li><code>-dropout_input [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Also apply dropout to the input of the recurrent module.</li>
+<li><code>-dropout_input [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Dropout probability applied to the input of the recurrent module.</li>
+<li><code>-dropout_words &lt;number&gt;</code> (default: <code>0</code>)<br/>Dropout probability applied to the source sequence.</li>
+<li><code>-dropout_type &lt;string&gt;</code> (accepted: <code>naive</code>, <code>variational</code>; default: <code>naive</code>)<br/>Dropout type.</li>
 <li><code>-residual [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Add residual connections between recurrent layers.</li>
 <li><code>-bridge &lt;string&gt;</code> (accepted: <code>copy</code>, <code>dense</code>, <code>dense_nonlinear</code>, <code>none</code>; default: <code>copy</code>)<br/>Define how to pass encoder states to the decoder. With <code>copy</code>, the encoder and decoder must have the same number of layers.</li>
 <li><code>-input_feed [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.</li>

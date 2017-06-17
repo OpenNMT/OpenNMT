@@ -15,7 +15,7 @@
     
     
       
-        <title>Word features - OpenNMT</title>
+        <title>Regularization - OpenNMT</title>
       
     
     
@@ -77,11 +77,11 @@
             
               
                 <span class="md-header-nav__parent">
-                  Data
+                  Training
                 </span>
               
             
-            Word features
+            Regularization
           
         </span>
       </div>
@@ -224,12 +224,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
     
     <label class="md-nav__link" for="nav-4">
       Data
@@ -247,7 +245,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../preparation/" title="Preparation" class="md-nav__link">
+    <a href="../../data/preparation/" title="Preparation" class="md-nav__link">
       Preparation
     </a>
   </li>
@@ -257,64 +255,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        Word features
-      </label>
-    
-    <a href="./" title="Word features" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../../data/word_features/" title="Word features" class="md-nav__link">
       Word features
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#time-shifting" title="Time-shifting" class="md-nav__link">
-    Time-shifting
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vocabularies" title="Vocabularies" class="md-nav__link">
-    Vocabularies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embeddings" title="Embeddings" class="md-nav__link">
-    Embeddings
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#beam-search" title="Beam search" class="md-nav__link">
-    Beam search
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -327,10 +272,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
     
     <label class="md-nav__link" for="nav-5">
       Training
@@ -348,7 +295,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../training/models/" title="Models" class="md-nav__link">
+    <a href="../models/" title="Models" class="md-nav__link">
       Models
     </a>
   </li>
@@ -360,7 +307,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../training/embeddings/" title="Embeddings" class="md-nav__link">
+    <a href="../embeddings/" title="Embeddings" class="md-nav__link">
       Embeddings
     </a>
   </li>
@@ -372,7 +319,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../training/logs/" title="Logs" class="md-nav__link">
+    <a href="../logs/" title="Logs" class="md-nav__link">
       Logs
     </a>
   </li>
@@ -384,7 +331,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../training/multi_gpu/" title="Multi GPU" class="md-nav__link">
+    <a href="../multi_gpu/" title="Multi GPU" class="md-nav__link">
       Multi GPU
     </a>
   </li>
@@ -396,7 +343,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../training/retraining/" title="Retraining" class="md-nav__link">
+    <a href="../retraining/" title="Retraining" class="md-nav__link">
       Retraining
     </a>
   </li>
@@ -406,11 +353,43 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../training/regularization/" title="Regularization" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Regularization
+      </label>
+    
+    <a href="./" title="Regularization" class="md-nav__link md-nav__link--active">
       Regularization
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#dropout" title="Dropout" class="md-nav__link">
+    Dropout
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -420,7 +399,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../training/decay/" title="Decay strategies" class="md-nav__link">
+    <a href="../decay/" title="Decay strategies" class="md-nav__link">
       Decay strategies
     </a>
   </li>
@@ -432,7 +411,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../training/sampling/" title="Data sampling" class="md-nav__link">
+    <a href="../sampling/" title="Data sampling" class="md-nav__link">
       Data sampling
     </a>
   </li>
@@ -786,29 +765,8 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#time-shifting" title="Time-shifting" class="md-nav__link">
-    Time-shifting
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vocabularies" title="Vocabularies" class="md-nav__link">
-    Vocabularies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embeddings" title="Embeddings" class="md-nav__link">
-    Embeddings
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#beam-search" title="Beam search" class="md-nav__link">
-    Beam search
+  <a href="#dropout" title="Dropout" class="md-nav__link">
+    Dropout
   </a>
   
 </li>
@@ -827,76 +785,28 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/data/word_features.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
+                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/training/regularization.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
                 
                 
-                  <h1>Word features</h1>
+                  <h1>Regularization</h1>
                 
-                <p>OpenNMT supports additional features on source and target words in the form of <strong>discrete labels</strong>.</p>
-<ul>
-<li>On the source side, these features act as <strong>additional information</strong> to the encoder. An
-embedding will be optimized for each label and then fed as additional source input
-alongside the word it annotates.</li>
-<li>On the target side, these features will be <strong>predicted</strong> by the network. The
-decoder is then able to decode a sentence and annotate each word.</li>
-</ul>
-<p>To use additional features, directly modify your data by appending labels to each word with
-the special character <code>￨</code> (unicode character FFE8). There can be an <strong>arbitrary number</strong> of additional
-features in the form <code>word￨feat1￨feat2￨...￨featN</code> but each word must have the same number of
-features and in the same order. Source and target data can have a different number of additional features.</p>
-<p>As an example, see <code>data/src-train-case.txt</code> which uses a separate feature
-to represent the case of each word. Using case as a feature is a way to optimize the word
-dictionary (no duplicated words like "the" and "The") and gives the system an additional
-information that can be useful to optimize its objective function.</p>
-<div class="codehilite"><pre><span></span>it￨C is￨l not￨l acceptable￨l that￨l ,￨n with￨l the￨l help￨l of￨l the￨l national￨l bureaucracies￨l ,￨n parliament￨C &amp;apos;s￨l legislative￨l prerogative￨l should￨l be￨l made￨l null￨l and￨l void￨l by￨l means￨l of￨l implementing￨l provisions￨l whose￨l content￨l ,￨n purpose￨l and￨l extent￨l are￨l not￨l laid￨l down￨l in￨l advance￨l .￨n
-</pre></div>
-
-
-<p>You can generate this case feature with OpenNMT's tokenization script and the <code>-case_feature</code> flag.</p>
-<h2 id="time-shifting">Time-shifting<a class="headerlink" href="#time-shifting" title="Permanent link">&para;</a></h2>
-<p>By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. This way, the decoder architecture is similar to a RNN-based sequence tagger with the output of a timestep being the tag of the input.</p>
-<p>More precisely at timestep <script type="math/tex">t</script>:</p>
-<ul>
-<li>the inputs are <script type="math/tex">words^{(t)}</script> and <script type="math/tex">features^{(t-1)}</script>
-</li>
-<li>the outputs are <script type="math/tex">words^{(t+1)}</script> and <script type="math/tex">features^{(t)}</script>
-</li>
-</ul>
-<p>To reuse available vocabulary, <script type="math/tex">features^{(-1)}</script> is set to the end of sentence token.</p>
-<h2 id="vocabularies">Vocabularies<a class="headerlink" href="#vocabularies" title="Permanent link">&para;</a></h2>
-<p>By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code> options in the format <code>word_vocab_size[ feat1_vocab_size[ feat2_vocab_size[ ...]]]</code>. For example:</p>
-<div class="codehilite"><pre><span></span><span class="c1"># unlimited source features vocabulary size</span>
--src_vocab_size <span class="m">50000</span>
-
-<span class="c1"># first feature vocabulary is limited to 60, others are unlimited</span>
--src_vocab_size <span class="m">50000</span> <span class="m">60</span>
-
-<span class="c1"># second feature vocabulary is limited to 100, others are unlimited</span>
--src_vocab_size <span class="m">50000</span> <span class="m">0</span> <span class="m">100</span>
-
-<span class="c1"># limit vocabulary size of the first and second feature</span>
--src_vocab_size <span class="m">50000</span> <span class="m">60</span> <span class="m">100</span>
-</pre></div>
-
-
-<p>You can similarly use <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> to limit vocabulary by frequency instead of absolute size.</p>
-<p>Like words, word features vocabularies can be reused across datasets with the <code>-features_vocabs_prefix</code>. For example, if the processing generates theses features dictionaries:</p>
-<ul>
-<li><code>data/demo.source_feature_1.dict</code></li>
-<li><code>data/demo.source_feature_2.dict</code></li>
-<li><code>data/demo.source_feature_3.dict</code></li>
-</ul>
-<p>you have to set <code>-features_vocabs_prefix data/demo</code> as command line option.</p>
-<h2 id="embeddings">Embeddings<a class="headerlink" href="#embeddings" title="Permanent link">&para;</a></h2>
-<p>The feature embedding size is automatically computed based on the number of values the feature takes. This default size reduction works well for features with few values like the case or POS.</p>
-<p>For other features, you may want to manually choose the embedding size with the <code>-src_word_vec_size</code> and <code>-tgt_word_vec_size</code> options. They behave similarly to <code>-src_vocab_size</code> with a list of embedding size: <code>word_vec_size[ feat1_vec_size[ feat2_vec_size[ ...]]]</code>.</p>
-<p>Then, each feature embedding is concatenated to each other by default. You can instead choose to sum them by setting <code>-feat_merge sum</code>. Finally, the resulting merged embedding is concatenated to the word embedding.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>In the <code>sum</code> case, each feature embedding must have the same dimension. You can set the common embedding size with <code>-feat_vec_size</code>.</p>
+                <p>To prevent neural networks from overfitting and increase generalization capacity, several regularization methods are available.</p>
+<h2 id="dropout">Dropout<a class="headerlink" href="#dropout" title="Permanent link">&para;</a></h2>
+<p>Dropout is an effective and simple regularization technique introduced by <a href="http://www.jmlr.org/papers/volume15/srivastava14a.old/source/srivastava14a.pdf">Srivastava et al., 2015</a>. Dropout is only applied during training. The idea is to disable for a given batch individual neurons with some probability <script type="math/tex">p</script>. Setting <script type="math/tex">p</script> to 0 disables the dropout. Default regularization is dropout with <script type="math/tex">p=0.2</script>.</p>
+<p><img alt="Dropout" src="../../img/dropout.jpg" /></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Dropout value can be changed dynamically when restarting the training. So it can be adjusted all along the training process.</p>
 </div>
-<h2 id="beam-search">Beam search<a class="headerlink" href="#beam-search" title="Permanent link">&para;</a></h2>
-<p>During decoding, the beam search is only applied on the target words space and not on the word features. When the beam path is complete, the associated features are selected along this path.</p>
+<p>Dropout is applied on the output of each layer, the output of the attention layer, and can be enabled also between word embeddings and the first layer with the <code>-dropout_input</code> option.</p>
+<p>Because of recurrence, applying dropout to recurrent neural networks requires some specific care and two implementations are available and can be configured using the <code>-dropout_type</code> option:</p>
+<ul>
+<li><code>naive</code> (default): implements the approach described in <a href="https://arxiv.org/pdf/1409.2329.pdf">Zaremba et al., 2015</a>. The dropout is only applied on non-recurrent connections.</li>
+<li><code>variational</code>: implements the approach described in <a href="../[https://arxiv.org/pdf/1512.05287.pdf]">Gal et al., 2016</a>. In this approach, dropout is also applied to the recurrent connections but each timestep applies the same dropout mask.</li>
+</ul>
+<p>The following picture (from Gal et al. paper) describes both different approaches. On the left side, the naive dropout: no dropout on recurrent connections, and dropout for each timestep is different. On the right side, the variational dropout: there is dropout on recurrent connections, but dropout for each timesteps are the same,</p>
+<p><img alt="Dropout Types" src="../../img/dropout-type.jpg" /></p>
+<p>Finally, dropout can also be applied to the words themselves. In that case, a set of individual words randomly selected with probability <script type="math/tex">p_{words}</script> are replaced by padding tokens. You can apply this option using <code>-dropout_words pwords</code> with a non zero value.</p>
                 
                   
                 
@@ -915,7 +825,7 @@ information that can be useful to optimize its objective function.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../preparation/" title="Preparation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../retraining/" title="Retraining" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -924,19 +834,19 @@ information that can be useful to optimize its objective function.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Preparation
+                Retraining
               </span>
             </div>
           </a>
         
         
-          <a href="../../training/models/" title="Models" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../decay/" title="Decay strategies" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Models
+                Decay strategies
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">

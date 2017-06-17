@@ -15,7 +15,7 @@
     
     
       
-        <title>Word features - OpenNMT</title>
+        <title>Scorer - OpenNMT</title>
       
     
     
@@ -77,11 +77,11 @@
             
               
                 <span class="md-header-nav__parent">
-                  Data
+                  Tools
                 </span>
               
             
-            Word features
+            Scorer
           
         </span>
       </div>
@@ -224,12 +224,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
     
     <label class="md-nav__link" for="nav-4">
       Data
@@ -247,7 +245,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../preparation/" title="Preparation" class="md-nav__link">
+    <a href="../../data/preparation/" title="Preparation" class="md-nav__link">
       Preparation
     </a>
   </li>
@@ -257,64 +255,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        Word features
-      </label>
-    
-    <a href="./" title="Word features" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../../data/word_features/" title="Word features" class="md-nav__link">
       Word features
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#time-shifting" title="Time-shifting" class="md-nav__link">
-    Time-shifting
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vocabularies" title="Vocabularies" class="md-nav__link">
-    Vocabularies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embeddings" title="Embeddings" class="md-nav__link">
-    Embeddings
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#beam-search" title="Beam search" class="md-nav__link">
-    Beam search
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -507,10 +452,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" checked>
     
     <label class="md-nav__link" for="nav-7">
       Tools
@@ -528,7 +475,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../tools/tokenization/" title="Tokenization" class="md-nav__link">
+    <a href="../tokenization/" title="Tokenization" class="md-nav__link">
       Tokenization
     </a>
   </li>
@@ -538,11 +485,20 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../tools/scorer/" title="Scorer" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+    <a href="./" title="Scorer" class="md-nav__link md-nav__link--active">
       Scorer
     </a>
+    
   </li>
 
         
@@ -552,7 +508,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../tools/servers/" title="Servers" class="md-nav__link">
+    <a href="../servers/" title="Servers" class="md-nav__link">
       Servers
     </a>
   </li>
@@ -781,41 +737,8 @@
 <nav class="md-nav md-nav--secondary">
   
   
+    
   
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#time-shifting" title="Time-shifting" class="md-nav__link">
-    Time-shifting
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#vocabularies" title="Vocabularies" class="md-nav__link">
-    Vocabularies
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embeddings" title="Embeddings" class="md-nav__link">
-    Embeddings
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#beam-search" title="Beam search" class="md-nav__link">
-    Beam search
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
   
 </nav>
                   </div>
@@ -827,76 +750,33 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/data/word_features.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
+                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/tools/scorer.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
                 
                 
-                  <h1>Word features</h1>
-                
-                <p>OpenNMT supports additional features on source and target words in the form of <strong>discrete labels</strong>.</p>
-<ul>
-<li>On the source side, these features act as <strong>additional information</strong> to the encoder. An
-embedding will be optimized for each label and then fed as additional source input
-alongside the word it annotates.</li>
-<li>On the target side, these features will be <strong>predicted</strong> by the network. The
-decoder is then able to decode a sentence and annotate each word.</li>
-</ul>
-<p>To use additional features, directly modify your data by appending labels to each word with
-the special character <code>￨</code> (unicode character FFE8). There can be an <strong>arbitrary number</strong> of additional
-features in the form <code>word￨feat1￨feat2￨...￨featN</code> but each word must have the same number of
-features and in the same order. Source and target data can have a different number of additional features.</p>
-<p>As an example, see <code>data/src-train-case.txt</code> which uses a separate feature
-to represent the case of each word. Using case as a feature is a way to optimize the word
-dictionary (no duplicated words like "the" and "The") and gives the system an additional
-information that can be useful to optimize its objective function.</p>
-<div class="codehilite"><pre><span></span>it￨C is￨l not￨l acceptable￨l that￨l ,￨n with￨l the￨l help￨l of￨l the￨l national￨l bureaucracies￨l ,￨n parliament￨C &amp;apos;s￨l legislative￨l prerogative￨l should￨l be￨l made￨l null￨l and￨l void￨l by￨l means￨l of￨l implementing￨l provisions￨l whose￨l content￨l ,￨n purpose￨l and￨l extent￨l are￨l not￨l laid￨l down￨l in￨l advance￨l .￨n
+                <p>OpenNMT provides native implementation of scoring metrics - for the moment, only BLEU.</p>
+<h1 id="bleu">BLEU<a class="headerlink" href="#bleu" title="Permanent link">&para;</a></h1>
+<p><a href="https://en.wikipedia.org/wiki/BLEU">BLEU</a> is a metric widely used for evaluation of machine translation output.</p>
+<p>Syntax follows <a href="https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl">multi-bleu.perl</a> syntax:</p>
+<div class="codehilite"><pre><span></span>$ th tools/score.lua REFERENCE <span class="o">[</span>-sample SN<span class="o">]</span> <span class="o">[</span>-scorer bleu<span class="o">]</span> <span class="o">[</span>-order N<span class="o">]</span> &lt; OUT
 </pre></div>
 
 
-<p>You can generate this case feature with OpenNMT's tokenization script and the <code>-case_feature</code> flag.</p>
-<h2 id="time-shifting">Time-shifting<a class="headerlink" href="#time-shifting" title="Permanent link">&para;</a></h2>
-<p>By default, word features on the target side are automatically shifted compared to the words so that their prediction directly depends on the word they annotate. This way, the decoder architecture is similar to a RNN-based sequence tagger with the output of a timestep being the tag of the input.</p>
-<p>More precisely at timestep <script type="math/tex">t</script>:</p>
-<ul>
-<li>the inputs are <script type="math/tex">words^{(t)}</script> and <script type="math/tex">features^{(t-1)}</script>
-</li>
-<li>the outputs are <script type="math/tex">words^{(t+1)}</script> and <script type="math/tex">features^{(t)}</script>
-</li>
-</ul>
-<p>To reuse available vocabulary, <script type="math/tex">features^{(-1)}</script> is set to the end of sentence token.</p>
-<h2 id="vocabularies">Vocabularies<a class="headerlink" href="#vocabularies" title="Permanent link">&para;</a></h2>
-<p>By default, features vocabulary size is unlimited. Depending on the type of features you are using, you may want to limit their vocabulary during the preprocessing with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code> options in the format <code>word_vocab_size[ feat1_vocab_size[ feat2_vocab_size[ ...]]]</code>. For example:</p>
-<div class="codehilite"><pre><span></span><span class="c1"># unlimited source features vocabulary size</span>
--src_vocab_size <span class="m">50000</span>
-
-<span class="c1"># first feature vocabulary is limited to 60, others are unlimited</span>
--src_vocab_size <span class="m">50000</span> <span class="m">60</span>
-
-<span class="c1"># second feature vocabulary is limited to 100, others are unlimited</span>
--src_vocab_size <span class="m">50000</span> <span class="m">0</span> <span class="m">100</span>
-
-<span class="c1"># limit vocabulary size of the first and second feature</span>
--src_vocab_size <span class="m">50000</span> <span class="m">60</span> <span class="m">100</span>
+<p>generating:</p>
+<div class="codehilite"><pre><span></span>[06/17/17 09:39:04 INFO] 4 references, 1002 sentences
+BLEU = 34.77 +/- 0.43, 79.8/49.1/29.6/17.6 (BP=0.919, ratio=0.922, hyp_len=26742, ref_len=28995)
 </pre></div>
 
 
-<p>You can similarly use <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> to limit vocabulary by frequency instead of absolute size.</p>
-<p>Like words, word features vocabularies can be reused across datasets with the <code>-features_vocabs_prefix</code>. For example, if the processing generates theses features dictionaries:</p>
+<p>where:</p>
 <ul>
-<li><code>data/demo.source_feature_1.dict</code></li>
-<li><code>data/demo.source_feature_2.dict</code></li>
-<li><code>data/demo.source_feature_3.dict</code></li>
+<li><code>REFERENCE</code> is either a single file, or a prefix for multiple-reference <code>REFERENCE0</code>, <code>REFERENCE1</code>, ...</li>
+<li><code>-order</code> is bleu n-gram order (default 4)</li>
+<li>parameter <code>-sample</code> indicates the number of sample to draw for evaluating <em>error margin</em> (default 20) - indicated with <code>+/- ERR</code> in the output</li>
 </ul>
-<p>you have to set <code>-features_vocabs_prefix data/demo</code> as command line option.</p>
-<h2 id="embeddings">Embeddings<a class="headerlink" href="#embeddings" title="Permanent link">&para;</a></h2>
-<p>The feature embedding size is automatically computed based on the number of values the feature takes. This default size reduction works well for features with few values like the case or POS.</p>
-<p>For other features, you may want to manually choose the embedding size with the <code>-src_word_vec_size</code> and <code>-tgt_word_vec_size</code> options. They behave similarly to <code>-src_vocab_size</code> with a list of embedding size: <code>word_vec_size[ feat1_vec_size[ feat2_vec_size[ ...]]]</code>.</p>
-<p>Then, each feature embedding is concatenated to each other by default. You can instead choose to sum them by setting <code>-feat_merge sum</code>. Finally, the resulting merged embedding is concatenated to the word embedding.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>In the <code>sum</code> case, each feature embedding must have the same dimension. You can set the common embedding size with <code>-feat_vec_size</code>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><em>Error margin</em> is a simple way to know if BLEU score variation is part of metric calculation variation or is significant.</p>
 </div>
-<h2 id="beam-search">Beam search<a class="headerlink" href="#beam-search" title="Permanent link">&para;</a></h2>
-<p>During decoding, the beam search is only applied on the target words space and not on the word features. When the beam path is complete, the associated features are selected along this path.</p>
                 
                   
                 
@@ -915,7 +795,7 @@ information that can be useful to optimize its objective function.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../preparation/" title="Preparation" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../tokenization/" title="Tokenization" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -924,19 +804,19 @@ information that can be useful to optimize its objective function.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Preparation
+                Tokenization
               </span>
             </div>
           </a>
         
         
-          <a href="../../training/models/" title="Models" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../servers/" title="Servers" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Models
+                Servers
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">
