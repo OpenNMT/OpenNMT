@@ -50,6 +50,7 @@ pages:
       - "Unknown words": translation/unknowns.md
   - Tools:
       - Tokenization: tools/tokenization.md
+      - Scorer: tools/scorer.md
       - Servers: tools/servers.md
   - "Reference: Options":
       - "Scripts usage": options/usage.md
