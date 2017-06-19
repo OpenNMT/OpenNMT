@@ -74,7 +74,7 @@ function GlobalAttention:_buildModel(dim, global_attention)
     score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
   end
 
-  local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
+  local attn = nn.Squeeze(3)(score_ht_hs) -- batchL x sourceL
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
@@ -82,7 +82,7 @@ function GlobalAttention:_buildModel(dim, global_attention)
 
   -- Apply attention to context.
   local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
-  contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
+  contextCombined = nn.Squeeze(2)(contextCombined) -- batchL x dim
   contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
   local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
 
