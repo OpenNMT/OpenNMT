@@ -104,8 +104,9 @@ local options = {
     (encoding/embedding) of the input.]]
   },
   {
-    '-dump_beam', '',
-    [[Path to a file where beam search exploration will be dumped.]]
+    '-save_beam_to', '',
+    [[Path to a file where the beam search exploration will be saved in a JSON format.
+      Requires the `dkjson` package.]]
   }
 }
 
@@ -137,21 +138,14 @@ function Translator:__init(args)
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
 
-  if self.args.dump_beam ~= '' then
-    self.dump_beam_file = io.open(self.args.dump_beam, "w")
-    assert(self.dump_beam_file, "Cannot not open: "..self.args.dump_beam)
-    self.beam_accum = {
-             predicted_ids = {},
-             beam_parent_ids= {},
-             scores= {},
-             log_probs= {}
-    }
-  end
-
   if self.args.target_subdict:len() > 0 then
     self.dicts.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
     self.model:setTargetVoc(self.dicts.subdict.targetVocTensor)
     _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.dicts.subdict.targetVocTensor:size(1))
+  end
+
+  if self.args.save_beam_to:len() > 0 then
+    self.beamHistories = {}
   end
 end
 
@@ -312,8 +306,7 @@ function Translator:translateBatch(batch)
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,
-                                                      self.args.eos_norm,
-                                                      self.beam_accum)
+                                                      self.args.eos_norm)
 
   -- Save memory by only keeping track of necessary elements in the states.
   -- Attentions are at index 4 in the states defined in onmt.translate.DecoderAdvancer.
@@ -325,13 +318,16 @@ function Translator:translateBatch(batch)
   advancer:setKeptStateIndexes({attnIndex, featsIndex})
 
   -- Conduct beam search.
-  local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  local results = beamSearcher:search(self.args.beam_size, self.args.n_best, self.args.pre_filter_factor)
+  local beamSearcher = onmt.translate.BeamSearcher.new(advancer, self.args.save_beam_to:len() > 0)
+  local results, histories = beamSearcher:search(self.args.beam_size,
+                                                 self.args.n_best,
+                                                 self.args.pre_filter_factor)
 
   local allHyp = {}
   local allFeats = {}
   local allAttn = {}
   local allScores = {}
+  local allHistories = {}
 
   for b = 1, batch.size do
     local hypBatch = {}
@@ -374,9 +370,52 @@ function Translator:translateBatch(batch)
     table.insert(allFeats, featsBatch)
     table.insert(allAttn, attnBatch)
     table.insert(allScores, scoresBatch)
+    table.insert(allHistories, histories[b])
   end
 
-  return allHyp, allFeats, allScores, allAttn, goldScore
+  return allHyp, allFeats, allScores, allAttn, goldScore, allHistories
+end
+
+--[[ Save the aggreagated beam search histories in a JSON file.
+
+See also https://github.com/OpenNMT/VisTools/blob/master/generate_beam_viz.py.
+
+Parameters:
+
+  * file - the file to save to.
+
+]]
+function Translator:saveBeamHistories(file)
+  if not self.beamHistories or #self.beamHistories == 0 then
+    return
+  end
+
+  local data = {}
+  data.predicted_ids = {}
+  data.beam_parent_ids = {}
+  data.scores = {}
+
+  for b = 1, #self.beamHistories do
+    local history = self.beamHistories[b]
+    local beamIds = {}
+    local beamParents = {}
+    local beamScores = {}
+
+    for i = 1, #history.predictedIds do
+      table.insert(beamIds,
+                   self.dicts.tgt.words:convertToLabels(torch.totable(history.predictedIds[i])))
+      table.insert(beamScores, torch.totable(history.scores[i]))
+      table.insert(beamParents, torch.totable(history.parentBeams[i] - 1))
+    end
+
+    table.insert(data.predicted_ids, beamIds)
+    table.insert(data.beam_parent_ids, beamParents)
+    table.insert(data.scores, beamScores)
+  end
+
+  local output = assert(io.open(file, 'w'))
+  output:write(require('dkjson').encode(data))
+  self.beamHistories = {}
 end
 
 --[[ Translate a batch of source sequences.
@@ -412,10 +451,15 @@ function Translator:translate(src, gold)
     local predScore = {}
     local attn = {}
     local goldScore = {}
+    local beamHistories = {}
     if self.args.dump_input_encoding then
       encStates = self:translateBatch(batch)
     else
-      pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
+      pred, predFeats, predScore, attn, goldScore, beamHistories = self:translateBatch(batch)
+    end
+
+    if self.beamHistories then
+      onmt.utils.Table.append(self.beamHistories, beamHistories)
     end
 
     for b = 1, batch.size do

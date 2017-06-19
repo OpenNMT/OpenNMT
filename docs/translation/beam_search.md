@@ -41,9 +41,11 @@ $$ep(X,Y)=\gamma\frac{|X|}{|Y|}$$
 
 where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\gamma\) is the coverage normalization coefficient `-eos_norm`.
 
-## Visualizing beam search
+## Visualizing the beam search
 
-To visualize beam search exploration, you can use the option `-dump_beam FILE.json` that will generate a json representation of the beam search. This representation can be turned into dynamic HTML svg using `generate_beam_viz.py` from [`OpenNMT/VisTools`](https://github.com/OpenNMT/VisTools) repository.
+To visualize the beam search exploration, you can use the option `-save_beam_to file.json`. It will save JSON serialization of the beam search history. This representation can then be turned into a dynamic HTML page using the `generate_beam_viz.py` script from the [`OpenNMT/VisTools`](https://github.com/OpenNMT/VisTools) repository.
 
 ![Beam Search visualization](../img/beam_search.png)
 
+!!! note "Note"
+    This option requires the `dkjson` package.

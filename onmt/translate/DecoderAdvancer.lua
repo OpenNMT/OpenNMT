@@ -14,13 +14,9 @@ Parameters:
   * `max_num_unks` - optional, maximum number of UNKs.
   * `decStates` - optional, initial decoder states.
   * `dicts` - optional, dictionary for additional features.
-  * `length_norm`, `coverage_norm`, `eos_norm` - optional, coverage, norm and length parameters
-  * `beam_accum` - optional, structure keeping full history on beam search for debug purpose
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts,
-                                length_norm, coverage_norm, eos_norm,
-                                beam_accum)
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
   self.batch = batch
   self.context = context
@@ -34,7 +30,6 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
     onmt.utils.Cuda.convert(torch.Tensor()),
     { self.batch.size, decoder.args.rnnSize })
   self.dicts = dicts
-  self.beam_accum = beam_accum
 end
 
 --[[Returns an initial beam.
@@ -75,15 +70,6 @@ function DecoderAdvancer:initBeam()
   params.length_norm = self.length_norm
   params.coverage_norm = self.coverage_norm
   params.eos_norm = self.eos_norm
-  if self.beam_accum then
-    self.beam_accum_idx_base = #self.beam_accum.predicted_ids
-    for _ = 1, self.batch.size do
-      table.insert(self.beam_accum.predicted_ids,{})
-      table.insert(self.beam_accum.beam_parent_ids,{})
-      table.insert(self.beam_accum.scores,{})
-      table.insert(self.beam_accum.log_probs,{})
-    end
-  end
   return onmt.translate.Beam.new(tokens, state, params)
 end
 

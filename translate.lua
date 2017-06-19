@@ -190,15 +190,8 @@ local function main()
     end
   end
 
-  if opt.dump_beam then
-    local json = require ("dkjson")
-    for i = 1,#translator.beam_accum["predicted_ids"] do
-      for j = 1, #translator.beam_accum["predicted_ids"][i] do
-        translator.beam_accum["predicted_ids"][i][j] =
-            translator.dicts.tgt.words:convertToLabels(translator.beam_accum["predicted_ids"][i][j])
-      end
-    end
-    translator.dump_beam_file:write(json.encode(translator.beam_accum))
+  if opt.save_beam_to:len() > 0 then
+    translator:saveBeamHistories(opt.save_beam_to)
   end
 
   outFile:close()

@@ -105,17 +105,10 @@ function beamSearchTest.beamSearch()
                        {{tokens = {1, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
                        {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
 
-  -- Test dump beam
-  advancer.beam_accum = {
-             predicted_ids = {{},{},{}},
-             beam_parent_ids= {{},{},{}},
-             scores= {{},{},{}},
-             log_probs= {{},{},{}}
-  }
-  advancer.beam_accum_idx_base = 0
-  beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  beamSearcher:search(beamSize, nBest)
-  tester:eq(#advancer.beam_accum.predicted_ids[1][1],3)
+  -- Test beam search saver.
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer, true)
+  results, histories = beamSearcher:search(beamSize, nBest)
+  tester:eq(#histories[1].predictedIds, 2)
 end
 
 return beamSearchTest
