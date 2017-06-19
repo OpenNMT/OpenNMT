@@ -107,7 +107,7 @@ function beamSearchTest.beamSearch()
 
   -- Test beam search saver.
   beamSearcher = onmt.translate.BeamSearcher.new(advancer, true)
-  results, histories = beamSearcher:search(beamSize, nBest)
+  local _, histories = beamSearcher:search(beamSize, nBest)
   tester:eq(#histories[1].predictedIds, 2)
 end
 
