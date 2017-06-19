@@ -43,7 +43,7 @@ where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\
 
 ## Visualizing the beam search
 
-To visualize the beam search exploration, you can use the option `-save_beam_to file.json`. It will save JSON serialization of the beam search history. This representation can then be turned into a dynamic HTML page using the `generate_beam_viz.py` script from the [`OpenNMT/VisTools`](https://github.com/OpenNMT/VisTools) repository.
+To visualize the beam search exploration, you can use the option `-save_beam_to file.json`. It will save a JSON serialization of the beam search history. This representation can then be visualized dynamically using the `generate_beam_viz.py` script from the [`OpenNMT/VisTools`](https://github.com/OpenNMT/VisTools) repository.
 
 ![Beam Search visualization](../img/beam_search.png)
 
