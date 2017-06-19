@@ -17,10 +17,12 @@ local BeamSearcher = torch.class('BeamSearcher')
 Parameters:
 
   * `advancer` - an `onmt.translate.Advancer` object.
+  * `saveHistory` - if true, save the beam search history.
 
 ]]
-function BeamSearcher:__init(advancer)
+function BeamSearcher:__init(advancer, saveHistory)
   self.advancer = advancer
+  self.saveHistory = saveHistory
 end
 
 --[[ Performs beam search.
@@ -35,9 +37,13 @@ Parameters:
   larger value to consider more. [1]
   * `keepInitial` - optional, whether return the initial token or not. [false]
 
-Returns: a table `finished`. `finished[b][n].score`, `finished[b][n].tokens`
-and `finished[b][n].states` describe the n-th best hypothesis for b-th sample
-in the batch.
+Returns:
+
+  * a table `finished`. `finished[b][n].score`, `finished[b][n].tokens`
+    and `finished[b][n].states` describe the n-th best hypothesis for b-th sample
+    in the batch.
+  * (optional) a table `histories`. `histories[b].predictedIds`, `histories[b].parentBeams`
+    and `histories[b].scores` save the full beam search history of the b-th sample.
 
 ]]
 function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
@@ -49,6 +55,7 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
 
   local beams = {}
   local finished = {}
+  local histories = {}
 
   -- Initialize the beam.
   beams[1] = self.advancer:initBeam()
@@ -71,15 +78,17 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
     local completed = self.advancer:isComplete(beams[t + 1])
 
     -- Remove completed hypotheses (maintained by BeamSearcher).
-    local finishedBatches, finishedHypotheses = self:_completeHypotheses(beams, completed)
+    local finishedBatches, finishedHypotheses, finishedHistory =
+      self:_completeHypotheses(beams, completed)
 
     for b = 1, #finishedBatches do
       finished[finishedBatches[b]] = finishedHypotheses[b]
+      histories[finishedBatches[b]] = finishedHistory[b]
     end
     t = t + 1
     remaining = beams[t]:getRemaining()
   end
-  return finished
+  return finished, histories
 end
 
 -- Find the top beamSize hypotheses (satisfying filters).
@@ -115,13 +124,7 @@ function BeamSearcher:_findKBest(beams, scores)
 
   -- substitute with complete dictionary index
   if self.advancer.dicts.subdict then
-    if consideredToken.map then
-      consideredToken:map(consideredToken, function(idx) return self.advancer.dicts.subdict:fullIdx(idx) end)
-    else
-      for i = 1, consideredToken:size(1) do
-        consideredToken[i] = self.advancer.dicts.subdict:fullIdx(consideredToken[i])
-      end
-    end
+    self.advancer.dicts.subdict:fullIdx(consideredToken)
   end
 
   local newBeam = beams[t]:_nextBeam(consideredToken, consideredScores,
@@ -189,6 +192,27 @@ function BeamSearcher:_retrieveHypothesis(beams, batchId, score, tok, bp, t)
   return {tokens = tokens, states = states, score = score}
 end
 
+-- Retrieve the complete beam history of batchId.
+function BeamSearcher:_retrieveHistory(beams, batchId, t)
+  local predictedIds = {}
+  local parentBeams = {}
+  local scores = {}
+
+  t = t - 1
+
+  while t > 1 do
+    local remainingId = beams[t]:orig2Remaining(batchId)
+
+    table.insert(predictedIds, 1, beams[t]:_indexToken(self.beamSize, remainingId):squeeze())
+    table.insert(scores, 1, beams[t]:_indexScore(self.beamSize, remainingId):squeeze())
+    table.insert(parentBeams, 1, beams[t]:_indexBackPointer(self.beamSize, remainingId):squeeze())
+
+    t = t - 1
+  end
+
+  return { predictedIds = predictedIds, parentBeams = parentBeams, scores = scores }
+end
+
 -- Checks which sequences are finished and moves finished hypothese to a buffer.
 function BeamSearcher:_completeHypotheses(beams, completed)
   local t = #beams
@@ -197,6 +221,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
 
   local finishedBatches = {}
   local finishedHypotheses = {}
+  local finishedHistory = {}
 
   -- Keep track of unfinished batch ids.
   local remainingIds = {}
@@ -231,6 +256,12 @@ function BeamSearcher:_completeHypotheses(beams, completed)
                                                           table.unpack(hypotheses[k].hypothesis)))
       end
       table.insert(finishedHypotheses, hypothesis)
+
+      if self.saveHistory then
+        local history = self:_retrieveHistory(beams, origId, t)
+        table.insert(finishedHistory, history)
+      end
+
       onmt.translate.Beam._removeCompleted(origId)
     end
   end
@@ -241,7 +272,7 @@ function BeamSearcher:_completeHypotheses(beams, completed)
   if #remainingIds < batchSize then
     beams[t]:_removeFinishedBatches(remainingIds, self.beamSize)
   end
-  return finishedBatches, finishedHypotheses
+  return finishedBatches, finishedHypotheses, finishedHistory
 end
 
 return BeamSearcher

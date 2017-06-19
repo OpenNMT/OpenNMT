@@ -28,6 +28,7 @@
 * `-coverage_norm <number>` (default: `0`)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.
 * `-eos_norm <number>` (default: `0`)<br/>End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.
 * `-dump_input_encoding [<boolean>]` (default: `false`)<br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.
+* `-save_beam_to <string>` (default: `''`)<br/>Path to a file where the beam search exploration will be saved in a JSON format. Requires the `dkjson` package.
 
 ## Cuda options
 
