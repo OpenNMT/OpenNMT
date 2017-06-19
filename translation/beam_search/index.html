@@ -490,6 +490,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#visualizing-the-beam-search" title="Visualizing the beam search" class="md-nav__link">
+    Visualizing the beam search
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -839,6 +846,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#visualizing-the-beam-search" title="Visualizing the beam search" class="md-nav__link">
+    Visualizing the beam search
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -890,6 +904,13 @@
 <script type="math/tex; mode=display">ep(X,Y)=\gamma\frac{|X|}{|Y|}</script>
 </p>
 <p>where <script type="math/tex">|X|</script> is the source length, <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\gamma</script> is the coverage normalization coefficient <code>-eos_norm</code>.</p>
+<h2 id="visualizing-the-beam-search">Visualizing the beam search<a class="headerlink" href="#visualizing-the-beam-search" title="Permanent link">&para;</a></h2>
+<p>To visualize the beam search exploration, you can use the option <code>-save_beam_to file.json</code>. It will save a JSON serialization of the beam search history. This representation can then be visualized dynamically using the <code>generate_beam_viz.py</code> script from the <a href="https://github.com/OpenNMT/VisTools"><code>OpenNMT/VisTools</code></a> repository.</p>
+<p><img alt="Beam Search visualization" src="../../img/beam_search.png" /></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This option requires the <code>dkjson</code> package.</p>
+</div>
                 
                   
                 
