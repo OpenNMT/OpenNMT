@@ -349,11 +349,13 @@ function Translator:translateBatch(batch)
         table.remove(attn)
 
         -- Remove unnecessary values from the attention vectors.
-        if batch.size > 1 and batch.sourceLength == attn[1]:size(1) then
+        if batch.size > 1 then
           local size = batch.sourceSize[b]
           local length = batch.sourceLength
           for j = 1, #attn do
-            attn[j] = attn[j]:narrow(1, length - size + 1, size)
+            if length == attn[j]:size(1) then
+              attn[j] = attn[j]:narrow(1, length - size + 1, size)
+            end
           end
         end
       end

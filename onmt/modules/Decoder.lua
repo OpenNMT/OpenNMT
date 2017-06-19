@@ -56,7 +56,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   end
 
   local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
-                      args.dropout, args.residual, args.dropout_input)
+                      args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
   self.inputNet = inputNetwork
@@ -244,6 +244,13 @@ function Decoder:replaceAttentionSoftmax(builder)
   end
 end
 
+function Decoder:getAttention()
+  self:findAttentionModel()
+  if self.softmaxAttn then
+    return self.softmaxAttn.output:clone()
+  end
+end
+
 --[[ Mask padding means that the attention-layer is constrained to
   give zero-weight to padding on the source side.
 
@@ -372,8 +379,8 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
                                       context,
                                       prevOut,
                                       t,
-                                      batch.sourceSize,
-                                      batch.sourceLength)
+                                      batch:variableLengths() and batch.sourceSize or nil,
+                                      batch:variableLengths() and batch.sourceLength or nil)
     func(prevOut, t)
   end
 end
@@ -395,6 +402,8 @@ function Decoder:forward(batch, initialStates, context)
                                          { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
+    -- Initialize noise for variational dropout.
+    onmt.VariationalDropout.initializeNetwork(self.network)
   end
 
   local outputs = {}

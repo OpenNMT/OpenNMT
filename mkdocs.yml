@@ -41,6 +41,7 @@ pages:
       - Logs: training/logs.md
       - "Multi GPU": training/multi_gpu.md
       - Retraining: training/retraining.md
+      - Regularization: training/regularization.md
       - "Decay strategies": training/decay.md
       - "Data sampling": training/sampling.md
   - Translation:
@@ -49,6 +50,7 @@ pages:
       - "Unknown words": translation/unknowns.md
   - Tools:
       - Tokenization: tools/tokenization.md
+      - Scorer: tools/scorer.md
       - Servers: tools/servers.md
   - "Reference: Options":
       - "Scripts usage": options/usage.md

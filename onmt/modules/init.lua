@@ -5,6 +5,7 @@ require('onmt.modules.Encoder')
 require('onmt.modules.BiEncoder')
 require('onmt.modules.PDBiEncoder')
 require('onmt.modules.DBiEncoder')
+require('onmt.modules.GoogleEncoder')
 require('onmt.modules.Decoder')
 
 require('onmt.modules.Network')
@@ -13,6 +14,7 @@ require('onmt.modules.Bridge')
 
 require('onmt.modules.GRU')
 require('onmt.modules.LSTM')
+require('onmt.modules.VariationalDropout')
 
 require('onmt.modules.MaskedSoftmax')
 require('onmt.modules.WordEmbedding')

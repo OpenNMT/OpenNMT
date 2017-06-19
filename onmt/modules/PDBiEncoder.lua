@@ -112,7 +112,9 @@ function PDBiEncoder:resetPreallocation()
   self.gradContextProto = torch.Tensor()
 end
 
-function PDBiEncoder:forward(batch)
+function PDBiEncoder:forward(batch, initial_states)
+  assert(not initial_states, "Cannot apply bidirectional Encoder incrementally")
+
   -- Make source length divisible by the total reduction.
   batch:resizeSource(math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier)
 

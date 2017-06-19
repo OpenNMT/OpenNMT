@@ -24,6 +24,12 @@ The deep bidirectional encoder (`-encoder_type dbrnn`) is an alternative bidirec
 
 ![Deep bidirectional encoder](../img/dbrnn.png)
 
+### Google's NMT encoder
+
+The Google encoder (`-encoder_type gnmt`) is an encoder with a single bidirectional layer as described in [Wu et al. (2016)](../references.md#GNMT). The bidirectional states are concatenated and residual connections are enabled by default.
+
+![Google's NMT encoder](../img/gnmt-encoder.png)
+
 ## Decoders
 
 ### Default decoder

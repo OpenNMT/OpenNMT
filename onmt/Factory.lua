@@ -5,7 +5,7 @@ local options = {
     '-encoder_type', 'rnn',
     [[Encoder type.]],
     {
-      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn' },
+      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn', 'gnmt' },
       structural = 0
     }
   },
@@ -48,6 +48,7 @@ function Factory.declareOpts(cmd)
   onmt.BiEncoder.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
+  onmt.GoogleEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
 end
 
@@ -142,6 +143,12 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   return inputNetwork
 end
 
+local function describeRNN(opt)
+  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = '
+                   .. opt.dropout .. ' (%s)',
+                 opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout_type)
+end
+
 function Factory.getOutputSizes(dicts)
   local outputSizes = { dicts.words:size() }
   for i = 1, #dicts.features do
@@ -154,8 +161,7 @@ function Factory.buildEncoder(opt, inputNetwork)
 
   local function describeEncoder(name)
     _G.logger:info('   - type: %s', name)
-    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
-                   opt.rnn_type, opt.layers, opt.rnn_size)
+    describeRNN(opt)
   end
 
   if opt.encoder_type == 'brnn' then
@@ -167,6 +173,9 @@ function Factory.buildEncoder(opt, inputNetwork)
   elseif opt.encoder_type == 'pdbrnn' then
     describeEncoder('pyramidal deep bidirectional RNN')
     return onmt.PDBiEncoder.new(opt, inputNetwork)
+  elseif opt.encoder_type == 'gnmt' then
+    describeEncoder('GNMT')
+    return onmt.GoogleEncoder.new(opt, inputNetwork)
   else
     describeEncoder('unidirectional RNN')
     return onmt.Encoder.new(opt, inputNetwork)
@@ -195,6 +204,8 @@ function Factory.loadEncoder(pretrained)
     encoder = onmt.PDBiEncoder.load(pretrained)
   elseif pretrained.name == 'DBiEncoder' then
     encoder = onmt.DBiEncoder.load(pretrained)
+  elseif pretrained.name == 'GoogleEncoder' then
+    encoder = onmt.GoogleEncoder.load(pretrained)
   else
     -- Keep for backward compatibility.
     local brnn = #pretrained.modules == 2
@@ -209,8 +220,7 @@ function Factory.loadEncoder(pretrained)
 end
 
 function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
-  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
-                 opt.rnn_type, opt.layers, opt.rnn_size)
+  describeRNN(opt)
 
   return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end

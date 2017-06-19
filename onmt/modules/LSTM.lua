@@ -33,19 +33,20 @@ Parameters:
   * `dropout` - Dropout rate to use (in $$[0,1]$$ range).
   * `residual` - Residual connections between layers.
   * `dropout_input` - if true, add a dropout layer on the first layer (useful for instance in complex encoders)
+  * `dropout_type` - naive dropout applies independently of each connection, variational applies uniformally on all timesteps
 --]]
-function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
+function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
   dropout = dropout or 0
 
   self.dropout = dropout
   self.numEffectiveLayers = 2 * layers
   self.outputSize = hiddenSize
 
-  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input))
+  parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type))
 end
 
 --[[ Stack the LSTM units. ]]
-function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
+function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
   local inputs = {}
   local outputs = {}
 
@@ -76,12 +77,21 @@ function LSTM:_buildModel(layers, inputSize, hiddenSize, dropout, residual, drop
         input = nn.CAddTable()({input, prevInput})
       end
     end
-    if dropout > 0 and (dropout_input or L > 1) then
-      input = nn.Dropout(dropout)(input)
-    end
 
     local prevC = inputs[L*2 - 1]
     local prevH = inputs[L*2]
+
+    -- Apply variational dropout on recurrent connection.
+    if dropout_type == "variational" then
+      prevH = onmt.VariationalDropout(dropout)(prevH)
+    end
+    if dropout_input or L > 1 then
+      if dropout_type == "variational" then
+        input = onmt.VariationalDropout(dropout)(input)
+      else
+        input = nn.Dropout(dropout)(input)
+      end
+    end
 
     nextC, nextH = self:_buildLayer(inputDim, hiddenSize)({prevC, prevH, input}):split(2)
     prevInput = input

@@ -19,11 +19,17 @@ function BatchTensor:variableLengths()
 end
 
 function BatchTensor:reverseSourceInPlace()
-  for b = 1, self.size do
-    local reversedIndices = torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long()
-    local window = {b, {self.sourceLength - self.sourceSize[b] + 1, self.sourceLength}}
-    self.sourceInput[window]:copy(self.sourceInput[window]:index(1, reversedIndices))
+  if not self.sourceInputRev then
+    self.sourceInputRev = self.sourceInput:clone()
+
+    for b = 1, self.size do
+      local reversedIndices = torch.linspace(self.sourceSize[b], 1, self.sourceSize[b]):long()
+      local window = {b, {self.sourceLength - self.sourceSize[b] + 1, self.sourceLength}}
+      self.sourceInputRev[window]:copy(self.sourceInput[window]:index(1, reversedIndices))
+    end
   end
+
+  self.sourceInput, self.sourceInputRev = self.sourceInputRev, self.sourceInput
 end
 
 return BatchTensor

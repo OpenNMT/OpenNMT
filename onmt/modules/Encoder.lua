@@ -50,9 +50,25 @@ local options = {
   },
   {
     '-dropout_input', false,
-    [[Also apply dropout to the input of the recurrent module.]],
+    [[Dropout probability applied to the input of the recurrent module.]],
     {
       structural = 0
+    }
+  },
+  {
+    '-dropout_words', 0,
+    [[Dropout probability applied to the source sequence.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0, 1),
+      structural = 1
+    }
+  },
+  {
+    '-dropout_type', 'naive',
+    [[Dropout type.]],
+    {
+      structural = 0,
+      enum = { 'naive', 'variational'}
     }
   },
   {
@@ -81,7 +97,7 @@ function Encoder:__init(args, inputNetwork)
     RNN = onmt.GRU
   end
 
-  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input)
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
   self.inputNet = inputNetwork
@@ -172,27 +188,33 @@ Returns:
   1. - final hidden states
   2. - context matrix H
 --]]
-function Encoder:forward(batch)
+function Encoder:forward(batch, initial_states)
 
   -- TODO: Change `batch` to `input`.
 
   local outputSize = self.args.rnnSize
 
-  if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
-                                                         self.stateProto,
-                                                         { batch.size, outputSize })
+  local states = initial_states
+  -- if states is not passed, start with empty state
+  if not states then
+    if self.statesProto == nil then
+      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+                                                           self.stateProto,
+                                                           { batch.size, outputSize })
+    end
+
+    -- Make initial states h_0.
+    states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, outputSize })
   end
 
-  -- Make initial states h_0.
-  local states = onmt.utils.Tensor.reuseTensorTable(self.statesProto, { batch.size, outputSize })
-
-  -- Preallocated output matrix.
+    -- Preallocated output matrix.
   local context = onmt.utils.Tensor.reuseTensor(self.contextProto,
                                                 { batch.size, batch.sourceLength, outputSize })
 
   if self.train then
     self.inputs = {}
+    -- Initialize noise for variational dropout.
+    onmt.VariationalDropout.initializeNetwork(self.network)
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward

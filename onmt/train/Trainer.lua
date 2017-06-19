@@ -77,6 +77,7 @@ function Trainer:__init(args, model, dicts, firstBatch)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.profiler = args.profiler
   self.args.disable_mem_optimization = args.disable_mem_optimization
+  self.args.dropout_words = args.dropout_words
 
   self.optim = onmt.train.Optim.new(args)
   self.saver = onmt.train.Saver.new(args, model, self.optim, dicts)
@@ -179,7 +180,11 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
 
       for j = 1, math.min(onmt.utils.Parallel.count, data:batchCount() - i + 1) do
         local batchIdx = getBatchIdx(i + j - 1)
-        table.insert(batches, data:getBatch(batchIdx))
+        local batch = data:getBatch(batchIdx)
+        if self.args.dropout_words and self.args.dropout_words > 0 then
+          batch:dropoutWords(self.args.dropout_words)
+        end
+        table.insert(batches, batch)
         totalSize = totalSize + batches[#batches].size
       end
 
@@ -280,6 +285,9 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
           local batchIdx = getBatchIdx(i)
 
           _G.batch = data:getBatch(batchIdx)
+          if self.args.dropout_words and self.args.dropout_words > 0 then
+            _G.batch:dropoutWords(self.args.dropout_words)
+          end
           table.insert(batches, onmt.utils.Tensor.deepClone(_G.batch))
           onmt.utils.Cuda.convert(_G.batch)
 
