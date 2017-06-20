@@ -5,7 +5,7 @@ local options = {
     '-model', '',
     [[Path to the serialized model file.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
     }
   },
   {
@@ -108,24 +108,28 @@ function Translator.declareOpts(cmd)
 end
 
 
-function Translator:__init(args)
+function Translator:__init(args, model, dicts)
   self.args = args
 
-  _G.logger:info('Loading \'' .. self.args.model .. '\'...')
-  self.checkpoint = torch.load(self.args.model)
+  if model then
+    self.model = model
+    self.dicts = dicts
+  else
+    _G.logger:info('Loading \'' .. self.args.model .. '\'...')
+    self.checkpoint = torch.load(self.args.model)
 
-  self.dataType = self.checkpoint.options.data_type or 'bitext'
-  self.modelType = self.checkpoint.options.model_type or 'seq2seq'
-  _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
+    self.dataType = self.checkpoint.options.data_type or 'bitext'
+    self.modelType = self.checkpoint.options.model_type or 'seq2seq'
+    _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
 
-  assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
+    assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
-  self.model = onmt.Seq2Seq.load(args, self.checkpoint.models, self.checkpoint.dicts)
+    self.model = onmt.Seq2Seq.load(args, self.checkpoint.models, self.checkpoint.dicts)
+    self.dicts = self.checkpoint.dicts
+  end
+
   self.model:evaluate()
-
   onmt.utils.Cuda.convert(self.model.models)
-
-  self.dicts = self.checkpoint.dicts
 
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)

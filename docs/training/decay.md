@@ -12,7 +12,7 @@ If an epoch is a too large unit for your particular use case, consider using [da
 
 By default, the decay is applied when one of the following conditions is met:
 
-1. The validation perplexity is not improving more than `-start_decay_ppl_delta`.
+1. The validation score is not improving more than `-start_decay_score_delta`.
 2. The current epoch is past `-start_decay_at`.
 
 Once one of the conditions is met, the learning rate is decayed after **each** remaining epoch.
@@ -23,8 +23,8 @@ With the `-decay epoch_only` option, the learning rate is only decayed when the 
 
 1. The current epoch is past `-start_decay_at`.
 
-## Perplexity-based
+## Score-based
 
-With the `-decay perplexity_only` option, the learning rate is only decayed when the condition is met on the validation perplexity:
+With the `-decay score_only` option, the learning rate is only decayed when the condition is met on the validation score:
 
-1. The validation perplexity is not improving more than `-start_decay_ppl_delta`.
+1. The validation score is not improving more than `-start_decay_score_delta`.

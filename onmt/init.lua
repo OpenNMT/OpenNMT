@@ -8,6 +8,7 @@ require('onmt.modules.init')
 onmt.scorers = require('onmt.scorers.init')
 
 onmt.data = require('onmt.data.init')
+onmt.evaluators = require('onmt.evaluators.init')
 onmt.train = require('onmt.train.init')
 onmt.translate = require('onmt.translate.init')
 onmt.tagger = require('onmt.tagger.init')

@@ -349,4 +349,14 @@ function Batch:dropoutWords(p)
   end
 end
 
+--[[ Remove target related attributes, e.g. for translation only. ]]
+function Batch:removeTarget()
+  self.targetLength = nil
+  self.targetSize = nil
+  self.targetInput = nil
+  self.targetOutput = nil
+  self.targetInputFeatures = nil
+  self.targetOutputFeatures = nil
+end
+
 return Batch
