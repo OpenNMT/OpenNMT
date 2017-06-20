@@ -16,13 +16,6 @@ local options = {
     }
   },
   {
-    '-batch_size', 30,
-    [[Batch size.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
-    }
-  },
-  {
     '-max_sent_length', 250,
     [[Maximum output sentence length.]],
     {
