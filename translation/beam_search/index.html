@@ -905,12 +905,21 @@
 </p>
 <p>where <script type="math/tex">|X|</script> is the source length, <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\gamma</script> is the coverage normalization coefficient <code>-eos_norm</code>.</p>
 <h2 id="visualizing-the-beam-search">Visualizing the beam search<a class="headerlink" href="#visualizing-the-beam-search" title="Permanent link">&para;</a></h2>
-<p>To visualize the beam search exploration, you can use the option <code>-save_beam_to file.json</code>. It will save a JSON serialization of the beam search history. This representation can then be visualized dynamically using the <code>generate_beam_viz.py</code> script from the <a href="https://github.com/OpenNMT/VisTools"><code>OpenNMT/VisTools</code></a> repository.</p>
-<p><img alt="Beam Search visualization" src="../../img/beam_search.png" /></p>
+<p>To visualize the beam search exploration, you can use the option <code>-save_beam_to beam.json</code>. It will save a JSON serialization of the beam search history.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This option requires the <code>dkjson</code> package.</p>
 </div>
+<p>This representation can then be visualized dynamically using the <code>generate_beam_viz.py</code> script from the <a href="https://github.com/OpenNMT/VisTools"><code>OpenNMT/VisTools</code></a> repository:</p>
+<div class="codehilite"><pre><span></span>git clone https://github.com/OpenNMT/VisTools.git
+<span class="nb">cd</span> VisTools
+mkdir out/
+python generate_beam_viz.py -d ~/OpenNMT/beam.json -o out/
+firefox out/000000.html
+</pre></div>
+
+
+<p><img alt="Beam search visualization" src="../../img/beam_search.png" /></p>
                 
                   
                 
