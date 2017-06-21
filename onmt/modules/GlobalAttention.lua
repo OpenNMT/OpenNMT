@@ -103,7 +103,7 @@ function GlobalAttention:_buildModel(dim, global_attention)
   local attn
   local contextCombined
 
-  if self.args.multi_head_attention > 1 then
+  if self.args.multi_head_attention and self.args.multi_head_attention > 1 then
     -- linear layer on context and ht
     local sdim = dim / self.args.multi_head_attention
 
