@@ -8,7 +8,7 @@ Neural Machine Translation (NMT) is the default and original task for OpenNMT. I
 
 Step by step process is described on the [quickstart page](/quickstart/) and full process to train large system is described on the forum [here](http://forum.opennmt.net/t/training-english-german-wmt15-nmt-engine/29).
 
-![Neural Machine Translation](../img/nmt.png)
+![Neural Machine Translation](img/nmt.png)
 
 ## Summarization
 
@@ -22,13 +22,13 @@ Im2Text, written by Yuntian Deng from HarvardNLP group, is implementing a generi
 
 While OpenNMT is not primarily targetting speech recognition applications, its ability to support [input vectors](/data/preparation/#input-vectors) and [pyramidal RNN](/training/models/#pyramidal-deep-bidirectional-encoder) make possible end-to-end experiments on speech to text applications as described for instance in [Listen, Attend and Spell](https://arxiv.org/abs/1508.01211). See for instance [monophone speech recognition with OpenNMT](http://forum.opennmt.net/t/monophone-speech-recognition-with-opennmt/542) on the forum.
 
-![Listen, Attend and Spell](../img/las.png)
+![Listen, Attend and Spell](img/las.png)
 
 ## Sequence Tagging
 
 A Sequence Tagger is available in OpenNMT. Sharing the same encoder code, it does not need a decoder, since each input is synced with an output - a sequence tagger just needs an encoder and a generation layer. Sequence Tagging can be used for any annotation task such as part of speech tagging.
 
-![Sequence Tagger](../img/seqtagger.png)
+![Sequence Tagger](img/seqtagger.png)
 
 To train a sequence tagger:
 
@@ -40,7 +40,7 @@ To train a sequence tagger:
 
 A language model is very similar to a sequence tagger - the main difference is that the output "tag" for each token is the following word in source sentence.
 
-![Language Model](../img/lm.png)
+![Language Model](img/lm.png)
 
 * prepare data with `-data_type monotext` in preprocessor
 * train the model with `-model_type lm`
