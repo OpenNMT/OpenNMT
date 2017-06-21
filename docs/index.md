@@ -2,19 +2,19 @@
 
 OpenNMT project is composed of 3 main repositories:
 
-* [OpenNMT lua](https://github.com/OpenNMT/OpenNMT) (_aka_ OpenNMT): the main project written using [torch](http://torch.ch) in lua. Optimized and stable code for production and large scale experiments.
-* [OpenNMT-py](https://github.com/OpenNMT/OpenNMT-py): light version of OpenNMT in [pythorch](http://pytorch.org), initially created by FAIR team as a sample project for pytorch. This version, more easy to modify is suited for research purpose does not include all features.
-* [OpenNMT-C](https://github.com/OpenNMT/CTranslate) (_aka_ CTranslate): C++ optimized decoder for the models created with OpenNMT.
+* [OpenNMT-Lua](https://github.com/OpenNMT/OpenNMT) (a.k.a. OpenNMT): the main project developed with [LuaTorch](http://torch.ch).<br/>Optimized and stable code for production and large scale experiments.
+* [OpenNMT-py](https://github.com/OpenNMT/OpenNMT-py): light version of OpenNMT using [PyTorch](http://pytorch.org).<br/>Initially created by the Facebook AI research team as a sample project for PyTorch, this version is easier to extend and is suited for research purpose but does not include all features.
+* [OpenNMT-C](https://github.com/OpenNMT/CTranslate) (a.k.a. CTranslate): C++ inference engine for OpenNMT models.
 
-OpenNMT is a generic deep learning framework mainly specialized in sequence-to-sequence models covering a variety of tasks like [machine translation](/applications/#machine-translation) (NMT), [summarization](/applications/#summarization), but can also be used for non-textual input, for instance [im2text](/applications/#im2text) is recognizing latex formulas in images, or [speech recognition](/applications/#speech-recognition). The framework has also been extended for other non sequence-to-sequence tasks like [language modelling](/applications/#language-modelling), and [sequence taggers](/applications/#sequence-tagging).
+OpenNMT is a generic deep learning framework mainly specialized in sequence-to-sequence models covering a variety of tasks such as [machine translation](/applications/#machine-translation), [summarization](/applications/#summarization), [image to text](/applications/#image-to-text), and [speech recognition](/applications/#speech-recognition). The framework has also been extended for other non sequence-to-sequence tasks like [language modelling](/applications/#language-modelling) and [sequence tagging](/applications/#sequence-tagging).
 
-All these applications are reusing and sometime extending a collection of generic easy-to-reused modules, [encoders](/training/models/#encoders), [decoders](/training/models/#decoders), [embeddings](/training/embeddings/), [attention models](/training/models/#attention-model) and more...
+All these applications are reusing and sometimes extending a collection of easy-to-reuse modules: [encoders](/training/models/#encoders), [decoders](/training/models/#decoders), [embeddings layers](/training/embeddings/), [attention layers](/training/models/#attention-model), and more.
 
-The framework is implemented to be as generic as possible and can be used either through commandline applications, client-server, or librairies.
+The framework is implemented to be as generic as possible and can be used either via command line applications, client-server, or libraries.
 
-The project is self-contained and ready to use either for research and for production.
+The project is self-contained and ready to use for both research and production.
 
-OpenNMT project is an open-source initiative derivated from [seq2seq-attn](https://github.com/SYSTRAN/seq2seq-attn), initially created by Kim Yoon at HarvardNLP group.
+*OpenNMT project is an open-source initiative derivated from [seq2seq-attn](https://github.com/SYSTRAN/seq2seq-attn), initially created by Kim Yoon at HarvardNLP group.*
 
 ## Additional resources
 
