@@ -877,7 +877,7 @@
 </ul>
 <h2 id="translator-options">Translator options<a class="headerlink" href="#translator-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-model &lt;string&gt;</code> (required)<br/>Path to the serialized model file.</li>
+<li><code>-model &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the serialized model file.</li>
 <li><code>-beam_size &lt;number&gt;</code> (default: <code>5</code>)<br/>Beam size.</li>
 <li><code>-max_sent_length &lt;number&gt;</code> (default: <code>250</code>)<br/>Maximum output sentence length.</li>
 <li><code>-replace_unk [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If <code>-phrase_table</code> is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token</li>

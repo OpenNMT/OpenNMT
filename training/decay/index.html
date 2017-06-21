@@ -416,8 +416,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#perplexity-based" title="Perplexity-based" class="md-nav__link">
-    Perplexity-based
+  <a href="#score-based" title="Score-based" class="md-nav__link">
+    Score-based
   </a>
   
 </li>
@@ -805,8 +805,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#perplexity-based" title="Perplexity-based" class="md-nav__link">
-    Perplexity-based
+  <a href="#score-based" title="Score-based" class="md-nav__link">
+    Score-based
   </a>
   
 </li>
@@ -842,7 +842,7 @@
 <h2 id="default">Default<a class="headerlink" href="#default" title="Permanent link">&para;</a></h2>
 <p>By default, the decay is applied when one of the following conditions is met:</p>
 <ol>
-<li>The validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
+<li>The validation score is not improving more than <code>-start_decay_score_delta</code>.</li>
 <li>The current epoch is past <code>-start_decay_at</code>.</li>
 </ol>
 <p>Once one of the conditions is met, the learning rate is decayed after <strong>each</strong> remaining epoch.</p>
@@ -851,10 +851,10 @@
 <ol>
 <li>The current epoch is past <code>-start_decay_at</code>.</li>
 </ol>
-<h2 id="perplexity-based">Perplexity-based<a class="headerlink" href="#perplexity-based" title="Permanent link">&para;</a></h2>
-<p>With the <code>-decay perplexity_only</code> option, the learning rate is only decayed when the condition is met on the validation perplexity:</p>
+<h2 id="score-based">Score-based<a class="headerlink" href="#score-based" title="Permanent link">&para;</a></h2>
+<p>With the <code>-decay score_only</code> option, the learning rate is only decayed when the condition is met on the validation score:</p>
 <ol>
-<li>The validation perplexity is not improving more than <code>-start_decay_ppl_delta</code>.</li>
+<li>The validation score is not improving more than <code>-start_decay_score_delta</code>.</li>
 </ol>
                 
                   
