@@ -5,7 +5,7 @@ local options = {
     '-encoder_type', 'rnn',
     [[Encoder type.]],
     {
-      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn', 'gnmt' },
+      enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn', 'gnmt', 'cnn' },
       structural = 0
     }
   },
@@ -49,6 +49,7 @@ function Factory.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
   onmt.GoogleEncoder.declareOpts(cmd)
+  onmt.CNNEncoder.declareOpts(cmd)
   onmt.GlobalAttention.declareOpts(cmd)
 end
 
@@ -155,8 +156,13 @@ function Factory.buildEncoder(opt, inputNetwork)
 
   local function describeEncoder(name)
     _G.logger:info('   - type: %s', name)
-    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
+    if name == 'CNN' then
+      _G.logger:info('   - structure: cnn_kernel = %d; cnn_layers = %d; cnn_size = %d;',
+                   opt.cnn_kernel, opt.cnn_layers, opt.cnn_size)
+    else
+      _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
                    opt.rnn_type, opt.layers, opt.rnn_size)
+    end
   end
 
   if opt.encoder_type == 'brnn' then
@@ -171,6 +177,9 @@ function Factory.buildEncoder(opt, inputNetwork)
   elseif opt.encoder_type == 'gnmt' then
     describeEncoder('GNMT')
     return onmt.GoogleEncoder.new(opt, inputNetwork)
+  elseif opt.encoder_type == 'cnn' then
+    describeEncoder('CNN')
+    return onmt.CNNEncoder.new(opt, inputNetwork)
   else
     describeEncoder('unidirectional RNN')
     return onmt.Encoder.new(opt, inputNetwork)
@@ -201,6 +210,8 @@ function Factory.loadEncoder(pretrained)
     encoder = onmt.DBiEncoder.load(pretrained)
   elseif pretrained.name == 'GoogleEncoder' then
     encoder = onmt.GoogleEncoder.load(pretrained)
+  elseif pretrained.name == 'CNNEncoder' then
+    encoder = onmt.CNNEncoder.load(pretrained)
   else
     -- Keep for backward compatibility.
     local brnn = #pretrained.modules == 2

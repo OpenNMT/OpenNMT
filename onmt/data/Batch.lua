@@ -182,7 +182,7 @@ local function addInputFeatures(inputs, featuresSeq, t)
     if t > featuresSeq[j]:size(1) then
       feat = onmt.Constants.PAD
     else
-      feat = featuresSeq[j][t]
+      feat = (t and featuresSeq[j][t]) or featuresSeq[j]:t()
     end
     table.insert(features, feat)
   end
@@ -193,10 +193,10 @@ local function addInputFeatures(inputs, featuresSeq, t)
   end
 end
 
---[[ Get source input batch at timestep `t`. --]]
+--[[ Get source input batch at timestep `t`. If `t` is nil, returns the whole sequence. --]]
 function Batch:getSourceInput(t)
   -- If a regular input, return word id, otherwise a table with features.
-  local inputs = self.sourceInput[t]
+  local inputs = (t and self.sourceInput[t]) or self.sourceInput:t()
 
   if #self.sourceInputFeatures > 0 then
     inputs = { inputs }
