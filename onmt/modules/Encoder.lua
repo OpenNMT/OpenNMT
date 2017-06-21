@@ -105,6 +105,7 @@ function Encoder:__init(args, inputNetwork)
   self.args = {}
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.dropout_type = args.dropout_type
 
   parent.__init(self, self:_buildModel())
 
@@ -213,8 +214,11 @@ function Encoder:forward(batch, initial_states)
 
   if self.train then
     self.inputs = {}
-    -- Initialize noise for variational dropout.
-    onmt.VariationalDropout.initializeNetwork(self.network)
+
+    if self.args.dropout_type == 'variational' then
+      -- Initialize noise for variational dropout.
+      onmt.VariationalDropout.initializeNetwork(self.network)
+    end
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward

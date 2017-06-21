@@ -64,6 +64,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args = args
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.dropout_type = args.dropout_type
 
   self.args.inputIndex = {}
   self.args.outputIndex = {}
@@ -415,8 +416,11 @@ function Decoder:forward(batch, initialStates, context)
                                          { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
-    -- Initialize noise for variational dropout.
-    onmt.VariationalDropout.initializeNetwork(self.network)
+
+    if self.args.dropout_type == 'variational' then
+      -- Initialize noise for variational dropout.
+      onmt.VariationalDropout.initializeNetwork(self.network)
+    end
   end
 
   local outputs = {}
