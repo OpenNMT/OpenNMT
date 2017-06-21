@@ -16,7 +16,7 @@ Constructs a unit mapping:
   $$(H_1 .. H_n, q) => (a)$$
   Where H is of `batch x n x dim` and q is of `batch x dim`.
 
-  The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H), q] + b_2)$$.
+  The full function is  $$\tanh(W_2 [(softmax((W_1 q + b_1) H) H); q] + b_2)$$.
 
   * dot: $$score(h_t,{\overline{h}}_s) = h_t^T{\overline{h}}_s$$
   * general: $$score(h_t,{\overline{h}}_s) = h_t^T W_a {\overline{h}}_s$$
@@ -30,7 +30,7 @@ local options = {
     '-global_attention', 'general',
     [[Global attention model type.]],
     {
-      enum = {'general', 'dot', 'concat'},
+      enum = {'general', 'dot', 'dot_scaled', 'concat'},
       structural = 0
     }
   }
@@ -56,8 +56,8 @@ function GlobalAttention:_buildModel(dim, global_attention)
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
 
-  local ht = inputs[1]
-  local context = inputs[2] -- batchL x sourceTimesteps x dim
+  local ht = inputs[1] -- batchL x dim
+  local context = inputs[2] -- batchL x sourceL x dim
 
   -- Get attention.
   local score_ht_hs
@@ -66,6 +66,9 @@ function GlobalAttention:_buildModel(dim, global_attention)
       ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
     end
     score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
+    if global_attention == 'scaled_dot' then
+      score_ht_hs = nn.MulConstant(1/math.sqrt(dim))(score_ht_hs)
+    end
   else
     local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
     local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, context})
