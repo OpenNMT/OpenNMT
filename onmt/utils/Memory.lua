@@ -33,8 +33,7 @@ function Memory.optimize(model, batch)
   local memoryOptimizer = onmt.utils.MemoryOptimizer.new(model.models)
 
   batch = onmt.utils.Tensor.deepClone(batch)
-  batch.sourceLength = 1
-  batch.sourceSize:fill(1)
+  batch:resizeSource(1)
   batch.targetLength = 1
 
   model:trainNetwork(batch, true)

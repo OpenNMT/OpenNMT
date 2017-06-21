@@ -3,6 +3,8 @@
 ### Breaking changes
 
 * Models previously trained with `-pdbrnn` or `-dbrnn` are no more compatible
+* `-start_decay_ppl_delta` option is renamed to `-start_decay_score_delta`
+* `-decay perplexity_only` option is renamed to `-decay score_only`
 
 ### Deprecations
 
@@ -12,12 +14,16 @@
 ### New features
 
 * Implement inference for language models
+* Support variational dropout and dropout on source sequence
+* Support several validation metrics: loss, perplexity and BLEU
 * Add option in preprocessing to check that lengths of source and target are equal (e.g. for sequence tagging)
 * Add `-pdbrnn_merge` option to define how to reduce the time dimension
 * Add option to segment mixed cased words
 * Add option to segment words of given alphabets or when switching alphabets
 * Add Google's NMT encoder
 * New application `lm.lua` to apply language model for scoring or sampling
+* Add scorer tool (BLEU supported)
+* Add option to save the beam search as JSON
 
 ### Fixes and improvements
 
@@ -34,6 +40,10 @@
 
 ## [v0.7.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.7.0) (2017-05-19)
 
+### Breaking changes
+
+* `-sample_w_ppl` option is renamed `-sample_type` for future extensions
+
 ### New features
 
 * Support vectors as inputs using [Kaldi](http://kaldi-asr.org/) input format
@@ -46,7 +56,7 @@
 * Add `epoch_only` decay strategy to only decay learning based on epochs
 * Make epoch models save frequency configurable
 * Optimize decoding and training with target vocabulary reduction (importance sampling)
-* [*Breaking, renamed option*] Introduce `partition` data sampling
+* Introduce `partition` data sampling
 
 ### Fixes and improvements
 
@@ -65,6 +75,10 @@
 
 ## [v0.6.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.6.0) (2017-04-07)
 
+### Breaking changes
+
+* `-fix_word_vecs` options now requires `0` and `1` as argument for a better retraining experience
+
 ### New features
 
 * Add new encoders: deep bidirectional and pyramidal deep bidirectional
@@ -78,7 +92,6 @@
 
 ### Fixes and improvements
 
-* [*Breaking, changed option*] `-fix_word_vecs` options now accept `0` and `1` for a better retraining experience
 * Check consistency of option settings when training from checkpoints
 * Save and restore random number generator states from checkpoints
 * Output more dataset metrics during the preprocessing
@@ -140,6 +153,10 @@
 
 ## [v0.4.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.4.0) (2017-02-10)
 
+### Breaking changes
+
+* New translator API for better integration
+
 ### New features
 
 * Profiler option
@@ -150,7 +167,6 @@
 
 ### Fixes and improvements
 
-* [*Breaking, new API*] Improve translator API consistency
 * Improve beam search speed (up to 90% faster)
 * Reduce released model size (up to 2x smaller)
 * Fix tokenization of text containing the joiner marker character
@@ -166,6 +182,12 @@
 
 ## [v0.3.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.3.0) (2017-01-23)
 
+### Breaking changes
+
+* Rename `-epochs` option to `-end_epoch` to clarify its behavior
+* Remove `-nparallel` option and support a list of comma-separated identifiers on `-gpuid`
+* Rename `-sep_annotate` option to `-joiner_annotate`
+
 ### New features
 
 * ZeroMQ translation server
@@ -176,9 +198,7 @@
 
 ### Fixes and improvements
 
-* [*Breaking, renamed option*] Rename `-epochs` option to `-end_epoch` to clarify its behavior
-* [*Breaking, removed option*] Remove `-nparallel` option and support a list of comma-separated identifiers on `-gpuid`
-* [*Breaking, renamed option*] Zero-Width Joiner unicode character (ZWJ) is now tokenizing - but as a joiner
+* Zero-Width Joiner unicode character (ZWJ) is now tokenizing but as a joiner
 * Fix Hangul tokenization
 * Fix duplicated tokens in aggressive tokenization
 * Fix error when using BRNN and multiple source features
@@ -188,9 +208,12 @@
 
 ## [v0.2.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.2.0) (2017-01-02)
 
+### Breaking changes
+
+* `-seq_length` option is split into `-src_seq_length` and `-tgt_seq_length`
+
 ### New features
 
-* [*Breaking, renamed option*] Control maximum source and target length independently
 * Asynchronous SGD
 * Detokenization
 * BPE support in tokenization

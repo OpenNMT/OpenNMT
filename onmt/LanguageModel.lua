@@ -81,6 +81,11 @@ function LanguageModel.load(args, models, dicts)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
   self.srcVocSize = dicts.src.words:size(1)
 
+  self.eosProto = {}
+  for _ = 1, #dicts.src.features + 1 do
+    table.insert(self.eosProto, torch.LongTensor())
+  end
+
   return self
 end
 

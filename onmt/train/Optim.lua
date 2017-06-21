@@ -59,8 +59,8 @@ local options = {
     }
   },
   {
-    '-start_decay_ppl_delta', 0,
-    [[Start decay when validation perplexity improvement is lower than this value.]],
+    '-start_decay_score_delta', 0,
+    [[Start decay when validation score improvement is lower than this value.]],
     {
       train_state = true
     }
@@ -69,12 +69,12 @@ local options = {
     '-decay', 'default',
     [[When to apply learning rate decay.
       `default`: decay after each epoch past `-start_decay_at` or as soon as the
-      validation perplexity is not improving more than `-start_decay_ppl_delta`,
+      validation score is not improving more than `-start_decay_score_delta`,
       `epoch_only`: only decay after each epoch past `-start_decay_at`,
-      `perplexity_only`: only decay when validation perplexity is not improving more than
+      `score_only`: only decay when validation score is not improving more than
       `-start_decay_ppl_delta`.]],
     {
-      enum = {'default', 'epoch_only', 'perplexity_only'},
+      enum = {'default', 'epoch_only', 'score_only'},
       train_state = true
     }
   }
@@ -149,32 +149,42 @@ function Optim:updateParams(params, gradParams)
   end
 end
 
--- decay learning rate if val perf does not improve or we hit the startDecayAt limit
-function Optim:updateLearningRate(score, epoch)
+--[[ Update the learning rate if conditions are met (see the documentation).
+
+Parameters:
+
+  * `score` - the last validation score.
+  * `èpoch` - the current epoch number.
+  * `evaluator` - the `Evaluator` used to compute `score`.
+
+Returns: the new learning rate.
+
+]]
+function Optim:updateLearningRate(score, epoch, evaluator)
   local function decayLr()
     self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
   end
+
+  evaluator = evaluator or onmt.evaluators.PerplexityEvaluator.new()
 
   if self.args.optim == 'sgd' then
     self.valPerf[#self.valPerf + 1] = score
 
     local epochCondMet = (epoch >= self.args.start_decay_at)
-    local pplCondMet = false
+    local scoreCondMet = false
 
     if self.valPerf[#self.valPerf] ~= nil and self.valPerf[#self.valPerf-1] ~= nil then
-      local currPpl = self.valPerf[#self.valPerf]
-      local prevPpl = self.valPerf[#self.valPerf-1]
-      if prevPpl - currPpl < self.args.start_decay_ppl_delta then
-        pplCondMet = true
-      end
+      local currScore = self.valPerf[#self.valPerf]
+      local prevScore = self.valPerf[#self.valPerf-1]
+      scoreCondMet = not evaluator:compare(currScore, prevScore, self.args.start_decay_score_delta)
     end
 
-    if self.args.decay == 'default' and (epochCondMet or pplCondMet or self.startDecay) then
+    if self.args.decay == 'default' and (epochCondMet or scoreCondMet or self.startDecay) then
       self.startDecay = true
       decayLr()
     elseif self.args.decay == 'epoch_only' and epochCondMet then
       decayLr()
-    elseif self.args.decay == 'perplexity_only' and pplCondMet then
+    elseif self.args.decay == 'score_only' and scoreCondMet then
       decayLr()
     end
   end

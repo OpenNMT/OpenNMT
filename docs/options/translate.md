@@ -12,13 +12,13 @@
 * `-src <string>` (required)<br/>Source sequences to translate.
 * `-tgt <string>` (default: `''`)<br/>Optional true target sequences.
 * `-output <string>` (default: `pred.txt`)<br/>Output file.
+* `-batch_size <number>` (default: `30`)<br/>Batch size.
 * `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
 
 ## Translator options
 
-* `-model <string>` (required)<br/>Path to the serialized model file.
+* `-model <string>` (default: `''`)<br/>Path to the serialized model file.
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
-* `-batch_size <number>` (default: `30`)<br/>Batch size.
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
 * `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token
 * `-phrase_table <string>` (default: `''`)<br/>Path to source-target dictionary to replace `<unk>` tokens.
@@ -30,6 +30,7 @@
 * `-coverage_norm <number>` (default: `0`)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.
 * `-eos_norm <number>` (default: `0`)<br/>End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.
 * `-dump_input_encoding [<boolean>]` (default: `false`)<br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.
+* `-save_beam_to <string>` (default: `''`)<br/>Path to a file where the beam search exploration will be saved in a JSON format. Requires the `dkjson` package.
 
 ## Cuda options
 

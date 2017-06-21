@@ -40,3 +40,22 @@ The score of the end of sentence token is penalized by the following formula:
 $$ep(X,Y)=\gamma\frac{|X|}{|Y|}$$
 
 where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\gamma\) is the coverage normalization coefficient `-eos_norm`.
+
+## Visualizing the beam search
+
+To visualize the beam search exploration, you can use the option `-save_beam_to beam.json`. It will save a JSON serialization of the beam search history.
+
+!!! note "Note"
+    This option requires the `dkjson` package.
+
+This representation can then be visualized dynamically using the `generate_beam_viz.py` script from the [`OpenNMT/VisTools`](https://github.com/OpenNMT/VisTools) repository:
+
+```bash
+git clone https://github.com/OpenNMT/VisTools.git
+cd VisTools
+mkdir out/
+python generate_beam_viz.py -d ~/OpenNMT/beam.json -o out/
+firefox out/000000.html
+```
+
+![Beam search visualization](../img/beam_search.png)
