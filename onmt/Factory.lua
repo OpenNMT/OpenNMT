@@ -155,8 +155,8 @@ function Factory.buildEncoder(opt, inputNetwork)
 
   local function describeEncoder(name)
     _G.logger:info('   - type: %s', name)
-    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
-                   opt.rnn_type, opt.layers, opt.rnn_size)
+    _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = %0.2f',
+                   opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
   end
 
   if opt.encoder_type == 'brnn' then
@@ -215,8 +215,8 @@ function Factory.loadEncoder(pretrained)
 end
 
 function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
-  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = ' .. opt.dropout,
-                 opt.rnn_type, opt.layers, opt.rnn_size)
+  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = %0.2f',
+                 opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout)
 
   return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end
@@ -252,7 +252,7 @@ function Factory.buildAttention(args)
     _G.logger:info('   - attention: none')
     return onmt.NoAttention(args, args.rnn_size)
   else
-    _G.logger:info('   - attention: global (%s)', args.global_attention)
+    _G.logger:info('   - attention: global (%s), dropout = %0.2f', args.global_attention, args.dropout_attention)
     return onmt.GlobalAttention(args, args.rnn_size)
   end
 end

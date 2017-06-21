@@ -39,7 +39,14 @@ local options = {
     [[Number of attention head - should be a divisor of rnn_size]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt,
-      depends = function (args) return args.rnn_size % args.multi_head_attention == 0 end
+      depends = function (args) return args.rnn_size % args.multi_head_attention == 0, 'multi_head_attention should be a divisor of rnn_size' end
+    }
+  },
+  {
+    '-dropout_attention', 0,
+    [[Dropout layer on attention]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0, 1)
     }
   }
 }
@@ -81,8 +88,8 @@ function GlobalAttention:buildAttention(hs, ht, global_attention, dim)
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
-  attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
-  return attn
+
+  return nn.Dropout(self.args.dropout_attention)(attn)
 end
 
 function GlobalAttention:_buildModel(dim, global_attention)
@@ -93,11 +100,41 @@ function GlobalAttention:_buildModel(dim, global_attention)
   local ht = inputs[1] -- batchL x dim
   local context = inputs[2] -- batchL x sourceL x dim
 
-  local attn = self:buildAttention(context, ht, global_attention, dim)
+  local attn
+  local contextCombined
 
-  -- Apply attention to context.
-  local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
-  contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
+  if self.args.multi_head_attention > 1 then
+    -- linear layer on context and ht
+    local sdim = dim / self.args.multi_head_attention
+
+
+    local ht_l = nn.Linear(dim, dim, false)(ht)
+    local context_l = nn.Bottle(nn.Linear(dim, dim, false), 2)(context)
+
+    local contextCombined_l = {}
+
+    -- split and build attentions
+    for i = 1, self.args.multi_head_attention do
+      local sht_l = nn.Narrow(2, (i-1)*sdim + 1, sdim)(ht_l)
+      local scontext_l = nn.Narrow(3, (i-1)*sdim + 1, sdim)(context_l)
+      local sattn = self:buildAttention(scontext_l, sht_l, global_attention, sdim)
+      sattn = nn.Replicate(1,2)(sattn) -- batchL x 1 x sourceL
+      table.insert(contextCombined_l, nn.Sum(2)(nn.MM()({sattn, scontext_l}))) -- batchL x sdim
+    end
+
+    -- concat
+    contextCombined = nn.JoinTable(2)(contextCombined_l) -- batchL x { n x sdim } => batchL x dim
+
+    -- last linear
+    contextCombined = nn.Linear(dim, dim, false)(contextCombined)
+  else
+    attn = self:buildAttention(context, ht, global_attention, dim)
+    attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
+    -- Apply attention to context.
+    contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
+    contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
+  end
+
   contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
   local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
 
