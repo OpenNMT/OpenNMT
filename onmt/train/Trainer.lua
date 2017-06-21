@@ -64,6 +64,13 @@ local options = {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       train_state = true
     }
+  },
+  {
+    '-validation_metric', 'perplexity',
+    [[Metric to use for validation.]],
+    {
+      enum = { 'perplexity', 'loss', 'bleu' }
+    }
   }
 }
 
@@ -71,6 +78,7 @@ function Trainer.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Trainer')
   onmt.train.Optim.declareOpts(cmd)
   onmt.train.Saver.declareOpts(cmd)
+  onmt.translate.Translator.declareOpts(cmd)
 end
 
 function Trainer:__init(args, model, dicts, firstBatch)
@@ -81,6 +89,14 @@ function Trainer:__init(args, model, dicts, firstBatch)
 
   self.optim = onmt.train.Optim.new(args)
   self.saver = onmt.train.Saver.new(args, model, self.optim, dicts)
+
+  if self.args.validation_metric == 'perplexity' then
+    self.evaluator = onmt.evaluators.PerplexityEvaluator.new()
+  elseif self.args.validation_metric == 'loss' then
+    self.evaluator = onmt.evaluators.LossEvaluator.new()
+  elseif self.args.validation_metric == 'bleu' then
+    self.evaluator = onmt.evaluators.BLEUEvaluator.new(args, dicts)
+  end
 
   model:training()
 
@@ -126,20 +142,12 @@ function Trainer:__init(args, model, dicts, firstBatch)
 end
 
 function Trainer:eval(data)
-  local loss = 0
-  local totalWords = 0
-
   self.model:evaluate()
-
-  for i = 1, data:batchCount() do
-    local batch = onmt.utils.Cuda.convert(data:getBatch(i))
-    loss = loss + self.model:forwardComputeLoss(batch)
-    totalWords = totalWords + self.model:getOutputLabelsCount(batch)
-  end
-
+  _G.logger:info('Evaluating on the validation dataset...')
+  local score = self.evaluator:eval(self.model, data)
+  _G.logger:info('Validation %s: %.2f', self.evaluator.__tostring__(), score)
   self.model:training()
-
-  return math.exp(loss / totalWords)
+  return score
 end
 
 function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
@@ -388,15 +396,13 @@ function Trainer:train(trainData, validData, trainStates)
     end
 
     local epochState = self:trainEpoch(trainData, epoch, self.args.start_iteration, batchOrder)
-    local validPpl = self:eval(validData)
+    local validScore = self:eval(validData)
 
-    _G.logger:info('Validation perplexity: %.2f', validPpl)
-
-    self.optim:updateLearningRate(validPpl, epoch)
+    self.optim:updateLearningRate(validScore, epoch, self.evaluator)
 
     unsavedEpochs = unsavedEpochs + 1
     if unsavedEpochs == self.args.save_every_epochs then
-      self.saver:saveEpoch(validPpl, epochState)
+      self.saver:saveEpoch(validScore, epochState)
       unsavedEpochs = 0
     end
 

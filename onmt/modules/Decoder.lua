@@ -197,8 +197,6 @@ function Decoder:findAttentionModel()
     self.network:apply(function (layer)
       if layer.name == 'decoderAttn' then
         self.decoderAttn = layer
-      elseif layer.name == 'softmaxAttn' then
-        self.softmaxAttn = layer
       end
     end)
     self.decoderAttnClones = {}
@@ -229,7 +227,6 @@ function Decoder:replaceAttentionSoftmax(builder)
       local mod = builder()
       mod.name = 'softmaxAttn'
       mod:type(module._type)
-      self.softmaxAttn = mod
       return mod
     else
       return module
@@ -246,8 +243,24 @@ end
 
 function Decoder:getAttention()
   self:findAttentionModel()
-  if self.softmaxAttn then
-    return self.softmaxAttn.output:clone()
+
+  local baseModule
+  local attention
+
+  if #self.networkClones == 0 then
+    baseModule = self.decoderAttn
+  else
+    baseModule = self.decoderAttnClones[1]
+  end
+
+  baseModule:apply(function (layer)
+    if layer.name == 'softmaxAttn' then
+      attention = layer
+    end
+  end)
+
+  if attention then
+    return attention.output:clone()
   end
 end
 
