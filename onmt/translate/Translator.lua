@@ -2,11 +2,8 @@ local Translator = torch.class('Translator')
 
 local options = {
   {
-    '-model', '',
-    [[Path to the serialized model file.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
-    }
+    '-model', { '' },
+    [[List of trained models.]]
   },
   {
     '-beam_size', 5,
@@ -111,21 +108,53 @@ end
 function Translator:__init(args)
   self.args = args
 
-  _G.logger:info('Loading \'' .. self.args.model .. '\'...')
-  self.checkpoint = torch.load(self.args.model)
+  onmt.utils.ThreadPool.init(
+    #self.args.model,
+    function()
+      require('onmt.init')
+    end,
+    function(id)
+      onmt.utils.Cuda.init(args, id)
+    end
+  )
 
-  self.dataType = self.checkpoint.options.data_type or 'bitext'
-  self.modelType = self.checkpoint.options.model_type or 'seq2seq'
-  _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
+  local sourceVocabSize
+  local targetVocabSize
 
-  assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
+  -- Load models into their own thread.
+  onmt.utils.ThreadPool.dispatch(
+    function(i)
+      local ckpt = torch.load(self.args.model[i])
+      _G.model = onmt.Seq2Seq.load(args, ckpt.models, ckpt.dicts)
+      _G.model:evaluate()
+      onmt.utils.Cuda.convert(_G.model.models)
+      return i, ckpt, _G.model, self.args.model[i]
+    end,
+    function(i, ckpt, model, modelFile)
+      -- Check vocabulary.
+      if not sourceVocabSize then
+        sourceVocabSize = ckpt.dicts.src.words:size()
+        targetVocabSize = ckpt.dicts.tgt.words:size()
+      else
+        assert(ckpt.dicts.src.words:size() == sourceVocabSize, 'source vocabulary must be the same')
+        assert(ckpt.dicts.tgt.words:size() == targetVocabSize, 'target vocabulary must be the same')
+      end
 
-  self.model = onmt.Seq2Seq.load(args, self.checkpoint.models, self.checkpoint.dicts)
-  self.model:evaluate()
+      -- Reference the first model.
+      if i == 1 then
+        self.dataType = ckpt.options.data_type or 'bitext'
+        self.modelType = ckpt.options.model_type or 'seq2seq'
+        self.dicts = ckpt.dicts
+        self.model = model
+      end
 
-  onmt.utils.Cuda.convert(self.model.models)
+      assert(ckpt.options.model_type == 'seq2seq', "Translator can only manage seq2seq models")
 
-  self.dicts = self.checkpoint.dicts
+      _G.logger:info('Loaded \'%s\' on %s',
+                     modelFile,
+                     onmt.utils.Cuda.activated and 'GPU ' .. onmt.utils.Cuda.getGpu(i) or 'CPU')
+    end
+  )
 
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
@@ -133,7 +162,13 @@ function Translator:__init(args)
 
   if self.args.target_subdict:len() > 0 then
     self.dicts.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
-    self.model:setTargetVoc(self.dicts.subdict.targetVocTensor)
+
+    onmt.utils.ThreadPool.dispatch(
+      function()
+        _G.model:setTargetVoc(self.dicts.subdict.targetVocTensor)
+      end
+    )
+
     _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.dicts.subdict.targetVocTensor:size(1))
   end
 
@@ -276,26 +311,63 @@ function Translator:buildTargetFeatures(predFeats)
 end
 
 function Translator:translateBatch(batch)
-  local encStates, context = self.model.models.encoder:forward(batch)
+  local allEncStates = {}
+  local allDecStates = {}
+  local allContexts = {}
+
+  -- Dispatch source input encoding.
+  onmt.utils.ThreadPool.dispatch(
+    function(i)
+      local batchClone = onmt.utils.Tensor.deepClone(batch)
+      local model = _G.model
+
+      local encStates, context = model.models.encoder:forward(batchClone)
+      local decStates = model.models.bridge:forward(encStates)
+
+      return i, encStates, decStates, context
+    end,
+    function(i, encStates, decStates, context)
+      allEncStates[i] = encStates
+      allDecStates[i] = decStates
+      allContexts[i] = context
+    end
+  )
+
+  -- Return average input encoding if defined.
   if self.args.dump_input_encoding then
-    return encStates[#encStates]
+    for i = 2, #allEncStates do
+      allEncStates[1][#allEncStates[1]]
+        :mul(i - 1)
+        :add(allEncStates[i][#allEncStates[i]]:clone())
+        :div(i)
+    end
+    return allEncStates[1][#allEncStates[1]]
   end
 
-  local decInitStates = self.model.models.bridge:forward(encStates)
-
-  -- Compute gold score.
+  -- Compute average gold score.
   local goldScore
   if batch.targetInput ~= nil then
-    goldScore = self.model.models.decoder:computeScore(batch, decInitStates, context)
+    local processed = 0
+    onmt.utils.ThreadPool.dispatch(
+      function(i)
+        local batchClone = onmt.utils.Tensor.deepClone(batch)
+        local score = _G.model.models.decoder:computeScore(batchClone, allDecStates[i], allContexts[i])
+        return score
+      end,
+      function(score)
+        goldScore = goldScore and (goldScore * processed + score) / (processed + 1) or score
+        processed = processed + 1
+      end
+    )
   end
 
   -- Specify how to go one step forward.
-  local advancer = onmt.translate.DecoderAdvancer.new(self.model.models.decoder,
+  local advancer = onmt.translate.DecoderAdvancer.new(nil,
                                                       batch,
-                                                      context,
+                                                      allContexts,
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
-                                                      decInitStates,
+                                                      allDecStates,
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,

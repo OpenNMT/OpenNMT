@@ -61,7 +61,7 @@ function Cuda.init(opt, masterGPU)
 
       end
 
-      cutorch.setDevice(Cuda.gpuIds[masterGPU])
+      cutorch.setDevice(Cuda.getGpu(masterGPU))
 
       if opt.seed then
         cutorch.manualSeed(opt.seed)
@@ -154,6 +154,10 @@ end
 ]]
 function Cuda.gpuCount()
   return #Cuda.gpuIds
+end
+
+function Cuda.getGpu(i)
+  return Cuda.gpuIds[(i - 1) % #Cuda.gpuIds + 1]
 end
 
 --[[
