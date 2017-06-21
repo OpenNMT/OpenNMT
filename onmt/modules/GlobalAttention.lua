@@ -33,6 +33,14 @@ local options = {
       enum = {'general', 'dot', 'dot_scaled', 'concat'},
       structural = 0
     }
+  },
+  {
+    '-multi_head_attention', 1,
+    [[Number of attention head - should be a divisor of rnn_size]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt,
+      depends = function (args) return args.rnn_size % args.multi_head_attention == 0 end
+    }
   }
 }
 
@@ -51,27 +59,19 @@ function GlobalAttention:__init(opt, dim)
   parent.__init(self, self:_buildModel(dim, self.args.global_attention))
 end
 
-function GlobalAttention:_buildModel(dim, global_attention)
-  local inputs = {}
-  table.insert(inputs, nn.Identity()())
-  table.insert(inputs, nn.Identity()())
-
-  local ht = inputs[1] -- batchL x dim
-  local context = inputs[2] -- batchL x sourceL x dim
-
-  -- Get attention.
+function GlobalAttention:buildAttention(hs, ht, global_attention, dim)
   local score_ht_hs
   if global_attention ~= 'concat' then
     if global_attention == 'general' then
       ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
     end
-    score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
+    score_ht_hs = nn.MM()({hs, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
     if global_attention == 'scaled_dot' then
       score_ht_hs = nn.MulConstant(1/math.sqrt(dim))(score_ht_hs)
     end
   else
     local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
-    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, context})
+    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, hs})
     local Wa_ht_hs = nn.Bottle(nn.Linear(dim*2, dim, false),2)(ht_hs)
     local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)
     score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
@@ -82,6 +82,18 @@ function GlobalAttention:_buildModel(dim, global_attention)
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
+  return attn
+end
+
+function GlobalAttention:_buildModel(dim, global_attention)
+  local inputs = {}
+  table.insert(inputs, nn.Identity()())
+  table.insert(inputs, nn.Identity()())
+
+  local ht = inputs[1] -- batchL x dim
+  local context = inputs[2] -- batchL x sourceL x dim
+
+  local attn = self:buildAttention(context, ht, global_attention, dim)
 
   -- Apply attention to context.
   local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
