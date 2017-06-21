@@ -446,13 +446,30 @@ end
 -- Index the last step token by given batch id and beam id.
 function Beam:_indexToken(beamSize, batchId, beamId)
   local token = self._tokens[#self._tokens]
-  return selectBatchBeam(token, beamSize, batchId, beamId)
+  if beamId then
+    return selectBatchBeam(token, beamSize, batchId, beamId)
+  else
+    return selectBatch(flatToRc(token, beamSize), { batchId })
+  end
 end
 
 -- Index backpointer by given batch id and beam id.
 function Beam:_indexBackPointer(beamSize, batchId, beamId)
   if self._backPointer then
-    return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
+    if beamId then
+      return selectBatchBeam(self._backPointer, beamSize, batchId, beamId)
+    else
+      return selectBatch(flatToRc(self._backPointer, beamSize), { batchId })
+    end
+  end
+end
+
+-- Index scores by given batch id and beam id.
+function Beam:_indexScore(beamSize, batchId, beamId)
+  if beamId then
+    return selectBatchBeam(self._scores, beamSize, batchId, beamId)
+  else
+    return selectBatch(flatToRc(self._scores, beamSize), { batchId })
   end
 end
 

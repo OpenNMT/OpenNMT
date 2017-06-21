@@ -19,6 +19,13 @@ local options = {
     [[Output file.]]
   },
   {
+    '-batch_size', 30,
+    [[Batch size.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
+  },
+  {
     '-idx_files', false,
     [[If set, source and target files are 'key value' with key match between source and target.]]
   }
@@ -189,6 +196,11 @@ local function main()
       reportScore('GOLD', goldScoreTotal, goldWordsTotal)
     end
   end
+
+  if opt.save_beam_to:len() > 0 then
+    translator:saveBeamHistories(opt.save_beam_to)
+  end
+
   outFile:close()
   _G.logger:shutDown()
 end

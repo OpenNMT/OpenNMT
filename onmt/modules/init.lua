@@ -14,6 +14,7 @@ require('onmt.modules.Bridge')
 
 require('onmt.modules.GRU')
 require('onmt.modules.LSTM')
+require('onmt.modules.VariationalDropout')
 
 require('onmt.modules.MaskedSoftmax')
 require('onmt.modules.WordEmbedding')

@@ -56,7 +56,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   end
 
   local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
-                      args.dropout, args.residual, args.dropout_input)
+                      args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
   self.inputNet = inputNetwork
@@ -64,6 +64,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args = args
   self.args.rnnSize = self.rnn.outputSize
   self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.dropout_type = args.dropout_type
 
   self.args.inputIndex = {}
   self.args.outputIndex = {}
@@ -197,8 +198,6 @@ function Decoder:findAttentionModel()
     self.network:apply(function (layer)
       if layer.name == 'decoderAttn' then
         self.decoderAttn = layer
-      elseif layer.name == 'softmaxAttn' then
-        self.softmaxAttn = layer
       end
     end)
     self.decoderAttnClones = {}
@@ -229,7 +228,6 @@ function Decoder:replaceAttentionSoftmax(builder)
       local mod = builder()
       mod.name = 'softmaxAttn'
       mod:type(module._type)
-      self.softmaxAttn = mod
       return mod
     else
       return module
@@ -246,8 +244,24 @@ end
 
 function Decoder:getAttention()
   self:findAttentionModel()
-  if self.softmaxAttn then
-    return self.softmaxAttn.output:clone()
+
+  local baseModule
+  local attention
+
+  if #self.networkClones == 0 then
+    baseModule = self.decoderAttn
+  else
+    baseModule = self.decoderAttnClones[1]
+  end
+
+  baseModule:apply(function (layer)
+    if layer.name == 'softmaxAttn' then
+      attention = layer
+    end
+  end)
+
+  if attention then
+    return attention.output:clone()
   end
 end
 
@@ -402,6 +416,11 @@ function Decoder:forward(batch, initialStates, context)
                                          { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
+
+    if self.args.dropout_type == 'variational' then
+      -- Initialize noise for variational dropout.
+      onmt.VariationalDropout.initializeNetwork(self.network)
+    end
   end
 
   local outputs = {}

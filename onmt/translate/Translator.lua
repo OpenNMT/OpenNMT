@@ -5,19 +5,12 @@ local options = {
     '-model', '',
     [[Path to the serialized model file.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.fileExists
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
     }
   },
   {
     '-beam_size', 5,
     [[Beam size.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isInt(1)
-    }
-  },
-  {
-    '-batch_size', 30,
-    [[Batch size.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
@@ -102,6 +95,11 @@ local options = {
     [[Instead of generating target tokens conditional on
     the source tokens, we print the representation
     (encoding/embedding) of the input.]]
+  },
+  {
+    '-save_beam_to', '',
+    [[Path to a file where the beam search exploration will be saved in a JSON format.
+      Requires the `dkjson` package.]]
   }
 }
 
@@ -110,24 +108,28 @@ function Translator.declareOpts(cmd)
 end
 
 
-function Translator:__init(args)
+function Translator:__init(args, model, dicts)
   self.args = args
 
-  _G.logger:info('Loading \'' .. self.args.model .. '\'...')
-  self.checkpoint = torch.load(self.args.model)
+  if model then
+    self.model = model
+    self.dicts = dicts
+  else
+    _G.logger:info('Loading \'' .. self.args.model .. '\'...')
+    local checkpoint = torch.load(self.args.model)
 
-  self.dataType = self.checkpoint.options.data_type or 'bitext'
-  self.modelType = self.checkpoint.options.model_type or 'seq2seq'
-  _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
+    self.dataType = checkpoint.options.data_type or 'bitext'
+    self.modelType = checkpoint.options.model_type or 'seq2seq'
+    _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
 
-  assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
+    assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
-  self.model = onmt.Seq2Seq.load(args, self.checkpoint.models, self.checkpoint.dicts)
+    self.model = onmt.Seq2Seq.load(args, checkpoint.models, checkpoint.dicts)
+    self.dicts = checkpoint.dicts
+  end
+
   self.model:evaluate()
-
   onmt.utils.Cuda.convert(self.model.models)
-
-  self.dicts = self.checkpoint.dicts
 
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
@@ -137,6 +139,10 @@ function Translator:__init(args)
     self.dicts.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
     self.model:setTargetVoc(self.dicts.subdict.targetVocTensor)
     _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.dicts.subdict.targetVocTensor:size(1))
+  end
+
+  if self.args.save_beam_to:len() > 0 then
+    self.beamHistories = {}
   end
 end
 
@@ -309,13 +315,16 @@ function Translator:translateBatch(batch)
   advancer:setKeptStateIndexes({attnIndex, featsIndex})
 
   -- Conduct beam search.
-  local beamSearcher = onmt.translate.BeamSearcher.new(advancer)
-  local results = beamSearcher:search(self.args.beam_size, self.args.n_best, self.args.pre_filter_factor)
+  local beamSearcher = onmt.translate.BeamSearcher.new(advancer, self.args.save_beam_to:len() > 0)
+  local results, histories = beamSearcher:search(self.args.beam_size,
+                                                 self.args.n_best,
+                                                 self.args.pre_filter_factor)
 
   local allHyp = {}
   local allFeats = {}
   local allAttn = {}
   local allScores = {}
+  local allHistories = {}
 
   for b = 1, batch.size do
     local hypBatch = {}
@@ -337,11 +346,13 @@ function Translator:translateBatch(batch)
         table.remove(attn)
 
         -- Remove unnecessary values from the attention vectors.
-        if batch.size > 1 and batch.sourceLength == attn[1]:size(1) then
+        if batch.size > 1 then
           local size = batch.sourceSize[b]
           local length = batch.sourceLength
           for j = 1, #attn do
-            attn[j] = attn[j]:narrow(1, length - size + 1, size)
+            if length == attn[j]:size(1) then
+              attn[j] = attn[j]:narrow(1, length - size + 1, size)
+            end
           end
         end
       end
@@ -358,9 +369,52 @@ function Translator:translateBatch(batch)
     table.insert(allFeats, featsBatch)
     table.insert(allAttn, attnBatch)
     table.insert(allScores, scoresBatch)
+    table.insert(allHistories, histories[b])
   end
 
-  return allHyp, allFeats, allScores, allAttn, goldScore
+  return allHyp, allFeats, allScores, allAttn, goldScore, allHistories
+end
+
+--[[ Save the aggreagated beam search histories in a JSON file.
+
+See also https://github.com/OpenNMT/VisTools/blob/master/generate_beam_viz.py.
+
+Parameters:
+
+  * file - the file to save to.
+
+]]
+function Translator:saveBeamHistories(file)
+  if not self.beamHistories or #self.beamHistories == 0 then
+    return
+  end
+
+  local data = {}
+  data.predicted_ids = {}
+  data.beam_parent_ids = {}
+  data.scores = {}
+
+  for b = 1, #self.beamHistories do
+    local history = self.beamHistories[b]
+    local beamIds = {}
+    local beamParents = {}
+    local beamScores = {}
+
+    for i = 1, #history.predictedIds do
+      table.insert(beamIds,
+                   self.dicts.tgt.words:convertToLabels(torch.totable(history.predictedIds[i])))
+      table.insert(beamScores, torch.totable(history.scores[i]))
+      table.insert(beamParents, torch.totable(history.parentBeams[i] - 1))
+    end
+
+    table.insert(data.predicted_ids, beamIds)
+    table.insert(data.beam_parent_ids, beamParents)
+    table.insert(data.scores, beamScores)
+  end
+
+  local output = assert(io.open(file, 'w'))
+  output:write(require('dkjson').encode(data))
+  self.beamHistories = {}
 end
 
 --[[ Translate a batch of source sequences.
@@ -396,10 +450,15 @@ function Translator:translate(src, gold)
     local predScore = {}
     local attn = {}
     local goldScore = {}
+    local beamHistories = {}
     if self.args.dump_input_encoding then
       encStates = self:translateBatch(batch)
     else
-      pred, predFeats, predScore, attn, goldScore = self:translateBatch(batch)
+      pred, predFeats, predScore, attn, goldScore, beamHistories = self:translateBatch(batch)
+    end
+
+    if self.beamHistories then
+      onmt.utils.Table.append(self.beamHistories, beamHistories)
     end
 
     for b = 1, batch.size do

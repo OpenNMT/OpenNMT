@@ -42,7 +42,9 @@
 * `-rnn_size <number>` (default: `500`)<br/>Hidden size of the recurrent unit.
 * `-rnn_type <string>` (accepted: `LSTM`, `GRU`; default: `LSTM`)<br/>Type of recurrent cell.
 * `-dropout <number>` (default: `0.3`)<br/>Dropout probability applied between recurrent layers.
-* `-dropout_input [<boolean>]` (default: `false`)<br/>Also apply dropout to the input of the recurrent module.
+* `-dropout_input [<boolean>]` (default: `false`)<br/>Dropout probability applied to the input of the recurrent module.
+* `-dropout_words <number>` (default: `0`)<br/>Dropout probability applied to the source sequence.
+* `-dropout_type <string>` (accepted: `naive`, `variational`; default: `naive`)<br/>Dropout type.
 * `-residual [<boolean>]` (default: `false`)<br/>Add residual connections between recurrent layers.
 * `-bridge <string>` (accepted: `copy`, `dense`, `dense_nonlinear`, `none`; default: `copy`)<br/>Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder must have the same number of layers.
 * `-input_feed [<boolean>]` (default: `true`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
@@ -67,6 +69,7 @@
 * `-start_epoch <number>` (default: `1`)<br/>If loading from a checkpoint, the epoch from which to start.
 * `-end_epoch <number>` (default: `13`)<br/>The final epoch of the training. If = 0, train forever unless another stopping condition is met (e.g. `-min_learning_rate` is reached).
 * `-curriculum <number>` (default: `0`)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.
+* `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`; default: `perplexity`)<br/>Metric to use for validation.
 
 ## Optimization options
 
@@ -78,14 +81,31 @@
 * `-max_grad_norm <number>` (default: `5`)<br/>Clip the gradients norm to this value.
 * `-learning_rate_decay <number>` (default: `0.7`)<br/>Learning rate decay factor: `learning_rate = learning_rate * learning_rate_decay`.
 * `-start_decay_at <number>` (default: `9`)<br/>In "default" decay mode, start decay after this epoch.
-* `-start_decay_ppl_delta <number>` (default: `0`)<br/>Start decay when validation perplexity improvement is lower than this value.
-* `-decay <string>` (accepted: `default`, `epoch_only`, `perplexity_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation perplexity is not improving more than `-start_decay_ppl_delta`, `epoch_only`: only decay after each epoch past `-start_decay_at`, `perplexity_only`: only decay when validation perplexity is not improving more than `-start_decay_ppl_delta`.
+* `-start_decay_score_delta <number>` (default: `0`)<br/>Start decay when validation score improvement is lower than this value.
+* `-decay <string>` (accepted: `default`, `epoch_only`, `score_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation score is not improving more than `-start_decay_score_delta`, `epoch_only`: only decay after each epoch past `-start_decay_at`, `score_only`: only decay when validation score is not improving more than `-start_decay_ppl_delta`.
 
 ## Saver options
 
 * `-save_model <string>` (required)<br/>Model filename (the model will be saved as `<save_model>_epochN_PPL.t7` where `PPL` is the validation perplexity.
 * `-train_from <string>` (default: `''`)<br/>Path to a checkpoint.
 * `-continue [<boolean>]` (default: `false`)<br/>If set, continue the training where it left off.
+
+## Translator options
+
+* `-model <string>` (default: `''`)<br/>Path to the serialized model file.
+* `-beam_size <number>` (default: `5`)<br/>Beam size.
+* `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
+* `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token
+* `-phrase_table <string>` (default: `''`)<br/>Path to source-target dictionary to replace `<unk>` tokens.
+* `-n_best <number>` (default: `1`)<br/>If > 1, it will also output an n-best list of decoded sentences.
+* `-max_num_unks <number>` (default: `inf`)<br/>All sequences with more `<unk>`s than this will be ignored during beam search.
+* `-target_subdict <string>` (default: `''`)<br/>Path to target words dictionary corresponding to the source.
+* `-pre_filter_factor <number>` (default: `1`)<br/>Optional, set this only if filter is being used. Before applying filters, hypotheses with top `beam_size * pre_filter_factor` scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.
+* `-length_norm <number>` (default: `0`)<br/>Length normalization coefficient (alpha). If set to 0, no length normalization.
+* `-coverage_norm <number>` (default: `0`)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.
+* `-eos_norm <number>` (default: `0`)<br/>End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.
+* `-dump_input_encoding [<boolean>]` (default: `false`)<br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.
+* `-save_beam_to <string>` (default: `''`)<br/>Path to a file where the beam search exploration will be saved in a JSON format. Requires the `dkjson` package.
 
 ## Crayon options
 
