@@ -259,29 +259,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#im2text" title="Im2Text" class="md-nav__link">
-    Im2Text
+  <a href="#image-to-text" title="Image to text" class="md-nav__link">
+    Image to text
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#speech-recognition" title="Speech Recognition" class="md-nav__link">
-    Speech Recognition
+  <a href="#speech-recognition" title="Speech recognition" class="md-nav__link">
+    Speech recognition
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#sequence-tagging" title="Sequence Tagging" class="md-nav__link">
-    Sequence Tagging
+  <a href="#sequence-tagging" title="Sequence tagging" class="md-nav__link">
+    Sequence tagging
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#language-modelling" title="Language Modelling" class="md-nav__link">
-    Language Modelling
+  <a href="#language-modelling" title="Language modelling" class="md-nav__link">
+    Language modelling
   </a>
   
 </li>
@@ -820,29 +820,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#im2text" title="Im2Text" class="md-nav__link">
-    Im2Text
+  <a href="#image-to-text" title="Image to text" class="md-nav__link">
+    Image to text
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#speech-recognition" title="Speech Recognition" class="md-nav__link">
-    Speech Recognition
+  <a href="#speech-recognition" title="Speech recognition" class="md-nav__link">
+    Speech recognition
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#sequence-tagging" title="Sequence Tagging" class="md-nav__link">
-    Sequence Tagging
+  <a href="#sequence-tagging" title="Sequence tagging" class="md-nav__link">
+    Sequence tagging
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#language-modelling" title="Language Modelling" class="md-nav__link">
-    Language Modelling
+  <a href="#language-modelling" title="Language modelling" class="md-nav__link">
+    Language modelling
   </a>
   
 </li>
@@ -867,7 +867,8 @@
                   <h1>Applications</h1>
                 
                 <h2 id="machine-translation">Machine Translation<a class="headerlink" href="#machine-translation" title="Permanent link">&para;</a></h2>
-<p>Neural Machine Translation (NMT) is the default and original task for OpenNMT. It requires a corpus of bilingual sentences (for instance as available on <a href="http://opus.lingfil.uu.se">Opus</a> for a very large variety of domains and language pairs). Training a NMT engine is a 3 steps process:</p>
+<p>Neural Machine Translation (NMT) is the default and original task for OpenNMT. It requires a corpus of bilingual sentences for instance as available on <a href="http://opus.lingfil.uu.se">Opus</a> for a very large variety of domains and language pairs.</p>
+<p>Training a NMT engine is a 3 steps process:</p>
 <ul>
 <li><a href="../tools/tokenization/">Tokenization</a></li>
 <li>Preprocessing</li>
@@ -876,26 +877,28 @@
 <p>Step by step process is described on the <a href="../quickstart/">quickstart page</a> and full process to train large system is described on the forum <a href="http://forum.opennmt.net/t/training-english-german-wmt15-nmt-engine/29">here</a>.</p>
 <p><img alt="Neural Machine Translation" src="../img/nmt.png" /></p>
 <h2 id="summarization">Summarization<a class="headerlink" href="#summarization" title="Permanent link">&para;</a></h2>
-<p>Summarization models are trained exactly like NMT models - the nature of the training data is different: source corpus are full length document / articles, and target are summaries. <a href="http://forum.opennmt.net/t/text-summarization-on-gigaword-and-rouge-scoring/85/">This forum post</a> details how to train and evaluation a summarization model.</p>
-<h2 id="im2text">Im2Text<a class="headerlink" href="#im2text" title="Permanent link">&para;</a></h2>
-<p>Im2Text, written by Yuntian Deng from HarvardNLP group, is implementing a generic image-to-text application on top of OpenNMT libraries for <a href="https://arxiv.org/pdf/1609.04938v1.pdf">visual markup decompilation</a>. Main modification to generic OpenNMT is the encoder introducing CNN layers in combination with RNN.</p>
-<h2 id="speech-recognition">Speech Recognition<a class="headerlink" href="#speech-recognition" title="Permanent link">&para;</a></h2>
-<p>While OpenNMT is not primarily targetting speech recognition applications, its ability to support <a href="../data/preparation/#input-vectors">input vectors</a> and <a href="../training/models/#pyramidal-deep-bidirectional-encoder">pyramidal RNN</a> make possible end-to-end experiments on speech to text applications as described for instance in <a href="https://arxiv.org/abs/1508.01211">Listen, Attend and Spell</a>. See for instance <a href="http://forum.opennmt.net/t/monophone-speech-recognition-with-opennmt/542">monophone speech recognition with OpenNMT</a> on the forum.</p>
+<p>Summarization models are trained exactly like NMT models. However, the nature of the training data is different: source corpus are full length document or articles, and target are summaries.</p>
+<p><a href="http://forum.opennmt.net/t/text-summarization-on-gigaword-and-rouge-scoring/85/">This forum post</a> details how to train and evaluate a summarization model.</p>
+<h2 id="image-to-text">Image to text<a class="headerlink" href="#image-to-text" title="Permanent link">&para;</a></h2>
+<p><em>Im2Text</em>, developed by Yuntian Deng from the Harvard NLP group, is implementing a generic image-to-text application on top of OpenNMT libraries for <a href="https://arxiv.org/pdf/1609.04938v1.pdf">visual markup decompilation</a>. The main modification to the vanilla OpenNMT is an encoder introducing CNN layers in combination with RNN.</p>
+<h2 id="speech-recognition">Speech recognition<a class="headerlink" href="#speech-recognition" title="Permanent link">&para;</a></h2>
+<p>While OpenNMT is not primarily targetting speech recognition applications, its ability to support <a href="../data/preparation/#input-vectors">input vectors</a> and <a href="../training/models/#pyramidal-deep-bidirectional-encoder">pyramidal RNN</a> makes possible end-to-end experiments on speech to text applications as described for instance in <a href="https://arxiv.org/abs/1508.01211">Listen, Attend and Spell</a>.</p>
+<p>See for instance <a href="http://forum.opennmt.net/t/monophone-speech-recognition-with-opennmt/542">monophone speech recognition with OpenNMT</a> on the forum.</p>
 <p><img alt="Listen, Attend and Spell" src="../img/las.png" /></p>
-<h2 id="sequence-tagging">Sequence Tagging<a class="headerlink" href="#sequence-tagging" title="Permanent link">&para;</a></h2>
-<p>A Sequence Tagger is available in OpenNMT. Sharing the same encoder code, it does not need a decoder, since each input is synced with an output - a sequence tagger just needs an encoder and a generation layer. Sequence Tagging can be used for any annotation task such as part of speech tagging.</p>
+<h2 id="sequence-tagging">Sequence tagging<a class="headerlink" href="#sequence-tagging" title="Permanent link">&para;</a></h2>
+<p>A sequence tagger is available in OpenNMT. It shares the same encoder architecture as a sequence-to-sequence model but does not need a decoder since each input is synced with an output. A sequence tagger just needs an encoder and a generation layer. Sequence tagging can be used for any annotation tasks such as part of speech tagging.</p>
 <p><img alt="Sequence Tagger" src="../img/seqtagger.png" /></p>
 <p>To train a sequence tagger:</p>
 <ul>
-<li>prepare the bitext with source and target sequence length identical (you can use <code>-check_plength</code> option in preprocessor).</li>
+<li>preprocess the parallel data with source and target sequence having the same length (you can use the <code>-check_plength</code> option).</li>
 <li>train the model with <code>-model_type seqtagger</code></li>
 <li>use the model with <code>tag.lua</code></li>
 </ul>
-<h2 id="language-modelling">Language Modelling<a class="headerlink" href="#language-modelling" title="Permanent link">&para;</a></h2>
-<p>A language model is very similar to a sequence tagger - the main difference is that the output "tag" for each token is the following word in source sentence.</p>
+<h2 id="language-modelling">Language modelling<a class="headerlink" href="#language-modelling" title="Permanent link">&para;</a></h2>
+<p>A language model is very similar to a sequence tagger. The main difference is that the output "tag" for each token is the following word in source sentence.</p>
 <p><img alt="Language Model" src="../img/lm.png" /></p>
 <ul>
-<li>prepare data with <code>-data_type monotext</code> in preprocessor</li>
+<li>preprocess the data with <code>-data_type monotext</code></li>
 <li>train the model with <code>-model_type lm</code></li>
 <li>use the model with <code>lm.lua</code></li>
 </ul>
