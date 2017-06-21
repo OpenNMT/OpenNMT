@@ -116,16 +116,16 @@ function Translator:__init(args, model, dicts)
     self.dicts = dicts
   else
     _G.logger:info('Loading \'' .. self.args.model .. '\'...')
-    self.checkpoint = torch.load(self.args.model)
+    local checkpoint = torch.load(self.args.model)
 
-    self.dataType = self.checkpoint.options.data_type or 'bitext'
-    self.modelType = self.checkpoint.options.model_type or 'seq2seq'
+    self.dataType = checkpoint.options.data_type or 'bitext'
+    self.modelType = checkpoint.options.model_type or 'seq2seq'
     _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
 
     assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
-    self.model = onmt.Seq2Seq.load(args, self.checkpoint.models, self.checkpoint.dicts)
-    self.dicts = self.checkpoint.dicts
+    self.model = onmt.Seq2Seq.load(args, checkpoint.models, checkpoint.dicts)
+    self.dicts = checkpoint.dicts
   end
 
   self.model:evaluate()
