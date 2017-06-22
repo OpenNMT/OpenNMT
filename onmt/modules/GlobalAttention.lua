@@ -73,7 +73,7 @@ function GlobalAttention:buildAttention(hs, ht, global_attention, dim)
       ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
     end
     score_ht_hs = nn.MM()({hs, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
-    if global_attention == 'scaled_dot' then
+    if global_attention == 'dot_scaled' then
       score_ht_hs = nn.MulConstant(1/math.sqrt(dim))(score_ht_hs)
     end
   else
