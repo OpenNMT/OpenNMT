@@ -255,7 +255,11 @@ function Factory.buildAttention(args)
     _G.logger:info('   - attention: none')
     return onmt.NoAttention(args, args.rnn_size)
   else
-    _G.logger:info('   - attention: global (%s), dropout = %0.2f', args.global_attention, args.dropout_attention)
+    local multi_head = ''
+    if args.multi_head_attention and args.multi_head_attention > 1 then
+      multi_head = ', multi head = '..args.multi_head_attention
+    end
+    _G.logger:info('   - attention: global (%s), dropout = %0.2f%s', args.global_attention, args.dropout_attention, multi_head)
     return onmt.GlobalAttention(args, args.rnn_size)
   end
 end
