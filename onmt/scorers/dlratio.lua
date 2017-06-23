@@ -2,15 +2,14 @@ local function calculate_one_dlratio(pred, ref)
   local predlen = string.len(pred)
   local reflen = string.len(ref)
   local matrix = {}
-  local cost = 1
-  
+
   -- save time if we can
   if (predlen == 0) then
     return reflen
   elseif (pred == ref) then
     return 0
   end
-  
+
   -- create the predlen x reflen matrix
   for i = 0, predlen do
     matrix[i] = {}
@@ -18,7 +17,7 @@ local function calculate_one_dlratio(pred, ref)
       matrix[i][j] = 0
     end
   end
-  
+
   -- initialize the matrix
   for i = 1, predlen do
     matrix[i][0] = i
@@ -26,7 +25,7 @@ local function calculate_one_dlratio(pred, ref)
   for j = 1, reflen do
     matrix[0][j] = j
   end
-  
+
   -- calculate Damerau-Levenshtein edit distance
   for i = 1, predlen, 1 do
     for j = 1, reflen, 1 do
@@ -42,7 +41,7 @@ local function calculate_one_dlratio(pred, ref)
       end
     end
   end
-  
+
   -- return DL edit dist
   return matrix[predlen][reflen]
 end
