@@ -69,7 +69,7 @@
 * `-start_epoch <number>` (default: `1`)<br/>If loading from a checkpoint, the epoch from which to start.
 * `-end_epoch <number>` (default: `13`)<br/>The final epoch of the training. If = 0, train forever unless another stopping condition is met (e.g. `-min_learning_rate` is reached).
 * `-curriculum <number>` (default: `0`)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.
-* `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`; default: `perplexity`)<br/>Metric to use for validation.
+* `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`, `dlratio`; default: `perplexity`)<br/>Metric to use for validation.
 
 ## Optimization options
 

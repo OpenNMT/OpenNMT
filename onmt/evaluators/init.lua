@@ -5,5 +5,6 @@ evaluators.LossEvaluator = require('onmt.evaluators.LossEvaluator')
 evaluators.PerplexityEvaluator = require('onmt.evaluators.PerplexityEvaluator')
 evaluators.TranslationEvaluator = require('onmt.evaluators.TranslationEvaluator')
 evaluators.BLEUEvaluator = require('onmt.evaluators.BLEUEvaluator')
+evaluators.DLratioEvaluator = require('onmt.evaluators.DLratioEvaluator')
 
 return evaluators
