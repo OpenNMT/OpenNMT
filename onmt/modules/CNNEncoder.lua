@@ -86,7 +86,7 @@ function CNNEncoder.load(pretrained)
   local self = torch.factory('onmt.CNNEncoder')()
   parent.__init(self)
 
-  self:add(pretrained.modules)
+  self.modules = pretrained.modules
 
   self.args = pretrained.args
 
