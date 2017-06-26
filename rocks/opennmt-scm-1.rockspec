@@ -69,6 +69,7 @@ build = {
     ["onmt.evaluators.PerplexityEvaluator"] = "onmt/evaluators/PerplexityEvaluator.lua",
     ["onmt.evaluators.TranslationEvaluator"] = "onmt/evaluators/TranslationEvaluator.lua",
     ["onmt.evaluators.BLEUEvaluator"] = "onmt/evaluators/BLEUEvaluator.lua",
+    ["onmt.evaluators.DLratioEvaluator"] = "onmt/evaluators/DLratioEvaluator.lua",
     ["onmt.train.init"] = "onmt/train/init.lua",
     ["onmt.train.Saver"] = "onmt/train/Saver.lua",
     ["onmt.train.EpochState"] = "onmt/train/EpochState.lua",
