@@ -69,7 +69,7 @@ local options = {
     '-validation_metric', 'perplexity',
     [[Metric to use for validation.]],
     {
-      enum = { 'perplexity', 'loss', 'bleu' }
+      enum = { 'perplexity', 'loss', 'bleu', 'dlratio' }
     }
   }
 }
@@ -96,6 +96,8 @@ function Trainer:__init(args, model, dicts, firstBatch)
     self.evaluator = onmt.evaluators.LossEvaluator.new()
   elseif self.args.validation_metric == 'bleu' then
     self.evaluator = onmt.evaluators.BLEUEvaluator.new(args, dicts)
+  elseif self.args.validation_metric == 'dlratio' then
+    self.evaluator = onmt.evaluators.DLratioEvaluator.new(args, dicts)
   end
 
   model:training()
