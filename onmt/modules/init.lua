@@ -19,6 +19,7 @@ require('onmt.modules.LSTM')
 require('onmt.modules.MaskedSoftmax')
 require('onmt.modules.WordEmbedding')
 require('onmt.modules.FeaturesEmbedding')
+require('onmt.modules.Position')
 
 require('onmt.modules.NoAttention')
 require('onmt.modules.GlobalAttention')

@@ -30,9 +30,16 @@ local options = {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0
     }
+  },
+  {
+    '-use_pos_emb', true,
+    [[Add positional embeddings to word embeddings.]],
+    {
+      structural = 0
+    }
   }
 
-  -- TODO : dropouts, positional embeddings, attention network
+  -- TODO : dropouts, attention network
 }
 
 
@@ -55,6 +62,13 @@ function CNNEncoder:__init(args, inputNetwork)
 
   -- Compute input network.
   local inLayer = self.inputNet(input)
+
+  if self.args.use_pos_emb then
+    local positions = onmt.Position(2)(input)
+    local posEmb = nn.LookupTable(self.args.preprocess.src_seq_length, self.args.src_word_vec_size[1])(positions)
+    inLayer = nn.CAddTable()({inLayer, posEmb})
+  end
+
   local curLayer = inLayer
 
   for layer_idx=1,args.cnn_layers do
