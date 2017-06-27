@@ -39,7 +39,7 @@ local options = {
     }
   }
 
-  -- TODO : dropouts, attention network
+  -- TODO : attention network
 }
 
 
@@ -73,6 +73,10 @@ function CNNEncoder:__init(args, inputNetwork)
 
   for layer_idx=1,args.cnn_layers do
 
+    if self.args.dropout_input and layer_idx == 1 then
+      curLayer = nn.Dropout(self.args.dropout)(curLayer)
+    end
+
     -- TODO : is there always batch ? which dimension to pad ?
     local pad = nn.Padding(2,args.cnn_kernel-1)(curLayer)
     local conv = nn.TemporalConvolution(convInSize,convOutSize,args.cnn_kernel)(pad)
@@ -85,6 +89,7 @@ function CNNEncoder:__init(args, inputNetwork)
     end
 
     curLayer = nn.Tanh()(curLayer)
+
     convInSize = convOutSize
   end
 
