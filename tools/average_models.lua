@@ -6,13 +6,12 @@ local cmd = onmt.utils.ExtendedCmdLine.new('average_models.lua')
 
 local options = {
   {
-    '-models', {''} ,
-    [[Path to the trained model to release.]]
+    '-models', {} ,
+    [[Path to models to average.]]
   },
   {
-    '-output_model', '',
-    [[Path the released model. If not set, the `release` suffix will be automatically
-      added to the model filename.]]
+    '-output_model', 'final_averaged.t7',
+    [[Path to the averaged model.]]
   },
   {
     '-force', false,
@@ -60,15 +59,11 @@ end
 
 local function main()
 
-  for _, f in pairs(opt.models) do
+  for _, f in ipairs(opt.models) do
     assert(path.exists(f), 'model \'' .. f .. '\' does not exist.')
   end
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
-
-  if opt.output_model:len() == 0 then
-    opt.output_model = 'final_averaged.t7'
-  end
 
   if not opt.force then
     assert(not path.exists(opt.output_model),
@@ -77,20 +72,19 @@ local function main()
 
   onmt.utils.Cuda.init(opt)
 
-  local checkpoint1  
-  local average_param
+  local checkpoint1
+  local averageParams
 
-  for k, f in pairs(opt.models) do
+  for k, f in ipairs(opt.models) do
     _G.logger:info('Loading model \'' .. f .. '\'...')
     if k == 1 then
-
       local _, err = pcall(function ()
         checkpoint1 = torch.load(f)
       end)
       if err then
         error('unable to load the model (' .. err .. ').')
       end
-      average_param = gatherParameters(checkpoint1.models)
+      averageParams = gatherParameters(checkpoint1.models)
     else
       local checkpoint
       local _, err = pcall(function ()
@@ -100,8 +94,8 @@ local function main()
         error('unable to load the model (' .. err .. ').')
       end
       local params = gatherParameters(checkpoint.models)
-      for i = 1, #params, 1 do
-        average_param[i]:mul(k-1):add(params[i]):div(k)
+      for i = 1, #params do
+        averageParams[i]:mul(k-1):add(params[i]):div(k)
       end
     end
     _G.logger:info('... done.')
@@ -113,6 +107,5 @@ local function main()
 
   _G.logger:shutDown()
 end
-
 
 main()
