@@ -26,12 +26,14 @@ onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
+--[[ Appends each parameter in `params` into `store`. ]]
 local function appendParameters(store, params)
   for _, p in ipairs(params) do
     table.insert(store, p)
   end
 end
 
+-- Returns a table containing all parameters of `model`.
 local function gatherModelParameters(model, store)
   store = store or {}
 
@@ -46,6 +48,7 @@ local function gatherModelParameters(model, store)
   return store
 end
 
+--[[ Returns a table containing all parameters of all models in `models`. ]]
 local function gatherParameters(models)
   local parameters = {}
 
@@ -72,6 +75,7 @@ local function main()
 
   onmt.utils.Cuda.init(opt)
 
+  -- Parameters will be averaged into the first model.
   local checkpoint1
   local averageParams
 
@@ -95,6 +99,7 @@ local function main()
       end
       local params = gatherParameters(checkpoint.models)
       for i = 1, #params do
+        -- Average in place.
         averageParams[i]:mul(k-1):add(params[i]):div(k)
       end
     end
