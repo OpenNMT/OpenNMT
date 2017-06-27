@@ -21,6 +21,7 @@
 * Add option to segment words of given alphabets or when switching alphabets
 * Add Google's NMT encoder
 * Add scorer tool (BLEU supported)
+* Add script to average multiple models
 * Add option to save the beam search as JSON
 
 ### Fixes and improvements
