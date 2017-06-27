@@ -8,8 +8,7 @@ local cmd = onmt.utils.ExtendedCmdLine.new('scorer.lua')
 
 local options = {
   {
-    '-scorer',
-    onmt.scorers.list[1],
+    '-scorer', 'bleu',
     [[Scorer to use.]],
     {
       enum = onmt.scorers.list
@@ -76,9 +75,11 @@ local function main()
     add_to_reference(opt.rfilestem)
   end
 
-  while path.exists(opt.rfilestem .. refid) do
-    add_to_reference(opt.rfilestem .. refid)
-    refid = refid + 1
+  if onmt.scorers.multi[opt.scorer] then
+    while path.exists(opt.rfilestem .. refid) do
+      add_to_reference(opt.rfilestem .. refid)
+      refid = refid + 1
+    end
   end
 
   local hyp = {}
@@ -95,11 +96,12 @@ local function main()
 
   assert(#hyp==#references[1], "ERROR: line count hyp/ref does not match")
 
-  _G.logger:info("%d references, %d sentences", #references, #hyp)
+  if not onmt.scorers.multi[opt.scorer] then
+    references = references[1]
+  end
 
-  local details = select(2, onmt.scorers[opt.scorer](hyp, references, opt.sample, opt.order))
-  print(details)
-
+  local score, format = onmt.scorers[opt.scorer](hyp, references, opt.sample, opt.order)
+  print(format or score)
 end
 
 main()
