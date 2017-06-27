@@ -20,7 +20,7 @@
 * Add option to segment mixed cased words
 * Add option to segment words of given alphabets or when switching alphabets
 * Add Google's NMT encoder
-* Add scorer tool (BLEU supported)
+* Add external scorer script for BLEU and Damerau-Levenshtein edit ratio
 * Add script to average multiple models
 * Add option to save the beam search as JSON
 
