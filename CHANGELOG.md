@@ -12,7 +12,7 @@
 
 ### New features
 
-* Implement inference for language models
+* Implement inference for language models for scoring or sampling
 * Support variational dropout and dropout on source sequence
 * Support several validation metrics: loss, perplexity, BLEU and Damerau-Levenshtein edit ratio
 * Add option in preprocessing to check that lengths of source and target are equal (e.g. for sequence tagging)
