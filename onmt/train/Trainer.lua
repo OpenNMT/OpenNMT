@@ -157,10 +157,10 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     return batchOrder and batchOrder[idx] or idx
   end
 
-  -- if target vocabulary for the batch is provided and generator support setting target vocabulary
-  if data.targetVocTensor and self.model.setTargetVoc then
+  -- if vocabulary for the batch is provided and generator support setting vocabulary
+  if data.vocabTensor and self.model.setGeneratorVocab then
     onmt.utils.Parallel.launch(function(_)
-      _G.model:setTargetVoc(data.targetVocTensor)
+      _G.model:setGeneratorVocab(data.vocabTensor)
     end)
   end
 
@@ -342,9 +342,9 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     epochState:log(numIterations)
   end
 
-  if data.targetVocTensor and self.model.setTargetVoc then
+  if data.vocabTensor and self.model.setGeneratorVocab then
     onmt.utils.Parallel.launch(function(_)
-      _G.model:unsetTargetVoc()
+      _G.model:unsetGeneratorVocab()
     end)
   end
 

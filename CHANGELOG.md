@@ -9,6 +9,7 @@
 ### Deprecations
 
 * `-brnn`, `-dbrnn` and `-pdbrnn` options are replaced by `-encoder_type <type>` for future extensions
+* `-sample_target_vocab` option is renamed `-sample_vocab` and is extended to language models
 
 ### New features
 
