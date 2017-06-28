@@ -131,7 +131,7 @@ function Seq2Seq:__init(args, dicts)
                                    self.models.decoder.args.numEffectiveLayers)
 
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
-  self.tgtVocSize = dicts.tgt.words:size(1)
+  self.tgtVocabSize = dicts.tgt.words:size(1)
 
 end
 
@@ -145,7 +145,7 @@ function Seq2Seq.load(args, models, dicts)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
   self.models.bridge = onmt.Bridge.load(models.bridge)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
-  self.tgtVocSize = dicts.tgt.words:size(1)
+  self.tgtVocabSize = dicts.tgt.words:size(1)
 
   return self
 end
@@ -174,14 +174,14 @@ function Seq2Seq:returnIndividualLosses(enable)
   return true
 end
 
-function Seq2Seq:setGeneratorVoc(t)
-  self.models.decoder.generator:setGeneratorVoc(t)
+function Seq2Seq:setGeneratorVocab(t)
+  self.models.decoder.generator:setGeneratorVocab(t)
   self.criterion.mainCriterion.weights:resize(t:size(1))
 end
 
-function Seq2Seq:unsetGeneratorVoc()
-  self.models.decoder.generator:setGeneratorVoc()
-  self.criterion.mainCriterion.weights:resize(self.tgtVocSize)
+function Seq2Seq:unsetGeneratorVocab()
+  self.models.decoder.generator:setGeneratorVocab()
+  self.criterion.mainCriterion.weights:resize(self.tgtVocabSize)
 end
 
 function Seq2Seq:enableProfiling()

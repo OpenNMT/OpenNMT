@@ -39,7 +39,7 @@ local options = {
   },
   {
     '-sample_vocab', false,
-    [[Use importance sampling approach as approximation of full softmax: target vocabulary (or bitext), or source vocabulary (for language model) is built using sample.]],
+    [[Use importance sampling approach as approximation of full softmax: target vocabulary (for sequence-to-sequence), or source vocabulary (for language model) is built using sample.]],
     {
       depends = function(opt)
                   if opt.sample_vocab then
@@ -64,14 +64,14 @@ function SampledDataset:__init(opt, srcData, tgtData)
   parent.__init(self, srcData, tgtData)
 
   if opt.sample_vocab then
-    self.VocIndex = {}
-    self.VocTensor = {}
+    self.vocabIndex = {}
+    self.vocabTensor = {}
     if opt.model_type == 'lm' then
-      self.VocAxis = self.src
-      self.VocAxisName = 'source'
+      self.vocabAxis = self.src
+      self.vocabAxisName = 'source'
     else
-      self.VocAxis = self.tgt
-      self.VocAxisName = 'target'
+      self.vocabAxis = self.tgt
+      self.vocabAxisName = 'target'
     end
   end
 
@@ -82,8 +82,8 @@ function SampledDataset:__init(opt, srcData, tgtData)
   self.startedPplSampling = false
 
   _G.logger:info(' * sampling ' .. opt.sample .. ' instances from ' .. #self.src .. ' at each epoch')
-  if self.VocIndex then
-    _G.logger:info(' * with ' .. self.VocAxisName .. ' vocabulary importance sampling')
+  if self.vocabIndex then
+    _G.logger:info(' * with ' .. self.vocabAxisName .. ' vocabulary importance sampling')
   end
   if opt.sample_type == 'perplexity' then
     _G.logger:info(' * using train data perplexity as probability distribution when sampling')
@@ -135,11 +135,11 @@ function SampledDataset:sample(logLevel)
 
   _G.logger:log('Sampling dataset...', logLevel)
 
-  if self.VocIndex then
-    self.VocTensor = { }
-    self.VocIndex = { }
-    self.VocIndex[onmt.Constants.PAD]=1
-    table.insert(self.VocTensor,onmt.Constants.PAD)
+  if self.vocabIndex then
+    self.vocabTensor = {}
+    self.vocabIndex = {}
+    self.vocabIndex[onmt.Constants.PAD] = 1
+    table.insert(self.vocabTensor, onmt.Constants.PAD)
   end
 
   -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_perplexity_init.
@@ -239,11 +239,11 @@ function SampledDataset:sample(logLevel)
   for i = 1, self.sampled:size(1) do
     self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
     -- if importance sampling select vocabs
-    if self.VocIndex then
-      for j = 1, self.VocAxis[self.sampled[i]]:size(1) do
-        if not self.VocIndex[self.VocAxis[self.sampled[i]][j]] then
-          self.VocIndex[self.VocAxis[self.sampled[i]][j]] = 1
-          table.insert(self.VocTensor, self.VocAxis[self.sampled[i]][j])
+    if self.vocabIndex then
+      for j = 1, self.vocabAxis[self.sampled[i]]:size(1) do
+        if not self.vocabIndex[self.vocabAxis[self.sampled[i]][j]] then
+          self.vocabIndex[self.vocabAxis[self.sampled[i]][j]] = 1
+          table.insert(self.vocabTensor, self.vocabAxis[self.sampled[i]][j])
         end
       end
     end
@@ -297,9 +297,9 @@ function SampledDataset:sample(logLevel)
 
   _G.logger:log('Sampled ' .. self.sampled:size(1) .. ' instances into ' .. #self.batchRange .. ' batches.', logLevel)
 
-  if self.VocIndex then
-    self.VocTensor=torch.LongTensor(self.VocTensor):sort()
-    _G.logger:log('Importance Sampling - keeping '..self.VocTensor:size(1)..' '..self.VocAxisName..' vocabs.', logLevel)
+  if self.vocabIndex then
+    self.vocabTensor = torch.LongTensor(self.vocabTensor):sort()
+    _G.logger:log('Importance Sampling - keeping ' .. self.vocabTensor:size(1) .. ' ' .. self.vocabAxisName .. ' vocabs.', logLevel)
   end
 
   return #self.batchRange, batchesOccupation / batchesCapacity
@@ -387,8 +387,8 @@ function SampledDataset:getBatch(batchIdx)
     local jEnd = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
     for _ = jBegin, jEnd do
       local srcIdx = self.src[i]
-      if self.VocAxis == self.src then
-        srcIdx = onmt.utils.Tensor.find(self.VocTensor, srcIdx)
+      if self.vocabAxis == self.src then
+        srcIdx = onmt.utils.Tensor.find(self.vocabTensor, srcIdx)
       end
       table.insert(src, srcIdx)
       if self.srcFeatures[i] then
@@ -396,8 +396,8 @@ function SampledDataset:getBatch(batchIdx)
       end
       if self.tgt ~= nil then
         local tgtIdx = self.tgt[i]
-        if self.VocTensor then
-          tgtIdx = onmt.utils.Tensor.find(self.VocTensor, tgtIdx)
+        if self.vocabTensor then
+          tgtIdx = onmt.utils.Tensor.find(self.vocabTensor, tgtIdx)
         end
         table.insert(tgt, tgtIdx)
         if self.tgtFeatures[i] then

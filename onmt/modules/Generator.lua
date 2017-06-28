@@ -35,7 +35,7 @@ function Generator:_buildGenerator(opt, sizes)
 end
 
 --[[ If the target vocabulary for the batch is not full vocabulary ]]
-function Generator:setGeneratorVoc(t)
+function Generator:setGeneratorVocab(t)
   self.rindexLinear:RIndex_setOutputIndices(t)
 end
 

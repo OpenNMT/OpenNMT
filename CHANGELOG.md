@@ -21,7 +21,6 @@
 * Add option to segment mixed cased words
 * Add option to segment words of given alphabets or when switching alphabets
 * Add Google's NMT encoder
-* New application `lm.lua` to apply language model for scoring or sampling
 * Add scorer tool (BLEU supported)
 * Add option to save the beam search as JSON
 
