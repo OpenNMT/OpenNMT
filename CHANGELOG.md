@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
+
 ### Breaking changes
 
 * Models previously trained with `-pdbrnn` or `-dbrnn` are no more compatible
