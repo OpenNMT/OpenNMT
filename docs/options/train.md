@@ -17,7 +17,7 @@
 * `-sample_type <string>` (accepted: `uniform`, `perplexity`, `partition`; default: `uniform`)<br/>Define the partition type. `uniform` draws randomly the sample, `perplexity` uses perplexity as a probability distribution when sampling (with `-sample_perplexity_init` and `-sample_perplexity_max` options), `partition` draws different subsets at each epoch.
 * `-sample_perplexity_init <number>` (default: `15`)<br/>Start perplexity-based sampling when average train perplexity per batch falls below this value.
 * `-sample_perplexity_max <number>` (default: `-1.5`)<br/>When greater than 0, instances with perplexity above this value will be considered as noise and ignored; when less than 0, mode + `-sample_perplexity_max` * stdev will be used as threshold.
-* `-sample_vocab [<boolean>]` (default: `false`)<br/>Use importance sampling approach as approximation of full softmax: target vocabulary (for sequence-to-sequence), or source vocabulary (for language model) is built using sample.
+* `-sample_vocab [<boolean>]` (default: `false`)<br/>Use importance sampling as an approximation of the full output vocabulary softmax.
 
 ## Model options
 

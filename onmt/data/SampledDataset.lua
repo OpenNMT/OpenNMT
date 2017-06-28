@@ -32,14 +32,14 @@ local options = {
   },
   {
     '-sample_tgt_vocab', false,
-    [[Use importance sampling approach as approximation of full softmax: target vocabulary is built using sample.]],
+    [[Use importance sampling as an approximation of the full output vocabulary softmax.]],
     {
       deprecatedBy = { 'sample_vocab', 'true' }
     }
   },
   {
     '-sample_vocab', false,
-    [[Use importance sampling approach as approximation of full softmax: target vocabulary (for sequence-to-sequence), or source vocabulary (for language model) is built using sample.]],
+    [[Use importance sampling as an approximation of the full output vocabulary softmax.]],
     {
       depends = function(opt)
                   if opt.sample_vocab then
