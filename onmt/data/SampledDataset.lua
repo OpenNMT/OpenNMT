@@ -387,7 +387,7 @@ function SampledDataset:getBatch(batchIdx)
     local jEnd = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
     for _ = jBegin, jEnd do
       local srcIdx = self.src[i]
-      if self.vocabAxis == self.src then
+      if self.vocabAxisName == 'source' then
         srcIdx = onmt.utils.Tensor.find(self.vocabTensor, srcIdx)
       end
       table.insert(src, srcIdx)
