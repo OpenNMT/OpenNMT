@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Fixes and improvements
+
+* Allow disabling gradients clipping with `-max_grad_norm 0`
+
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 
 ### Breaking changes

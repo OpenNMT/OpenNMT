@@ -78,7 +78,7 @@
 * `-optim <string>` (accepted: `sgd`, `adagrad`, `adadelta`, `adam`; default: `sgd`)<br/>Optimization method.
 * `-learning_rate <number>` (default: `1`)<br/>Initial learning rate. If `adagrad` or `adam` is used, then this is the global learning rate. Recommended settings are: `sgd` = 1, `adagrad` = 0.1, `adam` = 0.0002.
 * `-min_learning_rate <number>` (default: `0`)<br/>Do not continue the training past this learning rate value.
-* `-max_grad_norm <number>` (default: `5`)<br/>Clip the gradients norm to this value.
+* `-max_grad_norm <number>` (default: `5`)<br/>Clip the gradients L2-norm to this value. Set to 0 to disable.
 * `-learning_rate_decay <number>` (default: `0.7`)<br/>Learning rate decay factor: `learning_rate = learning_rate * learning_rate_decay`.
 * `-start_decay_at <number>` (default: `9`)<br/>In "default" decay mode, start decay after this epoch.
 * `-start_decay_score_delta <number>` (default: `0`)<br/>Start decay when validation score improvement is lower than this value.

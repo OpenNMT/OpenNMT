@@ -38,7 +38,7 @@ local options = {
   },
   {
     '-max_grad_norm', 5,
-    [[Clip the gradients norm to this value.]],
+    [[Clip the gradients L2-norm to this value. Set to 0 to disable.]],
     {
       train_state = true
     }
@@ -107,21 +107,11 @@ function Optim:prepareGrad(gradParams)
     end
   end
 
-  -- Compute gradients norm.
-  local gradNorm = 0
-  for j = 1, #gradParams do
-    gradNorm = gradNorm + gradParams[j]:norm()^2
+  if self.args.max_grad_norm > 0 then
+    Optim.clipGradByNorm(gradParams, self.args.max_grad_norm)
   end
-  gradNorm = math.sqrt(gradNorm)
-
-  local shrinkage = self.args.max_grad_norm / gradNorm
 
   for j = 1, #gradParams do
-    -- Shrink gradients if needed.
-    if shrinkage < 1 then
-      gradParams[j]:mul(shrinkage)
-    end
-
     -- Prepare gradients params according to the optimization method.
     if self.args.optim == 'adagrad' then
       Optim.adagradStep(gradParams[j], self.args.learning_rate, self.optimStates[j])
@@ -206,6 +196,30 @@ end
 
 function Optim:getStates()
   return self.optimStates
+end
+
+--[[ Clips gradients to a maximum L2-norm.
+
+Parameters:
+
+  * `gradParams` - a table of Tensor.
+  * `maxNorm` - the maximum L2-norm.
+
+]]
+function Optim.clipGradByNorm(gradParams, maxNorm)
+  local gradNorm = 0
+  for j = 1, #gradParams do
+    gradNorm = gradNorm + gradParams[j]:norm()^2
+  end
+  gradNorm = math.sqrt(gradNorm)
+
+  local clipCoef = maxNorm / gradNorm
+
+  if clipCoef < 1 then
+    for j = 1, #gradParams do
+      gradParams[j]:mul(clipCoef)
+    end
+  end
 end
 
 function Optim.adagradStep(dfdx, lr, state)
