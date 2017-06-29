@@ -19,7 +19,9 @@ require('onmt.modules.MaskedSoftmax')
 require('onmt.modules.WordEmbedding')
 require('onmt.modules.FeaturesEmbedding')
 
+require('onmt.modules.Attention')
 require('onmt.modules.NoAttention')
+require('onmt.modules.LocalAttention')
 require('onmt.modules.GlobalAttention')
 
 require('onmt.modules.Generator')

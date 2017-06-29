@@ -32,14 +32,6 @@ local options = {
       deprecatedBy = { 'encoder_type', 'pdbrnn' },
       structural = 0
     }
-  },
-  {
-    '-attention', 'global',
-    [[Attention model.]],
-    {
-      enum = {'none', 'global'},
-      structural = 0
-    }
   }
 }
 
@@ -49,7 +41,7 @@ function Factory.declareOpts(cmd)
   onmt.DBiEncoder.declareOpts(cmd)
   onmt.PDBiEncoder.declareOpts(cmd)
   onmt.GoogleEncoder.declareOpts(cmd)
-  onmt.GlobalAttention.declareOpts(cmd)
+  onmt.Attention.declareOpts(cmd)
 end
 
 -- Return effective embeddings size based on user options.
@@ -251,8 +243,11 @@ function Factory.buildAttention(args)
   if args.attention == 'none' then
     _G.logger:info('   - attention: none')
     return onmt.NoAttention(args, args.rnn_size)
+  else if args.attention == 'Local' then
+    _G.logger:info('   - attention: local (%s)', args.attention_type)
+    return onmt.LocalAttention(args, args.rnn_size)
   else
-    _G.logger:info('   - attention: global (%s)', args.global_attention)
+    _G.logger:info('   - attention: global (%s)', args.attention_type)
     return onmt.GlobalAttention(args, args.rnn_size)
   end
 end

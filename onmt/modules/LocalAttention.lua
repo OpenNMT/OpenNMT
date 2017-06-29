@@ -1,6 +1,6 @@
 require('nngraph')
 
-local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'onmt.Attention')
+local LocalAttention, parent = torch.class('onmt.LocalAttention', 'onmt.Attention')
 
 --[[A nn-style module computing attention.
 
@@ -8,11 +8,11 @@ local GlobalAttention, parent = torch.class('onmt.GlobalAttention', 'onmt.Attent
 
   * `dim` - dimension of the context vectors.
 --]]
-function GlobalAttention:__init(opt, dim)
+function LocalAttention:__init(opt, dim)
   parent.__init(self, opt, self:_buildModel(dim, self.args.attention_type))
 end
 
-function GlobalAttention:_buildModel(dim, global_attention)
+function LocalAttention:_buildModel(dim, attention_type)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -22,8 +22,8 @@ function GlobalAttention:_buildModel(dim, global_attention)
 
   -- Get attention.
   local score_ht_hs
-  if global_attention ~= 'concat' then
-    if global_attention == 'general' then
+  if attention_type ~= 'concat' then
+    if attention_type == 'general' then
       ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
     end
     score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
