@@ -12,7 +12,7 @@ function GlobalAttention:__init(opt, dim)
   parent.__init(self, opt, self:_buildModel(dim, self.args.attention_type))
 end
 
-function GlobalAttention:_buildModel(dim, global_attention)
+function GlobalAttention:_buildModel(dim, attention_type)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -21,24 +21,7 @@ function GlobalAttention:_buildModel(dim, global_attention)
   local context = inputs[2] -- batchL x sourceTimesteps x dim
 
   -- Get attention.
-  local score_ht_hs
-  if global_attention ~= 'concat' then
-    if global_attention == 'general' then
-      ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
-    end
-    score_ht_hs = nn.MM()({context, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
-  else
-    local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
-    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, context})
-    local Wa_ht_hs = nn.Bottle(nn.Linear(dim*2, dim, false),2)(ht_hs)
-    local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)
-    score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
-  end
-
-  local attn = nn.Sum(3)(score_ht_hs) -- batchL x sourceL
-  local softmaxAttn = nn.SoftMax()
-  softmaxAttn.name = 'softmaxAttn'
-  attn = softmaxAttn(attn)
+  local attn = self:buildAttention(context, ht, attention_type, dim)
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
 
   -- Apply attention to context.

@@ -55,6 +55,7 @@ build = {
     ["onmt.modules.Sequencer"] = "onmt/modules/Sequencer.lua",
     ["onmt.modules.WordEmbedding"] = "onmt/modules/WordEmbedding.lua",
     ["onmt.modules.JoinReplicateTable"] = "onmt/modules/JoinReplicateTable.lua",
+    ["onmt.modules.CenteredWindow"] = "onmt/modules/CenteredWindow.lua",
     ["onmt.modules.ParallelClassNLLCriterion"] = "onmt/modules/ParallelClassNLLCriterion.lua",
     ["onmt.modules.RIndexLinear"] = "onmt/modules/RIndexLinear.lua",
     ["onmt.data.init"] = "onmt/data/init.lua",
