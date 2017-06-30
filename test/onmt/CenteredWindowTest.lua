@@ -11,13 +11,17 @@ function centeredWindowTest.forward()
     p[i] = i
   end
   local w = onmt.CenteredWindow(3):forward({c, p})
-  tester:eq(w[1]:narrow(1,1,3):sum(), 0)
-  tester:eq(w[1][4]:sum(), 8)
-  tester:eq(w[2]:narrow(1,1,2):sum(), 0)
-  tester:eq(w[2][3]:sum(), 8)
-  tester:eq(w[12][7]:sum(), 0)
-  tester:eq(w[12][5]:sum(), 0)
-  tester:eq(w[12][4]:sum(), 8)
+  local cw = w[1]
+  local muw = w[2]
+  tester:eq(cw[1]:narrow(1,1,3):sum(), 0)
+  tester:eq(cw[1][4]:sum(), 8)
+  tester:eq(cw[2]:narrow(1,1,2):sum(), 0)
+  tester:eq(cw[2][3]:sum(), 8)
+  tester:eq(cw[12][7]:sum(), 0)
+  tester:eq(cw[12][5]:sum(), 0)
+  tester:eq(cw[12][4]:sum(), 8)
+  tester:assertTensorEq(muw[1], muw[2])
+  tester:eq(muw[1][4], 1)
 end
 
 function centeredWindowTest.forwardbackward()
@@ -26,8 +30,9 @@ function centeredWindowTest.forwardbackward()
   for i = 1, 12 do
     p[i] = i
   end
-  local g = torch.Tensor(12, 7, 8):fill(1)
-  local gI = onmt.CenteredWindow(3):backward({c, p}, g)
+  local gc = torch.Tensor(12, 7, 8):fill(1)
+  local gmu = torch.Tensor(12, 7):uniform(0.1)
+  local gI = onmt.CenteredWindow(3):backward({c, p}, {gc, mu})
 
   local gI1 = gI[1]
   local gI2 = gI[2]
