@@ -26,7 +26,7 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.coverage_norm = coverage_norm or 0.0
   self.eos_norm = eos_norm or 0.0
   self.decStates = decStates or onmt.utils.Tensor.initTensorTable(
-    decoder.args.numEffectiveLayers,
+    decoder.args.numStates,
     onmt.utils.Cuda.convert(torch.Tensor()),
     { self.batch.size, decoder.args.rnnSize })
   self.dicts = dicts

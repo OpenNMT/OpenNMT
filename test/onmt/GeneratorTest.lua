@@ -66,7 +66,7 @@ function generatorTest.GeneratorIS()
     tester:eq( output[i]:size(2), sizes[i])
   end
 
-  generator:setTargetVoc(torch.LongTensor{1,2})
+  generator:setGeneratorVocab(torch.LongTensor{1,2})
   local output_ri = generator:forward({context, torch.Tensor{3}})
 
   tester:eq(output_ri[1]:size(2),2)

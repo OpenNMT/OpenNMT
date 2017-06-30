@@ -398,6 +398,10 @@ function ExtendedCmdLine:__readOption__(params, arg, i)
 
     i = i + 1
     numArguments = numArguments + 1
+
+    if not multiValues then
+      break
+    end
   end
 
   local optionName = onmt.utils.String.stripHyphens(key)

@@ -21,8 +21,15 @@ function SubDict:__init(dict, filePath)
   self.vocabs = nil
 end
 
-function SubDict:fullIdx(idx)
-  return self.targetVocInvMap[idx]
+function SubDict:fullIdx(tensor)
+  if tensor.map then
+      tensor:map(tensor, function(idx) return self.targetVocInvMap[idx] end)
+  else
+    for idx = 1, tensor:size(1) do
+      tensor[idx] = self.targetVocInvMap[tensor[idx]]
+    end
+  end
+  return
 end
 
 return SubDict

@@ -25,6 +25,7 @@ If you are planning to submit a large pull request (e.g. a new feature, code ref
 ### During the development
 
 While we are open on the coding style, we would like the code to be consistent across the project. So please review and apply as much as possible our [style recommendations](STYLE.md).
+If possible, write [automated tests](test/README.md)...
 
 ### Before submitting the pull request
 
