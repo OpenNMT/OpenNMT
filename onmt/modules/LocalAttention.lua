@@ -35,10 +35,15 @@ function LocalAttention:_buildModel(dim, attention_type)
   pt = nn.CMul()(slen, pt)
 
   -- build context around pt
-  local local_context = onmt.CenteredWindow(self.args.local_attention_span)(context, pt)
+  local lcontext_mu = onmt.CenteredWindow(self.args.local_attention_span)(context, pt)
+  local local_context = nn.SelectTable(1)(lcontext_mu)
+  local mu = nn.SelectTable(2)(lcontext_mu)
 
   -- Get attention.
   local attn = self:buildAttention(local_context, ht, attention_type, dim)
+  -- favor alignment points near p_t
+  attn = nn.CMul()({attn, mu})
+
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x windowSize
 
   -- Apply attention to context.
