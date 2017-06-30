@@ -64,8 +64,7 @@ function CNNEncoder:__init(args, inputNetwork)
   local inLayer = self.inputNet(input)
 
   if self.args.use_pos_emb then
-    local positions = onmt.Position(2, self.args.preprocess.src_seq_length)(input)
-    local posEmb = nn.LookupTable(self.args.preprocess.src_seq_length, self.args.src_word_vec_size[1])(positions)
+    local posEmb = onmt.PositionEmbedding(2, self.args.preprocess.src_seq_length, self.args.src_word_vec_size[1])(input)
     inLayer = nn.CAddTable()({inLayer, posEmb})
   end
 
