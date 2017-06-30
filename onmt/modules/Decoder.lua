@@ -70,8 +70,8 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
 
   self.args.inputFeed = args.input_feed
 
-  parent.__init(self, self:_buildModel(attentionModel))
   self.args.attentionNeedsSLen = attentionModel.needsSLen
+  parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
   -- likelihoods over the target vocabulary.
