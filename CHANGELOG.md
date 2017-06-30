@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+### New features
+* Introduce Local Alignment
+
+### Deprecations
+* Option `-global_attention <type>` is replaced by `-attention_type <type>` to introduce local alignment
+
 ### Fixes and improvements
 
 * Allow disabling gradients clipping with `-max_grad_norm 0`

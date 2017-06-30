@@ -65,7 +65,7 @@ With the `copy` bridge, encoder and decoder should have the same structure (numb
 
 ## Attention Model
 
-Different models are available from [Luong (2015)](../references.md#Luong2015) "Global Attention Model".
+Different models are available from [Luong (2015)](../references.md#Luong2015) "Global Attention Model" and "Local Attention Model".
 
 ![Global attentional model](../img/global-attention-model.png)
 
@@ -79,4 +79,4 @@ and the score function is one of these:
 * `general`: $$\mathrm{score}(h_t,\bar{h}_s)=h_t^TW_a\bar{h}_s$$
 * `concat`: $$\mathrm{score}(h_t,\bar{h}_s)=\nu_a^T.\mathrm{tanh}(W_a[h_t;\bar{h}_s])$$
 
-The model is selected using `-global_attention` option or can be disabled with `-attention none` option. The default attention model is `general`.
+The model type is selected using `-attention_type` option or can be disabled with `-attention none` option. The default attention model is `global`, type `general`.
