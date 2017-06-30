@@ -22,7 +22,7 @@
 ## Model options
 
 * `-model_type <string>` (accepted: `lm`, `seq2seq`, `seqtagger`; default: `seq2seq`)<br/>Type of model to train. This option impacts all options choices.
-* `-param_init <number>` (default: `0.1`)<br/>Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`).
+* `-param_init <number>` (default: `0.1`)<br/>Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`). Set to 0 to rely on each module default initialization.
 
 ## Sequence to Sequence with Attention options
 

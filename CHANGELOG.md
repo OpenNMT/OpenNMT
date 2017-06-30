@@ -3,6 +3,7 @@
 ### Fixes and improvements
 
 * Allow disabling gradients clipping with `-max_grad_norm 0`
+* Allow disabling global parameters initialization
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 
