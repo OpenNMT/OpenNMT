@@ -243,7 +243,7 @@ function Factory.buildAttention(args)
   if args.attention == 'none' then
     _G.logger:info('   - attention: none')
     return onmt.NoAttention(args, args.rnn_size)
-  elseif args.attention == 'Local' then
+  elseif args.attention == 'local' then
     _G.logger:info('   - attention: local (%s)', args.attention_type)
     return onmt.LocalAttention(args, args.rnn_size)
   else

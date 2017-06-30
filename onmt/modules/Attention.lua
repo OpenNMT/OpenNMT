@@ -34,14 +34,14 @@ local options = {
       structural = 0
     }
   },
-  { '-attention_type', '',
-    [[]],
+  { '-global_attention', '',
+    [[Global attention type.]],
     {
-      deprecated = '-attention_model'
+      deprecatedBy = { 'attention_type' },
     }
   },
   {
-    '-attention_model', 'general',
+    '-attention_type', 'general',
     [[Attention type.]],
     {
       enum = {'general', 'dot', 'dot_scaled', 'concat'},
@@ -74,14 +74,14 @@ function Attention:__init(opt, model)
   parent.__init(self, model)
 end
 
-function Attention:buildScore(hs, ht, attention_type, dim)
+function Attention:buildScore(hs, ht, opt, dim)
   local score_ht_hs
-  if attention_type ~= 'concat' then
-    if attention_type == 'general' then
+  if opt.attention_type ~= 'concat' then
+    if opt.attention_type == 'general' then
       ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
     end
     score_ht_hs = nn.MM()({hs, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
-    if attention_type == 'dot_scaled' then
+    if opt.attention_type == 'dot_scaled' then
       score_ht_hs = nn.MulConstant(1/math.sqrt(dim))(score_ht_hs)
     end
   else
@@ -95,13 +95,13 @@ function Attention:buildScore(hs, ht, attention_type, dim)
   return score_ht_hs
 end
 
-function Attention:buildAttention(hs, ht, attention_type, dim)
-  local score_ht_hs = self:buildScore(hs, ht, attention_type, dim)
+function Attention:buildAttention(hs, ht, opt, dim)
+  local score_ht_hs = self:buildScore(hs, ht, opt, dim)
 
   local attn = nn.Squeeze(3)(score_ht_hs) -- batchL x sourceL
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
 
-  return nn.Dropout(self.args.dropout_attention)(attn)
+  return nn.Dropout(opt.dropout_attention)(attn)
 end

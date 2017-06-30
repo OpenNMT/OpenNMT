@@ -11,14 +11,12 @@ local LocalAttention, parent = torch.class('onmt.LocalAttention', 'onmt.Attentio
   * `dim` - dimension of the context vectors.
 ]]
 function LocalAttention:__init(opt, dim)
-  parent.__init(self, opt, self:_buildModel(dim, self.args.attention_type))
+  parent.__init(self, opt, self:_buildModel(dim, opt))
 end
 
-function LocalAttention.needSLen()
-  return true
-end
+LocalAttention.needsSLen = true
 
-function LocalAttention:_buildModel(dim, attention_type)
+function LocalAttention:_buildModel(dim, opt)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -29,20 +27,20 @@ function LocalAttention:_buildModel(dim, attention_type)
   local slen = inputs[3] -- batchL
 
   -- get pt first
-  local Wp_ht = nn.Bottle(nn.Linear(dim, dim, false),2)(ht)
-  local tanh_Wp_ht = nn.Tanh()(Wp_ht)
-  local pt = nn.Sigmoid(nn.Bottle(nn.Linear(1, dim),2)(tanh_Wp_ht)) -- batchL
-  pt = nn.CMul()(slen, pt)
+  local Wp_ht = nn.Bottle(nn.Linear(dim, dim, false), 2)(ht) -- batchL x dim
+  local tanh_Wp_ht = nn.Tanh()(Wp_ht) -- batchL x dim
+  local pt = nn.Sigmoid()(nn.Bottle(nn.Linear(dim, 1),2)(tanh_Wp_ht)) -- batchL
+  pt = nn.CMulTable()({slen, pt})
 
   -- build context around pt
-  local lcontext_mu = onmt.CenteredWindow(self.args.local_attention_span)(context, pt)
+  local lcontext_mu = onmt.CenteredWindow(opt.local_attention_span)({context, pt})
   local local_context = nn.SelectTable(1)(lcontext_mu)
   local mu = nn.SelectTable(2)(lcontext_mu)
 
   -- Get attention.
-  local attn = self:buildAttention(local_context, ht, attention_type, dim)
+  local attn = self:buildAttention(local_context, ht, opt, dim)
   -- favor alignment points near p_t
-  attn = nn.CMul()({attn, mu})
+  attn = nn.CMulTable()({attn, mu})
 
   -- Apply attention to context.
   attn = nn.Replicate(1,2)(attn) -- batchL x 1 x windowSize
