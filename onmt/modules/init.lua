@@ -27,6 +27,7 @@ require('onmt.modules.GlobalAttention')
 require('onmt.modules.Generator')
 
 require('onmt.modules.JoinReplicateTable')
+require('onmt.modules.CenteredWindow')
 require('onmt.modules.ParallelClassNLLCriterion')
 require('onmt.modules.RIndexLinear')
 
