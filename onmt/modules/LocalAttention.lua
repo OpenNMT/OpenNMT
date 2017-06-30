@@ -44,9 +44,8 @@ function LocalAttention:_buildModel(dim, attention_type)
   -- favor alignment points near p_t
   attn = nn.CMul()({attn, mu})
 
-  attn = nn.Replicate(1,2)(attn) -- batchL x 1 x windowSize
-
   -- Apply attention to context.
+  attn = nn.Replicate(1,2)(attn) -- batchL x 1 x windowSize
   local contextCombined = nn.MM()({attn, local_context}) -- batchL x 1 x dim
   contextCombined = nn.Sum(2)(contextCombined) -- batchL x dim
   contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
