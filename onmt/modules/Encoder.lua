@@ -104,7 +104,7 @@ function Encoder:__init(args, inputNetwork)
 
   self.args = {}
   self.args.rnnSize = self.rnn.outputSize
-  self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.numStates = self.rnn.numStates
   self.args.dropout_type = args.dropout_type
 
   parent.__init(self, self:_buildModel())
@@ -117,6 +117,8 @@ function Encoder.load(pretrained)
   local self = torch.factory('onmt.Encoder')()
 
   self.args = pretrained.args
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers -- Backward compatibility.
+
   parent.__init(self, pretrained.modules[1])
 
   self:resetPreallocation()
@@ -159,7 +161,7 @@ function Encoder:_buildModel()
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, self.args.numEffectiveLayers do
+  for _ = 1, self.args.numStates do
     local h0 = nn.Identity()() -- batchSize x rnnSize
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -199,7 +201,7 @@ function Encoder:forward(batch, initial_states)
   -- if states is not passed, start with empty state
   if not states then
     if self.statesProto == nil then
-      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                            self.stateProto,
                                                            { batch.size, outputSize })
     end
@@ -272,7 +274,7 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
   -- TODO: change this to (input, gradOutput) as in nngraph.
   local outputSize = self.args.rnnSize
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                               self.gradOutputProto,
                                                               { batch.size, outputSize })
   end

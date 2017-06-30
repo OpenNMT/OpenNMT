@@ -126,9 +126,9 @@ function Seq2Seq:__init(args, dicts)
 
   self.models.bridge = onmt.Bridge(args.bridge,
                                    encArgs.rnn_size,
-                                   self.models.encoder.args.numEffectiveLayers,
+                                   self.models.encoder.args.numStates,
                                    decArgs.rnn_size,
-                                   self.models.decoder.args.numEffectiveLayers)
+                                   self.models.decoder.args.numStates)
 
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
   self.tgtVocabSize = dicts.tgt.words:size(1)

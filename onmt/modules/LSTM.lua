@@ -39,7 +39,7 @@ function LSTM:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_i
   dropout = dropout or 0
 
   self.dropout = dropout
-  self.numEffectiveLayers = 2 * layers
+  self.numStates = 2 * layers
   self.outputSize = hiddenSize
 
   parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type))

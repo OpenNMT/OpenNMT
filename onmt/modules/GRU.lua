@@ -36,7 +36,7 @@ function GRU:__init(layers, inputSize, hiddenSize, dropout, residual, dropout_in
   dropout = dropout or 0
 
   self.dropout = dropout
-  self.numEffectiveLayers = layers
+  self.numStates = layers
   self.outputSize = hiddenSize
 
   parent.__init(self, self:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type))

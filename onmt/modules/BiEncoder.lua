@@ -73,7 +73,7 @@ function BiEncoder:__init(args, input)
   self.fwd = onmt.Encoder.new(args, input)
   self.bwd = onmt.Encoder.new(args, input:clone('weight', 'bias', 'gradWeight', 'gradBias'))
 
-  self.args.numEffectiveLayers = self.fwd.args.numEffectiveLayers
+  self.args.numStates = self.fwd.args.numStates
 
   if self.args.brnn_merge == 'concat' then
     self.args.hiddenSize = self.args.rnn_size * 2
@@ -102,6 +102,7 @@ function BiEncoder.load(pretrained)
   -- backward compatibility
   self.args.rnn_size = self.args.rnn_size or self.args.rnnSize
   self.args.brnn_merge = self.args.brnn_merge or self.args.merge
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers
 
   self:add(self.fwd)
   self:add(self.bwd)
@@ -140,7 +141,7 @@ function BiEncoder:forward(batch, initial_states)
   assert(not initial_states, "Cannot apply bidirectional Encoder incrementally")
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.hiddenSize })
   end
@@ -202,7 +203,7 @@ end
 
 function BiEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   gradStatesOutput = gradStatesOutput
-    or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    or onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.hiddenSize })
 
