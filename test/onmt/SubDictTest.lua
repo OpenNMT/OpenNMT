@@ -22,7 +22,9 @@ function subDictTest.read()
   local sd1 = onmt.utils.SubDict.new(d1, 'tmp.subdict')
 
   tester:eq(sd1.targetVocTensor, torch.LongTensor{2,3,4,6,7})
-  tester:eq(sd1:fullIdx(4), 6)
+  local t = torch.LongTensor{4}
+  sd1:fullIdx(t)
+  tester:assertTensorEq(t, torch.LongTensor{6})
 
   os.remove('tmp.subdict')
 end
