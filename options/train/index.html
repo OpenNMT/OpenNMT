@@ -994,7 +994,7 @@
 <h2 id="model-options">Model options<a class="headerlink" href="#model-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-model_type &lt;string&gt;</code> (accepted: <code>lm</code>, <code>seq2seq</code>, <code>seqtagger</code>; default: <code>seq2seq</code>)<br/>Type of model to train. This option impacts all options choices.</li>
-<li><code>-param_init &lt;number&gt;</code> (default: <code>0.1</code>)<br/>Parameters are initialized over uniform distribution with support (-<code>param_init</code>, <code>param_init</code>).</li>
+<li><code>-param_init &lt;number&gt;</code> (default: <code>0.1</code>)<br/>Parameters are initialized over uniform distribution with support (-<code>param_init</code>, <code>param_init</code>). Set to 0 to rely on each module default initialization.</li>
 </ul>
 <h2 id="sequence-to-sequence-with-attention-options">Sequence to Sequence with Attention options<a class="headerlink" href="#sequence-to-sequence-with-attention-options" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1050,7 +1050,7 @@
 <li><code>-optim &lt;string&gt;</code> (accepted: <code>sgd</code>, <code>adagrad</code>, <code>adadelta</code>, <code>adam</code>; default: <code>sgd</code>)<br/>Optimization method.</li>
 <li><code>-learning_rate &lt;number&gt;</code> (default: <code>1</code>)<br/>Initial learning rate. If <code>adagrad</code> or <code>adam</code> is used, then this is the global learning rate. Recommended settings are: <code>sgd</code> = 1, <code>adagrad</code> = 0.1, <code>adam</code> = 0.0002.</li>
 <li><code>-min_learning_rate &lt;number&gt;</code> (default: <code>0</code>)<br/>Do not continue the training past this learning rate value.</li>
-<li><code>-max_grad_norm &lt;number&gt;</code> (default: <code>5</code>)<br/>Clip the gradients norm to this value.</li>
+<li><code>-max_grad_norm &lt;number&gt;</code> (default: <code>5</code>)<br/>Clip the gradients L2-norm to this value. Set to 0 to disable.</li>
 <li><code>-learning_rate_decay &lt;number&gt;</code> (default: <code>0.7</code>)<br/>Learning rate decay factor: <code>learning_rate = learning_rate * learning_rate_decay</code>.</li>
 <li><code>-start_decay_at &lt;number&gt;</code> (default: <code>9</code>)<br/>In "default" decay mode, start decay after this epoch.</li>
 <li><code>-start_decay_score_delta &lt;number&gt;</code> (default: <code>0</code>)<br/>Start decay when validation score improvement is lower than this value.</li>
