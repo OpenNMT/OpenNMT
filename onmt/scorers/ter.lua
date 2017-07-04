@@ -1,3 +1,5 @@
+-- implementation based on tercom v6 perl
+
 ----------------------- DEFAULT PARAMETERS -----------------------
 
 -- standard costs
