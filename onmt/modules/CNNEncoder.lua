@@ -55,6 +55,8 @@ function CNNEncoder:__init(args, inputNetwork)
   self.inputNet = inputNetwork
   self.args = args
 
+  self.args.numEffectiveLayers = 1
+
   local convInSize = inputNetwork.inputSize
   local convOutSize = args.cnn_size
 
@@ -92,7 +94,9 @@ function CNNEncoder:__init(args, inputNetwork)
     convInSize = convOutSize
   end
 
-  self:add(nn.gModule({input},{curLayer}))
+  local state = nn.Mean(2)(curLayer)
+
+  self:add(nn.gModule({input},{state, curLayer}))
 
   -- TODO : do we need it ?
   -- self:resetPreallocation()
@@ -132,11 +136,11 @@ end
 function CNNEncoder:forward(batch)
   local output = self.modules[1]:forward(batch:getSourceInput())
 
-  return nil, output
+  return {output[1]}, output[2]
 end
 
 function CNNEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
-  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), gradContextOutput)
+  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), { gradStatesOutput[1], gradContextOutput })
   return gradInputs
 end
