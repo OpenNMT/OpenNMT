@@ -97,7 +97,7 @@ local function backtrace_path(pat, i, j)
       end
     end
   end
-  print("RES",table.concat(path,","))
+
   return path
 end
 
@@ -113,17 +113,9 @@ local function min_edit_dist_arr(hw, rw, full)
 
   _min_edit_dist(#hw, #rw, hw, rw, mat, pat, full)
 
-  for i = 1, #hw do
-    local s=""
-    for j = 1, #rw do
-      s = s .. (mat[i][j] or "_")
-    end
-    print(s)
-  end
-
   local score = mat[#hw][#rw]
   local path = backtrace_path(pat, #hw, #rw)
-  print("SCORE",score)
+
   return score, path
 end
 
@@ -389,7 +381,7 @@ local function calc_best_shift(hyp, ref, rloc, curerr, path_vals)
       end
     end
   end
-  print("cur_best_path",cur_best_path)
+
   return cur_best_hyp, cur_best_score, cur_best_path, cur_best_start, cur_best_end, cur_best_dest
 end
 
@@ -416,12 +408,10 @@ local function calc_shifts(cand, ref)
     cur = new_hyp
   end
 
-  print("med_path=",med_path)
-
   return med_score + edits, med_path, cur, all_shifts
 end
 
-function score_sent(id, HYP, REFS)
+local function score_sent(id, HYP, REFS)
   -- try all references, and find the one with the lowest score
   -- return the score, path, shifts, etc
   local tmparr = {}
@@ -431,7 +421,10 @@ function score_sent(id, HYP, REFS)
   local best_hyp = HYP[id]
   local best_allshift = tmparr;
 
+  local rlen = 0
+
   for _, ref in ipairs(REFS[id]) do
+    rlen = rlen + #ref
     local s, p, newhyp, allshifts = calc_shifts(HYP, ref)
     if best_score < 0 or s < best_score then
       best_score = s
@@ -441,6 +434,20 @@ function score_sent(id, HYP, REFS)
       best_allshift = allshifts
     end
   end
-  print("best_score=",best_score)
-  return best_score, best_path, best_ref, best_hyp, best_allshift
+
+  rlen = rlen / (#REFS[id] + 1)
+
+  return best_score/rlen, best_path, best_ref, best_hyp, best_allshift
 end
+
+local function calculate_ter(cand, refs)
+  local score = 0
+  local nb = 0
+  for k,_ in ipairs(cand) do
+    score = score + score_sent(k, cand, refs)
+    nb = nb + 1
+  end
+  return score/nb*100
+end
+
+return calculate_ter
