@@ -136,6 +136,12 @@ end
 function CNNEncoder:forward(batch)
   local output = self.modules[1]:forward(batch:getSourceInput())
 
+  for i=1,batch.size do
+    for j=1, batch.sourceLength-batch.sourceSize[i] do
+      output[2][i][j]:fill(0)
+    end
+  end
+
   return {output[1]}, output[2]
 end
 
