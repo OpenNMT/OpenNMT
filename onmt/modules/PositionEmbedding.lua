@@ -21,7 +21,7 @@ function PositionEmbedding:__init(dimension, nIndex, nOutput)
 end
 
 function PositionEmbedding:postParametersInitialization()
-  self.weight[self.max_pos+1]:zero()
+  self.weight[1]:zero()
 end
 
 function PositionEmbedding:updateOutput(input)
@@ -30,18 +30,16 @@ function PositionEmbedding:updateOutput(input)
    self.input = self.input:typeAs(input)
    self.input:resizeAs(input):copy(input)
 
-   for i=1,self.input:size(dim) do
-     local step = self.input:select(dim,i)
-     if i <= self.max_pos then
-       for b=1,step:size(1) do
-         if step[b] == onmt.Constants.PAD then
-           step[b] = self.max_pos+1
-	 else
-	   step[b] = i
-	 end
+   for b=1,self.input:size(1) do
+     local batch = self.input:select(1,b)
+     local start = -1
+     for t=1,self.input:size(dim) do
+       if batch[t] == onmt.Constants.PAD then
+         batch[t] = 1
+         start = start+1
+       else
+         batch[t] = math.min(t-start,self.max_pos+1)
        end
-     else
-       step:fill(self.max_pos+1)
      end
    end
 

@@ -79,7 +79,7 @@ function CNNEncoder:__init(args, inputNetwork)
     end
 
     -- TODO : is there always batch ? which dimension to pad ?
-    local pad = nn.Padding(2,args.cnn_kernel-1)(curLayer)
+    local pad = nn.Padding(2,1-args.cnn_kernel)(curLayer) -- left padding
     local conv = nn.TemporalConvolution(convInSize,convOutSize,args.cnn_kernel)(pad)
 
     -- Add a residual connection, except for the first layer
