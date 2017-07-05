@@ -94,9 +94,14 @@ function CNNEncoder:__init(args, inputNetwork)
     convInSize = convOutSize
   end
 
-  local state = nn.Mean(2)(curLayer)
-
-  self:add(nn.gModule({input},{state, curLayer}))
+  if self.args.bridge == "copy" then
+    _G.logger:info('ERROR : Cannot use copy bridge with convolutional encoder.')
+  elseif self.args.bridge == "none" then
+    self:add(nn.gModule({input},{curLayer}))
+  else
+     local state = nn.Mean(2)(curLayer)
+     self:add(nn.gModule({input},{state, curLayer}))
+  end
 
   -- TODO : do we need it ?
   -- self:resetPreallocation()
@@ -136,17 +141,31 @@ end
 function CNNEncoder:forward(batch)
   local output = self.modules[1]:forward(batch:getSourceInput())
 
+  local states = nil
+
+  if (type(output) == "table") then
+    states = {output[1]}
+    output = output[2]
+  end
+
   for i=1,batch.size do
     for j=1, batch.sourceLength-batch.sourceSize[i] do
-      output[2][i][j]:fill(0)
+      output[i][j]:fill(0)
     end
   end
 
-  return {output[1]}, output[2]
+  return states, output
 end
 
 function CNNEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
-  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), { gradStatesOutput[1], gradContextOutput })
+  local gradOut = nil
+  if gradStatesOutput then
+    gradOut = {gradStatesOutput[1], gradContextOutput}
+  else
+    gradOut = gradContextOutput
+  end
+
+  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), gradOut)
   return gradInputs
 end
