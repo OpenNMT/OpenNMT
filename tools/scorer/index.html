@@ -765,7 +765,28 @@
                   <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/tools/scorer.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
                 
                 
-                <p>OpenNMT provides native implementation of scoring metrics - for the moment, only BLEU.</p>
+                <p>OpenNMT provides native implementation of scoring metrics - BLEU, TER, DLRATION</p>
+<p>All metrics can be used as a validation metric (see <a href="../../options/train/#trainer-options">option <code>-validation_metric</code></a>) during training or standalone using <code>tools/score.lua</code>:</p>
+<div class="codehilite"><pre><span></span>$ th tools/score.lua REFERENCE <span class="o">[</span>-sample SN<span class="o">]</span> <span class="o">[</span>-scorer bleu<span class="p">|</span>ter<span class="p">|</span>dlratio<span class="o">]</span> PARAMS &lt; OUT
+</pre></div>
+
+
+<p>The actual metric is selected with <code>scorer</code> option and the output is a line with 3 field, tab separated like:</p>
+<div class="codehilite"><pre><span></span>34.73        +/-0.83        BLEU = 34.77, 79.8/49.1/29.6/17.6 (BP=0.919, ratio=0.922, hyp_len=26742, ref_len=28995)
+54.77                       TER = 54.77 (Ins 1.8, Del 4.4, Sub 9.6, Shft 1.9, WdSh 2.6)
+</pre></div>
+
+
+<p>The fields are:</p>
+<ul>
+<li>numeric value of the score</li>
+<li>95% confidence error margin (1.96*standard deviation) for k samples of half-size</li>
+<li>formated scorer output</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><em>Error margin</em> is a simple way to know if score variation is part of metric calculation variation or is significant.</p>
+</div>
 <h1 id="bleu">BLEU<a class="headerlink" href="#bleu" title="Permanent link">&para;</a></h1>
 <p><a href="https://en.wikipedia.org/wiki/BLEU">BLEU</a> is a metric widely used for evaluation of machine translation output.</p>
 <p>Syntax follows <a href="https://github.com/moses-smt/mosesdecoder/blob/master/scripts/generic/multi-bleu.perl">multi-bleu.perl</a> syntax:</p>
@@ -783,12 +804,11 @@ BLEU = 34.77 +/- 0.43, 79.8/49.1/29.6/17.6 (BP=0.919, ratio=0.922, hyp_len=26742
 <ul>
 <li><code>REFERENCE</code> is either a single file, or a prefix for multiple-reference <code>REFERENCE0</code>, <code>REFERENCE1</code>, ...</li>
 <li><code>-order</code> is bleu n-gram order (default 4)</li>
-<li>parameter <code>-sample</code> indicates the number of sample to draw for evaluating <em>error margin</em> (default 20) - indicated with <code>+/- ERR</code> in the output</li>
 </ul>
-<div class="admonition tip">
-<p class="admonition-title">Tip</p>
-<p><em>Error margin</em> is a simple way to know if BLEU score variation is part of metric calculation variation or is significant.</p>
-</div>
+<h1 id="ter">TER<a class="headerlink" href="#ter" title="Permanent link">&para;</a></h1>
+<p><a href="http://www.cs.umd.edu/~snover/tercom/">TER</a> is an error metric for machine translation that messures the number of edits required to change a system output into one of the references. It is generally prefered to BLEU for estimation of sentence post-editing.</p>
+<h1 id="dlratio">DLRATIO<a class="headerlink" href="#dlratio" title="Permanent link">&para;</a></h1>
+<p><a href="https://en.wikipedia.org/wiki/Damerau–Levenshtein_distance">Damerau-Levenshtein edit distance</a> is edit distance between 2 sentences. It is a simplified version of <code>TER</code> that also integrates numbers of sequence shift.</p>
                 
                   
                 
