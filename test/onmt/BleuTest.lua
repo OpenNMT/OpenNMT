@@ -45,7 +45,7 @@ function bleuTest.basic()
   tester:eq(bleu,0.20,0.01)
   tester:assert(details:find("20.5") ~= 0)
   -- two references with order 5
-  bleu, details = onmt.scorers['bleu'](candtok, refs, 5)
+  bleu = onmt.scorers['bleu'](candtok, refs, 5)
   tester:eq(bleu,0.12,0.01)
 end
 
