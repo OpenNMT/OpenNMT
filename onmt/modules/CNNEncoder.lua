@@ -8,7 +8,7 @@ local CNNEncoder, parent = torch.class('onmt.CNNEncoder', 'nn.Container')
 
 local options = {
   {
-    '-cnn_layers', 5,
+    '-cnn_layers', 2,
     [[Number of convolutional layers in the encoder.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
@@ -35,6 +35,14 @@ local options = {
     '-use_pos_emb', true,
     [[Add positional embeddings to word embeddings.]],
     {
+      structural = 0
+    }
+  },
+  {
+    '-max_pos', 50,
+    [[Maximum value for positional indexes.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0
     }
   }
@@ -66,7 +74,7 @@ function CNNEncoder:__init(args, inputNetwork)
   local inLayer = self.inputNet(input)
 
   if self.args.use_pos_emb then
-    local posEmb = onmt.PositionEmbedding(2, self.args.preprocess.src_seq_length, self.args.src_word_vec_size[1])(input)
+    local posEmb = onmt.PositionEmbedding(2, args.max_pos, convInSize)(input)
     inLayer = nn.CAddTable()({inLayer, posEmb})
   end
 
