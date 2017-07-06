@@ -102,17 +102,10 @@ function CNNEncoder:__init(args, inputNetwork)
     convInSize = convOutSize
   end
 
-  if self.args.bridge == "copy" then
-    _G.logger:info('ERROR : Cannot use copy bridge with convolutional encoder.')
-  elseif self.args.bridge == "none" then
-    self:add(nn.gModule({input},{curLayer}))
-  else
-     local state = nn.Mean(2)(curLayer)
-     self:add(nn.gModule({input},{state, curLayer}))
-  end
+  local state = nn.Mean(2)(curLayer)
+  self:add(nn.gModule({input},{state, curLayer}))
 
-  -- TODO : do we need it ?
-  -- self:resetPreallocation()
+  self:resetPreallocation()
 end
 
 
@@ -125,8 +118,7 @@ function CNNEncoder.load(pretrained)
 
   self.args = pretrained.args
 
-  -- TODO : do we need it ?
-  -- self:resetPreallocation()
+  self:resetPreallocation()
 
   return self
 end
@@ -141,39 +133,42 @@ function CNNEncoder:serialize()
 end
 
 
--- TODO : Do we need it for convolutional decoder ?
--- function Encoder:resetPreallocation()
--- end
+-- TODO : other preallocation ?
+function CNNEncoder:resetPreallocation()
+
+  -- Prototype for preallocated state output gradients.
+  self.gradStatesOutputProto = torch.Tensor()
+
+end
+
 
 
 function CNNEncoder:forward(batch)
   local output = self.modules[1]:forward(batch:getSourceInput())
 
-  local states = nil
-
-  if (type(output) == "table") then
-    states = {output[1]}
-    output = output[2]
-  end
+  local states = {output[1]}
+  local context = output[2]
 
   for i=1,batch.size do
     for j=1, batch.sourceLength-batch.sourceSize[i] do
-      output[i][j]:fill(0)
+      context[i][j]:fill(0)
     end
   end
 
-  return states, output
+  return states, context
 end
 
 function CNNEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
-  local gradOut = nil
+  local outputSize = self.args.cnn_size
+
   if gradStatesOutput then
-    gradOut = {gradStatesOutput[1], gradContextOutput}
+    self.gradStatesOutputProto = gradStatesOutput[1]
   else
-    gradOut = gradContextOutput
+    -- if gradStatesOutput is not defined - start with empty tensor
+    self.gradStatesOutputProto = onmt.utils.Tensor.reuseTensor(self.gradStatesOutputProto, { batch.size, outputSize })
   end
 
-  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), gradOut)
+  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), { self.gradStatesOutputProto, gradContextOutput })
   return gradInputs
 end
