@@ -216,7 +216,7 @@ function Decoder:findAttentionModel()
     self.decoderAttnClones = {}
   end
   for t = #self.decoderAttnClones+1, #self.networkClones do
-    self:net(t):apply(function (layer)
+    self.networkClones[t]:apply(function (layer)
       if layer.name == 'decoderAttn' then
         self.decoderAttnClones[t] = layer
       elseif layer.name == 'softmaxAttn' then
