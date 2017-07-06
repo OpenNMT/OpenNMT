@@ -1,6 +1,6 @@
 OpenNMT provides native implementation of scoring metrics - BLEU, TER, DLRATION
 
-All metrics can be used as a validation metric during training or standalone using `tools/score.lua`:
+All metrics can be used as a validation metric (see [option `-validation_metric`](../options/train/#trainer-options)) during training or standalone using `tools/score.lua`:
 
 ```bash
 $ th tools/score.lua REFERENCE [-sample SN] [-scorer bleu|ter|dlratio] PARAMS < OUT

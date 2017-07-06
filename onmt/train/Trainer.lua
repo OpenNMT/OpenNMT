@@ -69,7 +69,7 @@ local options = {
     '-validation_metric', 'perplexity',
     [[Metric to use for validation.]],
     {
-      enum = { 'perplexity', 'loss', 'bleu', 'dlratio' }
+      enum = { 'perplexity', 'loss', 'bleu', 'ter', 'dlratio' }
     }
   }
 }
