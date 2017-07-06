@@ -122,7 +122,7 @@ end
 local function perform_shift(hwords, startpos, endpos, moveto)
   -- perform a shift on a string of words
   local range = {}
-  if moveto == -1 then
+  if moveto == 0 then
     for j = startpos, endpos do
       table.insert(range, hwords[j])
     end
@@ -174,18 +174,19 @@ local function perform_shift(hwords, startpos, endpos, moveto)
     end
   end
 
-  return table.concat(range, " ")
+  return range
 end
 
 local function gather_all_poss_shifts(hwords, rloc, ralign, herr, rerr, min_size)
   -- find all possible shifts to search through
   local poss = {}
+  local max_poss = -1
 
   -- return an array (@poss), indexed by len of shift
-  -- each entry is (startpos, end, moveto);
+  -- each entry is (startpos, end, moveto)
   for startpos = 1, #hwords do
     if rloc[hwords[startpos]] then
-      local ok = 0
+      local ok = false
 
       for _, moveto in ipairs(rloc[hwords[startpos]]) do
           ok = ok or (startpos ~= ralign[moveto] and
@@ -193,46 +194,53 @@ local function gather_all_poss_shifts(hwords, rloc, ralign, herr, rerr, min_size
                       startpos - ralign[moveto]-1 <= MAX_SHIFT_DIST)
       end
 
-      local endpos = startpos + min_size
+      local endpos = startpos + min_size - 1
       while ok and endpos <= #hwords and endpos < startpos + MAX_SHIFT_SIZE do
         local cand_range = {}
         for j = startpos, endpos do
           table.insert(cand_range, hwords[j])
         end
-        local cand = table.concat(cand_range, ",")
+        local cand = table.concat(cand_range, " ")
+
         ok = false
         if rloc[cand] then
           local any_herr = false
-          local i = 1
+          local i = 0
           while i <= endpos - startpos and not any_herr do
             any_herr = herr[startpos+i]
             i = i + 1
           end
           if not any_herr then
-            ok = 1
+            ok = true
           else
             -- consider moving startpos..end
             for _, moveto in ipairs(rloc[cand]) do
               if ralign[moveto] ~= startpos and
                  (ralign[moveto] < startpos or ralign[moveto] > endpos) and
-                 ralign[moveto - startpos] <= MAX_SHIFT_DIST and
+                 ralign[moveto] - startpos <= MAX_SHIFT_DIST and
                  startpos - ralign[moveto] - 1 <= MAX_SHIFT_DIST then
                 ok = true
 
                 -- check to see if there are any errors in either string
                 -- (only move if this is the case!)
-                local any_rerr = false;
-                i = 1
+                local any_rerr = false
+                i = 0
                 while i <= endpos - startpos and not any_rerr do
                   any_rerr = rerr[moveto+i]
                   i = i + 1
                 end
 
                 if any_rerr then
-                  for roff in 1, endpos - startpos + 1 do
+                  for roff = 0, endpos - startpos do
                     if startpos ~= ralign[moveto+roff] and
                        (roff == 0 or ralign[moveto+roff] ~= ralign[moveto]) then
-                      table.insert(poss[endpos-startpos], {startpos, endpos, moveto+roff})
+                      if not poss[endpos-startpos] then
+                        poss[endpos - startpos] = {}
+                      end
+                      if endpos - startpos > max_poss then
+                        max_poss = endpos - startpos
+                      end
+                      table.insert(poss[endpos - startpos], {startpos, endpos, moveto+roff})
                     end
                   end
                 end
@@ -244,7 +252,7 @@ local function gather_all_poss_shifts(hwords, rloc, ralign, herr, rerr, min_size
       end
     end
   end
-  return poss
+  return poss, max_poss
 end
 
 local function build_word_matches(harr, rarr)
@@ -286,7 +294,7 @@ local function build_word_matches(harr, rarr)
       end
     end
   end
-  return rloc;
+  return rloc
 end
 
 local function calc_best_shift(hyp, ref, rloc, curerr, path_vals)
@@ -307,23 +315,23 @@ local function calc_best_shift(hyp, ref, rloc, curerr, path_vals)
   local herr = {}
   local rerr = {}
 
-  local hpos = -1;
+  local hpos = 0
   for _, sym in ipairs(path_vals) do
     if sym == " " then
       hpos = hpos + 1
-      table.insert(herr, 0)
-      table.insert(rerr, 0)
+      table.insert(herr, false)
+      table.insert(rerr, false)
       table.insert(ralign, hpos)
-    elseif sym == " " then
+    elseif sym == "S" then
       hpos = hpos + 1
-      table.insert(herr, 1)
-      table.insert(rerr, 1)
+      table.insert(herr, true)
+      table.insert(rerr, true)
       table.insert(ralign, hpos)
     elseif sym == "I" then
       hpos = hpos + 1
-      table.insert(herr, 1)
+      table.insert(herr, true)
     elseif sym == "D" then
-      table.insert(rerr, 1)
+      table.insert(rerr, true)
       table.insert(ralign, hpos)
     end
   end
@@ -331,11 +339,11 @@ local function calc_best_shift(hyp, ref, rloc, curerr, path_vals)
   -- Have we found any good shift yet?
   local anygain = false
 
-  local poss_shifts = gather_all_poss_shifts(hyp, rloc, ralign, herr, rerr, 1)
+  local poss_shifts, max_pos_shifts = gather_all_poss_shifts(hyp, rloc, ralign, herr, rerr, 1)
 
   local stop = false
-  local i = #poss_shifts
-  while i > 1 and not stop do
+  local i = max_pos_shifts
+  while i >= 0 and not stop do
     local curfix = curerr - (cur_best_shift_cost + cur_best_score)
     local maxfix = 2 * (1 + i) - SHIFT_COST
 
@@ -346,7 +354,7 @@ local function calc_best_shift(hyp, ref, rloc, curerr, path_vals)
       local work_end = -1
 
       local j = 1
-      while not stop and j < #poss_shifts[i] do
+      while not stop and poss_shifts[i] and j <= #poss_shifts[i] do
         local s = poss_shifts[i][j]
         curfix = curerr - (cur_best_shift_cost + cur_best_score)
         maxfix = (2 * (1 + i)) - SHIFT_COST
@@ -363,12 +371,12 @@ local function calc_best_shift(hyp, ref, rloc, curerr, path_vals)
             end
           end
 
-          local shifted_str = perform_shift(hyp, startpos, endpos, ralign[moveto]);
-          local try_score, try_path = _min_edit_dist(shifted_str, ref, 1)
+          local shifted_str = perform_shift(hyp, startpos, endpos, ralign[moveto])
+          local try_score, try_path = min_edit_dist_arr(shifted_str, ref, 1)
 
           local gain = (cur_best_score + cur_best_shift_cost) - (try_score + SHIFT_COST)
           if gain > 0 or (cur_best_shift_cost == 0 and gain == 0) then
-            anygain = true;
+            anygain = true
             cur_best_score = try_score
             cur_best_shift_cost = SHIFT_COST
             cur_best_path = try_path
@@ -378,8 +386,10 @@ local function calc_best_shift(hyp, ref, rloc, curerr, path_vals)
             cur_best_dest = ralign[moveto]
           end
         end
+        j = j + 1
       end
     end
+    i = i - 1
   end
 
   return cur_best_hyp, cur_best_score, cur_best_path, cur_best_start, cur_best_end, cur_best_dest
@@ -411,6 +421,25 @@ local function calc_shifts(cand, ref)
   return med_score + edits, med_path, cur, all_shifts
 end
 
+local function get_score_breakdown(path, shifts)
+  -- Calculate the score breakdown by type
+  -- INS DEL SUB SHIFT WORDS_SHIFTED
+  local spieces = torch.Tensor{0, 0, 0, #shifts, 0}
+  for _, e in ipairs(path) do
+    if      e == "I" then
+      spieces[1] = spieces[1] + 1
+    elseif  e == "D" then
+      spieces[2] = spieces[2] + 1
+    elseif  e == "S" then
+      spieces[3] = spieces[3] + 1
+    end
+  end
+  for _, s in ipairs(shifts) do
+    spieces[5] = spieces[5] + (s[2] - s[1]) + 1
+  end
+  return spieces
+end
+
 local function score_sent(id, HYP, REFS)
   -- try all references, and find the one with the lowest score
   -- return the score, path, shifts, etc
@@ -418,14 +447,14 @@ local function score_sent(id, HYP, REFS)
   local best_score = -1
   local best_ref = ""
   local best_path = ""
-  local best_hyp = HYP[id]
-  local best_allshift = tmparr;
+  local best_allshift = tmparr
+  local best_hyp
 
   local rlen = 0
 
-  for _, ref in ipairs(REFS[id]) do
-    rlen = rlen + #ref
-    local s, p, newhyp, allshifts = calc_shifts(HYP, ref)
+  for _, ref in ipairs(REFS) do
+    rlen = rlen + #ref[id]
+    local s, p, newhyp, allshifts = calc_shifts(HYP[id], ref[id])
     if best_score < 0 or s < best_score then
       best_score = s
       best_path = p
@@ -435,7 +464,7 @@ local function score_sent(id, HYP, REFS)
     end
   end
 
-  rlen = rlen / (#REFS[id] + 1)
+  rlen = rlen / #REFS
 
   return best_score/rlen, best_path, best_ref, best_hyp, best_allshift
 end
@@ -443,11 +472,23 @@ end
 local function calculate_ter(cand, refs)
   local score = 0
   local nb = 0
+  local score_breakdown = torch.Tensor(5)
   for k,_ in ipairs(cand) do
-    score = score + score_sent(k, cand, refs)
+    local best_score, best_path, _, _, best_allshift =
+              score_sent(k, cand, refs)
+
+    score = score + best_score
+    score_breakdown:add(get_score_breakdown(best_path, best_allshift))
+
     nb = nb + 1
   end
-  return score/nb*100
+  score_breakdown:div(nb)
+  local score_detail =
+      string.format("TER = %.2f (Ins %.1f, Del %.1f, Sub %.1f, Shft %.1f, WdSh %.1f)",
+          score*100/nb, score_breakdown[1], score_breakdown[2], score_breakdown[3],
+          score_breakdown[4], score_breakdown[5]
+      )
+  return score/nb, score_detail
 end
 
 return calculate_ter

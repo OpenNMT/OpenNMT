@@ -2,7 +2,7 @@ require('onmt.init')
 
 local tester = ...
 
-local bleuTest = torch.TestSuite()
+local terTest = torch.TestSuite()
 
 local ref1 = {
 [[After 60 days of hard work , the scientists from Xi ' an Satellite Testing and Monitoring Center overcame various technical difficulties and successfully solved the malfunction of the Beidou Navigation Experimental Satellites ( BDNES ) .]],
@@ -32,21 +32,19 @@ local function tok(t)
   return tt
 end
 
-function bleuTest.basic()
+function terTest.basic()
   local refs = { tok(ref1) }
   local candtok = tok(cand)
   -- one reference
-  local bleu = onmt.scorers['bleu'](candtok, refs)
-  tester:eq(bleu,0.15,0.01)
+  local ter = onmt.scorers['ter'](candtok, refs)
+  tester:eq(ter,0.659,0.01)
   table.insert(refs, tok(ref2))
   -- two references
   local details
-  bleu, details = onmt.scorers['bleu'](candtok, refs)
-  tester:eq(bleu,0.20,0.01)
+  ter, details = onmt.scorers['ter'](candtok, refs)
+  tester:eq(ter,0.646,0.01)
   tester:assert(details:find("20.5") ~= 0)
-  -- two references with order 5
-  bleu, details = onmt.scorers['bleu'](candtok, refs, 5)
-  tester:eq(bleu,0.12,0.01)
+  tester:assert(details:find("+/- 0") ~= 0)
 end
 
-return bleuTest
+return terTest
