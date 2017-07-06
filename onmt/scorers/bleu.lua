@@ -20,7 +20,7 @@ local function my_log(v)
   return math.log(v)
 end
 
-local function calculate_bleu_excludeminmax(cand, refs, N, min, max)
+local function _calculate_bleu(cand, refs, N)
   local length_translation = 0
   local length_reference = 0
   local total = {}
@@ -28,50 +28,48 @@ local function calculate_bleu_excludeminmax(cand, refs, N, min, max)
 
   local actual_size = 0
   for i = 1, #cand do
-    if not min or i < min or i > max then
-      local cand_length = #cand[i]
-      local closest_diff = 9999
-      local closest_length = 9999
+    local cand_length = #cand[i]
+    local closest_diff = 9999
+    local closest_length = 9999
 
-      local ref_ngram = {}
+    local ref_ngram = {}
 
-      for _, ref in ipairs(refs) do
-        local ref_length = #ref[i]
-        local diff = math.abs(cand_length-ref_length)
-        if diff < closest_diff then
-          closest_diff = diff
+    for _, ref in ipairs(refs) do
+      local ref_length = #ref[i]
+      local diff = math.abs(cand_length-ref_length)
+      if diff < closest_diff then
+        closest_diff = diff
+        closest_length = ref_length
+      elseif diff == closest_diff then
+        if ref_length < closest_length then
           closest_length = ref_length
-        elseif diff == closest_diff then
-          if ref_length < closest_length then
-            closest_length = ref_length
-          end
-        end
-
-        local ref_ngrams_n = {}
-        get_ngrams(ref_ngrams_n, ref[i], N)
-
-        for k, v in pairs(ref_ngrams_n) do
-          if not ref_ngram[k] or ref_ngram[k][1] < v[1] then
-            ref_ngram[k] = v
-          end
         end
       end
 
-      length_translation = length_translation + cand_length
-      length_reference = length_reference+ closest_length
+      local ref_ngrams_n = {}
+      get_ngrams(ref_ngrams_n, ref[i], N)
 
-      local t_gram = {}
-      get_ngrams(t_gram, cand[i], N)
-
-      for k,v in pairs(t_gram) do
-        local n = v[2]
-        total[n] = (total[n] or 0) + v[1]
-        if ref_ngram[k] then
-          correct[n] = (correct[n] or 0) + math.min(v[1], ref_ngram[k][1])
+      for k, v in pairs(ref_ngrams_n) do
+        if not ref_ngram[k] or ref_ngram[k][1] < v[1] then
+          ref_ngram[k] = v
         end
       end
-      actual_size = actual_size + 1
     end
+
+    length_translation = length_translation + cand_length
+    length_reference = length_reference+ closest_length
+
+    local t_gram = {}
+    get_ngrams(t_gram, cand[i], N)
+
+    for k,v in pairs(t_gram) do
+      local n = v[2]
+      total[n] = (total[n] or 0) + v[1]
+      if ref_ngram[k] then
+        correct[n] = (correct[n] or 0) + math.min(v[1], ref_ngram[k][1])
+      end
+    end
+    actual_size = actual_size + 1
   end
 
   local nbleu = {}
@@ -106,26 +104,13 @@ local function calculate_bleu_excludeminmax(cand, refs, N, min, max)
 end
 
 
-local function calculate_bleu(cand, refs, sample, N)
+local function calculate_bleu(cand, refs, N)
   N = N or 4
-  sample = sample or 1
 
-  local bleu, nbleu, bp, lratio, ltrans, lref = calculate_bleu_excludeminmax(cand, refs, N)
+  local bleu, nbleu, bp, lratio, ltrans, lref = _calculate_bleu(cand, refs, N)
 
-  local margin = 0
-
-  if sample > 1 then
-    local s = #cand
-    for k = 1, sample do
-      local sbleu = select(1, calculate_bleu_excludeminmax(cand, refs, N, (k-1)*s/sample, k*s/sample))
-      if math.abs(sbleu-bleu) > margin then
-        margin = math.abs(sbleu-bleu)
-      end
-    end
-  end
-
-  local vs = { bleu*100, margin*100 }
-  local format = "BLEU = %.2f +/- %.2f, "
+  local vs = { bleu*100 }
+  local format = "BLEU = %.2f, "
   for n = 1, N do
     if n > 1 then format = format .. '/' end
     format = format .. "%.1f"
