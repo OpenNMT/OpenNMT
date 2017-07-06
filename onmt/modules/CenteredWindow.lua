@@ -1,5 +1,9 @@
 --[[
-  Build:
+  Input:
+    - a sequence `seq` (batchxL)
+    - a positional tensor (batch) with float position in [1;L]
+
+  Output:
     - a local window [p-D;p+D] along second dimension around position p (float)
     - a gaussian distribution for the window $$\mu(s)=exp(-\frac{(s-p_t)^2}{2\sigma^2})$$
 ]]
