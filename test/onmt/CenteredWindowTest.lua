@@ -32,14 +32,16 @@ function centeredWindowTest.forwardbackward()
   end
   local gc = torch.Tensor(12, 7, 8):fill(1)
   local gmu = torch.Tensor(12, 7):uniform(0.1)
-  local gI = onmt.CenteredWindow(3):backward({c, p}, {gc, gmu})
+  local m = onmt.CenteredWindow(3)
+  m:forward({c, p})
+  local gI = m:backward({c, p}, {gc, gmu})
 
   local gI1 = gI[1]
   local gI2 = gI[2]
   tester:eq(gI1[1]:narrow(1,1,4):sum(), 32)
   tester:eq(gI1[1]:narrow(1,5,7):sum(), 0)
   tester:eq(gI1[5]:sum(), 7*8)
-  tester:eq(gI2:sum(), 0)
+  tester:eq(gI2:sum(), -5.9e-16, 0.1e-16)
 end
 
 return centeredWindowTest
