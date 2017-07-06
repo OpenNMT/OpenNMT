@@ -7,7 +7,9 @@ scorers.dlratio = require 'onmt.scorers.dlratio'
 -- Build list of available scorers.
 scorers.list = {}
 for k, _ in pairs(scorers) do
-  table.insert(scorers.list, k)
+  if k ~= 'list' then
+    table.insert(scorers.list, k)
+  end
 end
 
 -- Mark here scorers that support multiple references.
