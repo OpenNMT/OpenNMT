@@ -111,6 +111,6 @@ build = {
     ["onmt.Model"] = "onmt/Model.lua",
     ["onmt.scorers.init"] = "onmt/scorers/init.lua",
     ["onmt.scorers.bleu"] = "onmt/scorers/bleu.lua",
-    ["onmt.scorers.ter"] = "onmt/scorers/ter.lua"
+    ["onmt.scorers.tercom"] = "onmt/scorers/tercom.lua"
   }
 }
