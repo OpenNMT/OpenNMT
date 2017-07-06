@@ -101,7 +101,8 @@ local function main()
   end
 
   local score, format = onmt.scorers[opt.scorer](hyp, references, opt.order)
-  local margin = 0
+  score = string.format("%.2f", score*100)
+  local margin = ''
 
   if opt.sample > 1 then
     local scores = torch.Tensor(opt.sample)
@@ -121,10 +122,10 @@ local function main()
       end
       scores[k] = onmt.scorers[opt.scorer](nhyp, nref, opt.order)
     end
-    score = torch.mean(scores)
-    margin = torch.std(scores)*1.96
+    score = string.format("%.2f", torch.mean(scores)*100)
+    margin = string.format("+/-%.2f", torch.std(scores)*1.96*100)
   end
-  print(score, '+/-'..margin, format)
+  print(score, margin, format)
 end
 
 main()

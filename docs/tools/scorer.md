@@ -9,14 +9,14 @@ $ th tools/score.lua REFERENCE [-sample SN] [-scorer bleu|ter|dlratio] PARAMS < 
 The actual metric is selected with `scorer` option and the output is a line with 3 field, tab separated like:
 
 ```
-0.34595538877232        +/-0.0093241227401284   BLEU = 34.77, 79.8/49.1/29.6/17.6 (BP=0.919, ratio=0.922, hyp_len=26742, ref_len=28995)
-0.54765684807534        +/-0    TER = 54.77 (Ins 1.8, Del 4.4, Sub 9.6, Shft 1.9, WdSh 2.6)
+34.73        +/-0.83        BLEU = 34.77, 79.8/49.1/29.6/17.6 (BP=0.919, ratio=0.922, hyp_len=26742, ref_len=28995)
+54.77                       TER = 54.77 (Ins 1.8, Del 4.4, Sub 9.6, Shft 1.9, WdSh 2.6)
 ```
 
 The fields are:
 
 * numeric value of the score
-* 95% confidence error margin for k sample in `sample` is specified
+* 95% confidence error margin (1.96*standard deviation) for k samples of half-size
 * formated scorer output
 
 !!! tip "Tip"
