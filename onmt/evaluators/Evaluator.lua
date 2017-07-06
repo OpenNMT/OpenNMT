@@ -39,11 +39,11 @@ end
 -- Predefine common comparison methods.
 function Evaluator.lowerIsBetter(a, b, delta)
   delta = delta or 0
-  return a - b <= delta
+  return a - (b - delta) <= 0
 end
 function Evaluator.higherIsBetter(a, b, delta)
   delta = delta or 0
-  return a - b >= delta
+  return a - (b + delta) >= 0
 end
 
 --[[ Return the name of the evaluation metric. ]]
