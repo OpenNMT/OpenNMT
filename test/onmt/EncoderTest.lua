@@ -14,6 +14,10 @@ local function buildEncoder(class, rnnType, merge)
   opt.brnn_merge = merge or 'sum'
   opt.dropout = 0
 
+  if class == onmt.CNNEncoder then
+    opt.cnn_size = 10
+  end
+
   local inputNet = nn.LookupTable(10, 4)
   inputNet.inputSize = 4
 
@@ -39,7 +43,9 @@ local function genericCheckDim(encoder, opt)
   end
 
   tester:eq(context:size(), torch.LongStorage({3, timesteps, opt.rnn_size}))
-  tester:eq(#states, opt.layers * (opt.rnn_type == 'LSTM' and 2 or 1))
+  if not opt.cnn_size then
+    tester:eq(#states, opt.layers * (opt.rnn_type == 'LSTM' and 2 or 1))
+  end
   for _, v in ipairs(states) do
     tester:eq(v:size(), torch.LongStorage({3, opt.rnn_size}))
   end
@@ -52,9 +58,18 @@ local function genericCheckDim(encoder, opt)
 
   local gradInputs = encoder:backward(batch, gradStatesOutput, gradContextOutput)
 
-  tester:eq(#gradInputs, 4)
-  for _, v in ipairs(gradInputs) do
-    tester:eq(v:size(), torch.LongStorage({3}))
+  local steps = #gradInputs
+  if opt.cnn_size then
+    steps = gradInputs:size(2)
+  end
+  tester:eq(steps, 4)
+
+  if not opt.cnn_size then
+    for _, v in ipairs(gradInputs) do
+      tester:eq(v:size(), torch.LongStorage({3}))
+    end
+  else
+    tester:eq(gradInputs:size(1), 3)
   end
 
   return states, context
@@ -231,6 +246,21 @@ end
 
 function encoderTest.pdbrnn_saveAndLoad_GRU()
   local encoder, opt = buildEncoder(onmt.PDBiEncoder, 'GRU')
+  genericCheckSerial(encoder, opt)
+end
+
+function encoderTest.cnn()
+  local encoder, opt = buildEncoder(onmt.CNNEncoder)
+  genericCheckDim(encoder, opt)
+end
+
+function encoderTest.cnn_masking()
+  local encoder, _ = buildEncoder(onmt.CNNEncoder)
+  genericCheckMasking(encoder)
+end
+
+function encoderTest.cnn_saveAndLoad()
+  local encoder, opt = buildEncoder(onmt.CNNEncoder)
   genericCheckSerial(encoder, opt)
 end
 
