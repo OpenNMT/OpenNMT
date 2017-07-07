@@ -43,7 +43,7 @@ function PDBiEncoder:__init(args, input)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.multiplier = math.pow(self.args.pdbrnn_reduction, args.layers - 1)
   self.args.hiddenSize = args.rnn_size
-  self.args.numEffectiveLayers = 0
+  self.args.numStates = 0
 
   for i = 1, args.layers do
     local layerArgs = onmt.utils.Tensor.deepClone(args)
@@ -65,7 +65,7 @@ function PDBiEncoder:__init(args, input)
     end
 
     local brnn = onmt.BiEncoder(layerArgs, input)
-    self.args.numEffectiveLayers = self.args.numEffectiveLayers + brnn.args.numEffectiveLayers
+    self.args.numStates = self.args.numStates + brnn.args.numStates
     self:add(brnn)
   end
 
@@ -82,6 +82,7 @@ function PDBiEncoder.load(pretrained, className)
   end
 
   self.args = pretrained.args
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers -- Backward compatibility.
 
   self:resetPreallocation()
   return self
@@ -119,7 +120,7 @@ function PDBiEncoder:forward(batch, initial_states)
   batch:resizeSource(math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier)
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.hiddenSize })
   end

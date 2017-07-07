@@ -29,11 +29,9 @@ local function testRNN(cell, layers, inputSize, hiddenSize, dropout, residual, d
   table.insert(inputs, torch.Tensor(2, inputSize):uniform())
 
   local expectedDropout = 0
-  if dropout and dropout > 0 then
-    expectedDropout = expectedDropout + layers - 1
-    if dropout_input then
-      expectedDropout = expectedDropout + 1
-    end
+  expectedDropout = expectedDropout + layers - 1
+  if dropout_input then
+    expectedDropout = expectedDropout + 1
   end
 
   checkModuleCount(rnn, 'nn.Dropout', expectedDropout)

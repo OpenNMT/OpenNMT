@@ -37,7 +37,7 @@ function GoogleEncoder:__init(args, input)
 
   self.args = {}
   self.args.hiddenSize = args.rnn_size
-  self.args.numEffectiveLayers = self.modules[1].args.numEffectiveLayers + self.modules[2].args.numEffectiveLayers
+  self.args.numStates = self.modules[1].args.numStates + self.modules[2].args.numStates
 
   self:resetPreallocation()
 end
@@ -49,7 +49,9 @@ function GoogleEncoder.load(pretrained)
 
   self:add(onmt.BiEncoder.load(pretrained.modules[1]))
   self:add(onmt.Encoder.load(pretrained.modules[2]))
+
   self.args = pretrained.args
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers -- Backward compatibility.
 
   self:resetPreallocation()
   return self
@@ -92,10 +94,10 @@ end
 function GoogleEncoder:backward(batch, gradStatesOutput, gradContextOutput)
   local brnnGradStates = onmt.utils.Table.subrange(gradStatesOutput,
                                                    1,
-                                                   self.modules[1].args.numEffectiveLayers)
+                                                   self.modules[1].args.numStates)
   local rnnGradStates = onmt.utils.Table.subrange(gradStatesOutput,
-                                                  self.modules[1].args.numEffectiveLayers + 1,
-                                                  self.modules[2].args.numEffectiveLayers)
+                                                  self.modules[1].args.numStates + 1,
+                                                  self.modules[2].args.numStates)
 
   local firstGradInputs = self.modules[2]:backward(self.inputs[2], rnnGradStates, gradContextOutput)
 

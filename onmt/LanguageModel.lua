@@ -66,6 +66,8 @@ function LanguageModel:__init(args, dicts)
   self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)
 
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.srcVocabSize = dicts.src.words:size(1)
+
 end
 
 function LanguageModel.load(args, models, dicts)
@@ -77,6 +79,12 @@ function LanguageModel.load(args, models, dicts)
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.generator = onmt.Generator.load(models.generator)
   self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.srcVocabSize = dicts.src.words:size(1)
+
+  self.eosProto = {}
+  for _ = 1, #dicts.src.features + 1 do
+    table.insert(self.eosProto, torch.LongTensor())
+  end
 
   return self
 end
@@ -93,6 +101,16 @@ function LanguageModel.dataType(datatype)
   else
     return datatype == 'monotext'
   end
+end
+
+function LanguageModel:setGeneratorVocab(t)
+  self.models.generator:setGeneratorVocab(t)
+  self.criterion.mainCriterion.weights:resize(t:size(1))
+end
+
+function LanguageModel:unsetGeneratorVocab()
+  self.models.generator:setGeneratorVocab()
+  self.criterion.mainCriterion.weights:resize(self.srcVocabSize)
 end
 
 function LanguageModel:enableProfiling()

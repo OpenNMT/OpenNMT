@@ -104,6 +104,11 @@ function beamSearchTest.beamSearch()
   tester:eq(results, { {{tokens = {2, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
                        {{tokens = {1, 3, 4}, states = {}, score = math.log(.6*.4*.9)}},
                        {{tokens = {4}, states = {}, score = math.log(.9)}} }, 1e-6)
+
+  -- Test beam search saver.
+  beamSearcher = onmt.translate.BeamSearcher.new(advancer, true)
+  local _, histories = beamSearcher:search(beamSize, nBest)
+  tester:eq(#histories[1].predictedIds, 2)
 end
 
 return beamSearchTest

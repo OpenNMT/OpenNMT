@@ -50,9 +50,25 @@ local options = {
   },
   {
     '-dropout_input', false,
-    [[Also apply dropout to the input of the recurrent module.]],
+    [[Dropout probability applied to the input of the recurrent module.]],
     {
       structural = 0
+    }
+  },
+  {
+    '-dropout_words', 0,
+    [[Dropout probability applied to the source sequence.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0, 1),
+      structural = 1
+    }
+  },
+  {
+    '-dropout_type', 'naive',
+    [[Dropout type.]],
+    {
+      structural = 0,
+      enum = { 'naive', 'variational'}
     }
   },
   {
@@ -81,14 +97,15 @@ function Encoder:__init(args, inputNetwork)
     RNN = onmt.GRU
   end
 
-  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input)
+  local rnn = RNN.new(args.layers, inputNetwork.inputSize, args.rnn_size, args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
   self.inputNet = inputNetwork
 
   self.args = {}
   self.args.rnnSize = self.rnn.outputSize
-  self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.numStates = self.rnn.numStates
+  self.args.dropout_type = args.dropout_type
 
   parent.__init(self, self:_buildModel())
 
@@ -100,6 +117,8 @@ function Encoder.load(pretrained)
   local self = torch.factory('onmt.Encoder')()
 
   self.args = pretrained.args
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers -- Backward compatibility.
+
   parent.__init(self, pretrained.modules[1])
 
   self:resetPreallocation()
@@ -142,7 +161,7 @@ function Encoder:_buildModel()
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, self.args.numEffectiveLayers do
+  for _ = 1, self.args.numStates do
     local h0 = nn.Identity()() -- batchSize x rnnSize
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -182,7 +201,7 @@ function Encoder:forward(batch, initial_states)
   -- if states is not passed, start with empty state
   if not states then
     if self.statesProto == nil then
-      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                            self.stateProto,
                                                            { batch.size, outputSize })
     end
@@ -197,6 +216,11 @@ function Encoder:forward(batch, initial_states)
 
   if self.train then
     self.inputs = {}
+
+    if self.args.dropout_type == 'variational' then
+      -- Initialize noise for variational dropout.
+      onmt.VariationalDropout.initializeNetwork(self.network)
+    end
   end
 
   -- Act like nn.Sequential and call each clone in a feed-forward
@@ -250,7 +274,7 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
   -- TODO: change this to (input, gradOutput) as in nngraph.
   local outputSize = self.args.rnnSize
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                               self.gradOutputProto,
                                                               { batch.size, outputSize })
   end

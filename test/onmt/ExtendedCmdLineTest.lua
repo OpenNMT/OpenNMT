@@ -117,24 +117,18 @@ function cmdLineTest.fail_unknown()
   onmt.Seq2Seq.declareOpts(cmd)
   onmt.data.SampledDataset.declareOpts(cmd)
   tester:assertError(function() cmd:parse({'-src_word_vec_size', '500', '-xxx'}) end)
-  tester:assertError(function() cmd:parse({'-sample_tgt_vocab', '-sample', '0'}) end)
+  tester:assertError(function() cmd:parse({'-sample_vocab', '-sample', '0'}) end)
 end
 
 function cmdLineTest.arguments()
   local cmd = onmt.utils.ExtendedCmdLine.new()
-  local options = {
-    {
-      'mode', 'string',
-      [['score' apply lm to input text, 'sample' samples output based on input text.]],
-      {
-        enum = { 'score', 'sample' }
-      }
-    }
-  }
+  local options = { { '-opt1', 'toto', '' }, { 'pos_opt2', 'string', '' } }
 
-  cmd:setCmdLineOptions(options, 'Data')
-  tester:assertError(function() cmd:parse({''}) end)
-  tester:assertNoError(function() cmd:parse({'score'}) end)
+  cmd:setCmdLineOptions(options)
+
+  tester:assertError(function() cmd:parse({'-opt1', 'titi'}) end)
+  tester:assertNoError(function() cmd:parse({'toto'}) end)
+  tester:assertNoError(function() cmd:parse({'-opt1', 'titi', 'toto'}) end)
 end
 
 return cmdLineTest

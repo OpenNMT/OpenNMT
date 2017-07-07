@@ -320,4 +320,43 @@ function Batch:reverseSourceInPlace()
   self.sourceInputFeatures, self.sourceInputFeaturesRev = self.sourceInputFeaturesRev, self.sourceInputFeatures
 end
 
+function Batch:dropoutWords(p)
+  assert(not self.inputVectors, "-dropout_words option cannot be used with input vectors")
+
+  local vocabMask = torch.Tensor()
+
+  for i = 1, self.sourceInput:size(1) do
+    local vocab = {}
+    local vocabMap = {}
+
+    for j = 1, self.sourceInput:size(2) do
+      local x = self.sourceInput[i][j]
+      if x > onmt.Constants.EOS and not vocab[x] then
+        table.insert(vocabMap, x)
+        vocab[x] = #vocabMap
+      end
+    end
+
+    vocabMask:resize(#vocabMap)
+    vocabMask:bernoulli(1-p)
+
+    for j = 1, self.sourceInput:size(2) do
+      local x = self.sourceInput[i][j]
+      if x > onmt.Constants.EOS and vocabMask[vocab[x]] == 0 then
+        self.sourceInput[i][j] = onmt.Constants.PAD
+      end
+    end
+  end
+end
+
+--[[ Remove target related attributes, e.g. for translation only. ]]
+function Batch:removeTarget()
+  self.targetLength = nil
+  self.targetSize = nil
+  self.targetInput = nil
+  self.targetOutput = nil
+  self.targetInputFeatures = nil
+  self.targetOutputFeatures = nil
+end
+
 return Batch

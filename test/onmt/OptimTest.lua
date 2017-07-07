@@ -42,7 +42,7 @@ function optimTest.decay_default_decayByEpoch()
   tester:eq(optim:updateLearningRate(5.0, 2), args.learning_rate * optim.args.learning_rate_decay)
 end
 
-function optimTest.decay_default_decayByPPL()
+function optimTest.decay_default_decayByScore()
   local args = {
     decay = 'default',
     learning_rate = 1
@@ -54,7 +54,7 @@ function optimTest.decay_default_decayByPPL()
   tester:eq(optim:updateLearningRate(11.0, 2), args.learning_rate * optim.args.learning_rate_decay)
 end
 
-function optimTest.decay_default_decayByPPLAgain()
+function optimTest.decay_default_decayByScoreAgain()
   local args = {
     decay = 'default',
     learning_rate = 1
@@ -67,11 +67,11 @@ function optimTest.decay_default_decayByPPLAgain()
   tester:eq(optim:updateLearningRate(9.0, 3), args.learning_rate * optim.args.learning_rate_decay * optim.args.learning_rate_decay)
 end
 
-function optimTest.decay_default_decayByPPLDelta()
+function optimTest.decay_default_decayByScoreDelta()
   local args = {
     decay = 'default',
     learning_rate = 1,
-    start_decay_ppl_delta = 0.5
+    start_decay_score_delta = 0.5
   }
 
   local optim = getOptim(args)
@@ -80,9 +80,9 @@ function optimTest.decay_default_decayByPPLDelta()
   tester:eq(optim:updateLearningRate(10.75, 2), args.learning_rate * optim.args.learning_rate_decay)
 end
 
-function optimTest.decay_perplexityOnly_noDecay()
+function optimTest.decay_scoreOnly_noDecay()
   local args = {
-    decay = 'perplexity_only',
+    decay = 'score_only',
     learning_rate = 1,
     start_decay_at = 2
   }
@@ -93,17 +93,58 @@ function optimTest.decay_perplexityOnly_noDecay()
   tester:eq(optim:updateLearningRate(5.0, 2), args.learning_rate)
 end
 
-function optimTest.decay_perplexityOnly_decay()
+function optimTest.decay_scoreOnly_noDecayDeltaLowerIsBetter()
   local args = {
-    decay = 'perplexity_only',
+    decay = 'score_only',
     learning_rate = 1,
-    start_decay_ppl_delta = 0.5
+    start_decay_score_delta = 0.5
   }
 
   local optim = getOptim(args)
 
   optim.valPerf[1] = 10.0
-  tester:eq(optim:updateLearningRate(10.75, 2), args.learning_rate * optim.args.learning_rate_decay)
+  tester:eq(optim:updateLearningRate(9, 2), args.learning_rate)
+end
+
+function optimTest.decay_scoreOnly_noDecayDeltaHigherIsBetter()
+  local args = {
+    decay = 'score_only',
+    learning_rate = 1,
+    start_decay_score_delta = 0.5
+  }
+
+  local optim = getOptim(args)
+
+  optim.valPerf[1] = 10.0
+  tester:eq(optim:updateLearningRate(11, 2, onmt.evaluators.BLEUEvaluator.new()),
+            args.learning_rate)
+end
+
+function optimTest.decay_scoreOnly_decayDeltaLowerIsBetter()
+  local args = {
+    decay = 'score_only',
+    learning_rate = 1,
+    start_decay_score_delta = 0.5
+  }
+
+  local optim = getOptim(args)
+
+  optim.valPerf[1] = 10.0
+  tester:eq(optim:updateLearningRate(9.75, 2), args.learning_rate * optim.args.learning_rate_decay)
+end
+
+function optimTest.decay_scoreOnly_decayDeltaHigherIsBetter()
+  local args = {
+    decay = 'score_only',
+    learning_rate = 1,
+    start_decay_score_delta = 1
+  }
+
+  local optim = getOptim(args)
+
+  optim.valPerf[1] = 10.0
+  tester:eq(optim:updateLearningRate(10.5, 2, onmt.evaluators.BLEUEvaluator.new()),
+            args.learning_rate * optim.args.learning_rate_decay)
 end
 
 function optimTest.decay_epochOnly_noDecay()
