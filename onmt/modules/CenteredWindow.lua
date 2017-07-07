@@ -82,10 +82,10 @@ function CenteredWindow:updateGradInput(input, gradOutput)
     self.gradInput[1][i]:narrow(1, left, right-left+1):copy(gradOutput[1][i]:narrow(1, dec, right-left+1))
   end
 
-  -- no gradient on the positional tensor
+  -- differenciation on p
   local frac = (p - torch.floor(p)):resize(batch, 1):expand(batch, 2*self.D + 1)
   local decbatch = self.dec:expand(batch, 2*self.D + 1)
-  self.gradInput[2] = 2*self.inv2sigma*torch.cmul(self.output[2], (frac+decbatch)):sum(2)
+  self.gradInput[2] = -2*self.inv2sigma*torch.cmul(self.output[2], (frac+decbatch)):sum(2)
 
   return self.gradInput
 end
