@@ -150,7 +150,7 @@ local function describeRNN(opt)
                  opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout_type)
 end
 
-local function describeCNN(opt)  
+local function describeCNN(opt)
   _G.logger:info('   - structure: cnn_kernel = %d; cnn_layers = %d; cnn_size = %d;',
                    opt.cnn_kernel, opt.cnn_layers, opt.cnn_size)
 end
@@ -171,9 +171,9 @@ function Factory.buildEncoder(opt, inputNetwork)
       describeCNN(opt)
     else
       describeRNN(opt)
-    end    
+    end
   end
-  
+
   if opt.encoder_type == 'brnn' then
     describeEncoder('bidirectional RNN')
     return onmt.BiEncoder.new(opt, inputNetwork)

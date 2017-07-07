@@ -63,7 +63,7 @@ function CNNEncoder:__init(args, inputNetwork)
   self.inputNet = inputNetwork
   self.args = args
 
-  self.args.numEffectiveLayers = 1
+  self.args.numStates = 1
 
   local convInSize = inputNetwork.inputSize
   local convOutSize = args.cnn_size

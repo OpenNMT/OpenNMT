@@ -48,12 +48,12 @@ function PositionEmbedding:updateOutput(input)
    return self.output
 end
 
-function PositionEmbedding:updateGradInput(input, gradOutput)
+function PositionEmbedding:updateGradInput(_, gradOutput)
    self.gradInput = parent.updateGradInput(self, self.input, gradOutput)
    return self.gradInput
 end
 
-function PositionEmbedding:accGradParameters(input, gradOutput, scale)
+function PositionEmbedding:accGradParameters(_, gradOutput, scale)
    parent.accGradParameters(self, self.input, gradOutput, scale)
    self.gradWeight[self.max_pos+1]:zero()
 end
