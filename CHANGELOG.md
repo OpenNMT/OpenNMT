@@ -3,6 +3,7 @@
 ### New features
 
 * Add TER calculation
+* Add CNN encoder
 
 ### Fixes and improvements
 
