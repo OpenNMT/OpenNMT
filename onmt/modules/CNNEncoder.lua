@@ -1,4 +1,4 @@
---[[ Google's Convolutional Encoder as described in https://arxiv.org/abs/1611.02344.
+--[[ Convolutional Encoder similar to the one described in https://arxiv.org/abs/1611.02344.
 
 
 
