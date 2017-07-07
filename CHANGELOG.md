@@ -1,10 +1,13 @@
 ## [Unreleased]
 
+### New features
+
+* Add TER calculation
+
 ### Fixes and improvements
 
 * Allow disabling gradients clipping with `-max_grad_norm 0`
-* Allow disabling global parameters initialization
-* Add TER calculation
+* Allow disabling global parameters initialization with `-param_init 0`
 * Introduce error estimation in scorer for all metrics
 * Fix validation score delta that was applied in the incorrect direction
 
