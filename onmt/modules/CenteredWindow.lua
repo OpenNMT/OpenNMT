@@ -23,6 +23,9 @@ function CenteredWindow:__init(D)
   end
 end
 
+local function distWeight(K,x) return torch.exp(-K*torch.cmul(x,x)) end
+local function gradDistWeight(K, x, distWeightX) return -2*K*torch.cmul(x,distWeightX or distWeigth(K, x)) end
+
 function CenteredWindow:updateOutput(input)
   local seq = input[1]
   local p = input[2]
@@ -37,8 +40,9 @@ function CenteredWindow:updateOutput(input)
   self.output[1]:resize(size):zero()
   --self.mask:resize(size):zero()
 
-  local left = torch.floor(p) - self.D
-  local right = torch.floor(p) + self.D
+  local floorp = torch.floor(p)
+  local left = floorp - self.D
+  local right = floorp + self.D
 
   for i = 1, batch do
     local dec = 1
@@ -57,7 +61,7 @@ function CenteredWindow:updateOutput(input)
   -- keep fractional part of p and expand to a batch * 2D+1 tensor
   local frac = (p - torch.floor(p)):resize(batch, 1):expand(batch, 2*self.D + 1)
   local decbatch = self.dec:expand(batch, 2*self.D + 1)
-  self.output[2] = torch.exp(-self.inv2sigma*torch.cmul(frac+decbatch, frac+decbatch))
+  self.output[2] = distWeight(self.inv2sigma, frac+decbatch)
 
   return self.output
 end
@@ -66,15 +70,16 @@ function CenteredWindow:updateGradInput(input, gradOutput)
   local seq = input[1]
   local p = input[2]
 
-  -- passing back gradient through the window - ignore gradient propagation on mu
+  -- passing back gradient through the window
   self.gradInput[1] = self.gradInput[1]:typeAs(seq):resizeAs(seq):zero()
 
   local size = seq:size()
   local batch = size[1]
   local L = size[2]
 
-  local left = torch.floor(p) - self.D
-  local right = torch.floor(p) + self.D
+  local floorp = torch.floor(p)
+  local left = floorp - self.D
+  local right = floorp + self.D
 
   for i = 1, batch do
     local dec = 1
@@ -89,9 +94,9 @@ function CenteredWindow:updateGradInput(input, gradOutput)
   end
 
   -- differenciation on p
-  local frac = (p - torch.floor(p)):resize(batch, 1):expand(batch, 2*self.D + 1)
+  local frac = floorp:resize(batch, 1):expand(batch, 2*self.D + 1)
   local decbatch = self.dec:expand(batch, 2*self.D + 1)
-  self.gradInput[2] = 2*self.inv2sigma*torch.cmul(torch.cmul(self.output[2], frac+decbatch), gradOutput[2]):sum(2)
+  self.gradInput[2] = torch.cmul(gradDistWeight(self.inv2sigma, frac+decbatch, self.output[2]), gradOutput[2]):sum(2)
 
   return self.gradInput
 end
