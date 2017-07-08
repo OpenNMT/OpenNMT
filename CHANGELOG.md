@@ -1,18 +1,19 @@
 ## [Unreleased]
 
 ### New features
+* Add TER calculation
+* Add CNN encoder
 * Introduce Local Alignment
-
-### Deprecations
-* Option `-global_attention <type>` is replaced by `-attention_type <type>` to introduce local alignment
 
 ### Fixes and improvements
 
 * Allow disabling gradients clipping with `-max_grad_norm 0`
-* Allow disabling global parameters initialization
-* Add TER calculation
+* Allow disabling global parameters initialization with `-param_init 0`
 * Introduce error estimation in scorer for all metrics
 * Fix validation score delta that was applied in the incorrect direction
+
+### Deprecations
+* Option `-global_attention <type>` is replaced by `-attention_type <type>` to introduce local alignment
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 

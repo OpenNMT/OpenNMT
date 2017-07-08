@@ -48,7 +48,7 @@
 * `-residual [<boolean>]` (default: `false`)<br/>Add residual connections between recurrent layers.
 * `-bridge <string>` (accepted: `copy`, `dense`, `dense_nonlinear`, `none`; default: `copy`)<br/>Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder must have the same number of layers.
 * `-input_feed [<boolean>]` (default: `true`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
-* `-encoder_type <string>` (accepted: `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`; default: `rnn`)<br/>Encoder type.
+* `-encoder_type <string>` (accepted: `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`, `cnn`; default: `rnn`)<br/>Encoder type.
 * `-attention <string>` (accepted: `none`, `global`; default: `global`)<br/>Attention model.
 * `-brnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action for the bidirectional states.
 * `-pdbrnn_reduction <number>` (default: `2`)<br/>Time-reduction factor at each layer.

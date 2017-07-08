@@ -39,6 +39,7 @@ build = {
     ["onmt.modules.DBiEncoder"] = "onmt/modules/DBiEncoder.lua",
     ["onmt.modules.PDBiEncoder"] = "onmt/modules/PDBiEncoder.lua",
     ["onmt.modules.GoogleEncoder"] = "onmt/modules/GoogleEncoder.lua",
+    ["onmt.modules.CNNEncoder"] = "onmt/modules/CNNEncoder.lua",
     ["onmt.modules.Decoder"] = "onmt/modules/Decoder.lua",
     ["onmt.modules.Encoder"] = "onmt/modules/Encoder.lua",
     ["onmt.modules.Network"] = "onmt/modules/Network.lua",
