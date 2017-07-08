@@ -20,7 +20,7 @@ local protectInput = {
   'nn.Linear',
   'nn.JoinTable',
   'nn.CMulTable',
-  'nn.CenteredWindow',
+  'onmt.CenteredWindow',
   'nn.MM'
 }
 

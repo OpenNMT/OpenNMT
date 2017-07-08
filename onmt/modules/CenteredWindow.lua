@@ -91,7 +91,7 @@ function CenteredWindow:updateGradInput(input, gradOutput)
   -- differenciation on p
   local frac = (p - torch.floor(p)):resize(batch, 1):expand(batch, 2*self.D + 1)
   local decbatch = self.dec:expand(batch, 2*self.D + 1)
-  self.gradInput[2] = -2*self.inv2sigma*torch.cmul(torch.cmul(self.output[2], frac+decbatch), gradOutput[2]):sum(2)
+  self.gradInput[2] = 2*self.inv2sigma*torch.cmul(torch.cmul(self.output[2], frac+decbatch), gradOutput[2]):sum(2)
 
   return self.gradInput
 end
