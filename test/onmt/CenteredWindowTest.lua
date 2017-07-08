@@ -10,10 +10,13 @@ function centeredWindowTest.forward()
   for i = 1, 12 do
     p[i] = i
   end
-  local w = onmt.CenteredWindow(3):forward({c, p})
+  local m = onmt.CenteredWindow(3)
+  local w = m:forward({c, p})
   local cw = w[1]
   local muw = w[2]
   tester:eq(cw[1]:narrow(1,1,3):sum(), 0)
+  --tester:eq(m.mask[{1,{1,3},1}]:sum(), 3)
+  --tester:eq(m.mask[{1,{3,7},1}]:sum(), 1)
   tester:eq(cw[1][4]:sum(), 8)
   tester:eq(cw[2]:narrow(1,1,2):sum(), 0)
   tester:eq(cw[2][3]:sum(), 8)
@@ -37,11 +40,9 @@ function centeredWindowTest.forwardbackward()
   local gI = m:backward({c, p}, {gc, gmu})
 
   local gI1 = gI[1]
-  local gI2 = gI[2]
   tester:eq(gI1[1]:narrow(1,1,4):sum(), 32)
   tester:eq(gI1[1]:narrow(1,5,7):sum(), 0)
   tester:eq(gI1[5]:sum(), 7*8)
-  tester:eq(gI2:sum(), -5.9e-16, 0.1e-16)
 end
 
 return centeredWindowTest

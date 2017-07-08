@@ -14,6 +14,7 @@ function CenteredWindow:__init(D)
   parent.__init(self)
   self.D=D
   self.output = { torch.Tensor(), torch.Tensor() }
+  --self.mask = torch.ByteTensor(1, 1)
   self.gradInput = { torch.Tensor(), torch.Tensor() }
   self.inv2sigma = 1/(D*D/2)
   self.dec = torch.Tensor(1, 2*D + 1)
@@ -34,16 +35,19 @@ function CenteredWindow:updateOutput(input)
 
   size[2] = 2*self.D + 1
   self.output[1]:resize(size):zero()
+  --self.mask:resize(size):zero()
 
   for i = 1, batch do
     local left = math.floor(p[i] - self.D)
     local dec = 1
     if left < 1 then
+      --self.mask[{i,{1,1-left}}]:fill(1)
       dec = 2 - left
       left = 1
     end
     local right = math.floor(p[i] + self.D)
     if right > L then
+      --self.mask[{i,{2*self.D+1-(right-L-1), 2*self.D+1}}]:fill(1)
       right = L
     end
     self.output[1][i]:narrow(1, dec, right-left+1):copy(input[1][i]:narrow(1, left, right-left+1))
@@ -85,7 +89,7 @@ function CenteredWindow:updateGradInput(input, gradOutput)
   -- differenciation on p
   local frac = (p - torch.floor(p)):resize(batch, 1):expand(batch, 2*self.D + 1)
   local decbatch = self.dec:expand(batch, 2*self.D + 1)
-  self.gradInput[2] = -2*self.inv2sigma*torch.cmul(self.output[2], (frac+decbatch)):sum(2)
+  self.gradInput[2] = -2*self.inv2sigma*torch.cmul(torch.cmul(self.output[2], frac+decbatch), gradOutput[2]):sum(2)
 
   return self.gradInput
 end

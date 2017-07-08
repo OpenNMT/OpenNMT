@@ -30,6 +30,7 @@ function LocalAttention:_buildModel(dim, opt)
   local Wp_ht = nn.Bottle(nn.Linear(dim, dim, false), 2)(ht) -- batchL x dim
   local tanh_Wp_ht = nn.Tanh()(Wp_ht) -- batchL x dim
   local pt = nn.Sigmoid()(nn.Bottle(nn.Linear(dim, 1),2)(tanh_Wp_ht)) -- batchL
+  -- from Luong implementation - h2sInfo.scales.*(srcLens-1) + 1;
   pt = nn.CMulTable()({slen, pt})
 
   -- build context around pt

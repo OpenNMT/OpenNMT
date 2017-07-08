@@ -49,8 +49,8 @@ local options = {
     }
   },
   {
-    '-local_attention_span', 5,
-    [[Half-width of the local attention window.]],
+    '-local_attention_span', 1,
+    [[Width of the local attention window [-D;+D].]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt,
       structural = 0
