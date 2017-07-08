@@ -37,20 +37,21 @@ function CenteredWindow:updateOutput(input)
   self.output[1]:resize(size):zero()
   --self.mask:resize(size):zero()
 
+  local left = torch.floor(p) - self.D
+  local right = torch.floor(p) + self.D
+
   for i = 1, batch do
-    local left = math.floor(p[i] - self.D)
     local dec = 1
-    if left < 1 then
+    if left[i] < 1 then
       --self.mask[{i,{1,1-left}}]:fill(1)
-      dec = 2 - left
-      left = 1
+      dec = 2 - left[i]
+      left[i] = 1
     end
-    local right = math.floor(p[i] + self.D)
-    if right > L then
+    if right[i] > L then
       --self.mask[{i,{2*self.D+1-(right-L-1), 2*self.D+1}}]:fill(1)
-      right = L
+      right[i] = L
     end
-    self.output[1][i]:narrow(1, dec, right-left+1):copy(input[1][i]:narrow(1, left, right-left+1))
+    self.output[1][i]:narrow(1, dec, right[i]-left[i]+1):copy(seq[i]:narrow(1, left[i], right[i]-left[i]+1))
   end
 
   -- keep fractional part of p and expand to a batch * 2D+1 tensor
@@ -72,18 +73,19 @@ function CenteredWindow:updateGradInput(input, gradOutput)
   local batch = size[1]
   local L = size[2]
 
+  local left = torch.floor(p) - self.D
+  local right = torch.floor(p) + self.D
+
   for i = 1, batch do
-    local left = math.floor(p[i] - self.D)
     local dec = 1
-    if left < 1 then
-      dec = 2 - left
-      left = 1
+    if left[i] < 1 then
+      dec = 2 - left[i]
+      left[i] = 1
     end
-    local right = math.floor(p[i] + self.D)
-    if right > L then
-      right = L
+    if right[i] > L then
+      right[i] = L
     end
-    self.gradInput[1][i]:narrow(1, left, right-left+1):copy(gradOutput[1][i]:narrow(1, dec, right-left+1))
+    self.gradInput[1][i]:narrow(1, left[i], right[i]-left[i]+1):copy(gradOutput[1][i]:narrow(1, dec, right[i]-left[i]+1))
   end
 
   -- differenciation on p
