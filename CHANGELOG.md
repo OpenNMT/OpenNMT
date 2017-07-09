@@ -7,6 +7,7 @@
 * Add TER calculation
 * Introduce error estimation in scorer for all metrics
 * Fix validation score delta that was applied in the incorrect direction
+* Fix LuaJIT out of memory issues in learn_bpe
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 
