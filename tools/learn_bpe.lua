@@ -5,6 +5,7 @@ local unicode = require('tools.utils.unicode')
 local tokenizer = require('tools.utils.tokenizer')
 local case = require ('tools.utils.case')
 local separators = require('tools.utils.separators')
+local tds = require('tds')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('learn_bpe.lua')
 
@@ -109,7 +110,7 @@ end
 
 local function updatedict(d, key1, key2, value)
   if d[key1] == nil then
-    d[key1] = { [key2] = value}
+    d[key1] = tds.Hash({ [key2] = value})
   else
     if d[key1][key2] == nil then
       d[key1][key2] = 1
@@ -120,7 +121,7 @@ local function updatedict(d, key1, key2, value)
 end
 
 local function get_vocabulary()
-  local vocab = defaultdict(0)
+  local vocab = tds.Hash()
   local l = io.read()
 
   local segmentor = function (a) return string.split(a, " ") end
@@ -138,13 +139,13 @@ local function get_vocabulary()
     local toks = segmentor(l)
     for i = 1, #toks do
       local word = toks[i]
-      vocab[word] = vocab[word] + 1
+      vocab[word] = (vocab[word] or 0) + 1
     end
     l=io.read()
     count = count + 1
     if count % 100000 == 0 then _G.logger:info('... ' .. count .. ' sentences processed') end
   end
-  local vocabreal = {}
+  local vocabreal = tds.Hash()
   for k, v in pairs(vocab) do
     vocabreal[string2word(k)] = v
   end
@@ -153,7 +154,7 @@ end
 
 local function get_pair_statistics(vocab)
   local stats = defaultdict(0)
-  local indices = {}
+  local indices = tds.Hash()
   for idx, word_freq in ipairs(vocab) do
     local word = word_freq[1]
     local freq = word_freq[2]
@@ -179,7 +180,7 @@ local function replace_pair(pair, vocab, indices)
       local word = word_freq[1]
       local freq = word_freq[2]
       local new_word = replace(string.split(word, ' '), bigram)
-      vocab[idx] = {new_word, freq}
+      vocab[idx] = tds.Vec({new_word, freq})
       table.insert(changed, {idx, new_word, word, freq})
     end
   end
@@ -194,7 +195,7 @@ end
 
 local function update_pair_statistics(pair, changed, stats, indices)
   stats[pair] = 0
-  indices[pair] = {}
+  indices[pair] = tds.Hash()
   local bigram = string.split (pair, " ")
   local first = bigram[1]
   local second = bigram[2]
@@ -274,11 +275,11 @@ local function main()
   table.insert(bpe_options, opt.mode)
 
   local vocab = get_vocabulary()
-  local sorted_vocab = {}
-  for k, v in pairs(vocab) do sorted_vocab[#sorted_vocab+1] = {k, v} end
-  table.sort(sorted_vocab, function(a, b) return a[2] > b[2] end)
+  local sorted_vocab = tds.Vec()
+  for k, v in pairs(vocab) do sorted_vocab[#sorted_vocab+1] = tds.Vec({k, v}) end
+  sorted_vocab:sort(function(a, b) return a[2] > b[2] end)
 
-  _G.logger:info('Geting pair statistics from vocabulary')
+  _G.logger:info('Getting pair statistics from vocabulary')
   local stats, indices = get_pair_statistics (sorted_vocab)
 
   _G.logger:info('Generating merge operations to output')
