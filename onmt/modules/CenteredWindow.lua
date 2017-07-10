@@ -24,7 +24,7 @@ function CenteredWindow:__init(D)
 end
 
 local function distWeight(K,x) return torch.exp(-K*torch.cmul(x,x)) end
-local function gradDistWeight(K, x, distWeightX) return -2*K*torch.cmul(x,distWeightX or distWeigth(K, x)) end
+local function gradDistWeight(K, x, distWeightX) return -2*K*torch.cmul(x, distWeightX or distWeigth(K, x)) end
 
 function CenteredWindow:updateOutput(input)
   local seq = input[1]
@@ -59,7 +59,7 @@ function CenteredWindow:updateOutput(input)
   end
 
   -- keep fractional part of p and expand to a batch * 2D+1 tensor
-  local frac = (p - torch.floor(p)):resize(batch, 1):expand(batch, 2*self.D + 1)
+  local frac = (p - floorp):resize(batch, 1):expand(batch, 2*self.D + 1)
   local decbatch = self.dec:expand(batch, 2*self.D + 1)
   self.output[2] = distWeight(self.inv2sigma, frac+decbatch)
 
@@ -94,7 +94,7 @@ function CenteredWindow:updateGradInput(input, gradOutput)
   end
 
   -- differenciation on p
-  local frac = floorp:resize(batch, 1):expand(batch, 2*self.D + 1)
+  local frac = (p - floorp):resize(batch, 1):expand(batch, 2*self.D + 1)
   local decbatch = self.dec:expand(batch, 2*self.D + 1)
   self.gradInput[2] = torch.cmul(gradDistWeight(self.inv2sigma, frac+decbatch, self.output[2]), gradOutput[2]):sum(2)
 
