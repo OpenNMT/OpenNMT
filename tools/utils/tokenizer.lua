@@ -54,7 +54,7 @@ local options = {
   {
     '-bpe_model', '',
     [[Apply Byte Pair Encoding if the BPE model path is given. If the option is used,
-      `-mode` will be overridden/set automatically if the BPE model specified by `-bpe_model`
+      BPE related options will be overridden/set automatically if the BPE model specified by `-bpe_model`
       is learnt using `learn_bpe.lua`.]]
   },
   {

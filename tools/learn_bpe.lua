@@ -2,7 +2,6 @@ require('torch')
 require('onmt.init')
 
 local unicode = require('tools.utils.unicode')
-local tokenizer = require('tools.utils.tokenizer')
 local case = require ('tools.utils.case')
 local separators = require('tools.utils.separators')
 local tds = require('tds')
@@ -15,26 +14,8 @@ local options = {
     [[The number of merge operations to learn.]]
   },
   {
-    '-t', false,
-    [[Tokenize the input with tokenizer, the same options as tokenize.lua,
-      but only `-mode` is taken into account for BPE training.]]
-  },
-  {
-    '-mode', 'conservative',
-    [[Define how aggressive should the tokenization be. `aggressive` only keeps sequences
-      of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65",
-      "soft-landing", etc.]],
-    {
-      enum = {'conservative', 'aggressive'}
-    }
-  },
-  {
-    '-segment_case', false,
-    [[Segment case feature, splits AbC to Ab C to be able to restore case]]
-  },
-  {
     '-lc', false,
-    [[Lowercase the output from the tokenizer before learning BPE.]]
+    [[Lowercase input tokens before learning BPE.]]
   },
   {
     '-bpe_mode', 'suffix',
@@ -50,7 +31,10 @@ local options = {
   },
   {
     '-save_bpe', '',
-    [[Path to save the output model.]]
+    [[Path to save the output model.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+    }
   }
 }
 
@@ -125,13 +109,8 @@ local function get_vocabulary()
   local l = io.read()
 
   local segmentor = function (a) return string.split(a, " ") end
-  if opt.t then
-    segmentor = function (a) return tokenizer.tokenize(opt, a) end
-    if opt.lc then
-      segmentor = function (a) return case.lowerCase(tokenizer.tokenize(opt, a)) end
-    end
-  elseif opt.lc or opt.mode == 'aggressive' then
-    _G.logger:warning('The tokenization options -lc or -mode are disabled, add -t to cmd to enable these options')
+  if opt.lc then
+    segmentor = function (a) return case.lowerCase(string.split(a, " ")) end
   end
   _G.logger:info('Building vocabulary from STDIN')
   local count = 1
@@ -271,8 +250,7 @@ local function main()
   local bpe_options = {}
   if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
   if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  if opt.lc and opt.t then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  table.insert(bpe_options, opt.mode)
+  if opt.lc then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
 
   local vocab = get_vocabulary()
   local sorted_vocab = tds.Vec()
