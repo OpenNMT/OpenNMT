@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Breaking changes
+
+* Remove tokenization options from `learn_bpe.lua`
+
 ### New features
 
 * Add TER calculation
@@ -11,7 +15,7 @@
 * Allow disabling global parameters initialization with `-param_init 0`
 * Introduce error estimation in scorer for all metrics
 * Fix validation score delta that was applied in the incorrect direction
-* Fix LuaJIT out of memory issues in learn_bpe
+* Fix LuaJIT out of memory issues in `learn_bpe.lua`
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 
