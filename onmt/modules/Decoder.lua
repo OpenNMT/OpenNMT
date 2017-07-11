@@ -96,6 +96,7 @@ function Decoder.load(pretrained)
   self.generator = onmt.Generator.load(pretrained.modules[2])
   self:add(self.generator)
 
+  self:removePaddingMask(true)
   self:resetPreallocation()
 
   return self
@@ -287,8 +288,8 @@ function Decoder:addPaddingMask(sourceSizes, sourceLength)
 end
 
 --[[ Remove mask applied to the attention softmax. ]]
-function Decoder:removePaddingMask()
-  if self.paddingMask then
+function Decoder:removePaddingMask(force)
+  if self.paddingMask or force then
     self.paddingMask = nil
     self:replaceAttentionSoftmax(function() return nn.SoftMax() end)
   end
