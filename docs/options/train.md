@@ -53,6 +53,11 @@
 * `-brnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action for the bidirectional states.
 * `-pdbrnn_reduction <number>` (default: `2`)<br/>Time-reduction factor at each layer.
 * `-pdbrnn_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action when reducing time.
+* `-cnn_layers <number>` (default: `2`)<br/>Number of convolutional layers in the encoder.
+* `-cnn_kernel <number>` (default: `3`)<br/>Kernel size for convolutions. Same in each layer.
+* `-cnn_size <number>` (default: `500`)<br/>Number of output units per convolutional layer. Same in each layer.
+* `-use_pos_emb [<boolean>]` (default: `true`)<br/>Add positional embeddings to word embeddings.
+* `-max_pos <number>` (default: `50`)<br/>Maximum value for positional indexes.
 
 ## Global Attention Model options
 
@@ -91,8 +96,6 @@
 * `-continue [<boolean>]` (default: `false`)<br/>If set, continue the training where it left off.
 
 ## Translator options
-
- Translator options are used for evaluation of translation metrics on validation set.
 
 * `-model <string>` (default: `''`)<br/>Path to the serialized model file.
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
