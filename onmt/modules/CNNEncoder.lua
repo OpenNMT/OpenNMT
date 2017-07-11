@@ -82,7 +82,7 @@ function CNNEncoder:__init(args, inputNetwork)
 
   for layer_idx=1,args.cnn_layers do
 
-    if self.args.dropout_input and layer_idx == 1 then
+    if self.args.dropout_input or layer_idx > 1 then
       curLayer = nn.Dropout(self.args.dropout)(curLayer)
     end
 
