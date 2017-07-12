@@ -178,13 +178,7 @@ end
 local function addInputFeatures(inputs, featuresSeq, t)
   local features = {}
   for j = 1, #featuresSeq do
-    local feat
-    if t > featuresSeq[j]:size(1) then
-      feat = onmt.Constants.PAD
-    else
-      feat = (t and featuresSeq[j][t]) or featuresSeq[j]:t()
-    end
-    table.insert(features, feat)
+    table.insert(features, (t and featuresSeq[j][t]) or featuresSeq[j]:t())
   end
   if #features > 1 then
     table.insert(inputs, features)
