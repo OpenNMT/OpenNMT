@@ -11,12 +11,18 @@ Parameters:
 
   * `model` - the model to evaluate.
   * `data` - the `Dataset` to evaluate on.
+  * `saveFile` - optional filename to save the translation.
 
 Returns: the evaluation score.
 
 ]]
-function Evaluator:eval(_, _)
+function Evaluator:eval(_, _, _)
   error('Not implemented')
+end
+
+--[[ Return true if the evaluator can save the translation result. ]]
+function Evaluator:canSaveTranslation()
+  return false
 end
 
 --[[ Compare two scores as returned by the evaluator.

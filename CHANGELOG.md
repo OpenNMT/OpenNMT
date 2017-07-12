@@ -8,6 +8,7 @@
 
 * Add TER calculation
 * Add CNN encoder
+* Add option to save the validation translation to a file
 
 ### Fixes and improvements
 

@@ -75,6 +75,7 @@
 * `-end_epoch <number>` (default: `13`)<br/>The final epoch of the training. If = 0, train forever unless another stopping condition is met (e.g. `-min_learning_rate` is reached).
 * `-curriculum <number>` (default: `0`)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.
 * `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`, `ter`, `dlratio`; default: `perplexity`)<br/>Metric to use for validation.
+* `-save_validation_translation_every <number>` (default: `0`)<br/>When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the translation every this many epochs to the file `<save_model>_epochN_validation_translation.txt`. If = 0, will not save validation translation.
 
 ## Optimization options
 
