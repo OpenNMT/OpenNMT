@@ -22,12 +22,15 @@ require('onmt.modules.WordEmbedding')
 require('onmt.modules.FeaturesEmbedding')
 require('onmt.modules.PositionEmbedding')
 
+require('onmt.modules.Attention')
 require('onmt.modules.NoAttention')
+require('onmt.modules.LocalAttention')
 require('onmt.modules.GlobalAttention')
 
 require('onmt.modules.Generator')
 
 require('onmt.modules.JoinReplicateTable')
+require('onmt.modules.CenteredWindow')
 require('onmt.modules.ParallelClassNLLCriterion')
 require('onmt.modules.RIndexLinear')
 

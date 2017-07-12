@@ -11,7 +11,8 @@ local MemoryOptimizer = torch.class('MemoryOptimizer')
 local protectOutput = {
   'nn.Sigmoid',
   'nn.SoftMax',
-  'nn.Tanh'
+  'nn.Tanh',
+  'onmt.CenteredWindow'
 }
 
 -- We cannot share the input of these modules as they use it in their backward pass.
@@ -19,6 +20,7 @@ local protectInput = {
   'nn.Linear',
   'nn.JoinTable',
   'nn.CMulTable',
+  'onmt.CenteredWindow',
   'nn.MM'
 }
 

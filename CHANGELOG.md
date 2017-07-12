@@ -5,9 +5,9 @@
 * Remove tokenization options from `learn_bpe.lua`
 
 ### New features
-
 * Add TER calculation
 * Add CNN encoder
+* Introduce Local Alignment
 
 ### Fixes and improvements
 
@@ -16,6 +16,9 @@
 * Introduce error estimation in scorer for all metrics
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
+
+### Deprecations
+* Option `-global_attention <type>` is replaced by `-attention_type <type>` to introduce local alignment
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 

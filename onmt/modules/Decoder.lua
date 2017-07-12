@@ -71,6 +71,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
 
   self.args.inputFeed = args.input_feed
 
+  self.args.attentionNeedsSLen = attentionModel.needsSLen
   parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
@@ -164,6 +165,13 @@ function Decoder:_buildModel(attentionModel)
     self.args.inputIndex.inputFeed = #inputs
   end
 
+  -- sentence length tensor
+  local slen
+  if self.args.attentionNeedsSLen then
+    slen = nn.Identity()() -- batchSize
+    table.insert(inputs, slen)
+  end
+
   -- Compute the input network.
   local input = self.inputNet(x)
 
@@ -186,7 +194,11 @@ function Decoder:_buildModel(attentionModel)
   -- Compute the attention here using h^L as query.
   local attnLayer = attentionModel
   attnLayer.name = 'decoderAttn'
-  local attnInput = {outputs[#outputs], context}
+  local attnInput = { outputs[#outputs], context }
+  if slen then
+    table.insert(attnInput, slen)
+  end
+
   local attnOutput = attnLayer(attnInput)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
@@ -313,7 +325,7 @@ Returns:
  2. `states` - All states.
 --]]
 function Decoder:forwardOne(input, prevStates, context, prevOut, t, sourceSizes, sourceLength)
-  if sourceSizes then
+  if sourceLength then
     -- If the encoder reduced the time dimension, resize the padding mask accordingly.
     if sourceLength ~= context:size(2) then
       local multiplier = math.ceil(sourceLength / context:size(2))
@@ -345,6 +357,10 @@ function Decoder:forwardOne(input, prevStates, context, prevOut, t, sourceSizes,
     else
       table.insert(inputs, prevOut)
     end
+  end
+
+  if self.args.attentionNeedsSLen then
+    table.insert(inputs, sourceSizes)
   end
 
   -- Remember inputs for the backward pass.
@@ -395,7 +411,7 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
                                       context,
                                       prevOut,
                                       t,
-                                      batch:variableLengths() and batch.sourceSize or nil,
+                                      batch.sourceSize,
                                       batch:variableLengths() and batch.sourceLength or nil)
     func(prevOut, t)
   end
