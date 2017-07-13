@@ -25,34 +25,56 @@ function TranslationEvaluator:eval(model, data, saveFile)
   for i = 1, data:batchCount() do
     local batch = onmt.utils.Cuda.convert(data:getBatch(i))
 
-    local referenceTargets = batch.targetOutput
+    local referenceTargetsBatch = batch.targetOutput
+    local referenceFeaturesBatch = batch.targetOutputFeatures
+    local referenceSize = batch.targetSize
+
     batch:removeTarget()
+
     local predictedTargets, predictedFeatures, _, attention = translator:translateBatch(batch)
 
     for b = 1, batch.size do
-      local reference = self.dicts.tgt.words:convertToLabels(torch.totable(referenceTargets[{{}, b}]),
-                                                             onmt.Constants.EOS)
-      table.remove(reference) -- Remove </s>.
+      local referenceWords = self.dicts.tgt.words:convertToLabels(
+        torch.totable(referenceTargetsBatch[{{}, b}]),
+        onmt.Constants.EOS)
+      table.remove(referenceWords) -- Remove </s>.
 
-      local targetWords = translator:buildTargetWords(predictedTargets[b][1], reference, attention)
+      local predictedWords = translator:buildTargetWords(predictedTargets[b][1],
+                                                         referenceWords,
+                                                         attention)
 
-      table.insert(predictions, targetWords)
-      table.insert(references, reference)
+      table.insert(predictions, predictedWords)
+      table.insert(references, referenceWords)
 
       if saveFile then
-        local score = self:score({ targetWords }, { reference })
+        local score = self:score({ predictedWords }, { referenceWords })
 
         -- When saving to a file, build the complete translation.
-        local targetFeatures = translator:buildTargetFeatures(predictedFeatures[b][1])
-
         local output = translator:buildOutput({
-          words = targetWords,
-          features = targetFeatures
+           words = predictedWords,
+          features = translator:buildTargetFeatures(predictedFeatures[b][1])
+        })
+
+        -- Also build the reference sentence.
+        local referenceFeatures = {}
+        for l = 1, referenceSize[b] do
+          local features = {}
+          for j = 1, #referenceFeaturesBatch do
+            table.insert(features, referenceFeaturesBatch[j][l][b])
+          end
+          table.insert(referenceFeatures, features)
+        end
+
+        local gold = translator:buildOutput({
+          words = referenceWords,
+          features = translator:buildTargetFeatures(referenceFeatures)
         })
 
         file:write(tostring(score))
         file:write(' ||| ')
         file:write(output)
+        file:write(' ||| ')
+        file:write(gold)
         file:write('\n')
       end
     end
