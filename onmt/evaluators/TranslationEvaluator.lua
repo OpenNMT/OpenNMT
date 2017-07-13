@@ -6,28 +6,60 @@ function TranslationEvaluator:__init(translatorOpt, dicts)
   self.dicts = dicts
 end
 
-function TranslationEvaluator:eval(model, data)
+function TranslationEvaluator:canSaveTranslation()
+  return true
+end
+
+function TranslationEvaluator:eval(model, data, saveFile)
   local translator = onmt.translate.Translator.new(self.translatorOpt, model, self.dicts)
 
   local references = {}
   local predictions = {}
+
+  local file
+
+  if saveFile then
+    file = assert(io.open(saveFile, 'w'))
+  end
 
   for i = 1, data:batchCount() do
     local batch = onmt.utils.Cuda.convert(data:getBatch(i))
 
     local referenceTargets = batch.targetOutput
     batch:removeTarget()
-    local predictedTargets = translator:translateBatch(batch)
+    local predictedTargets, predictedFeatures, _, attention = translator:translateBatch(batch)
 
     for b = 1, batch.size do
-      local predicted = self.dicts.tgt.words:convertToLabels(predictedTargets[b][1])
       local reference = self.dicts.tgt.words:convertToLabels(torch.totable(referenceTargets[{{}, b}]),
                                                              onmt.Constants.EOS)
       table.remove(reference) -- Remove </s>.
 
-      table.insert(predictions, predicted)
+      local targetWords = translator:buildTargetWords(predictedTargets[b][1], reference, attention)
+
+      table.insert(predictions, targetWords)
       table.insert(references, reference)
+
+      if saveFile then
+        local score = self:score({ targetWords }, { reference })
+
+        -- When saving to a file, build the complete translation.
+        local targetFeatures = translator:buildTargetFeatures(predictedFeatures[b][1])
+
+        local output = translator:buildOutput({
+          words = targetWords,
+          features = targetFeatures
+        })
+
+        file:write(tostring(score))
+        file:write(' ||| ')
+        file:write(output)
+        file:write('\n')
+      end
     end
+  end
+
+  if saveFile then
+    file:close()
   end
 
   return self:score(predictions, references)
