@@ -24,6 +24,17 @@ local options = {
     {
       structural = 0
     }
+  },
+  {
+    '-scheduled_sampling', 1,
+    [[Probability of feeding true (vs. generated) previous token to decoder.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0,1)
+    }
+  },
+  {
+    '-scheduled_sampling_memopt', false,
+    [[When using scheduled sampling - optimize memory usage.]]
   }
 }
 
@@ -389,7 +400,22 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   local prevOut
 
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t),
+    local decInput = batch:getTargetInput(t)
+    -- scheduled sampling - calculate previous output
+    if t > 1 and self.args.scheduled_sampling < 1 then
+      decInput = decInput:clone()
+      local pred = self.generator:forward(prevOut)
+      if not self.args.scheduled_sampling_memopt then
+        self.preds[t] =  pred
+      end
+      local rand = torch.rand(batch.size)
+      local realInput = torch.gt(rand, self.args.scheduled_sampling)
+      local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze()
+      decInput[realInput]:copy(bestIdx[realInput])
+    else
+      decInput = batch:getTargetInput(t)
+    end
+    prevOut, states = self:forwardOne(decInput,
                                       states,
                                       context,
                                       prevOut,
@@ -417,6 +443,7 @@ function Decoder:forward(batch, initialStates, context)
                                          { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
+    self.preds = {}
 
     if self.args.dropout_type == 'variational' then
       -- Initialize noise for variational dropout.
@@ -465,8 +492,8 @@ function Decoder:backward(batch, outputs, criterion)
     local prepOutputs = { outputs[t], refOutput }
 
     -- Compute decoder output gradients.
-    -- Note: This would typically be in the forward pass.
-    local pred = self.generator:forward(prepOutputs)
+    -- Note: This would typically be in the forward pass - but for memory optimization we keep it here
+    local pred = self.preds[t] or self.generator:forward(prepOutputs)
 
     if self.indvLoss then
       for i = 1, pred[1]:size(1) do
