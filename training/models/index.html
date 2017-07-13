@@ -372,6 +372,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cnn-encoder" title="CNN encoder" class="md-nav__link">
+    CNN encoder
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -901,6 +908,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cnn-encoder" title="CNN encoder" class="md-nav__link">
+    CNN encoder
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -982,6 +996,8 @@
 <h3 id="googles-nmt-encoder">Google's NMT encoder<a class="headerlink" href="#googles-nmt-encoder" title="Permanent link">&para;</a></h3>
 <p>The Google encoder (<code>-encoder_type gnmt</code>) is an encoder with a single bidirectional layer as described in <a href="../../references/#GNMT">Wu et al. (2016)</a>. The bidirectional states are concatenated and residual connections are enabled by default.</p>
 <p><img alt="Google's NMT encoder" src="../../img/gnmt-encoder.png" /></p>
+<h3 id="cnn-encoder">CNN encoder<a class="headerlink" href="#cnn-encoder" title="Permanent link">&para;</a></h3>
+<p>The CNN encoder (<code>-encoder_type cnn</code>) is an encoder based on several convolutional layers as described in <a href="../../references/#CNNEncoder">Gehring et al. (2017)</a>.</p>
 <h2 id="decoders">Decoders<a class="headerlink" href="#decoders" title="Permanent link">&para;</a></h2>
 <h3 id="default-decoder">Default decoder<a class="headerlink" href="#default-decoder" title="Permanent link">&para;</a></h3>
 <p>The default decoder applies attention over the source sequence and implements input feeding by default.</p>

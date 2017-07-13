@@ -828,12 +828,9 @@
 <h2 id="bpe-options">BPE options<a class="headerlink" href="#bpe-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-size &lt;string&gt;</code> (default: <code>30000</code>)<br/>The number of merge operations to learn.</li>
-<li><code>-t [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Tokenize the input with tokenizer, the same options as tokenize.lua, but only <code>-mode</code> is taken into account for BPE training.</li>
-<li><code>-mode &lt;string&gt;</code> (accepted: <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc.</li>
-<li><code>-segment_case [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment case feature, splits AbC to Ab C to be able to restore case</li>
-<li><code>-lc [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Lowercase the output from the tokenizer before learning BPE.</li>
+<li><code>-lc [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Lowercase input tokens before learning BPE.</li>
 <li><code>-bpe_mode &lt;string&gt;</code> (accepted: <code>suffix</code>, <code>prefix</code>, <code>both</code>, <code>none</code>; default: <code>suffix</code>)<br/>Define the BPE mode. <code>prefix</code>: append <code>&lt;w&gt;</code> to the begining of each word to learn prefix-oriented pair statistics; <code>suffix</code>: append <code>&lt;/w&gt;</code> to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; <code>both</code>: <code>suffix</code> and <code>prefix</code>; <code>none</code>: no <code>suffix</code> nor <code>prefix</code>.</li>
-<li><code>-save_bpe &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to save the output model.</li>
+<li><code>-save_bpe &lt;string&gt;</code> (required)<br/>Path to save the output model.</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
