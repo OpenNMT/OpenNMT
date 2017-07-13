@@ -24,8 +24,8 @@ local options = {
   },
   {
     '-sample',
-    10,
-    [[Number of sample for estimation of error margin.]],
+    1,
+    [[If > 1, number of samples for estimation of k-fold error margin (95% certitude) - 10 is a good value.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt()
     }
@@ -100,8 +100,32 @@ local function main()
     references = references[1]
   end
 
-  local score, format = onmt.scorers[opt.scorer](hyp, references, opt.sample, opt.order)
-  print(format or score)
+  local score, format = onmt.scorers[opt.scorer](hyp, references, opt.order)
+  score = string.format("%.2f", score*100)
+  local margin = ''
+
+  if opt.sample > 1 then
+    local scores = torch.Tensor(opt.sample)
+    for k = 1, opt.sample do
+      -- extract 1/2 random sample
+      local perm = torch.randperm(#hyp)
+      local nhyp = {}
+      local nref = {}
+      for _ = 1, #references do
+        table.insert(nref, {})
+      end
+      for i = 1, #hyp/2 do
+        table.insert(nhyp, hyp[perm[i]])
+        for j = 1, #references do
+          table.insert(nref[j], references[j][perm[i]])
+        end
+      end
+      scores[k] = onmt.scorers[opt.scorer](nhyp, nref, opt.order)
+    end
+    score = string.format("%.2f", torch.mean(scores)*100)
+    margin = string.format("+/-%.2f", torch.std(scores)*1.96*100)
+  end
+  print(score, margin, format)
 end
 
 main()
