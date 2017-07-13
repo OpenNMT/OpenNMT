@@ -109,7 +109,7 @@ function Decoder:scheduledSamplingDecay(epoch)
   local k = self.args.scheduled_sampling_decay_rate
   local i = epoch - 1
   if self.args.scheduled_sampling_decay_type == "linear" then
-    self.args.scheduled_sampling = self.args.base_scheduled_sampling - i * k
+    self.args.scheduled_sampling = math.max(0, self.args.base_scheduled_sampling - i * k)
   else
     self.args.scheduled_sampling = self.args.base_scheduled_sampling * k / ( k + math.exp(i/k) - 1 )
   end
