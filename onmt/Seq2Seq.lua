@@ -184,6 +184,10 @@ function Seq2Seq:unsetGeneratorVocab()
   self.criterion.mainCriterion.weights:resize(self.tgtVocabSize)
 end
 
+function Seq2Seq:updateRates(epoch)
+  self.models.decoder:scheduledSamplingDecay(epoch)
+end
+
 function Seq2Seq:enableProfiling()
   _G.profiler.addHook(self.models.encoder, 'encoder')
   _G.profiler.addHook(self.models.decoder, 'decoder')

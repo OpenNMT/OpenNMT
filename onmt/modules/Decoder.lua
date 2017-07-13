@@ -33,6 +33,17 @@ local options = {
     }
   },
   {
+    '-scheduled_sampling_decay_type', 'linear',
+    [[Scheduled Sampling decay type.]],
+    {
+      enum = {'linear', 'invsigmoid'}
+    }
+  },
+  {
+    '-scheduled_sampling_decay_rate', 0,
+    [[Scheduled Sampling decay rate.]]
+  },
+  {
     '-scheduled_sampling_memopt', false,
     [[When using scheduled sampling - optimize memory usage.]]
   }
@@ -82,6 +93,8 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
 
   self.args.inputFeed = args.input_feed
 
+  self.args.base_scheduled_sampling = self.args.scheduled_sampling
+
   parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
@@ -90,6 +103,19 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self:add(self.generator)
 
   self:resetPreallocation()
+end
+
+function Decoder:scheduledSamplingDecay(epoch)
+  local k = self.args.scheduled_sampling_decay_rate
+  local i = epoch - 1
+  if self.args.scheduled_sampling_decay_type == "linear" then
+    self.args.scheduled_sampling = self.args.base_scheduled_sampling - i * k
+  else
+    self.args.scheduled_sampling = self.args.base_scheduled_sampling * k / ( k + math.exp(i/k) - 1 )
+  end
+  if self.args.scheduled_sampling ~= 1 then
+    _G.logger:info('Set Scheduled Sampling rate: %0.3f', self.args.scheduled_sampling)
+  end
 end
 
 function Decoder:returnIndividualLosses(enable)
@@ -411,7 +437,7 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
       end
       local rand = torch.rand(batch.size)
       local realInput = torch.gt(rand, self.args.scheduled_sampling)
-      local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze()
+      local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze(2)
       decInput[realInput]:copy(bestIdx[realInput])
     else
       decInput = batch:getTargetInput(t)

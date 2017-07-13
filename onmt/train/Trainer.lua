@@ -182,12 +182,15 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     return batchOrder and batchOrder[idx] or idx
   end
 
-  -- if vocabulary for the batch is provided and generator support setting vocabulary
-  if data.vocabTensor and self.model.setGeneratorVocab then
-    onmt.utils.Parallel.launch(function(_)
+  onmt.utils.Parallel.launch(function(_)
+    -- if vocabulary for the batch is provided and generator support setting vocabulary
+    if data.vocabTensor and self.model.setGeneratorVocab then
       _G.model:setGeneratorVocab(data.vocabTensor)
-    end)
-  end
+    end
+    if _G.model.updateRates then
+      _G.model:updateRates(epoch)
+    end
+  end)
 
   startIteration = startIteration or 1
 
