@@ -40,6 +40,8 @@ function TranslationEvaluator:eval(model, data, saveFile)
       table.insert(references, reference)
 
       if saveFile then
+        local score = self:score({ targetWords }, { reference })
+
         -- When saving to a file, build the complete translation.
         local targetFeatures = translator:buildTargetFeatures(predictedFeatures[b][1])
 
@@ -48,6 +50,8 @@ function TranslationEvaluator:eval(model, data, saveFile)
           features = targetFeatures
         })
 
+        file:write(tostring(score))
+        file:write(' ||| ')
         file:write(output)
         file:write('\n')
       end
