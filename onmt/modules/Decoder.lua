@@ -432,13 +432,14 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
     if t > 1 and self.args.scheduled_sampling < 1 then
       decInput = decInput:clone()
       local pred = self.generator:forward(prevOut)
+      -- save in table to avoid calculating again in backward pass - good for speed, bad for memory
       if not self.args.scheduled_sampling_memopt then
         self.preds[t] =  pred
       end
       local rand = torch.rand(batch.size)
       local realInput = torch.gt(rand, self.args.scheduled_sampling)
       local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze(2)
-      decInput[realInput]:copy(bestIdx[realInput])
+      decInput:maskedCopy(realInput, bestIdx[realInput])
     else
       decInput = batch:getTargetInput(t)
     end
