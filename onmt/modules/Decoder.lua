@@ -160,6 +160,9 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+
+  -- Prototype for random distribution
+  self.distribProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -423,6 +426,7 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   end
 
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, initialStates)
+  local distrib = onmt.utils.Tensor.reuseTensor(self.distribProto, { batch.size })
 
   local prevOut
 
@@ -431,14 +435,17 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
     -- scheduled sampling - calculate previous output
     if t > 1 and self.args.scheduled_sampling < 1 then
       decInput = decInput:clone()
-      local pred = self.generator:forward(prevOut)
+      local pred = self.generator:forward({ prevOut, batch:getTargetOutput(t) })
       -- save in table to avoid calculating again in backward pass - good for speed, bad for memory
       if not self.args.scheduled_sampling_memopt then
         self.preds[t] =  pred
       end
-      local rand = torch.rand(batch.size)
-      local realInput = torch.gt(rand, self.args.scheduled_sampling)
+      distrib:rand(batch.size)
+      -- mask of element to pick from generated model
+      local realInput = torch.gt(distrib, self.args.scheduled_sampling)
+      -- pick argmax, we could also sample from log-distribution
       local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze(2)
+      -- replace in the input the gold reference by the model generated one
       decInput:maskedCopy(realInput, bestIdx[realInput])
     else
       decInput = batch:getTargetInput(t)
