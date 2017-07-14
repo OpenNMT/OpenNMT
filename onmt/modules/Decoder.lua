@@ -42,10 +42,6 @@ local options = {
   {
     '-scheduled_sampling_decay_rate', 0,
     [[Scheduled Sampling decay rate.]]
-  },
-  {
-    '-scheduled_sampling_memopt', false,
-    [[When using scheduled sampling - optimize memory usage.]]
   }
 }
 
@@ -437,9 +433,6 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
       decInput = decInput:clone()
       local pred = self.generator:forward({ prevOut, batch:getTargetOutput(t) })
       -- save in table to avoid calculating again in backward pass - good for speed, bad for memory
-      if not self.args.scheduled_sampling_memopt then
-        self.preds[t] =  pred
-      end
       distrib:rand(batch.size)
       -- mask of element to pick from generated model
       local realInput = torch.gt(distrib, self.args.scheduled_sampling)
@@ -478,7 +471,6 @@ function Decoder:forward(batch, initialStates, context)
                                          { batch.size, self.args.rnnSize })
   if self.train then
     self.inputs = {}
-    self.preds = {}
 
     if self.args.dropout_type == 'variational' then
       -- Initialize noise for variational dropout.
@@ -528,7 +520,7 @@ function Decoder:backward(batch, outputs, criterion)
 
     -- Compute decoder output gradients.
     -- Note: This would typically be in the forward pass - but for memory optimization we keep it here
-    local pred = self.preds[t] or self.generator:forward(prepOutputs)
+    local pred = self.generator:forward(prepOutputs)
 
     if self.indvLoss then
       for i = 1, pred[1]:size(1) do
