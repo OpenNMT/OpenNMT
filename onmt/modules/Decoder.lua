@@ -430,7 +430,14 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
     local decInput = batch:getTargetInput(t)
     -- scheduled sampling - calculate previous output
     if t > 1 and self.args.scheduled_sampling < 1 then
-      decInput = decInput:clone()
+      local decInputMain
+      if type(decInput) == 'table' then
+        decInput[1] = decInput[1]:clone()
+        decInputMain = decInput[1]
+      else
+        decInput = decInput:clone()
+        decInputMain = decInput
+      end
       local pred = self.generator:forward({ prevOut, batch:getTargetOutput(t) })
       -- save in table to avoid calculating again in backward pass - good for speed, bad for memory
       distrib:rand(batch.size)
