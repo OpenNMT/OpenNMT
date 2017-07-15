@@ -446,7 +446,7 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
       -- pick argmax, we could also sample from log-distribution
       local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze(2)
       -- replace in the input the gold reference by the model generated one
-      decInput:maskedCopy(realInput, bestIdx[realInput])
+      decInputMain:maskedCopy(realInput, bestIdx[realInput])
     else
       decInput = batch:getTargetInput(t)
     end
