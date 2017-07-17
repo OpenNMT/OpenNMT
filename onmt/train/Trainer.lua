@@ -69,8 +69,14 @@ local options = {
     '-validation_metric', 'perplexity',
     [[Metric to use for validation.]],
     {
-      enum = { 'perplexity', 'loss', 'bleu', 'dlratio' }
+      enum = { 'perplexity', 'loss', 'bleu', 'ter', 'dlratio' }
     }
+  },
+  {
+    '-save_validation_translation_every', 0,
+    [[When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the
+    translation every this many epochs to the file `<save_model>_epochN_validation_translation.txt`.
+    If = 0, will not save validation translation.]]
   }
 }
 
@@ -96,8 +102,15 @@ function Trainer:__init(args, model, dicts, firstBatch)
     self.evaluator = onmt.evaluators.LossEvaluator.new()
   elseif self.args.validation_metric == 'bleu' then
     self.evaluator = onmt.evaluators.BLEUEvaluator.new(args, dicts)
+  elseif self.args.validation_metric == 'ter' then
+    self.evaluator = onmt.evaluators.TEREvaluator.new(args, dicts)
   elseif self.args.validation_metric == 'dlratio' then
     self.evaluator = onmt.evaluators.DLratioEvaluator.new(args, dicts)
+  end
+
+  if self.args.save_validation_translation_every > 0 and not self.evaluator:canSaveTranslation() then
+    _G.logger:warning('Only translation-based evaluators can save the validation translation. Ignoring the option.')
+    self.args.save_validation_translation_every = 0
   end
 
   model:training()
@@ -143,12 +156,24 @@ function Trainer:__init(args, model, dicts, firstBatch)
   end)
 end
 
-function Trainer:eval(data)
+function Trainer:eval(data, epoch)
   self.model:evaluate()
   _G.logger:info('Evaluating on the validation dataset...')
-  local score = self.evaluator:eval(self.model, data)
+
+  local saveFile
+
+  if self.args.save_validation_translation_every > 0
+  and epoch % self.args.save_validation_translation_every == 0 then
+    saveFile = string.format('%s_validation_translation.txt', self.saver:formatEpochFile(epoch))
+    _G.logger:info('Saving validation translation to \'%s\'...', saveFile)
+  end
+
+
+  local score = self.evaluator:eval(self.model, data, saveFile)
+
   _G.logger:info('Validation %s: %.2f', self.evaluator.__tostring__(), score)
   self.model:training()
+
   return score
 end
 
@@ -398,7 +423,7 @@ function Trainer:train(trainData, validData, trainStates)
     end
 
     local epochState = self:trainEpoch(trainData, epoch, self.args.start_iteration, batchOrder)
-    local validScore = self:eval(validData)
+    local validScore = self:eval(validData, epoch)
 
     self.optim:updateLearningRate(validScore, epoch, self.evaluator)
 

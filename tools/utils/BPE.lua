@@ -22,7 +22,7 @@ function BPE:__init(opt)
 
   local t = f:read("*line")
   local options = self.split(t, ";")
-  if (#options == 4) then
+  if (#options == 3) then
     self.prefix = options[1] == "true"
     self.suffix = options[2] == "true"
     self.case_insensitive = options[3] == "true"

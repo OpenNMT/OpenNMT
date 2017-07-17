@@ -30,6 +30,10 @@ The Google encoder (`-encoder_type gnmt`) is an encoder with a single bidirectio
 
 ![Google's NMT encoder](../img/gnmt-encoder.png)
 
+### CNN encoder
+
+The CNN encoder (`-encoder_type cnn`) is an encoder based on several convolutional layers as described in [Gehring et al. (2017)](../references.md#CNNEncoder).
+
 ## Decoders
 
 ### Default decoder
