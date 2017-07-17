@@ -33,6 +33,13 @@ local options = {
     }
   },
   {
+    '-scheduled_sampling_scope', 'token',
+    [[Apply scheduled sampling at token or sentence level.]],
+    {
+      enum = { 'token', 'sentence' }
+    }
+  },
+  {
     '-scheduled_sampling_decay_type', 'linear',
     [[Scheduled Sampling decay type.]],
     {
@@ -424,6 +431,10 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, initialStates)
   local distrib = onmt.utils.Tensor.reuseTensor(self.distribProto, { batch.size })
 
+  if self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'sentence' then
+    distrib:rand(batch.size)
+  end
+
   local prevOut
 
   for t = 1, batch.targetLength do
@@ -439,8 +450,9 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
         decInputMain = decInput
       end
       local pred = self.generator:forward({ prevOut, batch:getTargetOutput(t) })
-      -- save in table to avoid calculating again in backward pass - good for speed, bad for memory
-      distrib:rand(batch.size)
+      if self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'token' then
+        distrib:rand(batch.size)
+      end
       -- mask of element to pick from generated model
       local realInput = torch.gt(distrib, self.args.scheduled_sampling)
       -- pick argmax, we could also sample from log-distribution
