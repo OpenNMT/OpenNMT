@@ -22,11 +22,14 @@ function BPE:__init(opt)
 
   local t = f:read("*line")
   local options = self.split(t, ";")
-  if (#options == 3) then
+  if (#options == 3 or #options == 4 ) then
     self.prefix = options[1] == "true"
     self.suffix = options[2] == "true"
     self.case_insensitive = options[3] == "true"
     t = f:read("*line")
+    if #options == 4 then
+      print ("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs")
+    end
   else
     self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
     self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"
