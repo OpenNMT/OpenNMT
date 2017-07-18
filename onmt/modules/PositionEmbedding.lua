@@ -55,5 +55,5 @@ end
 
 function PositionEmbedding:accGradParameters(_, gradOutput, scale)
    parent.accGradParameters(self, self.input, gradOutput, scale)
-   self.gradWeight[self.max_pos+1]:zero()
+   self.gradWeight[1]:zero()
 end
