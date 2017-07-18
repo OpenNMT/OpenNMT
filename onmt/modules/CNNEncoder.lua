@@ -47,7 +47,6 @@ local options = {
     }
   }
 
-  -- TODO : attention network
 }
 
 
@@ -86,7 +85,6 @@ function CNNEncoder:__init(args, inputNetwork)
       curLayer = nn.Dropout(self.args.dropout)(curLayer)
     end
 
-    -- TODO : is there always batch ? which dimension to pad ?
     local pad = nn.Padding(2,args.cnn_kernel-1)(curLayer) -- right padding
     local conv = nn.TemporalConvolution(convInSize,convOutSize,args.cnn_kernel)(pad)
 
@@ -102,8 +100,7 @@ function CNNEncoder:__init(args, inputNetwork)
     convInSize = convOutSize
   end
 
-  local state = nn.Mean(2)(curLayer)
-  self:add(nn.gModule({input},{state, curLayer}))
+  self:add(nn.gModule({input},{curLayer}))
 
   self:resetPreallocation()
 end
@@ -133,7 +130,6 @@ function CNNEncoder:serialize()
 end
 
 
--- TODO : other preallocation ?
 function CNNEncoder:resetPreallocation()
 
   -- Prototype for preallocated state output gradients.
@@ -141,19 +137,16 @@ function CNNEncoder:resetPreallocation()
 
 end
 
-
-
 function CNNEncoder:forward(batch)
-  local output = self.modules[1]:forward(batch:getSourceInput())
-
-  local states = {output[1]}
-  local context = output[2]
+  local context = self.modules[1]:forward(batch:getSourceInput())
 
   for i=1,batch.size do
     for j=1, batch.sourceLength-batch.sourceSize[i] do
       context[i][j]:fill(0)
     end
   end
+
+  local states = { torch.sum(context, 2):squeeze(2) }
 
   return states, context
 end
@@ -169,6 +162,8 @@ function CNNEncoder:backward(batch, gradStatesOutput, gradContextOutput)
     self.gradStatesOutputProto = onmt.utils.Tensor.reuseTensor(self.gradStatesOutputProto, { batch.size, outputSize })
   end
 
-  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), { self.gradStatesOutputProto, gradContextOutput })
+  gradContextOutput = gradContextOutput + self.gradStatesOutputProto:view(batch.size,1,outputSize):expandAs(gradContextOutput)
+
+  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), gradContextOutput)
   return gradInputs
 end
