@@ -30,9 +30,13 @@ The Google encoder (`-encoder_type gnmt`) is an encoder with a single bidirectio
 
 ![Google's NMT encoder](../img/gnmt-encoder.png)
 
-### CNN encoder
+### Convolutional encoder
 
-The CNN encoder (`-encoder_type cnn`) is an encoder based on several convolutional layers as described in [Gehring et al. (2017)](../references.md#CNNEncoder).
+The convolutional encoder (`-encoder_type cnn`) is an encoder based on several convolutional layers as described in [Gehring et al. (2017)](../references.md#CNNEncoder).
+
+In sequence-to-sequence models, it should be used either without a bridge or with a dense bridge (options `-bridge dense`, `-bridge dense_nonlinear`, or `-bridge none`). The default `copy` bridge is not compatible with this encoder.
+
+It is also recommended to set a small learning rate when using SGD (e.g. `-learning_rate 0.1`) or use Adam instead (e.g. `-optim adam -learning_rate 0.0002`).
 
 ## Decoders
 
