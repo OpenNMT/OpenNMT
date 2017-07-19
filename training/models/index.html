@@ -373,8 +373,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cnn-encoder" title="CNN encoder" class="md-nav__link">
-    CNN encoder
+  <a href="#convolutional-encoder" title="Convolutional encoder" class="md-nav__link">
+    Convolutional encoder
   </a>
   
 </li>
@@ -909,8 +909,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cnn-encoder" title="CNN encoder" class="md-nav__link">
-    CNN encoder
+  <a href="#convolutional-encoder" title="Convolutional encoder" class="md-nav__link">
+    Convolutional encoder
   </a>
   
 </li>
@@ -996,8 +996,10 @@
 <h3 id="googles-nmt-encoder">Google's NMT encoder<a class="headerlink" href="#googles-nmt-encoder" title="Permanent link">&para;</a></h3>
 <p>The Google encoder (<code>-encoder_type gnmt</code>) is an encoder with a single bidirectional layer as described in <a href="../../references/#GNMT">Wu et al. (2016)</a>. The bidirectional states are concatenated and residual connections are enabled by default.</p>
 <p><img alt="Google's NMT encoder" src="../../img/gnmt-encoder.png" /></p>
-<h3 id="cnn-encoder">CNN encoder<a class="headerlink" href="#cnn-encoder" title="Permanent link">&para;</a></h3>
-<p>The CNN encoder (<code>-encoder_type cnn</code>) is an encoder based on several convolutional layers as described in <a href="../../references/#CNNEncoder">Gehring et al. (2017)</a>.</p>
+<h3 id="convolutional-encoder">Convolutional encoder<a class="headerlink" href="#convolutional-encoder" title="Permanent link">&para;</a></h3>
+<p>The convolutional encoder (<code>-encoder_type cnn</code>) is an encoder based on several convolutional layers as described in <a href="../../references/#CNNEncoder">Gehring et al. (2017)</a>.</p>
+<p>In sequence-to-sequence models, it should be used either without a bridge or with a dense bridge (options <code>-bridge dense</code>, <code>-bridge dense_nonlinear</code>, or <code>-bridge none</code>). The default <code>copy</code> bridge is not compatible with this encoder.</p>
+<p>It is also recommended to set a small learning rate when using SGD (e.g. <code>-learning_rate 0.1</code>) or use Adam instead (e.g. <code>-optim adam -learning_rate 0.0002</code>).</p>
 <h2 id="decoders">Decoders<a class="headerlink" href="#decoders" title="Permanent link">&para;</a></h2>
 <h3 id="default-decoder">Default decoder<a class="headerlink" href="#default-decoder" title="Permanent link">&para;</a></h3>
 <p>The default decoder applies attention over the source sequence and implements input feeding by default.</p>
