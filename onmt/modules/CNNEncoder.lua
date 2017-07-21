@@ -68,12 +68,13 @@ function CNNEncoder:__init(args, inputNetwork)
   local convOutSize = args.cnn_size
 
   local input = nn.Identity()()
+  local sourceSize = nn.Identity()()
 
   -- Compute input network.
   local inLayer = self.inputNet(input)
 
   if self.args.use_pos_emb then
-    local posEmb = onmt.PositionEmbedding(2, args.max_pos, convInSize)(input)
+    local posEmb = onmt.PositionEmbedding(2, args.max_pos, convInSize)({inLayer, sourceSize})
     inLayer = nn.CAddTable()({inLayer, posEmb})
   end
 
@@ -100,7 +101,7 @@ function CNNEncoder:__init(args, inputNetwork)
     convInSize = convOutSize
   end
 
-  self:add(nn.gModule({input},{curLayer}))
+  self:add(nn.gModule({input, sourceSize},{curLayer}))
 
   self:resetPreallocation()
 end
@@ -138,7 +139,7 @@ function CNNEncoder:resetPreallocation()
 end
 
 function CNNEncoder:forward(batch)
-  local context = self.modules[1]:forward(batch:getSourceInput())
+  local context = self.modules[1]:forward({batch:getSourceInput(), batch.sourceSize})
 
   for i=1,batch.size do
     for j=1, batch.sourceLength-batch.sourceSize[i] do
@@ -164,6 +165,7 @@ function CNNEncoder:backward(batch, gradStatesOutput, gradContextOutput)
 
   gradContextOutput = gradContextOutput + self.gradStatesOutputProto:view(batch.size,1,outputSize):expandAs(gradContextOutput)
 
-  local gradInputs = self.modules[1]:backward(batch:getSourceInput(), gradContextOutput)
-  return gradInputs
+  local gradInputs = self.modules[1]:backward({ batch:getSourceInput(), batch.sourceSize }, gradContextOutput)
+
+  return gradInputs[1]
 end

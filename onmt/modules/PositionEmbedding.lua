@@ -25,20 +25,22 @@ function PositionEmbedding:postParametersInitialization()
 end
 
 function PositionEmbedding:updateOutput(input)
-   local dim = self.dimension < 0 and input:dim() + self.dimension + 1 or self.dimension
 
-   self.input = self.input:typeAs(input)
-   self.input:resizeAs(input):copy(input)
+   local dim = self.dimension < 0 and input[1]:dim() + self.dimension + 1 or self.dimension
+
+   self.input = self.input:typeAs(input[1])
+   self.input:resizeAs(input[1][{{},{},1}])
+
+   local sourceSize = input[2]
 
    for b=1,self.input:size(1) do
      local batch = self.input:select(1,b)
-     local start = -1
+     local start = self.input:size(2) - sourceSize[b]
      for t=1,self.input:size(dim) do
-       if batch[t] == onmt.Constants.PAD then
+       if t <= start then
          batch[t] = 1
-         start = start+1
        else
-         batch[t] = math.min(t-start,self.max_pos+1)
+         batch[t] = math.min(t-start+1,self.max_pos+1)
        end
      end
    end
@@ -48,9 +50,16 @@ function PositionEmbedding:updateOutput(input)
    return self.output
 end
 
-function PositionEmbedding:updateGradInput(_, gradOutput)
-   self.gradInput = parent.updateGradInput(self, self.input, gradOutput)
-   return self.gradInput
+function PositionEmbedding:updateGradInput(input, gradOutput)
+
+   if torch.type(self.gradInput) ~= torch.type(input[1]) then
+      self.gradInput = input[1].new()
+   end
+   if not self.gradInput:isSameSizeAs(input[1]) then
+      self.gradInput:resizeAs(input[1]):zero()
+   end
+
+   return { self.gradInput, torch.zeros(input[2]:size()) }
 end
 
 function PositionEmbedding:accGradParameters(_, gradOutput, scale)
