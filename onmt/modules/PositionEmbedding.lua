@@ -50,7 +50,7 @@ function PositionEmbedding:updateOutput(input)
    return self.output
 end
 
-function PositionEmbedding:updateGradInput(input, gradOutput)
+function PositionEmbedding:updateGradInput(input, _)
 
    if torch.type(self.gradInput) ~= torch.type(input[1]) then
       self.gradInput = input[1].new()
