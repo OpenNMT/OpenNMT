@@ -59,7 +59,7 @@ function PositionEmbedding:updateGradInput(input, _)
       self.gradInput:resizeAs(input[1]):zero()
    end
 
-   return { self.gradInput, torch.zeros(input[2]:size()) }
+   return {self.gradInput, nil}
 end
 
 function PositionEmbedding:accGradParameters(_, gradOutput, scale)

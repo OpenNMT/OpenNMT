@@ -10,10 +10,11 @@ function positionEmbeddingTest.default()
 
   pos:postParametersInitialization()
 
-  local input = torch.LongTensor({{2, 3, 4, 5, 6, 7}, {1, 1, 1, 8, 9, 10}})
+  local input = torch.Tensor(2, 6, 5):uniform()
+  local inputSize = torch.LongTensor({6, 3})
   local gradOutput = torch.Tensor(2, 6, 5):uniform()
 
-  local output = pos:forward(input)
+  local output = pos:forward({input, inputSize})
   tester:eq(output:size(), torch.LongStorage({2, 6, 5}))
 
   -- test padding masking
@@ -22,8 +23,8 @@ function positionEmbeddingTest.default()
   -- test last positions
   tester:eq(output[{1,3}],output[{1,-1}])
 
-  local gradInput = pos:backward(input, gradOutput)
-  tester:eq(gradInput:size(), torch.LongStorage({2, 6}))
+  local gradInput = pos:backward({input, inputSize}, gradOutput)
+  tester:eq(gradInput:size(), torch.LongStorage({2, 6, 5}))
 
 end
 
