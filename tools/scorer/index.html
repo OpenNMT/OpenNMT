@@ -806,9 +806,9 @@ BLEU = 34.77 +/- 0.43, 79.8/49.1/29.6/17.6 (BP=0.919, ratio=0.922, hyp_len=26742
 <li><code>-order</code> is bleu n-gram order (default 4)</li>
 </ul>
 <h1 id="ter">TER<a class="headerlink" href="#ter" title="Permanent link">&para;</a></h1>
-<p><a href="http://www.cs.umd.edu/~snover/tercom/">TER</a> is an error metric for machine translation that messures the number of edits required to change a system output into one of the references. It is generally prefered to BLEU for estimation of sentence post-editing.</p>
+<p><a href="http://www.cs.umd.edu/~snover/tercom/">TER</a> is an error metric for machine translation that messures the number of edits required to change a system output into one of the references. It is generally prefered to BLEU for estimation of sentence post-editing effort.</p>
 <h1 id="dlratio">DLRATIO<a class="headerlink" href="#dlratio" title="Permanent link">&para;</a></h1>
-<p><a href="https://en.wikipedia.org/wiki/Damerau–Levenshtein_distance">Damerau-Levenshtein edit distance</a> is edit distance between 2 sentences. It is a simplified version of <code>TER</code> that also integrates numbers of sequence shift.</p>
+<p><a href="https://en.wikipedia.org/wiki/Damerau–Levenshtein_distance">Damerau-Levenshtein edit distance</a> is edit distance between 2 sentences. It is a simplified version of <code>TER</code> (in particular, <code>TER</code> that also integrates numbers of sequence shift).</p>
                 
                   
                 
