@@ -680,18 +680,6 @@
 
 
   <li class="md-nav__item">
-    <a href="../../options/lm/" title="lm.lua" class="md-nav__link">
-      lm.lua
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
     <a href="../../options/build_vocab/" title="tools/build_vocab.lua" class="md-nav__link">
       tools/build_vocab.lua
     </a>
@@ -927,7 +915,7 @@
 <p>
 <script type="math/tex; mode=display">ep(X,Y)=\gamma\frac{|X|}{|Y|}</script>
 </p>
-<p>where <script type="math/tex">|X|</script> is the source length, <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\gamma</script> is the coverage normalization coefficient <code>-eos_norm</code>.</p>
+<p>where <script type="math/tex">|X|</script> is the source length, <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\gamma</script> is the end of sentence normalization coefficient <code>-eos_norm</code>.</p>
 <h2 id="visualizing-the-beam-search">Visualizing the beam search<a class="headerlink" href="#visualizing-the-beam-search" title="Permanent link">&para;</a></h2>
 <p>To visualize the beam search exploration, you can use the option <code>-save_beam_to beam.json</code>. It will save a JSON serialization of the beam search history.</p>
 <div class="admonition note">
