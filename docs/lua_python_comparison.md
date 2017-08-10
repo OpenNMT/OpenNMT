@@ -6,7 +6,9 @@ There is no python version yet of tokenization/bpe scripts.
 
 # `preprocess.(lua|py)`
 
-OpenNMT-lua reference option list is documented [here](http://opennmt.net/OpenNMT/options/preprocess/)
+OpenNMT-lua reference option list for `preprocess.lua` is documented [here](http://opennmt.net/OpenNMT/options/preprocess/).
+
+Options differences:
 
 |      | `OpenNMT-lua` | `OpenNMT-py` |
 | ---  | ---           | ---          |
