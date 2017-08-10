@@ -651,6 +651,36 @@
             "title": "Other options"
         }, 
         {
+            "location": "/options/lm/", 
+            "text": "lm.lua\n options:\n\n\n\n\n-h [\nboolean\n]\n (default: \nfalse\n)\nThis help.\n\n\n-md [\nboolean\n]\n (default: \nfalse\n)\nDump help in Markdown format.\n\n\n-config \nstring\n (default: \n''\n)\nLoad options from this file.\n\n\n-save_config \nstring\n (default: \n''\n)\nSave options to this file.\n\n\n\n\nData options\n\n\n\n\nmode\n (accepted: \nscore\n, \nsample\n)\n'score' apply lm to input text, 'sample' samples output based on input text.\n\n\n-src \nstring\n (required)\nSource sequences to sample/score.\n\n\n-output \nstring\n (default: \noutput.txt\n)\nOutput file depend on \nmode\n.\n\n\n\n\nLM options\n\n\n\n\n-model \nstring\n (required)\nPath to the serialized model file.\n\n\n-batch_size \nnumber\n (default: \n30\n)\nBatch size.\n\n\n-max_length \nnumber\n (default: \n100\n)\nMaximal length of sentences in sample mode.\n\n\n-temperature \nnumber\n (default: \n1\n)\nFor \nsample\n mode, higher temperatures cause the model to take more chances and increase diversity of results, but at a cost of more mistakes.\n\n\n\n\nCuda options\n\n\n\n\n-gpuid \ntable\n (default: \n0\n)\nList of GPU identifiers (1-indexed). CPU is used when set to 0.\n\n\n-fallback_to_cpu [\nboolean\n]\n (default: \nfalse\n)\nIf GPU can't be used, rollback on the CPU.\n\n\n-fp16 [\nboolean\n]\n (default: \nfalse\n)\nUse half-precision float on GPU.\n\n\n-no_nccl [\nboolean\n]\n (default: \nfalse\n)\nDisable usage of nccl in parallel mode.\n\n\n\n\nLogger options\n\n\n\n\n-log_file \nstring\n (default: \n''\n)\nOutput logs to a file under this path instead of stdout.\n\n\n-disable_logs [\nboolean\n]\n (default: \nfalse\n)\nIf set, output nothing.\n\n\n-log_level \nstring\n (accepted: \nDEBUG\n, \nINFO\n, \nWARNING\n, \nERROR\n; default: \nINFO\n)\nOutput logs at this level and above.\n\n\n\n\nOther options\n\n\n\n\n-time [\nboolean\n]\n (default: \nfalse\n)\nMeasure average translation time.", 
+            "title": "lm.lua"
+        }, 
+        {
+            "location": "/options/lm/#data-options", 
+            "text": "mode  (accepted:  score ,  sample ) 'score' apply lm to input text, 'sample' samples output based on input text.  -src  string  (required) Source sequences to sample/score.  -output  string  (default:  output.txt ) Output file depend on  mode .", 
+            "title": "Data options"
+        }, 
+        {
+            "location": "/options/lm/#lm-options", 
+            "text": "-model  string  (required) Path to the serialized model file.  -batch_size  number  (default:  30 ) Batch size.  -max_length  number  (default:  100 ) Maximal length of sentences in sample mode.  -temperature  number  (default:  1 ) For  sample  mode, higher temperatures cause the model to take more chances and increase diversity of results, but at a cost of more mistakes.", 
+            "title": "LM options"
+        }, 
+        {
+            "location": "/options/lm/#cuda-options", 
+            "text": "-gpuid  table  (default:  0 ) List of GPU identifiers (1-indexed). CPU is used when set to 0.  -fallback_to_cpu [ boolean ]  (default:  false ) If GPU can't be used, rollback on the CPU.  -fp16 [ boolean ]  (default:  false ) Use half-precision float on GPU.  -no_nccl [ boolean ]  (default:  false ) Disable usage of nccl in parallel mode.", 
+            "title": "Cuda options"
+        }, 
+        {
+            "location": "/options/lm/#logger-options", 
+            "text": "-log_file  string  (default:  '' ) Output logs to a file under this path instead of stdout.  -disable_logs [ boolean ]  (default:  false ) If set, output nothing.  -log_level  string  (accepted:  DEBUG ,  INFO ,  WARNING ,  ERROR ; default:  INFO ) Output logs at this level and above.", 
+            "title": "Logger options"
+        }, 
+        {
+            "location": "/options/lm/#other-options", 
+            "text": "-time [ boolean ]  (default:  false ) Measure average translation time.", 
+            "title": "Other options"
+        }, 
+        {
             "location": "/options/build_vocab/", 
             "text": "build_vocab.lua\n options:\n\n\n\n\n-h [\nboolean\n]\n (default: \nfalse\n)\nThis help.\n\n\n-md [\nboolean\n]\n (default: \nfalse\n)\nDump help in Markdown format.\n\n\n-config \nstring\n (default: \n''\n)\nLoad options from this file.\n\n\n-save_config \nstring\n (default: \n''\n)\nSave options to this file.\n\n\n\n\nVocabulary options\n\n\n\n\n-data \nstring\n (required)\nData file.\n\n\n-save_vocab \nstring\n (required)\nVocabulary dictionary prefix.\n\n\n-vocab_size \ntable\n (default: \n50000\n)\nList of source vocabularies size: \nword[ feat1[ feat2[ ...] ] ]\n. If = 0, vocabularies are not pruned.\n\n\n-words_min_frequency \ntable\n (default: \n0\n)\nList of source words min frequency: \nword[ feat1[ feat2[ ...] ] ]\n. If = 0, vocabularies are pruned by size.\n\n\n-keep_frequency [\nboolean\n]\n (default: \nfalse\n)\nKeep frequency of words in dictionary.\n\n\n-idx_files [\nboolean\n]\n (default: \nfalse\n)\nIf set, each line of the data file starts with a first field which is the index of the sentence.\n\n\n\n\nLogger options\n\n\n\n\n-log_file \nstring\n (default: \n''\n)\nOutput logs to a file under this path instead of stdout.\n\n\n-disable_logs [\nboolean\n]\n (default: \nfalse\n)\nIf set, output nothing.\n\n\n-log_level \nstring\n (accepted: \nDEBUG\n, \nINFO\n, \nWARNING\n, \nERROR\n; default: \nINFO\n)\nOutput logs at this level and above.", 
             "title": "tools/build_vocab.lua"
@@ -814,6 +844,21 @@
             "location": "/options/average_models/#logger-options", 
             "text": "-log_file  string  (default:  '' ) Output logs to a file under this path instead of stdout.  -disable_logs [ boolean ]  (default:  false ) If set, output nothing.  -log_level  string  (accepted:  DEBUG ,  INFO ,  WARNING ,  ERROR ; default:  INFO ) Output logs at this level and above.", 
             "title": "Logger options"
+        }, 
+        {
+            "location": "/lua_python_comparison/", 
+            "text": "This page lists all the differences between commandline options of \nOpenNMT\n (lua version) and \nOpenNMT-py\n (python version). Identical options are not described.\n\n\ntokenize.lua\n, \nlearn_bpe.lua\n\n\nThere is no python version yet of tokenization/bpe scripts.\n\n\npreprocess.(lua|py)\n\n\nOpenNMT-lua reference option list for \npreprocess.lua\n is documented \nhere\n.\n\n\nOptions differences:\n\n\n\n\n\n\n\n\n\n\nOpenNMT-lua\n\n\nOpenNMT-py\n\n\n\n\n\n\n\n\n\n\n-config\n\n\n\n\nnot implemented\n\n\n\n\n\n\n-save_config\n\n\n\n\nnot supported\n\n\n\n\n\n\n-src_type\n\n\nnot supported\n\n\ntext|img\n\n\n\n\n\n\n-src_img_dir\n\n\nnot supported\n\n\nused for \n-src_type img\n\n\n\n\n\n\n-data_type\n\n\nbitext|monotext|feattext\n - used for ASR and LM models\n\n\n\n\n\n\n\n\n-src_words_min_frequency\n\n\nkeep all src vocab with this frequency\n\n\nnot supported\n\n\n\n\n\n\n-tgt_words_min_frequency\n\n\nkeep all tgt vocab with this frequency\n\n\nnot supported\n\n\n\n\n\n\n-src_seq_length_trunc\n\n\nnot supported\n\n\nif sentence too long, truncate it\n\n\n\n\n\n\n-tgt_seq_length_trunc\n\n\nnot supported\n\n\nif sentence too long, truncate it\n\n\n\n\n\n\n-check_plength\n\n\ncheck alignment of source/target for sequence tagging\n\n\nnot supported\n\n\n\n\n\n\n-time_shift_features\n\n\nshift feature by one timestep\n\n\nnot supported\n\n\n\n\n\n\n-keep_frequency\n\n\nused by sampled softmax\n\n\nnot supported\n\n\n\n\n\n\n-sort\n\n\n\n\nnot optional\n: can not be disabled\n\n\n\n\n\n\n-idx_files\n\n\nfor \nfeattext\n - provide format to align source\ntarget alignment\n\n\nnot supported\n\n\n\n\n\n\n-lower\n\n\nnot supported\n - is part of the tokenization features\n\n\nruntime lowercasing", 
+            "title": "Lua and Python OpenNMT"
+        }, 
+        {
+            "location": "/lua_python_comparison/#tokenizelua-learn_bpelua", 
+            "text": "There is no python version yet of tokenization/bpe scripts.", 
+            "title": "tokenize.lua, learn_bpe.lua"
+        }, 
+        {
+            "location": "/lua_python_comparison/#preprocessluapy", 
+            "text": "OpenNMT-lua reference option list for  preprocess.lua  is documented  here .  Options differences:      OpenNMT-lua  OpenNMT-py      -config   not implemented    -save_config   not supported    -src_type  not supported  text|img    -src_img_dir  not supported  used for  -src_type img    -data_type  bitext|monotext|feattext  - used for ASR and LM models     -src_words_min_frequency  keep all src vocab with this frequency  not supported    -tgt_words_min_frequency  keep all tgt vocab with this frequency  not supported    -src_seq_length_trunc  not supported  if sentence too long, truncate it    -tgt_seq_length_trunc  not supported  if sentence too long, truncate it    -check_plength  check alignment of source/target for sequence tagging  not supported    -time_shift_features  shift feature by one timestep  not supported    -keep_frequency  used by sampled softmax  not supported    -sort   not optional : can not be disabled    -idx_files  for  feattext  - provide format to align source target alignment  not supported    -lower  not supported  - is part of the tokenization features  runtime lowercasing", 
+            "title": "preprocess.(lua|py)"
         }, 
         {
             "location": "/references/", 
