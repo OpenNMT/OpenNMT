@@ -154,6 +154,11 @@ function Saver:_save(filePath, info)
   torch.save(filePath, data)
 end
 
+--[[ Return the prefix of an epoch file. ]]
+function Saver:formatEpochFile(epoch)
+  return string.format('%s_epoch%d', self.args.save_model, epoch)
+end
+
 --[[ Save the model and the current epoch state. ]]
 function Saver:saveIteration(iteration, epochState, batchOrder)
   local info = {}
@@ -178,7 +183,8 @@ function Saver:saveEpoch(validPpl, epochState)
   info.iteration = 1
   info.trainTimeInMinute = epochState:getTime() / 60
 
-  local filePath = string.format('%s_epoch%d_%.2f.t7', self.args.save_model, epochState.epoch, validPpl)
+  local prefix = self:formatEpochFile(epochState.epoch)
+  local filePath = string.format('%s_%.2f.t7', prefix, validPpl)
 
   _G.logger:info('Saving checkpoint to \'' .. filePath .. '\'...')
 

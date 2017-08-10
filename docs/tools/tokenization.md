@@ -86,4 +86,4 @@ constitution --> con￨l sti￨l tu￨l tion￨l
 ```
 
 !!! note "Note"
-    Use Lua 5.2 if you encounter any memory issue while using `learn_bpe.lua` (e.g. `-size` is too big). Otherwise, stay with Lua 5.1 for better efficiency.
+    Use Lua 5.2 if you encounter any memory issue while using `learn_bpe.lua` (e.g. `-size` is too big). Otherwise, stay with LuaJIT for better efficiency.

@@ -48,11 +48,16 @@
 * `-residual [<boolean>]` (default: `false`)<br/>Add residual connections between recurrent layers.
 * `-bridge <string>` (accepted: `copy`, `dense`, `dense_nonlinear`, `none`; default: `copy`)<br/>Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder must have the same number of layers.
 * `-input_feed [<boolean>]` (default: `true`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
-* `-encoder_type <string>` (accepted: `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`; default: `rnn`)<br/>Encoder type.
+* `-encoder_type <string>` (accepted: `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`, `cnn`; default: `rnn`)<br/>Encoder type.
 * `-attention <string>` (accepted: `none`, `global`; default: `global`)<br/>Attention model.
 * `-brnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action for the bidirectional states.
 * `-pdbrnn_reduction <number>` (default: `2`)<br/>Time-reduction factor at each layer.
 * `-pdbrnn_merge <string>` (accepted: `concat`, `sum`; default: `concat`)<br/>Merge action when reducing time.
+* `-cnn_layers <number>` (default: `2`)<br/>Number of convolutional layers in the encoder.
+* `-cnn_kernel <number>` (default: `3`)<br/>Kernel size for convolutions. Same in each layer.
+* `-cnn_size <number>` (default: `500`)<br/>Number of output units per convolutional layer. Same in each layer.
+* `-use_pos_emb [<boolean>]` (default: `true`)<br/>Add positional embeddings to word embeddings.
+* `-max_pos <number>` (default: `50`)<br/>Maximum value for positional indexes.
 
 ## Global Attention Model options
 
@@ -69,7 +74,8 @@
 * `-start_epoch <number>` (default: `1`)<br/>If loading from a checkpoint, the epoch from which to start.
 * `-end_epoch <number>` (default: `13`)<br/>The final epoch of the training. If = 0, train forever unless another stopping condition is met (e.g. `-min_learning_rate` is reached).
 * `-curriculum <number>` (default: `0`)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.
-* `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`, `dlratio`; default: `perplexity`)<br/>Metric to use for validation.
+* `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`, `ter`, `dlratio`; default: `perplexity`)<br/>Metric to use for validation.
+* `-save_validation_translation_every <number>` (default: `0`)<br/>When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the translation every this many epochs to the file `<save_model>_epochN_validation_translation.txt`. If = 0, will not save validation translation.
 
 ## Optimization options
 

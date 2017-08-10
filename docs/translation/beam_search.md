@@ -39,7 +39,7 @@ The score of the end of sentence token is penalized by the following formula:
 
 $$ep(X,Y)=\gamma\frac{|X|}{|Y|}$$
 
-where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\gamma\) is the coverage normalization coefficient `-eos_norm`.
+where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\gamma\) is the end of sentence normalization coefficient `-eos_norm`.
 
 ## Visualizing the beam search
 
