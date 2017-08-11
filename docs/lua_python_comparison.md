@@ -65,9 +65,8 @@ Options differences:
 | `-attention_type` | see `-global_attention` | dot, general, mlp |
 | `-global_attention` | general, dot, concat | see `-attention_type` |
 | `-copy_attn` | *not supported* | copy attention layer |
-| `-coverage_attn` | *not supported* | coverage attention layer |
-| `-lambda_coverage` |  | lambda value for coverage |
-| `-context_gate` |  | source,target,both |
+| `-coverage_attn`<br>`-lambda_coverage` | *not supported* | coverage attention layer |
+| `-context_gate` | *not supported* | source,target,both |
 | `-use_pos_emb` | add positional embeddings to word embeddings | *not supported* |
 | `-max_pos` | connected to `-use_pos_emb` | *not supported* |
 | `-position_encoding` | *not supported* | use a sinusoid to mark relative words positions. |
