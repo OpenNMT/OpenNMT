@@ -809,6 +809,11 @@
 <td><em>not supported</em></td>
 </tr>
 <tr>
+<td><code>-md</code></td>
+<td>dump help as md file for online documentation</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
 <td><code>-src_type</code></td>
 <td><em>not supported</em></td>
 <td><code>text|img</code></td>
@@ -872,6 +877,345 @@
 <td><code>-lower</code></td>
 <td><em>not supported</em> - is part of the tokenization features</td>
 <td>runtime lowercasing</td>
+</tr>
+<tr>
+<td><code>-log_file</code><br><code>-disable_logs</code><br><code>-log_level</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+</tbody>
+</table>
+<h1 id="trainluapy"><code>train.(lua|py)</code><a class="headerlink" href="#trainluapy" title="Permanent link">&para;</a></h1>
+<p>OpenNMT-lua reference option list for <code>preprocess.lua</code> is documented <a href="http://opennmt.net/OpenNMT/options/train/">here</a>.</p>
+<p>Options differences:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>OpenNMT-lua</code></th>
+<th><code>OpenNMT-py</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-config</code><br><code>-save_config</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-sample</code>-<br><code>-sample_type</code>-<br><code>-sample_perplexity_init</code>-<br><code>-sample_perplexity_max</code><br><code>-sample_vocab</code></td>
+<td>Sampled dataset options</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-model_type</code></td>
+<td>lm, seq2seq, seqtagger</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-enc_layers</code></td>
+<td>number of layers of the encoder</td>
+<td><em>not supported</em>: see <code>-layers</code></td>
+</tr>
+<tr>
+<td><code>-dec_layers</code></td>
+<td>number of layers of the encoder</td>
+<td><em>not supported</em>: see <code>-layers</code></td>
+</tr>
+<tr>
+<td><code>-src_word_vec_size</code></td>
+<td></td>
+<td><em>not supported</em>: see <code>-word_vec_size</code> and <code>-feat_vec_size</code></td>
+</tr>
+<tr>
+<td><code>-tgt_word_vec_size</code></td>
+<td></td>
+<td><em>not supported</em>: see <code>-word_vec_size</code> and <code>-feat_vec_size</code></td>
+</tr>
+<tr>
+<td><code>-fix_word_vecs_enc</code></td>
+<td>true, false, pretrained</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-fix_word_vecs_dec</code></td>
+<td>true, false, pretrained</td>
+<td></td>
+</tr>
+<tr>
+<td><code>-share_decoder_embeddings</code></td>
+<td><em>not supported</em></td>
+<td>share the word and softmax embeddings for decoder</td>
+</tr>
+<tr>
+<td><code>-feat_merge</code></td>
+<td>concat, sum</td>
+<td>concat, sum, mlp</td>
+</tr>
+<tr>
+<td><code>-dropout_input</code></td>
+<td>Dropout probability applied to the input of the recurrentÊmodule</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-dropout_words</code></td>
+<td>Dropout probability applied to the source sequence</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-dropout_type</code></td>
+<td>naive, variational</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-residual</code></td>
+<td>Add residual connections between recurrent layers</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-bridge</code></td>
+<td>copy, dense, dense_nonlinear</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-encoder_type</code></td>
+<td>rnn, brnn, dbrnn, pdbrnn, gnmt, cnn</td>
+<td>text, img: if text, type is defined by <code>-encoder_layer</code> and <code>-brnn</code></td>
+</tr>
+<tr>
+<td><code>-encoder_layer</code></td>
+<td><em>not supported</em></td>
+<td>rnn, mean, transformer</td>
+</tr>
+<tr>
+<td><code>-decoder_layer</code></td>
+<td><em>not supported</em></td>
+<td>rnn, transformer</td>
+</tr>
+<tr>
+<td><code>-brnn</code></td>
+<td>defined by <code>-encoder_type</code></td>
+<td>use a bidirectional encoder, if <code>-encoder_layer</code> is <code>-rnn</code></td>
+</tr>
+<tr>
+<td><code>-pdbrnn_reduction</code><br><code>-pdbrnn_merge</code></td>
+<td>for <code>-encoder_type</code> set to <code>-pdbrnn</code></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-cnn_layers</code><br><code>-cnn_kernel</code><br><code>-cnn_size</code></td>
+<td>for <code>-encoder_type</code> set to <code>-cnn</code></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-truncated_decoder</code></td>
+<td><em>not supported</em></td>
+<td>truncated bptt</td>
+</tr>
+<tr>
+<td><code>-attention</code></td>
+<td>none, global</td>
+<td>only global attention</td>
+</tr>
+<tr>
+<td><code>-attention_type</code></td>
+<td>see <code>-global_attention</code></td>
+<td>dot, general, mlp</td>
+</tr>
+<tr>
+<td><code>-global_attention</code></td>
+<td>general, dot, concat</td>
+<td>see <code>-attention_type</code></td>
+</tr>
+<tr>
+<td><code>-copy_attn</code></td>
+<td><em>not supported</em></td>
+<td>copy attention layer</td>
+</tr>
+<tr>
+<td><code>-coverage_attn</code></td>
+<td><em>not supported</em></td>
+<td>coverage attention layer</td>
+</tr>
+<tr>
+<td><code>-lambda_coverage</code></td>
+<td></td>
+<td>lambda value for coverage</td>
+</tr>
+<tr>
+<td><code>-context_gate</code></td>
+<td></td>
+<td>source,target,both</td>
+</tr>
+<tr>
+<td><code>-use_pos_emb</code></td>
+<td>add positional embeddings to word embeddings</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-max_pos</code></td>
+<td>connected to <code>-use_pos_emb</code></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-position_encoding</code></td>
+<td><em>not supported</em></td>
+<td>use a sinusoid to mark relative words positions.</td>
+</tr>
+<tr>
+<td><code>-save_every</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-save_every_epochs</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-report_every</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-async_parallel</code><br><code>-async_parallel_minbatch</code></td>
+<td>Async multi-gpu training</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-start_iteration</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-end_epoch</code></td>
+<td>the final epoch of the training</td>
+<td><em>not supported</em>: see <code>-epochs</code></td>
+</tr>
+<tr>
+<td><code>-epochs</code></td>
+<td><em>not supported</em>: see <code>-end_epoch</code></td>
+<td>number of training epochs</td>
+</tr>
+<tr>
+<td><code>-validation_metric</code></td>
+<td>perplexity, loss, bleu, ter, dlratio</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-save_validation_translation_every</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-max_batch_size</code></td>
+<td>maximum batch size</td>
+<td><em>not supported</em>: see <code>-max_generator_batches</code></td>
+</tr>
+<tr>
+<td><code>-uneven_batches</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-max_generator_batches</code></td>
+<td><em>not supported</em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-min_learning_rate</code></td>
+<td>do not continue the training past this learning rate value</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-start_decay_score_delta</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-decay</code></td>
+<td>default, epoch_only, score_only</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-decay_method</code></td>
+<td></td>
+<td>use a custom learning rate decay (?)</td>
+</tr>
+<tr>
+<td><code>-warmup_steps</code></td>
+<td><em>not supported</em></td>
+<td>number of warmup steps for custom decay</td>
+</tr>
+<tr>
+<td><code>-train_from_state_dict</code></td>
+<td><em>not supported</em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-continue</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-extra_shuffle</code></td>
+<td><em>not supported</em></td>
+<td>shuffle and re-assign mini-batches</td>
+</tr>
+<tr>
+<td><code>-start_checkpoint_at</code></td>
+<td><em>not supported</em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-gpus</code></td>
+<td><em>not supported</em>: is <code>-gpuid</code></td>
+<td>list of GPU identifiers for parallel training</td>
+</tr>
+<tr>
+<td><code>-gpuid</code></td>
+<td>list of GPU identifiers for parallel training</td>
+<td>is <code>-gpus</code></td>
+</tr>
+<tr>
+<td><code>-log_interval</code></td>
+<td><em>not supported</em></td>
+<td>print stats at this interval</td>
+</tr>
+<tr>
+<td><code>-log_server</code></td>
+<td></td>
+<td><em>not supported</em>: is <code>-exp_host</code> and <code>-exp_port</code></td>
+</tr>
+<tr>
+<td><code>-exp_host, exp_port</code></td>
+<td><em>not supported</em>: is <code>-log_server</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-experiment_name</code></td>
+<td><em>not supported</em>: is <code>-exp</code></td>
+<td>crayon experiment name</td>
+</tr>
+<tr>
+<td><code>-exp</code></td>
+<td>crayon experiment name</td>
+<td>is <code>-experiment name</code></td>
+</tr>
+<tr>
+<td><code>-fp16</code></td>
+<td>half-float precision for GPU</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-fallback_to_cpu</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>-no_nccl</code></td>
+<td></td>
+<td><em>not supported</em></td>
 </tr>
 </tbody>
 </table>
