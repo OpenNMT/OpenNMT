@@ -105,7 +105,7 @@ Commandline options differences:
 | `exp` | crayon experiment name | is `experiment name` |
 | <span style="color:blue">GPU Options<span> |||
 | `gpus` | *not supported*: is `gpuid` | list of GPU identifiers for parallel training |
-| `gpuid` | list of GPU identifiers for parallel training | is `gpus` |
+| `gpuid` | list of GPU identifiers for parallel training | *not supported*: is `gpus` |
 | `fp16` | half-float precision for GPU | *not supported* |
 | `fallback_to_cpu` |  | *not supported* |
 | `no_nccl` |  | *not supported* |
