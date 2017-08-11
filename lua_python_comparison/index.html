@@ -799,87 +799,87 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-config</code></td>
+<td><code>config</code></td>
 <td></td>
 <td><em>not implemented</em></td>
 </tr>
 <tr>
-<td><code>-save_config</code></td>
+<td><code>save_config</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-md</code></td>
+<td><code>md</code></td>
 <td>dump help as md file for online documentation</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-src_type</code></td>
+<td><code>src_type</code></td>
 <td><em>not supported</em></td>
-<td><code>text|img</code></td>
+<td><code>text</code>, <code>img</code></td>
 </tr>
 <tr>
-<td><code>-src_img_dir</code></td>
+<td><code>src_img_dir</code></td>
 <td><em>not supported</em></td>
-<td>used for <code>-src_type img</code></td>
+<td>used for <code>src_type img</code></td>
 </tr>
 <tr>
-<td><code>-data_type</code></td>
-<td><code>bitext|monotext|feattext</code> - used for ASR and LM models</td>
+<td><code>data_type</code></td>
+<td><code>bitext</code>, <code>monotext</code>, <code>feattext</code> - used for ASR and LM models</td>
 <td></td>
 </tr>
 <tr>
-<td><code>-src_words_min_frequency</code></td>
+<td><code>src_words_min_frequency</code></td>
 <td>keep all src vocab with this frequency</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-tgt_words_min_frequency</code></td>
+<td><code>tgt_words_min_frequency</code></td>
 <td>keep all tgt vocab with this frequency</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-src_seq_length_trunc</code></td>
+<td><code>src_seq_length_trunc</code></td>
 <td><em>not supported</em></td>
 <td>if sentence too long, truncate it</td>
 </tr>
 <tr>
-<td><code>-tgt_seq_length_trunc</code></td>
+<td><code>tgt_seq_length_trunc</code></td>
 <td><em>not supported</em></td>
 <td>if sentence too long, truncate it</td>
 </tr>
 <tr>
-<td><code>-check_plength</code></td>
+<td><code>check_plength</code></td>
 <td>check alignment of source/target for sequence tagging</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-time_shift_features</code></td>
+<td><code>time_shift_features</code></td>
 <td>shift feature by one timestep</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-keep_frequency</code></td>
+<td><code>keep_frequency</code></td>
 <td>used by sampled softmax</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-sort</code></td>
+<td><code>sort</code></td>
 <td></td>
 <td><em>not optional</em>: can not be disabled</td>
 </tr>
 <tr>
-<td><code>-idx_files</code></td>
+<td><code>idx_files</code></td>
 <td>for <code>feattext</code> - provide format to align source&amp;target alignment</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-lower</code></td>
+<td><code>lower</code></td>
 <td><em>not supported</em> - is part of the tokenization features</td>
 <td>runtime lowercasing</td>
 </tr>
 <tr>
-<td><code>-log_file</code><br><code>-disable_logs</code><br><code>-log_level</code></td>
+<td><code>log_file</code><br><code>disable_logs</code><br><code>log_level</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
@@ -898,317 +898,302 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-config</code><br><code>-save_config</code></td>
+<td><code>config</code><br><code>save_config</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-sample</code>-<br><code>-sample_type</code>-<br><code>-sample_perplexity_init</code>-<br><code>-sample_perplexity_max</code><br><code>-sample_vocab</code></td>
+<td><code>sample</code><br><code>sample_type</code><br><code>sample_perplexity_init</code><br><code>sample_perplexity_max</code><br><code>sample_vocab</code></td>
 <td>Sampled dataset options</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-model_type</code></td>
+<td><code>model_type</code></td>
 <td>lm, seq2seq, seqtagger</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-enc_layers</code></td>
-<td>number of layers of the encoder</td>
-<td><em>not supported</em>: see <code>-layers</code></td>
+<td><code>enc_layers</code><br><code>dec_layers</code></td>
+<td>number of layers of the encoder/decoder</td>
+<td><em>not supported</em>: see <code>layers</code></td>
 </tr>
 <tr>
-<td><code>-dec_layers</code></td>
-<td>number of layers of the encoder</td>
-<td><em>not supported</em>: see <code>-layers</code></td>
-</tr>
-<tr>
-<td><code>-src_word_vec_size</code></td>
+<td><code>src_word_vec_size</code><br><code>tgt_word_vec_size</code></td>
 <td></td>
-<td><em>not supported</em>: see <code>-word_vec_size</code> and <code>-feat_vec_size</code></td>
+<td><em>not supported</em>: see <code>word_vec_size</code> and <code>feat_vec_size</code></td>
 </tr>
 <tr>
-<td><code>-tgt_word_vec_size</code></td>
-<td></td>
-<td><em>not supported</em>: see <code>-word_vec_size</code> and <code>-feat_vec_size</code></td>
-</tr>
-<tr>
-<td><code>-fix_word_vecs_enc</code></td>
-<td>true, false, pretrained</td>
+<td><code>fix_word_vecs_enc</code><br><code>fix_word_vecs_dec</code></td>
+<td><code>true</code>, <code>false</code>, <code>pretrained</code></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-fix_word_vecs_dec</code></td>
-<td>true, false, pretrained</td>
-<td></td>
-</tr>
-<tr>
-<td><code>-share_decoder_embeddings</code></td>
+<td><code>share_decoder_embeddings</code></td>
 <td><em>not supported</em></td>
 <td>share the word and softmax embeddings for decoder</td>
 </tr>
 <tr>
-<td><code>-feat_merge</code></td>
-<td>concat, sum</td>
-<td>concat, sum, mlp</td>
+<td><code>feat_merge</code></td>
+<td><code>concat</code>, <code>sum</code></td>
+<td><code>concat</code>, <code>sum</code>, <code>mlp</code></td>
 </tr>
 <tr>
-<td><code>-dropout_input</code></td>
-<td>Dropout probability applied to the input of the recurrentÊmodule</td>
+<td><code>dropout_input</code></td>
+<td>Dropout probability applied to the input of the recurrent module</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-dropout_words</code></td>
+<td><code>dropout_words</code></td>
 <td>Dropout probability applied to the source sequence</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-dropout_type</code></td>
+<td><code>dropout_type</code></td>
 <td>naive, variational</td>
-<td><em>not supported</em></td>
+<td><em>not supported</em>: dropout is naive</td>
 </tr>
 <tr>
-<td><code>-residual</code></td>
+<td><code>residual</code></td>
 <td>Add residual connections between recurrent layers</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-bridge</code></td>
-<td>copy, dense, dense_nonlinear</td>
+<td><code>bridge</code></td>
+<td><code>copy</code>, <code>dense</code>, <code>dense_nonlinear</code></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-encoder_type</code></td>
-<td>rnn, brnn, dbrnn, pdbrnn, gnmt, cnn</td>
-<td>text, img: if text, type is defined by <code>-encoder_layer</code> and <code>-brnn</code></td>
+<td><code>encoder_type</code></td>
+<td><code>rnn</code>, <code>brnn</code>, <code>dbrnn</code>, <code>pdbrnn</code>, <code>gnmt</code>, <code>cnn</code></td>
+<td><code>text</code>, <code>img</code>: if <code>text</code>, corresponding type is defined by <code>encoder_layer</code> and <code>brnn</code></td>
 </tr>
 <tr>
-<td><code>-encoder_layer</code></td>
+<td><code>encoder_layer</code></td>
 <td><em>not supported</em></td>
-<td>rnn, mean, transformer</td>
+<td><code>rnn</code>, <code>mean</code>, <code>transformer</code></td>
 </tr>
 <tr>
-<td><code>-decoder_layer</code></td>
+<td><code>decoder_layer</code></td>
 <td><em>not supported</em></td>
-<td>rnn, transformer</td>
+<td><code>rnn</code>, <code>transformer</code></td>
 </tr>
 <tr>
-<td><code>-brnn</code></td>
-<td>defined by <code>-encoder_type</code></td>
-<td>use a bidirectional encoder, if <code>-encoder_layer</code> is <code>-rnn</code></td>
+<td><code>brnn</code></td>
+<td>defined by <code>encoder_type</code></td>
+<td>use a bidirectional encoder, if <code>encoder_layer</code> is <code>rnn</code></td>
 </tr>
 <tr>
-<td><code>-pdbrnn_reduction</code><br><code>-pdbrnn_merge</code></td>
-<td>for <code>-encoder_type</code> set to <code>-pdbrnn</code></td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>-cnn_layers</code><br><code>-cnn_kernel</code><br><code>-cnn_size</code></td>
-<td>for <code>-encoder_type</code> set to <code>-cnn</code></td>
+<td><code>pdbrnn_reduction</code><br><code>pdbrnn_merge</code></td>
+<td>for <code>encoder_type</code> set to <code>pdbrnn</code></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-truncated_decoder</code></td>
+<td><code>cnn_layers</code><br><code>cnn_kernel</code><br><code>cnn_size</code></td>
+<td>for <code>encoder_type</code> set to <code>cnn</code></td>
 <td><em>not supported</em></td>
-<td>truncated bptt</td>
 </tr>
 <tr>
-<td><code>-attention</code></td>
-<td>none, global</td>
-<td>only global attention</td>
+<td><code>truncated_decoder</code></td>
+<td><em>not supported</em></td>
+<td>truncated back propagation through time</td>
 </tr>
 <tr>
-<td><code>-attention_type</code></td>
-<td>see <code>-global_attention</code></td>
-<td>dot, general, mlp</td>
+<td><code>attention</code></td>
+<td><code>none</code>, <code>global</code></td>
+<td><em>not supported</em>: only global attention</td>
 </tr>
 <tr>
-<td><code>-global_attention</code></td>
-<td>general, dot, concat</td>
-<td>see <code>-attention_type</code></td>
+<td><code>attention_type</code></td>
+<td>see <code>global_attention</code></td>
+<td><code>dot</code>, <code>general</code>, <code>mlp</code></td>
 </tr>
 <tr>
-<td><code>-copy_attn</code></td>
+<td><code>global_attention</code></td>
+<td><code>general</code>, <code>dot</code>, <code>concat</code></td>
+<td>see <code>attention_type</code></td>
+</tr>
+<tr>
+<td><code>copy_attn</code></td>
 <td><em>not supported</em></td>
 <td>copy attention layer</td>
 </tr>
 <tr>
-<td><code>-coverage_attn</code><br><code>-lambda_coverage</code></td>
+<td><code>coverage_attn</code><br><code>lambda_coverage</code></td>
 <td><em>not supported</em></td>
 <td>coverage attention layer</td>
 </tr>
 <tr>
-<td><code>-context_gate</code></td>
+<td><code>context_gate</code></td>
 <td><em>not supported</em></td>
-<td>source,target,both</td>
+<td><code>source</code>, <code>target</code>, <code>both</code></td>
 </tr>
 <tr>
-<td><code>-use_pos_emb</code></td>
+<td><code>use_pos_emb</code></td>
 <td>add positional embeddings to word embeddings</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-max_pos</code></td>
-<td>connected to <code>-use_pos_emb</code></td>
+<td><code>max_pos</code></td>
+<td>connected to <code>use_pos_emb</code></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-position_encoding</code></td>
+<td><code>position_encoding</code></td>
 <td><em>not supported</em></td>
 <td>use a sinusoid to mark relative words positions.</td>
 </tr>
 <tr>
-<td><code>-save_every</code></td>
+<td><code>save_every</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-save_every_epochs</code></td>
+<td><code>save_every_epochs</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-report_every</code></td>
+<td><code>report_every</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-async_parallel</code><br><code>-async_parallel_minbatch</code></td>
+<td><code>async_parallel</code><br><code>async_parallel_minbatch</code></td>
 <td>Async multi-gpu training</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-start_iteration</code></td>
+<td><code>start_iteration</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-end_epoch</code></td>
-<td>the final epoch of the training</td>
-<td><em>not supported</em>: see <code>-epochs</code></td>
+<td><code>end_epoch</code></td>
+<td>final epoch of the training</td>
+<td><em>not supported</em>: see <code>epochs</code></td>
 </tr>
 <tr>
-<td><code>-epochs</code></td>
-<td><em>not supported</em>: see <code>-end_epoch</code></td>
+<td><code>epochs</code></td>
+<td><em>not supported</em>: see <code>end_epoch</code></td>
 <td>number of training epochs</td>
 </tr>
 <tr>
-<td><code>-validation_metric</code></td>
-<td>perplexity, loss, bleu, ter, dlratio</td>
+<td><code>validation_metric</code></td>
+<td><code>perplexity</code>, <code>loss</code>, <code>bleu</code>, <code>ter</code>, <code>dlratio</code></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-save_validation_translation_every</code></td>
+<td><code>save_validation_translation_every</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-max_batch_size</code></td>
+<td><code>max_batch_size</code></td>
 <td>maximum batch size</td>
-<td><em>not supported</em>: see <code>-max_generator_batches</code></td>
+<td><em>not supported</em>: see <code>max_generator_batches</code></td>
 </tr>
 <tr>
-<td><code>-uneven_batches</code></td>
+<td><code>uneven_batches</code></td>
 <td></td>
 <td></td>
 </tr>
 <tr>
-<td><code>-max_generator_batches</code></td>
+<td><code>max_generator_batches</code></td>
 <td><em>not supported</em></td>
 <td></td>
 </tr>
 <tr>
-<td><code>-min_learning_rate</code></td>
+<td><code>min_learning_rate</code></td>
 <td>do not continue the training past this learning rate value</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-start_decay_score_delta</code></td>
+<td><code>start_decay_score_delta</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-decay</code></td>
+<td><code>decay</code></td>
 <td>default, epoch_only, score_only</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-decay_method</code></td>
+<td><code>decay_method</code></td>
 <td></td>
 <td>use a custom learning rate decay (?)</td>
 </tr>
 <tr>
-<td><code>-warmup_steps</code></td>
+<td><code>warmup_steps</code></td>
 <td><em>not supported</em></td>
 <td>number of warmup steps for custom decay</td>
 </tr>
 <tr>
-<td><code>-train_from_state_dict</code></td>
+<td><code>train_from_state_dict</code></td>
 <td><em>not supported</em></td>
 <td></td>
 </tr>
 <tr>
-<td><code>-continue</code></td>
+<td><code>continue</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-extra_shuffle</code></td>
+<td><code>extra_shuffle</code></td>
 <td><em>not supported</em></td>
 <td>shuffle and re-assign mini-batches</td>
 </tr>
 <tr>
-<td><code>-start_checkpoint_at</code></td>
+<td><code>start_checkpoint_at</code></td>
 <td><em>not supported</em></td>
 <td></td>
 </tr>
 <tr>
-<td><code>-gpus</code></td>
-<td><em>not supported</em>: is <code>-gpuid</code></td>
+<td><code>gpus</code></td>
+<td><em>not supported</em>: is <code>gpuid</code></td>
 <td>list of GPU identifiers for parallel training</td>
 </tr>
 <tr>
-<td><code>-gpuid</code></td>
+<td><code>gpuid</code></td>
 <td>list of GPU identifiers for parallel training</td>
-<td>is <code>-gpus</code></td>
+<td>is <code>gpus</code></td>
 </tr>
 <tr>
-<td><code>-log_interval</code></td>
+<td><code>log_interval</code></td>
 <td><em>not supported</em></td>
 <td>print stats at this interval</td>
 </tr>
 <tr>
-<td><code>-log_server</code></td>
+<td><code>log_server</code></td>
 <td></td>
-<td><em>not supported</em>: is <code>-exp_host</code> and <code>-exp_port</code></td>
+<td><em>not supported</em>: is <code>exp_host</code> and <code>exp_port</code></td>
 </tr>
 <tr>
-<td><code>-exp_host, exp_port</code></td>
-<td><em>not supported</em>: is <code>-log_server</code></td>
+<td><code>exp_host, exp_port</code></td>
+<td><em>not supported</em>: is <code>log_server</code></td>
 <td></td>
 </tr>
 <tr>
-<td><code>-experiment_name</code></td>
-<td><em>not supported</em>: is <code>-exp</code></td>
+<td><code>experiment_name</code></td>
+<td><em>not supported</em>: is <code>exp</code></td>
 <td>crayon experiment name</td>
 </tr>
 <tr>
-<td><code>-exp</code></td>
+<td><code>exp</code></td>
 <td>crayon experiment name</td>
-<td>is <code>-experiment name</code></td>
+<td>is <code>experiment name</code></td>
 </tr>
 <tr>
-<td><code>-fp16</code></td>
+<td><code>fp16</code></td>
 <td>half-float precision for GPU</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-fallback_to_cpu</code></td>
+<td><code>fallback_to_cpu</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>-no_nccl</code></td>
+<td><code>no_nccl</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
