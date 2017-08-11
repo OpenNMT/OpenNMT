@@ -719,12 +719,49 @@
     
     <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
     
-      
     
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Lua and Python OpenNMT
+      </label>
     
     <a href="./" title="Lua and Python OpenNMT" class="md-nav__link md-nav__link--active">
       Lua and Python OpenNMT
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tokenizelua-learn_bpelua" title="tokenize.lua, learn_bpe.lua" class="md-nav__link">
+    tokenize.lua, learn_bpe.lua
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#preprocessluapy" title="preprocess.(lua|py)" class="md-nav__link">
+    preprocess.(lua|py)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trainluapy" title="train.(lua|py)" class="md-nav__link">
+    train.(lua|py)
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -767,8 +804,34 @@
 <nav class="md-nav md-nav--secondary">
   
   
-    
   
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tokenizelua-learn_bpelua" title="tokenize.lua, learn_bpe.lua" class="md-nav__link">
+    tokenize.lua, learn_bpe.lua
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#preprocessluapy" title="preprocess.(lua|py)" class="md-nav__link">
+    preprocess.(lua|py)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trainluapy" title="train.(lua|py)" class="md-nav__link">
+    train.(lua|py)
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
   
 </nav>
                   </div>
@@ -783,12 +846,14 @@
                   <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/lua_python_comparison.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
                 
                 
+                  <h1>Lua and Python OpenNMT</h1>
+                
                 <p>This page lists all the differences between commandline options of <code>OpenNMT</code> (lua version) and <code>OpenNMT-py</code> (python version). Identical options are not described.</p>
-<h1 id="tokenizelua-learn_bpelua"><code>tokenize.lua</code>, <code>learn_bpe.lua</code><a class="headerlink" href="#tokenizelua-learn_bpelua" title="Permanent link">&para;</a></h1>
+<h2 id="tokenizelua-learn_bpelua"><code>tokenize.lua</code>, <code>learn_bpe.lua</code><a class="headerlink" href="#tokenizelua-learn_bpelua" title="Permanent link">&para;</a></h2>
 <p>There is no python version yet of tokenization/bpe scripts.</p>
-<h1 id="preprocessluapy"><code>preprocess.(lua|py)</code><a class="headerlink" href="#preprocessluapy" title="Permanent link">&para;</a></h1>
+<h2 id="preprocessluapy"><code>preprocess.(lua|py)</code><a class="headerlink" href="#preprocessluapy" title="Permanent link">&para;</a></h2>
 <p>OpenNMT-lua reference option list for <code>preprocess.lua</code> is documented <a href="http://opennmt.net/OpenNMT/options/preprocess/">here</a>.</p>
-<p>Options differences:</p>
+<p>Commandline options differences:</p>
 <table>
 <thead>
 <tr>
@@ -799,12 +864,7 @@
 </thead>
 <tbody>
 <tr>
-<td><code>config</code></td>
-<td></td>
-<td><em>not implemented</em></td>
-</tr>
-<tr>
-<td><code>save_config</code></td>
+<td><code>config</code><br><code>save_config</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
@@ -816,7 +876,7 @@
 <tr>
 <td><code>src_type</code></td>
 <td><em>not supported</em></td>
-<td><code>text</code>, <code>img</code></td>
+<td><code>text</code>, <code>img</code> (*)</td>
 </tr>
 <tr>
 <td><code>src_img_dir</code></td>
@@ -826,7 +886,7 @@
 <tr>
 <td><code>data_type</code></td>
 <td><code>bitext</code>, <code>monotext</code>, <code>feattext</code> - used for ASR and LM models</td>
-<td></td>
+<td><em>not supported</em></td>
 </tr>
 <tr>
 <td><code>src_words_min_frequency</code></td>
@@ -879,15 +939,21 @@
 <td>runtime lowercasing</td>
 </tr>
 <tr>
+<td><span style="color:blue">Logging Options<span></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
 <td><code>log_file</code><br><code>disable_logs</code><br><code>log_level</code></td>
 <td></td>
 <td><em>not supported</em></td>
 </tr>
 </tbody>
 </table>
-<h1 id="trainluapy"><code>train.(lua|py)</code><a class="headerlink" href="#trainluapy" title="Permanent link">&para;</a></h1>
+<p>(*) Lua implementation of <code>im2text</code> is in independent repository <a href="https://github.com/OpenNMT/Im2Text">here</a>.</p>
+<h2 id="trainluapy"><code>train.(lua|py)</code><a class="headerlink" href="#trainluapy" title="Permanent link">&para;</a></h2>
 <p>OpenNMT-lua reference option list for <code>preprocess.lua</code> is documented <a href="http://opennmt.net/OpenNMT/options/train/">here</a>.</p>
-<p>Options differences:</p>
+<p>Commandline options differences:</p>
 <table>
 <thead>
 <tr>
@@ -903,9 +969,19 @@
 <td><em>not supported</em></td>
 </tr>
 <tr>
+<td><span style="color:blue">Sampling Options<span></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
 <td><code>sample</code><br><code>sample_type</code><br><code>sample_perplexity_init</code><br><code>sample_perplexity_max</code><br><code>sample_vocab</code></td>
-<td>Sampled dataset options</td>
+<td><a href="../options/train/#sampled-dataset-options">Sampled dataset options</a></td>
 <td><em>not supported</em></td>
+</tr>
+<tr>
+<td><span style="color:blue">Model Options<span></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td><code>model_type</code></td>
@@ -933,18 +1009,33 @@
 <td>share the word and softmax embeddings for decoder</td>
 </tr>
 <tr>
+<td><code>use_pos_emb</code></td>
+<td>add positional embeddings to word embeddings</td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>max_pos</code></td>
+<td>connected to <code>use_pos_emb</code></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><code>position_encoding</code></td>
+<td><em>not supported</em></td>
+<td>use a sinusoid to mark relative words positions.</td>
+</tr>
+<tr>
 <td><code>feat_merge</code></td>
 <td><code>concat</code>, <code>sum</code></td>
 <td><code>concat</code>, <code>sum</code>, <code>mlp</code></td>
 </tr>
 <tr>
 <td><code>dropout_input</code></td>
-<td>Dropout probability applied to the input of the recurrent module</td>
+<td>Dropout applied to the input of the recurrent module</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
 <td><code>dropout_words</code></td>
-<td>Dropout probability applied to the source sequence</td>
+<td>Dropout applied to the full source sequence</td>
 <td><em>not supported</em></td>
 </tr>
 <tr>
@@ -998,19 +1089,24 @@
 <td>truncated back propagation through time</td>
 </tr>
 <tr>
+<td><span style="color:blue">Attention Options<span></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
 <td><code>attention</code></td>
 <td><code>none</code>, <code>global</code></td>
 <td><em>not supported</em>: only global attention</td>
 </tr>
 <tr>
 <td><code>attention_type</code></td>
-<td>see <code>global_attention</code></td>
+<td><em>not supported</em>: is <code>global_attention</code></td>
 <td><code>dot</code>, <code>general</code>, <code>mlp</code></td>
 </tr>
 <tr>
 <td><code>global_attention</code></td>
 <td><code>general</code>, <code>dot</code>, <code>concat</code></td>
-<td>see <code>attention_type</code></td>
+<td><em>not supported</em>: is <code>attention_type</code></td>
 </tr>
 <tr>
 <td><code>copy_attn</code></td>
@@ -1028,29 +1124,9 @@
 <td><code>source</code>, <code>target</code>, <code>both</code></td>
 </tr>
 <tr>
-<td><code>use_pos_emb</code></td>
-<td>add positional embeddings to word embeddings</td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>max_pos</code></td>
-<td>connected to <code>use_pos_emb</code></td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>position_encoding</code></td>
-<td><em>not supported</em></td>
-<td>use a sinusoid to mark relative words positions.</td>
-</tr>
-<tr>
-<td><code>save_every</code></td>
+<td><span style="color:blue">Training Options<span></td>
 <td></td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>save_every_epochs</code></td>
 <td></td>
-<td><em>not supported</em></td>
 </tr>
 <tr>
 <td><code>report_every</code></td>
@@ -1086,6 +1162,11 @@
 <td><code>save_validation_translation_every</code></td>
 <td></td>
 <td><em>not supported</em></td>
+</tr>
+<tr>
+<td><span style="color:blue">Optim Options<span></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td><code>max_batch_size</code></td>
@@ -1128,6 +1209,16 @@
 <td>number of warmup steps for custom decay</td>
 </tr>
 <tr>
+<td><code>extra_shuffle</code></td>
+<td><em>not supported</em></td>
+<td>shuffle and re-assign mini-batches</td>
+</tr>
+<tr>
+<td><span style="color:blue">Saver Options<span></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
 <td><code>train_from_state_dict</code></td>
 <td><em>not supported</em></td>
 <td></td>
@@ -1138,24 +1229,29 @@
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>extra_shuffle</code></td>
-<td><em>not supported</em></td>
-<td>shuffle and re-assign mini-batches</td>
-</tr>
-<tr>
 <td><code>start_checkpoint_at</code></td>
 <td><em>not supported</em></td>
 <td></td>
 </tr>
 <tr>
-<td><code>gpus</code></td>
-<td><em>not supported</em>: is <code>gpuid</code></td>
-<td>list of GPU identifiers for parallel training</td>
+<td><code>save_every</code></td>
+<td></td>
+<td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>gpuid</code></td>
-<td>list of GPU identifiers for parallel training</td>
-<td>is <code>gpus</code></td>
+<td><code>save_every_epochs</code></td>
+<td></td>
+<td><em>not supported</em></td>
+</tr>
+<tr>
+<td><span style="color:blue">Logging Options<span></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>log_file</code><br><code>disable_logs</code><br><code>log_level</code></td>
+<td></td>
+<td><em>not supported</em></td>
 </tr>
 <tr>
 <td><code>log_interval</code></td>
@@ -1181,6 +1277,21 @@
 <td><code>exp</code></td>
 <td>crayon experiment name</td>
 <td>is <code>experiment name</code></td>
+</tr>
+<tr>
+<td><span style="color:blue">GPU Options<span></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>gpus</code></td>
+<td><em>not supported</em>: is <code>gpuid</code></td>
+<td>list of GPU identifiers for parallel training</td>
+</tr>
+<tr>
+<td><code>gpuid</code></td>
+<td>list of GPU identifiers for parallel training</td>
+<td>is <code>gpus</code></td>
 </tr>
 <tr>
 <td><code>fp16</code></td>
