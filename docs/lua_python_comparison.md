@@ -40,7 +40,7 @@ Options differences:
 | ---  | ---           | ---          |
 | `config`<br>`save_config` |  | *not supported* |
 | `sample`<br>`sample_type`<br>`sample_perplexity_init`<br>`sample_perplexity_max`<br>`sample_vocab`  | Sampled dataset options | *not supported* |
-| `model_type` | lm, seq2seq, seqtagger | *not supported* |
+| `model_type` | `lm`, `seq2seq`, `seqtagger` | *not supported* |
 | `enc_layers`<br>`dec_layers` | number of layers of the encoder/decoder | *not supported*: see `layers` |
 | `src_word_vec_size`<br>`tgt_word_vec_size` |  | *not supported*: see `word_vec_size` and `feat_vec_size` |
 | `fix_word_vecs_enc`<br>`fix_word_vecs_dec` | `true`, `false`, `pretrained` | *not supported* |
@@ -48,7 +48,7 @@ Options differences:
 | `feat_merge` | `concat`, `sum` | `concat`, `sum`, `mlp` |
 | `dropout_input` | Dropout probability applied to the input of the recurrent module | *not supported* |
 | `dropout_words` | Dropout probability applied to the source sequence | *not supported* |
-| `dropout_type` | naive, variational | *not supported*: dropout is naive |
+| `dropout_type` | `naive`, `variational` | *not supported*: dropout is `naive` |
 | `residual` | Add residual connections between recurrent layers | *not supported* |
 | `bridge` | `copy`, `dense`, `dense_nonlinear` | *not supported* |
 | `encoder_type` | `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`, `cnn` | `text`, `img`: if `text`, corresponding type is defined by `encoder_layer` and `brnn` |
