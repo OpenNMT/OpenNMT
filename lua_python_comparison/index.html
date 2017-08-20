@@ -1129,11 +1129,6 @@
 <td></td>
 </tr>
 <tr>
-<td><code>report_every</code></td>
-<td></td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
 <td><code>async_parallel</code><br><code>async_parallel_minbatch</code></td>
 <td>Async multi-gpu training</td>
 <td><em>not supported</em></td>
@@ -1254,44 +1249,14 @@
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>log_interval</code></td>
-<td><em>not supported</em></td>
-<td>print stats at this interval</td>
-</tr>
-<tr>
-<td><code>log_server</code></td>
-<td></td>
-<td><em>not supported</em>: is <code>exp_host</code> and <code>exp_port</code></td>
-</tr>
-<tr>
-<td><code>exp_host, exp_port</code></td>
-<td><em>not supported</em>: is <code>log_server</code></td>
-<td></td>
-</tr>
-<tr>
-<td><code>experiment_name</code></td>
-<td><em>not supported</em>: is <code>exp</code></td>
-<td>crayon experiment name</td>
-</tr>
-<tr>
-<td><code>exp</code></td>
-<td>crayon experiment name</td>
-<td>is <code>experiment name</code></td>
+<td><code>exp_port</code></td>
+<td>port of the Crayon server</td>
+<td><em>not supported</em>: default port 8889 is used</td>
 </tr>
 <tr>
 <td><span style="color:blue">GPU Options<span></td>
 <td></td>
 <td></td>
-</tr>
-<tr>
-<td><code>gpus</code></td>
-<td><em>not supported</em>: is <code>gpuid</code></td>
-<td>list of GPU identifiers for parallel training</td>
-</tr>
-<tr>
-<td><code>gpuid</code></td>
-<td>list of GPU identifiers for parallel training</td>
-<td>is <code>gpus</code></td>
 </tr>
 <tr>
 <td><code>fp16</code></td>
