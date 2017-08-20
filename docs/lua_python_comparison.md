@@ -73,7 +73,6 @@ Commandline options differences:
 | `coverage_attn`<br>`lambda_coverage` | *not supported* | coverage attention layer |
 | `context_gate` | *not supported* | `source`, `target`, `both` |
 | <span style="color:blue">Training Options<span> |||
-| `report_every` |  | *not supported* |
 | `async_parallel`<br>`async_parallel_minbatch` | Async multi-gpu training | *not supported* |
 | `start_iteration` |  | *not supported* |
 | `end_epoch` | final epoch of the training | *not supported*: see `epochs` |
@@ -98,14 +97,8 @@ Commandline options differences:
 | `save_every_epochs` |  | *not supported* |
 | <span style="color:blue">Logging Options<span> |||
 | `log_file`<br>`disable_logs`<br>`log_level` | | *not supported* |
-| `log_interval` | *not supported* | print stats at this interval |
-| `log_server` |  | *not supported*: is `exp_host` and `exp_port` |
-| `exp_host, exp_port` | *not supported*: is `log_server` |  |
-| `experiment_name` | *not supported*: is `exp` | crayon experiment name |
-| `exp` | crayon experiment name | is `experiment name` |
+| `exp_port` | port of the Crayon server | *not supported*: default port 8889 is used |
 | <span style="color:blue">GPU Options<span> |||
-| `gpus` | *not supported*: is `gpuid` | list of GPU identifiers for parallel training |
-| `gpuid` | list of GPU identifiers for parallel training | *not supported*: is `gpus` |
 | `fp16` | half-float precision for GPU | *not supported* |
 | `fallback_to_cpu` |  | *not supported* |
 | `no_nccl` |  | *not supported* |
