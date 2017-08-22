@@ -84,6 +84,7 @@ Commandline options differences:
 | `save_every_epochs` |  | *not supported* |
 | <span style="color:blue">Logging Options<span> |||
 | `log_file`<br>`disable_logs`<br>`log_level` | | *not supported* |
+| `exp_port` | port of the Crayon server | *not supported*: default port 8889 is used |
 | <span style="color:blue">GPU Options<span> |||
 | `fp16` | half-float precision for GPU | *not supported* |
 | `fallback_to_cpu` |  | *not supported* |
