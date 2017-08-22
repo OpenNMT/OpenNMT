@@ -16,6 +16,10 @@ local options = {
     }
   },
   {
+    '-lm_weight', 0.1,
+    [[Relative weight of language model.]]
+  },
+  {
     '-beam_size', 5,
     [[Beam size.]],
     {
@@ -327,7 +331,7 @@ function Translator:translateBatch(batch)
                                                       self.args.max_num_unks,
                                                       decInitStates,
                                                       self.lm and self.lm.model.models,
-                                                      lmStates, lmContext,
+                                                      lmStates, lmContext, self.args.lm_weight,
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,

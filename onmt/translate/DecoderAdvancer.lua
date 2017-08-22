@@ -19,7 +19,7 @@ Parameters:
 
 --]]
 function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates,
-                                lmModel, lmStates, lmContext,
+                                lmModel, lmStates, lmContext, lm_weight,
                                 dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
   self.batch = batch
@@ -36,6 +36,7 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.lmModel = lmModel
   self.lmStates = lmStates
   self.lmContext = lmContext
+  self.lm_weight = lm_weight
   self.dicts = dicts
 end
 
@@ -151,6 +152,14 @@ function DecoderAdvancer:expand(beam)
   end
   state[5] = features
   local scores = out[1]
+
+  if self.lmModel then
+    local lmOut = self.lmModel.generator:forward(state[10])
+    print(scores:size())
+    print(lmOut[1]:size())
+    scores = scores + lmOut[1] * self.lm_weight
+  end
+
   return scores
 end
 
