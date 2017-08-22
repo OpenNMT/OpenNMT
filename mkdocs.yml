@@ -59,6 +59,7 @@ pages:
       - "train.lua": options/train.md
       - "translate.lua": options/translate.md
       - "tag.lua": options/tag.md
+      - "lm.lua": options/lm.md
       - "tools/build_vocab.lua": options/build_vocab.md
       - "tools/release_model.lua": options/release_model.md
       - "tools/tokenize.lua": options/tokenize.md
