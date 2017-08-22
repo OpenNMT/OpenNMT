@@ -273,7 +273,7 @@ end
   2. - context matrix H
 
 --]]
-function Encoder:forwardOne(inputs, initial_states)
+function Encoder:forwardOne(inputs, initial_states, clone)
   -- simulating batch object
   local batch = {
     size = (type(inputs) == 'table' and inputs[1]:size(1)) or inputs:size(1),
@@ -281,7 +281,23 @@ function Encoder:forwardOne(inputs, initial_states)
     getSourceInput = function() return inputs end,
     variableLengths = function() return false end
   }
-  return self:forward(batch, initial_states)
+
+  local states, context = self:forward(batch, initial_states)
+
+  if clone then
+    -- clone the context and states
+    local copyStates, copyContext
+    copyStates = {}
+    for _, s in ipairs(states) do
+      table.insert(copyStates, s:clone())
+    end
+    copyContext = context:clone()
+
+    return copyStates, copyContext
+  else
+    return states, context
+  end
+
 end
 
 --[[ Backward pass (only called during training)

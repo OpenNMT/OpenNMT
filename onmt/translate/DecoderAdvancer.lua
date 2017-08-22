@@ -114,7 +114,7 @@ function DecoderAdvancer:update(beam)
 
   -- if defined, compute next language model step
   if self.lmModel then
-    lmStates, lmContext = self.lmModel.encoder:forwardOne(inputs, lmStates)
+    lmStates, lmContext = self.lmModel.encoder:forwardOne(inputs, lmStates, true)
   end
 
   t = t + 1
