@@ -13,10 +13,14 @@ Parameters:
   * `max_sent_length` - optional, maximum output sentence length.
   * `max_num_unks` - optional, maximum number of UNKs.
   * `decStates` - optional, initial decoder states.
+  * `lmModel` - optional, the language model object.
+  * `lmStates`, `lmContext` - option initial language model states and context - initialized with BOS
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates, dicts, length_norm, coverage_norm, eos_norm)
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates,
+                                lmModel, lmStates, lmContext,
+                                dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
   self.batch = batch
   self.context = context
@@ -29,6 +33,9 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
     decoder.args.numStates,
     onmt.utils.Cuda.convert(torch.Tensor()),
     { self.batch.size, decoder.args.rnnSize })
+  self.lmModel = lmModel
+  self.lmStates = lmStates
+  self.lmContext = lmContext
   self.dicts = dicts
 end
 
@@ -64,8 +71,8 @@ function DecoderAdvancer:initBeam()
   end
 
   -- Define state to be { decoder states, decoder output, context,
-  -- attentions, features, sourceSizes, step, cumulated attention probablities }.
-  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba }
+  -- attentions, features, sourceSizes, step, cumulated attention probablities, lmStates, lmContext }.
+  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba, self.lmStates, self.lmContext }
   local params = {}
   params.length_norm = self.length_norm
   params.coverage_norm = self.coverage_norm
@@ -82,8 +89,8 @@ Parameters:
 ]]
 function DecoderAdvancer:update(beam)
   local state = beam:getState()
-  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba
-    = table.unpack(state, 1, 8)
+  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba, lmStates, lmContext
+    = table.unpack(state, 1, 10)
   local tokens = beam:getTokens()
   local token = tokens[#tokens]
   local inputs
@@ -96,6 +103,7 @@ function DecoderAdvancer:update(beam)
     table.insert(inputs, features)
   end
 
+  -- compute next decoder step
   decOut, decStates = self.decoder:forwardOne(inputs,
                                               decStates,
                                               context,
@@ -103,6 +111,12 @@ function DecoderAdvancer:update(beam)
                                               nil,
                                               sourceSizes,
                                               self.batch.sourceLength)
+
+  -- if defined, compute next language model step
+  if self.lmModel then
+    lmStates, lmContext = self.lmModel.encoder:forwardOne(inputs, lmStates)
+  end
+
   t = t + 1
 
   local attention = self.decoder:getAttention()
@@ -110,7 +124,7 @@ function DecoderAdvancer:update(beam)
     cumAttnProba = cumAttnProba:add(attention)
   end
 
-  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba}
+  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba, lmStates, lmContext}
   beam:setState(nextState)
 end
 

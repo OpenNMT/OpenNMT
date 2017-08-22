@@ -228,10 +228,19 @@ function LM:sample(src, max_length, temperature)
       end
     end
 
-    local batch = onmt.data.Batch.new(nextsrc, nextsrcFeats)
-    onmt.utils.Cuda.convert(batch)
+    local inputs
+    if #nextsrcFeats == 0 then
+      inputs = nextsrc
+    elseif #nextsrcFeats == 1 then
+      inputs = { nextsrc, nextsrcFeats[1] }
+    else
+      inputs = { nextsrc }
+      table.insert(inputs, nextsrcFeats)
+    end
 
-    states, context = self.model.models.encoder:forward(batch, states)
+    onmt.utils.Cuda.convert(inputs)
+
+    states, context = self.model.models.encoder:forwardOne(inputs, states)
     t = t + 1
   end
 

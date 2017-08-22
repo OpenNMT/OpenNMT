@@ -9,6 +9,13 @@ local options = {
     }
   },
   {
+    '-lm_model', '',
+    [[Path to serialized language model file.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
     '-beam_size', 5,
     [[Beam size.]],
     {
@@ -133,6 +140,13 @@ function Translator:__init(args, model, dicts)
 
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
+  end
+
+  if args.lm_model ~= '' then
+    local tmodel = args.model
+    args.model = args.lm_model
+    self.lm = onmt.lm.LM.new(args)
+    args.model = tmodel
   end
 
   if self.args.target_subdict:len() > 0 then
@@ -285,6 +299,18 @@ function Translator:translateBatch(batch)
     return encStates[#encStates]
   end
 
+  -- if we have a language model - initialize lm state with BOS
+  local lmStates, lmContext
+  if self.lm then
+    local bos_states = {}
+    for _ = 1, batch.size do
+      table.insert(bos_states, torch.IntTensor{onmt.Constants.BOS})
+    end
+    local bos_batch = onmt.data.Batch.new(bos_states, {})
+    onmt.utils.Cuda.convert(bos_batch)
+    lmStates, lmContext = self.lm.model.models.encoder:forward(bos_batch)
+  end
+
   local decInitStates = self.model.models.bridge:forward(encStates)
 
   -- Compute gold score.
@@ -300,6 +326,8 @@ function Translator:translateBatch(batch)
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
                                                       decInitStates,
+                                                      self.lm and self.lm.model.models,
+                                                      lmStates, lmContext,
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,
