@@ -869,16 +869,6 @@
 <td><em>not supported</em></td>
 </tr>
 <tr>
-<td><code>md</code></td>
-<td>dump help as md file for online documentation</td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>src_type</code></td>
-<td><em>not supported</em></td>
-<td><code>text</code>, <code>img</code> (*)</td>
-</tr>
-<tr>
 <td><code>src_img_dir</code></td>
 <td><em>not supported</em></td>
 <td>used for <code>src_type img</code></td>
@@ -886,17 +876,7 @@
 <tr>
 <td><code>data_type</code></td>
 <td><code>bitext</code>, <code>monotext</code>, <code>feattext</code> - used for ASR and LM models</td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>src_words_min_frequency</code></td>
-<td>keep all src vocab with this frequency</td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>tgt_words_min_frequency</code></td>
-<td>keep all tgt vocab with this frequency</td>
-<td><em>not supported</em></td>
+<td><code>text</code>, <code>img</code> (*)</td>
 </tr>
 <tr>
 <td><code>src_seq_length_trunc</code></td>
@@ -932,11 +912,6 @@
 <td><code>idx_files</code></td>
 <td>for <code>feattext</code> - provide format to align source&amp;target alignment</td>
 <td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>lower</code></td>
-<td><em>not supported</em> - is part of the tokenization features</td>
-<td>runtime lowercasing</td>
 </tr>
 <tr>
 <td><span style="color:blue">Logging Options<span></td>
@@ -986,22 +961,7 @@
 <tr>
 <td><code>model_type</code></td>
 <td><code>lm</code>, <code>seq2seq</code>, <code>seqtagger</code></td>
-<td><em>not supported</em></td>
-</tr>
-<tr>
-<td><code>enc_layers</code><br><code>dec_layers</code></td>
-<td>number of layers of the encoder/decoder</td>
-<td><em>not supported</em>: see <code>layers</code></td>
-</tr>
-<tr>
-<td><code>src_word_vec_size</code><br><code>tgt_word_vec_size</code></td>
-<td></td>
-<td><em>not supported</em>: see <code>word_vec_size</code> and <code>feat_vec_size</code></td>
-</tr>
-<tr>
-<td><code>fix_word_vecs_enc</code><br><code>fix_word_vecs_dec</code></td>
-<td><code>true</code>, <code>false</code>, <code>pretrained</code></td>
-<td><em>not supported</em></td>
+<td><code>text</code>, <code>img</code></td>
 </tr>
 <tr>
 <td><code>share_decoder_embeddings</code></td>
@@ -1056,22 +1016,12 @@
 <tr>
 <td><code>encoder_type</code></td>
 <td><code>rnn</code>, <code>brnn</code>, <code>dbrnn</code>, <code>pdbrnn</code>, <code>gnmt</code>, <code>cnn</code></td>
-<td><code>text</code>, <code>img</code>: if <code>text</code>, corresponding type is defined by <code>encoder_layer</code> and <code>brnn</code></td>
-</tr>
-<tr>
-<td><code>encoder_layer</code></td>
-<td><em>not supported</em></td>
 <td><code>rnn</code>, <code>mean</code>, <code>transformer</code></td>
 </tr>
 <tr>
 <td><code>decoder_layer</code></td>
 <td><em>not supported</em></td>
 <td><code>rnn</code>, <code>transformer</code></td>
-</tr>
-<tr>
-<td><code>brnn</code></td>
-<td>defined by <code>encoder_type</code></td>
-<td>use a bidirectional encoder, if <code>encoder_layer</code> is <code>rnn</code></td>
 </tr>
 <tr>
 <td><code>pdbrnn_reduction</code><br><code>pdbrnn_merge</code></td>
@@ -1099,14 +1049,9 @@
 <td><em>not supported</em>: only global attention</td>
 </tr>
 <tr>
-<td><code>attention_type</code></td>
-<td><em>not supported</em>: is <code>global_attention</code></td>
-<td><code>dot</code>, <code>general</code>, <code>mlp</code></td>
-</tr>
-<tr>
 <td><code>global_attention</code></td>
 <td><code>general</code>, <code>dot</code>, <code>concat</code></td>
-<td><em>not supported</em>: is <code>attention_type</code></td>
+<td><code>dot</code>, <code>general</code>, <code>mlp</code></td>
 </tr>
 <tr>
 <td><code>copy_attn</code></td>
@@ -1151,7 +1096,7 @@
 <tr>
 <td><code>validation_metric</code></td>
 <td><code>perplexity</code>, <code>loss</code>, <code>bleu</code>, <code>ter</code>, <code>dlratio</code></td>
-<td><em>not supported</em></td>
+<td><em>not supported</em> always perplexity</td>
 </tr>
 <tr>
 <td><code>save_validation_translation_every</code></td>
@@ -1204,18 +1149,8 @@
 <td>number of warmup steps for custom decay</td>
 </tr>
 <tr>
-<td><code>extra_shuffle</code></td>
-<td><em>not supported</em></td>
-<td>shuffle and re-assign mini-batches</td>
-</tr>
-<tr>
 <td><span style="color:blue">Saver Options<span></td>
 <td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>train_from_state_dict</code></td>
-<td><em>not supported</em></td>
 <td></td>
 </tr>
 <tr>
