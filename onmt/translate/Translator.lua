@@ -306,13 +306,9 @@ function Translator:translateBatch(batch)
   -- if we have a language model - initialize lm state with BOS
   local lmStates, lmContext
   if self.lm then
-    local bos_states = {}
-    for _ = 1, batch.size do
-      table.insert(bos_states, torch.IntTensor{onmt.Constants.BOS})
-    end
-    local bos_batch = onmt.data.Batch.new(bos_states, {})
-    onmt.utils.Cuda.convert(bos_batch)
-    lmStates, lmContext = self.lm.model.models.encoder:forward(bos_batch)
+    local bos_inputs = torch.IntTensor(batch.size):fill(onmt.Constants.BOS)
+    onmt.utils.Cuda.convert(bos_inputs)
+    lmStates, lmContext = self.lm.model.models.encoder:forwardOne(bos_inputs)
   end
 
   local decInitStates = self.model.models.bridge:forward(encStates)
