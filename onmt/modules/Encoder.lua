@@ -260,6 +260,30 @@ function Encoder:forward(batch, initial_states)
   return states, context
 end
 
+--[[ One step forward
+
+  Parameters:
+
+  * `inputs` - the input
+  * `initial_states` - the previous RNN state
+
+  Returns:
+
+  1. - final hidden states
+  2. - context matrix H
+
+--]]
+function Encoder:forwardOne(inputs, initial_states)
+  -- simulating batch object
+  local batch = {
+    size = (type(inputs) == 'table' and inputs[1]:size(1)) or inputs:size(1),
+    sourceLength = 1,
+    getSourceInput = function() return inputs end,
+    variableLengths = function() return false end
+  }
+  return self:forward(batch, initial_states)
+end
+
 --[[ Backward pass (only called during training)
 
   Parameters:
