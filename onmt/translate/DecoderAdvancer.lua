@@ -155,8 +155,6 @@ function DecoderAdvancer:expand(beam)
 
   if self.lmModel then
     local lmOut = self.lmModel.generator:forward(state[10])
-    print(scores:size())
-    print(lmOut[1]:size())
     scores = scores + lmOut[1] * self.lm_weight
   end
 
