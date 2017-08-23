@@ -99,6 +99,8 @@
 ## Translator options
 
 * `-model <string>` (default: `''`)<br/>Path to the serialized model file.
+* `-lm_model <string>` (default: `''`)<br/>Path to serialized language model file.
+* `-lm_weight <number>` (default: `0.1`)<br/>Relative weight of language model.
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
 * `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token
