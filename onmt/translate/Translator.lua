@@ -150,6 +150,10 @@ function Translator:__init(args, model, dicts)
     local tmodel = args.model
     args.model = args.lm_model
     self.lm = onmt.lm.LM.new(args)
+
+    -- check that lm has the same dictionary than translation model
+    assert(self.dicts.tgt.words == self.lm.dicts.src.words, "Language model dictionary does not match seq2seq target dictionary")
+
     args.model = tmodel
   end
 
