@@ -308,7 +308,7 @@ function Translator:translateBatch(batch)
   if self.lm then
     local bos_inputs = torch.IntTensor(batch.size):fill(onmt.Constants.BOS)
     onmt.utils.Cuda.convert(bos_inputs)
-    lmStates, lmContext = self.lm.model.models.encoder:forwardOne(bos_inputs)
+    lmStates, lmContext = self.lm.model.models.encoder:forwardOne(bos_inputs, nil, true)
   end
 
   local decInitStates = self.model.models.bridge:forward(encStates)
