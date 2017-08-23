@@ -185,10 +185,15 @@ local function init_server(options)
           -- TODO
           -- I need to test here I f I have enough memory to load the model
           -- if not then I need to unload the oldest one
-          -- print(cutorch.getMemoryUsage())
-          _G.logger:info("Loading model id %d",req[1].id)
-          server.translator[req[1].id] = onmt.translate.Translator.new(server.opt[req[1].id])
-          server.model_loaded[req[1].id] = true
+          print(cutorch.getMemoryUsage())
+          freeMemory, totalMemory = cutorch.getMemoryUsage()
+          if ( freeMemory > 3100000000 ) then
+            _G.logger:info("Loading model id %d",req[1].id)
+            server.translator[req[1].id] = onmt.translate.Translator.new(server.opt[req[1].id])
+            server.model_loaded[req[1].id] = true
+          else
+            return restserver.response():status(500):entity()
+          end
         end
         server.timer[req[1].id] = torch.Timer()
         local translate = translateMessage(server,req)
