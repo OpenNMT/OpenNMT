@@ -153,6 +153,10 @@ function Translator:__init(args, model, dicts)
 
     -- check that lm has the same dictionary than translation model
     assert(self.dicts.tgt.words == self.lm.dicts.src.words, "Language model dictionary does not match seq2seq target dictionary")
+    assert(#self.dicts.tgt.features == #self.lm.dicts.src.features, "Language model should have same number of features than translation model")
+    for i = 1 , #self.dicts.tgt.features do
+      assert(self.dicts.tgt.features[i] == self.lm.dicts.src.features[i], "LM feature ["..i.."] does not match translation tgt feature")
+    end
 
     args.model = tmodel
   end
