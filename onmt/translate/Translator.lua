@@ -315,6 +315,18 @@ function Translator:translateBatch(batch)
   local lmStates, lmContext
   if self.lm then
     local bos_inputs = torch.IntTensor(batch.size):fill(onmt.Constants.BOS)
+    if #self.lm.dicts.src.features > 0 then
+      local inputs = { bos_inputs }
+      if #self.lm.dicts.src.features > 1 then
+        table.insert(inputs, {})
+        for _ = 1, #self.lm.dicts.src.features do
+          table.insert(inputs[2], bos_inputs)
+        end
+      else
+        table.insert(inputs, bos_inputs)
+      end
+      bos_inputs = inputs
+    end
     onmt.utils.Cuda.convert(bos_inputs)
     lmStates, lmContext = self.lm.model.models.encoder:forwardOne(bos_inputs, nil, true)
   end
