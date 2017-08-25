@@ -854,15 +854,17 @@
                 
                   <h1>Decay strategies</h1>
                 
-                <p>OpenNMT's training implements empirical learning rate decay strategies. Experiences showed that using stochastic gradient descent (SGD) and a decay strategy yield better performance than optimization methods with adaptive learning rates.</p>
-<p>Learning rate updates are always computed at the end of an epoch. When a decay condition is met, the following update rule is applied:</p>
+                <p>OpenNMT's training implements empirical learning rate decay strategies. Experiences showed that using a decay strategy systematically yield better performance.</p>
+<p>When a decay condition is met, the following update rule is applied:</p>
 <p>
 <script type="math/tex; mode=display">lr^{(t+1)} = lr^{(t)} \times decay</script>
 </p>
 <p>where <script type="math/tex">lr^{(0)}=</script>
 <code>-learning_rate</code> and <script type="math/tex">decay=</script>
 <code>-learning_rate_decay</code>.</p>
-<p>If an epoch is a too large unit for your particular use case, consider using <a href="../sampling/">data sampling</a>. Additionally, it may be useful to set a minimum learning rate with <code>-min_learning_rate</code> to stop the training earlier when the learning rate is too small to make a difference.</p>
+<p>Learning rate decay is applied when using SGD or Adam optimizers. For the latter, you can also set the <code>-reset_when_decay</code> flag to reset the optimizer state when the decay is applied to simulate "Adam with restarts" from <a href="https://arxiv.org/abs/1706.09733">Denkowski et al. 2017</a>.</p>
+<p>Learning rate updates are always computed at the end of an epoch. If this is a too large unit for your particular use case, consider using <a href="../sampling/">data sampling</a>.</p>
+<p>Additionally, it may be useful to set a minimum learning rate with <code>-min_learning_rate</code> to stop the training earlier when the learning rate is too small to make a difference.</p>
 <h2 id="default">Default<a class="headerlink" href="#default" title="Permanent link">&para;</a></h2>
 <p>By default, the decay is applied when one of the following conditions is met:</p>
 <ol>
