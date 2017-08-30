@@ -432,7 +432,9 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, initialStates)
   local distrib = onmt.utils.Tensor.reuseTensor(self.distribProto, { batch.size })
 
-  if self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'sentence' then
+  -- scheduled sampling
+  if self.args.scheduled_sampling and
+     self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'sentence' then
     distrib:rand(batch.size)
   end
 
@@ -441,7 +443,8 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   for t = 1, batch.targetLength do
     local decInput = batch:getTargetInput(t)
     -- scheduled sampling - calculate previous output
-    if t > 1 and self.args.scheduled_sampling < 1 then
+    if self.args.scheduled_sampling and
+       t > 1 and self.args.scheduled_sampling < 1 then
       local decInputMain
       if type(decInput) == 'table' then
         decInput[1] = decInput[1]:clone()
