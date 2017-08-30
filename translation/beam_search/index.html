@@ -503,6 +503,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#decoding-with-auxiliary-language-model" title="Decoding with auxiliary language model" class="md-nav__link">
+    Decoding with auxiliary language model
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#visualizing-the-beam-search" title="Visualizing the beam search" class="md-nav__link">
     Visualizing the beam search
   </a>
@@ -883,6 +890,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#decoding-with-auxiliary-language-model" title="Decoding with auxiliary language model" class="md-nav__link">
+    Decoding with auxiliary language model
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#visualizing-the-beam-search" title="Visualizing the beam search" class="md-nav__link">
     Visualizing the beam search
   </a>
@@ -940,6 +954,17 @@
 <script type="math/tex; mode=display">ep(X,Y)=\gamma\frac{|X|}{|Y|}</script>
 </p>
 <p>where <script type="math/tex">|X|</script> is the source length, <script type="math/tex">|Y|</script> is the current target length and <script type="math/tex">\gamma</script> is the end of sentence normalization coefficient <code>-eos_norm</code>.</p>
+<h2 id="decoding-with-auxiliary-language-model">Decoding with auxiliary language model<a class="headerlink" href="#decoding-with-auxiliary-language-model" title="Permanent link">&para;</a></h2>
+<p>Beam search can use an additional language model to modify score of each option as defined in <a href="../../references/#LMShallowFusion">Gulcehre et al. (2015)</a> as "Shallow Fusion":</p>
+<p>
+<script type="math/tex; mode=display">s(Y,X) = s_{TM}(Y,X) + \beta.s_{LM}(Y)</script>
+</p>
+<p>Where <script type="math/tex">s_{LM}(Y)</script> is the language model log-probability of the sequence  <script type="math/tex">Y</script> and <script type="math/tex">\beta</script> is defined by <code>-lm_weight</code> parameter.
+To activate the language model, simply use <code>-lm_model lm.t7</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The language model cannot use bidirectional RNN and needs to share the same vocabulary (tokens and features) than the translation model.</p>
+</div>
 <h2 id="visualizing-the-beam-search">Visualizing the beam search<a class="headerlink" href="#visualizing-the-beam-search" title="Permanent link">&para;</a></h2>
 <p>To visualize the beam search exploration, you can use the option <code>-save_beam_to beam.json</code>. It will save a JSON serialization of the beam search history.</p>
 <div class="admonition note">
