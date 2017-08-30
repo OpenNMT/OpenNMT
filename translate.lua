@@ -159,12 +159,12 @@ local function main()
                     local ttable = torch.totable(v)
                     local attcount = #attentions
 					local source = translator:buildOutput(srcBatch[b])
-					local x,nt = sentence:gsub("%S+","")
-					local y,ns = source:gsub("%S+","")
+					local _,nt = sentence:gsub("%S+","")
+					local _,ns = source:gsub("%S+","")
                     if k == 1 then
                       attFile:write(b..' ||| '..sentence..' ||| '..results[b].preds[n].score..' ||| '..source..' ||| '..ns..' '..nt..'\n')
                     end
-                    for x,j in pairs(ttable) do
+                    for _,j in pairs(ttable) do
                       attFile:write(j..' ')
                     end
                     attFile:write('\n')
