@@ -1,12 +1,16 @@
-OpenNMT's training implements empirical learning rate decay strategies. Experiences showed that using stochastic gradient descent (SGD) and a decay strategy yield better performance than optimization methods with adaptive learning rates.
+OpenNMT's training implements empirical learning rate decay strategies. Experiences showed that using a decay strategy systematically yield better performance.
 
-Learning rate updates are always computed at the end of an epoch. When a decay condition is met, the following update rule is applied:
+When a decay condition is met, the following update rule is applied:
 
 $$lr^{(t+1)} = lr^{(t)} \times decay$$
 
 where \(lr^{(0)}=\) `-learning_rate` and \(decay=\) `-learning_rate_decay`.
 
-If an epoch is a too large unit for your particular use case, consider using [data sampling](sampling.md). Additionally, it may be useful to set a minimum learning rate with `-min_learning_rate` to stop the training earlier when the learning rate is too small to make a difference.
+Learning rate decay is applied when using SGD or Adam optimizers. For the latter, you can also set the `-reset_when_decay` flag to reset the optimizer state when the decay is applied to simulate "Adam with restarts" from [Denkowski et al. 2017](https://arxiv.org/abs/1706.09733).
+
+Learning rate updates are always computed at the end of an epoch. If this is a too large unit for your particular use case, consider using [data sampling](sampling.md).
+
+Additionally, it may be useful to set a minimum learning rate with `-min_learning_rate` to stop the training earlier when the learning rate is too small to make a difference.
 
 ## Default
 

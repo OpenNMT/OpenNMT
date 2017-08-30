@@ -3,6 +3,7 @@
 ### Breaking changes
 
 * Remove tokenization options from `learn_bpe.lua`
+* Learning rate is also decayed when using Adam
 
 ### New features
 
@@ -10,6 +11,7 @@
 * Add CNN encoder
 * Add option to save the validation translation to a file
 * Add 'Shallow Fusion' of language model in decoder
+* Add option to reset the optimizer states when the learning rate is decayed
 
 ### Fixes and improvements
 
