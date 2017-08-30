@@ -47,13 +47,6 @@ cmd:setCmdLineOptions(otherOptions, 'Other')
 
 local opt = cmd:parse(arg)
 
-local function isValid(seq, maxSeqLength)
-  if torch.isTensor(seq) then
-    return seq:size(1) > 0 and seq:size(1) <= maxSeqLength
-  end
-  return #seq > 0 and #seq <= maxSeqLength
-end
-
 local function parallelCheck(idx, _, _, tokens)
   local length1 = (type(tokens[1])=='table' and #tokens[1]) or (tokens[1]:dim()==0 and 0) or tokens[1]:size(1)
   local length2 = (type(tokens[2])=='table' and #tokens[2]) or (tokens[2]:dim()==0 and 0) or tokens[2]:size(1)
@@ -92,7 +85,7 @@ local function main()
                                      opt.src_vocab_size or opt.vocab_size,
                                      opt.src_words_min_frequency or opt.words_min_frequency,
                                      opt.features_vocabs_prefix,
-                                     function(s) return isValid(s, opt.src_seq_length or opt.seq_length) end,
+                                     function(s) return onmt.utils.dataset.isValid(s, opt.src_seq_length or opt.seq_length) end,
                                      opt.keep_frequency,
                                      opt.idx_files)
   end
@@ -104,7 +97,7 @@ local function main()
                                      opt.tgt_vocab_size,
                                      opt.tgt_words_min_frequency,
                                      opt.features_vocabs_prefix,
-                                     function(s) return isValid(s, opt.tgt_seq_length) end,
+                                     function(s) return onmt.utils.dataset.isValid(s, opt.tgt_seq_length) end,
                                      opt.keep_frequency,
                                      opt.idx_files)
   end
@@ -118,17 +111,17 @@ local function main()
 
   data.train = {}
   if dataType == 'monotext' then
-    data.train.src = Preprocessor:makeMonolingualData(opt.train, data.dicts.src, isValid)
+    data.train.src = Preprocessor:makeMonolingualData(opt.train, data.dicts.src, onmt.utils.dataset.isValid)
   elseif dataType == 'feattext' then
     data.train.src, data.train.tgt = Preprocessor:makeFeatTextData(opt.train_src, opt.train_tgt,
                                                                    data.dicts.tgt,
-                                                                   isValid, parallelValidFunc)
+                                                                   onmt.utils.dataset.isValid, parallelValidFunc)
     -- record the size of the input layer
     data.dicts.srcInputSize = data.train.src.vectors[1]:size(2)
   else
     data.train.src, data.train.tgt = Preprocessor:makeBilingualData(opt.train_src, opt.train_tgt,
                                                                     data.dicts.src, data.dicts.tgt,
-                                                                    isValid, parallelValidFunc)
+                                                                    onmt.utils.dataset.isValid, parallelValidFunc)
   end
 
   _G.logger:info('')
@@ -136,15 +129,15 @@ local function main()
   _G.logger:info('Preparing validation data...')
   data.valid = {}
   if dataType == 'monotext' then
-    data.valid.src = Preprocessor:makeMonolingualData(opt.valid, data.dicts.src, isValid)
+    data.valid.src = Preprocessor:makeMonolingualData(opt.valid, data.dicts.src, onmt.utils.dataset.isValid)
   elseif dataType == 'feattext' then
     data.valid.src, data.valid.tgt = Preprocessor:makeFeatTextData(opt.valid_src, opt.valid_tgt,
                                                                     data.dicts.tgt,
-                                                                    isValid)
+                                                                    onmt.utils.dataset.isValid)
   else
     data.valid.src, data.valid.tgt = Preprocessor:makeBilingualData(opt.valid_src, opt.valid_tgt,
                                                                     data.dicts.src, data.dicts.tgt,
-                                                                    isValid)
+                                                                    onmt.utils.dataset.isValid)
   end
 
   _G.logger:info('')

@@ -21,7 +21,7 @@ local options = {
 cmd:setCmdLineOptions(options, 'Data')
 
 onmt.data.SampledDataset.declareOpts(cmd)
-onmt.data.GlobalDataset.declareOpts(cmd, modelClass)
+onmt.data.DynamicDataRepository.declareOpts(cmd, modelClass)
 
 onmt.Model.declareOpts(cmd)
 modelClass.declareOpts(cmd)
@@ -39,79 +39,84 @@ onmt.utils.Profiler.declareOpts(cmd)
 
 cmd:option('-seed', 3435, [[Random seed.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 
-local function loadDataset(opt, filename, dirname)
-  assert(not(filename~='' and dirname~=''), "Option 'data' and 'gd_train_dir' cannot be activated simultaneously.")
+local function loadData(opt, filename, dirname)
+  assert(not(filename~='' and dirname~=''), "Option 'data' and 'ddr_train_dir' cannot be activated simultaneously.")
 
-  local dataset
+  local data
   if filename ~= '' then
     _G.logger:info('Loading data from \'%s\'...', filename)
 
-    dataset = torch.load(filename, 'binary', false)
-
-    -- Keep backward compatibility.
-    dataset.dataType = dataset.dataType or 'bitext'
+    data = torch.load(filename, 'binary', false)
 
     -- Check if data type is compatible with the target model.
-    if not modelClass.dataType(dataset.dataType) then
+    if not modelClass.dataType(data.dataType) then
       _G.logger:error('Data type `%s\' is incompatible with `%s\' models',
-                      dataset.dataType, modelClass.modelName())
+                      data.dataType, modelClass.modelName())
       os.exit(0)
     end
   else
-    dataset = onmt.data.GlobalDataset.new(opt, modelClass)
-    os.exit(0)
+    data = onmt.data.DynamicDataRepository.new(opt, modelClass)
   end
 
-  return dataset
+  -- Keep backward compatibility.
+  data.dataType = data.dataType or 'bitext'
+
+  return data
 end
 
-local function buildData(opt, dataset)
-  local trainData
-  if opt.sample > 0 then
-     trainData = onmt.data.SampledDataset.new(opt, dataset.train.src, dataset.train.tgt)
+local function buildDataset(opt, data)
+  local trainDataset, validDataset
+
+  if torch.type(data) == "DynamicDataRepository" then
+    trainDataset = data:getTraining()
+    validDataset = data:getValid()
   else
-     trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
+    if opt.sample > 0 then
+       trainDataset = onmt.data.SampledDataset.new(opt, data.train.src, data.train.tgt)
+    else
+       trainDataset = onmt.data.Dataset.new(data.train.src, data.train.tgt)
+    end
+    validDataset = onmt.data.Dataset.new(data.valid.src, data.valid.tgt)
   end
-  local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
 
-  local nTrainBatch, batchUsage = trainData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
-  validData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+  local nTrainBatch, batchUsage = trainDataset:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+  validDataset:setBatchSize(opt.max_batch_size, opt.uneven_batches)
 
-  if dataset.dataType ~= 'monotext' then
+  if data.dataType ~= 'monotext' then
     local srcVocSize
     local srcFeatSize = '-'
-    if dataset.dicts.src then
-      srcVocSize = dataset.dicts.src.words:size()
-      srcFeatSize = #dataset.dicts.src.features
+    if data.dicts.src then
+      srcVocSize = data.dicts.src.words:size()
+      srcFeatSize = #data.dicts.src.features
     else
-      srcVocSize = '*'..dataset.dicts.srcInputSize
+      srcVocSize = '*'..data.dicts.srcInputSize
     end
     local tgtVocSize
     local tgtFeatSize = '-'
-    if dataset.dicts.tgt then
-      tgtVocSize = dataset.dicts.tgt.words:size()
-      tgtFeatSize = #dataset.dicts.tgt.features
+    if data.dicts.tgt then
+      tgtVocSize = data.dicts.tgt.words:size()
+      tgtFeatSize = #data.dicts.tgt.features
     else
-      tgtVocSize = '*'..dataset.dicts.tgtInputSize
+      tgtVocSize = '*'..data.dicts.tgtInputSize
     end
     _G.logger:info(' * vocabulary size: source = %s; target = %s',
                    srcVocSize, tgtVocSize)
     _G.logger:info(' * additional features: source = %s; target = %s',
                    srcFeatSize, tgtFeatSize)
   else
-    _G.logger:info(' * vocabulary size: %d', dataset.dicts.src.words:size())
-    _G.logger:info(' * additional features: %d', #dataset.dicts.src.features)
+    _G.logger:info(' * vocabulary size: %d', data.dicts.src.words:size())
+    _G.logger:info(' * additional features: %d', #data.dicts.src.features)
   end
   _G.logger:info(' * maximum sequence length: source = %d; target = %d',
-                 trainData.maxSourceLength, trainData.maxTargetLength)
-  _G.logger:info(' * number of training sentences: %d', #trainData.src)
+                 trainDataset.maxSourceLength, trainDataset.maxTargetLength)
+  _G.logger:info(' * number of training sentences: %d', #trainDataset.src)
   _G.logger:info(' * number of batches: %d',  nTrainBatch)
   _G.logger:info('   - source sequence lengths: %s', opt.uneven_batches and 'variable' or 'equal')
   _G.logger:info('   - maximum size: %d', opt.max_batch_size)
-  _G.logger:info('   - average size: %.2f', trainData:instanceCount() / nTrainBatch)
+  _G.logger:info('   - average size: %.2f', trainDataset:instanceCount() / nTrainBatch)
   _G.logger:info('   - capacity: %.2f%%', math.ceil(batchUsage * 1000) / 10)
 
-  return trainData, validData
+  return trainDataset, validDataset
 end
 
 local function loadModel(opt, dicts)
@@ -153,34 +158,34 @@ local function main()
   _G.logger:info('Training ' .. modelClass.modelName() .. ' model...')
 
   -- Loading data package.
-  local dataset = loadDataset(opt, opt.data, opt.gd_train_dir)
+  local data = loadData(opt, opt.data, opt.gd_train_dir)
 
   -- Record data type in the options, and preprocessing options if present.
-  opt.data_type = dataset.dataType
-  opt.preprocess = dataset.opt
+  opt.data_type = data.dataType
+  opt.preprocess = data.opt
 
   -- Building training datasets.
-  local trainData, validData = buildData(opt, dataset)
+  local trainDataset, validDataset = buildDataset(opt, data)
 
   -- Building the model.
   local model
   local trainStates
 
   if onmt.train.Saver.checkpointDefined(opt) then
-    model, trainStates = loadModel(opt, dataset.dicts)
+    model, trainStates = loadModel(opt, data.dicts)
   else
-    model = buildModel(opt, dataset.dicts)
+    model = buildModel(opt, data.dicts)
   end
 
   onmt.utils.Cuda.convert(model)
 
   if opt.sample > 0 then
-    trainData:checkModel(model)
+    trainDataset:checkModel(model)
   end
 
   -- Start training.
-  local trainer = onmt.train.Trainer.new(opt, model, dataset.dicts, trainData:getBatch(1))
-  trainer:train(trainData, validData, trainStates)
+  local trainer = onmt.train.Trainer.new(opt, model, data.dicts, trainDataset:getBatch(1))
+  trainer:train(trainDataset, validDataset, trainStates)
 
   _G.logger:shutDown()
 end

@@ -2,7 +2,8 @@ local data = {}
 
 data.Dataset = require('onmt.data.Dataset')
 data.AliasMultinomial = require('onmt.data.AliasMultinomial')
-data.GlobalDataset = require('onmt.data.GlobalDataset')
+data.DynamicDataRepository = require('onmt.data.DynamicDataRepository')
+data.DynamicDataset = require('onmt.data.DynamicDataset')
 data.SampledDataset = require('onmt.data.SampledDataset')
 data.Batch = require('onmt.data.Batch')
 data.BatchTensor = require('onmt.data.BatchTensor')
