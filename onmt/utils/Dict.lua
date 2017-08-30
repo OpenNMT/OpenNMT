@@ -18,6 +18,19 @@ function Dict:__init(data)
   end
 end
 
+-- comparaison operator for dictionaries
+function Dict.__eq(dict1, dict2)
+  if #dict1.idxToLabel ~= #dict2.idxToLabel then
+    return false
+  end
+  for i = 1, #dict1.idxToLabel do
+    if dict1[i] ~= dict2[i] then
+      return false
+    end
+  end
+  return true
+end
+
 --[[ Return the number of entries in the dictionary. ]]
 function Dict:size()
   return #self.idxToLabel

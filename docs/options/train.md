@@ -93,6 +93,7 @@
 * `-start_decay_at <number>` (default: `9`)<br/>In "default" decay mode, start decay after this epoch.
 * `-start_decay_score_delta <number>` (default: `0`)<br/>Start decay when validation score improvement is lower than this value.
 * `-decay <string>` (accepted: `default`, `epoch_only`, `score_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation score is not improving more than `-start_decay_score_delta`, `epoch_only`: only decay after each epoch past `-start_decay_at`, `score_only`: only decay when validation score is not improving more than `-start_decay_ppl_delta`.
+* `-reset_when_decay [<boolean>]` (default: `false`)<br/>If set, the optimizer states (if any) will be reset when the decay condition is met.
 
 ## Saver options
 
@@ -103,6 +104,8 @@
 ## Translator options
 
 * `-model <string>` (default: `''`)<br/>Path to the serialized model file.
+* `-lm_model <string>` (default: `''`)<br/>Path to serialized language model file.
+* `-lm_weight <number>` (default: `0.1`)<br/>Relative weight of language model.
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
 * `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token

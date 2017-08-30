@@ -41,6 +41,18 @@ $$ep(X,Y)=\gamma\frac{|X|}{|Y|}$$
 
 where \(|X|\) is the source length, \(|Y|\) is the current target length and \(\gamma\) is the end of sentence normalization coefficient `-eos_norm`.
 
+## Decoding with auxiliary language model
+
+Beam search can use an additional language model to modify score of each option as defined in [Gulcehre et al. (2015)](../references.md#LMShallowFusion) as "Shallow Fusion":
+
+$$s(Y,X) = s_{TM}(Y,X) + \beta.s_{LM}(Y)$$
+
+Where \(s_{LM}(Y)\) is the language model log-probability of the sequence  \(Y\) and \(\beta\) is defined by `-lm_weight` parameter.
+To activate the language model, simply use `-lm_model lm.t7`.
+
+!!! warning "Warning"
+    The language model cannot use bidirectional RNN and needs to share the same vocabulary (tokens and features) than the translation model.
+
 ## Visualizing the beam search
 
 To visualize the beam search exploration, you can use the option `-save_beam_to beam.json`. It will save a JSON serialization of the beam search history.
