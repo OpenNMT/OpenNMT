@@ -260,6 +260,46 @@ function Encoder:forward(batch, initial_states)
   return states, context
 end
 
+--[[ One step forward
+
+  Parameters:
+
+  * `inputs` - the input
+  * `initial_states` - the previous RNN state
+
+  Returns:
+
+  1. - final hidden states
+  2. - context for the single token
+
+--]]
+function Encoder:forwardOne(inputs, initial_states, clone)
+  -- simulating batch object
+  local batch = {
+    size = (type(inputs) == 'table' and inputs[1]:size(1)) or inputs:size(1),
+    sourceLength = 1,
+    getSourceInput = function() return inputs end,
+    variableLengths = function() return false end
+  }
+
+  local states, context = self:forward(batch, initial_states)
+
+  if clone then
+    -- clone the context and states
+    local copyStates, copyContext
+    copyStates = {}
+    for _, s in ipairs(states) do
+      table.insert(copyStates, s:clone())
+    end
+    copyContext = context:squeeze(2):clone()
+
+    return copyStates, copyContext
+  else
+    return states, context:squeeze(2)
+  end
+
+end
+
 --[[ Backward pass (only called during training)
 
   Parameters:
