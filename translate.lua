@@ -79,8 +79,9 @@ local function main()
   end
 
   local outFile = io.open(opt.output, 'w')
+  local attFile
   if withAttention then
-    local attFile = io.open(opt.attention, 'w')
+    attFile = io.open(opt.attention, 'w')
   end
 
   local sentId = 1
@@ -157,8 +158,11 @@ local function main()
                   if v ~= nil then
                     local ttable = torch.totable(v)
                     local attcount = #attentions
+					local source = translator:buildOutput(srcBatch[b])
+					_,nt = sentence:gsub("%S+","")
+					_,ns = source:gsub("%S+","")
                     if k == 1 then
-                      attFile:write('0 ||| '..sentence..' ||| 0 ||| '..translator:buildOutput(srcBatch[b])..'\n')
+                      attFile:write(b..' ||| '..sentence..' ||| '..results[b].preds[n].score..' ||| '..source..' ||| '..ns..' '..nt..'\n')
                     end
                     for i,j in pairs(ttable) do
                       attFile:write(j..' ')
