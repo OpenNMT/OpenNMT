@@ -19,6 +19,10 @@ local options = {
     [[Output file.]]
   },
   {
+    '-attention', '',
+    [[Optional attention output file.]]
+  },
+  {
     '-batch_size', 30,
     [[Batch size.]],
     {
@@ -67,6 +71,7 @@ local function main()
   local goldBatch
 
   local withGoldScore = opt.tgt:len() > 0
+  local withAttention = opt.attention:len() > 0
 
   if withGoldScore then
     goldReader = onmt.utils.FileReader.new(opt.tgt, opt.idx_files)
@@ -74,6 +79,9 @@ local function main()
   end
 
   local outFile = io.open(opt.output, 'w')
+  if withAttention then
+    local attFile = io.open(opt.attention, 'w')
+  end
 
   local sentId = 1
   local batchId = 1
@@ -143,6 +151,25 @@ local function main()
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
               outFile:write(sentence .. '\n')
+              if withAttention then
+                local attentions = results[b].preds[n].attention
+                for k,v in pairs(attentions) do
+                  if v ~= nil then
+                    local ttable = torch.totable(v)
+                    local attcount = #attentions
+                    if k == 1 then
+                      attFile:write('0 ||| '..sentence..' ||| 0 ||| '..translator:buildOutput(srcBatch[b])..'\n')
+                    end
+                    for i,j in pairs(ttable) do
+                      attFile:write(j..' ')
+                    end
+                    attFile:write('\n')
+                    if k == attcount then
+                      attFile:write('\n')
+                    end
+                  end
+                end
+              end
               if n == 1 then
                 predScoreTotal = predScoreTotal + results[b].preds[n].score
                 predWordsTotal = predWordsTotal + #results[b].preds[n].words
