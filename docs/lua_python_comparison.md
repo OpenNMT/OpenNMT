@@ -13,12 +13,8 @@ Commandline options differences:
 |      | `OpenNMT-lua` | `OpenNMT-py` |
 | ---  | ---           | ---          |
 | `config`<br>`save_config` |  | *not supported* |
-| `md` | dump help as md file for online documentation | *not supported* |
-| `src_type` | *not supported* | `text`, `img` (*) |
 | `src_img_dir` | *not supported* | used for `src_type img` |
-| `data_type` | `bitext`, `monotext`, `feattext` - used for ASR and LM models | *not supported* |
-| `src_words_min_frequency` | keep all src vocab with this frequency | *not supported* |
-| `tgt_words_min_frequency` | keep all tgt vocab with this frequency | *not supported* |
+| `data_type` | `bitext`, `monotext`, `feattext` - used for ASR and LM models | `text`, `img` (*) |
 | `src_seq_length_trunc` | *not supported* | if sentence too long, truncate it |
 | `tgt_seq_length_trunc` | *not supported* | if sentence too long, truncate it |
 | `check_plength` | check alignment of source/target for sequence tagging | *not supported* |
@@ -26,7 +22,6 @@ Commandline options differences:
 | `keep_frequency` | used by sampled softmax | *not supported* |
 | `sort` | | *not optional*: can not be disabled |
 | `idx_files` | for `feattext` - provide format to align source&target alignment | *not supported* |
-| `lower` | *not supported* - is part of the tokenization features | runtime lowercasing |
 | <span style="color:blue">Logging Options<span> |||
 | `log_file`<br>`disable_logs`<br>`log_level` | | *not supported* |
 
@@ -44,10 +39,7 @@ Commandline options differences:
 | <span style="color:blue">Sampling Options<span> |||
 | `sample`<br>`sample_type`<br>`sample_perplexity_init`<br>`sample_perplexity_max`<br>`sample_vocab`  | [Sampled dataset options](/options/train/#sampled-dataset-options) | *not supported* |
 | <span style="color:blue">Model Options<span> |||
-| `model_type` | `lm`, `seq2seq`, `seqtagger` | *not supported* |
-| `enc_layers`<br>`dec_layers` | number of layers of the encoder/decoder | *not supported*: see `layers` |
-| `src_word_vec_size`<br>`tgt_word_vec_size` |  | *not supported*: see `word_vec_size` and `feat_vec_size` |
-| `fix_word_vecs_enc`<br>`fix_word_vecs_dec` | `true`, `false`, `pretrained` | *not supported* |
+| `model_type` | `lm`, `seq2seq`, `seqtagger` | `text`, `img` |
 | `share_decoder_embeddings` | *not supported* | share the word and softmax embeddings for decoder |
 | `use_pos_emb` | add positional embeddings to word embeddings | *not supported* |
 | `max_pos` | connected to `use_pos_emb` | *not supported* |
@@ -58,17 +50,14 @@ Commandline options differences:
 | `dropout_type` | `naive`, `variational` | *not supported*: dropout is `naive` |
 | `residual` | Add residual connections between recurrent layers | *not supported* |
 | `bridge` | `copy`, `dense`, `dense_nonlinear` | *not supported* |
-| `encoder_type` | `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`, `cnn` | `text`, `img`: if `text`, corresponding type is defined by `encoder_layer` and `brnn` |
-| `encoder_layer` | *not supported* | `rnn`, `mean`, `transformer` |
+| `encoder_type` | `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`, `cnn` | `rnn`, `mean`, `transformer` |
 | `decoder_layer` | *not supported* | `rnn`, `transformer` |
-| `brnn` | defined by `encoder_type` | use a bidirectional encoder, if `encoder_layer` is `rnn` |
 | `pdbrnn_reduction`<br>`pdbrnn_merge` | for `encoder_type` set to `pdbrnn` | *not supported* |
 | `cnn_layers`<br>`cnn_kernel`<br>`cnn_size` | for `encoder_type` set to `cnn` | *not supported* |
 | `truncated_decoder` | *not supported* | truncated back propagation through time |
 | <span style="color:blue">Attention Options<span> |||
 | `attention` | `none`, `global` | *not supported*: only global attention |
-| `attention_type` | *not supported*: is `global_attention` | `dot`, `general`, `mlp` |
-| `global_attention` | `general`, `dot`, `concat` | *not supported*: is `attention_type` |
+| `global_attention` | `general`, `dot`, `concat` | `dot`, `general`, `mlp` |
 | `copy_attn` | *not supported* | copy attention layer |
 | `coverage_attn`<br>`lambda_coverage` | *not supported* | coverage attention layer |
 | `context_gate` | *not supported* | `source`, `target`, `both` |
@@ -77,7 +66,7 @@ Commandline options differences:
 | `start_iteration` |  | *not supported* |
 | `end_epoch` | final epoch of the training | *not supported*: see `epochs` |
 | `epochs` | *not supported*: see `end_epoch` | number of training epochs |
-| `validation_metric` | `perplexity`, `loss`, `bleu`, `ter`, `dlratio` | *not supported* |
+| `validation_metric` | `perplexity`, `loss`, `bleu`, `ter`, `dlratio` | *not supported* always perplexity |
 | `save_validation_translation_every` |  | *not supported* |
 | <span style="color:blue">Optim Options<span> |||
 | `max_batch_size` | maximum batch size | *not supported*: see `max_generator_batches` |
@@ -88,9 +77,7 @@ Commandline options differences:
 | `decay` | default, epoch_only, score_only | *not supported* |
 | `decay_method` |  | use a custom learning rate decay (?) |
 | `warmup_steps` | *not supported* | number of warmup steps for custom decay |
-| `extra_shuffle` | *not supported* | shuffle and re-assign mini-batches |
 | <span style="color:blue">Saver Options<span> |||
-| `train_from_state_dict` | *not supported* |  |
 | `continue` |  | *not supported* |
 | `start_checkpoint_at` | *not supported* |  |
 | `save_every` |  | *not supported* |

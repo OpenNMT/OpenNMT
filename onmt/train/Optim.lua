@@ -77,6 +77,13 @@ local options = {
       enum = {'default', 'epoch_only', 'score_only'},
       train_state = true
     }
+  },
+  {
+    '-reset_when_decay', false,
+    [[If set, the optimizer states (if any) will be reset when the decay condition is met.]],
+    {
+      train_state = true
+    }
   }
 }
 
@@ -153,11 +160,17 @@ Returns: the new learning rate.
 function Optim:updateLearningRate(score, epoch, evaluator)
   local function decayLr()
     self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
+
+    if self.args.reset_when_decay and self.optimStates ~= nil then
+      for i = 1, #self.optimStates do
+        self.optimStates[i] = {}
+      end
+    end
   end
 
   evaluator = evaluator or onmt.evaluators.PerplexityEvaluator.new()
 
-  if self.args.optim == 'sgd' then
+  if self.args.optim == 'sgd' or self.args.optim == 'adam' then
     self.valPerf[#self.valPerf + 1] = score
 
     local epochCondMet = (epoch >= self.args.start_decay_at)
@@ -183,7 +196,7 @@ function Optim:updateLearningRate(score, epoch, evaluator)
 end
 
 function Optim:isFinished()
-  if self.args.optim == 'sgd' then
+  if self.args.optim == 'sgd' or self.args.optim == 'adam' then
     return self.args.learning_rate < self.args.min_learning_rate
   else
     return false

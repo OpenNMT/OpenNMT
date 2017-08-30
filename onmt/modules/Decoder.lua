@@ -24,6 +24,31 @@ local options = {
     {
       structural = 0
     }
+  },
+  {
+    '-scheduled_sampling', 1,
+    [[Probability of feeding true (vs. generated) previous token to decoder.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0,1)
+    }
+  },
+  {
+    '-scheduled_sampling_scope', 'token',
+    [[Apply scheduled sampling at token or sentence level.]],
+    {
+      enum = { 'token', 'sentence' }
+    }
+  },
+  {
+    '-scheduled_sampling_decay_type', 'linear',
+    [[Scheduled Sampling decay type.]],
+    {
+      enum = {'linear', 'invsigmoid'}
+    }
+  },
+  {
+    '-scheduled_sampling_decay_rate', 0,
+    [[Scheduled Sampling decay rate.]]
   }
 }
 
@@ -71,6 +96,8 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
 
   self.args.inputFeed = args.input_feed
 
+  self.args.base_scheduled_sampling = self.args.scheduled_sampling
+
   parent.__init(self, self:_buildModel(attentionModel))
 
   -- The generator use the output of the decoder sequencer to generate the
@@ -79,6 +106,20 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self:add(self.generator)
 
   self:resetPreallocation()
+end
+
+function Decoder:scheduledSamplingDecay(epoch)
+  local k = self.args.scheduled_sampling_decay_rate
+  local i = epoch - 1
+  if self.args.scheduled_sampling_decay_type == "linear" then
+    self.args.scheduled_sampling = math.max(0, self.args.base_scheduled_sampling - i * k)
+  else
+    self.args.scheduled_sampling = self.args.base_scheduled_sampling * k / ( k + math.exp(i/k) - 1 )
+  end
+  if self.args.scheduled_sampling > 1 then self.args.scheduled_sampling = 1 end
+  if self.args.scheduled_sampling ~= 1 then
+    _G.logger:info('Set Scheduled Sampling rate: %0.3f', self.args.scheduled_sampling)
+  end
 end
 
 function Decoder:returnIndividualLosses(enable)
@@ -123,6 +164,9 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+
+  -- Prototype for random distribution
+  self.distribProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -386,11 +430,43 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   end
 
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, initialStates)
+  local distrib = onmt.utils.Tensor.reuseTensor(self.distribProto, { batch.size })
+
+  -- scheduled sampling
+  if self.args.scheduled_sampling and
+     self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'sentence' then
+    distrib:rand(batch.size)
+  end
 
   local prevOut
 
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t),
+    local decInput = batch:getTargetInput(t)
+    -- scheduled sampling - calculate previous output
+    if self.args.scheduled_sampling and
+       t > 1 and self.args.scheduled_sampling < 1 then
+      local decInputMain
+      if type(decInput) == 'table' then
+        decInput[1] = decInput[1]:clone()
+        decInputMain = decInput[1]
+      else
+        decInput = decInput:clone()
+        decInputMain = decInput
+      end
+      local pred = self.generator:forward({ prevOut, batch:getTargetOutput(t) })
+      if self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'token' then
+        distrib:rand(batch.size)
+      end
+      -- mask of element to pick from generated model
+      local realInput = torch.gt(distrib, self.args.scheduled_sampling)
+      -- pick argmax, we could also sample from log-distribution
+      local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze(2)
+      -- replace in the input the gold reference by the model generated one
+      decInputMain:maskedCopy(realInput, bestIdx[realInput])
+    else
+      decInput = batch:getTargetInput(t)
+    end
+    prevOut, states = self:forwardOne(decInput,
                                       states,
                                       context,
                                       prevOut,
@@ -466,7 +542,7 @@ function Decoder:backward(batch, outputs, criterion)
     local prepOutputs = { outputs[t], refOutput }
 
     -- Compute decoder output gradients.
-    -- Note: This would typically be in the forward pass.
+    -- Note: This would typically be in the forward pass - but for memory optimization we keep it here
     local pred = self.generator:forward(prepOutputs)
 
     if self.indvLoss then
