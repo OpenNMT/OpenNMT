@@ -48,6 +48,10 @@
 * `-residual [<boolean>]` (default: `false`)<br/>Add residual connections between recurrent layers.
 * `-bridge <string>` (accepted: `copy`, `dense`, `dense_nonlinear`, `none`; default: `copy`)<br/>Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder must have the same number of layers.
 * `-input_feed [<boolean>]` (default: `true`)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.
+* `-scheduled_sampling <number>` (default: `1`)<br/>Probability of feeding true (vs. generated) previous token to decoder.
+* `-scheduled_sampling_scope <string>` (accepted: `token`, `sentence`; default: `token`)<br/>Apply scheduled sampling at token or sentence level.
+* `-scheduled_sampling_decay_type <string>` (accepted: `linear`, `invsigmoid`; default: `linear`)<br/>Scheduled Sampling decay type.
+* `-scheduled_sampling_decay_rate <number>` (default: `0`)<br/>Scheduled Sampling decay rate.
 * `-encoder_type <string>` (accepted: `rnn`, `brnn`, `dbrnn`, `pdbrnn`, `gnmt`, `cnn`; default: `rnn`)<br/>Encoder type.
 * `-attention <string>` (accepted: `none`, `global`; default: `global`)<br/>Attention model.
 * `-brnn_merge <string>` (accepted: `concat`, `sum`; default: `sum`)<br/>Merge action for the bidirectional states.
