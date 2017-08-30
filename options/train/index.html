@@ -1044,6 +1044,10 @@
 <li><code>-residual [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Add residual connections between recurrent layers.</li>
 <li><code>-bridge &lt;string&gt;</code> (accepted: <code>copy</code>, <code>dense</code>, <code>dense_nonlinear</code>, <code>none</code>; default: <code>copy</code>)<br/>Define how to pass encoder states to the decoder. With <code>copy</code>, the encoder and decoder must have the same number of layers.</li>
 <li><code>-input_feed [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Feed the context vector at each time step as additional input (via concatenation with the word embeddings) to the decoder.</li>
+<li><code>-scheduled_sampling &lt;number&gt;</code> (default: <code>1</code>)<br/>Probability of feeding true (vs. generated) previous token to decoder.</li>
+<li><code>-scheduled_sampling_scope &lt;string&gt;</code> (accepted: <code>token</code>, <code>sentence</code>; default: <code>token</code>)<br/>Apply scheduled sampling at token or sentence level.</li>
+<li><code>-scheduled_sampling_decay_type &lt;string&gt;</code> (accepted: <code>linear</code>, <code>invsigmoid</code>; default: <code>linear</code>)<br/>Scheduled Sampling decay type.</li>
+<li><code>-scheduled_sampling_decay_rate &lt;number&gt;</code> (default: <code>0</code>)<br/>Scheduled Sampling decay rate.</li>
 <li><code>-encoder_type &lt;string&gt;</code> (accepted: <code>rnn</code>, <code>brnn</code>, <code>dbrnn</code>, <code>pdbrnn</code>, <code>gnmt</code>, <code>cnn</code>; default: <code>rnn</code>)<br/>Encoder type.</li>
 <li><code>-attention &lt;string&gt;</code> (accepted: <code>none</code>, <code>global</code>; default: <code>global</code>)<br/>Attention model.</li>
 <li><code>-brnn_merge &lt;string&gt;</code> (accepted: <code>concat</code>, <code>sum</code>; default: <code>sum</code>)<br/>Merge action for the bidirectional states.</li>

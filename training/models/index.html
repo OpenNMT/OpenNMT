@@ -425,6 +425,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#scheduled-sampling" title="Scheduled Sampling" class="md-nav__link">
+    Scheduled Sampling
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -985,6 +992,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#scheduled-sampling" title="Scheduled Sampling" class="md-nav__link">
+    Scheduled Sampling
+  </a>
+  
+</li>
+      
       
       
     </ul>
@@ -1065,6 +1079,9 @@
 </li>
 </ul>
 <p>The model is selected using <code>-global_attention</code> option or can be disabled with <code>-attention none</code> option. The default attention model is <code>general</code>.</p>
+<h2 id="scheduled-sampling">Scheduled Sampling<a class="headerlink" href="#scheduled-sampling" title="Permanent link">&para;</a></h2>
+<p>By default, the decoder at step <script type="math/tex">t</script> is using the reference token for step <script type="math/tex">t-1</script> to calculate the new output. For some applications, for instance speech recognition, this is leading to propagation of decoding errors and also a mismatch between training and inference workflow. Scheduled sampling (as introduced in <a href="http://papers.nips.cc/paper/5956-scheduled-sampling-for-sequence-prediction-with-recurrent-neural-networks.pdf">Scheduled sampling for sequence prediction with recurrent neural networks</a>. In Advances in Neural Information Processing Systems (pp. 1171-1179).]) is allowing to mix gold reference and generated output in a proportion that will change over time: at the beginning of the training the generated output confidence is very low and it is better to use gold reference, while at the end of the training, we have to rely on generated output to have training in the same conditions than inference.</p>
+<p>Scheduled sampling is activated with <code>-scheduled_sampling</code> parameter which takes the probability to use the reference token instead of the previously generated one. By default, probability is one meaning that we always use previously generated token. The sampling can be done either at each token level or at the sentence level using <code>-scheduled_sampling_scope</code> parameter. The decay of the sampling rate is controlled by parameters <code>-scheduled_sampling_decay_type</code> and <code>-scheduled_sampling_decay_rate</code>.</p>
                 
                   
                 
