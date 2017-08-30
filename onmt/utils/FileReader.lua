@@ -61,6 +61,22 @@ function FileReader:next()
   return sent, idx
 end
 
+function FileReader.countLines(filename)
+  local BUFSIZE = 2^13
+  local f = io.input(filename)
+  local lc = 0
+  while true do
+    local lines, rest = f:read(BUFSIZE, "*line")
+    if not lines then break end
+    if rest then lines = lines .. rest .. '\n' end
+    -- count newlines in the chunk
+    local t
+    t = select(2, string.gsub(lines, "\n", "\n"))
+    lc = lc + t
+  end
+  return lc
+end
+
 function FileReader:close()
   self.file:close()
 end

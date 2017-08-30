@@ -45,6 +45,18 @@ local commonOptions = {
   }
 }
 
+function Preprocessor.getDataList(mode)
+  local datalist
+  if mode == 'bitext' or mode == 'seq2seq' then
+    datalist = { {name="source",short="src",hasVocab=true,suffix=".src"} , {name="target",short="tgt",hasVocab=true,suffix=".tgt"} }
+  elseif mode == 'monotext' then
+    datalist = { {hasVocab=true,suffix=".tok"} }
+  else
+    datalist = { {name="source",short="src",hasVocab=false,suffix=".src"} , {name="target",short="tgt",hasVocab=true,suffix=".tgt"} }
+  end
+  return datalist
+end
+
 --[[
   Generic function to generate options for the different modes
 ]]
@@ -61,14 +73,7 @@ local function declareDataOptions(mode)
     if data.name then return " "..data.name end
     return ""
   end
-  local datalist
-  if mode == 'bitext' then
-    datalist = { {name="source",short="src",hasVocab=true} , {name="target",short="tgt",hasVocab=true} }
-  elseif mode == 'monotext' then
-    datalist = { {hasVocab=true} }
-  else
-    datalist = { {name="source",short="src",hasVocab=false} , {name="target",short="tgt",hasVocab=true} }
-  end
+  local datalist = Preprocessor.getDataList(mode)
   local options = {}
   for i = 1, #datalist do
     table.insert(options,
