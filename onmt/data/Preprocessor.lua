@@ -297,7 +297,7 @@ end
   * `isValid`: validation function taking prepared table of tokens from each source
   * `generateFeatures`: table of feature extraction fucnction for each source
 ]]
-function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants, isValid, generateFeatures, parallelCheck)
+function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants, isValid, generateFeatures, parallelCheck, sample_file)
   local n = #files[1][2]
   local sentenceDists = {}
   local vectors = {}
@@ -366,7 +366,9 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
     end
   end
 
-  for _, df in ipairs(files) do
+  for m, df in ipairs(files) do
+    -- if there is a sampling for this file
+    local sampling = sample_file[m]
     local readers = {}
     prunedRatio = {}
     for i = 1, n do
@@ -413,7 +415,8 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
       end
     else
       local idx = 1
-      while true do
+      local sampling_idx = 1
+      while true and (not sampling or sampling_idx <= sampling:size(1)) do
         local tokens = {}
         local hasNil = false
         local allNil = true
@@ -422,15 +425,24 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
           hasNil = hasNil or tokens[i] == nil
           allNil = allNil and tokens[i] == nil
         end
-
-        if hasNil then
-          if not allNil then
-            _G.logger:error('all data sources do not have the same number of sentences')
-            os.exit(1)
+        if not sampling or sampling[sampling_idx] == idx then
+          if hasNil then
+            if not allNil then
+              _G.logger:error('all data sources do not have the same number of sentences')
+              os.exit(1)
+            end
+            break
           end
-          break
+          if not sampling then
+            processSentence(idx, tokens)
+          else
+            -- when sampling we can introduce several time the same sentence
+            while sampling_idx <= sampling:size(1) and sampling[sampling_idx] == idx do
+              processSentence(idx, tokens)
+              sampling_idx = sampling_idx + 1
+            end
+          end
         end
-        processSentence(idx, tokens)
         idx = idx + 1
       end
     end
@@ -508,7 +520,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
   return data
 end
 
-function Preprocessor:makeBilingualData(files, srcDicts, tgtDicts, isValid, parallelCheck)
+function Preprocessor:makeBilingualData(files, srcDicts, tgtDicts, isValid, parallelCheck, sample_file)
   local data = self:makeGenericData(
                               files,
                               { false, false },
@@ -534,11 +546,12 @@ function Preprocessor:makeBilingualData(files, srcDicts, tgtDicts, isValid, para
                                 onmt.utils.Features.generateSource,
                                 onmt.utils.Features.generateTarget
                               },
-                              parallelCheck)
+                              parallelCheck,
+                              sample_file)
   return data[1], data[2]
 end
 
-function Preprocessor:makeFeatTextData(files, tgtDicts, isValid, parallelCheck)
+function Preprocessor:makeFeatTextData(files, tgtDicts, isValid, parallelCheck, sample_file)
   local data = self:makeGenericData(
                               files,
                               { true, false },
@@ -562,11 +575,12 @@ function Preprocessor:makeFeatTextData(files, tgtDicts, isValid, parallelCheck)
                                 false,
                                 onmt.utils.Features.generateTarget
                               },
-                              parallelCheck)
+                              parallelCheck,
+                              sample_file)
   return data[1], data[2]
 end
 
-function Preprocessor:makeMonolingualData(files, dicts, isValid)
+function Preprocessor:makeMonolingualData(files, dicts, isValid, sample_file)
   local data = self:makeGenericData(
                               files,
                               { false },
@@ -584,7 +598,9 @@ function Preprocessor:makeMonolingualData(files, dicts, isValid)
                               end,
                               {
                                 onmt.utils.Features.generateTarget
-                              })
+                              },
+                              nil,
+                              sample_file)
   return data[1]
 end
 
@@ -643,13 +659,33 @@ function Preprocessor:makeData(dataset, dicts)
     parallelValidFunc = Preprocessor.parallelCheck
   end
 
+  local sample_file = {}
+  if dataset == 'train' and self.args.sample ~= 0 then
+    -- sample data using sample and sample_dict
+    local sampledCount = self.args.sample
+    if sampledCount < 1 then
+      sampledCount = sampledCount * self.totalCount
+    end
+    -- check how many sentences per file
+    for _, f in ipairs(self.list_train) do
+      local n = math.ceil(sampledCount*f[1]/self.totalCount)
+      local t = torch.LongTensor(n)
+      for i = 1, n do
+        t[i] = torch.random(1, f[1])
+      end
+      t = torch.sort(t)
+      table.insert(sample_file, t)
+    end
+  end
+
   local data = {}
   if self.dataType == 'monotext' then
-    data.src = self:makeMonolingualData(self["list_"..dataset], dicts.src, self.isValid)
+    data.src = self:makeMonolingualData(self["list_"..dataset], dicts.src, self.isValid, sample_file)
   elseif self.dataType == 'feattext' then
     data.src, data.tgt = self:makeFeatTextData(self["list_"..dataset],
                                                dicts.tgt,
-                                               self.isValid, parallelValidFunc)
+                                               self.isValid, parallelValidFunc,
+                                               sample_file)
     if not dicts.srcInputSize then
       dicts.srcInputSize = data.src.vectors[1]:size(2)
     else
@@ -658,7 +694,7 @@ function Preprocessor:makeData(dataset, dicts)
   else
     data.src, data.tgt = self:makeBilingualData(self["list_"..dataset],
                                                 dicts.src, dicts.tgt,
-                                                self.isValid, parallelValidFunc)
+                                                self.isValid, parallelValidFunc, sample_file)
   end
 
   return data
