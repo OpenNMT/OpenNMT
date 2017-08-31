@@ -4,6 +4,7 @@
 
 * Remove tokenization options from `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
+* Option `report_every` in preprocess is renamed `report_progress_every`
 
 ### New features
 
@@ -12,6 +13,7 @@
 * Add option to save the validation translation to a file
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
+* No need to preprocess anymore with dynamic datasets
 
 ### Fixes and improvements
 
