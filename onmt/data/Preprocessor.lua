@@ -55,7 +55,7 @@ local commonOptions = {
     [[If set, source and target files are 'key value' with key match between source and target.]]
   },
   {
-    '-report_every', 100000,
+    '-report_progress_every', 100000,
     [[Report status every this many sentences.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isInt(1)
@@ -361,7 +361,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
 
     count = count + 1
 
-    if count % self.args.report_every == 0 then
+    if count % self.args.report_progress_every == 0 then
       _G.logger:info('... ' .. count .. ' sentences prepared')
     end
   end
