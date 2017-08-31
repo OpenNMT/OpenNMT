@@ -127,13 +127,4 @@ function Dataset:getBatch(idx)
   return onmt.data.Batch.new(src, srcFeatures, tgt, tgtFeatures)
 end
 
---[[ Check data validity ]]
-function Dataset.isValid(seq, maxSeqLength)
-  if torch.isTensor(seq) then
-    return seq:size(1) > 0 and seq:size(1) <= maxSeqLength
-  end
-  return #seq > 0 and #seq <= maxSeqLength
-end
-
-
 return Dataset

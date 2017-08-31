@@ -25,6 +25,22 @@ local commonOptions = {
     [[Keep frequency of words in dictionary.]]
   },
   {
+    '-sample', 0,
+    [[If not zero, extract a sample of the corpus. Values between 0 and 1 indicate ratio,
+      values higher than 1 indicate data size]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0)
+    }
+  },
+  {
+    '-sample_dist', '',
+    [[Configuration file with data class distribution to use for sampling training corpus.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists,
+      depends = function(opt) return opt.sample_dist == '' or opt.sample > 0 end
+    }
+  },
+  {
     '-sort', true,
     [[If set, sort the sequences by size to build batches without source padding.]]
   },
@@ -45,11 +61,11 @@ local commonOptions = {
   }
 }
 
-function Preprocessor.getDataList(mode)
+function Preprocessor.getDataList(dataType)
   local datalist
-  if mode == 'bitext' or mode == 'seq2seq' then
+  if dataType == 'bitext' or dataType == 'seq2seq' then
     datalist = { {name="source",short="src",hasVocab=true,suffix=".src"} , {name="target",short="tgt",hasVocab=true,suffix=".tgt"} }
-  elseif mode == 'monotext' then
+  elseif dataType == 'monotext' then
     datalist = { {hasVocab=true,suffix=".tok"} }
   else
     datalist = { {name="source",short="src",hasVocab=false,suffix=".src"} , {name="target",short="tgt",hasVocab=true,suffix=".tgt"} }
@@ -58,9 +74,9 @@ function Preprocessor.getDataList(mode)
 end
 
 --[[
-  Generic function to generate options for the different modes
+  Generic function to generate options for the different dataTypes
 ]]
-local function declareDataOptions(mode)
+local function declareDataOptions(dataType)
   local function prefix(data)
     if data.short then return data.short.."_" end
     return ""
@@ -73,18 +89,28 @@ local function declareDataOptions(mode)
     if data.name then return " "..data.name end
     return ""
   end
-  local datalist = Preprocessor.getDataList(mode)
+  local datalist = Preprocessor.getDataList(dataType)
   local options = {}
+
+  table.insert(options,
+    {
+      '-train_dir', '',
+      [[Path to training files directory.]],
+      {
+        valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+      }
+    })
   for i = 1, #datalist do
     table.insert(options,
       {
         '-train'..suffix(datalist[i]), '',
         "Path to the training"..nameWithSpace(datalist[i]).." data.",
         {
-          valid=onmt.utils.ExtendedCmdLine.fileExists
+          valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
         }
       })
   end
+
   for i = 1, #datalist do
     table.insert(options,
       {
@@ -104,6 +130,11 @@ local function declareDataOptions(mode)
           {
             valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
           }
+        })
+      table.insert(options,
+        {
+          '-'..prefix(datalist[i])..'suffix', datalist[i].suffix,
+          "Suffix for"..nameWithSpace(datalist[i]).." files in train/valid directories."
         })
       table.insert(options,
         {
@@ -129,28 +160,64 @@ local function declareDataOptions(mode)
         }
       })
   end
+
+  if dataType ~= 'monotext' then
+    table.insert(options,
+      {
+        '-check_plength', false,
+        [[Check source and target have same length (for seq tagging).]]
+      })
+  end
+
   return options
 end
 
-function Preprocessor.declareOpts(cmd, mode)
-  mode = mode or 'bitext'
-  local options = declareDataOptions(mode)
+function Preprocessor.declareOpts(cmd, dataType)
+  dataType = dataType or 'bitext'
+  local options = declareDataOptions(dataType)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
   cmd:setCmdLineOptions(options, 'Data')
 end
 
-function Preprocessor:__init(args, mode)
+function Preprocessor:__init(args, dataType)
   tds = require('tds')
 
-  mode = mode or 'bitext'
+  self.dataType = dataType or 'bitext'
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, commonOptions)
-  local options = declareDataOptions(mode)
+  local options = declareDataOptions(self.dataType)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+
+  local function isempty(t)
+    local count = 0
+    for _, v in ipairs(t) do
+      if self.args[v] == '' then
+        count = count + 1
+      end
+    end
+    return count
+  end
+
+  -- sanity check on options: train_dir is exclusive all direct file settings
+  -- and for train_dir, we do need pre-build vocabulary
+  if dataType == 'monotext' then
+    self.trains = { 'train' }
+    self.vocabs = { 'vocab' }
+  else
+    self.trains = { 'train_src', 'train_tgt' }
+    self.vocabs = { 'src_vocab', 'tgt_vocab' }
+  end
+
+  if args.train_dir ~= '' then
+    assert(isempty(self.trains) == #self.trains, 'For directory mode, file mode options (training) should not be set')
+    assert(isempty(self.vocabs) == 0, 'For directory mode, vocabs should be predefined')
+  else
+    assert(isempty(self.trains) == 0)
+  end
 end
 
 --[[
@@ -442,6 +509,82 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
                                 onmt.utils.Features.generateTarget
                               })
   return data[1]
+end
+
+--[[ Check data validity ]]
+function Preprocessor.isValid(seq, maxSeqLength)
+  if torch.isTensor(seq) then
+    return seq:size(1) > 0 and seq:size(1) <= maxSeqLength
+  end
+  return #seq > 0 and #seq <= maxSeqLength
+end
+
+local function parallelCheck(idx, _, _, tokens)
+  local length1 = (type(tokens[1])=='table' and #tokens[1]) or (tokens[1]:dim()==0 and 0) or tokens[1]:size(1)
+  local length2 = (type(tokens[2])=='table' and #tokens[2]) or (tokens[2]:dim()==0 and 0) or tokens[2]:size(1)
+  if length1~=length2 then
+    _G.logger:warning('SENT %s: source/target not aligned (%d/%d)', tostring(idx), length1, length2)
+    return false
+  end
+  return true
+end
+
+function Preprocessor:getVocabulary()
+  local dicts = {}
+  if self.dataType ~= 'feattext' then
+    local src_file = self.args.train_src
+    if self.dataType == 'monotext' then
+      src_file = self.args.train
+    end
+    dicts.src = onmt.data.Vocabulary.init('source',
+                                     src_file,
+                                     self.args.src_vocab or self.args.vocab,
+                                     self.args.src_vocab_size or self.args.vocab_size,
+                                     self.args.src_words_min_frequency or self.args.words_min_frequency,
+                                     self.args.features_vocabs_prefix,
+                                     function(s) return onmt.data.Preprocessor.isValid(s, self.args.src_seq_length or self.args.seq_length) end,
+                                     self.args.keep_frequency,
+                                     self.args.idx_files)
+  end
+  if self.dataType ~= 'monotext' then
+    local tgt_file = self.args.train_tgt
+    dicts.tgt = onmt.data.Vocabulary.init('target',
+                                     tgt_file,
+                                     self.args.tgt_vocab,
+                                     self.args.tgt_vocab_size,
+                                     self.args.tgt_words_min_frequency,
+                                     self.args.features_vocabs_prefix,
+                                     function(s) return onmt.data.Preprocessor.isValid(s, self.args.tgt_seq_length) end,
+                                     self.args.keep_frequency,
+                                     self.args.idx_files)
+  end
+  return dicts
+end
+
+function Preprocessor:makeData(dataset, dicts)
+  local parallelValidFunc = nil
+  if self.args.check_plength then
+    parallelValidFunc = parallelCheck
+  end
+
+  local data = {}
+  if self.dataType == 'monotext' then
+    data.src = self:makeMonolingualData(self.args[dataset], dicts.src, self.isValid)
+  elseif self.dataType == 'feattext' then
+    data.src, data.tgt = self:makeFeatTextData(self.args[dataset.."_src"], self.args[dataset.."_tgt"],
+                                               dicts.tgt,
+                                               self.isValid, parallelValidFunc)
+    if dataset == 'train' then
+      -- record the size of the input layer
+      dicts.srcInputSize = data.src.vectors[1]:size(2)
+    end
+  else
+    data.src, data.tgt = self:makeBilingualData(self.args[dataset.."_src"], self.args[dataset.."_tgt"],
+                                                dicts.src, dicts.tgt,
+                                                self.isValid, parallelValidFunc)
+  end
+
+  return data
 end
 
 return Preprocessor
