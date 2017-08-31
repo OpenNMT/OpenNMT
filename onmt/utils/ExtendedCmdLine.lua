@@ -202,7 +202,7 @@ function ExtendedCmdLine:argument(key, type, help, _meta_)
     end
   end
 
-  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+  onmt.utils.Error.assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
 
   parent.argument(self, key, help, type)
 
@@ -221,7 +221,7 @@ function ExtendedCmdLine:option(key, default, help, _meta_)
     end
   end
 
-  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+  onmt.utils.Error.assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
 
   parent.option(self, key, default, help)
 
@@ -230,13 +230,13 @@ function ExtendedCmdLine:option(key, default, help, _meta_)
   if _meta_ and (
     (_meta_.valid and not _meta_.valid(default)) or
     (_meta_.enum and type(default) ~= 'table' and not onmt.utils.Table.hasValue(_meta_.enum, default))) then
-    assert(default=='',"Invalid option default definition: "..key.."="..default)
+    onmt.utils.Error.assert(default=='',"Invalid option default definition: "..key.."="..default)
     _meta_.required = true
   end
 
   if _meta_ and _meta_.enum and type(default) == 'table' then
     for _,k in ipairs(default) do
-      assert(onmt.utils.Table.hasValue(_meta_.enum, k), "table option not compatible with enum: "..key)
+      onmt.utils.Error.assert(onmt.utils.Table.hasValue(_meta_.enum, k), "table option not compatible with enum: "..key)
     end
   end
 
@@ -245,13 +245,13 @@ end
 
 --[[ Override options with option values set in file `filename`. ]]
 function ExtendedCmdLine:loadConfig(filename, opt)
-  local file = assert(io.open(filename, 'r'))
+  local file = onmt.utils.Error.assert(io.open(filename, 'r'))
 
   for line in file:lines() do
     -- Ignore empty or commented out lines.
     if line:len() > 0 and string.sub(line, 1, 1) ~= '#' then
       local field = onmt.utils.String.split(line, '=')
-      assert(#field == 2, 'badly formatted config file')
+      onmt.utils.Error.assert(#field == 2, 'badly formatted config file')
 
       local key = onmt.utils.String.strip(field[1])
       local val = onmt.utils.String.strip(field[2])
@@ -299,7 +299,7 @@ function ExtendedCmdLine:logConfig(opt)
 end
 
 function ExtendedCmdLine:dumpConfig(opt, filename)
-  local file = assert(io.open(filename, 'w'))
+  local file = onmt.utils.Error.assert(io.open(filename, 'w'))
 
   for key, val in pairs(opt) do
     if key:sub(1, 1) ~= '_' then
