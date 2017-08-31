@@ -54,7 +54,7 @@ local function main()
 
   local function add_to_reference(filename)
     local file = io.open(filename)
-    assert(file, "cannot open `" .. filename .. "`")
+    onmt.utils.Error.assert(file, "cannot open `" .. filename .. "`")
     local ref = {}
     while true do
       local line = file:read()
@@ -65,7 +65,7 @@ local function main()
       end
       table.insert(ref, sent)
     end
-    assert(#references==0 or #references[#references] == #ref, "ERROR: all references do not have same line count")
+    onmt.utils.Error.assert(#references==0 or #references[#references] == #ref, "all references do not have same line count")
     table.insert(references, ref)
   end
 
@@ -94,7 +94,7 @@ local function main()
     table.insert(hyp, sent)
   end
 
-  assert(#hyp==#references[1], "ERROR: line count hyp/ref does not match")
+  onmt.utils.Error.assert(#hyp==#references[1], "line count hyp/ref does not match")
 
   if not onmt.scorers.multi[opt.scorer] then
     references = references[1]
