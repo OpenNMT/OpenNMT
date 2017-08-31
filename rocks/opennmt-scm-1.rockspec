@@ -98,6 +98,7 @@ build = {
     ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",
     ["onmt.utils.Profiler"] = "onmt/utils/Profiler.lua",
     ["onmt.utils.Memory"] = "onmt/utils/Memory.lua",
+    ["onmt.utils.Error"] = "onmt/utils/Error.lua",
     ["onmt.utils.MemoryOptimizer"] = "onmt/utils/MemoryOptimizer.lua",
     ["onmt.utils.ExtendedCmdLine"] = "onmt/utils/ExtendedCmdLine.lua",
     ["onmt.utils.Parallel"] = "onmt/utils/Parallel.lua",
