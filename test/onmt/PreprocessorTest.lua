@@ -51,8 +51,7 @@ function preprocessorTest.bitext()
   local srcDicts = makeDicts('source',opt.train_src)
   local tgtDicts = makeDicts('target',opt.train_tgt)
 
-  local srcData, tgtData = preprocessor:makeBilingualData(opt.train_src,
-                                                          opt.train_tgt,
+  local srcData, tgtData = preprocessor:makeBilingualData({{1,{opt.train_src,opt.train_tgt}}},
                                                           srcDicts,
                                                           tgtDicts,
                                                           noFilter)
@@ -73,7 +72,7 @@ function preprocessorTest.monotext()
 
   local dicts = makeDicts('source',opt.train)
 
-  local data = preprocessor:makeMonolingualData(opt.train, dicts, noFilter)
+  local data = preprocessor:makeMonolingualData({{1,{opt.train}}}, dicts, noFilter)
 
   tester:eq(torch.typename(data.words), 'tds.Vec')
   tester:eq(torch.typename(data.features), 'tds.Vec')
@@ -93,8 +92,7 @@ function preprocessorTest.feattext()
 
   local tgtDicts = makeDicts('target',opt.train_tgt)
 
-  local srcData,tgtData = preprocessor:makeFeatTextData(opt.train_src,
-                                                        opt.train_tgt,
+  local srcData,tgtData = preprocessor:makeFeatTextData({{1,{opt.train_src, opt.train_tgt}}},
                                                         tgtDicts,
                                                         isValid)
 

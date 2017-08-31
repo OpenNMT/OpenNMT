@@ -81,7 +81,8 @@ function FileReader.countLines(filename, idx_files)
       if not line then break end
       local p = line:find(" ")
       onmt.utils.Error.assert(p and p ~= 1, "Invalid line in file '"..filename.."' - missing idx: "..line)
-      while line and not line:find("]") do
+      local multiline = line:find("\\[")
+      while line and multiline and not line:find("\\]") do
         line = f:read()
       end
       onmt.utils.Error.assert(line, "Block not closed in file '"..filename.."'")

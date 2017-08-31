@@ -273,16 +273,20 @@ function Preprocessor:__init(args, dataType)
     local list_files = { self.args[self.trains[1]] }
     for i = 2, #self.trains do
       table.insert(list_files, args[self.trains[i]])
-      onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.trains[i]], args.idx_files) == self.totalCount,
-                              "line count in "..args[self.trains[i]].." do not match "..args[self.trains[1]])
+      if not args.idx_files then
+        onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.trains[i]], args.idx_files) == self.totalCount,
+                                "line count in "..args[self.trains[i]].." do not match "..args[self.trains[1]])
+      end
     end
     self.list_train = { { self.totalCount, list_files } }
   end
 
   self.list_valid = { {onmt.utils.FileReader.countLines(args[self.valids[1]], args.idx_files), {args[self.valids[1]]}}}
   for i = 2, #self.valids do
-    onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.valids[i]], args.idx_files) == self.list_valid[1][1],
+    if not args.idx_files then
+      onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.valids[i]], args.idx_files) == self.list_valid[1][1],
                               "line count in "..args[self.valids[i]].." do not match "..args[self.valids[1]])
+    end
     table.insert(self.list_valid[1][2], args[self.valids[i]])
   end
 end
@@ -298,6 +302,7 @@ end
   * `generateFeatures`: table of feature extraction fucnction for each source
 ]]
 function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants, isValid, generateFeatures, parallelCheck, sample_file)
+  sample_file = sample_file or {}
   local n = #files[1][2]
   local sentenceDists = {}
   local vectors = {}
