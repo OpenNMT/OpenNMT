@@ -4,13 +4,6 @@ local SampledDataset, parent = torch.class("SampledDataset", "Dataset")
 
 local options = {
   {
-    '-sample', 0,
-    [[Number of instances to sample from train data in each epoch.]],
-    {
-      valid = onmt.utils.ExtendedCmdLine.isUInt()
-    }
-  },
-  {
     '-sample_type', 'uniform',
     [[Define the partition type. `uniform` draws randomly the sample, `perplexity` uses perplexity
       as a probability distribution when sampling (with `-sample_perplexity_init` and `-sample_perplexity_max`

@@ -39,8 +39,7 @@ onmt.utils.Profiler.declareOpts(cmd)
 
 cmd:option('-seed', 3435, [[Random seed.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
 
-local function loadData(opt, filename, dirname)
-  assert(not(filename~='' and dirname~=''), "Option 'data' and 'ddr_train_dir' cannot be activated simultaneously.")
+local function loadData(opt, filename)
 
   local data
   if filename ~= '' then
@@ -157,7 +156,7 @@ local function main()
   _G.logger:info('Training ' .. modelClass.modelName() .. ' model...')
 
   -- Loading data package.
-  local data = loadData(opt, opt.data, opt.gd_train_dir)
+  local data = loadData(opt, opt.data)
 
   -- Record data type in the options, and preprocessing options if present.
   opt.data_type = data.dataType
@@ -178,7 +177,7 @@ local function main()
 
   onmt.utils.Cuda.convert(model)
 
-  if opt.sample > 0 then
+  if torch.type(trainDataset) == 'SampledDataset' and opt.sample > 0 then
     trainDataset:checkModel(model)
   end
 
