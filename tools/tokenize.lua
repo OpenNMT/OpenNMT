@@ -16,13 +16,6 @@ cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not ch
 
 local opt = cmd:parse(arg)
 
-if opt.bpe_model ~= '' then
-  local f = assert(io.open(opt.bpe_model, "r"))
-  local options = {}
-  for i in string.gmatch(f:read("*line"), "[^;]+") do table.insert(options, i) end
-  if #options == 4 then opt.mode = options[4] end  -- overriding 'mode' from cmd by options from bpe_model for BPE compatibility
-end
-
 local pool = threads.Threads(
    opt.nparallel,
    function()

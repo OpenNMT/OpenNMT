@@ -11,12 +11,18 @@ Parameters:
 
   * `model` - the model to evaluate.
   * `data` - the `Dataset` to evaluate on.
+  * `saveFile` - optional filename to save the translation.
 
 Returns: the evaluation score.
 
 ]]
-function Evaluator:eval(_, _)
+function Evaluator:eval(_, _, _)
   error('Not implemented')
+end
+
+--[[ Return true if the evaluator can save the translation result. ]]
+function Evaluator:canSaveTranslation()
+  return false
 end
 
 --[[ Compare two scores as returned by the evaluator.
@@ -39,11 +45,11 @@ end
 -- Predefine common comparison methods.
 function Evaluator.lowerIsBetter(a, b, delta)
   delta = delta or 0
-  return a - b <= delta
+  return a - (b - delta) <= 0
 end
 function Evaluator.higherIsBetter(a, b, delta)
   delta = delta or 0
-  return a - b >= delta
+  return a - (b + delta) >= 0
 end
 
 --[[ Return the name of the evaluation metric. ]]

@@ -17,6 +17,10 @@ local function buildEncoder(class, rnnType, merge, dropout, dropout_type, dropou
   opt.dropout_input = dropout_input or false
   opt.max_batch_size = 64
 
+  if class == onmt.CNNEncoder then
+    opt.cnn_size = 10
+  end
+
   local inputNet = nn.LookupTable(10, 4)
   inputNet.inputSize = 4
 
@@ -42,7 +46,9 @@ local function genericCheckDim(encoder, opt)
   end
 
   tester:eq(context:size(), torch.LongStorage({3, timesteps, opt.rnn_size}))
-  tester:eq(#states, opt.layers * (opt.rnn_type == 'LSTM' and 2 or 1))
+  if not opt.cnn_size then
+    tester:eq(#states, opt.layers * (opt.rnn_type == 'LSTM' and 2 or 1))
+  end
   for _, v in ipairs(states) do
     tester:eq(v:size(), torch.LongStorage({3, opt.rnn_size}))
   end
@@ -55,9 +61,18 @@ local function genericCheckDim(encoder, opt)
 
   local gradInputs = encoder:backward(batch, gradStatesOutput, gradContextOutput)
 
-  tester:eq(#gradInputs, 4)
-  for _, v in ipairs(gradInputs) do
-    tester:eq(v:size(), torch.LongStorage({3}))
+  local steps = #gradInputs
+  if opt.cnn_size then
+    steps = gradInputs:size(2)
+  end
+  tester:eq(steps, 4)
+
+  if not opt.cnn_size then
+    for _, v in ipairs(gradInputs) do
+      tester:eq(v:size(), torch.LongStorage({3}))
+    end
+  else
+    tester:eq(gradInputs:size(1), 3)
   end
 
   return states, context
@@ -74,6 +89,11 @@ local function justForward(encoder)
   encoder:forward(batch)
 end
 
+local function justForwardOne(encoder, value, clone)
+  local inputs =torch.IntTensor(3):fill(value)
+  encoder:training()
+  return encoder:forwardOne(inputs, nil, clone)
+end
 
 local function genericCheckMasking(encoder)
   local src = {
@@ -129,6 +149,14 @@ function encoderTest.simple_LSTM_dropouts()
   justForward(encoder)
   tester:eq(count, 4)
   tester:eq(vcount, 0)
+
+  local context1, context2
+  context1 = select(2, justForwardOne(encoder, 2, false))
+  context2 = select(2, justForwardOne(encoder, 3, false))
+  tester:assertTensorEq(context1, context2)
+  context1 = select(2, justForwardOne(encoder, 2, true))
+  context2 = select(2, justForwardOne(encoder, 3, true))
+  tester:assertTensorNe(context1, context2)
 
   count = 0
   encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0.2, 'variational')
@@ -289,6 +317,21 @@ end
 
 function encoderTest.pdbrnn_saveAndLoad_GRU()
   local encoder, opt = buildEncoder(onmt.PDBiEncoder, 'GRU')
+  genericCheckSerial(encoder, opt)
+end
+
+function encoderTest.cnn()
+  local encoder, opt = buildEncoder(onmt.CNNEncoder)
+  genericCheckDim(encoder, opt)
+end
+
+function encoderTest.cnn_masking()
+  local encoder, _ = buildEncoder(onmt.CNNEncoder)
+  genericCheckMasking(encoder)
+end
+
+function encoderTest.cnn_saveAndLoad()
+  local encoder, opt = buildEncoder(onmt.CNNEncoder)
   genericCheckSerial(encoder, opt)
 end
 
