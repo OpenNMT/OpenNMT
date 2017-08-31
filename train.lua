@@ -49,11 +49,10 @@ local function loadData(opt, filename, dirname)
     data = torch.load(filename, 'binary', false)
 
     -- Check if data type is compatible with the target model.
-    if not modelClass.dataType(data.dataType) then
-      _G.logger:error('Data type `%s\' is incompatible with `%s\' models',
+    onmt.utils.Error.assert(modelClass.dataType(data.dataType),
+                      'Data type `%s\' is incompatible with `%s\' models',
                       data.dataType, modelClass.modelName())
-      os.exit(0)
-    end
+
   else
     data = onmt.data.DynamicDataRepository.new(opt, modelClass)
   end
