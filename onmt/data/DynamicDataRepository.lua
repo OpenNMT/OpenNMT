@@ -72,50 +72,6 @@ function DynamicDataRepository.declareOpts(cmd, modelClass)
   cmd:setCmdLineOptions(options, 'Global dataset')
 end
 
-local function parseDirectory(args, datalist, type)
-  local dir = args[type.."_dir"]
-  assert(dir ~= '', 'missing \''..type..'_dir\' parameter')
-  _G.logger:info('Parsing '..type..' data from \''..dir..'\':')
-  local firstSuffix = args[prefix(datalist[1])..'suffix']
-  local totalCount = 0
-  local totalError = 0
-  local list_files = {}
-  for f in paths.iterfiles(dir) do
-    local flist = {}
-    if f:sub(-firstSuffix:len()) == firstSuffix then
-      local fprefix = f:sub(1, -firstSuffix:len()-1)
-      table.insert(flist, paths.concat(dir,f))
-      local countLines = onmt.utils.FileReader.countLines(flist[1])
-      local error = 0
-      for i = 2, #datalist do
-        local tfile = paths.concat(dir,fprefix..args[prefix(datalist[i])..'suffix'])
-        table.insert(flist, tfile)
-        if not path.exists(tfile) or onmt.utils.FileReader.countLines(tfile) ~= countLines then
-          _G.logger:error('* invalid file - '..tfile..' - not aligned with '..f)
-          error = error + 1
-        end
-      end
-      if error == 0 then
-        _G.logger:info('* Reading files \''..fprefix..'\' - '..countLines..' sentences')
-        table.insert(list_files, {countLines, flist})
-        totalCount = totalCount + countLines
-      else
-        totalError = totalError + 1
-      end
-    end
-  end
-  if totalError > 0 then
-    _G.logger:error('Errors in training directory - fix them first')
-    os.exit(0)
-  end
-  if totalCount == 0 then
-    _G.logger:error('No '..type..' data found in directory \''..dir..'\'')
-    os.exit(0)
-  end
-  _G.logger:info(totalCount..' sentences in '..type..' directory')
-  return totalCount, list_files
-end
-
 function DynamicDataRepository:getTrain()
   return onmt.data.DynamicDataset.new(self.train_total, self.train_files,
                                       self.dicts,

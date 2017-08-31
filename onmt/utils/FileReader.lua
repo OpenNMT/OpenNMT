@@ -17,7 +17,7 @@ function FileReader:next()
 
   if self.idxSent then
     local p = line:find(" ")
-    assert(p and p ~= 1, 'Invalid line - missing idx: '..line)
+    onmt.utils.Error.assert(p and p ~= 1, 'Invalid line - missing idx: '..line)
     idx = line:sub(1,p-1)
     line = line:sub(p+1)
   end
@@ -61,19 +61,34 @@ function FileReader:next()
   return sent, idx
 end
 
-function FileReader.countLines(filename)
-  local BUFSIZE = 2^13
+function FileReader.countLines(filename, idx_files)
   local f = io.input(filename)
   local lc = 0
-  while true do
-    local lines, rest = f:read(BUFSIZE, "*line")
-    if not lines then break end
-    if rest then lines = lines .. rest .. '\n' end
-    -- count newlines in the chunk
-    local t
-    t = select(2, string.gsub(lines, "\n", "\n"))
-    lc = lc + t
+  if not idx_files then
+    local BUFSIZE = 2^13
+    while true do
+      local lines, rest = f:read(BUFSIZE, "*line")
+      if not lines then break end
+      if rest then lines = lines .. rest .. '\n' end
+      -- count newlines in the chunk
+      local t
+      t = select(2, string.gsub(lines, "\n", "\n"))
+      lc = lc + t
+    end
+  else
+    while true do
+      local line = f:read()
+      if not line then break end
+      local p = line:find(" ")
+      onmt.utils.Error.assert(p and p ~= 1, "Invalid line in file '"..filename.."' - missing idx: "..line)
+      while line and not line:find("]") do
+        line = f:read()
+      end
+      onmt.utils.Error.assert(line, "Block not closed in file '"..filename.."'")
+      lc = lc + 1
+    end
   end
+  f:close()
   return lc
 end
 
