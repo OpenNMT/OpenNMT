@@ -21,6 +21,7 @@ function Error.assert(condition, message)
     end
     os.exit(0)
   end
+  return condition
 end
 
 return Error

@@ -299,7 +299,7 @@ function ExtendedCmdLine:logConfig(opt)
 end
 
 function ExtendedCmdLine:dumpConfig(opt, filename)
-  local file = onmt.utils.Error.assert(io.open(filename, 'w'))
+  local file = onmt.utils.Error.assert(io.open(filename, 'w'), "Cannot open file '"..filename.."' for writing")
 
   for key, val in pairs(opt) do
     if key:sub(1, 1) ~= '_' then
