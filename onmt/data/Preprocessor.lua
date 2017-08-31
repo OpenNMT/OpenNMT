@@ -185,7 +185,7 @@ function Preprocessor.declareOpts(cmd, dataType)
   cmd:setCmdLineOptions(options, 'Data')
 end
 
-local function parseDirectory(args, datalist, type)
+local function parseDirectory(args, datalist, dist_rules, type)
   local dir = args[type.."_dir"]
   assert(dir ~= '', 'missing \''..type..'_dir\' parameter')
   _G.logger:info('Parsing '..type..' data from directory \''..dir..'\':')
@@ -211,6 +211,7 @@ local function parseDirectory(args, datalist, type)
       if error == 0 then
         _G.logger:info('* Reading files \''..fprefix..'\' - '..countLines..' sentences')
         table.insert(list_files, {countLines, flist})
+        list_files[#list_files].fname = fprefix
         totalCount = totalCount + countLines
       else
         totalError = totalError + 1
@@ -226,6 +227,41 @@ local function parseDirectory(args, datalist, type)
     os.exit(0)
   end
   _G.logger:info(totalCount..' sentences, in '..#list_files..' files, in '..type..' directory')
+
+  if #dist_rules > 0 then
+    local weight_norm = 0
+    for i = 1, #list_files do
+      local rule_idx = 1
+      while rule_idx <= #dist_rules do
+        local fname = list_files[i].fname
+        if dist_rules[rule_idx][1] == '*' or fname:find(dist_rules[rule_idx][1]) then
+          list_files[i].rule_idx = rule_idx
+          if #dist_rules[rule_idx] == 2 then
+            weight_norm = weight_norm + dist_rules[rule_idx][2]
+          end
+          break
+        end
+        rule_idx = rule_idx + 1
+      end
+    end
+    local sum_weight = 0
+    for i = 1, #list_files do
+      if list_files[i].rule_idx then
+        local rule_idx = list_files[i].rule_idx
+        list_files[i].weight = dist_rules[rule_idx][2] / weight_norm
+        sum_weight = sum_weight + list_files[i].weight
+      end
+    end
+    -- final normalization of weights
+    for i = 1, #list_files do
+      list_files[i].weight = list_files[i].weight / sum_weight
+    end
+  else
+    for i = 1, #list_files do
+      list_files[i].weight = list_files[i][1] / totalCount
+    end
+  end
+
   return totalCount, list_files
 end
 
@@ -262,11 +298,22 @@ function Preprocessor:__init(args, dataType)
     self.vocabs = { 'src_vocab', 'tgt_vocab' }
   end
 
+  self.dist_rules = {}
+  if args.sample_dist ~= '' then
+    local f = io.input(args.sample_dist)
+    while true do
+      local dist_rule = f:read()
+      if not dist_rule then break end
+      local trule = onmt.utils.String.split(dist_rule, " ")
+      onmt.utils.Error.assert(#trule == 2, "invalid syntax for sample distribution rule: "..dist_rule)
+      table.insert(self.dist_rules, trule)
+    end
+  end
   -- list and check training files
   if args.train_dir ~= '' then
     onmt.utils.Error.assert(isempty(self.trains) == #self.trains, 'For directory mode, file mode options (training) should not be set')
     onmt.utils.Error.assert(isempty(self.vocabs) == 0, 'For directory mode, vocabs should be predefined')
-    self.totalCount, self.list_train = parseDirectory(self.args, Preprocessor.getDataList(self.dataType), 'train')
+    self.totalCount, self.list_train = parseDirectory(self.args, Preprocessor.getDataList(self.dataType), self.dist_rules, 'train')
   else
     onmt.utils.Error.assert(isempty(self.trains) == 0)
     self.totalCount = onmt.utils.FileReader.countLines(self.args[self.trains[1]], args.idx_files)
@@ -279,6 +326,8 @@ function Preprocessor:__init(args, dataType)
       end
     end
     self.list_train = { { self.totalCount, list_files } }
+    self.list_train[1].fname = self.args[self.trains[1]]
+    self.list_train[1].weight = 1
   end
 
   self.list_valid = { {onmt.utils.FileReader.countLines(args[self.valids[1]], args.idx_files), {args[self.valids[1]]}}}
@@ -288,6 +337,8 @@ function Preprocessor:__init(args, dataType)
                               "line count in "..args[self.valids[i]].." do not match "..args[self.valids[1]])
     end
     table.insert(self.list_valid[1][2], args[self.valids[i]])
+    self.list_valid[1].fname = self.args[self.valids[1]]
+    self.list_valid[1].weight = 1
   end
 end
 
@@ -381,6 +432,8 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
       table.insert(prunedRatio, 0)
     end
 
+    local before = #vectors[1]
+
     if self.args.idx_files then
       local maps = {}
       for i = 1, n do
@@ -462,10 +515,11 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
     local msgPrune = ''
     for i = 1, n do
       msgPrune = msgPrune .. (i==1 and '' or ', ')
-      msgPrune = msgPrune .. paths.basename(df[2][i]) .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
+      msgPrune = msgPrune .. nameSources[i] .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
     end
 
-    _G.logger:info(' * % of unknown words: '..msgPrune)
+    _G.logger:info(' * file \'%s\': %d total, %d drawn, %d kept - unknown words: %s',
+                      df.fname, df[1], sampling and sampling:size(1) or df[1], #vectors[1]-before, msgPrune)
 
   end
 
@@ -659,6 +713,7 @@ function Preprocessor:getVocabulary()
 end
 
 function Preprocessor:makeData(dataset, dicts)
+  _G.logger:info("--- Preparing "..dataset.." sample")
   local parallelValidFunc = nil
   if self.args.check_plength then
     parallelValidFunc = Preprocessor.parallelCheck
@@ -673,7 +728,7 @@ function Preprocessor:makeData(dataset, dicts)
     end
     -- check how many sentences per file
     for _, f in ipairs(self.list_train) do
-      local n = math.ceil(sampledCount*f[1]/self.totalCount)
+      local n = math.ceil(sampledCount * f.weight)
       local t = torch.LongTensor(n)
       for i = 1, n do
         t[i] = torch.random(1, f[1])
@@ -701,6 +756,8 @@ function Preprocessor:makeData(dataset, dicts)
                                                 dicts.src, dicts.tgt,
                                                 self.isValid, parallelValidFunc, sample_file)
   end
+
+  _G.logger:info("")
 
   return data
 end
