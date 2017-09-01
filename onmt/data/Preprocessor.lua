@@ -254,6 +254,10 @@ local function parseDirectory(args, datalist, dist_rules, type)
         end
         rule_idx = rule_idx + 1
       end
+      if rule_idx > #dist_rules then
+        _G.logger:warning("file '"..list_files[i].fname.."' is covered by rule - will not be used")
+        list_files[i].weight = 0
+      end
     end
     local sum_weight = 0
     for i = 1, #list_files do
@@ -485,7 +489,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
     else
       local idx = 1
       local sampling_idx = 1
-      while true and (not sampling or sampling_idx <= sampling:size(1)) do
+      while true and (not sampling or (sampling:dim() ~= 0 and sampling_idx <= sampling:size(1))) do
         local tokens = {}
         local hasNil = false
         local allNil = true
@@ -517,9 +521,6 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
     end
 
     for i = 1, n do
-      for j=1, #sentenceDists[i] do
-        sentenceDists[i][j] = sentenceDists[i][j]/count
-      end
       readers[i]:close()
     end
 
@@ -530,8 +531,14 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
     end
 
     _G.logger:info(' * file \'%s\': %d total, %d drawn, %d kept - unknown words: %s',
-                      df.fname, df[1], sampling and sampling:size(1) or df[1], #vectors[1]-before, msgPrune)
+                      df.fname, df[1], sampling and (sampling:dim()==0 and 0 or sampling:size(1)) or df[1], #vectors[1]-before, msgPrune)
 
+  end
+
+  for i = 1, n do
+    for j=1, #sentenceDists[i] do
+      sentenceDists[i][j] = sentenceDists[i][j]/count
+    end
   end
 
   local function reorderData(perm)
@@ -741,10 +748,12 @@ function Preprocessor:makeData(dataset, dicts)
     for _, f in ipairs(self.list_train) do
       local n = math.ceil(sampledCount * f.weight)
       local t = torch.LongTensor(n)
-      for i = 1, n do
-        t[i] = torch.random(1, f[1])
+      if n > 0 then
+        for i = 1, n do
+          t[i] = torch.random(1, f[1])
+        end
+        t = torch.sort(t)
       end
-      t = torch.sort(t)
       table.insert(sample_file, t)
     end
   end
