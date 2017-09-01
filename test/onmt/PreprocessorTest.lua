@@ -10,15 +10,15 @@ local noFilter = function(_) return true end
 
 local function buildPreprocessor(mode)
   local cmd = onmt.utils.ExtendedCmdLine.new()
-  onmt.data.Preprocessor.declareOpts(cmd, mode)
+  onmt.data.Preprocessor.declareOpts(cmd, mode == 'parsedir' and 'bitext' or mode)
 
   local commandLine
   if not mode or mode == 'bitext' then
     commandLine = {
-      '-train_src', dataDir .. '/src-val-case.txt',
-      '-train_tgt', dataDir .. '/tgt-val-case.txt',
-      '-valid_src', dataDir .. '/src-test-case.txt',
-      '-valid_tgt', dataDir .. '/tgt-test-case.txt'
+      '-train_src', dataDir .. '/src-val.txt',
+      '-train_tgt', dataDir .. '/tgt-val.txt',
+      '-valid_src', dataDir .. '/src-test.txt',
+      '-valid_tgt', dataDir .. '/tgt-test.txt'
     }
   elseif mode == 'monotext' then
     commandLine = {
@@ -34,11 +34,24 @@ local function buildPreprocessor(mode)
       '-idx_files',
       '-src_seq_length', 100
     }
+  elseif mode == 'parsedir' then
+    commandLine = {
+      '-train_dir', dataDir,
+      '-src_suffix', 'src-val.txt',
+      '-tgt_suffix', 'tgt-val.txt',
+      '-valid_src', dataDir .. '/src-test.txt',
+      '-valid_tgt', dataDir .. '/tgt-test.txt',
+      '-src_vocab', 'ddict.src.dict',
+      '-tgt_vocab', 'ddict.tgt.dict',
+      '-sample', 0.1,
+      '-src_seq_length', 10,
+      '-preprocess_pthreads', 1
+    }
   end
 
   local opt = cmd:parse(commandLine)
 
-  return onmt.data.Preprocessor.new(opt, mode), opt
+  return onmt.data.Preprocessor.new(opt, mode == 'parsedir' and 'bitext' or mode), opt
 end
 
 local function makeDicts(srctgt, file)
@@ -51,20 +64,28 @@ function preprocessorTest.bitext()
   local srcDicts = makeDicts('source',opt.train_src)
   local tgtDicts = makeDicts('target',opt.train_tgt)
 
-  local srcData, tgtData = preprocessor:makeBilingualData({{1,{opt.train_src,opt.train_tgt}}},
-                                                          srcDicts,
-                                                          tgtDicts,
-                                                          noFilter)
+  local srcData, tgtData = preprocessor:makeBilingualData({{1,{opt.train_src, opt.train_tgt}}}, srcDicts, tgtDicts)
 
   tester:eq(torch.typename(srcData.words), 'tds.Vec')
   tester:eq(torch.typename(srcData.features), 'tds.Vec')
-  tester:eq(#srcData.words, 3000)
-  tester:eq(#srcData.features, 3000)
+  tester:eq(#srcData.words, 2819)
 
   tester:eq(torch.typename(tgtData.words), 'tds.Vec')
   tester:eq(torch.typename(tgtData.features), 'tds.Vec')
-  tester:eq(#tgtData.words, 3000)
-  tester:eq(#tgtData.features, 3000)
+  tester:eq(#tgtData.words, 2819)
+
+  onmt.data.Vocabulary.save('source', srcDicts.words, 'ddict.src.dict')
+  onmt.data.Vocabulary.save('target', tgtDicts.words, 'ddict.tgt.dict')
+
+  preprocessor = buildPreprocessor('parsedir')
+  local dicts = preprocessor:getVocabulary()
+  local data = preprocessor:makeData('train', dicts)
+  -- sample 10% and sentence length<=10
+  tester:assertle(#data.src.words, 50)
+
+  os.remove('ddict.src.dict')
+  os.remove('ddict.tgt.dict')
+
 end
 
 function preprocessorTest.monotext()
@@ -72,19 +93,12 @@ function preprocessorTest.monotext()
 
   local dicts = makeDicts('source',opt.train)
 
-  local data = preprocessor:makeMonolingualData({{1,{opt.train}}}, dicts, noFilter)
+  local data = preprocessor:makeMonolingualData({{1,{opt.train}}}, dicts)
 
   tester:eq(torch.typename(data.words), 'tds.Vec')
   tester:eq(torch.typename(data.features), 'tds.Vec')
-  tester:eq(#data.words, 3000)
-  tester:eq(#data.features, 3000)
-end
-
-local function isValid(seq, maxSeqLength)
-  if torch.isTensor(seq) then
-    return seq:size(1) > 0 and seq:size(1) <= maxSeqLength
-  end
-  return #seq > 0 and #seq <= maxSeqLength
+  tester:eq(#data.words, 2857)
+  tester:eq(#data.features, 2857)
 end
 
 function preprocessorTest.feattext()
@@ -92,9 +106,7 @@ function preprocessorTest.feattext()
 
   local tgtDicts = makeDicts('target',opt.train_tgt)
 
-  local srcData,tgtData = preprocessor:makeFeatTextData({{1,{opt.train_src, opt.train_tgt}}},
-                                                        tgtDicts,
-                                                        isValid)
+  local srcData,tgtData = preprocessor:makeFeatTextData({{1,{opt.train_src, opt.train_tgt}}}, tgtDicts)
 
   tester:eq(torch.typename(srcData.vectors), 'tds.Vec')
   tester:eq(torch.typename(tgtData.words), 'tds.Vec')
