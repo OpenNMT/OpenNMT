@@ -200,7 +200,7 @@ local function ruleMatch(s, rule)
   end
 end
 
-local function parseDirectory(args, datalist, dist_rules, type)
+local function parseDirectory(pool, args, datalist, dist_rules, type)
   local dir = args[type.."_dir"]
   assert(dir ~= '', 'missing \''..type..'_dir\' parameter')
   _G.logger:info('Parsing '..type..' data from directory \''..dir..'\':')
@@ -216,14 +216,6 @@ local function parseDirectory(args, datalist, dist_rules, type)
   local totalError = 0
   local list_files = {}
 
-  local pool = threads.Threads(
-    args.preprocess_pthreads,
-    function()
-      _G.paths = require 'paths'
-      _G.path = require 'pl.path'
-      _G.FileReader = require 'onmt.utils.FileReader'
-    end
-  )
   for _, candf in ipairs(candidate_files) do
     pool:addjob(
       function(f)
@@ -348,6 +340,15 @@ function Preprocessor:__init(args, dataType)
     return count
   end
 
+  self.pool = threads.Threads(
+    args.preprocess_pthreads,
+    function()
+      _G.paths = require 'paths'
+      _G.path = require 'pl.path'
+      _G.FileReader = require 'onmt.utils.FileReader'
+    end
+  )
+
   -- sanity check on options: train_dir is exclusive all direct file settings
   -- and for train_dir, we do need pre-build vocabulary
   if dataType == 'monotext' then
@@ -375,7 +376,7 @@ function Preprocessor:__init(args, dataType)
   if args.train_dir ~= '' then
     onmt.utils.Error.assert(isempty(self.trains) == #self.trains, 'For directory mode, file mode options (training) should not be set')
     onmt.utils.Error.assert(isempty(self.vocabs) == 0, 'For directory mode, vocabs should be predefined')
-    self.totalCount, self.list_train = parseDirectory(self.args, Preprocessor.getDataList(self.dataType), self.dist_rules, 'train')
+    self.totalCount, self.list_train = parseDirectory(self.pool, self.args, Preprocessor.getDataList(self.dataType), self.dist_rules, 'train')
   else
     onmt.utils.Error.assert(isempty(self.trains) == 0)
     self.totalCount = onmt.utils.FileReader.countLines(self.args[self.trains[1]], args.idx_files)
