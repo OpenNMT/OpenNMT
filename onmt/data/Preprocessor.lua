@@ -255,7 +255,7 @@ local function parseDirectory(args, datalist, dist_rules, type)
         rule_idx = rule_idx + 1
       end
       if rule_idx > #dist_rules then
-        _G.logger:warning("file '"..list_files[i].fname.."' is covered by rule - will not be used")
+        _G.logger:warning("file '"..list_files[i].fname.."' is not covered by rules - will not be used")
         list_files[i].weight = 0
       end
     end
