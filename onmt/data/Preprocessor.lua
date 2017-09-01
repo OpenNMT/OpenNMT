@@ -185,6 +185,14 @@ function Preprocessor.declareOpts(cmd, dataType)
   cmd:setCmdLineOptions(options, 'Data')
 end
 
+local function ruleMatch(s, rule)
+  if rule == '*' then return true end
+  local pat = onmt.utils.String.split(rule, ",")
+  for _, r in ipairs(pat) do
+    if string.match(s, r) then return true end
+  end
+end
+
 local function parseDirectory(args, datalist, dist_rules, type)
   local dir = args[type.."_dir"]
   assert(dir ~= '', 'missing \''..type..'_dir\' parameter')
@@ -230,15 +238,18 @@ local function parseDirectory(args, datalist, dist_rules, type)
 
   if #dist_rules > 0 then
     local weight_norm = 0
+    local weight_rule = {}
     for i = 1, #list_files do
       local rule_idx = 1
       while rule_idx <= #dist_rules do
         local fname = list_files[i].fname
-        if dist_rules[rule_idx][1] == '*' or fname:find(dist_rules[rule_idx][1]) then
+        if ruleMatch(fname, dist_rules[rule_idx][1]) then
           list_files[i].rule_idx = rule_idx
-          if #dist_rules[rule_idx] == 2 then
+          if not weight_rule[rule_idx] then
             weight_norm = weight_norm + dist_rules[rule_idx][2]
+            weight_rule[rule_idx] = 0
           end
+          weight_rule[rule_idx] = weight_rule[rule_idx] + list_files[i][1]
           break
         end
         rule_idx = rule_idx + 1
@@ -248,7 +259,7 @@ local function parseDirectory(args, datalist, dist_rules, type)
     for i = 1, #list_files do
       if list_files[i].rule_idx then
         local rule_idx = list_files[i].rule_idx
-        list_files[i].weight = dist_rules[rule_idx][2] / weight_norm
+        list_files[i].weight = dist_rules[rule_idx][2] / weight_norm * list_files[i][1] / weight_rule[rule_idx]
         sum_weight = sum_weight + list_files[i].weight
       end
     end
