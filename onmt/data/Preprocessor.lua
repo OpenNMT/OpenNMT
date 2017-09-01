@@ -422,6 +422,7 @@ function Preprocessor:__init(args, dataType)
 
 end
 
+--[[ Process on given tokenized sentence - check for validity and prepare structure ]]
 local function processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
                                constants, prunedRatio, generateFeatures, time_shift_feature,
                                sentenceDists, vectors, features, avgLength, sizes,
