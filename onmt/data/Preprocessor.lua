@@ -12,6 +12,7 @@ local Preprocessor = torch.class('Preprocessor')
 local paths = require 'paths'
 local path = require 'pl.path'
 local tds
+local threads
 
 local commonOptions = {
   {
@@ -57,6 +58,13 @@ local commonOptions = {
   {
     '-report_progress_every', 100000,
     [[Report status every this many sentences.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
+  },
+  {
+    '-preprocess_pthreads', 4,
+    [[Number of parallel threads for preprocessing.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
@@ -198,34 +206,67 @@ local function parseDirectory(args, datalist, dist_rules, type)
   assert(dir ~= '', 'missing \''..type..'_dir\' parameter')
   _G.logger:info('Parsing '..type..' data from directory \''..dir..'\':')
   local firstSuffix = args[prefix(datalist[1])..'suffix']
+  local candidate_files = {}
+  for f in paths.iterfiles(dir) do
+    if f:sub(-firstSuffix:len()) == firstSuffix then
+      table.insert(candidate_files, f)
+    end
+  end
+
   local totalCount = 0
   local totalError = 0
   local list_files = {}
-  for f in paths.iterfiles(dir) do
-    local flist = {}
-    if f:sub(-firstSuffix:len()) == firstSuffix then
-      local fprefix = f:sub(1, -firstSuffix:len()-1)
-      table.insert(flist, paths.concat(dir,f))
-      local countLines = onmt.utils.FileReader.countLines(flist[1], args.idx_files)
-      local error = 0
-      for i = 2, #datalist do
-        local tfile = paths.concat(dir,fprefix..args[prefix(datalist[i])..'suffix'])
-        table.insert(flist, tfile)
-        if not path.exists(tfile) or onmt.utils.FileReader.countLines(tfile, args.idx_files) ~= countLines then
-          _G.logger:error('* invalid file - '..tfile..' - not aligned with '..f)
-          error = error + 1
-        end
-      end
-      if error == 0 then
-        _G.logger:info(' * Reading files \''..fprefix..'\' - '..countLines..' sentences')
-        table.insert(list_files, {countLines, flist})
-        list_files[#list_files].fname = fprefix
-        totalCount = totalCount + countLines
-      else
-        totalError = totalError + 1
-      end
+
+  local pool = threads.Threads(
+    args.preprocess_pthreads,
+    function()
+      _G.paths = require 'paths'
+      _G.path = require 'pl.path'
+      _G.FileReader = require 'onmt.utils.FileReader'
     end
+  )
+  for _, candf in ipairs(candidate_files) do
+    pool:addjob(
+      function(f)
+        local flist = {}
+        local errors = {}
+        local fprefix = f:sub(1, -firstSuffix:len()-1)
+        table.insert(flist, _G.paths.concat(dir,f))
+        local error = 0
+        local countLines = _G.FileReader.countLines(flist[1], args.idx_files)
+        for i = 2, #datalist do
+          local tfile = _G.paths.concat(dir,fprefix..args[prefix(datalist[i])..'suffix'])
+          table.insert(flist, tfile)
+          if not _G.path.exists(tfile) or _G.FileReader.countLines(tfile, args.idx_files) ~= countLines then
+            table.insert(errors, '* invalid file - '..tfile..' - not aligned with '..f)
+            error = error + 1
+          end
+        end
+        if error == 0 then
+          local fdesc = { countLines, flist }
+          fdesc.fname = fprefix
+          return 0, fdesc
+        else
+          return error, errors
+        end
+      end,
+      function(error, fdesc)
+        if error > 0 then
+          totalError = totalError + error
+          for _, m in ipairs(fdesc) do
+            _G.logger:io(m)
+          end
+        else
+          _G.logger:info(' * Reading files \''..fdesc.fname..'\' - '..fdesc[1]..' sentences')
+          table.insert(list_files, fdesc)
+          totalCount = totalCount + fdesc[1]
+        end
+      end,
+      candf)
   end
+
+  pool:synchronize()
+
   if totalError > 0 then
     _G.logger:error('Errors in training directory - fix them first')
     os.exit(0)
@@ -287,6 +328,8 @@ end
 
 function Preprocessor:__init(args, dataType)
   tds = require('tds')
+  -- try to load threads if available
+  threads = require('threads')
 
   self.dataType = dataType or 'bitext'
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, commonOptions)
