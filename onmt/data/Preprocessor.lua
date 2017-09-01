@@ -10,7 +10,6 @@ end
 
 local Preprocessor = torch.class('Preprocessor')
 local paths = require 'paths'
-local path = require 'pl.path'
 local tds
 local threads
 
