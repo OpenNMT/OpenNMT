@@ -217,7 +217,7 @@ local function parseDirectory(args, datalist, dist_rules, type)
         end
       end
       if error == 0 then
-        _G.logger:info('* Reading files \''..fprefix..'\' - '..countLines..' sentences')
+        _G.logger:info(' * Reading files \''..fprefix..'\' - '..countLines..' sentences')
         table.insert(list_files, {countLines, flist})
         list_files[#list_files].fname = fprefix
         totalCount = totalCount + countLines
@@ -235,8 +235,10 @@ local function parseDirectory(args, datalist, dist_rules, type)
     os.exit(0)
   end
   _G.logger:info(totalCount..' sentences, in '..#list_files..' files, in '..type..' directory')
+  _G.logger:info('')
 
   if #dist_rules > 0 then
+    _G.logger:info('Matching files with sample distribution rules:')
     local weight_norm = 0
     local weight_rule = {}
     for i = 1, #list_files do
@@ -255,7 +257,7 @@ local function parseDirectory(args, datalist, dist_rules, type)
         rule_idx = rule_idx + 1
       end
       if rule_idx > #dist_rules then
-        _G.logger:warning("file '"..list_files[i].fname.."' is not covered by rules - will not be used")
+        _G.logger:warning(" * file '"..list_files[i].fname.."' is not covered by rules - will not be used")
         list_files[i].weight = 0
       end
     end
@@ -270,7 +272,10 @@ local function parseDirectory(args, datalist, dist_rules, type)
     -- final normalization of weights
     for i = 1, #list_files do
       list_files[i].weight = list_files[i].weight / sum_weight
+      _G.logger:info(" * file '"..list_files[i].fname.."' uniform weight: %.1f, distribution weight: %.1f",
+                     100*list_files[i][1]/totalCount, 100*list_files[i].weight)
     end
+    _G.logger:info('')
   else
     for i = 1, #list_files do
       list_files[i].weight = list_files[i][1] / totalCount
@@ -700,6 +705,7 @@ function Preprocessor.parallelCheck(idx, _, _, tokens)
 end
 
 function Preprocessor:getVocabulary()
+  _G.logger:info("Preparing vocabulary")
   local dicts = {}
   -- use the first source file to count source features
   local src_file = self.list_train[1][2][1]
