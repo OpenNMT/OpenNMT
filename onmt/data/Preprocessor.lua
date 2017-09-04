@@ -363,6 +363,9 @@ function Preprocessor:__init(args, dataType)
         _G.tds = require 'tds'
       end
     )
+  else
+    _G.path = require 'pl.path'
+    _G.tds = tds
   end
 
   -- sanity check on options: train_dir is exclusive all direct file settings
