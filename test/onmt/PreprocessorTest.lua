@@ -37,6 +37,7 @@ local function buildPreprocessor(mode)
   elseif mode == 'parsedir' then
     commandLine = {
       '-train_dir', dataDir,
+      '-sample_dist', 'test/data/drule',
       '-src_suffix', 'src-val.txt',
       '-tgt_suffix', 'tgt-val.txt',
       '-valid_src', dataDir .. '/src-test.txt',
