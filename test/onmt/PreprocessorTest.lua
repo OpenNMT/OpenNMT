@@ -81,7 +81,7 @@ function preprocessorTest.bitext()
   local dicts = preprocessor:getVocabulary()
   local data = preprocessor:makeData('train', dicts)
   -- sample 10% and sentence length<=10
-  tester:assertle(#data.src.words, 50)
+  tester:assertle(#data.src.words, 60)
 
   os.remove('ddict.src.dict')
   os.remove('ddict.tgt.dict')
