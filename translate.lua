@@ -158,9 +158,9 @@ local function main()
                   if v ~= nil then
                     local ttable = torch.totable(v)
                     local attcount = #attentions
-					local source = translator:buildOutput(srcBatch[b])
-					local _,nt = sentence:gsub("%S+","")
-					local _,ns = source:gsub("%S+","")
+                    local source = translator:buildOutput(srcBatch[b])
+                    local _,nt = sentence:gsub("%S+","")
+                    local _,ns = source:gsub("%S+","")
                     if k == 1 then
                       attFile:write(b..' ||| '..sentence..' ||| '..results[b].preds[n].score..' ||| '..source..' ||| '..ns..' '..nt..'\n')
                     end
