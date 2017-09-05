@@ -12,6 +12,7 @@
 * Add option to save the validation translation to a file
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
+* Add option to dump attention in `translate.lua`
 
 ### Fixes and improvements
 
