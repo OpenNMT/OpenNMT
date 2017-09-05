@@ -510,6 +510,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#output-attention-to-a-file" title="Output attention to a file" class="md-nav__link">
+    Output attention to a file
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#visualizing-the-beam-search" title="Visualizing the beam search" class="md-nav__link">
     Visualizing the beam search
   </a>
@@ -897,6 +904,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#output-attention-to-a-file" title="Output attention to a file" class="md-nav__link">
+    Output attention to a file
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#visualizing-the-beam-search" title="Visualizing the beam search" class="md-nav__link">
     Visualizing the beam search
   </a>
@@ -965,6 +979,17 @@ To activate the language model, simply use <code>-lm_model lm.t7</code>.</p>
 <p class="admonition-title">Warning</p>
 <p>The language model cannot use bidirectional RNN and needs to share the same vocabulary (tokens and features) than the translation model.</p>
 </div>
+<h2 id="output-attention-to-a-file">Output attention to a file<a class="headerlink" href="#output-attention-to-a-file" title="Permanent link">&para;</a></h2>
+<p>The option <code>-save_attention FILE</code> can be used to save attention state to a file during translation. The format of the file is as following (compatible with NEMATUS):</p>
+<div class="codehilite"><pre><span></span>sentence id ||| target words ||| score ||| source words ||| number of source words ||| number of target words
+ALIGNMENT FOR T_1
+ALIGNMENT FOR T_2
+...
+ALIGNMENT FOR T_n
+</pre></div>
+
+
+<p>Where <code>T_1</code> ... <code>T_n</code> are the target words - each alignement line is space separated probability to source word.</p>
 <h2 id="visualizing-the-beam-search">Visualizing the beam search<a class="headerlink" href="#visualizing-the-beam-search" title="Permanent link">&para;</a></h2>
 <p>To visualize the beam search exploration, you can use the option <code>-save_beam_to beam.json</code>. It will save a JSON serialization of the beam search history.</p>
 <div class="admonition note">
