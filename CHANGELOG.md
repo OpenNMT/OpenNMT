@@ -14,6 +14,7 @@
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
 * Introduce dynamic dataset - no need to tokenize, preprocess, sample anymore
+* Add option to dump attention in `translate.lua`
 
 ### Fixes and improvements
 

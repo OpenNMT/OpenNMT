@@ -12,6 +12,7 @@
 * `-src <string>` (required)<br/>Source sequences to translate.
 * `-tgt <string>` (default: `''`)<br/>Optional true target sequences.
 * `-output <string>` (default: `pred.txt`)<br/>Output file.
+* `-save_attention <string>` (default: `''`)<br/>Optional attention output file.
 * `-batch_size <number>` (default: `30`)<br/>Batch size.
 * `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
 
