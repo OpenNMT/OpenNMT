@@ -19,7 +19,7 @@ local options = {
     [[Output file.]]
   },
   {
-    '-attention', '',
+    '-save_attention', '',
     [[Optional attention output file.]]
   },
   {
@@ -71,7 +71,7 @@ local function main()
   local goldBatch
 
   local withGoldScore = opt.tgt:len() > 0
-  local withAttention = opt.attention:len() > 0
+  local withAttention = opt.save_attention:len() > 0
 
   if withGoldScore then
     goldReader = onmt.utils.FileReader.new(opt.tgt, opt.idx_files)
@@ -81,7 +81,7 @@ local function main()
   local outFile = io.open(opt.output, 'w')
   local attFile
   if withAttention then
-    attFile = io.open(opt.attention, 'w')
+    attFile = io.open(opt.save_attention, 'w')
   end
 
   local sentId = 1
