@@ -85,6 +85,10 @@ local options = {
   }
 }
 
+function tokenizer.getOpts()
+  return options
+end
+
 function tokenizer.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Tokenizer')
 end

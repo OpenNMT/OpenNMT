@@ -10,6 +10,8 @@ end
 
 local Preprocessor = torch.class('Preprocessor')
 local paths = require 'paths'
+local tokenizer = require('tools.utils.tokenizer')
+
 local tds
 local threads
 
@@ -190,6 +192,37 @@ function Preprocessor.declareOpts(cmd, dataType)
     table.insert(options, v)
   end
   cmd:setCmdLineOptions(options, 'Data')
+
+  -- prepare tokenization option
+  options = {}
+  local topts = tokenizer.getOpts()
+  for _, v in ipairs(topts) do
+    -- change mode option to include disabling mode (default)
+    if v[1] == '-mode' then
+      v = { '-mode', 'none',
+          [[Define how aggressive should the tokenization be. `none` disable the tokenization.]],
+            {
+              enum = {'conservative', 'aggressive', 'none'}
+            }
+          }
+    end
+    if dataType == 'bitext' then
+      local opt = {table.unpack(v)}
+      opt[1] = '-tok_src_' .. v[1]:sub(2)
+      table.insert(options, {table.unpack(opt)})
+      opt[1] = '-tok_tgt_' .. v[1]:sub(2)
+      table.insert(options, {table.unpack(opt)})
+    elseif dataType == 'feattext' then
+      local opt = {table.unpack(v)}
+      opt[1] = '-tok_tgt_' .. v[1]:sub(2)
+      table.insert(options, {table.unpack(opt)})
+    elseif dataType == 'monotext' then
+      local opt = {table.unpack(v)}
+      opt[1] = '-tok_' .. v[1]:sub(2)
+      table.insert(options, {table.unpack(opt)})
+    end
+  end
+  cmd:setCmdLineOptions(options, "Tokenizer")
 end
 
 local function ruleMatch(s, rule)
@@ -330,6 +363,25 @@ function Preprocessor:poolSynchronize()
   end
 end
 
+-- initialization of threads and tokenizers
+local function init_thread(tokenizers)
+  _G.paths = require 'paths'
+  _G.path = require 'pl.path'
+  _G.onmt = require 'onmt.init'
+  _G.tds = require 'tds'
+  -- if on-the-fly tokenization
+  _G.separators = require('tools.utils.separators')
+  _G.tokenizer = require('tools.utils.tokenizer')
+  _G.BPE = require ('tools.utils.BPE')
+  _G.bpes = {}
+  _G.tokenizers = tokenizers
+  for i, v in ipairs(tokenizers) do
+    if v and v["bpe_model"] ~= '' then
+      _G.bpes[i] = _G.BPE.new(v["bpe_model"])
+    end
+  end
+end
+
 function Preprocessor:__init(args, dataType)
   tds = require('tds')
 
@@ -351,21 +403,39 @@ function Preprocessor:__init(args, dataType)
     return count
   end
 
+  -- tokenization options
+  local tokenizers = { {}, {} }
+  for k, v in pairs(args) do
+    if k:sub(1,4) == 'tok_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      tokenizers[idx][k] = v
+    end
+  end
+  for i = 1, 2 do
+    if not tokenizers[i]["mode"] or tokenizers[i]["mode"] == 'none' then
+      tokenizers[i] = false
+    else
+      _G.logger:info("Using on-the-fly tokenization for input "..i)
+    end
+  end
+
   if args.preprocess_pthreads > 1 and args.train_dir ~= '' then
     -- try to load threads if available
     threads = require('threads')
     self.pool = threads.Threads(
       args.preprocess_pthreads,
-      function()
-        _G.paths = require 'paths'
-        _G.path = require 'pl.path'
-        _G.onmt = require 'onmt.init'
-        _G.tds = require 'tds'
-      end
+      function() init_thread(tokenizers) end
     )
   else
-    _G.path = require 'pl.path'
-    _G.tds = tds
+    init_thread(tokenizers)
   end
 
   -- sanity check on options: train_dir is exclusive all direct file settings
@@ -535,7 +605,11 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         local readers = {}
         local prunedRatio = {}
         for i = 1, n do
-          table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i]))
+          local tokFunction
+          if _G.tokenizers[i] then
+            tokFunction = function(line) return tokenizer.tokenize(_G.tokenizers[i], line, _G.bpes[i]) end
+          end
+          table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i], tokFunction))
           table.insert(prunedRatio, 0)
         end
 
@@ -838,7 +912,6 @@ function Preprocessor.parallelCheck(idx, _, _, tokens)
 end
 
 function Preprocessor:getVocabulary()
-  _G.logger:info("Preparing vocabulary")
   local dicts = {}
   -- use the first source file to count source features
   local src_file = self.list_train[1][2][1]

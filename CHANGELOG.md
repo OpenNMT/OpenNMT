@@ -13,7 +13,7 @@
 * Add option to save the validation translation to a file
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
-* No need to preprocess anymore with dynamic datasets
+* Introduce dynamic dataset - no need to tokenize, preprocess, sample anymore
 
 ### Fixes and improvements
 

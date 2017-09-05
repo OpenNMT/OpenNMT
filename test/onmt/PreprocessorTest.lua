@@ -44,6 +44,7 @@ local function buildPreprocessor(mode)
       '-valid_tgt', dataDir .. '/tgt-test.txt',
       '-src_vocab', 'ddict.src.dict',
       '-tgt_vocab', 'ddict.tgt.dict',
+      '-tok_src_mode', 'conservative',
       '-sample', 0.1,
       '-src_seq_length', 10,
       '-preprocess_pthreads', 1

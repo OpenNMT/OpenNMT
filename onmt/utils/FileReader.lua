@@ -1,9 +1,10 @@
 local FileReader = torch.class("FileReader")
 
-function FileReader:__init(filename, idxSent, featSequence)
+function FileReader:__init(filename, idxSent, featSequence, tokenizer)
   self.file = assert(io.open(filename, "r"))
   self.idxSent = idxSent
   self.featSequence = featSequence
+  self.tokenizer = tokenizer
 end
 
 --[[ Read next line in the file and split it on spaces. If EOF is reached, returns nil. ]]
@@ -24,8 +25,12 @@ function FileReader:next()
 
   local sent = {}
   if not self.featSequence then
-    for word in line:gmatch'([^%s]+)' do
-      table.insert(sent, word)
+    if not self.tokenizer then
+      for word in line:gmatch'([^%s]+)' do
+        table.insert(sent, word)
+      end
+    else
+      sent = self.tokenizer(line)
     end
   else
     local p = 1
