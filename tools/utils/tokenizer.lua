@@ -113,10 +113,30 @@ local function tokenize(line, opt)
   local prev_alphabet
   local number = false
   local other = false
+  local placeholder = false
 
   -- iterate on utf-8 characters
   for v, c, nextv in unicode.utf8_iter(line) do
-    if unicode.isSeparator(v) then
+    if placeholder then
+      if c == separators.ph_marker_close then
+        curtok = curtok .. c
+        letter = true
+        prev_alphabet = 'placeholder'
+        placeholder = false
+        space = false
+      else
+        if unicode.isSeparator(v) then
+          c = string.format(separators.protected_character.."%04x", v)
+        end
+        curtok = curtok .. c
+      end
+    elseif c == separators.ph_marker_open then
+      if space == false then
+        table.insert(tokens, curtok)
+      end
+      curtok = c
+      placeholder = true
+    elseif unicode.isSeparator(v) then
       if space == false then
         table.insert(tokens, curtok)
         curtok = ''
@@ -341,14 +361,36 @@ function tokenizer.detokenize(line, opt)
   local dline = ""
   local tokens = getTokens(line, opt.joiner)
   for j = 1, #tokens do
+    local token = tokens[j].w
     if j > 1 and not tokens[j-1].rightsep and not tokens[j].leftsep then
       dline = dline .. " "
     end
-    local word = tokens[j].w
-    if opt.case_feature then
-      word = case.restoreCase(word, tokens[j].feats)
+    if token:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
+      local inProtected = false
+      local protectSeq = ''
+      local rtok = ''
+      for _, c, _ in unicode.utf8_iter(token) do
+        if inProtected then
+          protectSeq = protectSeq .. c
+          if protectSeq:len() == 4 then
+            rtok = rtok .. unicode._cp_to_utf8(tonumber(protectSeq, 16))
+            inProtected = false
+          end
+        elseif c == separators.protected_character then
+          inProtected = true
+        else
+          rtok = rtok .. c
+          if c == separators.ph_marker_close then
+            break
+          end
+        end
+      end
+      token = rtok
     end
-    dline = dline .. word
+    if opt.case_feature then
+      token = case.restoreCase(token, tokens[j].feats)
+    end
+    dline = dline .. token
   end
   return dline
 end
