@@ -29,7 +29,7 @@ end
 
 function Cuda.init(opt, masterGPU)
   for _, id in ipairs(opt.gpuid) do
-    assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. id)
+    onmt.utils.Error.assert(id ~= nil and id >= 0, 'invalid GPU identifier: ' .. id)
     if id > 0 then
       table.insert(Cuda.gpuIds, id)
     end
@@ -48,7 +48,7 @@ function Cuda.init(opt, masterGPU)
 
         -- Validate GPU identifiers.
         for i = 1, #Cuda.gpuIds do
-          assert(Cuda.gpuIds[i] <= cutorch.getDeviceCount(),
+          onmt.utils.Error.assert(Cuda.gpuIds[i] <= cutorch.getDeviceCount(),
                  'GPU ' .. Cuda.gpuIds[i] .. ' is requested but only '
                    .. cutorch.getDeviceCount() .. ' GPUs are available')
         end
