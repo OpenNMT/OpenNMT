@@ -53,6 +53,21 @@ To activate the language model, simply use `-lm_model lm.t7`.
 !!! warning "Warning"
     The language model cannot use bidirectional RNN and needs to share the same vocabulary (tokens and features) than the translation model.
 
+## Output attention to a file
+
+The option `-save_attention FILE` can be used to save attention state to a file during translation. The format of the file is as following (compatible with NEMATUS):
+
+```
+sentence id ||| target words ||| score ||| source words ||| number of source words ||| number of target words
+ALIGNMENT FOR T_1
+ALIGNMENT FOR T_2
+...
+ALIGNMENT FOR T_n
+
+```
+
+Where `T_1` ... `T_n` are the target words - each alignement line is space separated probability to source word.
+
 ## Visualizing the beam search
 
 To visualize the beam search exploration, you can use the option `-save_beam_to beam.json`. It will save a JSON serialization of the beam search history.

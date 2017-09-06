@@ -13,6 +13,7 @@
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
 * Introduce protection blocks for tokenization
+* Add option to dump attention in `translate.lua`
 
 ### Fixes and improvements
 
@@ -21,6 +22,8 @@
 * Introduce error estimation in scorer for all metrics
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
+* More graceful error handling
+* Reduce memory footprint of Adam, Adadelta and Adagrad optimizers
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 

@@ -133,7 +133,7 @@ function Translator:__init(args, model, dicts)
     self.modelType = checkpoint.options.model_type or 'seq2seq'
     _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
 
-    assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
+    onmt.utils.Error.assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
     self.model = onmt.Seq2Seq.load(args, checkpoint.models, checkpoint.dicts)
     self.dicts = checkpoint.dicts
@@ -152,10 +152,10 @@ function Translator:__init(args, model, dicts)
     self.lm = onmt.lm.LM.new(args)
 
     -- check that lm has the same dictionary than translation model
-    assert(self.dicts.tgt.words == self.lm.dicts.src.words, "Language model dictionary does not match seq2seq target dictionary")
-    assert(#self.dicts.tgt.features == #self.lm.dicts.src.features, "Language model should have same number of features than translation model")
+    onmt.utils.Error.assert(self.dicts.tgt.words == self.lm.dicts.src.words, "Language model dictionary does not match seq2seq target dictionary")
+    onmt.utils.Error.assert(#self.dicts.tgt.features == #self.lm.dicts.src.features, "Language model should have same number of features than translation model")
     for i = 1 , #self.dicts.tgt.features do
-      assert(self.dicts.tgt.features[i] == self.lm.dicts.src.features[i], "LM feature ["..i.."] does not match translation tgt feature")
+      onmt.utils.Error.assert(self.dicts.tgt.features[i] == self.lm.dicts.src.features[i], "LM feature ["..i.."] does not match translation tgt feature")
     end
 
     args.model = tmodel
@@ -460,7 +460,7 @@ function Translator:saveBeamHistories(file)
     table.insert(data.scores, beamScores)
   end
 
-  local output = assert(io.open(file, 'w'))
+  local output = onmt.utils.Error.assert(io.open(file, 'w'), "Cannot open file '"..file.."' for writing.")
   output:write(require('dkjson').encode(data))
   self.beamHistories = {}
 end
