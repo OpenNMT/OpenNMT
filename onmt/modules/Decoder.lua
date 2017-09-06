@@ -109,16 +109,19 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
 end
 
 function Decoder:scheduledSamplingDecay(epoch)
-  local k = self.args.scheduled_sampling_decay_rate
-  local i = epoch - 1
-  if self.args.scheduled_sampling_decay_type == "linear" then
-    self.args.scheduled_sampling = math.max(0, self.args.base_scheduled_sampling - i * k)
-  else
-    self.args.scheduled_sampling = self.args.base_scheduled_sampling * k / ( k + math.exp(i/k) - 1 )
-  end
-  if self.args.scheduled_sampling > 1 then self.args.scheduled_sampling = 1 end
-  if self.args.scheduled_sampling ~= 1 then
-    _G.logger:info('Set Scheduled Sampling rate: %0.3f', self.args.scheduled_sampling)
+  -- backward compatibility
+  if self.args.scheduled_sampling_decay_rate and self.args.base_scheduled_sampling then
+    local k = self.args.scheduled_sampling_decay_rate
+    local i = epoch - 1
+    if self.args.scheduled_sampling_decay_type == "linear" then
+      self.args.scheduled_sampling = math.max(0, self.args.base_scheduled_sampling - i * k)
+    else
+      self.args.scheduled_sampling = self.args.base_scheduled_sampling * k / ( k + math.exp(i/k) - 1 )
+    end
+    if self.args.scheduled_sampling > 1 then self.args.scheduled_sampling = 1 end
+    if self.args.scheduled_sampling ~= 1 then
+      _G.logger:info('Set Scheduled Sampling rate: %0.3f', self.args.scheduled_sampling)
+    end
   end
 end
 
