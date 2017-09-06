@@ -12,6 +12,7 @@
 * Add option to save the validation translation to a file
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
+* Introduce protection blocks for tokenization
 
 ### Fixes and improvements
 
