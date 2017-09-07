@@ -6,7 +6,7 @@ $$lr^{(t+1)} = lr^{(t)} \times decay$$
 
 where \(lr^{(0)}=\) `-learning_rate` and \(decay=\) `-learning_rate_decay`.
 
-Learning rate decay is applied when using SGD or Adam optimizers. For the latter, you can also set the `-reset_when_decay` flag to reset the optimizer state when the decay is applied to simulate "Adam with restarts" from [Denkowski et al. 2017](https://arxiv.org/abs/1706.09733).
+Learning rate decay is applied when using SGD or Adam optimizers. For the latter, you can also set the `-decay_method restart` option to reset the optimizer state when the decay is applied to simulate "Adam with restarts" from [Denkowski et al. 2017](https://arxiv.org/abs/1706.09733).
 
 Learning rate updates are always computed at the end of an epoch. If this is a too large unit for your particular use case, consider using [data sampling](sampling.md).
 

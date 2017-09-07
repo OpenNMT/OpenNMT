@@ -93,7 +93,7 @@
 * `-start_decay_at <number>` (default: `9`)<br/>In "default" decay mode, start decay after this epoch.
 * `-start_decay_score_delta <number>` (default: `0`)<br/>Start decay when validation score improvement is lower than this value.
 * `-decay <string>` (accepted: `default`, `epoch_only`, `score_only`; default: `default`)<br/>When to apply learning rate decay. `default`: decay after each epoch past `-start_decay_at` or as soon as the validation score is not improving more than `-start_decay_score_delta`, `epoch_only`: only decay after each epoch past `-start_decay_at`, `score_only`: only decay when validation score is not improving more than `-start_decay_ppl_delta`.
-* `-reset_when_decay [<boolean>]` (default: `false`)<br/>If set, the optimizer states (if any) will be reset when the decay condition is met.
+* `-decay_method <string>` (accepted: `default`, `restart`; default: `default`)<br/>If `restart` is set, the optimizer states (if any) will be reset when the decay condition is met.
 
 ## Saver options
 
