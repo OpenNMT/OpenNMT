@@ -607,7 +607,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         for i = 1, n do
           local tokFunction
           if _G.tokenizers[i] then
-            tokFunction = function(line) return tokenizer.tokenize(_G.tokenizers[i], line, _G.bpes[i]) end
+            tokFunction = function(line) return _G.tokenizer.tokenize(_G.tokenizers[i], line, _G.bpes[i]) end
           end
           table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i], tokFunction))
           table.insert(prunedRatio, 0)
