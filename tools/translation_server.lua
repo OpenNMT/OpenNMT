@@ -21,7 +21,7 @@ cmd:setCmdLineOptions(options, 'Server')
 onmt.translate.Translator.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
-onmt.translate.Translator(cmd)
+onmt.translate.Translator.declareOpts(cmd)
 
 local function translateMessage(translator, lines)
   local batch = {}
