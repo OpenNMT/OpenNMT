@@ -13,6 +13,7 @@
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
 * Add option to dump attention in `translate.lua`
+* Add option to replace unknown words with the original wrapped in a <unk></unk> tag `-replace_unk_tagged`
 
 ### Fixes and improvements
 

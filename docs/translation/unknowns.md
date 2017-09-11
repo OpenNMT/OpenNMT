@@ -1,6 +1,6 @@
 The default translation mode allows the model to produce the `<unk>` symbol when it is not sure of the specific target word.
 
-Often times `<unk>` symbols will correspond to proper names that can be directly transposed between languages. The `-replace_unk` option will substitute `<unk>` with source words that have the highest attention weight.
+Often times `<unk>` symbols will correspond to proper names that can be directly transposed between languages. The `-replace_unk` option will substitute `<unk>` with source words that have the highest attention weight. The `-replace_unk_tagged` option will do the same, but wrap the token in a <unk></unk> tag.
 
 ## Phrase table
 
