@@ -41,6 +41,9 @@ local options = {
       target token. If it is not provided (or the identified source token
       does not exist in the table) then it will copy the source token]]},
   {
+    '-replace_unk_tagged', false,
+    [[The same as -replace_unk, but wrap the replaced token in <unk>token</unk> if it is not found in the phrase table.]]},
+  {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
     {
@@ -276,6 +279,21 @@ function Translator:buildTargetWords(pred, src, attn)
           tokens[i] = self.phraseTable:lookup(source)
         else
           tokens[i] = source
+        end
+      end
+    end
+  end
+
+  if self.args.replace_unk_tagged then
+    for i = 1, #tokens do
+      if tokens[i] == onmt.Constants.UNK_WORD then
+        local _, maxIndex = attn[i]:max(1)
+        local source = src[maxIndex[1]]
+
+        if self.phraseTable and self.phraseTable:contains(source) then
+          tokens[i] = self.phraseTable:lookup(source)
+        else
+          tokens[i] = "<unk>"..source.."</unk>"
         end
       end
     end
