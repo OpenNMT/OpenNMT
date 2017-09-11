@@ -43,6 +43,19 @@ function tokenizerTest.combiningMark()
   testTok(opt, "वर्तमान लिपि (स्क्रिप्ट) खो जाएगी।", "वर्तमान लिपि (￭ स्क्रिप्ट ￭) खो जाएगी ￭।", true)
 end
 
+function tokenizerTest.protectedSequence()
+  local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭km", true)
+  testTok(opt, "A｟380｠", "A￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭.", true)
+  opt = cmd:parse({'-mode','conservative','-joiner_annotate','-joiner_new'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭ km", true)
+  testTok(opt, "A｟380｠", "A ￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠ ￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭ .", true)
+end
+
 function tokenizerTest.basicDetokenization()
   local opt = cmd:parse({'-mode','conservative'})
   testTokDetok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions : human rights [ 14 ( g ) ]")

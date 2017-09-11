@@ -132,7 +132,13 @@ local function tokenize(line, opt)
       end
     elseif c == separators.ph_marker_open then
       if space == false then
+        if opt.joiner_annotate and not(opt.joiner_new) then
+          curtok = curtok .. opt.joiner
+        end
         table.insert(tokens, curtok)
+        if opt.joiner_annotate and opt.joiner_new then
+          table.insert(tokens, opt.joiner)
+        end
       end
       curtok = c
       placeholder = true
@@ -186,9 +192,11 @@ local function tokenize(line, opt)
         end
         if is_letter then
           if not(letter == true or space == true) or
-             (letter == true and not is_mark and prev_alphabet == is_alphabet and inTable(is_alphabet, opt.segment_alphabet)) or
-             (letter == true and not is_mark and prev_alphabet ~= is_alphabet and opt.segment_alphabet_change) then
-            if opt.joiner_annotate and not(opt.joiner_new) then
+             (letter == true and not is_mark and
+              (prev_alphabet == 'placeholder' or
+               (prev_alphabet == is_alphabet and inTable(is_alphabet, opt.segment_alphabet)) or
+               (prev_alphabet ~= is_alphabet and opt.segment_alphabet_change))) then
+            if opt.joiner_annotate and not(opt.joiner_new) and prev_alphabet ~= 'placeholder' then
               curtok = curtok .. opt.joiner
             end
             table.insert(tokens, curtok)
@@ -196,6 +204,9 @@ local function tokenize(line, opt)
               table.insert(tokens, opt.joiner)
             end
             curtok = ''
+            if opt.joiner_annotate and not(opt.joiner_new) and prev_alphabet == 'placeholder' then
+              curtok = curtok .. opt.joiner
+            end
           elseif other == true then
             if opt.joiner_annotate then
               if curtok == '' then
