@@ -15,7 +15,7 @@ local options = {
     '-log_level', 'INFO',
     [[Output logs at this level and above.]],
     {
-      enum = {'DEBUG', 'INFO', 'WARNING', 'ERROR'}
+      enum = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'NOERROR'}
     }
   }
 }
@@ -142,7 +142,7 @@ Parameters:
 ]]
 function Logger:setVisibleLevel(level)
   assert (level == 'DEBUG' or level == 'INFO' or
-          level == 'WARNING' or level == 'ERROR')
+          level == 'WARNING' or level == 'ERROR' or level == 'NOERROR')
   self.level = level
 end
 

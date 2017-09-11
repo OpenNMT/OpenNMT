@@ -1,18 +1,24 @@
 <!--- This file was automatically generated. Do not modify it manually but use the docs/options/generate.sh script instead. -->
 
-`learn_bpe.lua` options:
+`average_models.lua` options:
 
 * `-h [<boolean>]` (default: `false`)<br/>This help.
 * `-md [<boolean>]` (default: `false`)<br/>Dump help in Markdown format.
 * `-config <string>` (default: `''`)<br/>Load options from this file.
 * `-save_config <string>` (default: `''`)<br/>Save options to this file.
 
-## BPE options
+## Model options
 
-* `-size <string>` (default: `30000`)<br/>The number of merge operations to learn.
-* `-lc [<boolean>]` (default: `false`)<br/>Lowercase input tokens before learning BPE.
-* `-bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. `prefix`: append `<w>` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `</w>` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
-* `-save_bpe <string>` (required)<br/>Path to save the output model.
+* `-models <table>`<br/>Path to models to average.
+* `-output_model <string>` (default: `final_averaged.t7`)<br/>Path to the averaged model.
+* `-force [<boolean>]` (default: `false`)<br/>Force output model creation even if the target file exists.
+
+## Cuda options
+
+* `-gpuid <table>` (default: `0`)<br/>List of GPU identifiers (1-indexed). CPU is used when set to 0.
+* `-fallback_to_cpu [<boolean>]` (default: `false`)<br/>If GPU can't be used, rollback on the CPU.
+* `-fp16 [<boolean>]` (default: `false`)<br/>Use half-precision float on GPU.
+* `-no_nccl [<boolean>]` (default: `false`)<br/>Disable usage of nccl in parallel mode.
 
 ## Logger options
 

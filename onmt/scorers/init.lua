@@ -1,7 +1,20 @@
 local scorers = {}
 
 scorers.bleu = require 'onmt.scorers.bleu'
+scorers.ter = require 'onmt.scorers.tercom'
+scorers.dlratio = require 'onmt.scorers.dlratio'
 
-scorers.list = { 'bleu' }
+-- Build list of available scorers.
+scorers.list = {}
+for k, _ in pairs(scorers) do
+  if k ~= 'list' then
+    table.insert(scorers.list, k)
+  end
+end
+
+-- Mark here scorers that support multiple references.
+scorers.multi = {}
+scorers.multi['bleu'] = true
+scorers.multi['ter'] = true
 
 return scorers

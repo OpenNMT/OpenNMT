@@ -30,6 +30,14 @@ The Google encoder (`-encoder_type gnmt`) is an encoder with a single bidirectio
 
 ![Google's NMT encoder](../img/gnmt-encoder.png)
 
+### Convolutional encoder
+
+The convolutional encoder (`-encoder_type cnn`) is an encoder based on several convolutional layers as described in [Gehring et al. (2017)](../references.md#CNNEncoder).
+
+In sequence-to-sequence models, it should be used either without a bridge or with a dense bridge (options `-bridge dense`, `-bridge dense_nonlinear`, or `-bridge none`). The default `copy` bridge is not compatible with this encoder.
+
+It is also recommended to set a small learning rate when using SGD (e.g. `-learning_rate 0.1`) or use Adam instead (e.g. `-optim adam -learning_rate 0.0002`).
+
 ## Decoders
 
 ### Default decoder
@@ -80,3 +88,9 @@ and the score function is one of these:
 * `concat`: $$\mathrm{score}(h_t,\bar{h}_s)=\nu_a^T.\mathrm{tanh}(W_a[h_t;\bar{h}_s])$$
 
 The model is selected using `-global_attention` option or can be disabled with `-attention none` option. The default attention model is `general`.
+
+## Scheduled Sampling
+
+By default, the decoder at step \(t\) is using the reference token for step \(t-1\) to calculate the new output. For some applications, for instance speech recognition, this is leading to propagation of decoding errors and also a mismatch between training and inference workflow. Scheduled sampling (as introduced in [Scheduled sampling for sequence prediction with recurrent neural networks](http://papers.nips.cc/paper/5956-scheduled-sampling-for-sequence-prediction-with-recurrent-neural-networks.pdf). In Advances in Neural Information Processing Systems (pp. 1171-1179).]) is allowing to mix gold reference and generated output in a proportion that will change over time: at the beginning of the training the generated output confidence is very low and it is better to use gold reference, while at the end of the training, we have to rely on generated output to have training in the same conditions than inference.
+
+Scheduled sampling is activated with `-scheduled_sampling` parameter which takes the probability to use the reference token instead of the previously generated one. By default, probability is one meaning that we always use previously generated token. The sampling can be done either at each token level or at the sentence level using `-scheduled_sampling_scope` parameter. The decay of the sampling rate is controlled by parameters `-scheduled_sampling_decay_type` and `-scheduled_sampling_decay_rate`.

@@ -1,9 +1,9 @@
 Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch. There are different types of sampling that are selected using `-sample_type` option as defined below.
 
-When sampling, with the option `-sample_tgt_vocab` it is also possible to restrict the target vocabulary to the current sample which gives an approximate of the full generator as defined here [Jean et al, 2015](http://www.aclweb.org/anthology/P15-1001) through a so-called "Importance Sampling" approach.
+When sampling, with the option `-sample_vocab` it is also possible to restrict the generated vocabulary to the current sample which gives an approximate of the full softmax as defined here [Jean et al, 2015](http://www.aclweb.org/anthology/P15-1001) via an "importance sampling" approach.
 
 !!! tip "Tip"
-    Importance Sampling is particularly useful when training systems with very large target vocabulary
+    Importance sampling is particularly useful when training systems with very large output vocabulary for faster computation.
 
 ## Uniform
 

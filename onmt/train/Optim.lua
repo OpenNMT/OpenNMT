@@ -38,7 +38,7 @@ local options = {
   },
   {
     '-max_grad_norm', 5,
-    [[Clip the gradients norm to this value.]],
+    [[Clip the gradients L2-norm to this value. Set to 0 to disable.]],
     {
       train_state = true
     }
@@ -77,6 +77,15 @@ local options = {
       enum = {'default', 'epoch_only', 'score_only'},
       train_state = true
     }
+  },
+  {
+    '-decay_method', 'default',
+    [[If `restart` is set, the optimizer states (if any) will be reset when the
+      decay condition is met.]],
+    {
+      enum = {'default', 'restart'},
+      train_state = true
+    }
   }
 }
 
@@ -93,6 +102,23 @@ function Optim:setOptimStates(states)
   self.optimStates = states
 end
 
+--[[ Sets optimization states to zero. ]]
+function Optim:resetOptimStates()
+  if self.optimStates == nil then
+    return
+  end
+
+  for i = 1, #self.optimStates do
+    for key, state in pairs(self.optimStates[i]) do
+      if torch.isTensor(state) then
+        state:zero()
+      elseif key == 't' then
+        self.optimStates[i].t = 0
+      end
+    end
+  end
+end
+
 function Optim:zeroGrad(gradParams)
   for j = 1, #gradParams do
     gradParams[j]:zero()
@@ -107,21 +133,11 @@ function Optim:prepareGrad(gradParams)
     end
   end
 
-  -- Compute gradients norm.
-  local gradNorm = 0
-  for j = 1, #gradParams do
-    gradNorm = gradNorm + gradParams[j]:norm()^2
+  if self.args.max_grad_norm > 0 then
+    Optim.clipGradByNorm(gradParams, self.args.max_grad_norm)
   end
-  gradNorm = math.sqrt(gradNorm)
-
-  local shrinkage = self.args.max_grad_norm / gradNorm
 
   for j = 1, #gradParams do
-    -- Shrink gradients if needed.
-    if shrinkage < 1 then
-      gradParams[j]:mul(shrinkage)
-    end
-
     -- Prepare gradients params according to the optimization method.
     if self.args.optim == 'adagrad' then
       Optim.adagradStep(gradParams[j], self.args.learning_rate, self.optimStates[j])
@@ -163,11 +179,15 @@ Returns: the new learning rate.
 function Optim:updateLearningRate(score, epoch, evaluator)
   local function decayLr()
     self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
+
+    if self.args.decay_method == 'restart' then
+      self:resetOptimStates()
+    end
   end
 
   evaluator = evaluator or onmt.evaluators.PerplexityEvaluator.new()
 
-  if self.args.optim == 'sgd' then
+  if self.args.optim == 'sgd' or self.args.optim == 'adam' then
     self.valPerf[#self.valPerf + 1] = score
 
     local epochCondMet = (epoch >= self.args.start_decay_at)
@@ -193,7 +213,7 @@ function Optim:updateLearningRate(score, epoch, evaluator)
 end
 
 function Optim:isFinished()
-  if self.args.optim == 'sgd' then
+  if self.args.optim == 'sgd' or self.args.optim == 'adam' then
     return self.args.learning_rate < self.args.min_learning_rate
   else
     return false
@@ -208,15 +228,38 @@ function Optim:getStates()
   return self.optimStates
 end
 
-function Optim.adagradStep(dfdx, lr, state)
-  if not state.var then
-    state.var = torch.Tensor():typeAs(dfdx):resizeAs(dfdx):zero()
-    state.std = torch.Tensor():typeAs(dfdx):resizeAs(dfdx)
+--[[ Clips gradients to a maximum L2-norm.
+
+Parameters:
+
+  * `gradParams` - a table of Tensor.
+  * `maxNorm` - the maximum L2-norm.
+
+]]
+function Optim.clipGradByNorm(gradParams, maxNorm)
+  local gradNorm = 0
+  for j = 1, #gradParams do
+    gradNorm = gradNorm + gradParams[j]:norm()^2
   end
+  gradNorm = math.sqrt(gradNorm)
+
+  local clipCoef = maxNorm / gradNorm
+
+  if clipCoef < 1 then
+    for j = 1, #gradParams do
+      gradParams[j]:mul(clipCoef)
+    end
+  end
+end
+
+function Optim.adagradStep(dfdx, lr, state)
+  state.var = state.var or dfdx.new(dfdx:size()):zero()
+
+  local std = dfdx.new(dfdx:size())
 
   state.var:addcmul(1, dfdx, dfdx)
-  state.std:sqrt(state.var)
-  dfdx:cdiv(state.std:add(1e-10)):mul(-lr)
+  std:sqrt(state.var)
+  dfdx:cdiv(std:add(1e-10)):mul(-lr)
 end
 
 function Optim.adamStep(dfdx, lr, state)
@@ -227,32 +270,35 @@ function Optim.adamStep(dfdx, lr, state)
   state.t = state.t or 0
   state.m = state.m or dfdx.new(dfdx:size()):zero()
   state.v = state.v or dfdx.new(dfdx:size()):zero()
-  state.denom = state.denom or dfdx.new(dfdx:size()):zero()
+
+  local denom = dfdx.new(dfdx:size())
 
   state.t = state.t + 1
   state.m:mul(beta1):add(1-beta1, dfdx)
   state.v:mul(beta2):addcmul(1-beta2, dfdx, dfdx)
-  state.denom:copy(state.v):sqrt():add(eps)
+  denom:copy(state.v):sqrt():add(eps)
 
   local bias1 = 1-beta1^state.t
   local bias2 = 1-beta2^state.t
   local stepSize = lr * math.sqrt(bias2)/bias1
 
-  dfdx:copy(state.m):cdiv(state.denom):mul(-stepSize)
+  dfdx:copy(state.m):cdiv(denom):mul(-stepSize)
 end
 
 function Optim.adadeltaStep(dfdx, state)
   local rho = state.rho or 0.9
   local eps = state.eps or 1e-6
   state.var = state.var or dfdx.new(dfdx:size()):zero()
-  state.std = state.std or dfdx.new(dfdx:size()):zero()
-  state.delta = state.delta or dfdx.new(dfdx:size()):zero()
   state.accDelta = state.accDelta or dfdx.new(dfdx:size()):zero()
+
+  local std = dfdx.new(dfdx:size())
+  local delta = dfdx.new(dfdx:size())
+
   state.var:mul(rho):addcmul(1-rho, dfdx, dfdx)
-  state.std:copy(state.var):add(eps):sqrt()
-  state.delta:copy(state.accDelta):add(eps):sqrt():cdiv(state.std):cmul(dfdx)
-  dfdx:copy(state.delta):mul(-1)
-  state.accDelta:mul(rho):addcmul(1-rho, state.delta, state.delta)
+  std:copy(state.var):add(eps):sqrt()
+  delta:copy(state.accDelta):add(eps):sqrt():cdiv(std):cmul(dfdx)
+  dfdx:copy(delta):mul(-1)
+  state.accDelta:mul(rho):addcmul(1-rho, delta, delta)
 end
 
 return Optim

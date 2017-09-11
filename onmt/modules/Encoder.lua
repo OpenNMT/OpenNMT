@@ -104,7 +104,7 @@ function Encoder:__init(args, inputNetwork)
 
   self.args = {}
   self.args.rnnSize = self.rnn.outputSize
-  self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.numStates = self.rnn.numStates
   self.args.dropout_type = args.dropout_type
 
   parent.__init(self, self:_buildModel())
@@ -117,6 +117,8 @@ function Encoder.load(pretrained)
   local self = torch.factory('onmt.Encoder')()
 
   self.args = pretrained.args
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers -- Backward compatibility.
+
   parent.__init(self, pretrained.modules[1])
 
   self:resetPreallocation()
@@ -159,7 +161,7 @@ function Encoder:_buildModel()
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, self.args.numEffectiveLayers do
+  for _ = 1, self.args.numStates do
     local h0 = nn.Identity()() -- batchSize x rnnSize
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -199,7 +201,7 @@ function Encoder:forward(batch, initial_states)
   -- if states is not passed, start with empty state
   if not states then
     if self.statesProto == nil then
-      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+      self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                            self.stateProto,
                                                            { batch.size, outputSize })
     end
@@ -258,6 +260,46 @@ function Encoder:forward(batch, initial_states)
   return states, context
 end
 
+--[[ One step forward
+
+  Parameters:
+
+  * `inputs` - the input
+  * `initial_states` - the previous RNN state
+
+  Returns:
+
+  1. - final hidden states
+  2. - context for the single token
+
+--]]
+function Encoder:forwardOne(inputs, initial_states, clone)
+  -- simulating batch object
+  local batch = {
+    size = (type(inputs) == 'table' and inputs[1]:size(1)) or inputs:size(1),
+    sourceLength = 1,
+    getSourceInput = function() return inputs end,
+    variableLengths = function() return false end
+  }
+
+  local states, context = self:forward(batch, initial_states)
+
+  if clone then
+    -- clone the context and states
+    local copyStates, copyContext
+    copyStates = {}
+    for _, s in ipairs(states) do
+      table.insert(copyStates, s:clone())
+    end
+    copyContext = context:squeeze(2):clone()
+
+    return copyStates, copyContext
+  else
+    return states, context:squeeze(2)
+  end
+
+end
+
 --[[ Backward pass (only called during training)
 
   Parameters:
@@ -272,7 +314,7 @@ function Encoder:backward(batch, gradStatesOutput, gradContextOutput)
   -- TODO: change this to (input, gradOutput) as in nngraph.
   local outputSize = self.args.rnnSize
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                               self.gradOutputProto,
                                                               { batch.size, outputSize })
   end

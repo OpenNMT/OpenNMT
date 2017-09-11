@@ -24,6 +24,31 @@ local options = {
     {
       structural = 0
     }
+  },
+  {
+    '-scheduled_sampling', 1,
+    [[Probability of feeding true (vs. generated) previous token to decoder.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0,1)
+    }
+  },
+  {
+    '-scheduled_sampling_scope', 'token',
+    [[Apply scheduled sampling at token or sentence level.]],
+    {
+      enum = { 'token', 'sentence' }
+    }
+  },
+  {
+    '-scheduled_sampling_decay_type', 'linear',
+    [[Scheduled Sampling decay type.]],
+    {
+      enum = {'linear', 'invsigmoid'}
+    }
+  },
+  {
+    '-scheduled_sampling_decay_rate', 0,
+    [[Scheduled Sampling decay rate.]]
   }
 }
 
@@ -63,13 +88,15 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
 
   self.args = args
   self.args.rnnSize = self.rnn.outputSize
-  self.args.numEffectiveLayers = self.rnn.numEffectiveLayers
+  self.args.numStates = self.rnn.numStates
   self.args.dropout_type = args.dropout_type
 
   self.args.inputIndex = {}
   self.args.outputIndex = {}
 
   self.args.inputFeed = args.input_feed
+
+  self.args.base_scheduled_sampling = self.args.scheduled_sampling
 
   parent.__init(self, self:_buildModel(attentionModel))
 
@@ -81,6 +108,23 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self:resetPreallocation()
 end
 
+function Decoder:scheduledSamplingDecay(epoch)
+  -- backward compatibility
+  if self.args.scheduled_sampling_decay_rate and self.args.base_scheduled_sampling then
+    local k = self.args.scheduled_sampling_decay_rate
+    local i = epoch - 1
+    if self.args.scheduled_sampling_decay_type == "linear" then
+      self.args.scheduled_sampling = math.max(0, self.args.base_scheduled_sampling - i * k)
+    else
+      self.args.scheduled_sampling = self.args.base_scheduled_sampling * k / ( k + math.exp(i/k) - 1 )
+    end
+    if self.args.scheduled_sampling > 1 then self.args.scheduled_sampling = 1 end
+    if self.args.scheduled_sampling ~= 1 then
+      _G.logger:info('Set Scheduled Sampling rate: %0.3f', self.args.scheduled_sampling)
+    end
+  end
+end
+
 function Decoder:returnIndividualLosses(enable)
   self.indvLoss = enable
 end
@@ -90,11 +134,13 @@ function Decoder.load(pretrained)
   local self = torch.factory('onmt.Decoder')()
 
   self.args = pretrained.args
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers -- Backward compatibility.
 
   parent.__init(self, pretrained.modules[1])
   self.generator = onmt.Generator.load(pretrained.modules[2])
   self:add(self.generator)
 
+  self:removePaddingMask(true)
   self:resetPreallocation()
 
   return self
@@ -121,6 +167,9 @@ function Decoder:resetPreallocation()
 
   -- Prototype for preallocated context gradient.
   self.gradContextProto = torch.Tensor()
+
+  -- Prototype for random distribution
+  self.distribProto = torch.Tensor()
 end
 
 --[[ Build a default one time-step of the decoder
@@ -141,7 +190,7 @@ function Decoder:_buildModel(attentionModel)
   local states = {}
 
   -- Inputs are previous layers first.
-  for _ = 1, self.args.numEffectiveLayers do
+  for _ = 1, self.args.numStates do
     local h0 = nn.Identity()() -- batchSize x rnnSize
     table.insert(inputs, h0)
     table.insert(states, h0)
@@ -174,9 +223,9 @@ function Decoder:_buildModel(attentionModel)
   -- Forward states and input into the RNN.
   local outputs = self.rnn(states)
 
-  if self.args.numEffectiveLayers > 1 then
+  if self.args.numStates > 1 then
     -- The output of a subgraph is a node: split it to access the last RNN output.
-    outputs = { outputs:split(self.args.numEffectiveLayers) }
+    outputs = { outputs:split(self.args.numStates) }
   else
     outputs = { outputs }
   end
@@ -203,7 +252,7 @@ function Decoder:findAttentionModel()
     self.decoderAttnClones = {}
   end
   for t = #self.decoderAttnClones+1, #self.networkClones do
-    self:net(t):apply(function (layer)
+    self.networkClones[t]:apply(function (layer)
       if layer.name == 'decoderAttn' then
         self.decoderAttnClones[t] = layer
       elseif layer.name == 'softmaxAttn' then
@@ -286,8 +335,8 @@ function Decoder:addPaddingMask(sourceSizes, sourceLength)
 end
 
 --[[ Remove mask applied to the attention softmax. ]]
-function Decoder:removePaddingMask()
-  if self.paddingMask then
+function Decoder:removePaddingMask(force)
+  if self.paddingMask or force then
     self.paddingMask = nil
     self:replaceAttentionSoftmax(function() return nn.SoftMax() end)
   end
@@ -384,11 +433,43 @@ function Decoder:forwardAndApply(batch, initialStates, context, func)
   end
 
   local states = onmt.utils.Tensor.copyTensorTable(self.statesProto, initialStates)
+  local distrib = onmt.utils.Tensor.reuseTensor(self.distribProto, { batch.size })
+
+  -- scheduled sampling
+  if self.args.scheduled_sampling and
+     self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'sentence' then
+    distrib:rand(batch.size)
+  end
 
   local prevOut
 
   for t = 1, batch.targetLength do
-    prevOut, states = self:forwardOne(batch:getTargetInput(t),
+    local decInput = batch:getTargetInput(t)
+    -- scheduled sampling - calculate previous output
+    if self.args.scheduled_sampling and
+       t > 1 and self.args.scheduled_sampling < 1 then
+      local decInputMain
+      if type(decInput) == 'table' then
+        decInput[1] = decInput[1]:clone()
+        decInputMain = decInput[1]
+      else
+        decInput = decInput:clone()
+        decInputMain = decInput
+      end
+      local pred = self.generator:forward({ prevOut, batch:getTargetOutput(t) })
+      if self.args.scheduled_sampling < 1 and self.args.scheduled_sampling_scope == 'token' then
+        distrib:rand(batch.size)
+      end
+      -- mask of element to pick from generated model
+      local realInput = torch.gt(distrib, self.args.scheduled_sampling)
+      -- pick argmax, we could also sample from log-distribution
+      local bestIdx = select(2, torch.topk(pred[1], 1, 2, true)):squeeze(2)
+      -- replace in the input the gold reference by the model generated one
+      decInputMain:maskedCopy(realInput, bestIdx[realInput])
+    else
+      decInput = batch:getTargetInput(t)
+    end
+    prevOut, states = self:forwardOne(decInput,
                                       states,
                                       context,
                                       prevOut,
@@ -411,7 +492,7 @@ end
 --]]
 function Decoder:forward(batch, initialStates, context)
   initialStates = initialStates
-    or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    or onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
   if self.train then
@@ -445,7 +526,7 @@ Parameters:
   -- ]]
 function Decoder:backward(batch, outputs, criterion)
   if self.gradOutputsProto == nil then
-    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers + 1,
+    self.gradOutputsProto = onmt.utils.Tensor.initTensorTable(self.args.numStates + 1,
                                                               self.gradOutputProto,
                                                               { batch.size, self.args.rnnSize })
   end
@@ -464,7 +545,7 @@ function Decoder:backward(batch, outputs, criterion)
     local prepOutputs = { outputs[t], refOutput }
 
     -- Compute decoder output gradients.
-    -- Note: This would typically be in the forward pass.
+    -- Note: This would typically be in the forward pass - but for memory optimization we keep it here
     local pred = self.generator:forward(prepOutputs)
 
     if self.indvLoss then
@@ -546,7 +627,7 @@ Parameters:
 --]]
 function Decoder:computeLoss(batch, initialStates, context, criterion)
   initialStates = initialStates
-    or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    or onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
 
@@ -572,7 +653,7 @@ Parameters:
 --]]
 function Decoder:computeScore(batch, initialStates, context)
   initialStates = initialStates
-    or onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    or onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                          onmt.utils.Cuda.convert(torch.Tensor()),
                                          { batch.size, self.args.rnnSize })
 

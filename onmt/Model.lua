@@ -12,7 +12,8 @@ local options = {
   },
   {
     '-param_init', 0.1,
-    [[Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`).]],
+    [[Parameters are initialized over uniform distribution with support (-`param_init`, `param_init`).
+      Set to 0 to rely on each module default initialization.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isFloat(0),
       init_only = true
@@ -81,7 +82,10 @@ function Model:initParams()
 
   for i = 1, #params do
     local name = modelMap[i]
-    params[i]:uniform(-self.args.param_init, self.args.param_init)
+
+    if self.args.param_init > 0 then
+      params[i]:uniform(-self.args.param_init, self.args.param_init)
+    end
 
     self.models[name]:apply(function (m)
       if m.postParametersInitialization then

@@ -9,6 +9,17 @@ local options = {
     }
   },
   {
+    '-lm_model', '',
+    [[Path to serialized language model file.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
+    '-lm_weight', 0.1,
+    [[Relative weight of language model.]]
+  },
+  {
     '-beam_size', 5,
     [[Beam size.]],
     {
@@ -122,7 +133,7 @@ function Translator:__init(args, model, dicts)
     self.modelType = checkpoint.options.model_type or 'seq2seq'
     _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
 
-    assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
+    onmt.utils.Error.assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
     self.model = onmt.Seq2Seq.load(args, checkpoint.models, checkpoint.dicts)
     self.dicts = checkpoint.dicts
@@ -135,9 +146,24 @@ function Translator:__init(args, model, dicts)
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
 
+  if args.lm_model ~= '' then
+    local tmodel = args.model
+    args.model = args.lm_model
+    self.lm = onmt.lm.LM.new(args)
+
+    -- check that lm has the same dictionary than translation model
+    onmt.utils.Error.assert(self.dicts.tgt.words == self.lm.dicts.src.words, "Language model dictionary does not match seq2seq target dictionary")
+    onmt.utils.Error.assert(#self.dicts.tgt.features == #self.lm.dicts.src.features, "Language model should have same number of features than translation model")
+    for i = 1 , #self.dicts.tgt.features do
+      onmt.utils.Error.assert(self.dicts.tgt.features[i] == self.lm.dicts.src.features[i], "LM feature ["..i.."] does not match translation tgt feature")
+    end
+
+    args.model = tmodel
+  end
+
   if self.args.target_subdict:len() > 0 then
     self.dicts.subdict = onmt.utils.SubDict.new(self.dicts.tgt.words, self.args.target_subdict)
-    self.model:setTargetVoc(self.dicts.subdict.targetVocTensor)
+    self.model:setGeneratorVocab(self.dicts.subdict.targetVocTensor)
     _G.logger:info('Using target vocabulary from %s (%d vocabs)', self.args.target_subdict, self.dicts.subdict.targetVocTensor:size(1))
   end
 
@@ -285,6 +311,26 @@ function Translator:translateBatch(batch)
     return encStates[#encStates]
   end
 
+  -- if we have a language model - initialize lm state with BOS
+  local lmStates, lmContext
+  if self.lm then
+    local bos_inputs = torch.IntTensor(batch.size):fill(onmt.Constants.BOS)
+    if #self.lm.dicts.src.features > 0 then
+      local inputs = { bos_inputs }
+      if #self.lm.dicts.src.features > 1 then
+        table.insert(inputs, {})
+        for _ = 1, #self.lm.dicts.src.features do
+          table.insert(inputs[2], bos_inputs)
+        end
+      else
+        table.insert(inputs, bos_inputs)
+      end
+      bos_inputs = inputs
+    end
+    onmt.utils.Cuda.convert(bos_inputs)
+    lmStates, lmContext = self.lm.model.models.encoder:forwardOne(bos_inputs, nil, true)
+  end
+
   local decInitStates = self.model.models.bridge:forward(encStates)
 
   -- Compute gold score.
@@ -300,6 +346,8 @@ function Translator:translateBatch(batch)
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
                                                       decInitStates,
+                                                      self.lm and self.lm.model.models,
+                                                      lmStates, lmContext, self.args.lm_weight,
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,
@@ -412,7 +460,7 @@ function Translator:saveBeamHistories(file)
     table.insert(data.scores, beamScores)
   end
 
-  local output = assert(io.open(file, 'w'))
+  local output = onmt.utils.Error.assert(io.open(file, 'w'), "Cannot open file '"..file.."' for writing.")
   output:write(require('dkjson').encode(data))
   self.beamHistories = {}
 end
