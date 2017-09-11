@@ -42,7 +42,7 @@ local options = {
       does not exist in the table) then it will copy the source token]]},
   {
     '-replace_unk_tagged', false,
-    [[The same as -replace_unk, but wrap the replaced token in <unk>token</unk> if it is not found in the phrase table.]]},
+    [[The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.]]},
   {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
@@ -293,7 +293,7 @@ function Translator:buildTargetWords(pred, src, attn)
         if self.phraseTable and self.phraseTable:contains(source) then
           tokens[i] = self.phraseTable:lookup(source)
         else
-          tokens[i] = "<unk>"..source.."</unk>"
+          tokens[i] = "｟unk:"..source.."｠"
         end
       end
     end
