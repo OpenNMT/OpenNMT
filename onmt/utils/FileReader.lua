@@ -72,7 +72,7 @@ function FileReader.countLines(filename, idx_files)
     if fwc then
       local l = fwc:read()
       fwc:close()
-      return string.gmatch(l, "%d+")()
+      return tonumber(string.gmatch(l, "%d+")())
     end
   end
   local f = io.input(filename)
@@ -94,8 +94,8 @@ function FileReader.countLines(filename, idx_files)
       if not line then break end
       local p = line:find(" ")
       onmt.utils.Error.assert(p and p ~= 1, "Invalid line in file '"..filename.."' - missing idx: "..line)
-      local multiline = line:find("\\[")
-      while line and multiline and not line:find("\\]") do
+      local multiline = line:find("%[")
+      while line and multiline and not line:find("%]") do
         line = f:read()
       end
       onmt.utils.Error.assert(line, "Block not closed in file '"..filename.."'")
