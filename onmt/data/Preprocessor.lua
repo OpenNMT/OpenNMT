@@ -229,9 +229,7 @@ local function ruleMatch(s, rule)
   if rule == '*' then return true end
   local pat = onmt.utils.String.split(rule, ",")
   for _, r in ipairs(pat) do
-    print("test",s,r,string.match(s,r))
-    if string.match(s, r) then print(true);return true end
-    print(false)
+    if string.match(s, r) then return true end
   end
 end
 
@@ -336,7 +334,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, type)
     for i = 1, #list_files do
       list_files[i].weight = list_files[i].weight / sum_weight
       _G.logger:info(" * file '"..list_files[i].fname.."' uniform weight: %.1f, (rule: %d) distribution weight: %.1f",
-                     100*list_files[i][1]/totalCount, list_files[i].rule_idx, 100*list_files[i].weight)
+                     100*list_files[i][1]/totalCount, list_files[i].rule_idx or 0, 100*list_files[i].weight)
     end
     _G.logger:info('')
   else
