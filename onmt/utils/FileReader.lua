@@ -67,6 +67,14 @@ function FileReader:next()
 end
 
 function FileReader.countLines(filename, idx_files)
+  if not idx_files and io.popen then
+    local fwc = io.popen('wc -l '..filename)
+    if fwc then
+      local l = fwc:read()
+      fwc:close()
+      return string.gmatch(l, "%d+")()
+    end
+  end
   local f = io.input(filename)
   local lc = 0
   if not idx_files then
