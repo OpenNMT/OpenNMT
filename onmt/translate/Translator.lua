@@ -284,7 +284,6 @@ function Translator:buildTargetWords(pred, src, attn)
         elseif self.args.replace_unk_tagged then
           tokens[i] = '｟unk:' .. source .. '｠'
         end
-        
       end
     end
   end
