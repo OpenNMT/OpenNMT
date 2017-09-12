@@ -139,6 +139,13 @@ local function tokenize(line, opt)
         if opt.joiner_annotate and opt.joiner_new then
           table.insert(tokens, opt.joiner)
         end
+      elseif other == true then
+        if opt.joiner_annotate then
+          if curtok == '' then
+            if opt.joiner_new then table.insert(tokens, opt.joiner)
+            else tokens[#tokens] = tokens[#tokens] .. opt.joiner end
+          end
+        end
       end
       curtok = c
       placeholder = true
