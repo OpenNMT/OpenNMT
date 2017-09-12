@@ -43,6 +43,13 @@ function tokenizerTest.combiningMark()
   testTok(opt, "वर्तमान लिपि (स्क्रिप्ट) खो जाएगी।", "वर्तमान लिपि (￭ स्क्रिप्ट ￭) खो जाएगी ￭।", true)
 end
 
+function tokenizerTest.spaceTokenization()
+  local opt = cmd:parse({'-mode','space'})
+  testTok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions: human rights [14 (g)]")
+  opt = cmd:parse({'-mode','space', '-case_feature'})
+  testTok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th￨L meeting￨L social￨C and￨L human￨L rights￨L questions:￨L human￨L rights￨L [14￨N (g)]￨L")
+end
+
 function tokenizerTest.basicDetokenization()
   local opt = cmd:parse({'-mode','conservative'})
   testTokDetok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions : human rights [ 14 ( g ) ]")

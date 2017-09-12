@@ -199,10 +199,10 @@ function Preprocessor.declareOpts(cmd, dataType)
   for _, v in ipairs(topts) do
     -- change mode option to include disabling mode (default)
     if v[1] == '-mode' then
-      v = { '-mode', 'none',
-          [[Define how aggressive should the tokenization be. `none` disable the tokenization.]],
+      v = { '-mode', 'space',
+          [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
             {
-              enum = {'conservative', 'aggressive', 'none'}
+              enum = {'conservative', 'aggressive', 'space'}
             }
           }
     end
@@ -420,11 +420,7 @@ function Preprocessor:__init(args, dataType)
     end
   end
   for i = 1, 2 do
-    if not tokenizers[i]["mode"] or tokenizers[i]["mode"] == 'none' then
-      tokenizers[i] = false
-    else
-      _G.logger:info("Using on-the-fly tokenization for input "..i)
-    end
+    _G.logger:info("Using on-the-fly '%s' tokenization for input "..i, tokenizers[i]["mode"])
   end
 
   if args.preprocess_pthreads > 1 and args.train_dir ~= '' then
@@ -606,9 +602,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         local prunedRatio = {}
         for i = 1, n do
           local tokFunction
-          if _G.tokenizers[i] then
-            tokFunction = function(line) return _G.tokenizer.tokenize(_G.tokenizers[i], line, _G.bpes[i]) end
-          end
+          tokFunction = function(line) return _G.tokenizer.tokenize(_G.tokenizers[i], line, _G.bpes[i]) end
           table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i], tokFunction))
           table.insert(prunedRatio, 0)
         end

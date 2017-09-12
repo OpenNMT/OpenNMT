@@ -15,9 +15,9 @@ local options = {
     '-mode', 'conservative',
     [[Define how aggressive should the tokenization be. `aggressive` only keeps sequences
       of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65",
-      "soft-landing", etc.]],
+      "soft-landing", etc. `space` is doing space tokenization.]],
     {
-      enum = {'conservative', 'aggressive'}
+      enum = {'space', 'conservative', 'aggressive'}
     }
   },
   {
@@ -108,6 +108,11 @@ end
 -- - skip any other non control character [U+0001-U+002F]
 -- - keep sequence of letters/numbers and tokenize everything else
 local function tokenize(line, opt)
+
+  if opt.mode == 'space' then
+    return onmt.utils.String.split(line, ' ')
+  end
+
   local tokens = {}
   -- contains the current token
   local curtok = ''
