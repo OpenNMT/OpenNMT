@@ -7,14 +7,19 @@ function FileReader:__init(filename, idxSent, featSequence, tokenizer)
   self.tokenizer = tokenizer
 end
 
---[[ Read next line in the file and split it on spaces. If EOF is reached, returns nil. ]]
-function FileReader:next()
+--[[
+  Read next line in the file and split it on spaces. If EOF is reached, returns nil.
+  If skip - do not process the sentence, it will be skipped.
+]]
+function FileReader:next(skip)
   local line = self.file:read()
   local idx
 
   if line == nil then
     return nil
   end
+
+  local sent = {}
 
   if self.idxSent then
     local p = line:find(" ")
@@ -23,8 +28,9 @@ function FileReader:next()
     line = line:sub(p+1)
   end
 
-  local sent = {}
   if not self.featSequence then
+    -- no need to tokenize sentence that we will skip
+    if skip then return sent, idx end
     if not self.tokenizer then
       for word in line:gmatch'([^%s]+)' do
         table.insert(sent, word)

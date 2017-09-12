@@ -654,12 +654,13 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
             local tokens = {}
             local hasNil = false
             local allNil = true
+            local keepSentence = not sampling or sampling[sampling_idx] == idx
             for i = 1, n do
-              tokens[i] = readers[i]:next()
+              tokens[i] = readers[i]:next(not keepSentence)
               hasNil = hasNil or tokens[i] == nil
               allNil = allNil and tokens[i] == nil
             end
-            if not sampling or sampling[sampling_idx] == idx then
+            if keepSentence then
               if hasNil then
                 if not allNil then
                   return _G.__threadid, 1, string.format('all data sources do not have the same number of sentences')
