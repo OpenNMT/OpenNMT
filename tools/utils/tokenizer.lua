@@ -110,7 +110,14 @@ end
 local function tokenize(line, opt)
 
   if opt.mode == 'space' then
-    return onmt.utils.String.split(line, ' ')
+    local tokens=onmt.utils.String.split(line, ' ')
+    local nemptTokens = {}
+    for _, t in ipairs(tokens) do
+      if t ~= '' then
+        table.insert(nemptTokens, t)
+      end
+    end
+    return nemptTokens
   end
 
   local tokens = {}

@@ -376,8 +376,8 @@ local function init_thread(tokenizers)
   _G.bpes = {}
   _G.tokenizers = tokenizers
   for i, v in ipairs(tokenizers) do
-    if v and v["bpe_model"] ~= '' then
-      _G.bpes[i] = _G.BPE.new(v["bpe_model"])
+    if v and v["bpe_model"] and v["bpe_model"] ~= '' then
+      _G.bpes[i] = _G.BPE.new(v)
     end
   end
 end
