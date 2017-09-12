@@ -110,14 +110,23 @@ end
 local function tokenize(line, opt)
 
   if opt.mode == 'space' then
-    local tokens=onmt.utils.String.split(line, ' ')
-    local nemptTokens = {}
-    for _, t in ipairs(tokens) do
-      if t ~= '' then
-        table.insert(nemptTokens, t)
+    local index = 1
+    local tokens = {}
+    while index <= line:len() do
+      local sepStart, sepEnd = line:find(' ', index)
+      local sub
+      if not sepStart then
+        sub = line:sub(index)
+        table.insert(tokens, sub)
+        break
+      else
+        sub = line:sub(index, sepStart - 1)
+        table.insert(tokens, sub)
+        index = sepEnd + 1
       end
     end
-    return nemptTokens
+
+    return tokens
   end
 
   local tokens = {}
