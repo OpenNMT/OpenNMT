@@ -269,7 +269,7 @@ end
 function Translator:buildTargetWords(pred, src, attn)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  if self.args.replace_unk then
+  if self.args.replace_unk or self.args.replace_unk_tagged then
     for i = 1, #tokens do
       if tokens[i] == onmt.Constants.UNK_WORD then
         local _, maxIndex = attn[i]:max(1)
@@ -277,24 +277,14 @@ function Translator:buildTargetWords(pred, src, attn)
 
         if self.phraseTable and self.phraseTable:contains(source) then
           tokens[i] = self.phraseTable:lookup(source)
-        else
+
+        elseif self.args.replace_unk then
           tokens[i] = source
-        end
-      end
-    end
-  end
 
-  if self.args.replace_unk_tagged then
-    for i = 1, #tokens do
-      if tokens[i] == onmt.Constants.UNK_WORD then
-        local _, maxIndex = attn[i]:max(1)
-        local source = src[maxIndex[1]]
-
-        if self.phraseTable and self.phraseTable:contains(source) then
-          tokens[i] = self.phraseTable:lookup(source)
-        else
-          tokens[i] = "｟unk:"..source.."｠"
+        elseif self.args.replace_unk_tagged then
+          tokens[i] = '｟unk:' .. source .. '｠'
         end
+        
       end
     end
   end
