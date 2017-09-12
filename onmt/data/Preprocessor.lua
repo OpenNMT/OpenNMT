@@ -244,7 +244,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, type)
   local list_files = {}
 
   for candf in paths.iterfiles(dir) do
-    if candf:sub(-firstSuffix:len()) == firstSuffix then
+    if firstSuffix == '' or candf:sub(-firstSuffix:len()) == firstSuffix then
       self:poolAddJob(
         function(f)
           local flist = {}
