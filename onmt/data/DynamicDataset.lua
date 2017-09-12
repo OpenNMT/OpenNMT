@@ -1,9 +1,10 @@
 --[[ Dynamic Dataset class ]]
 
-local DynamicDataset, _ = torch.class("DynamicDataset")
+local DynamicDataset, _ = torch.class("DynamicDataset", "SampledVocabDataset")
 
-function DynamicDataset:__init(ddr)
+function DynamicDataset:__init(opt, ddr)
   self.ddr = ddr
+  self.opt = opt
 end
 
 --[[ define batch size ]]
@@ -20,8 +21,12 @@ function DynamicDataset:setBatchSize(maxBatchSize, uneven_batches)
   self.uneven_batches = uneven_batches
   local nTrainBatch, batchUsage = self.dataset:setBatchSize(maxBatchSize, uneven_batches)
   self.src = self.dataset.src
+  self.tgt = self.dataset.tgt
   self.maxSourceLength = self.dataset.maxSourceLength
   self.maxTargetLength = self.dataset.maxTargetLength
+  if torch.type(self.dataset) ~= 'SampledDataset' then
+    self:sampleVocabInit(self.opt, self.src, self.tgt)
+  end
   return nTrainBatch, batchUsage
 end
 
@@ -29,17 +34,36 @@ end
 function DynamicDataset:sample()
   if torch.type(self.dataset) == 'SampledDataset' then
     self.dataset:sample()
-  elseif not self.first and self.ddr.preprocessor.args.gsample > 0 then
-    _G.logger:info('Sampling dataset...')
-    local data = self.ddr.preprocessor:makeData('train', self.ddr.dicts)
-    self.dataset = onmt.data.Dataset.new(data.src, data.tgt)
-    local nTrainBatch, _ = self.dataset:setBatchSize(self.maxBatchSize, self.uneven_batches)
-    self.src = self.dataset.src
-    self.maxSourceLength = self.dataset.maxSourceLength
-    self.maxTargetLength = self.dataset.maxTargetLength
-    _G.logger:info('Sampling completed - %d sentences, %d mini-batch', #self.src, nTrainBatch)
-  else
-    self.first = false
+  elseif self.ddr.preprocessor.args.gsample > 0 then
+    if not self.first then
+      _G.logger:info('Sampling dataset...')
+      local data = self.ddr.preprocessor:makeData('train', self.ddr.dicts)
+      self.dataset = onmt.data.Dataset.new(data.src, data.tgt)
+      self.src = self.dataset.src
+      self.tgt = self.dataset.tgt
+      self:sampleVocabInit(self.opt, self.src, self.tgt)
+      local nTrainBatch, _ = self.dataset:setBatchSize(self.maxBatchSize, self.uneven_batches)
+      self.maxSourceLength = self.dataset.maxSourceLength
+      self.maxTargetLength = self.dataset.maxTargetLength
+      _G.logger:info('Sampling completed - %d sentences, %d mini-batch', #self.src, nTrainBatch)
+    else
+      self.first = false
+    end
+    if self.vocabIndex then
+      -- if importance sampling select vocabs
+      self:sampleVocabClear()
+      for idx = 1, #self.vocabAxis do
+        self:selectVocabs(idx)
+      end
+      self:sampleVocabReport('INFO')
+      -- adapt vocab index to sampled Vocab
+      for idx = 1, #self.vocabAxis do
+        for j = 1, self.vocabAxis[idx]:size(1) do
+          self.vocabAxis[idx][j] = self:sampleVocabIdx(self.vocabAxisName, self.vocabAxis[idx][j])
+        end
+      end
+    end
+
   end
 end
 

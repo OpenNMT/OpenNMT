@@ -22,6 +22,7 @@ cmd:setCmdLineOptions(options, 'Data')
 
 onmt.data.SampledDataset.declareOpts(cmd)
 onmt.data.DynamicDataRepository.declareOpts(cmd, modelClass)
+onmt.data.SampledVocabDataset.declareOpts(cmd)
 
 onmt.Model.declareOpts(cmd)
 modelClass.declareOpts(cmd)

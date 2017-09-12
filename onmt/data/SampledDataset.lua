@@ -1,6 +1,6 @@
 --[[ Data management and batch creation. Handles data created by `preprocess.lua`. ]]
 
-local SampledDataset, parent = torch.class("SampledDataset", "Dataset")
+local SampledDataset, parent = torch.class("SampledDataset", "SampledVocabDataset")
 
 local options = {
   {
@@ -30,27 +30,6 @@ local options = {
     [[When greater than 0, instances with perplexity above this value will be
       considered as noise and ignored; when less than 0, mode + `-sample_perplexity_max` * stdev
       will be used as threshold.]]
-  },
-  {
-    '-sample_tgt_vocab', false,
-    [[Use importance sampling as an approximation of the full output vocabulary softmax.]],
-    {
-      deprecatedBy = { 'sample_vocab', 'true' }
-    }
-  },
-  {
-    '-sample_vocab', false,
-    [[Use importance sampling as an approximation of the full output vocabulary softmax.]],
-    {
-      depends = function(opt)
-                  if opt.sample_vocab then
-                    if opt.model_type and opt.model_type ~= 'seq2seq' and opt.model_type ~= 'lm' then
-                      return false, "only works for seq2seq or language models." end
-                    if opt.sample == 0 then return false, "requires '-sample' option" end
-                  end
-                  return true
-                end
-    }
   }
 }
 
@@ -64,18 +43,6 @@ end
 function SampledDataset:__init(opt, srcData, tgtData)
   parent.__init(self, srcData, tgtData)
 
-  if opt.sample_vocab then
-    self.vocabIndex = {}
-    self.vocabTensor = {}
-    if opt.model_type == 'lm' then
-      self.vocabAxis = self.src
-      self.vocabAxisName = 'source'
-    else
-      self.vocabAxis = self.tgt
-      self.vocabAxisName = 'target'
-    end
-  end
-
   self.samplingSize = opt.sample
   self.sample_type = opt.sample_type
   self.sample_perplexity_init = opt.sample_perplexity_init
@@ -83,9 +50,8 @@ function SampledDataset:__init(opt, srcData, tgtData)
   self.startedPplSampling = false
 
   _G.logger:info(' * sampling ' .. opt.sample .. ' instances from ' .. #self.src .. ' at each epoch')
-  if self.vocabIndex then
-    _G.logger:info(' * with ' .. self.vocabAxisName .. ' vocabulary importance sampling')
-  end
+  self:sampleVocabInit(opt, self.src, self.tgt)
+
   if opt.sample_type == 'perplexity' then
     _G.logger:info(' * using train data perplexity as probability distribution when sampling')
     _G.logger:info(' * sample_perplexity_init: ' .. opt.sample_perplexity_init)
@@ -136,12 +102,7 @@ function SampledDataset:sample(logLevel)
 
   _G.logger:log('Sampling dataset...', logLevel)
 
-  if self.vocabIndex then
-    self.vocabTensor = {}
-    self.vocabIndex = {}
-    self.vocabIndex[onmt.Constants.PAD] = 1
-    table.insert(self.vocabTensor, onmt.Constants.PAD)
-  end
+  self:sampleVocabClear()
 
   -- Populate self.samplingProb with self.ppl if average ppl is below self.sample_perplexity_init.
   if self.sample_type == 'perplexity' and not self.startedPplSampling then
@@ -240,14 +201,7 @@ function SampledDataset:sample(logLevel)
   for i = 1, self.sampled:size(1) do
     self.sampledCnt[self.sampled[i]] = self.sampledCnt[self.sampled[i]] + 1
     -- if importance sampling select vocabs
-    if self.vocabIndex then
-      for j = 1, self.vocabAxis[self.sampled[i]]:size(1) do
-        if not self.vocabIndex[self.vocabAxis[self.sampled[i]][j]] then
-          self.vocabIndex[self.vocabAxis[self.sampled[i]][j]] = 1
-          table.insert(self.vocabTensor, self.vocabAxis[self.sampled[i]][j])
-        end
-      end
-    end
+    self:selectVocabs(self.sampled[i])
   end
 
   -- Prepares batches in terms of range within self.src and self.tgt.
@@ -297,11 +251,7 @@ function SampledDataset:sample(logLevel)
   end
 
   _G.logger:log('Sampled ' .. self.sampled:size(1) .. ' instances into ' .. #self.batchRange .. ' batches.', logLevel)
-
-  if self.vocabIndex then
-    self.vocabTensor = torch.LongTensor(self.vocabTensor):sort()
-    _G.logger:log('Importance Sampling - keeping ' .. self.vocabTensor:size(1) .. ' ' .. self.vocabAxisName .. ' vocabs.', logLevel)
-  end
+  self:sampleVocabReport(logLevel)
 
   return #self.batchRange, batchesOccupation / batchesCapacity
 end
@@ -387,19 +337,13 @@ function SampledDataset:getBatch(batchIdx)
     local jBegin = (i == rangeStart) and sampleCntBegin or 1
     local jEnd = (i == rangeEnd) and math.min(self.sampledCnt[i], sampleCntEnd) or self.sampledCnt[i]
     for _ = jBegin, jEnd do
-      local srcIdx = self.src[i]
-      if self.vocabAxisName == 'source' then
-        srcIdx = onmt.utils.Tensor.find(self.vocabTensor, srcIdx)
-      end
+      local srcIdx = self:sampleVocabIdx('source', self.src[i])
       table.insert(src, srcIdx)
       if self.srcFeatures[i] then
         table.insert(srcFeatures, self.srcFeatures[i])
       end
       if self.tgt ~= nil then
-        local tgtIdx = self.tgt[i]
-        if self.vocabTensor then
-          tgtIdx = onmt.utils.Tensor.find(self.vocabTensor, tgtIdx)
-        end
+        local tgtIdx = self:sampleVocabIdx('target', self.tgt[i])
         table.insert(tgt, tgtIdx)
         if self.tgtFeatures[i] then
           table.insert(tgtFeatures, self.tgtFeatures[i])

@@ -65,6 +65,7 @@ build = {
     ["onmt.data.Vocabulary"] = "onmt/data/Vocabulary.lua",
     ["onmt.data.AliasMultinomial"] = "onmt/data/AliasMultinomial.lua",
     ["onmt.data.SampledDataset"] = "onmt/data/SampledDataset.lua",
+    ["onmt.data.SampledVocabDataset"] = "onmt/data/SampledVocabDataset.lua",
     ["onmt.data.DynamicDataRepository"] = "onmt/data/DynamicDataRepository.lua",
     ["onmt.data.DynamicDataset"] = "onmt/data/DynamicDataset.lua",
     ["onmt.evaluators.Evaluator"] = "onmt/evaluators/Evaluator.lua",

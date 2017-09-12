@@ -11,10 +11,11 @@ function DynamicDataRepository:__init(args, modelClass)
   self.dataType = modelClass.dataType()
   self.preprocessor = onmt.data.Preprocessor.new(args, self.dataType)
   self.dicts = self.preprocessor:getVocabulary()
+  self.args = args
 end
 
 function DynamicDataRepository:getTraining()
-  return onmt.data.DynamicDataset.new(self)
+  return onmt.data.DynamicDataset.new(self.args, self)
 end
 
 function DynamicDataRepository:getValid()
