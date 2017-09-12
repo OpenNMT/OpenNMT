@@ -177,7 +177,7 @@ local function main()
 
   onmt.utils.Cuda.convert(model)
 
-  if torch.type(trainDataset) == 'SampledDataset' and opt.sample > 0 then
+  if opt.sample > 0 then
     trainDataset:checkModel(model)
   end
 

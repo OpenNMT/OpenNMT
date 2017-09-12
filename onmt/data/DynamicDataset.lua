@@ -11,7 +11,11 @@ function DynamicDataset:setBatchSize(maxBatchSize, uneven_batches)
   -- time to build first sample
   local data = self.ddr.preprocessor:makeData('train', self.ddr.dicts)
   self.first = true
-  self.dataset = onmt.data.Dataset.new(data.src, data.tgt)
+  if self.ddr.preprocessor.args.sample > 0 then
+    self.dataset = onmt.data.SampledDataset.new(self.ddr.preprocessor.args, data.src, data.tgt)
+  else
+    self.dataset = onmt.data.Dataset.new(data.src, data.tgt)
+  end
   self.maxBatchSize = maxBatchSize
   self.uneven_batches = uneven_batches
   local nTrainBatch, batchUsage = self.dataset:setBatchSize(maxBatchSize, uneven_batches)
@@ -23,7 +27,9 @@ end
 
 --[[ get a new sample ]]
 function DynamicDataset:sample()
-  if not self.first and self.ddr.preprocessor.args.sample > 0 then
+  if torch.type(self.dataset) == 'SampledDataset' then
+    self.dataset:sample()
+  elseif not self.first and self.ddr.preprocessor.args.gsample > 0 then
     _G.logger:info('Sampling dataset...')
     local data = self.ddr.preprocessor:makeData('train', self.ddr.dicts)
     self.dataset = onmt.data.Dataset.new(data.src, data.tgt)
@@ -47,6 +53,12 @@ end
 
 function DynamicDataset:getBatch(idx)
   return self.dataset:getBatch(idx)
+end
+
+function DynamicDataset:checkModel(model)
+  if self.dataset.checkModel then
+    self.dataset:checkModel(model)
+  end
 end
 
 return DynamicDataset

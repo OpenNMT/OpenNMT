@@ -29,19 +29,19 @@ local commonOptions = {
     [[Keep frequency of words in dictionary.]]
   },
   {
-    '-sample', 0,
-    [[If not zero, extract a sample of the corpus. Values between 0 and 1 indicate ratio,
+    '-gsample', 0,
+    [[If not zero, extract a new sample from the corpus. In training mode, file sampling is done at each epoch. Values between 0 and 1 indicate ratio,
       values higher than 1 indicate data size]],
     {
       valid = onmt.utils.ExtendedCmdLine.isFloat(0)
     }
   },
   {
-    '-sample_dist', '',
+    '-gsample_dist', '',
     [[Configuration file with data class distribution to use for sampling training corpus. If not set, sampling is uniform.]],
     {
       valid = onmt.utils.ExtendedCmdLine.fileNullOrExists,
-      depends = function(opt) return opt.sample_dist == '' or opt.sample > 0 end
+      depends = function(opt) return opt.gsample_dist == '' or opt.gsample > 0, "option `gsample_dist` requires `gsample`" end
     }
   },
   {
@@ -391,7 +391,8 @@ function Preprocessor:__init(args, dataType)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+
+  self.args = args
 
   local function isempty(t)
     local count = 0
@@ -447,8 +448,8 @@ function Preprocessor:__init(args, dataType)
   end
 
   self.dist_rules = {}
-  if args.sample_dist ~= '' then
-    local f = io.input(args.sample_dist)
+  if args.gsample_dist ~= '' then
+    local f = io.input(args.gsample_dist)
     while true do
       local dist_rule = f:read()
       if not dist_rule then break end
@@ -940,9 +941,9 @@ function Preprocessor:makeData(dataset, dicts)
   _G.logger:info("--- Preparing "..dataset.." sample")
 
   local sample_file = {}
-  if dataset == 'train' and self.args.sample ~= 0 then
+  if dataset == 'train' and self.args.gsample ~= 0 then
     -- sample data using sample and sample_dict
-    local sampledCount = self.args.sample
+    local sampledCount = self.args.gsample
     if sampledCount < 1 then
       sampledCount = sampledCount * self.totalCount
     end
