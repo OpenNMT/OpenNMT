@@ -37,7 +37,6 @@ local function buildPreprocessor(mode)
   elseif mode == 'parsedir' then
     commandLine = {
       '-train_dir', dataDir,
-      '-sample_dist', 'test/data/drule',
       '-src_suffix', 'src-val.txt',
       '-tgt_suffix', 'tgt-val.txt',
       '-valid_src', dataDir .. '/src-test.txt',
@@ -45,7 +44,8 @@ local function buildPreprocessor(mode)
       '-src_vocab', 'ddict.src.dict',
       '-tgt_vocab', 'ddict.tgt.dict',
       '-tok_src_mode', 'conservative',
-      '-sample', 0.1,
+      '-gsample', 0.1,
+      '-gsample_dist', 'test/data/drule',
       '-src_seq_length', 10,
       '-preprocess_pthreads', 1
     }
