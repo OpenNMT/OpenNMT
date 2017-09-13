@@ -43,6 +43,38 @@ function tokenizerTest.combiningMark()
   testTok(opt, "वर्तमान लिपि (स्क्रिप्ट) खो जाएगी।", "वर्तमान लिपि (￭ स्क्रिप्ट ￭) खो जाएगी ￭।", true)
 end
 
+function tokenizerTest.protectedSequence()
+  local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭km", true)
+  testTok(opt, "A｟380｠", "A￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭.", true)
+  testTok(opt, "$｟0.23｠", "$￭ ｟0.23｠", true)
+  testTok(opt, "｟0.23｠$", "｟0.23｠ ￭$", true)
+  testTok(opt, "｟US$｠23", "｟US$｠ ￭23", true)
+  testTok(opt, "1｟ABCD｠0", "1￭ ｟ABCD｠ ￭0", true)
+  testTok(opt, "$1", "$￭ 1", true)
+  opt = cmd:parse({'-mode','conservative','-joiner_annotate','-joiner_new'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭ km", true)
+  testTok(opt, "A｟380｠", "A ￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠ ￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭ .", true)
+end
+
+function tokenizerTest.aggressive()
+  local opt = cmd:parse({'-mode','aggressive','-joiner_annotate'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭km", true)
+  testTok(opt, "A｟380｠", "A￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭.", true)
+  testTok(opt, "$｟0.23｠", "$￭ ｟0.23｠", true)
+  testTok(opt, "｟0.23｠$", "｟0.23｠ ￭$", true)
+  testTok(opt, "｟US$｠23", "｟US$｠ ￭23", true)
+  testTok(opt, "1｟ABCD｠0", "1￭ ｟ABCD｠ ￭0", true)
+  testTok(opt, "$1", "$￭ 1", true)
+  testTok(opt, "A380", "A ￭380", true)
+end
+
 function tokenizerTest.basicDetokenization()
   local opt = cmd:parse({'-mode','conservative'})
   testTokDetok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions : human rights [ 14 ( g ) ]")
@@ -56,7 +88,7 @@ function tokenizerTest.bpebasic()
 
   opt = cmd:parse({'-bpe_model','test/data/bpe-models/fr500','-joiner_annotate','-mode','aggressive'})
   local raw = {
-    [[Il n'y a encore aucun décompte de corps, c'est notre estimation, a-t-il déclaré depuis Genève.]],
+    [[Il n'y a encore aucun décompte de corps, c'est notre estimation, a-t-il déclaré ｟depuis Genève｠.]],
     [[Le SMR mesure notamment l'efficacité et les effets indésirables d'un produit.]],
     [[Yasmina Reza retrouve le Théâtre Antoine (01.42.08.77.71) qui propose une reprise de Conversations après un enterrement, sa première pièce qui la révéla au public.]],
     [[Dans tous les cas, il y a eu une très bonne réactivité médicale.]],
@@ -66,9 +98,9 @@ function tokenizerTest.bpebasic()
     [[Nous ne faisons que de bonnes expériences avec cette façon décontractée d'accueillir nos clients.]]
   }
   local tok = {
-    [[Il n ￭'￭ y a en￭ co￭ re au￭ c￭ un dé￭ com￭ p￭ te de c￭ or￭ p￭ s ￭, c ￭'￭ est no￭ tre esti￭ m￭ ation ￭, a ￭-￭ t ￭-￭ il déclar￭ é depuis G￭ en￭ è￭ ve ￭.]],
+    [[Il n ￭'￭ y a en￭ co￭ re au￭ c￭ un dé￭ com￭ p￭ te de c￭ or￭ p￭ s ￭, c ￭'￭ est no￭ tre esti￭ m￭ ation ￭, a ￭-￭ t ￭-￭ il déclar￭ é ｟depuis％0020Genève｠ ￭.]],
     [[Le S￭ M￭ R m￭ es￭ u￭ re no￭ ta￭ m￭ ment l ￭'￭ e￭ ffi￭ ca￭ ci￭ té et les eff￭ e￭ ts in￭ dé￭ si￭ ra￭ b￭ les d ￭'￭ un produ￭ it ￭.]],
-    [[Y￭ as￭ min￭ a R￭ e￭ z￭ a re￭ tr￭ ouv￭ e le T￭ h￭ é￭ â￭ tre A￭ n￭ to￭ ine ( ￭0￭ 1 ￭. ￭4￭ 2 ￭. ￭0￭ 8 ￭. ￭7￭ 7 ￭. ￭7￭ 1 ￭) qui pro￭ po￭ se une re￭ pr￭ ise de C￭ on￭ ver￭ s￭ ations après un en￭ ter￭ r￭ ement ￭, sa premi￭ ère pi￭ è￭ ce qui la ré￭ v￭ é￭ la au publi￭ c ￭.]],
+    [[Y￭ as￭ min￭ a R￭ e￭ z￭ a re￭ tr￭ ouv￭ e le T￭ h￭ é￭ â￭ tre A￭ n￭ to￭ ine (￭ 0￭ 1 ￭.￭ 4￭ 2 ￭.￭ 0￭ 8 ￭.￭ 7￭ 7 ￭.￭ 7￭ 1 ￭) qui pro￭ po￭ se une re￭ pr￭ ise de C￭ on￭ ver￭ s￭ ations après un en￭ ter￭ r￭ ement ￭, sa premi￭ ère pi￭ è￭ ce qui la ré￭ v￭ é￭ la au publi￭ c ￭.]],
     [[Dans tou￭ s les ca￭ s ￭, il y a eu une tr￭ ès b￭ on￭ ne ré￭ ac￭ ti￭ vi￭ té mé￭ di￭ ca￭ le ￭.]],
     [[«￭ J ￭'￭ ai re￭ ç￭ u pl￭ usi￭ eurs o￭ ff￭ res d ￭'￭ em￭ pl￭ o￭ i de tr￭ ès gran￭ des entr￭ e￭ pr￭ is￭ es ￭» ￭, ann￭ on￭ ce ￭-￭ t ￭-￭ il ￭, sans en di￭ re plus ￭.]],
     [[Le t￭ emp￭ s man￭ qu￭ er￭ ait pu￭ is￭ que c￭ el￭ u￭ i ￭-￭ c￭ i s ￭'￭ est en￭ g￭ ag￭ é à con￭ fi￭ r￭ m￭ er la nom￭ in￭ ation deux jou￭ rs plus t￭ ar￭ d ￭, s￭ oit le 1￭ er mar￭ s ￭.]],
