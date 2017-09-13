@@ -5,6 +5,7 @@
 * Remove tokenization options from `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
 * Option `report_every` in preprocess is renamed `report_progress_every`
+* Fix some wrongly tokenization rules (punctuation-numbers)
 
 ### New features
 
@@ -14,7 +15,9 @@
 * Add 'Shallow Fusion' of language model in decoder
 * Add option to reset the optimizer states when the learning rate is decayed
 * Introduce dynamic dataset - no need to tokenize, preprocess, sample anymore
+* Introduce protection blocks for tokenization
 * Add option to dump attention in `translate.lua`
+* Add option to replace unknown words with the original wrapped in a `｟unk:xxxxx｠` tag `-replace_unk_tagged`
 
 ### Fixes and improvements
 
@@ -24,6 +27,7 @@
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
 * More graceful error handling
+* Reduce memory footprint of Adam, Adadelta and Adagrad optimizers
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 
