@@ -862,7 +862,7 @@
 <p>where <script type="math/tex">lr^{(0)}=</script>
 <code>-learning_rate</code> and <script type="math/tex">decay=</script>
 <code>-learning_rate_decay</code>.</p>
-<p>Learning rate decay is applied when using SGD or Adam optimizers. For the latter, you can also set the <code>-reset_when_decay</code> flag to reset the optimizer state when the decay is applied to simulate "Adam with restarts" from <a href="https://arxiv.org/abs/1706.09733">Denkowski et al. 2017</a>.</p>
+<p>Learning rate decay is applied when using SGD or Adam optimizers. For the latter, you can also set the <code>-decay_method restart</code> option to reset the optimizer state when the decay is applied to simulate "Adam with restarts" from <a href="https://arxiv.org/abs/1706.09733">Denkowski et al. 2017</a>.</p>
 <p>Learning rate updates are always computed at the end of an epoch. If this is a too large unit for your particular use case, consider using <a href="../sampling/">data sampling</a>.</p>
 <p>Additionally, it may be useful to set a minimum learning rate with <code>-min_learning_rate</code> to stop the training earlier when the learning rate is too small to make a difference.</p>
 <h2 id="default">Default<a class="headerlink" href="#default" title="Permanent link">&para;</a></h2>

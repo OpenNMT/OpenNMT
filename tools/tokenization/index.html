@@ -917,6 +917,7 @@
 <ul>
 <li><code>￨</code> is the feature separator symbol. If such character is used in source text, it is replaced by its non presentation form <code>│</code>.</li>
 <li><code>￭</code> is the default joiner marker (generated in <code>-joiner_annotate marker</code> mode). If such character is used in source text, it is replaced by its non presentation form <code>■</code></li>
+<li><code>｟...｠</code> are marking a sequence as protected - it won't be tokenized and its case feature is <code>N</code>.</li>
 </ul>
 <h2 id="mixed-casing-words">Mixed casing words<a class="headerlink" href="#mixed-casing-words" title="Permanent link">&para;</a></h2>
 <p><code>-segment_case</code> feature enables tokenizer to segment words into subwords with one of 3 casing types (truecase ('House'), uppercase ('HOUSE') or lowercase ('house')), which helps  restore right casing during  detokenization. This feature is especially useful for texts with a signficant number of words with mixed casing ('WiFi' -&gt; 'Wi' and 'Fi').</p>

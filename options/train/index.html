@@ -1089,7 +1089,7 @@
 <li><code>-start_decay_at &lt;number&gt;</code> (default: <code>9</code>)<br/>In "default" decay mode, start decay after this epoch.</li>
 <li><code>-start_decay_score_delta &lt;number&gt;</code> (default: <code>0</code>)<br/>Start decay when validation score improvement is lower than this value.</li>
 <li><code>-decay &lt;string&gt;</code> (accepted: <code>default</code>, <code>epoch_only</code>, <code>score_only</code>; default: <code>default</code>)<br/>When to apply learning rate decay. <code>default</code>: decay after each epoch past <code>-start_decay_at</code> or as soon as the validation score is not improving more than <code>-start_decay_score_delta</code>, <code>epoch_only</code>: only decay after each epoch past <code>-start_decay_at</code>, <code>score_only</code>: only decay when validation score is not improving more than <code>-start_decay_ppl_delta</code>.</li>
-<li><code>-reset_when_decay [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, the optimizer states (if any) will be reset when the decay condition is met.</li>
+<li><code>-decay_method &lt;string&gt;</code> (accepted: <code>default</code>, <code>restart</code>; default: <code>default</code>)<br/>If <code>restart</code> is set, the optimizer states (if any) will be reset when the decay condition is met.</li>
 </ul>
 <h2 id="saver-options">Saver options<a class="headerlink" href="#saver-options" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1105,6 +1105,7 @@
 <li><code>-beam_size &lt;number&gt;</code> (default: <code>5</code>)<br/>Beam size.</li>
 <li><code>-max_sent_length &lt;number&gt;</code> (default: <code>250</code>)<br/>Maximum output sentence length.</li>
 <li><code>-replace_unk [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If <code>-phrase_table</code> is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token</li>
+<li><code>-replace_unk_tagged [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>The same as <code>-replace_unk</code>, but wraps the replaced token in ｟unk:xxxxx｠.`</li>
 <li><code>-phrase_table &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to source-target dictionary to replace <code>&lt;unk&gt;</code> tokens.</li>
 <li><code>-n_best &lt;number&gt;</code> (default: <code>1</code>)<br/>If &gt; 1, it will also output an n-best list of decoded sentences.</li>
 <li><code>-max_num_unks &lt;number&gt;</code> (default: <code>inf</code>)<br/>All sequences with more <code>&lt;unk&gt;</code>s than this will be ignored during beam search.</li>
