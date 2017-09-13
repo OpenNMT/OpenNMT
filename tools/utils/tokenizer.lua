@@ -229,13 +229,13 @@ local function tokenize(line, opt)
           letter = true
           prev_alphabet = is_alphabet
         elseif is_number then
-          if not(number == true or space == true) then
+          if letter == true or not(number == true or space == true) then
             local addjoiner = false
             if opt.joiner_annotate then
               if opt.joiner_new then
                 addjoiner = true
               else
-                if not(letter) then
+                if not(letter) and not(placeholder) then
                   curtok = curtok .. opt.joiner
                 else
                   c = opt.joiner .. c
@@ -252,7 +252,7 @@ local function tokenize(line, opt)
               if opt.joiner_new then
                 table.insert(tokens, opt.joiner)
               else
-                curtok = opt.joiner
+                tokens[#tokens] = tokens[#tokens] .. opt.joiner
               end
             end
           end

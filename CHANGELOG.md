@@ -4,6 +4,7 @@
 
 * Remove tokenization options from `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
+* Fix some wrongly tokenization rules (punctuation-numbers)
 
 ### New features
 
