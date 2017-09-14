@@ -15,9 +15,9 @@ local options = {
     '-mode', 'conservative',
     [[Define how aggressive should the tokenization be. `aggressive` only keeps sequences
       of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65",
-      "soft-landing", etc.]],
+      "soft-landing", etc. `space` is doing space tokenization.]],
     {
-      enum = {'conservative', 'aggressive'}
+      enum = {'space', 'conservative', 'aggressive'}
     }
   },
   {
@@ -85,6 +85,10 @@ local options = {
   }
 }
 
+function tokenizer.getOpts()
+  return options
+end
+
 function tokenizer.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Tokenizer')
 end
@@ -104,6 +108,27 @@ end
 -- - skip any other non control character [U+0001-U+002F]
 -- - keep sequence of letters/numbers and tokenize everything else
 local function tokenize(line, opt)
+
+  if opt.mode == 'space' then
+    local index = 1
+    local tokens = {}
+    while index <= line:len() do
+      local sepStart, sepEnd = line:find(' ', index)
+      local sub
+      if not sepStart then
+        sub = line:sub(index)
+        table.insert(tokens, sub)
+        break
+      else
+        sub = line:sub(index, sepStart - 1)
+        table.insert(tokens, sub)
+        index = sepEnd + 1
+      end
+    end
+
+    return tokens
+  end
+
   local tokens = {}
   -- contains the current token
   local curtok = ''

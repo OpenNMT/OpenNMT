@@ -14,19 +14,15 @@ function unicode._utf8_to_cp(s, idx)
   if idx > #s then return end
   idx = idx or 1
   local c = string.byte(s, idx)
-  local l = (c < 0x80 and 1) or (c < 0xE0 and 2) or (c < 0xF0 and 3) or (c < 0xF8 and 4)
+  if c < 0x80 then return c, string.char(c) end
+  local l = (c < 0xE0 and 2) or (c < 0xF0 and 3) or (c < 0xF8 and 4)
   if not l then error("invalid utf-8 sequence") end
-  local val = 0
-  if l == 1 then return c, string.sub(s, idx, idx) end
-  for i = 1, l do
+  local val = bit32.band(c, bit32.rshift(0xff, l))
+  for i = 2, l do
     c = string.byte(s, idx+i-1)
-    if i > 1 then
-      assert(bit32.band(c, 0xC0) == 0x80)
-      val = bit32.lshift(val, 6)
-      val = bit32.bor(val, bit32.band(c, 0x3F))
-    else
-      val = bit32.band(c,bit32.rshift(0xff,l))
-    end
+    assert(bit32.band(c, 0xC0) == 0x80)
+    val = bit32.lshift(val, 6)
+    val = bit32.bor(val, bit32.band(c, 0x3F))
   end
   return val, string.sub(s, idx, idx+l-1)
 end
@@ -61,7 +57,7 @@ function unicode.utf8_iter(s)
     p = p + #nextc
   end
   return function()
-    local v,c = nextv, nextc
+    local v, c = nextv, nextc
     if p > L then
       if nextc then
         nextc = nil
@@ -114,7 +110,7 @@ end
 function unicode.isSeparator(u)
   if not u then return false end
   -- control character or separator
-  return (u >= 9 and u <= 13) or _find_codepoint(u, unidata.Separator)
+  return u == 32 or (u >= 9 and u <= 13) or _find_codepoint(u, unidata.Separator)
 end
 
 function unicode.isMark(u)
@@ -126,6 +122,10 @@ end
 -- returns if letter and case "lower", "upper", "other"
 function unicode.isLetter(u)
   if not u then return false end
+  -- accelerate on common ascii
+  if u >= 97 and u <= 122 then return true, "lower" end
+  if u >= 65 and u <= 90 then return true, "upper" end
+  if u <= 127 then return false end
   -- unicode letter or CJK Unified Ideograph
   if ((u>=0x4E00 and u<=0x9FD5) -- CJK Unified Ideograph
       or (u>=0x2F00 and u<=0x2FD5) -- Kangxi Radicals
@@ -176,6 +176,9 @@ end
 
 function unicode.isNumber(u)
   if not u then return false end
+  -- accelerate on common ascii
+  if u >= 48 and u <= 57 then return true end
+  if u <= 127 then return false end
   return _find_codepoint(u, unidata.Number)
 end
 
