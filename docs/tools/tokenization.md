@@ -23,6 +23,7 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 
 * `￨` is the feature separator symbol. If such character is used in source text, it is replaced by its non presentation form `│`.
 * `￭` is the default joiner marker (generated in `-joiner_annotate marker` mode). If such character is used in source text, it is replaced by its non presentation form `■`
+* `｟...｠` are marking a sequence as protected - it won't be tokenized and its case feature is `N`.
 
 ## Mixed casing words
 `-segment_case` feature enables tokenizer to segment words into subwords with one of 3 casing types (truecase ('House'), uppercase ('HOUSE') or lowercase ('house')), which helps  restore right casing during  detokenization. This feature is especially useful for texts with a signficant number of words with mixed casing ('WiFi' -> 'Wi' and 'Fi').

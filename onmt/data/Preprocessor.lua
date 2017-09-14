@@ -130,7 +130,7 @@ local function declareDataOptions(dataType)
         '-valid'..suffix(datalist[i]), '',
         "Path to the validation"..nameWithSpace(datalist[i]).." data.",
         {
-          valid=onmt.utils.ExtendedCmdLine.fileExists
+          valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
         }
       })
   end
@@ -479,16 +479,18 @@ function Preprocessor:__init(args, dataType)
     self.list_train[1].weight = 1
   end
 
-  self.list_valid = { {onmt.utils.FileReader.countLines(args[self.valids[1]], args.idx_files), {args[self.valids[1]]}}}
-  for i = 2, #self.valids do
-    if not args.idx_files then
-      onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.valids[i]], args.idx_files) == self.list_valid[1][1],
-                              "line count in "..args[self.valids[i]].." do not match "..args[self.valids[1]])
+  if args[self.valids[1]] ~= '' then
+    self.list_valid = { {onmt.utils.FileReader.countLines(args[self.valids[1]], args.idx_files), {args[self.valids[1]]}}}
+    for i = 2, #self.valids do
+      if not args.idx_files then
+        onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.valids[i]], args.idx_files) == self.list_valid[1][1],
+                                "line count in "..args[self.valids[i]].." do not match "..args[self.valids[1]])
+      end
+      table.insert(self.list_valid[1][2], args[self.valids[i]])
     end
-    table.insert(self.list_valid[1][2], args[self.valids[i]])
+    self.list_valid[1].fname = self.args[self.valids[1]]
+    self.list_valid[1].weight = 1
   end
-  self.list_valid[1].fname = self.args[self.valids[1]]
-  self.list_valid[1].weight = 1
 
 end
 
@@ -939,46 +941,54 @@ function Preprocessor:getVocabulary()
 end
 
 function Preprocessor:makeData(dataset, dicts)
-  _G.logger:info("--- Preparing "..dataset.." sample")
+  if dataset ~= 'valid' or
+     (self.args.valid and self.args.valid ~= '') or
+     (self.args.src_valid and self.args.src_valid ~= '') or
+     (self.args.tgt_valid and self.args.tgt_valid ~= '') then
 
-  local sample_file = {}
-  if dataset == 'train' and self.args.gsample ~= 0 then
-    -- sample data using sample and sample_dict
-    local sampledCount = self.args.gsample
-    if sampledCount < 1 then
-      sampledCount = sampledCount * self.totalCount
-    end
-    -- check how many sentences per file
-    for _, f in ipairs(self.list_train) do
-      local n = math.ceil(sampledCount * f.weight)
-      local t = torch.LongTensor(n)
-      if n > 0 then
-        for i = 1, n do
-          t[i] = torch.random(1, f[1])
-        end
-        t = torch.sort(t)
+    _G.logger:info("--- Preparing "..dataset.." sample")
+
+    local sample_file = {}
+    if dataset == 'train' and self.args.gsample ~= 0 then
+      -- sample data using sample and sample_dict
+      local sampledCount = self.args.gsample
+      if sampledCount < 1 then
+        sampledCount = sampledCount * self.totalCount
       end
-      table.insert(sample_file, t)
+      -- check how many sentences per file
+      for _, f in ipairs(self.list_train) do
+        local n = math.ceil(sampledCount * f.weight)
+        local t = torch.LongTensor(n)
+        if n > 0 then
+          for i = 1, n do
+            t[i] = torch.random(1, f[1])
+          end
+          t = torch.sort(t)
+        end
+        table.insert(sample_file, t)
+      end
     end
-  end
 
-  local data = {}
-  if self.dataType == 'monotext' then
-    data.src = self:makeMonolingualData(self["list_"..dataset], dicts.src, sample_file)
-  elseif self.dataType == 'feattext' then
-    data.src, data.tgt = self:makeFeatTextData(self["list_"..dataset], dicts.tgt, sample_file)
-    if not dicts.srcInputSize then
-      dicts.srcInputSize = data.src.vectors[1]:size(2)
+    local data = {}
+    if self.dataType == 'monotext' then
+      data.src = self:makeMonolingualData(self["list_"..dataset], dicts.src, sample_file)
+    elseif self.dataType == 'feattext' then
+      data.src, data.tgt = self:makeFeatTextData(self["list_"..dataset], dicts.tgt, sample_file)
+      if not dicts.srcInputSize then
+        dicts.srcInputSize = data.src.vectors[1]:size(2)
+      else
+        onmt.utils.Error.assert(dicts.srcInputSize==data.src.vectors[1]:size(2), "feature size is not matching in all files")
+      end
     else
-      onmt.utils.Error.assert(dicts.srcInputSize==data.src.vectors[1]:size(2), "feature size is not matching in all files")
+      data.src, data.tgt = self:makeBilingualData(self["list_"..dataset], dicts.src, dicts.tgt, sample_file)
     end
+
+    _G.logger:info("")
+
+    return data
   else
-    data.src, data.tgt = self:makeBilingualData(self["list_"..dataset], dicts.src, dicts.tgt, sample_file)
+    _G.logger:warning('No validation data')
   end
-
-  _G.logger:info("")
-
-  return data
 end
 
 return Preprocessor

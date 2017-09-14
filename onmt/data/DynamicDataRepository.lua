@@ -20,7 +20,9 @@ end
 
 function DynamicDataRepository:getValid()
   local data = self.preprocessor:makeData('valid', self.dicts)
-  return onmt.data.Dataset.new(data.src, data.tgt)
+  if data then
+    return onmt.data.Dataset.new(data.src, data.tgt)
+  end
 end
 
 return DynamicDataRepository

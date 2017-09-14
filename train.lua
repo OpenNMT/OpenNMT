@@ -67,19 +67,26 @@ local function buildDataset(opt, data)
   local trainDataset, validDataset
 
   if torch.type(data) == "DynamicDataRepository" then
-    trainDataset = data:getTraining()
     validDataset = data:getValid()
+    trainDataset = data:getTraining()
   else
     if opt.sample > 0 then
        trainDataset = onmt.data.SampledDataset.new(opt, data.train.src, data.train.tgt)
     else
        trainDataset = onmt.data.Dataset.new(data.train.src, data.train.tgt)
     end
-    validDataset = onmt.data.Dataset.new(data.valid.src, data.valid.tgt)
+    if data.valid then
+      validDataset = onmt.data.Dataset.new(data.valid.src, data.valid.tgt)
+    end
   end
 
   local nTrainBatch, batchUsage = trainDataset:setBatchSize(opt.max_batch_size, opt.uneven_batches)
-  validDataset:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+
+  if validDataset then
+    validDataset:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+  else
+    _G.logger:warning('No validation data')
+  end
 
   if data.dataType ~= 'monotext' then
     local srcVocSize
