@@ -82,6 +82,10 @@ local options = {
     {
       enum = {'suffix', 'prefix', 'both', 'none'}
     }
+  },
+  {
+    '-normalize_cmd', '',
+    [[Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.]]
   }
 }
 
@@ -399,6 +403,7 @@ local function getTokens(t, joiner)
   end)
   return fields
 end
+
 
 function tokenizer.detokenize(line, opt)
   local dline = ""
