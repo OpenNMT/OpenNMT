@@ -414,23 +414,70 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#importance-sampling" title="Importance Sampling" class="md-nav__link">
+    Importance Sampling
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-sampling" title="Memory Sampling" class="md-nav__link">
+    Memory Sampling
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#uniform" title="Uniform" class="md-nav__link">
     Uniform
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#perplexity-based" title="Perplexity-based" class="md-nav__link">
     Perplexity-based
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#partition" title="Partition" class="md-nav__link">
     Partition
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-sampling" title="File Sampling" class="md-nav__link">
+    File Sampling
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-dataset" title="Dynamic Dataset" class="md-nav__link">
+    Dynamic Dataset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sampling-distribution-rules" title="Sampling distribution rules" class="md-nav__link">
+    Sampling distribution rules
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -815,23 +862,70 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#importance-sampling" title="Importance Sampling" class="md-nav__link">
+    Importance Sampling
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-sampling" title="Memory Sampling" class="md-nav__link">
+    Memory Sampling
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#uniform" title="Uniform" class="md-nav__link">
     Uniform
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#perplexity-based" title="Perplexity-based" class="md-nav__link">
     Perplexity-based
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#partition" title="Partition" class="md-nav__link">
     Partition
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-sampling" title="File Sampling" class="md-nav__link">
+    File Sampling
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-dataset" title="Dynamic Dataset" class="md-nav__link">
+    Dynamic Dataset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sampling-distribution-rules" title="Sampling distribution rules" class="md-nav__link">
+    Sampling distribution rules
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -854,24 +948,82 @@
                 
                   <h1>Data sampling</h1>
                 
-                <p>Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch. There are different types of sampling that are selected using <code>-sample_type</code> option as defined below.</p>
+                <p>Data sampling is a technique to select a subset of the training set at each epoch. This could be a way to make the epoch unit smaller or select relevant training sequences at each epoch. This is also necessary for working on very large dataset - where the full data does not need to be loaded in memory for each epoch. There are two implementations for sampling: <em>memory sampling</em> and <em>file sampling</em>.</p>
+<p>Both implementations also support vocabulary sampling (also called <em>Importance Sampling</em>).</p>
+<h2 id="importance-sampling">Importance Sampling<a class="headerlink" href="#importance-sampling" title="Permanent link">&para;</a></h2>
 <p>When sampling, with the option <code>-sample_vocab</code> it is also possible to restrict the generated vocabulary to the current sample which gives an approximate of the full softmax as defined here <a href="http://www.aclweb.org/anthology/P15-1001">Jean et al, 2015</a> via an "importance sampling" approach.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>Importance sampling is particularly useful when training systems with very large output vocabulary for faster computation.</p>
 </div>
-<h2 id="uniform">Uniform<a class="headerlink" href="#uniform" title="Permanent link">&para;</a></h2>
+<h2 id="memory-sampling">Memory Sampling<a class="headerlink" href="#memory-sampling" title="Permanent link">&para;</a></h2>
+<p><em>Memory Sampling</em> is enabled using <code>-sample N</code> option where <script type="math/tex">N</script> is the number of sequences to select at each epoch. There are different methods for selecting these <script type="math/tex">N</script> sentences corresponding to the <code>-sample_type</code> option: <code>uniform</code> (default), <code>perplexity</code> or <code>partition</code>.</p>
+<h3 id="uniform">Uniform<a class="headerlink" href="#uniform" title="Permanent link">&para;</a></h3>
 <p>The simplest data sampling is to uniformly select a subset of the training data. Using the <code>-sample N</code> option, the training will randomly choose <script type="math/tex">N</script> training sequences at each epoch.</p>
 <p>A typical use case is to reduce the length of the epochs for more frequent learning rate updates and validation perplexity computation.</p>
-<h2 id="perplexity-based">Perplexity-based<a class="headerlink" href="#perplexity-based" title="Permanent link">&para;</a></h2>
+<h3 id="perplexity-based">Perplexity-based<a class="headerlink" href="#perplexity-based" title="Permanent link">&para;</a></h3>
 <p>This approach is an attempt to feed relevant training data at each epoch. When using the flag <code>-sample_type perplexity</code>, the perplexity of each sequence is used to generate a multinomial probability distribution over the training sequences. The higher the perplexity, the more likely the sequence is selected.</p>
 <p>Alternatively, perplexity-based sampling can be enabled when an average training perplexity is met with the <code>-sample_perplexity_init</code> option.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This perplexity-based approach is experimental and effects are to be experimented. This also results in a ~10% slowdown as the perplexity of <strong>each</strong> sequence has to be independently computed.</p>
 </div>
-<h2 id="partition">Partition<a class="headerlink" href="#partition" title="Permanent link">&para;</a></h2>
+<h3 id="partition">Partition<a class="headerlink" href="#partition" title="Permanent link">&para;</a></h3>
 <p>When using the flag <code>-sample_type partition</code>, samples are drawn without random, uniformally and incrementally from the corpus training. Use this mode for making sure all training sequences will be sent the same number of time.</p>
+<h2 id="file-sampling">File Sampling<a class="headerlink" href="#file-sampling" title="Permanent link">&para;</a></h2>
+<p><em>File Sampling</em> is enabled using <code>-gsample V</code> option: <script type="math/tex">V</script> is either an integer and in that case it represents the number of sentences to sample from the dataset, or a float values and in that case, it represents a relative size based on the full dataset size (e.g: 0.1 being 10%).</p>
+<p>File Sampling can only be used with on-the-fly preprocessing and tokenization as an alternative to sequential tokenization, preprocessing, training - and this is refers as <em>Dynamic Dataset</em> below.</p>
+<p>In <em>File Sampling</em>, the only available sampling method is uniform meaning that the sentences are selected uniformly in each corpus of the dataset. However, it is possible to modify the distribution of the sampling for the different files using sampling rule file as described below.</p>
+<h3 id="dynamic-dataset">Dynamic Dataset<a class="headerlink" href="#dynamic-dataset" title="Permanent link">&para;</a></h3>
+<p>It is possible to provide raw files directly to training script. For that, instead of using the <code>-data D</code> option, you have to use preprocessing data selection options (such as <code>-train_src</code>, <code>-train_tgt</code>, or <code>-training_dir</code> option). Note these modes are exclusive. Corpus can be pre-tokenized, or you can provide tokenization options for both source and target (or source only for language models) prefixing all tokenization options with <code>-tok_src_</code>, <code>-tok_tgt_</code> or <code>tok_</code>. For instance - the following commandlines use all the files from <code>baseline</code> directory with source <code>.en</code> suffix and target <code>.fr</code> suffix. The source is tokenized in aggressive mode, and is using case feature, while the target is tokenized in aggressive mode and limited to 30 words sequences.</p>
+<div class="codehilite"><pre><span></span>th train.lua
+  -train_dir baseline
+  -src_suffix .en -tgt_suffix .fr
+  -tok_src_mode aggressive -tok_src_case_feature
+  -tok_tgt_mode aggressive
+  -tgt_seq_length 30
+  -save_model baseline
+</pre></div>
+
+
+<p>The available options are <code>preprocess.lua</code> options documented <a href="http://opennmt.net/OpenNMT/options/preprocess/">here</a> and <code>tokenize.lua</code> options documented <a href="http://opennmt.net/OpenNMT/options/tokenize/">here</a>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>It is simpler (and faster) to use dynamic dataset associated with file sampling when working on corpus with more than 10 million sentences.</p>
+</div>
+<h3 id="sampling-distribution-rules">Sampling distribution rules<a class="headerlink" href="#sampling-distribution-rules" title="Permanent link">&para;</a></h3>
+<p>When the set of training files is heterogenous, you can specify the proportion of each file using a distribution rule file specified with <code>-gsample_dist FILE</code> option.</p>
+<p>The rule file is list of rule in each line applied. A rule is a <code>LuaPattern SPACE WEIGHT</code>. The first rule in the file matching (with <code>LuaPattern</code> a filename) is applied for the file. <code>LuaPattern</code> can be a lua regex (see <a href="https://www.lua.org/pil/20.2.html">https://www.lua.org/pil/20.2.html</a>) or <code>*</code> matching everything.</p>
+<p>For instance, let us say you have the following files in your <code>train_dir</code> directory:</p>
+<div class="codehilite"><pre><span></span>generic.src, generic.tgt
+IT1.src, IT1.tgt
+IT2.src, IT2.tgt
+MSDN.src, MSDN.tgt
+colloquial.src, colloquial.tgt
+news.src, news.tgt
+</pre></div>
+
+
+<p>and using the following rules:</p>
+<div class="codehilite"><pre><span></span>IT,MSDN 20
+colloquial 10
+generic 65
+* 5
+</pre></div>
+
+
+<p>The following rules apply:</p>
+<ul>
+<li><code>generic 65</code> matches <code>generic.{src,tgt}</code></li>
+<li><code>IT,MSDN 20</code> matches <code>IT{1,2}.{src,tgt}</code> and <code>MSDN.{src,tgt}</code></li>
+<li><code>colloquial 10</code> matches <code>colloquial.{src,tgt}</code></li>
+<li><code>* 5</code> maches <code>news.{src,tgt}</code></li>
+</ul>
+<p>The weights are dynamically normalized to 1. Here we will make sure that 65% of the sample will be composed of sentences from <code>generic.{src,tgt}</code> and only 20% from <code>IT{1,2}.{src,tgt}</code> and <code>MSDN.{src,tgt}</code>. To build the sample, the sampling preparation algorithm might oversample some of the corpus if is too small.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If one file could not be match by a rule, it would be completely excluded.</p>
+</div>
                 
                   
                 
