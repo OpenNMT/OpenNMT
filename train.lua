@@ -62,10 +62,16 @@ local function buildData(opt, dataset)
   else
      trainData = onmt.data.Dataset.new(dataset.train.src, dataset.train.tgt)
   end
-  local validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
-
   local nTrainBatch, batchUsage = trainData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
-  validData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+
+  local validData
+
+  if dataset.valid then
+    validData = onmt.data.Dataset.new(dataset.valid.src, dataset.valid.tgt)
+    validData:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+  else
+    _G.logger:warning('No validation data')
+  end
 
   if dataset.dataType ~= 'monotext' then
     local srcVocSize

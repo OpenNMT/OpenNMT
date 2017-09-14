@@ -133,21 +133,27 @@ local function main()
 
   _G.logger:info('')
 
-  _G.logger:info('Preparing validation data...')
-  data.valid = {}
-  if dataType == 'monotext' then
-    data.valid.src = Preprocessor:makeMonolingualData(opt.valid, data.dicts.src, isValid)
-  elseif dataType == 'feattext' then
-    data.valid.src, data.valid.tgt = Preprocessor:makeFeatTextData(opt.valid_src, opt.valid_tgt,
-                                                                    data.dicts.tgt,
-                                                                    isValid)
+  -- optional validation data
+  if (opt.valid and opt.valid ~= '') or
+     (opt.valid_src and opt.valid_src ~= '') or
+     (opt.valid_tgt and opt.valid_tgt ~= '') then
+    _G.logger:info('Preparing validation data...')
+    data.valid = {}
+    if dataType == 'monotext' then
+      data.valid.src = Preprocessor:makeMonolingualData(opt.valid, data.dicts.src, isValid)
+    elseif dataType == 'feattext' then
+      data.valid.src, data.valid.tgt = Preprocessor:makeFeatTextData(opt.valid_src, opt.valid_tgt,
+                                                                      data.dicts.tgt,
+                                                                      isValid)
+    else
+      data.valid.src, data.valid.tgt = Preprocessor:makeBilingualData(opt.valid_src, opt.valid_tgt,
+                                                                      data.dicts.src, data.dicts.tgt,
+                                                                      isValid)
+    end
+    _G.logger:info('')
   else
-    data.valid.src, data.valid.tgt = Preprocessor:makeBilingualData(opt.valid_src, opt.valid_tgt,
-                                                                    data.dicts.src, data.dicts.tgt,
-                                                                    isValid)
+    _G.logger:warning('No validation data')
   end
-
-  _G.logger:info('')
 
   if dataType == 'monotext' then
     if opt.vocab:len() == 0 then
