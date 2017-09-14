@@ -79,9 +79,11 @@ local options = {
     }
   },
   {
-    '-reset_when_decay', false,
-    [[If set, the optimizer states (if any) will be reset when the decay condition is met.]],
+    '-decay_method', 'default',
+    [[If `restart` is set, the optimizer states (if any) will be reset when the
+      decay condition is met.]],
     {
+      enum = {'default', 'restart'},
       train_state = true
     }
   }
@@ -98,6 +100,23 @@ end
 
 function Optim:setOptimStates(states)
   self.optimStates = states
+end
+
+--[[ Sets optimization states to zero. ]]
+function Optim:resetOptimStates()
+  if self.optimStates == nil then
+    return
+  end
+
+  for i = 1, #self.optimStates do
+    for key, state in pairs(self.optimStates[i]) do
+      if torch.isTensor(state) then
+        state:zero()
+      elseif key == 't' then
+        self.optimStates[i].t = 0
+      end
+    end
+  end
 end
 
 function Optim:zeroGrad(gradParams)
@@ -161,10 +180,8 @@ function Optim:updateLearningRate(score, epoch, evaluator)
   local function decayLr()
     self.args.learning_rate = self.args.learning_rate * self.args.learning_rate_decay
 
-    if self.args.reset_when_decay and self.optimStates ~= nil then
-      for i = 1, #self.optimStates do
-        self.optimStates[i] = {}
-      end
+    if self.args.decay_method == 'restart' then
+      self:resetOptimStates()
     end
   end
 

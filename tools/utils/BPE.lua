@@ -1,4 +1,6 @@
 local unicode = require 'tools.utils.unicode'
+local separators = require('tools.utils.separators')
+
 local BPE = torch.class('BPE')
 
 function BPE:__init(opt)
@@ -162,40 +164,44 @@ function BPE:segment(tokens, separator)
   local bpeSegment = {}
   for i=1, #tokens do
     local token = tokens[i]
-    local left_sep = false
-    local right_sep = false
-    if self.joiner_annotate and not self.joiner_new then
-      if token:sub(1, #separator) == separator then
-        token = token:sub(#separator + 1)
-        left_sep = true
+    if token:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
+      table.insert(bpeSegment, token)
+    else
+      local left_sep = false
+      local right_sep = false
+      if self.joiner_annotate and not self.joiner_new then
+        if token:sub(1, #separator) == separator then
+          token = token:sub(#separator + 1)
+          left_sep = true
+        end
+        if token:sub(-#separator, -1) == separator then
+          token = token:sub(1, -#separator-1)
+          right_sep = true
+        end
       end
-      if token:sub(-#separator, -1) == separator then
-        token = token:sub(1, -#separator-1)
-        right_sep = true
+      local bpeTokens = self:encode(token)
+      if self.joiner_annotate and not self.joiner_new then
+        if left_sep then
+          bpeTokens[1] = separator .. bpeTokens[1]
+        end
+        if right_sep then
+          bpeTokens[#bpeTokens] = bpeTokens[#bpeTokens] .. separator
+        end
       end
-    end
-    local bpeTokens = self:encode(token)
-    if self.joiner_annotate and not self.joiner_new then
-      if left_sep then
-        bpeTokens[1] = separator .. bpeTokens[1]
-      end
-      if right_sep then
-        bpeTokens[#bpeTokens] = bpeTokens[#bpeTokens] .. separator
-      end
-    end
-    for j=1, #bpeTokens-1 do
-      if self.joiner_annotate then
-        if not self.joiner_new then
-          table.insert(bpeSegment, bpeTokens[j] .. separator)
+      for j=1, #bpeTokens-1 do
+        if self.joiner_annotate then
+          if not self.joiner_new then
+            table.insert(bpeSegment, bpeTokens[j] .. separator)
+          else
+            table.insert(bpeSegment, bpeTokens[j])
+            table.insert(bpeSegment, separator)
+          end
         else
           table.insert(bpeSegment, bpeTokens[j])
-          table.insert(bpeSegment, separator)
         end
-      else
-        table.insert(bpeSegment, bpeTokens[j])
       end
+      table.insert(bpeSegment, bpeTokens[#bpeTokens])
     end
-    table.insert(bpeSegment, bpeTokens[#bpeTokens])
   end
   return bpeSegment
 end

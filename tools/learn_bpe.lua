@@ -47,8 +47,12 @@ local opt = cmd:parse(arg)
 local function string2word(s)
   local t = {}
   if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, separators.BOT) end
-  for _, c in unicode.utf8_iter(s) do
-    table.insert(t, c)
+  if s:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
+    table.insert(t, s)
+  else
+    for _, c in unicode.utf8_iter(s) do
+      table.insert(t, c)
+    end
   end
   if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, separators.EOT) end
   return table.concat(t, " ")
@@ -109,7 +113,7 @@ local function get_vocabulary()
       local word = toks[i]
       vocab[word] = (vocab[word] or 0) + 1
     end
-    l=io.read()
+    l = io.read()
     count = count + 1
     if count % 100000 == 0 then _G.logger:info('... ' .. count .. ' sentences processed') end
   end

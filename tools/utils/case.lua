@@ -48,6 +48,10 @@ function case.addCase (toks)
     local loweredTok = ''
 
     for v, c in unicode.utf8_iter(toks[i]) do
+      if loweredTok == '' and c == separators.ph_marker_open then
+        loweredTok = toks[i]
+        break
+      end
       local is_letter, thecase = unicode.isLetter(v)
       -- find lowercase equivalent
       if is_letter then
