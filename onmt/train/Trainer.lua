@@ -426,7 +426,11 @@ function Trainer:train(trainData, validData, trainStates)
     end
 
     local epochState = self:trainEpoch(trainData, epoch, self.args.start_iteration, batchOrder)
-    local validScore = self:eval(validData, epoch)
+
+    local validScore = 0
+    if validData then
+      validScore = self:eval(validData, epoch)
+    end
 
     self.optim:updateLearningRate(validScore, epoch, self.evaluator)
 

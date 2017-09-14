@@ -86,7 +86,7 @@ local function declareDataOptions(mode)
         '-valid'..suffix(datalist[i]), '',
         "Path to the validation"..nameWithSpace(datalist[i]).." data.",
         {
-          valid=onmt.utils.ExtendedCmdLine.fileExists
+          valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
         }
       })
   end
