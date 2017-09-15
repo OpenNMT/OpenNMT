@@ -19,19 +19,19 @@ local opt = cmd:parse(arg)
 local N = require('tools.utils.normalizer')
 
 local pool = threads.Threads(
-   opt.nparallel,
-   function()
-     _G.separators = require('tools.utils.separators')
-     _G.tokenizer = require('tools.utils.tokenizer')
-     _G.BPE = require ('tools.utils.BPE')
-     if opt.bpe_model ~= '' then
-       _G.bpe = _G.BPE.new(opt)
-     end
-     if opt.normalize_cmd ~= '' then
+  opt.nparallel,
+  function()
+    _G.separators = require('tools.utils.separators')
+    _G.tokenizer = require('tools.utils.tokenizer')
+    _G.BPE = require ('tools.utils.BPE')
+    if opt.bpe_model ~= '' then
+      _G.bpe = _G.BPE.new(opt)
+    end
+    if opt.normalize_cmd ~= '' then
       local N = require('tools.utils.normalizer')
       _G.normalizer = N.new(opt.normalize_cmd)
     end
-   end
+  end
 )
 pool:specific(true)
 
