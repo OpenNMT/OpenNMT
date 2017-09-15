@@ -964,8 +964,8 @@ end
 function Preprocessor:makeData(dataset, dicts)
   if dataset ~= 'valid' or
      (self.args.valid and self.args.valid ~= '') or
-     (self.args.src_valid and self.args.src_valid ~= '') or
-     (self.args.tgt_valid and self.args.tgt_valid ~= '') then
+     (self.args.valid_src and self.args.valid_src ~= '') or
+     (self.args.valid_tgt and self.args.valid_tgt ~= '') then
 
     _G.logger:info("--- Preparing "..dataset.." sample")
 
