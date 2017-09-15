@@ -375,13 +375,14 @@ local function init_thread(tokenizers)
   _G.BPE = require ('tools.utils.BPE')
   _G.bpes = {}
   _G.tokenizers = tokenizers
+  _G.normalizers = {}
   for i, v in ipairs(tokenizers) do
     if v and v["bpe_model"] and v["bpe_model"] ~= '' then
       _G.bpes[i] = _G.BPE.new(v)
     end
     if v and v["normalize_cmd"] and v["normalize_cmd"] ~= '' then
       local N = require('tools.utils.normalizer')
-      _G.normalizer = N.new(v["normalize_cmd"])
+      _G.normalizers[i] = N.new(v["normalize_cmd"])
     end
   end
 end
@@ -563,6 +564,7 @@ end
 ]]
 function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants,
                                       isValid, generateFeatures, parallelCheck, sample_file)
+  local verbose = _G.logger.level == 'DEBUG'
   sample_file = sample_file or {}
   local n = #files[1][2]
 
@@ -655,18 +657,19 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
           local idx = 1
           local sampling_idx = 1
           local hasNil = false
-          local allNil = false
           -- read all the available sentences or as long as we have not reached sampling size
           -- sampling table is an ordered sentence of sentences id to keep
           while not hasNil and (not sampling or (sampling:dim() ~= 0 and sampling_idx <= sampling:size(1))) do
             -- keep in sentences the different sentences and number of times it repeats
-            local sentences = { 1 }
+            local sentences = { {} }
             for i = 1, n do
               table.insert(sentences, {})
             end
             -- keep maximum a batch of 10000 sentences
-            while not hasNil and #sentences[1] < 10000 do
+            while not hasNil and (not sampling or (sampling:dim() ~= 0 and sampling_idx <= sampling:size(1))) and #sentences[1] < 10000 do
+              local allNil = true
               local keepSentence = not sampling or sampling[sampling_idx] == idx
+
               for i = 1, n do
                 local sentence = readers[i]:next(false)
                 hasNil = hasNil or sentence == nil
@@ -675,40 +678,59 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                   table.insert(sentences[i+1], sentence)
                 end
               end
-              if keepSentence and sampling then
-                while sampling[sampling_idx+1] == idx do
-                  sentences[1] = sentences[1] + 1
-                  sampling_idx = sampling_idx + 1
+
+              if hasNil then
+                if not allNil then
+                  return _G.__threadid, 1, string.format('all data sources do not have the same number of sentences')
                 end
-                sampling_idx = sampling_idx + 1
+                break
+              end
+
+              local repeatSentence = 1
+              if sampling then
+                while sampling_idx+repeatSentence <= sampling:size(1) and sampling[sampling_idx+repeatSentence] == idx do
+                  repeatSentence = repeatSentence + 1
+                end
+              end
+
+              if keepSentence then
+                if sampling then
+                  sampling_idx = sampling_idx + repeatSentence
+                end
+                table.insert(sentences[1], repeatSentence)
               end
               idx = idx + 1
             end
 
-            if hasNil then
-              if not allNil then
-                return _G.__threadid, 1, string.format('all data sources do not have the same number of sentences')
-              end
-            end
-
             -- normalize and tokenize
             for i = 1, n do
-              if _G.normalizer[i] then
-                local nsentences = _G.normalizer[i]:normalize(sentences[i+1])
+              if _G.normalizers[i] then
+                local nsentences = _G.normalizers[i]:normalize(sentences[i+1])
                 if nsentences == nil then
                   return _G.__threadid, 1, string.format('normalizer does not preserve sentence count')
                 end
                 sentences[i+1] = nsentences
               end
-              sentences[i+1] =  _G.tokenizer.tokenize(_G.tokenizers[i], sentences[i+1], _G.bpes[i])
+              for j = 1, #sentences[i+1] do
+                sentences[i+1][j] =  _G.tokenizer.tokenize(_G.tokenizers[i], sentences[i+1][j], _G.bpes[i])
+              end
             end
 
-            for i = 1, sentences[1] do
-              ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
-                                                      constants, prunedRatio, generateFeatures, time_shift_feature,
-                                                      sentenceDists, vectors, features, avgLength, sizes,
-                                                      src_seq_length, tgt_seq_length)
-              count = count + 1
+            for j = 1, #sentences[1] do
+              local tokens = {}
+              for i = 1, n do
+                table.insert(tokens, sentences[i+1][j])
+                if verbose then
+                  _G.logger:debug("[%d:%d] %s", j, i, table.concat(tokens[i], " "))
+                end
+              end
+              for _ = 1, sentences[1][j] do
+                ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
+                                                        constants, prunedRatio, generateFeatures, time_shift_feature,
+                                                        sentenceDists, vectors, features, avgLength, sizes,
+                                                        src_seq_length, tgt_seq_length)
+                count = count + 1
+              end
             end
           end
         end
@@ -774,6 +796,8 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
       end
     end
   end
+
+  onmt.utils.Error.assert(#gVectors[1] > 0, "empty dataset")
 
   if self.args.shuffle then
     _G.logger:info('... shuffling sentences')

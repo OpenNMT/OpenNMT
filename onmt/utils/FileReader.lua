@@ -34,7 +34,7 @@ function FileReader:next(doTokenize)
         table.insert(sent, word)
       end
     else
-      return sent, idx
+      return line, idx
     end
   else
     local p = 1
