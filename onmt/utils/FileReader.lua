@@ -1,17 +1,17 @@
 local FileReader = torch.class("FileReader")
 
-function FileReader:__init(filename, idxSent, featSequence, tokenizer)
+function FileReader:__init(filename, idxSent, featSequence)
   self.file = assert(io.open(filename, "r"))
   self.idxSent = idxSent
   self.featSequence = featSequence
-  self.tokenizer = tokenizer
 end
 
 --[[
   Read next line in the file and split it on spaces. If EOF is reached, returns nil.
   If skip - do not process the sentence, it will be skipped.
 ]]
-function FileReader:next(skip)
+function FileReader:next(doTokenize)
+  doTokenize = not (doTokenize == false)
   local line = self.file:read()
   local idx
 
@@ -29,14 +29,12 @@ function FileReader:next(skip)
   end
 
   if not self.featSequence then
-    -- no need to tokenize sentence that we will skip
-    if skip then return sent, idx end
-    if not self.tokenizer then
+    if doTokenize then
       for word in line:gmatch'([^%s]+)' do
         table.insert(sent, word)
       end
     else
-      sent = self.tokenizer(line)
+      return sent, idx
     end
   else
     local p = 1

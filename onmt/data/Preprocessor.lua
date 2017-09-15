@@ -379,6 +379,10 @@ local function init_thread(tokenizers)
     if v and v["bpe_model"] and v["bpe_model"] ~= '' then
       _G.bpes[i] = _G.BPE.new(v)
     end
+    if v and v["normalize_cmd"] and v["normalize_cmd"] ~= '' then
+      local N = require('tools.utils.normalizer')
+      _G.normalizer = N.new(v["normalize_cmd"])
+    end
   end
 end
 
@@ -604,9 +608,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         local readers = {}
         local prunedRatio = {}
         for i = 1, n do
-          local tokFunction
-          tokFunction = function(line) return _G.tokenizer.tokenize(_G.tokenizers[i], line, _G.bpes[i]) end
-          table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i], tokFunction))
+          table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i]))
           table.insert(prunedRatio, 0)
         end
 
@@ -652,44 +654,63 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         else
           local idx = 1
           local sampling_idx = 1
-          while true and (not sampling or (sampling:dim() ~= 0 and sampling_idx <= sampling:size(1))) do
-            local tokens = {}
-            local hasNil = false
-            local allNil = true
-            local keepSentence = not sampling or sampling[sampling_idx] == idx
+          local hasNil = false
+          local allNil = false
+          -- read all the available sentences or as long as we have not reached sampling size
+          -- sampling table is an ordered sentence of sentences id to keep
+          while not hasNil and (not sampling or (sampling:dim() ~= 0 and sampling_idx <= sampling:size(1))) do
+            -- keep in sentences the different sentences and number of times it repeats
+            local sentences = { 1 }
             for i = 1, n do
-              tokens[i] = readers[i]:next(not keepSentence)
-              hasNil = hasNil or tokens[i] == nil
-              allNil = allNil and tokens[i] == nil
+              table.insert(sentences, {})
             end
-            if keepSentence then
-              if hasNil then
-                if not allNil then
-                  return _G.__threadid, 1, string.format('all data sources do not have the same number of sentences')
+            -- keep maximum a batch of 10000 sentences
+            while not hasNil and #sentences[1] < 10000 do
+              local keepSentence = not sampling or sampling[sampling_idx] == idx
+              for i = 1, n do
+                local sentence = readers[i]:next(false)
+                hasNil = hasNil or sentence == nil
+                allNil = allNil and sentence == nil
+                if sentence and keepSentence then
+                  table.insert(sentences[i+1], sentence)
                 end
-                break
               end
-              if not sampling then
-                ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
-                                                    constants, prunedRatio, generateFeatures, time_shift_feature,
-                                                    sentenceDists, vectors, features, avgLength, sizes,
-                                                    src_seq_length, tgt_seq_length)
-                count = count + 1
-              else
-                -- when sampling we can introduce several time the same sentence
-                while sampling_idx <= sampling:size(1) and sampling[sampling_idx] == idx do
-                  ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
+              if keepSentence and sampling then
+                while sampling[sampling_idx+1] == idx do
+                  sentences[1] = sentences[1] + 1
+                  sampling_idx = sampling_idx + 1
+                end
+                sampling_idx = sampling_idx + 1
+              end
+              idx = idx + 1
+            end
+
+            if hasNil then
+              if not allNil then
+                return _G.__threadid, 1, string.format('all data sources do not have the same number of sentences')
+              end
+            end
+
+            -- normalize and tokenize
+            for i = 1, n do
+              if _G.normalizer[i] then
+                local nsentences = _G.normalizer[i]:normalize(sentences[i+1])
+                if nsentences == nil then
+                  return _G.__threadid, 1, string.format('normalizer does not preserve sentence count')
+                end
+                sentences[i+1] = nsentences
+              end
+              sentences[i+1] =  _G.tokenizer.tokenize(_G.tokenizers[i], sentences[i+1], _G.bpes[i])
+            end
+
+            for i = 1, sentences[1] do
+              ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
                                                       constants, prunedRatio, generateFeatures, time_shift_feature,
                                                       sentenceDists, vectors, features, avgLength, sizes,
                                                       src_seq_length, tgt_seq_length)
-                  count = count + 1
-                  sampling_idx = sampling_idx + 1
-                end
-              end
+              count = count + 1
             end
-            idx = idx + 1
           end
-
         end
 
         for i = 1, n do
