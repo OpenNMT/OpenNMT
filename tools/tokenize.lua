@@ -16,8 +16,6 @@ cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not ch
 
 local opt = cmd:parse(arg)
 
-local N = require('tools.utils.normalizer')
-
 local pool = threads.Threads(
   opt.nparallel,
   function()

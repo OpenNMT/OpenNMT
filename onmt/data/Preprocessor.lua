@@ -662,7 +662,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
           while not hasNil and (not sampling or (sampling:dim() ~= 0 and sampling_idx <= sampling:size(1))) do
             -- keep in sentences the different sentences and number of times it repeats
             local sentences = { {} }
-            for i = 1, n do
+            for _ = 1, n do
               table.insert(sentences, {})
             end
             -- keep maximum a batch of 10000 sentences
