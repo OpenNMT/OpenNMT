@@ -9,6 +9,7 @@
 
 ## Server options
 
+* `-host <string>` (default: `127.0.0.1`)<br/>Host to run the server on.
 * `-port <string>` (default: `7784`)<br/>Port to run the server on.
 * `-withAttn [<boolean>]` (default: `false`)<br/>If set returns by default attn vector.
 
