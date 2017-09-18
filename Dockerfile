@@ -1,17 +1,13 @@
 # Start with CUDA Torch dependencies 2
-FROM kaixhin/cuda-torch-deps:2-8.0
-MAINTAINER Kai Arulkumaran <design@kaixhin.com>
-
-# Restore Torch7 installation script
-RUN sed -i 's/path_to_nvcc=$(which no_nvcc)/path_to_nvcc=$(which nvcc)/g' install.sh
+FROM kaixhin/cuda-torch:8.0
+MAINTAINER OpenNMT <http://opennmt.net/>
 
 RUN sudo apt-get install -y libzmq-dev
 
-# Install CUDA libraries
-RUN luarocks install cutorch && \
-  luarocks install cunn && \
-  luarocks install cudnn && \
-  luarocks install tds
+# Needed libs for luarocks--audio
+RUN sudo apt-get install -y libfftw3-dev libsox-dev
+
+RUN luarocks install tds
 RUN luarocks install dkjson
 RUN luarocks install lua-zmq ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
 RUN luarocks install sundown
@@ -37,3 +33,8 @@ RUN luarocks install graphicsmagick
 RUN luarocks install argcheck
 RUN luarocks install audio
 RUN luarocks install signal
+RUN luarocks install bit32
+
+#Needed for test
+RUN luarocks install luacheck && \
+    luarocks install luacov
