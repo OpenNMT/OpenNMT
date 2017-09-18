@@ -435,7 +435,7 @@ function Trainer:train(trainData, validData, trainStates)
     self.optim:updateLearningRate(validScore, epoch, self.evaluator)
 
     unsavedEpochs = unsavedEpochs + 1
-    if unsavedEpochs == self.args.save_every_epochs then
+    if unsavedEpochs == self.args.save_every_epochs or epoch == endEpoch then
       self.saver:saveEpoch(validScore, epochState)
       unsavedEpochs = 0
     end

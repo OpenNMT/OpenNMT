@@ -30,6 +30,7 @@
 * Reduce memory footprint of Adam, Adadelta and Adagrad optimizers
 * Validation data is now optional in training
 * Faster tokenization (x2)
+* Always save the model of the last epoch
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 
