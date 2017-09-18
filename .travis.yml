@@ -17,7 +17,7 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
   - |
         if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-            docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+            docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
             sudo docker tag opennmt/opennmt:latest opennmt/opennmt:$TRAVIS_BUILD_NUMBER
             docker push opennmt/opennmt
         fi
