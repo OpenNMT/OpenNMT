@@ -121,11 +121,15 @@ local function tokenize(line, opt)
       local sub
       if not sepStart then
         sub = line:sub(index)
-        table.insert(tokens, sub)
+        if sub ~= '' then
+          table.insert(tokens, sub)
+        end
         break
       else
         sub = line:sub(index, sepStart - 1)
-        table.insert(tokens, sub)
+        if sub ~= '' then
+          table.insert(tokens, sub)
+        end
         index = sepEnd + 1
       end
     end
