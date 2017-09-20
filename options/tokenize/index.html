@@ -851,7 +851,7 @@
 </ul>
 <h2 id="tokenizer-options">Tokenizer options<a class="headerlink" href="#tokenizer-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-mode &lt;string&gt;</code> (accepted: <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc.</li>
+<li><code>-mode &lt;string&gt;</code> (accepted: <code>space</code>, <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc. <code>space</code> is doing space tokenization.</li>
 <li><code>-joiner_annotate [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Include joiner annotation using <code>-joiner</code> character.</li>
 <li><code>-joiner &lt;string&gt;</code> (default: <code>￭</code>)<br/>Character used to annotate joiners.</li>
 <li><code>-joiner_new [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>In <code>-joiner_annotate</code> mode, <code>-joiner</code> is an independent token.</li>

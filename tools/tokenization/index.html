@@ -897,10 +897,6 @@
                   <h1>Tokenization</h1>
                 
                 <p>OpenNMT provides generic tokenization utilities to quickly process new training data.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>For LuaJIT users, tokenization tools require the <code>bit32</code> package.</p>
-</div>
 <h2 id="tokenization">Tokenization<a class="headerlink" href="#tokenization" title="Permanent link">&para;</a></h2>
 <p>To tokenize a corpus:</p>
 <div class="codehilite"><pre><span></span>th tools/tokenize.lua OPTIONS &lt; file &gt; file.tok
@@ -971,12 +967,6 @@ tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive &lt; input
 <div class="codehilite"><pre><span></span>Constitution --&gt; con￨C sti￨l tu￨l tion￨l
 constitution --&gt; con￨l sti￨l tu￨l tion￨l
 </pre></div>
-
-
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Use Lua 5.2 if you encounter any memory issue while using <code>learn_bpe.lua</code> (e.g. <code>-size</code> is too big). Otherwise, stay with LuaJIT for better efficiency.</p>
-</div>
                 
                   
                 

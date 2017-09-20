@@ -907,6 +907,7 @@
 </ul>
 <h2 id="server-options">Server options<a class="headerlink" href="#server-options" title="Permanent link">&para;</a></h2>
 <ul>
+<li><code>-host &lt;string&gt;</code> (default: <code>127.0.0.1</code>)<br/>Host to run the server on.</li>
 <li><code>-port &lt;string&gt;</code> (default: <code>7784</code>)<br/>Port to run the server on.</li>
 <li><code>-withAttn [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set returns by default attn vector.</li>
 </ul>
@@ -918,7 +919,7 @@
 <li><code>-beam_size &lt;number&gt;</code> (default: <code>5</code>)<br/>Beam size.</li>
 <li><code>-max_sent_length &lt;number&gt;</code> (default: <code>250</code>)<br/>Maximum output sentence length.</li>
 <li><code>-replace_unk [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If <code>-phrase_table</code> is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token</li>
-<li><code>-replace_unk_tagged [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>The same as <code>-replace_unk</code>, but wraps the replaced token in ｟unk:xxxxx｠.`</li>
+<li><code>-replace_unk_tagged [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.</li>
 <li><code>-phrase_table &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to source-target dictionary to replace <code>&lt;unk&gt;</code> tokens.</li>
 <li><code>-n_best &lt;number&gt;</code> (default: <code>1</code>)<br/>If &gt; 1, it will also output an n-best list of decoded sentences.</li>
 <li><code>-max_num_unks &lt;number&gt;</code> (default: <code>inf</code>)<br/>All sequences with more <code>&lt;unk&gt;</code>s than this will be ignored during beam search.</li>
@@ -941,11 +942,11 @@
 <ul>
 <li><code>-log_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Output logs to a file under this path instead of stdout.</li>
 <li><code>-disable_logs [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, output nothing.</li>
-<li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
+<li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>, <code>NOERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
 </ul>
 <h2 id="tokenizer-options">Tokenizer options<a class="headerlink" href="#tokenizer-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-mode &lt;string&gt;</code> (accepted: <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc.</li>
+<li><code>-mode &lt;string&gt;</code> (accepted: <code>space</code>, <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc. <code>space</code> is doing space tokenization.</li>
 <li><code>-joiner_annotate [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Include joiner annotation using <code>-joiner</code> character.</li>
 <li><code>-joiner &lt;string&gt;</code> (default: <code>￭</code>)<br/>Character used to annotate joiners.</li>
 <li><code>-joiner_new [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>In <code>-joiner_annotate</code> mode, <code>-joiner</code> is an independent token.</li>
