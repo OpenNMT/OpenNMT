@@ -154,7 +154,7 @@ end
 function Optim:status()
   local status = 'Optim ' .. self.args.optim:upper()
   if self.args.optim ~= 'adadelta' then
-    status = status .. ' LR '.. string.format("%.4f", self.args.learning_rate)
+    status = status .. ' LR '.. string.format("%.6f", self.args.learning_rate)
   end
   return status
 end
