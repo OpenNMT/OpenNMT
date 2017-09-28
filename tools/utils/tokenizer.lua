@@ -37,6 +37,10 @@ local options = {
     [[Generate case feature.]]
   },
   {
+    '-lowercase', false,
+    [[Lowercase tokens.]]
+  },
+  {
     '-segment_case', false,
     [[Segment case feature, splits AbC to Ab C to be able to restore case]]
   },
@@ -58,12 +62,12 @@ local options = {
       is learnt using `learn_bpe.lua`.]]
   },
   {
-    '-EOT_marker', separators.EOT,
-    [[Marker used to mark the end of token.]]
+    '-bpe_EOT_marker', separators.EOT,
+    [[Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.]]
   },
   {
-    '-BOT_marker', separators.BOT,
-    [[Marker used to mark the beginning of token.]]
+    '-bpe_BOT_marker', separators.BOT,
+    [[Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.]]
   },
   {
     '-bpe_case_insensitive', false,
@@ -74,9 +78,9 @@ local options = {
   {
     '-bpe_mode', 'suffix',
     [[Define the BPE mode. This option will be overridden/set automatically if the BPE model
-      specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-BOT_marker`
+      specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-bpe_BOT_marker`
       to the begining of each word to learn prefix-oriented pair statistics;
-      `suffix`: append `-EOT_marker` to the end of each word to learn suffix-oriented pair
+      `suffix`: append `-bpe_EOT_marker` to the end of each word to learn suffix-oriented pair
       statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`:
       no `suffix` nor `prefix`.]],
     {
@@ -348,8 +352,8 @@ function tokenizer.tokenize(opt, line, bpe)
   end
 
   -- add-up case feature if requested
-  if opt.case_feature then
-    tokens = case.addCase(tokens)
+  if opt.case_feature or opt.lowercase then
+    tokens = case.addCase(tokens, opt.lowercase)
   end
 
   return tokens

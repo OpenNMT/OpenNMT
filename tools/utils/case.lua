@@ -21,28 +21,8 @@ function case.combineCase(feat, thecase)
   return feat
 end
 
--- lowercase
-function case.lowerCase (toks)
-  for i=1, #toks do
-    local loweredTok = ''
-
-    for v, c in unicode.utf8_iter(toks[i]) do
-      local is_letter, _ = unicode.isLetter(v)
-      -- find lowercase equivalent
-      if is_letter then
-        local lu, lc = unicode.getLower(v)
-        if lu then c = lc end
-      end
-      loweredTok = loweredTok..c
-    end
-
-    toks[i] = loweredTok
-  end
-  return toks
-end
-
 -- add case feature to tokens
-function case.addCase (toks)
+function case.addCase (toks, nofeat)
   for i=1, #toks do
     local casefeat = 'N'
     local loweredTok = ''
@@ -62,7 +42,11 @@ function case.addCase (toks)
       loweredTok = loweredTok..c
     end
 
-    toks[i] = loweredTok..separators.feat_marker..string.sub(casefeat,1,1)
+    if nofeat then
+      toks[i] = loweredTok
+    else
+      toks[i] = loweredTok..separators.feat_marker..string.sub(casefeat,1,1)
+    end
   end
   return toks
 end
