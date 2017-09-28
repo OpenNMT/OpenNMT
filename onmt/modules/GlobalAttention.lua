@@ -98,7 +98,7 @@ function GlobalAttention:_buildModel(dim, layers, global_attention)
   local contextOutput = contextCombined
   local inputDim = dim * 2
 
-  for i = 1, layers do
+  for _ = 1, layers do
     contextOutput = nn.Linear(inputDim, dim, false)(contextOutput)
     contextOutput = nn.Tanh()(contextOutput)
     inputDim = dim
