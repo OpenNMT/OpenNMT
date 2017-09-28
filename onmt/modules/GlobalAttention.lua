@@ -33,6 +33,14 @@ local options = {
       enum = {'general', 'dot', 'concat'},
       structural = 0
     }
+  },
+  {
+    '-global_attention_layers', 1,
+    [[Number of layers to use within the global attention layer.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1),
+      structural = 0
+    }
   }
 }
 
@@ -48,10 +56,12 @@ end
 --]]
 function GlobalAttention:__init(opt, dim)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(opt, options)
-  parent.__init(self, self:_buildModel(dim, self.args.global_attention))
+  parent.__init(self, self:_buildModel(dim,
+                                       self.args.global_attention_layers,
+                                       self.args.global_attention))
 end
 
-function GlobalAttention:_buildModel(dim, global_attention)
+function GlobalAttention:_buildModel(dim, layers, global_attention)
   local inputs = {}
   table.insert(inputs, nn.Identity()())
   table.insert(inputs, nn.Identity()())
@@ -84,7 +94,15 @@ function GlobalAttention:_buildModel(dim, global_attention)
   local contextCombined = nn.MM()({attn, context}) -- batchL x 1 x dim
   contextCombined = nn.Squeeze(2)(contextCombined) -- batchL x dim
   contextCombined = nn.JoinTable(2)({contextCombined, inputs[1]}) -- batchL x dim*2
-  local contextOutput = nn.Tanh()(nn.Linear(dim*2, dim, false)(contextCombined))
+
+  local contextOutput = contextCombined
+  local inputDim = dim * 2
+
+  for i = 1, layers do
+    contextOutput = nn.Linear(inputDim, dim, false)(contextOutput)
+    contextOutput = nn.Tanh()(contextOutput)
+    inputDim = dim
+  end
 
   return nn.gModule(inputs, {contextOutput})
 end

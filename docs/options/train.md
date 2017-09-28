@@ -127,6 +127,7 @@
 ## Global Attention Model options
 
 * `-global_attention <string>` (accepted: `general`, `dot`, `concat`; default: `general`)<br/>Global attention model type.
+* `-global_attention_layers <number>` (default: `1`)<br/>Number of layers to use within the global attention layer.
 
 ## Trainer options
 
