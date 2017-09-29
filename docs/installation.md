@@ -6,6 +6,7 @@
 
 ```bash
 luarocks install tds
+luarocks install bit32 # if using LuaJIT
 ```
 
 3\. Clone the OpenNMT repository:
