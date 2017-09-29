@@ -922,7 +922,9 @@ function Preprocessor:getVocabulary()
                                      self.args.features_vocabs_prefix,
                                      function(s) return isValid(s, self.args.src_seq_length or self.args.seq_length) end,
                                      self.args.keep_frequency,
-                                     self.args.idx_files)
+                                     self.args.idx_files,
+                                     self.args.tok_src_case_feature)
+
   end
   if self.dataType ~= 'monotext' then
     -- use the first target file to count target features
@@ -935,7 +937,8 @@ function Preprocessor:getVocabulary()
                                      self.args.features_vocabs_prefix,
                                      function(s) return isValid(s, self.args.tgt_seq_length) end,
                                      self.args.keep_frequency,
-                                     self.args.idx_files)
+                                     self.args.idx_files,
+                                     self.args.tok_tgt_case_feature)
   end
   return dicts
 end

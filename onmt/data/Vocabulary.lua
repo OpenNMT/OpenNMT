@@ -1,4 +1,5 @@
 local path = require('pl.path')
+local case = require('tools.utils.case')
 
 --[[ Vocabulary management utility functions. ]]
 local Vocabulary = torch.class("Vocabulary")
@@ -66,10 +67,15 @@ function Vocabulary.make(filename, validFunc, idxFile)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency, idxFile)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency, idxFile, case_feature)
   local wordVocab
   local featuresVocabs = {}
   local numFeatures = countFeatures(dataFile, idxFile)
+  local correctedNumFeatures = numFeatures
+
+  if numFeatures == 0 and case_feature then
+    correctedNumFeatures = 1
+  end
 
   if vocabFile:len() > 0 then
     -- If given, load existing word dictionary.
@@ -79,7 +85,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
     _G.logger:info(' * Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
   end
 
-  if featuresVocabsFiles:len() > 0 and numFeatures > 0 then
+  if featuresVocabsFiles:len() > 0 and correctedNumFeatures > 0 then
     -- If given, discover existing features dictionaries.
     local j = 1
 
@@ -100,9 +106,20 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
     assert(#featuresVocabs > 0,
            'dictionary \'' .. featuresVocabsFiles .. '.' .. name .. '_feature_1.dict\' not found')
-    assert(#featuresVocabs == numFeatures,
-           'the data contains ' .. numFeatures .. ' ' .. name
+    assert(#featuresVocabs == correctedNumFeatures,
+           'the data contains ' .. correctedNumFeatures .. ' ' .. name
              .. ' features but only ' .. #featuresVocabs .. ' dictionaries were found')
+  end
+
+  if #featuresVocabs == 0 and case_feature then
+    -- build default case feature
+    _G.logger:info(' * Building default case feature vocabularies...')
+    featuresVocabs[1] = onmt.utils.Dict.new()
+    local regCaseFeat = case.getFeatures()
+    featuresVocabs[1]:addSpecials({onmt.Constants.PAD, onmt.Constants.UNK, onmt.Constants.BOS, onmt.Constants.EOS})
+    for _, f in ipairs(regCaseFeat) do
+      featuresVocabs[1]:add(f)
+    end
   end
 
   if wordVocab == nil or keepFrequency or (#featuresVocabs == 0 and numFeatures > 0) then
