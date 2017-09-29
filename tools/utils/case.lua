@@ -22,7 +22,7 @@ function case.combineCase(feat, thecase)
 end
 
 -- add case feature to tokens
-function case.addCase (toks, nofeat)
+function case.addCase (toks)
   for i=1, #toks do
     local casefeat = 'N'
     local loweredTok = ''
@@ -42,11 +42,7 @@ function case.addCase (toks, nofeat)
       loweredTok = loweredTok..c
     end
 
-    if nofeat then
-      toks[i] = loweredTok
-    else
-      toks[i] = loweredTok..separators.feat_marker..string.sub(casefeat,1,1)
-    end
+    toks[i] = loweredTok..separators.feat_marker..string.sub(casefeat,1,1)
   end
   return toks
 end

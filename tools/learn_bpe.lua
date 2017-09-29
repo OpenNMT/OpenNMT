@@ -135,8 +135,9 @@ local function get_vocabulary()
   local count = 1
   while not(l == nil) do
     local toks = segmentor(l)
-    for i = 1, #toks do
-      local word = toks[i]
+    local words = onmt.utils.Features.extract(toks)
+    for i = 1, #words do
+      local word = words[i]
       vocab[word] = (vocab[word] or 0) + 1
     end
     l = io.read()

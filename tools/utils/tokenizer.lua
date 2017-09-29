@@ -37,10 +37,6 @@ local options = {
     [[Generate case feature.]]
   },
   {
-    '-lowercase', false,
-    [[Lowercase tokens.]]
-  },
-  {
     '-segment_case', false,
     [[Segment case feature, splits AbC to Ab C to be able to restore case]]
   },
@@ -352,8 +348,8 @@ function tokenizer.tokenize(opt, line, bpe)
   end
 
   -- add-up case feature if requested
-  if opt.case_feature or opt.lowercase then
-    tokens = case.addCase(tokens, opt.lowercase)
+  if opt.case_feature then
+    tokens = case.addCase(tokens)
   end
 
   return tokens
