@@ -109,8 +109,4 @@ function case.restoreCase(w, feats)
   end
 end
 
-function case.getFeatures()
-  return {'C', 'l', 'n', 'U', 'M'}
-end
-
 return case
