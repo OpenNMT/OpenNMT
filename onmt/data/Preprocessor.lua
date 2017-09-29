@@ -924,7 +924,6 @@ function Preprocessor:getVocabulary()
                                      self.args.keep_frequency,
                                      self.args.idx_files,
                                      self.args.tok_src_case_feature)
-
   end
   if self.dataType ~= 'monotext' then
     -- use the first target file to count target features
