@@ -116,7 +116,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
     _G.logger:info(' * Building default case feature vocabularies...')
     featuresVocabs[1] = onmt.utils.Dict.new()
     local regCaseFeat = case.getFeatures()
-    featuresVocabs[1]:addSpecials({onmt.Constants.PAD, onmt.Constants.UNK, onmt.Constants.BOS, onmt.Constants.EOS})
+    featuresVocabs[1]:addSpecials({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD, onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
     for _, f in ipairs(regCaseFeat) do
       featuresVocabs[1]:add(f)
     end
