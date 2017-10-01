@@ -9,7 +9,7 @@
 
 ## Tokenizer options
 
-* `-mode <string>` (accepted: `conservative`, `aggressive`; default: `conservative`)<br/>Define how aggressive should the tokenization be. `aggressive` only keeps sequences of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc.
+* `-mode <string>` (accepted: `space`, `conservative`, `aggressive`; default: `conservative`)<br/>Define how aggressive should the tokenization be. `aggressive` only keeps sequences of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc. `space` is doing space tokenization.
 * `-joiner_annotate [<boolean>]` (default: `false`)<br/>Include joiner annotation using `-joiner` character.
 * `-joiner <string>` (default: `￭`)<br/>Character used to annotate joiners.
 * `-joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
