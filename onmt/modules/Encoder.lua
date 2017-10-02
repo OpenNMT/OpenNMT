@@ -68,7 +68,7 @@ local options = {
     [[Dropout type.]],
     {
       structural = 0,
-      enum = { 'naive', 'variational'}
+      enum = { 'naive', 'variational', 'variational_non_recurrent'}
     }
   },
   {
