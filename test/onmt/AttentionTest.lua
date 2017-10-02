@@ -15,17 +15,17 @@ local function checkDim(mod, dim)
 end
 
 function attentionTest.global_general()
-  local attn = onmt.GlobalAttention({ global_attention = 'general' }, 50)
+  local attn = onmt.GlobalAttention({ global_attention = 'general', global_attention_layers = 1 }, 50)
   checkDim(attn, 50)
 end
 
 function attentionTest.global_dot()
-  local attn = onmt.GlobalAttention({ global_attention = 'dot' }, 50)
+  local attn = onmt.GlobalAttention({ global_attention = 'dot', global_attention_layers = 1 }, 50)
   checkDim(attn, 50)
 end
 
 function attentionTest.global_concat()
-  local attn = onmt.GlobalAttention({ global_attention = 'concat' }, 50)
+  local attn = onmt.GlobalAttention({ global_attention = 'concat', global_attention_layers = 1 }, 50)
   checkDim(attn, 50)
 end
 
