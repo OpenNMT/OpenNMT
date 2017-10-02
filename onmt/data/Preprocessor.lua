@@ -461,7 +461,9 @@ function Preprocessor:__init(args, dataType)
   -- list and check training files
   if args.train_dir ~= '' then
     onmt.utils.Error.assert(isempty(self.trains) == #self.trains, 'For directory mode, file mode options (training) should not be set')
-    onmt.utils.Error.assert(isempty(self.vocabs) == 0, 'For directory mode, vocabs should be predefined')
+    if not args.dry_run then
+      onmt.utils.Error.assert(isempty(self.vocabs) == 0, 'For directory mode, vocabs should be predefined')
+    end
     self.totalCount, self.list_train = self:parseDirectory(self.args, Preprocessor.getDataList(self.dataType), self.dist_rules, 'train')
   else
     onmt.utils.Error.assert(isempty(self.trains) == 0)

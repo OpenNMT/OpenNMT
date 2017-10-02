@@ -10,7 +10,8 @@
 ## Preprocess options
 
 * `-data_type <string>` (accepted: `bitext`, `monotext`, `feattext`; default: `bitext`)<br/>Type of data to preprocess. Use 'monotext' for monolingual data. This option impacts all options choices.
-* `-save_data <string>` (required)<br/>Output file for the prepared data.
+* `-dry_run [<boolean>]` (default: `false`)<br/>If set, this will only prepare the preprocessor. Useful when using file sampling to test distribution rules.
+* `-save_data <string>` (default: `''`)<br/>Output file for the prepared data.
 
 ## Data options
 
