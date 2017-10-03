@@ -334,7 +334,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, type)
     for i = 1, #list_files do
       list_files[i].weight = list_files[i].weight / sum_weight
       if list_files[i].weight > 0 then
-        _G.logger:info(" * file '%s' uniform weight: %.1f, (rule: %d) distribution weight: %.1f",
+        _G.logger:info(" * file '%s' uniform weight: %.3f, (rule: %d) distribution weight: %.3f",
                        list_files[i].fname,
                        100 * list_files[i][1] / totalCount,
                        list_files[i].rule_idx or 0,
