@@ -333,8 +333,13 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, type)
     -- final normalization of weights
     for i = 1, #list_files do
       list_files[i].weight = list_files[i].weight / sum_weight
-      _G.logger:info(" * file '"..list_files[i].fname.."' uniform weight: %.1f, (rule: %d) distribution weight: %.1f",
-                     100*list_files[i][1]/totalCount, list_files[i].rule_idx or 0, 100*list_files[i].weight)
+      if list_files[i].weight > 0 then
+        _G.logger:info(" * file '%s' uniform weight: %.1f, (rule: %d) distribution weight: %.1f",
+                       list_files[i].fname,
+                       100 * list_files[i][1] / totalCount,
+                       list_files[i].rule_idx or 0,
+                       100 * list_files[i].weight)
+      end
     end
     _G.logger:info('')
   else
