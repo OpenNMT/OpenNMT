@@ -54,11 +54,12 @@ for _, v in ipairs(topts) do
           }
         }
   end
-  local opt = {table.unpack(v)}
+  local opt = onmt.utils.Table.deepCopy(v)
   opt[1] = '-tok_src_' .. v[1]:sub(2)
-  table.insert(tok_options, {table.unpack(opt)})
+  table.insert(tok_options, opt)
+  opt = onmt.utils.Table.deepCopy(v)
   opt[1] = '-tok_tgt_' .. v[1]:sub(2)
-  table.insert(tok_options, {table.unpack(opt)})
+  table.insert(tok_options, opt)
 end
 table.insert(tok_options, {
   '-detokenize_output', false,
