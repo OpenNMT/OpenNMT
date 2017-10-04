@@ -2,10 +2,12 @@
 
 ### Breaking changes
 
-* Remove tokenization options from `learn_bpe.lua`
+* Enable tokenization with tokenizer's non-BPE related options for `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
 * Fix some wrong tokenization rules (punctuation-numbers)
 * `-report_every` option is renamed to `-report_progress_every`
+* `-EOT_marker` option is renamed to `-bpe_EOT_marker` for `tokenize.lua`
+* `-BOT_marker` option is renamed to `-bpe_BOT_marker` for `tokenize.lua`
 * `bit32` package is now required for LuaJIT users
 
 ### New features

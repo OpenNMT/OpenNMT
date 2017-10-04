@@ -44,20 +44,34 @@ Two options provide specific tokenization depending on alphabet:
 OpenNMT's BPE module fully supports the [original BPE](https://github.com/rsennrich/subword-nmt) as default mode:
 
 ```bash
-tools/learn_bpe.lua -size 30000 -save_bpe codes < input
-tools/tokenize.lua -bpe_model codes < input
+tools/learn_bpe.lua -size 30000 -save_bpe codes < input_tokenized
+tools/tokenize.lua -bpe_model codes < input_tokenized
 ```
 
-with two additional features:
+with three additional features:
 
-**1\. Add support for different modes of handling prefixes and/or suffixes: `-bpe_mode`**
+**1\. Accept raw text as input and use OpenNMT's tokenizer for pre-tokenization before BPE training**
+
+```bash
+tools/learn_bpe.lua -size 30000 -save_bpe codes -tok_mode aggressive -tok_segment_alphabet_change [ OTHER_TOK_OPTIONS ] [ OTHER_BPE_TRAINING_OPTIONS ] < input_raw
+tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change [ SAME_TOK_OPTIONS ] [ OTHER_BPE_INFERENCE_OPTIONS ] < input_raw
+```
+
+!!! note "Note"
+    All TOK_OPTIONS for learn_bpe.lua have their equivalent for tokenize.lua without the prefix `tok_`
+    BPE_INFERENCE_OPTIONS for tokenize.lua are those of Tokenizer options with the prefix `bpe_`
+
+!!! warning "Warning"
+    When applying BPE for any data set, the same TOK_OPTIONS should be used for learn_bpe.lua and tokenize.lua
+
+**2\. Add BPE_TRAINING_OPTION for different modes of handling prefixes and/or suffixes: `-bpe_mode`**
 
 * `suffix`: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "ent<\w>" at the end of a word. "<\w>" is an artificial marker appended to the end of each token input and treated as a single unit before doing statistics on bigrams. This is the default mode which is useful for most of the languages.
 * `prefix`: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "<w\>ent" at the beginning of a word. "<w\>" is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.
 * `both`: `suffix` + `prefix`
 * `none`: No artificial marker is appended to input tokens, a sub-token is treated equally whether it is in the middle or at the beginning or at the end of a token.
 
-**2\. Add support for BPE in addition to the case feature: `-bpe_case_insensitive`**
+**3\. Add BPE_INFERENCE_OPTION for BPE in addition to the case feature: `-bpe_case_insensitive`**
 
 OpenNMT's tokenization flow first applies BPE then add the case feature for each input token. With the standard BPE, "Constitution" and "constitution" may result in the different sequences of sub-tokens:
 
@@ -70,10 +84,10 @@ If you want a *caseless* split so that you can take the best from using case fea
 
 ```bash
 # We don't need BPE to care about case
-tools/learn_bpe.lua -size 30000 -save_bpe codes_lc < input_lowercased
+tools/learn_bpe.lua -size 30000 -save_bpe codes_lc -tok_case_feature [ OTHER_TOK_OPTIONS ] [ OTHER_BPE_TRAINING_OPTIONS ] < input_raw
 
 # The case information is preserved in the true case input
-tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive < input
+tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive -case_feature [ SAME_TOK_OPTIONS ] [ OTHER_BPE_INFERENCE_OPTIONS ] < input_raw
 ```
 
 The output of the previous example would be:
