@@ -685,6 +685,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tokenizer-options" title="Tokenizer options" class="md-nav__link">
+    Tokenizer options
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logger-options" title="Logger options" class="md-nav__link">
     Logger options
   </a>
@@ -815,6 +822,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tokenizer-options" title="Tokenizer options" class="md-nav__link">
+    Tokenizer options
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logger-options" title="Logger options" class="md-nav__link">
     Logger options
   </a>
@@ -852,9 +866,20 @@
 <h2 id="bpe-options">BPE options<a class="headerlink" href="#bpe-options" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>-size &lt;string&gt;</code> (default: <code>30000</code>)<br/>The number of merge operations to learn.</li>
-<li><code>-lc [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Lowercase input tokens before learning BPE.</li>
 <li><code>-bpe_mode &lt;string&gt;</code> (accepted: <code>suffix</code>, <code>prefix</code>, <code>both</code>, <code>none</code>; default: <code>suffix</code>)<br/>Define the BPE mode. <code>prefix</code>: append <code>&lt;w&gt;</code> to the begining of each word to learn prefix-oriented pair statistics; <code>suffix</code>: append <code>&lt;/w&gt;</code> to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; <code>both</code>: <code>suffix</code> and <code>prefix</code>; <code>none</code>: no <code>suffix</code> nor <code>prefix</code>.</li>
 <li><code>-save_bpe &lt;string&gt;</code> (required)<br/>Path to save the output model.</li>
+</ul>
+<h2 id="tokenizer-options">Tokenizer options<a class="headerlink" href="#tokenizer-options" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>-tok_mode &lt;string&gt;</code> (accepted: <code>conservative</code>, <code>aggressive</code>, <code>space</code>; default: <code>space</code>)<br/>Define how aggressive should the tokenization be. <code>space</code> is space-tokenization.</li>
+<li><code>-tok_joiner_annotate [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Include joiner annotation using <code>-joiner</code> character.</li>
+<li><code>-tok_joiner &lt;string&gt;</code> (default: <code>￭</code>)<br/>Character used to annotate joiners.</li>
+<li><code>-tok_joiner_new [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>In <code>-joiner_annotate</code> mode, <code>-joiner</code> is an independent token.</li>
+<li><code>-tok_case_feature [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Generate case feature.</li>
+<li><code>-tok_segment_case [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment case feature, splits AbC to Ab C to be able to restore case</li>
+<li><code>-tok_segment_alphabet &lt;table&gt;</code> (accepted: <code>Devanagari</code>, <code>Malayalam</code>, <code>Oriya</code>, <code>Georgian</code>, <code>Hangul</code>, <code>Myanmar</code>, <code>Tibetan</code>, <code>Hiragana</code>, <code>Gurmukhi</code>, <code>Yi</code>, <code>Armenian</code>, <code>Kangxi</code>, <code>Latin</code>, <code>Ethiopic</code>, <code>Thai</code>, <code>Limbu</code>, <code>Mongolian</code>, <code>Tamil</code>, <code>Khmer</code>, <code>Tagbanwa</code>, <code>Cherokee</code>, <code>Sinhala</code>, <code>Cyrillic</code>, <code>Greek</code>, <code>Bopomofo</code>, <code>Hanunoo</code>, <code>Katakana</code>, <code>Ogham</code>, <code>Kannada</code>, <code>Braille</code>, <code>Telugu</code>, <code>Thaana</code>, <code>Lao</code>, <code>Han</code>, <code>Kanbun</code>, <code>Gujarati</code>, <code>Bengali</code>, <code>Arabic</code>, <code>Buhid</code>, <code>Tagalog</code>, <code>Syriac</code>, <code>Hebrew</code>)<br/>Segment all letters from indicated alphabet.</li>
+<li><code>-tok_segment_alphabet_change [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment if alphabet change between 2 letters.</li>
+<li><code>-tok_normalize_cmd &lt;string&gt;</code> (default: <code>''</code>)<br/>Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>

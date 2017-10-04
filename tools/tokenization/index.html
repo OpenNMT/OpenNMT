@@ -510,6 +510,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#normalization" title="Normalization" class="md-nav__link">
+    Normalization
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tokenization" title="Tokenization" class="md-nav__link">
     Tokenization
   </a>
@@ -836,6 +843,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#normalization" title="Normalization" class="md-nav__link">
+    Normalization
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tokenization" title="Tokenization" class="md-nav__link">
     Tokenization
   </a>
@@ -896,13 +910,38 @@
                 
                   <h1>Tokenization</h1>
                 
-                <p>OpenNMT provides generic tokenization utilities to quickly process new training data.</p>
+                <p>OpenNMT provides generic tokenization utilities to quickly process new training data. The goal of the tokenization is to convert raw sentences into sequences of tokens. In that process two main operations are performed in sequence:</p>
+<ul>
+<li>normalization - which applies some uniform transformation on the source sequences to identify and protect some specific sequences (for instance url), normalize characters (for instance all types of quotes, unicode variants) or even to normalize some variants (like dates) into unique representation simpler for the translation process</li>
+<li>the tokenization itself - which transform the actual normalized sentence into a sequence of space-separated tokens together with possible features (case).</li>
+</ul>
+<h2 id="normalization">Normalization<a class="headerlink" href="#normalization" title="Permanent link">&para;</a></h2>
+<p>Normalization is performed by user commandline tool which has to work in "pipeline" mode: sentences from standard input are normalized and produced on the standard output. For instance, the following python script is normalizing unicode representation (using NFC representation), turns French quotes <code>«»</code> into English quotes <code>“”</code>, and protect "hashtags" sequences:</p>
+<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">unicodedata</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">:</span>
+  <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+  <span class="n">line</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s1">&#39;NFC&#39;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+  <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">u</span><span class="s2">&quot;«&quot;</span><span class="p">,</span> <span class="sa">u</span><span class="s2">&quot;“&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">u</span><span class="s2">&quot;»&quot;</span><span class="p">,</span> <span class="sa">u</span><span class="s2">&quot;”&quot;</span><span class="p">)</span>
+  <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(^|[^S\w])#([A-Za-z0-9_]+)&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">1｟#</span><span class="se">\\</span><span class="s1">2｠&#39;</span><span class="p">)</span>
+  <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Normalization script is called as part of tokenization adding the option <code>-normalize_cmd "normalize.py"</code>.</p>
 <h2 id="tokenization">Tokenization<a class="headerlink" href="#tokenization" title="Permanent link">&para;</a></h2>
 <p>To tokenize a corpus:</p>
 <div class="codehilite"><pre><span></span>th tools/tokenize.lua OPTIONS &lt; file &gt; file.tok
 </pre></div>
 
 
+<p>Available tokenization modes are defined <a href="http://opennmt.net/OpenNMT/options/tokenize/">here</a>.</p>
+<p>In order to perform <code>detokenization</code>, tokenization can introduce a joiner annotation mark <code>￭</code>.</p>
 <h2 id="detokenization">Detokenization<a class="headerlink" href="#detokenization" title="Permanent link">&para;</a></h2>
 <p>If you activate <code>-joiner_annotate</code> marker, the tokenization is reversible. Just use:</p>
 <div class="codehilite"><pre><span></span>th tools/detokenize.lua OPTIONS &lt; file.tok &gt; file.detok
@@ -934,20 +973,35 @@ TVs --&gt; tv￨U s￨L
 
 <h2 id="bpe">BPE<a class="headerlink" href="#bpe" title="Permanent link">&para;</a></h2>
 <p>OpenNMT's BPE module fully supports the <a href="https://github.com/rsennrich/subword-nmt">original BPE</a> as default mode:</p>
-<div class="codehilite"><pre><span></span>tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes &lt; input
-tools/tokenize.lua -bpe_model codes &lt; input
+<div class="codehilite"><pre><span></span>tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes &lt; input_tokenized
+tools/tokenize.lua -bpe_model codes &lt; input_tokenized
 </pre></div>
 
 
-<p>with two additional features:</p>
-<p><strong>1. Add support for different modes of handling prefixes and/or suffixes: <code>-bpe_mode</code></strong></p>
+<p>with three additional features:</p>
+<p><strong>1. Accept raw text as input and use OpenNMT's tokenizer for pre-tokenization before BPE training</strong></p>
+<div class="codehilite"><pre><span></span>tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes -tok_mode aggressive -tok_segment_alphabet_change <span class="o">[</span> OTHER_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_TRAINING_OPTIONS <span class="o">]</span> &lt; input_raw
+tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change <span class="o">[</span> SAME_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_INFERENCE_OPTIONS <span class="o">]</span> &lt; input_raw
+</pre></div>
+
+
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All TOK_OPTIONS for learn_bpe.lua have their equivalent for tokenize.lua without the prefix <code>tok_</code>
+BPE_INFERENCE_OPTIONS for tokenize.lua are those of Tokenizer options with the prefix <code>bpe_</code></p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>When applying BPE for any data set, the same TOK_OPTIONS should be used for learn_bpe.lua and tokenize.lua</p>
+</div>
+<p><strong>2. Add BPE_TRAINING_OPTION for different modes of handling prefixes and/or suffixes: <code>-bpe_mode</code></strong></p>
 <ul>
 <li><code>suffix</code>: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "ent&lt;\w&gt;" at the end of a word. "&lt;\w&gt;" is an artificial marker appended to the end of each token input and treated as a single unit before doing statistics on bigrams. This is the default mode which is useful for most of the languages.</li>
 <li><code>prefix</code>: BPE merge operations are learnt to distinguish sub-tokens like "ent" in the middle of a word and "&lt;w>ent" at the beginning of a word. "&lt;w>" is an artificial marker appended to the beginning of each token input and treated as a single unit before doing statistics on bigrams.</li>
 <li><code>both</code>: <code>suffix</code> + <code>prefix</code></li>
 <li><code>none</code>: No artificial marker is appended to input tokens, a sub-token is treated equally whether it is in the middle or at the beginning or at the end of a token.</li>
 </ul>
-<p><strong>2. Add support for BPE in addition to the case feature: <code>-bpe_case_insensitive</code></strong></p>
+<p><strong>3. Add BPE_INFERENCE_OPTION for BPE in addition to the case feature: <code>-bpe_case_insensitive</code></strong></p>
 <p>OpenNMT's tokenization flow first applies BPE then add the case feature for each input token. With the standard BPE, "Constitution" and "constitution" may result in the different sequences of sub-tokens:</p>
 <div class="codehilite"><pre><span></span>Constitution --&gt; con￨C sti￨l tu￨l tion￨l
 constitution --&gt; consti￨l tu￨l tion￨l
@@ -956,10 +1010,10 @@ constitution --&gt; consti￨l tu￨l tion￨l
 
 <p>If you want a <em>caseless</em> split so that you can take the best from using case feature, and you can achieve that with the following command lines:</p>
 <div class="codehilite"><pre><span></span><span class="c1"># We don&#39;t need BPE to care about case</span>
-tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes_lc &lt; input_lowercased
+tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes_lc -tok_case_feature <span class="o">[</span> OTHER_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_TRAINING_OPTIONS <span class="o">]</span> &lt; input_raw
 
 <span class="c1"># The case information is preserved in the true case input</span>
-tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive &lt; input
+tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive -case_feature <span class="o">[</span> SAME_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_INFERENCE_OPTIONS <span class="o">]</span> &lt; input_raw
 </pre></div>
 
 

@@ -1024,6 +1024,9 @@ generic 65
 <p class="admonition-title">Warning</p>
 <p>If one file could not be match by a rule, it would be completely excluded.</p>
 </div>
+<p>To test your distribution rules, it is possible to execute a dry run of the preprocessor:</p>
+<div class="codehilite"><pre><span></span>th preprocess.lua -gsample_dist rules.txt -gsample <span class="m">100000</span> -train_dir data/ -dry_run
+</pre></div>
                 
                   
                 

@@ -228,8 +228,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#docker-ubuntu" title="Docker (Ubuntu)" class="md-nav__link">
-    Docker (Ubuntu)
+  <a href="#docker" title="Docker" class="md-nav__link">
+    Docker
   </a>
   
 </li>
@@ -816,8 +816,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#docker-ubuntu" title="Docker (Ubuntu)" class="md-nav__link">
-    Docker (Ubuntu)
+  <a href="#docker" title="Docker" class="md-nav__link">
+    Docker
   </a>
   
 </li>
@@ -863,27 +863,16 @@ luarocks install bit32 <span class="c1"># if using LuaJIT</span>
 
 
 <p>And you are ready to go! Take a look at the <a href="../quickstart/">quickstart</a> to familiarize yourself with the main training workflow.</p>
-<h2 id="docker-ubuntu">Docker (Ubuntu)<a class="headerlink" href="#docker-ubuntu" title="Permanent link">&para;</a></h2>
-<p>First you need to install <code>nvidia-docker</code>:</p>
-<div class="codehilite"><pre><span></span>wget -P /tmp https://github.com/NVIDIA/nvidia-docker/releases/download/v1.0.0-rc.3/nvidia-docker_1.0.0.rc.3-1_amd64.deb
-sudo dpkg -i /tmp/nvidia-docker*.deb
+<h2 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h2>
+<p>1. <a href="https://github.com/NVIDIA/nvidia-docker">Install <code>nvidia-docker</code></a> if using GPUs</p>
+<p>2. Pull and run the latest OpenNMT image:</p>
+<div class="codehilite"><pre><span></span>sudo nvidia-docker run -it opennmt/opennmt:latest
 </pre></div>
 
 
-<p>If this command does not work, you may need to run the following updates:</p>
-<div class="codehilite"><pre><span></span>sudo apt-add-repository <span class="s1">&#39;deb https://apt.dockerproject.org/repo ubuntu-xenial main&#39;</span>
-sudo apt-get update
-sudo apt-get install docker-engine nvidia-modprobe
-</pre></div>
-
-
-<p>Then simply run our Docker container:</p>
-<div class="codehilite"><pre><span></span>sudo nvidia-docker run -it harvardnlp/opennmt:8.0
-</pre></div>
-
-
-<p>Once in the instance, check out the latest code:</p>
-<div class="codehilite"><pre><span></span>git clone https://github.com/OpenNMT/OpenNMT
+<p>3. Clone the OpenNMT repository:</p>
+<div class="codehilite"><pre><span></span>git clone https://github.com/OpenNMT/OpenNMT ~/OpenNMT
+<span class="nb">cd</span> ~/OpenNMT
 </pre></div>
 
 
