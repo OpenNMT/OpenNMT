@@ -53,8 +53,8 @@ with three additional features:
 **1\. Accept raw text as input and use OpenNMT's tokenizer for pre-tokenization before BPE training**
 
 ```bash
-tools/learn_bpe.lua -size 30000 -save_bpe codes -OTHER_BPE_TRAINING_OPTIONS -tok_mode aggressive -tok_segment_alphabet_change -OTHER_TOK_OPTIONS < input_raw
-tools/tokenize.lua -bpe_model codes -OTHER_BPE_INFERENCE_OPTIONS -mode aggressive -segment_alphabet_change -SAME_TOK_OPTIONS < input_raw
+tools/learn_bpe.lua -size 30000 -save_bpe codes -tok_mode aggressive -tok_segment_alphabet_change [ OTHER_TOK_OPTIONS ] [ OTHER_BPE_TRAINING_OPTIONS ] < input_raw
+tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change [ SAME_TOK_OPTIONS ] [ OTHER_BPE_INFERENCE_OPTIONS ] < input_raw
 ```
 
 !!! note "Note"
@@ -84,10 +84,10 @@ If you want a *caseless* split so that you can take the best from using case fea
 
 ```bash
 # We don't need BPE to care about case
-tools/learn_bpe.lua -size 30000 -save_bpe codes_lc -OTHER_BPE_TRAINING_OPTIONS -tok_case_feature -OTHER_TOK_OPTIONS < input_raw
+tools/learn_bpe.lua -size 30000 -save_bpe codes_lc -tok_case_feature [ OTHER_TOK_OPTIONS ] [ OTHER_BPE_TRAINING_OPTIONS ] < input_raw
 
 # The case information is preserved in the true case input
-tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive -OTHER_BPE_INFERENCE_OPTIONS -case_feature -SAME_TOK_OPTIONS < input_raw
+tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive -case_feature [ SAME_TOK_OPTIONS ] [ OTHER_BPE_INFERENCE_OPTIONS ] < input_raw
 ```
 
 The output of the previous example would be:
