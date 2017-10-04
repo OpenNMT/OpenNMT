@@ -48,6 +48,10 @@ local options = {
     }
   },
   {
+    '-segment_numbers', false,
+    [[Segment numbers into single digits.]]
+  },
+  {
     '-segment_alphabet_change', false,
     [[Segment if alphabet change between 2 letters.]]
   },
@@ -262,7 +266,7 @@ local function tokenize(line, opt)
           letter = true
           prev_alphabet = is_alphabet
         elseif is_number then
-          if letter == true or not(number == true or space == true) then
+          if letter == true or (number and opt.segment_numbers) or not(number == true or space == true) then
             local addjoiner = false
             if opt.joiner_annotate then
               if opt.joiner_new then

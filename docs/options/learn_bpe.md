@@ -21,7 +21,8 @@
 * `-tok_joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
 * `-tok_case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
 * `-tok_segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
-* `-tok_segment_alphabet <table>` (accepted: `Devanagari`, `Malayalam`, `Oriya`, `Georgian`, `Hangul`, `Myanmar`, `Tibetan`, `Hiragana`, `Gurmukhi`, `Yi`, `Armenian`, `Kangxi`, `Latin`, `Ethiopic`, `Thai`, `Limbu`, `Mongolian`, `Tamil`, `Khmer`, `Tagbanwa`, `Cherokee`, `Sinhala`, `Cyrillic`, `Greek`, `Bopomofo`, `Hanunoo`, `Katakana`, `Ogham`, `Kannada`, `Braille`, `Telugu`, `Thaana`, `Lao`, `Han`, `Kanbun`, `Gujarati`, `Bengali`, `Arabic`, `Buhid`, `Tagalog`, `Syriac`, `Hebrew`)<br/>Segment all letters from indicated alphabet.
+* `-tok_segment_alphabet <table>` (accepted: `Tagbanwa`, `Gurmukhi`, `Thaana`, `Cyrillic`, `Mongolian`, `Hanunoo`, `Han`, `Sinhala`, `Greek`, `Kanbun`, `Devanagari`, `Bengali`, `Lao`, `Syriac`, `Tamil`, `Limbu`, `Khmer`, `Kangxi`, `Tibetan`, `Arabic`, `Ethiopic`, `Malayalam`, `Tagalog`, `Ogham`, `Hangul`, `Georgian`, `Myanmar`, `Braille`, `Yi`, `Buhid`, `Thai`, `Kannada`, `Telugu`, `Katakana`, `Armenian`, `Latin`, `Cherokee`, `Hiragana`, `Hebrew`, `Bopomofo`, `Gujarati`, `Oriya`)<br/>Segment all letters from indicated alphabet.
+* `-tok_segment_numbers [<boolean>]` (default: `false`)<br/>Segment numbers into single digits.
 * `-tok_segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
 * `-tok_normalize_cmd <string>` (default: `''`)<br/>Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.
 

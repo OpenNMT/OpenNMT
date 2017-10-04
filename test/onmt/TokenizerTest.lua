@@ -140,6 +140,11 @@ function tokenizerTest.segment_alphabet()
   testTok(opt, raw, tok)
 end
 
+function tokenizerTest.segment_numbers()
+  local opt = cmd:parse({'-segment_numbers','-joiner_annotate','-mode','aggressive'})
+  testTok(opt, "1984 mille neuf cent quatrevingt-quatre", "1￭ 9￭ 8￭ 4 mille neuf cent quatrevingt ￭-￭ quatre", true)
+end
+
 function tokenizerTest.segment_alphabet_change()
   local opt = cmd:parse({'-segment_alphabet_change'})
   testTok(opt, "rawБ", "raw Б")

@@ -15,7 +15,8 @@
 * `-joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
 * `-case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
 * `-segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
-* `-segment_alphabet <table>` (accepted: `Sinhala`, `Tamil`, `Han`, `Thai`, `Telugu`, `Katakana`, `Thaana`, `Georgian`, `Armenian`, `Hangul`, `Braille`, `Hiragana`, `Cyrillic`, `Kannada`, `Hebrew`, `Oriya`, `Greek`, `Kanbun`, `Lao`, `Yi`, `Gurmukhi`, `Tagbanwa`, `Arabic`, `Khmer`, `Latin`, `Limbu`, `Mongolian`, `Cherokee`, `Tibetan`, `Tagalog`, `Bopomofo`, `Ogham`, `Buhid`, `Ethiopic`, `Myanmar`, `Syriac`, `Hanunoo`, `Malayalam`, `Gujarati`, `Bengali`, `Kangxi`, `Devanagari`)<br/>Segment all letters from indicated alphabet.
+* `-segment_alphabet <table>` (accepted: `Buhid`, `Greek`, `Hangul`, `Ogham`, `Thaana`, `Tamil`, `Cherokee`, `Khmer`, `Devanagari`, `Thai`, `Oriya`, `Armenian`, `Katakana`, `Limbu`, `Arabic`, `Bengali`, `Latin`, `Mongolian`, `Cyrillic`, `Hiragana`, `Kangxi`, `Yi`, `Tagbanwa`, `Gurmukhi`, `Tagalog`, `Syriac`, `Kanbun`, `Hanunoo`, `Georgian`, `Kannada`, `Myanmar`, `Tibetan`, `Hebrew`, `Han`, `Lao`, `Telugu`, `Gujarati`, `Sinhala`, `Malayalam`, `Bopomofo`, `Braille`, `Ethiopic`)<br/>Segment all letters from indicated alphabet.
+* `-segment_numbers [<boolean>]` (default: `false`)<br/>Segment numbers into single digits.
 * `-segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
 * `-bpe_model <string>` (default: `''`)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, BPE related options will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
 * `-bpe_EOT_marker <string>` (default: `</w>`)<br/>Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.

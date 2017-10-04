@@ -53,6 +53,7 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 
 ## Mixed casing words
 `-segment_case` feature enables tokenizer to segment words into subwords with one of 3 casing types (truecase ('House'), uppercase ('HOUSE') or lowercase ('house')), which helps  restore right casing during  detokenization. This feature is especially useful for texts with a signficant number of words with mixed casing ('WiFi' -> 'Wi' and 'Fi').
+
 ```text
 WiFi --> wi￨C fi￨C
 TVs --> tv￨U s￨L
@@ -67,6 +68,15 @@ Two options provide specific tokenization depending on alphabet:
 ```text
 君子之心不胜其小，而气量涵盖一世。 --> 君 子 之 心 不 胜 其 小 ， 而 气 量 涵 盖 一 世 。
 ```
+
+## Number Segmentation
+
+The option `-segment_number` tokenizes numbers by digits. This option is interesting for full handling of numeric entities conversion/translation by neural networks.
+
+```text
+1984 --> 1 9 8 4
+```
+
 
 ## BPE
 
