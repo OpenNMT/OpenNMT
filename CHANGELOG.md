@@ -19,6 +19,7 @@
 * Introduce protection blocks for tokenization
 * Add option to dump attention in `translate.lua`
 * Add option to replace unknown words with the original wrapped in a `｟unk:xxxxx｠` tag `-replace_unk_tagged`
+* Add new dropout type 'varational_non_recurrent'
 
 ### Fixes and improvements
 
