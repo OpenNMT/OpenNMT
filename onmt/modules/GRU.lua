@@ -83,7 +83,8 @@ function GRU:_buildModel(layers, inputSize, hiddenSize, dropout, residual, dropo
       prevH = onmt.VariationalDropout(dropout)(prevH)
     end
     if dropout_input or L > 1 then
-      if dropout_type == "variational" then
+      if dropout_type ~= "naive" then
+        -- for variational and variational_non_recurrent
         input = onmt.VariationalDropout(dropout)(input)
       else
         input = nn.Dropout(dropout)(input)
