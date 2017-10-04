@@ -552,6 +552,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#number-segmentation" title="Number Segmentation" class="md-nav__link">
+    Number Segmentation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bpe" title="BPE" class="md-nav__link">
     BPE
   </a>
@@ -885,6 +892,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#number-segmentation" title="Number Segmentation" class="md-nav__link">
+    Number Segmentation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bpe" title="BPE" class="md-nav__link">
     BPE
   </a>
@@ -968,6 +982,12 @@ TVs --&gt; tv￨U s￨L
 <li><code>-segment_alphabet Alphabet</code>: tokenize all words of the indicated alphabet into characters - for instance to split a chinese sentence into characters, use <code>-segment_alphabet Han</code>:</li>
 </ul>
 <div class="codehilite"><pre><span></span>君子之心不胜其小，而气量涵盖一世。 --&gt; 君 子 之 心 不 胜 其 小 ， 而 气 量 涵 盖 一 世 。
+</pre></div>
+
+
+<h2 id="number-segmentation">Number Segmentation<a class="headerlink" href="#number-segmentation" title="Permanent link">&para;</a></h2>
+<p>The option <code>-segment_number</code> tokenizes numbers by digits. This option is interesting for full handling of numeric entities conversion/translation by neural networks.</p>
+<div class="codehilite"><pre><span></span>1984 --&gt; 1 9 8 4
 </pre></div>
 
 
