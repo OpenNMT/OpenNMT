@@ -17,10 +17,15 @@ local options = {
     }
   },
   {
+    '-dry_run', false,
+    [[If set, this will only prepare the preprocessor. Useful when using file sampling to
+      test distribution rules.]]
+  },
+  {
     '-save_data', '',
     [[Output file for the prepared data.]],
     {
-      valid = onmt.utils.ExtendedCmdLine.nonEmpty
+      depends = function(opt) return opt.dry_run, "option `-save_data` is required" end
     }
   }
 }
@@ -50,6 +55,11 @@ local function main()
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
   local Preprocessor = onmt.data.Preprocessor.new(opt, dataType)
+
+  if opt.dry_run then
+    _G.logger:shutDown()
+    return
+  end
 
   local data = { dataType=dataType }
 

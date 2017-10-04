@@ -72,7 +72,7 @@ local options = {
       validation score is not improving more than `-start_decay_score_delta`,
       `epoch_only`: only decay after each epoch past `-start_decay_at`,
       `score_only`: only decay when validation score is not improving more than
-      `-start_decay_ppl_delta`.]],
+      `-start_decay_score_delta`.]],
     {
       enum = {'default', 'epoch_only', 'score_only'},
       train_state = true
@@ -154,7 +154,7 @@ end
 function Optim:status()
   local status = 'Optim ' .. self.args.optim:upper()
   if self.args.optim ~= 'adadelta' then
-    status = status .. ' LR '.. string.format("%.4f", self.args.learning_rate)
+    status = status .. ' LR '.. string.format("%.6f", self.args.learning_rate)
   end
   return status
 end

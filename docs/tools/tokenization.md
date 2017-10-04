@@ -1,8 +1,5 @@
 OpenNMT provides generic tokenization utilities to quickly process new training data.
 
-!!! note "Note"
-    For LuaJIT users, tokenization tools require the `bit32` package.
-
 ## Tokenization
 
 To tokenize a corpus:
@@ -85,6 +82,3 @@ The output of the previous example would be:
 Constitution --> con￨C sti￨l tu￨l tion￨l
 constitution --> con￨l sti￨l tu￨l tion￨l
 ```
-
-!!! note "Note"
-    Use Lua 5.2 if you encounter any memory issue while using `learn_bpe.lua` (e.g. `-size` is too big). Otherwise, stay with LuaJIT for better efficiency.

@@ -15,10 +15,12 @@
 ## Translator options
 
 * `-model <string>` (default: `''`)<br/>Path to the serialized model file.
+* `-lm_model <string>` (default: `''`)<br/>Path to serialized language model file.
+* `-lm_weight <number>` (default: `0.1`)<br/>Relative weight of language model.
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
 * `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token
-* `-replace_unk_tagged [<boolean>]` (default: `false`)<br/>The same as `-replace_unk`, but wraps the replaced token in ｟unk:xxxxx｠.`
+* `-replace_unk_tagged [<boolean>]` (default: `false`)<br/>The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.
 * `-phrase_table <string>` (default: `''`)<br/>Path to source-target dictionary to replace `<unk>` tokens.
 * `-n_best <number>` (default: `1`)<br/>If > 1, it will also output an n-best list of decoded sentences.
 * `-max_num_unks <number>` (default: `inf`)<br/>All sequences with more `<unk>`s than this will be ignored during beam search.
@@ -41,4 +43,4 @@
 
 * `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout.
 * `-disable_logs [<boolean>]` (default: `false`)<br/>If set, output nothing.
-* `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`; default: `INFO`)<br/>Output logs at this level and above.
+* `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `NOERROR`; default: `INFO`)<br/>Output logs at this level and above.

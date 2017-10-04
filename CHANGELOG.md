@@ -4,8 +4,9 @@
 
 * Remove tokenization options from `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
-* Option `-report_every` in preprocess is renamed `-report_progress_every`
 * Fix some wrong tokenization rules (punctuation-numbers)
+* `-report_every` option is renamed to `-report_progress_every`
+* `bit32` package is now required for LuaJIT users
 
 ### New features
 

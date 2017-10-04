@@ -3,6 +3,8 @@ language: c
 services:
   - docker
 before_install:
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
   - sudo docker pull opennmt/opennmt:latest
   - sudo docker build -t opennmt/opennmt:latest --cache-from opennmt/opennmt:latest .
   - sudo docker run -itd --name build -v $(pwd):/repo -w /repo opennmt/opennmt:latest
