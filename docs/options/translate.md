@@ -36,6 +36,38 @@
 * `-dump_input_encoding [<boolean>]` (default: `false`)<br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.
 * `-save_beam_to <string>` (default: `''`)<br/>Path to a file where the beam search exploration will be saved in a JSON format. Requires the `dkjson` package.
 
+## Tokenizer options
+
+* `-tok_src_mode <string>` (accepted: `conservative`, `aggressive`, `space`; default: `space`)<br/>Define how aggressive should the tokenization be. `space` is space-tokenization.
+* `-tok_tgt_mode <string>` (accepted: `conservative`, `aggressive`, `space`; default: `space`)<br/>Define how aggressive should the tokenization be. `space` is space-tokenization.
+* `-tok_src_joiner_annotate [<boolean>]` (default: `false`)<br/>Include joiner annotation using `-joiner` character.
+* `-tok_tgt_joiner_annotate [<boolean>]` (default: `false`)<br/>Include joiner annotation using `-joiner` character.
+* `-tok_src_joiner <string>` (default: `￭`)<br/>Character used to annotate joiners.
+* `-tok_tgt_joiner <string>` (default: `￭`)<br/>Character used to annotate joiners.
+* `-tok_src_joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
+* `-tok_tgt_joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
+* `-tok_src_case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
+* `-tok_tgt_case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
+* `-tok_src_segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
+* `-tok_tgt_segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
+* `-tok_src_segment_alphabet <table>` (accepted: `Sinhala`, `Ogham`, `Bengali`, `Thaana`, `Hangul`, `Armenian`, `Braille`, `Kangxi`, `Gujarati`, `Lao`, `Hebrew`, `Katakana`, `Ethiopic`, `Kanbun`, `Cyrillic`, `Telugu`, `Malayalam`, `Arabic`, `Greek`, `Hiragana`, `Georgian`, `Cherokee`, `Tagalog`, `Limbu`, `Latin`, `Mongolian`, `Khmer`, `Buhid`, `Tamil`, `Tibetan`, `Kannada`, `Tagbanwa`, `Hanunoo`, `Myanmar`, `Devanagari`, `Han`, `Thai`, `Gurmukhi`, `Bopomofo`, `Oriya`, `Yi`, `Syriac`)<br/>Segment all letters from indicated alphabet.
+* `-tok_tgt_segment_alphabet <table>` (accepted: `Sinhala`, `Ogham`, `Bengali`, `Thaana`, `Hangul`, `Armenian`, `Braille`, `Kangxi`, `Gujarati`, `Lao`, `Hebrew`, `Katakana`, `Ethiopic`, `Kanbun`, `Cyrillic`, `Telugu`, `Malayalam`, `Arabic`, `Greek`, `Hiragana`, `Georgian`, `Cherokee`, `Tagalog`, `Limbu`, `Latin`, `Mongolian`, `Khmer`, `Buhid`, `Tamil`, `Tibetan`, `Kannada`, `Tagbanwa`, `Hanunoo`, `Myanmar`, `Devanagari`, `Han`, `Thai`, `Gurmukhi`, `Bopomofo`, `Oriya`, `Yi`, `Syriac`)<br/>Segment all letters from indicated alphabet.
+* `-tok_src_segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
+* `-tok_tgt_segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
+* `-tok_src_bpe_model <string>` (default: `''`)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, BPE related options will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_tgt_bpe_model <string>` (default: `''`)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, BPE related options will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_src_EOT_marker <string>` (default: `</w>`)<br/>Marker used to mark the end of token.
+* `-tok_tgt_EOT_marker <string>` (default: `</w>`)<br/>Marker used to mark the end of token.
+* `-tok_src_BOT_marker <string>` (default: `<w>`)<br/>Marker used to mark the beginning of token.
+* `-tok_tgt_BOT_marker <string>` (default: `<w>`)<br/>Marker used to mark the beginning of token.
+* `-tok_src_bpe_case_insensitive [<boolean>]` (default: `false`)<br/>Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_tgt_bpe_case_insensitive [<boolean>]` (default: `false`)<br/>Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_src_bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-BOT_marker` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `-EOT_marker` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
+* `-tok_tgt_bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-BOT_marker` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `-EOT_marker` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
+* `-tok_src_normalize_cmd <string>` (default: `''`)<br/>Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.
+* `-tok_tgt_normalize_cmd <string>` (default: `''`)<br/>Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.
+* `-detokenize_output [<boolean>]` (default: `false`)<br/>Detokenize output.
+
 ## Cuda options
 
 * `-gpuid <table>` (default: `0`)<br/>List of GPU identifiers (1-indexed). CPU is used when set to 0.

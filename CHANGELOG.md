@@ -34,6 +34,7 @@
 * Always save the model of the last epoch
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
+* Fix documentation generation of embedded tokenization options
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 

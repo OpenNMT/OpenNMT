@@ -207,19 +207,20 @@ function Preprocessor.declareOpts(cmd, dataType)
           }
     end
     if dataType == 'bitext' then
-      local opt = {table.unpack(v)}
+      local opt = onmt.utils.Table.deepCopy(v)
       opt[1] = '-tok_src_' .. v[1]:sub(2)
-      table.insert(options, {table.unpack(opt)})
+      table.insert(options, opt)
+      opt = onmt.utils.Table.deepCopy(v)
       opt[1] = '-tok_tgt_' .. v[1]:sub(2)
-      table.insert(options, {table.unpack(opt)})
+      table.insert(options, opt)
     elseif dataType == 'feattext' then
-      local opt = {table.unpack(v)}
+      local opt = onmt.utils.Table.deepCopy(v)
       opt[1] = '-tok_tgt_' .. v[1]:sub(2)
-      table.insert(options, {table.unpack(opt)})
+      table.insert(options, opt)
     elseif dataType == 'monotext' then
-      local opt = {table.unpack(v)}
+      local opt = onmt.utils.Table.deepCopy(v)
       opt[1] = '-tok_' .. v[1]:sub(2)
-      table.insert(options, {table.unpack(opt)})
+      table.insert(options, opt)
     end
   end
   cmd:setCmdLineOptions(options, "Tokenizer")
