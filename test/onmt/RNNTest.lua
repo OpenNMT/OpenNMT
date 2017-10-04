@@ -22,8 +22,9 @@ local function buildStates(count, batchSize, dim)
   return states
 end
 
-local function testRNN(cell, layers, inputSize, hiddenSize, dropout, residual, dropout_input)
-  local rnn = cell(layers, inputSize, hiddenSize, dropout, residual, dropout_input)
+local function testRNN(cell, layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
+  dropout_type = dropout_type or "naive"
+  local rnn = cell(layers, inputSize, hiddenSize, dropout, residual, dropout_input, dropout_type)
   local numStates = torch.typename(rnn) == 'onmt.GRU' and 1 or 2
   local inputs = buildStates(layers * numStates, 2, hiddenSize)
   table.insert(inputs, torch.Tensor(2, inputSize):uniform())
