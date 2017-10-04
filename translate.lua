@@ -1,4 +1,6 @@
 require('onmt.init')
+local tokenizer = require 'tools.utils.tokenizer'
+local BPE = require ('tools.utils.BPE')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
 
@@ -38,6 +40,33 @@ local options = {
 cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
+
+  -- prepare tokenization option
+local tok_options = {}
+local topts = tokenizer.getOpts()
+for _, v in ipairs(topts) do
+  -- change mode option to include disabling mode (default)
+  if v[1] == '-mode' then
+    v = { '-mode', 'space',
+        [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
+          {
+            enum = {'conservative', 'aggressive', 'space'}
+          }
+        }
+  end
+  local opt = onmt.utils.Table.deepCopy(v)
+  opt[1] = '-tok_src_' .. v[1]:sub(2)
+  table.insert(tok_options, opt)
+  opt = onmt.utils.Table.deepCopy(v)
+  opt[1] = '-tok_tgt_' .. v[1]:sub(2)
+  table.insert(tok_options, opt)
+end
+table.insert(tok_options, {
+  '-detokenize_output', false,
+  [[Detokenize output.]]
+})
+cmd:setCmdLineOptions(tok_options, "Tokenizer")
+
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
@@ -66,6 +95,35 @@ local function main()
   local srcReader = onmt.utils.FileReader.new(opt.src, opt.idx_files, translator:srcFeat())
   local srcBatch = {}
   local srcIdBatch = {}
+
+    -- tokenization options
+  local tokenizers = { {}, {} }
+  local bpes = {}
+  for k, v in pairs(opt) do
+    if k:sub(1,4) == 'tok_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      tokenizers[idx][k] = v
+      if k == "bpe_model" and v ~= '' then
+      bpes[idx] = BPE.new(v)
+    end
+    end
+  end
+  for i = 1, 2 do
+    _G.logger:info("Using on-the-fly '%s' tokenization for input "..i, tokenizers[i]["mode"])
+  end
+
+  -- if source features - no tokenization
+  if translator:srcFeat() then
+    tokenizers[1] = nil
+  end
 
   local goldReader
   local goldBatch
@@ -100,14 +158,20 @@ local function main()
   end
 
   while true do
-    local srcSeq, srcSeqId = srcReader:next()
+    local srcSeq, srcSeqId = srcReader:next(false)
 
     local goldOutputSeq
     if withGoldScore then
-      goldOutputSeq = goldReader:next()
+      goldOutputSeq = goldReader:next(false)
+      if goldOutputSeq then
+        goldOutputSeq = tokenizer.tokenize(tokenizers[2], goldOutputSeq, bpes[2])
+      end
     end
 
-    if srcSeq ~= nil then
+    if srcSeq then
+      if tokenizers[1] then
+        srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
+      end
       table.insert(srcBatch, translator:buildInput(srcSeq))
       table.insert(srcIdBatch, srcSeqId)
 
@@ -151,6 +215,9 @@ local function main()
           else
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
+              if opt.detokenize_output then
+                sentence = tokenizer.detokenize(sentence, tokenizers[2])
+              end
               outFile:write(sentence .. '\n')
               if withAttention then
                 local attentions = results[b].preds[n].attention

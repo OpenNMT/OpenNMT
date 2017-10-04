@@ -1,4 +1,29 @@
-OpenNMT provides generic tokenization utilities to quickly process new training data.
+OpenNMT provides generic tokenization utilities to quickly process new training data. The goal of the tokenization is to convert raw sentences into sequences of tokens. In that process two main operations are performed in sequence:
+
+* normalization - which applies some uniform transformation on the source sequences to identify and protect some specific sequences (for instance url), normalize characters (for instance all types of quotes, unicode variants) or even to normalize some variants (like dates) into unique representation simpler for the translation process
+* the tokenization itself - which transform the actual normalized sentence into a sequence of space-separated tokens together with possible features (case).
+
+## Normalization
+
+Normalization is performed by user commandline tool which has to work in "pipeline" mode: sentences from standard input are normalized and produced on the standard output. For instance, the following python script is normalizing unicode representation (using NFC representation), turns French quotes `«»` into English quotes `“”`, and protect "hashtags" sequences:
+
+```python
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import unicodedata
+import re
+import sys
+
+for line in sys.stdin:
+  line = line.strip()
+  line = unicodedata.normalize('NFC', line.encode('utf8'))
+  line = line.replace(u"«", u"“").replace(u"»", u"”")
+  line = line.encode('utf8').sub(r'(^|[^S\w])#([A-Za-z0-9_]+)', '\\1｟#\\2｠')
+  print(line)
+```
+
+Normalization script is called as part of tokenization adding the option `-normalize_cmd "normalize.py"`.
 
 ## Tokenization
 
@@ -7,6 +32,10 @@ To tokenize a corpus:
 ```bash
 th tools/tokenize.lua OPTIONS < file > file.tok
 ```
+
+Available tokenization modes are defined [here](http://opennmt.net/OpenNMT/options/tokenize/).
+
+In order to perform `detokenization`, tokenization can introduce a joiner annotation mark `￭`.
 
 ## Detokenization
 
