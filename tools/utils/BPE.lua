@@ -17,8 +17,8 @@ function BPE:__init(opt)
   self.codes = {}
   local f = assert(io.open(opt.bpe_model, "r"))
 
-  self.EOT_marker = opt.EOT_marker or opt.bpe_EOT_marker
-  self.BOT_marker = opt.BOT_marker or opt.bpe_EOT_marker
+  self.EOT_marker = opt.bpe_EOT_marker
+  self.BOT_marker = opt.bpe_BOT_marker
   self.joiner_new = opt.joiner_new
   self.joiner_annotate = opt.joiner_annotate
 
