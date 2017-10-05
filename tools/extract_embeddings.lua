@@ -40,8 +40,9 @@ local function main()
   end
   local dicts = checkpoint.dicts
   local encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder)
+  local decoder
   if checkpoint.models.decoder then
-    local decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
+    decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
   end
   local encoder_embeddings, decoder_embeddings
 
@@ -55,7 +56,7 @@ local function main()
       end
   end)
 
-  if checkpoint.models.decoder then
+  if decoder then
     decoder:apply(function(m)
         if torch.type(m) == "onmt.WordEmbedding" then
           print("Found target embeddings of size " ..  m.net.weight:size(1))
