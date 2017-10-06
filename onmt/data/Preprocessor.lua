@@ -586,9 +586,10 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
     table.insert(gAvgLength, 0)
   end
 
+  -- iterate on each file
   for _m, _df in ipairs(files) do
     self:poolAddJob(
-      function(m, df, idx_files, time_shift_feature, src_seq_length, tgt_seq_length)
+      function(df, idx_files, time_shift_feature, src_seq_length, tgt_seq_length, sampling)
         local count = 0
         local ignored = 0
         local emptyCount = 0
@@ -607,7 +608,6 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         end
 
         -- if there is a sampling for this file
-        local sampling = sample_file[m]
         local readers = {}
         local prunedRatio = {}
         for i = 1, n do
@@ -741,7 +741,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         gEmptyCount = gEmptyCount + emptyCount
 
       end,
-      _m, _df, self.args.idx_files, self.args.time_shift_feature, self.args.src_seq_length or self.args.seq_length, self.args.tgt_seq_length)
+      _df, self.args.idx_files, self.args.time_shift_feature, self.args.src_seq_length or self.args.seq_length, self.args.tgt_seq_length, sample_file[_m])
   end
 
   self:poolSynchronize()
@@ -974,7 +974,7 @@ function Preprocessor:makeData(dataset, dicts)
           end
           t = torch.sort(t)
         end
-        table.insert(sample_file, t)
+        table.insert(sample_file, tds.Vec(t))
       end
     end
 
