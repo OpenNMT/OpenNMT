@@ -16,10 +16,10 @@ extra:
 google_analytics: ['UA-89222039-1', 'opennmt.net']
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML
-  - https://github.com/OpenNMT/OpenNMT/js/version-select.js
+  - http://opennmt.net/OpenNMT/js/version-select.js
 extra_css:
   - css/extra.css
-  - https://github.com/OpenNMT/OpenNMT/css/version-select.css
+  - http://opennmt.net/OpenNMT/css/version-select.css
 
 markdown_extensions:
   - math
