@@ -436,11 +436,13 @@ function Preprocessor:__init(args, dataType)
   end
 
   if args.preprocess_pthreads > 1 and args.train_dir ~= '' then
+    local globalLogger = _G.logger
     -- try to load threads if available
     threads = require('threads')
     self.pool = threads.Threads(
       args.preprocess_pthreads,
-      function() init_thread(tokenizers) end
+      function() init_thread(tokenizers) end,
+      function() _G.logger = globalLogger end
     )
   else
     init_thread(tokenizers)
