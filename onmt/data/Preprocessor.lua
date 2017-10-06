@@ -659,7 +659,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         else
           local idx = 1
           local sampling_idx = 1
-          while true and (not sampling or (sampling:dim() ~= 0 and sampling_idx <= sampling:size(1))) do
+          while true and (not sampling or sampling_idx <= #sampling) do
             local tokens = {}
             local hasNil = false
             local allNil = true
@@ -684,7 +684,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                 count = count + 1
               else
                 -- when sampling we can introduce several time the same sentence
-                while sampling_idx <= sampling:size(1) and sampling[sampling_idx] == idx do
+                while sampling_idx <= #sampling and sampling[sampling_idx] == idx do
                   ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
                                                       constants, prunedRatio, generateFeatures, time_shift_feature,
                                                       sentenceDists, vectors, features, avgLength, sizes,
@@ -704,7 +704,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         end
 
         return _G.__threadid, false, sentenceDists, vectors, features, avgLength, sizes, prunedRatio, count, ignored, emptyCount,
-               sampling and (sampling:dim()==0 and 0 or sampling:size(1)) or _df[1]
+               sampling and #sampling or _df[1]
       end,
       -- aggregate the results together
       function(__threadid, error, sentenceDists, vectors, features, avgLength, sizes, prunedRatio, count, ignored, emptyCount, kept)
@@ -974,7 +974,7 @@ function Preprocessor:makeData(dataset, dicts)
           end
           t = torch.sort(t)
         end
-        table.insert(sample_file, tds.Vec(t))
+        table.insert(sample_file, tds.Vec(t:totable()))
       end
     end
 
