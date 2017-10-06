@@ -1,0 +1,1044 @@
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      
+      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.10.2">
+    
+    
+      
+        <title>Preparation - OpenNMT</title>
+      
+    
+    
+      <script src="../../assets/javascripts/modernizr-e826f8942a.js"></script>
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/application-408828a02a.css">
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+      <link rel="stylesheet" href="http://opennmt.net/OpenNMT/css/version-select.css">
+    
+    
+  </head>
+  
+  
+  
+  
+    <body>
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../.." title="OpenNMT" class="md-header-nav__button md-logo">
+          
+            
+              <img src="../../img/logo-alpha.png" width="24" height="24">
+            
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <span class="md-flex__ellipsis md-header-nav__title">
+          
+            
+              
+                <span class="md-header-nav__parent">
+                  Data
+                </span>
+              
+            
+            Preparation
+          
+        </span>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" required placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">&#xE5CD;</button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result" data-md-lang-search="" data-md-lang-tokenizer="[\s\-]+">
+          <div class="md-search-result__meta" data-md-lang-result-none="No matching documents" data-md-lang-result-one="1 matching document" data-md-lang-result-other="# matching documents">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/OpenNMT/OpenNMT" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      OpenNMT/OpenNMT
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <div class="md-nav__button md-logo">
+      
+        
+          <img src="../../img/logo-alpha.png">
+        
+      
+    </div>
+    OpenNMT
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/OpenNMT/OpenNMT" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      OpenNMT/OpenNMT
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="Overview" class="md-nav__link">
+      Overview
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../installation/" title="Installation" class="md-nav__link">
+      Installation
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../quickstart/" title="Quickstart" class="md-nav__link">
+      Quickstart
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Data
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Data
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Preparation
+      </label>
+    
+    <a href="./" title="Preparation" class="md-nav__link md-nav__link--active">
+      Preparation
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#data-type" title="Data type" class="md-nav__link">
+    Data type
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delimiters" title="Delimiters" class="md-nav__link">
+    Delimiters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#index-files" title="Index files" class="md-nav__link">
+    Index files
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-vectors" title="Input vectors" class="md-nav__link">
+    Input vectors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vocabularies" title="Vocabularies" class="md-nav__link">
+    Vocabularies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shuffling-and-sorting" title="Shuffling and sorting" class="md-nav__link">
+    Shuffling and sorting
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sentence-length" title="Sentence length" class="md-nav__link">
+    Sentence length
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../word_features/" title="Word features" class="md-nav__link">
+      Word features
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Training
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Training
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../training/models/" title="Models" class="md-nav__link">
+      Models
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../training/embeddings/" title="Embeddings" class="md-nav__link">
+      Embeddings
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../training/logs/" title="Logs" class="md-nav__link">
+      Logs
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../training/multi_gpu/" title="Multi GPU" class="md-nav__link">
+      Multi GPU
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../training/retraining/" title="Retraining" class="md-nav__link">
+      Retraining
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../training/decay/" title="Decay strategies" class="md-nav__link">
+      Decay strategies
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../training/sampling/" title="Data sampling" class="md-nav__link">
+      Data sampling
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Translation
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Translation
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../translation/inference/" title="Inference" class="md-nav__link">
+      Inference
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../translation/beam_search/" title="Beam search" class="md-nav__link">
+      Beam search
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../translation/unknowns/" title="Unknown words" class="md-nav__link">
+      Unknown words
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Tools
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Tools
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../tools/tokenization/" title="Tokenization" class="md-nav__link">
+      Tokenization
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../tools/servers/" title="Servers" class="md-nav__link">
+      Servers
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Reference: Options
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Reference: Options
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/usage/" title="Scripts usage" class="md-nav__link">
+      Scripts usage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/preprocess/" title="preprocess.lua" class="md-nav__link">
+      preprocess.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/train/" title="train.lua" class="md-nav__link">
+      train.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/translate/" title="translate.lua" class="md-nav__link">
+      translate.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/tag/" title="tag.lua" class="md-nav__link">
+      tag.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/build_vocab/" title="tools/build_vocab.lua" class="md-nav__link">
+      tools/build_vocab.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/release_model/" title="tools/release_model.lua" class="md-nav__link">
+      tools/release_model.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/tokenize/" title="tools/tokenize.lua" class="md-nav__link">
+      tools/tokenize.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/learn_bpe/" title="tools/learn_bpe.lua" class="md-nav__link">
+      tools/learn_bpe.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/server/" title="tools/translation_server.lua" class="md-nav__link">
+      tools/translation_server.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/rest_server/" title="tools/rest_translation_server.lua" class="md-nav__link">
+      tools/rest_translation_server.lua
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../options/embeddings/" title="tools/embeddings.lua" class="md-nav__link">
+      tools/embeddings.lua
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../extensions/" title="Extensions" class="md-nav__link">
+      Extensions
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../references/" title="References" class="md-nav__link">
+      References
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../issues/" title="Common issues" class="md-nav__link">
+      Common issues
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#data-type" title="Data type" class="md-nav__link">
+    Data type
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delimiters" title="Delimiters" class="md-nav__link">
+    Delimiters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#index-files" title="Index files" class="md-nav__link">
+    Index files
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-vectors" title="Input vectors" class="md-nav__link">
+    Input vectors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vocabularies" title="Vocabularies" class="md-nav__link">
+    Vocabularies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shuffling-and-sorting" title="Shuffling and sorting" class="md-nav__link">
+    Shuffling and sorting
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sentence-length" title="Sentence length" class="md-nav__link">
+    Sentence length
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/data/preparation.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                  <h1>Preparation</h1>
+                
+                <p>The data preparation (or preprocessing) passes over the data to generate word vocabularies and sequences of indices used by the training.</p>
+<h2 id="data-type">Data type<a class="headerlink" href="#data-type" title="Permanent link">&para;</a></h2>
+<p>By default, the data type is <code>bitext</code> which are aligned source and target files. Alignment is by default done at the line level, but can also be done through aligned index (see <a href="#index-files">Index files</a>).</p>
+<p>For training language models, data type is <code>monotext</code> which is only one language file.</p>
+<p>Finally, you can also manipulate the <code>feattext</code> data type (see <a href="#input-vectors">Input vectors</a>) which allows to code sequences of vectors (e.g. sequence of features generated by a device).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Input vectors can only be used for the source.</p>
+</div>
+<h2 id="delimiters">Delimiters<a class="headerlink" href="#delimiters" title="Permanent link">&para;</a></h2>
+<p>Training data (for <code>bitext</code> and <code>monotext</code> data types) are expected to follow the following format:</p>
+<ul>
+<li>sentences are newline-separated</li>
+<li>tokens are space-separated</li>
+</ul>
+<h2 id="index-files">Index files<a class="headerlink" href="#index-files" title="Permanent link">&para;</a></h2>
+<p>Index files are aligning different files by index and not by line. For instance the following files are aligned by index:</p>
+<div class="codehilite"><pre><span></span>line1 First line
+line2 Second line
+</pre></div>
+
+
+<div class="codehilite"><pre><span></span>line2 Deuxième ligne
+line1 Première ligne
+</pre></div>
+
+
+<p>where the first token of each line is an index which must have an equivalent (at any position) in aligned files.</p>
+<p>The option <code>-idx_files</code> is used (in <code>preprocess.lua</code> or <code>translate.lua</code>) to enable this feature.</p>
+<h2 id="input-vectors">Input vectors<a class="headerlink" href="#input-vectors" title="Permanent link">&para;</a></h2>
+<p>OpenNMT supports the use of vector sequence instead of word sequence on the source side.</p>
+<p>The data type is <code>feattext</code> and is using the <a href="http://kaldi-asr.org">Kaldi</a> text format (<code>.ark</code> files). For instance the following entry, indexed by <code>KEY</code> is representing a sequence
+of <code>m</code> vectors of <code>n</code> values:</p>
+<div class="codehilite"><pre><span></span>KEY [
+FEAT1.1 FEAT1.2 FEAT1.3 ... FEAT1.n
+...
+FEATm.1 FEATm.2 FEATm.3 ... FEATm.n ]
+</pre></div>
+
+
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Note that you need to use index files for representing input vectors.</p>
+</div>
+<h2 id="vocabularies">Vocabularies<a class="headerlink" href="#vocabularies" title="Permanent link">&para;</a></h2>
+<p>The main goal of the preprocessing is to build the word and features vocabularies and assign each word to an index within these dictionaries.</p>
+<p>By default, word vocabularies are limited to 50,000. You can change this value with the <code>-src_vocab_size</code> and <code>-tgt_vocab_size</code>. Alternatively, you can prune the vocabulary size by setting the minimum frequency of words with the <code>-src_words_min_frequency</code> and <code>-tgt_words_min_frequency</code> options.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When pruning vocabularies to 50,000, the preprocessing will actually report a vocabulary size of 50,004 because of 4 special tokens that are automatically added.</p>
+</div>
+<p>The preprocessing script will generate <code>*.dict</code> files containing the vocabularies: source and target token vocabularies are named <code>PREFIX.src.dict</code> and <code>PREFIX.tgt.dict</code>, while features' vocabulary files are named <code>PREFIX.{source,target}_feature_N.dict</code>.</p>
+<p>These files are optional for the rest of the workflow. However, it is common to reuse vocabularies across dataset using the <code>-src_vocab</code> and <code>-tgt_vocab</code> options. This is particularly needed when retraining a model on new data: the vocabulary has to be the same.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Vocabularies can be generated beforehand with the <code>tools/build_vocab.lua</code> script.</p>
+</div>
+<p>Each line of dictionary files is space-separated fields:</p>
+<ul>
+<li><code>token</code> the vocab entry.</li>
+<li><code>ID</code> its index used internally to map tokens to integer as an entry of lookup tables.</li>
+<li>(optional) the vocab frequency in the corpus it was extracted form. This field is generated.</li>
+<li>other fields are ignored</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>if you provide your own vocabulary - be sure to integrate the 4 special tokens: <code>&lt;blank&gt; &lt;unk&gt; &lt;s&gt; &lt;/s&gt;</code>. A good practice is to keep them at the beginning of the file with the respective index 1, 2, 3, 4</p>
+</div>
+<h2 id="shuffling-and-sorting">Shuffling and sorting<a class="headerlink" href="#shuffling-and-sorting" title="Permanent link">&para;</a></h2>
+<p>By default, OpenNMT both shuffles and sorts the data before the training. This process comes from 2 constraints of batch training:</p>
+<ul>
+<li><strong>shuffling</strong>: sentences within a batch should come from different parts of the corpus</li>
+<li><strong>sorting</strong>: sentences within a batch should have the same source length (i.e. without padding to maximize efficiency)</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>During the training, batches are also randomly selected unless the <code>-curriculum</code> option is used.</p>
+</div>
+<h2 id="sentence-length">Sentence length<a class="headerlink" href="#sentence-length" title="Permanent link">&para;</a></h2>
+<p>During preprocessing, too long sentences (with source longer than <code>-src_seq_length</code> or target longer than <code>-tgt_seq_length</code>) are discarded from the corpus. You can have an idea of the distribution of sentence length in your training corpus by looking at the preprocess log where a table gives percent of sentences with length 1-10, 11-20, 21-30, ..., 90+:</p>
+<div class="codehilite"><pre><span></span>[04/14/17 00:40:10 INFO]  * Source Sentence Length (range of 10): [ 7% ; 35% ; 32% ; 16% ; 7% ; 0% ; 0% ; 0% ; 0% ; 0% ]
+[04/14/17 00:40:10 INFO]  * Target Sentence Length (range of 10): [ 9% ; 38% ; 30% ; 15% ; 5% ; 0% ; 0% ; 0% ; 0% ; 0% ]
+</pre></div>
+
+
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Limiting maximal sentence length is a key parameter to reduce the GPU memory footprint used during training: indeed the memory grows linearly with maximal sentence length.</p>
+</div>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../../quickstart/" title="Quickstart" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Quickstart
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../word_features/" title="Word features" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Word features
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="http://www.mkdocs.org" title="MkDocs">MkDocs</a>
+        and
+        <a href="http://squidfunk.github.io/mkdocs-material/" title="Material for MkDocs">
+          Material for MkDocs</a>
+      </div>
+      
+        
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://opennmt.net" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/OpenNMT/OpenNMT" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/application-f3ab9e5ff8.js"></script>
+      
+      
+      <script>app.initialize({url:{base:"../.."}})</script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
+      
+        <script src="http://opennmt.net/OpenNMT/js/version-select.js"></script>
+      
+    
+    
+      
+      <script>!function(e,t,a,n,o,c,i){e.GoogleAnalyticsObject=o,e[o]=e[o]||function(){(e[o].q=e[o].q||[]).push(arguments)},e[o].l=1*new Date,c=t.createElement(a),i=t.getElementsByTagName(a)[0],c.async=1,c.src=n,i.parentNode.insertBefore(c,i)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-89222039-1","opennmt.net"),ga("set","anonymizeIp",!0),ga("send","pageview");var links=document.getElementsByTagName("a");Array.prototype.map.call(links,function(e){e.host!=document.location.host&&e.addEventListener("click",function(){var t=e.getAttribute("data-md-action")||"follow";ga("send","event","outbound",t,e.href)})});var query=document.forms.search.query;query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})</script>
+      
+    
+  </body>
+</html>
