@@ -16,7 +16,7 @@ extra:
 google_analytics: ['UA-89222039-1', 'opennmt.net']
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML
-  - https://opennmt.net/OpenNMT/js/version-select.js
+  - http://opennmt.net/OpenNMT/js/version-select.js
   - https://code.jquery.com/jquery-3.2.1.slim.min.js
   - https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.4/js/select2.min.js
 extra_css:
