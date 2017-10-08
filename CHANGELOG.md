@@ -2,10 +2,12 @@
 
 ### Breaking changes
 
-* Remove tokenization options from `learn_bpe.lua`
+* Enable tokenization with tokenizer's non-BPE related options for `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
 * Fix some wrong tokenization rules (punctuation-numbers)
 * `-report_every` option is renamed to `-report_progress_every`
+* `-EOT_marker` option is renamed to `-bpe_EOT_marker` for `tokenize.lua`
+* `-BOT_marker` option is renamed to `-bpe_BOT_marker` for `tokenize.lua`
 * `bit32` package is now required for LuaJIT users
 
 ### New features
@@ -17,8 +19,10 @@
 * Add option to reset the optimizer states when the learning rate is decayed
 * Introduce dynamic dataset to bypass tokenization, preprocessing, and sampling
 * Introduce protection blocks for tokenization
+* Introduce possibility to hook normalization command part of tokenization
 * Add option to dump attention in `translate.lua`
 * Add option to replace unknown words with the original wrapped in a `｟unk:xxxxx｠` tag `-replace_unk_tagged`
+* Add `-segment_numbers` option
 
 ### Fixes and improvements
 
@@ -33,6 +37,7 @@
 * Always save the model of the last epoch
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
+* Fix documentation generation of embedded tokenization options
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 

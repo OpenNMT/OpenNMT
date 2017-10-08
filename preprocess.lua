@@ -25,7 +25,9 @@ local options = {
     '-save_data', '',
     [[Output file for the prepared data.]],
     {
-      depends = function(opt) return opt.dry_run, "option `-save_data` is required" end
+      depends = function(opt)
+        return opt.dry_run or opt.save_data ~= '', "option `-save_data` is required"
+      end
     }
   }
 }

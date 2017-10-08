@@ -1,4 +1,4 @@
---[[ Sequence to sequence model with attention. ]]
+--[[ Sequence tagger. ]]
 local SeqTagger, parent = torch.class('SeqTagger', 'Model')
 
 local options = {
