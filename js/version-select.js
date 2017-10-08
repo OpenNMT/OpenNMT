@@ -13,7 +13,7 @@ window.addEventListener("DOMContentLoaded", function() {
 
   function makeSelect(options, selected) {
     var select = document.createElement("select");
-    select.classList.add("form-control");
+    select.classList.add("md-header-nav__source");
 
     options.forEach(function(i) {
       var value = i
@@ -39,19 +39,20 @@ window.addEventListener("DOMContentLoaded", function() {
 
     var versionPanel = document.createElement("div");
     versionPanel.id = "version-panel";
-    versionPanel.className = "md-flex__cell md-flex__cell--stretch";
-    versionPanel.textContent = "Version: ";
-
+    versionPanel.innerHTML = "<label>Version: </label>";
+    versionPanel.classList.add("md-flex__cell")
+    versionPanel.classList.add("md-flex__cell--shrink");
+    versionPanel.classList.add("md-header-nav__source");
     var select = makeSelect(versions.map(function(i) {
       return i.version;
     }), realVersion);
-    select.addEventListener("change", function(event) {
-      window.location.href = REL_BASE_URL + "/" + this.value;
-    });
     versionPanel.appendChild(select);
 
     var left = document.querySelector("div.md-flex");
     left.appendChild(versionPanel);
+    $('select').select2({ width: 'auto' }).on("change", function(event) {
+      window.location.href = REL_BASE_URL + "/" + this.value;
+    });
   };
   xhr.send();
 });
