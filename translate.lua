@@ -115,7 +115,7 @@ local function main()
   end
 
   if opt.tok_src_bpe_model ~= '' then
-     myopt = {}
+     local myopt = {}
      myopt.bpe_model = opt.tok_src_bpe_model
      myopt.bpe_EOT_marker = opt.tok_src_bpe_EOT_marker
      myopt.bpe_BOT_marker = opt.tok_src_bpe_BOT_marker
@@ -126,7 +126,7 @@ local function main()
      bpes[1] = BPE.new(myopt)
   end
   if opt.tok_tgt_bpe_model ~= '' then
-     myopt = {}
+     local myopt = {}
      myopt.bpe_model = opt.tok_tgt_bpe_model
      myopt.bpe_EOT_marker = opt.tok_tgt_bpe_EOT_marker
      myopt.bpe_BOT_marker = opt.tok_tgt_bpe_BOT_marker
