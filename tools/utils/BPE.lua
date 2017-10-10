@@ -4,40 +4,40 @@ local separators = require('tools.utils.separators')
 local BPE = torch.class('BPE')
 
 function BPE:__init(opt)
-   self.split = string.split
-   -- to be able to run the code without torch
-   if not self.split then
-      self.split = function(t, sep)
-		      local fields = {}
-		      local pattern = string.format("([^%s]+)", sep)
-		      t:gsub(pattern, function(c) fields[#fields+1] = c end)
-		      return fields
-		   end
-   end
-   self.codes = {}
-   local f = assert(io.open(opt.bpe_model, "r"))
-   
-   self.EOT_marker = opt.bpe_EOT_marker
-   self.BOT_marker = opt.bpe_BOT_marker
-   self.joiner_new = opt.joiner_new
-   self.joiner_annotate = opt.joiner_annotate
-   
-   local t = f:read("*line")
-   local options = self.split(t, ";")
-   if (#options == 3 or #options == 4 ) then
-      self.prefix = options[1] == "true"
-      self.suffix = options[2] == "true"
-      self.case_insensitive = options[3] == "true"
-      t = f:read("*line")
-      if #options == 4 then
-	 print ("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs")
-      end
-   else
-      self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
-      self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"
-      self.case_insensitive = opt.bpe_case_insensitive
-   end
-   local i = 1
+  self.split = string.split
+  -- to be able to run the code without torch
+  if not self.split then
+    self.split = function(t, sep)
+      local fields = {}
+      local pattern = string.format("([^%s]+)", sep)
+      t:gsub(pattern, function(c) fields[#fields+1] = c end)
+      return fields
+    end
+  end
+  self.codes = {}
+  local f = assert(io.open(opt.bpe_model, "r"))
+
+  self.EOT_marker = opt.bpe_EOT_marker
+  self.BOT_marker = opt.bpe_BOT_marker
+  self.joiner_new = opt.joiner_new
+  self.joiner_annotate = opt.joiner_annotate
+
+  local t = f:read("*line")
+  local options = self.split(t, ";")
+  if (#options == 3 or #options == 4 ) then
+    self.prefix = options[1] == "true"
+    self.suffix = options[2] == "true"
+    self.case_insensitive = options[3] == "true"
+    t = f:read("*line")
+    if #options == 4 then
+      print ("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs")
+    end
+  else
+    self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
+    self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"
+    self.case_insensitive = opt.bpe_case_insensitive
+  end
+  local i = 1
 
   while not(t == nil) do
     local l = self.split(t, " ")
@@ -132,13 +132,13 @@ function BPE:encode(l)
   end
 
   if self.suffix then
-     if word[#word] == self.EOT_marker then
-	table.remove(word, #word)
-     elseif string.sub(word[#word],-string.len(self.EOT_marker)) == self.EOT_marker then
-	word[#word] = string.sub(word[#word], 1, -string.len(self.EOT_marker)-1)
-     end
+    if word[#word] == self.EOT_marker then
+      table.remove(word, #word)
+    elseif string.sub(word[#word],-string.len(self.EOT_marker)) == self.EOT_marker then
+      word[#word] = string.sub(word[#word], 1, -string.len(self.EOT_marker)-1)
+    end
   end
-  
+
   if self.prefix then
     if word[1] == self.BOT_marker then
       table.remove(word, 1)
