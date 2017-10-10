@@ -96,23 +96,22 @@ local function main()
   local srcBatch = {}
   local srcIdBatch = {}
 
-  -- tokenization options
+    -- tokenization options
   local tokenizers = { {}, {} }
   local bpes = {}
-
   for k, v in pairs(opt) do
-     if k:sub(1,4) == 'tok_' then
-	local idx = 1
-	if k:sub(5, 8) == 'tgt_' then
-	   idx = 2
-	   k = k:sub(9)
-	elseif k:sub(5,8) == 'src_' then
-	   k = k:sub(9)
-	else
-	   k = k:sub(5)
-	end
-	tokenizers[idx][k] = v
-     end
+    if k:sub(1,4) == 'tok_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      tokenizers[idx][k] = v
+    end
   end
 
   if opt.tok_src_bpe_model ~= '' then
@@ -191,17 +190,17 @@ local function main()
     end
 
     if srcSeq then
-       if tokenizers[1] then
-	  srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
-       end
-       table.insert(srcBatch, translator:buildInput(srcSeq))
-       table.insert(srcIdBatch, srcSeqId)
-       
-       if withGoldScore then
-	  table.insert(goldBatch, translator:buildInputGold(goldOutputSeq))
-       end
+      if tokenizers[1] then
+        srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
+      end
+      table.insert(srcBatch, translator:buildInput(srcSeq))
+      table.insert(srcIdBatch, srcSeqId)
+
+      if withGoldScore then
+        table.insert(goldBatch, translator:buildInputGold(goldOutputSeq))
+      end
     elseif #srcBatch == 0 then
-       break
+      break
     end
 
     if srcSeq == nil or #srcBatch == opt.batch_size then
