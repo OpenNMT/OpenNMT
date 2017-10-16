@@ -56,8 +56,8 @@
 * `-tok_tgt_case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
 * `-tok_src_segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
 * `-tok_tgt_segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
-* `-tok_src_segment_alphabet <table>` (accepted: `Kanbun`, `Cherokee`, `Gujarati`, `Cyrillic`, `Gurmukhi`, `Georgian`, `Hanunoo`, `Hangul`, `Greek`, `Ogham`, `Bengali`, `Armenian`, `Arabic`, `Tagbanwa`, `Khmer`, `Malayalam`, `Sinhala`, `Hiragana`, `Devanagari`, `Thaana`, `Bopomofo`, `Syriac`, `Hebrew`, `Kangxi`, `Han`, `Limbu`, `Tamil`, `Mongolian`, `Kannada`, `Tagalog`, `Ethiopic`, `Telugu`, `Myanmar`, `Lao`, `Oriya`, `Braille`, `Katakana`, `Latin`, `Buhid`, `Thai`, `Yi`, `Tibetan`)<br/>Segment all letters from indicated alphabet.
-* `-tok_tgt_segment_alphabet <table>` (accepted: `Kanbun`, `Cherokee`, `Gujarati`, `Cyrillic`, `Gurmukhi`, `Georgian`, `Hanunoo`, `Hangul`, `Greek`, `Ogham`, `Bengali`, `Armenian`, `Arabic`, `Tagbanwa`, `Khmer`, `Malayalam`, `Sinhala`, `Hiragana`, `Devanagari`, `Thaana`, `Bopomofo`, `Syriac`, `Hebrew`, `Kangxi`, `Han`, `Limbu`, `Tamil`, `Mongolian`, `Kannada`, `Tagalog`, `Ethiopic`, `Telugu`, `Myanmar`, `Lao`, `Oriya`, `Braille`, `Katakana`, `Latin`, `Buhid`, `Thai`, `Yi`, `Tibetan`)<br/>Segment all letters from indicated alphabet.
+* `-tok_src_segment_alphabet <table>` (accepted: `Tagalog`, `Hanunoo`, `Limbu`, `Yi`, `Hebrew`, `Latin`, `Devanagari`, `Thaana`, `Lao`, `Sinhala`, `Georgian`, `Kannada`, `Cherokee`, `Kanbun`, `Buhid`, `Malayalam`, `Han`, `Thai`, `Katakana`, `Telugu`, `Greek`, `Myanmar`, `Armenian`, `Hangul`, `Cyrillic`, `Ethiopic`, `Tagbanwa`, `Gurmukhi`, `Ogham`, `Khmer`, `Arabic`, `Oriya`, `Hiragana`, `Mongolian`, `Kangxi`, `Syriac`, `Gujarati`, `Braille`, `Bengali`, `Tamil`, `Bopomofo`, `Tibetan`)<br/>Segment all letters from indicated alphabet.
+* `-tok_tgt_segment_alphabet <table>` (accepted: `Tagalog`, `Hanunoo`, `Limbu`, `Yi`, `Hebrew`, `Latin`, `Devanagari`, `Thaana`, `Lao`, `Sinhala`, `Georgian`, `Kannada`, `Cherokee`, `Kanbun`, `Buhid`, `Malayalam`, `Han`, `Thai`, `Katakana`, `Telugu`, `Greek`, `Myanmar`, `Armenian`, `Hangul`, `Cyrillic`, `Ethiopic`, `Tagbanwa`, `Gurmukhi`, `Ogham`, `Khmer`, `Arabic`, `Oriya`, `Hiragana`, `Mongolian`, `Kangxi`, `Syriac`, `Gujarati`, `Braille`, `Bengali`, `Tamil`, `Bopomofo`, `Tibetan`)<br/>Segment all letters from indicated alphabet.
 * `-tok_src_segment_numbers [<boolean>]` (default: `false`)<br/>Segment numbers into single digits.
 * `-tok_tgt_segment_numbers [<boolean>]` (default: `false`)<br/>Segment numbers into single digits.
 * `-tok_src_segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
@@ -77,7 +77,7 @@
 
 ## Logger options
 
-* `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout.
+* `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout - if file name ending with json, output structure json.
 * `-disable_logs [<boolean>]` (default: `false`)<br/>If set, output nothing.
 * `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `NOERROR`; default: `INFO`)<br/>Output logs at this level and above.
 
