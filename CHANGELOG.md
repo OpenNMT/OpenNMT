@@ -23,6 +23,7 @@
 * Add option to dump attention in `translate.lua`
 * Add option to replace unknown words with the original wrapped in a `｟unk:xxxxx｠` tag `-replace_unk_tagged`
 * Add `-segment_numbers` option
+* Logger formats log as JSON if file suffix is `.json`
 
 ### Fixes and improvements
 

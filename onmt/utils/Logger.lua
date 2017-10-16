@@ -5,7 +5,7 @@ local Logger = torch.class('Logger')
 local options = {
   {
     '-log_file', '',
-    [[Output logs to a file under this path instead of stdout.]]
+    [[Output logs to a file under this path instead of stdout - if file name ending with json, output structure json.]]
   },
   {
     '-disable_logs', false,
@@ -40,6 +40,7 @@ Example:
 ]]
 function Logger:__init(logFile, disableLogs, logLevel)
   logFile = logFile or ''
+  self.jsonLog = logFile:sub(-5) == '.json'
   disableLogs = disableLogs or false
   logLevel = logLevel or 'INFO'
 
@@ -50,11 +51,18 @@ function Logger:__init(logFile, disableLogs, logLevel)
     self:setVisibleLevel(logLevel)
   end
   if string.len(logFile) > 0 then
-    self.logFile = io.open(logFile, 'a')
+    self.logFile = io.open(logFile, (self.jsonLog and 'w') or 'a')
+    if self.jsonLog then
+      self.logFile:write("[\n");
+    end
   else
     self.logFile = nil
   end
   self.LEVELS = { DEBUG = 0, INFO = 1, WARNING = 2, ERROR = 3 }
+end
+
+local function jsonize(msg)
+  return msg:gsub("\\","\\\\"):gsub("\n","\\n"):gsub("\"","\\\"")
 end
 
 --[[ Log a message at a specified level.
@@ -67,13 +75,19 @@ Parameters:
 function Logger:log(message, level)
   level = level or 'INFO'
   local timeStamp = os.date('%x %X')
-  local msgFormatted = string.format('[%s %s] %s', timeStamp, level, message)
-  if (not self.mute) and self:_isVisible(level) then
-    print (msgFormatted)
-  end
-  if self.logFile and self:_isVisible(level) then
-    self.logFile:write(msgFormatted .. '\n')
-    self.logFile:flush()
+  if self.jsonLog then
+    if message:len() > 0 then
+      self.logFile:write('["'..level..'","'..timeStamp..'","'..jsonize(message)..'"],\n')
+    end
+  else
+    local msgFormatted = string.format('[%s %s] %s', timeStamp, level, message)
+    if (not self.mute) and self:_isVisible(level) then
+      print (msgFormatted)
+    end
+    if self.logFile and self:_isVisible(level) then
+      self.logFile:write(msgFormatted .. '\n')
+      self.logFile:flush()
+    end
   end
 end
 
@@ -117,22 +131,6 @@ function Logger:debug(...)
   self:log(self:_format(...), 'DEBUG')
 end
 
---[[ Log a message as exactly it is.
-
-Parameters:
-  * `message` - the message to log. Supports formatting string.
-
-]]
-function Logger:writeMsg(...)
-  local msg = self:_format(...)
-  if (not self.mute) and self:_isVisible('WARNING') then
-    io.write(msg)
-  end
-  if self.logFile and self:_isVisible('WARNING') then
-    self.logFile:write(msg)
-    self.logFile:flush()
-  end
-end
 
 --[[ Set the visible message level. Lower level messages will be muted.
 
@@ -165,6 +163,9 @@ end
 ]]
 function Logger:shutDown()
   if self.logFile then
+    if self.jsonLog then
+      self.logFile:write("[]]\n")
+    end
     self.logFile:close()
   end
 end
