@@ -1,18 +1,17 @@
 
 <!DOCTYPE html>
-<html lang="en" class="no-js">
+<html class="no-js">
   <head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
-      <meta http-equiv="x-ua-compatible" content="ie=edge">
       
       
       
       
         <link rel="shortcut icon" href="../../assets/images/favicon.png">
       
-      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.10.2">
+      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.5.5">
     
     
       
@@ -20,10 +19,10 @@
       
     
     
-      <script src="../../assets/javascripts/modernizr-e826f8942a.js"></script>
+      <script src="../../assets/javascripts/modernizr-56ade86843.js"></script>
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/application-408828a02a.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/application-b1a1975878.css">
       
     
     
@@ -65,13 +64,11 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="OpenNMT" class="md-header-nav__button md-logo">
-          
-            
-              <img src="../../img/logo-alpha.png" width="24" height="24">
-            
-          
-        </a>
+        
+          <a href="../.." title="OpenNMT" class="md-logo md-header-nav__button">
+            <img src="../../img/logo-alpha.png" width="24" height="24">
+          </a>
+        
       </div>
       <div class="md-flex__cell md-flex__cell--shrink">
         <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
@@ -94,17 +91,17 @@
         
           <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
           
-<div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="search"></label>
+<div class="md-search" data-md-component="search">
+  <div class="md-search__overlay"></div>
   <div class="md-search__inner">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" required placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
+      <input type="text" class="md-search__input" name="query" required placeholder="Search" accesskey="s" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
       <label class="md-icon md-search__icon" for="search"></label>
-      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">&#xE5CD;</button>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">close</button>
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="result" data-md-lang-search="" data-md-lang-tokenizer="[\s\-]+">
+        <div class="md-search-result" data-md-component="result">
           <div class="md-search-result__meta" data-md-lang-result-none="No matching documents" data-md-lang-result-one="1 matching document" data-md-lang-result-other="# matching documents">
             Type to start searching
           </div>
@@ -116,9 +113,9 @@
 </div>
         
       </div>
-      
-        <div class="md-flex__cell md-flex__cell--shrink">
-          <div class="md-header-nav__source">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <div class="md-header-nav__source">
+          
             
 
 
@@ -138,9 +135,9 @@
     </div>
   </a>
 
-          </div>
+          
         </div>
-      
+      </div>
     </div>
   </nav>
 </header>
@@ -157,13 +154,11 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="drawer">
-    <div class="md-nav__button md-logo">
-      
-        
-          <img src="../../img/logo-alpha.png">
-        
-      
-    </div>
+    
+      <i class="md-logo md-nav__button">
+        <img src="../../img/logo-alpha.png">
+      </i>
+    
     OpenNMT
   </label>
   
@@ -842,7 +837,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/tokenize.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/OpenNMT/OpenNMT/edit/master/docs/options/tokenize.md" title="Edit this page" class="md-icon md-content__icon">edit</a>
                 
                 
                   <h1>tools/tokenize.lua</h1>
@@ -864,7 +859,7 @@
 <li><code>-joiner_new [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>In <code>-joiner_annotate</code> mode, <code>-joiner</code> is an independent token.</li>
 <li><code>-case_feature [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Generate case feature.</li>
 <li><code>-segment_case [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment case feature, splits AbC to Ab C to be able to restore case</li>
-<li><code>-segment_alphabet &lt;table&gt;</code> (accepted: <code>Buhid</code>, <code>Greek</code>, <code>Hangul</code>, <code>Ogham</code>, <code>Thaana</code>, <code>Tamil</code>, <code>Cherokee</code>, <code>Khmer</code>, <code>Devanagari</code>, <code>Thai</code>, <code>Oriya</code>, <code>Armenian</code>, <code>Katakana</code>, <code>Limbu</code>, <code>Arabic</code>, <code>Bengali</code>, <code>Latin</code>, <code>Mongolian</code>, <code>Cyrillic</code>, <code>Hiragana</code>, <code>Kangxi</code>, <code>Yi</code>, <code>Tagbanwa</code>, <code>Gurmukhi</code>, <code>Tagalog</code>, <code>Syriac</code>, <code>Kanbun</code>, <code>Hanunoo</code>, <code>Georgian</code>, <code>Kannada</code>, <code>Myanmar</code>, <code>Tibetan</code>, <code>Hebrew</code>, <code>Han</code>, <code>Lao</code>, <code>Telugu</code>, <code>Gujarati</code>, <code>Sinhala</code>, <code>Malayalam</code>, <code>Bopomofo</code>, <code>Braille</code>, <code>Ethiopic</code>)<br/>Segment all letters from indicated alphabet.</li>
+<li><code>-segment_alphabet &lt;table&gt;</code> (accepted: <code>Tagalog</code>, <code>Hanunoo</code>, <code>Limbu</code>, <code>Yi</code>, <code>Hebrew</code>, <code>Latin</code>, <code>Devanagari</code>, <code>Thaana</code>, <code>Lao</code>, <code>Sinhala</code>, <code>Georgian</code>, <code>Kannada</code>, <code>Cherokee</code>, <code>Kanbun</code>, <code>Buhid</code>, <code>Malayalam</code>, <code>Han</code>, <code>Thai</code>, <code>Katakana</code>, <code>Telugu</code>, <code>Greek</code>, <code>Myanmar</code>, <code>Armenian</code>, <code>Hangul</code>, <code>Cyrillic</code>, <code>Ethiopic</code>, <code>Tagbanwa</code>, <code>Gurmukhi</code>, <code>Ogham</code>, <code>Khmer</code>, <code>Arabic</code>, <code>Oriya</code>, <code>Hiragana</code>, <code>Mongolian</code>, <code>Kangxi</code>, <code>Syriac</code>, <code>Gujarati</code>, <code>Braille</code>, <code>Bengali</code>, <code>Tamil</code>, <code>Bopomofo</code>, <code>Tibetan</code>)<br/>Segment all letters from indicated alphabet.</li>
 <li><code>-segment_numbers [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment numbers into single digits.</li>
 <li><code>-segment_alphabet_change [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment if alphabet change between 2 letters.</li>
 <li><code>-bpe_model &lt;string&gt;</code> (default: <code>''</code>)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, BPE related options will be overridden/set automatically if the BPE model specified by <code>-bpe_model</code> is learnt using <code>learn_bpe.lua</code>.</li>
@@ -958,9 +953,7 @@
       
     </div>
     
-      <script src="../../assets/javascripts/application-f3ab9e5ff8.js"></script>
-      
-      
+      <script src="../../assets/javascripts/application-ad1183cb07.js"></script>
       <script>app.initialize({url:{base:"../.."}})</script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
