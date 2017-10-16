@@ -438,6 +438,7 @@ function Preprocessor:__init(args, dataType)
   if args.preprocess_pthreads > 1 and args.train_dir ~= '' then
     -- try to load threads if available
     threads = require('threads')
+    threads.Threads.serialization('threads.sharedserialize')
     self.pool = threads.Threads(
       args.preprocess_pthreads,
       function() init_thread(tokenizers) end
