@@ -39,7 +39,7 @@ local server_options = {
      [[If set returns by default attn vector.]]
    },
    {
-     '-unload_time', 10,
+     '-unload_time', 7,
      [[Unload unused model from memory after this time.]]
    },
    {
@@ -130,32 +130,39 @@ local function translateMessage(server,lines)
   local translations = {}
   for b = 1, #lines do
     local ret = {}
+
     for i = 1, translator.args.n_best do
       local srcSent = translator:buildOutput(batch[b])
-      local predSent = translator:buildOutput(results[b].preds[i])
-
-      local oline
-      res, err = pcall(function() oline = tokenizer.detokenize(predSent, options) end)
-      if not res then
-        if string.find(err,"interrupted") then
-          error("interrupted")
-         else
-          error("unicode error in line ".. err)
-        end
-      end
-
       local lineres = {
-        tgt = oline,
-        src = srcSent,
-        n_best = i,
-        pred_score = results[b].preds[i].score
-      }
-      if options.withAttn or lines[b].withAttn then
-        local attnTable = {}
-        for j = 1, #results[b].preds[i].attention do
-          table.insert(attnTable, results[b].preds[i].attention[j]:totable())
+          tgt = "",
+          src = srcSent,
+          n_best = 1,
+          pred_score = 0
+        }
+      local oline = ""
+      if results[b].preds ~= nil then
+        local predSent = translator:buildOutput(results[b].preds[i])   
+        res, err = pcall(function() oline = tokenizer.detokenize(predSent, options) end)
+        if not res then
+          if string.find(err,"interrupted") then
+            error("interrupted")
+           else
+            error("unicode error in line ".. err)
+          end
         end
-        lineres.attn = attnTable
+        lineres = {
+          tgt = oline,
+          src = srcSent,
+          n_best = i,
+          pred_score = results[b].preds[i].score
+        }
+        if options.withAttn or lines[b].withAttn then
+          local attnTable = {}
+          for j = 1, #results[b].preds[i].attention do
+            table.insert(attnTable, results[b].preds[i].attention[j]:totable())
+          end
+          lineres.attn = attnTable
+        end
       end
       table.insert(ret, lineres)
     end
