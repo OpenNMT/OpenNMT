@@ -6,7 +6,8 @@ local function getLength(seq, ignore)
   local max = 0
 
   for i = 1, #seq do
-    local len = seq[i]:size(1)
+    local len = 0
+    if seq[i]:size():size() > 0 then len = seq[i]:size(1) end
     if ignore ~= nil then
       len = len - ignore
     end
@@ -54,10 +55,11 @@ Parameters:
   * `tgt` - 2D table of target batch indices
   * `tgtFeatures` - 2D table of target batch features (opt)
 --]]
-function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
+function Batch:__init(src, srcFeatures, tgt, tgtFeatures, constraints)
   src = src or {}
   srcFeatures = srcFeatures or {}
   tgtFeatures = tgtFeatures or {}
+  constraints = constraints or {}
 
   if tgt ~= nil then
     assert(#src == #tgt, "source and target must have the same batch size")
@@ -81,6 +83,10 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
       end
     end
   end
+
+  -- batch size x max constraints number x max number of tokens per constraints
+  self.cLength, self.cSize = getLength(constraints)
+  self.constraints = torch.LongTensor(self.size, self.cLength):fill(1)
 
   -- Allocate target tensors if defined.
   if tgt ~= nil then
@@ -107,6 +113,12 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures)
     local window = {{self.sourceLength - self.sourceSize[b] + 1, self.sourceLength}, b}
 
     self.sourceInput[window]:copy(src[b])
+
+    if self.cSize[b] > 0 then
+      local cWindow = {b, {1, self.cSize[b]}}
+
+      self.constraints[cWindow]:copy(constraints[b])
+    end
 
     for i = 1, #self.sourceInputFeatures do
       self.sourceInputFeatures[i][window]:copy(srcFeatures[b][i])

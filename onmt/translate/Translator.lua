@@ -149,6 +149,8 @@ function Translator:__init(args, model, dicts)
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
 
+  -- TODO : extend phrase table to phrases with several words
+
   if args.lm_model ~= '' then
     local tmodel = args.model
     args.model = args.lm_model
@@ -218,6 +220,7 @@ function Translator:buildData(src, gold)
   local srcData = {}
   srcData.words = {}
   srcData.features = {}
+  srcData.constraints = {}
 
   local goldData
   if gold then
@@ -231,6 +234,7 @@ function Translator:buildData(src, gold)
   local index = 1
 
   for b = 1, #src do
+
     if src[b].words and #src[b].words == 0 then
       table.insert(ignored, b)
     else
@@ -244,6 +248,16 @@ function Translator:buildData(src, gold)
           table.insert(srcData.features,
                        onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
         end
+
+	local ct = {}
+	for _,w in pairs(src[b].words) do
+	  if (self.phraseTable:lookup(w)) then
+	    -- TODO : phrases and sources
+	    -- ct[self.dicts.src.words:lookup(w)] =  self.dicts.tgt.words:lookup(self.phraseTable:lookup(w))
+	    table.insert(ct, self.phraseTable:lookup(w))
+	  end
+	end
+	table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(ct, onmt.Constants.UNK_WORD))
       else
         table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
       end

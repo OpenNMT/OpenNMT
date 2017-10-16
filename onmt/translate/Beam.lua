@@ -394,11 +394,11 @@ function Beam:_expandScores(scores, beamSize)
 end
 
 -- Create a new beam given new token, scores and backpointer.
-function Beam:_nextBeam(token, scores, backPointer, beamSize)
+function Beam:_nextBeam(token, scores, backPointer, beamSize, constraintMask)
   local remaining = math.floor(token:size(1) / beamSize)
   local params = self._params
   local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
-                           self:_nextState(backPointer, beamSize),
+                           self:_nextState(backPointer, beamSize, constraintMask),
                            params,
                            remaining)
   newBeam:setScores(scores)
@@ -409,8 +409,11 @@ function Beam:_nextBeam(token, scores, backPointer, beamSize)
 end
 
 -- Select the on-beam states using the pointers
-function Beam:_nextState(backPointer, beamSize)
+function Beam:_nextState(backPointer, beamSize, constraintMask)
   local nextState = selectBeam(self._state, backPointer, beamSize)
+  if constraintMask then
+    nextState[11]:maskedFill(constraintMask, 1)
+  end
   return nextState
 end
 

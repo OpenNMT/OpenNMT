@@ -139,18 +139,67 @@ function BeamSearcher:_findKBest(beams, scores)
 
   -- Find top beamSize hypotheses.
   if ((not pruned) or (not pruned:any())) and (self.preFilterFactor == 1) then
-    beams[t + 1] = newBeam
+    -- TODO
   else
     local _, kBestIds = topk(consideredNormScores, self.beamSize, 2, true, true)
-    local kBestScores = consideredScores:gather(2, kBestIds)
-    local backPointer = consideredBackPointer:gather(2, kBestIds)
-    local token = consideredToken
+    consideredScores = consideredScores:gather(2, kBestIds)
+    consideredBackPointer = consideredBackPointer:gather(2, kBestIds)
+    consideredToken = consideredToken
       :viewAs(consideredIds)
       :gather(2, kBestIds)
       :view(-1)
-    newBeam = beams[t]:_nextBeam(token, kBestScores, backPointer, self.beamSize)
-    beams[t + 1] = newBeam
   end
+
+  local constraints = beams[t]:getState()[11]
+  local constraintNum = constraints:size(2)
+
+  -- Constraints not yet used. 0 = constraint is available.
+  local availableConstraints = torch.eq(constraints, 1)
+
+  -- Add vocabSize * beam number to constraint indexes
+  local expandedConstraints = constraints:view(-1, self.beamSize*constraintNum):clone()
+  local vocabBeamIdx = torch.range(0,self.beamSize-1):typeAs(constraints):view(self.beamSize,1):mul(vocabSize):expand(self.beamSize, constraintNum):clone():view(1,-1):expandAs(expandedConstraints)
+  expandedConstraints:add(vocabBeamIdx)
+
+  -- Gather scores for available constraints
+  local constraintScores = torch.gather(expandedScores, 2, expandedConstraints)
+
+  -- Mask scores for constraints that are not available and choose top scored constraints
+  constraintScores:maskedFill(availableConstraints:view(-1, self.beamSize*constraintNum), -math.huge)
+  constraintScores, constraintScoreIdx = topk(constraintScores, self.beamSize/2, 2, true, true)
+
+  -- Reverse top constraint scores (since they need to be added at the end of each beam).
+  constraintScores = constraintScores:index(2 ,torch.linspace(self.beamSize/2,1,self.beamSize/2):long())
+  constraintScoreIdx = constraintScoreIdx:index(2 ,torch.linspace(self.beamSize/2,1,self.beamSize/2):long())
+
+  -- Gather corresponding constraint indexes and beam back pointers
+  local topConstraints = constraints:view(-1, self.beamSize*constraintNum):gather(2, constraintScoreIdx)
+  local topContraintBP = constraintScoreIdx:clone():add(-1):div(constraintNum):add(1)
+
+  local constraintScoresMask = torch.eq(constraintScores, -math.huge)
+  local constraintScoresMaskInv = torch.ne(constraintScores, -math.huge)
+
+  -- Select constraint scores, indexes and back pointers
+  constraintScores = constraintScores:maskedSelect(constraintScoresMaskInv)
+  topConstraints = topConstraints:maskedSelect(constraintScoresMaskInv)
+  topContraintBP = topContraintBP:maskedSelect(constraintScoresMaskInv)
+
+  -- Insert constraints into selected scores, selected tokens and selected backpointers
+  consideredScores[{{},{self.beamSize/2+1, self.beamSize}}]:maskedCopy(constraintScoresMaskInv, constraintScores)
+  consideredToken:view(-1, self.beamSize)[{{},{self.beamSize/2+1, self.beamSize}}]:maskedCopy(constraintScoresMaskInv, topConstraints)
+  consideredBackPointer[{{},{self.beamSize/2+1, self.beamSize}}]:maskedCopy(constraintScoresMaskInv, topContraintBP)
+
+  -- Create a mask for the contraint used at current step
+  local constraintIdx = constraintScoreIdx:clone():add(-1):fmod(constraintNum):add(1):view(-1, self.beamSize/2, 1)
+  local constraintMask = constraints:clone():zero():typeAs(constraintScoresMask)
+  local constraintMaskSlice = constraintMask:view(-1, self.beamSize, constraintNum)[{{},{self.beamSize/2+1, self.beamSize}, {}}]
+  constraintMaskSlice:scatter(3,constraintIdx, 1)
+  constraintScoresMaskExpanded = constraintScoresMask:view(-1, self.beamSize/2, 1):expandAs(constraintMaskSlice)
+  constraintMaskSlice:maskedFill(constraintScoresMaskExpanded,0)
+
+  -- TODO : make it optional
+  newBeam = beams[t]:_nextBeam(consideredToken, consideredScores, consideredBackPointer, self.beamSize, constraintMask)
+  beams[t + 1] = newBeam
 
   -- Cleanup unused memory.
   beams[t]:_cleanUp(self.advancer.keptStateIndexes)

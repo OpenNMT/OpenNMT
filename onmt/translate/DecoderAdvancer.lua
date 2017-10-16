@@ -72,8 +72,8 @@ function DecoderAdvancer:initBeam()
   end
 
   -- Define state to be { decoder states, decoder output, context,
-  -- attentions, features, sourceSizes, step, cumulated attention probablities, lmStates, lmContext }.
-  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba, self.lmStates, self.lmContext }
+  -- attentions, features, sourceSizes, step, cumulated attention probablities, lmStates, lmContext, constraints }.
+  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba, self.lmStates, self.lmContext, self.batch.constraints }
   local params = {}
   params.length_norm = self.length_norm
   params.coverage_norm = self.coverage_norm
@@ -90,8 +90,9 @@ Parameters:
 ]]
 function DecoderAdvancer:update(beam)
   local state = beam:getState()
-  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba, lmStates, lmContext
-    = table.unpack(state, 1, 10)
+  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba, lmStates, lmContext, constraints
+    = table.unpack(state, 1, 11)
+
   local tokens = beam:getTokens()
   local token = tokens[#tokens]
   local inputs
@@ -125,7 +126,7 @@ function DecoderAdvancer:update(beam)
     cumAttnProba = cumAttnProba:add(attention)
   end
 
-  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba, lmStates, lmContext}
+  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba, lmStates, lmContext, constraints}
   beam:setState(nextState)
 end
 
@@ -204,6 +205,10 @@ function DecoderAdvancer:filter(beam)
 
   -- Disallow too many UNKs
   local pruned = numUnks:gt(self.max_num_unks)
+
+  local finished = tokens[#tokens]:eq(onmt.Constants.EOS)
+  local unfinished_constraints = beam:getState()[11]:ne(1):sum(2):gt(0)
+  pruned:add(torch.cmul(unfinished_constraints, finished))
 
   -- Disallow empty hypotheses
   if #tokens == 2 then
