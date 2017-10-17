@@ -193,7 +193,7 @@ local function init_server(options)
           -- I need to test here if I have enough memory to load the model
           -- if not then I need to unload the oldest one
           local freeMemory = onmt.utils.Cuda.freeMemory()
-          if ( onmt.utils.Cuda.activated and freeMemory > 3100000000 ) then
+          if ( not onmt.utils.Cuda.activated or freeMemory > 3100000000 ) then
             _G.logger:info("Loading model id %d",req[1].id)
             server.translator[req[1].id] = onmt.translate.Translator.new(server.opt[req[1].id])
             server.model_loaded[req[1].id] = true
