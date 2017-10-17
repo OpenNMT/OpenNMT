@@ -141,7 +141,7 @@ local function translateMessage(server,lines)
         }
       local oline = ""
       if results[b].preds ~= nil then
-        local predSent = translator:buildOutput(results[b].preds[i])   
+        local predSent = translator:buildOutput(results[b].preds[i])
         res, err = pcall(function() oline = tokenizer.detokenize(predSent, options) end)
         if not res then
           if string.find(err,"interrupted") then
@@ -192,8 +192,7 @@ local function init_server(options)
           -- TODO
           -- I need to test here I f I have enough memory to load the model
           -- if not then I need to unload the oldest one
-          print(cutorch.getMemoryUsage())
-          freeMemory, totalMemory = cutorch.getMemoryUsage()
+          local freeMemory, totalMemory = cutorch.getMemoryUsage()
           if ( freeMemory > 3100000000 ) then
             _G.logger:info("Loading model id %d",req[1].id)
             server.translator[req[1].id] = onmt.translate.Translator.new(server.opt[req[1].id])
