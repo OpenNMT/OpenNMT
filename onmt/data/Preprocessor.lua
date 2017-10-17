@@ -274,7 +274,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, type)
           if error > 0 then
             totalError = totalError + error
             for _, m in ipairs(fdesc) do
-              _G.logger:io(m)
+              _G.logger:error(m)
             end
           else
             _G.logger:info(' * ['..threadid..'] Reading files \''..fdesc.fname..'\' - '..fdesc[1]..' sentences')
