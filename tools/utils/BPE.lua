@@ -1,5 +1,3 @@
-require('onmt.init')
-
 local unicode = require 'tools.utils.unicode'
 local separators = require('tools.utils.separators')
 

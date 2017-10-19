@@ -93,12 +93,11 @@ with three additional features:
 
 ```bash
 tools/learn_bpe.lua -size 30000 -save_bpe codes -tok_mode aggressive -tok_segment_alphabet_change [ OTHER_TOK_OPTIONS ] [ OTHER_BPE_TRAINING_OPTIONS ] < input_raw
-tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change [ SAME_TOK_OPTIONS ] [ OTHER_BPE_INFERENCE_OPTIONS ] < input_raw
+tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change [ SAME_TOK_OPTIONS ] < input_raw
 ```
 
 !!! note "Note"
     All TOK_OPTIONS for learn_bpe.lua have their equivalent for tokenize.lua without the prefix `tok_`
-    BPE_INFERENCE_OPTIONS for tokenize.lua are those of Tokenizer options with the prefix `bpe_`
 
 !!! warning "Warning"
     When applying BPE for any data set, the same TOK_OPTIONS should be used for learn_bpe.lua and tokenize.lua
@@ -110,7 +109,10 @@ tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change [ 
 * `both`: `suffix` + `prefix`
 * `none`: No artificial marker is appended to input tokens, a sub-token is treated equally whether it is in the middle or at the beginning or at the end of a token.
 
-**3\. Add BPE_INFERENCE_OPTION for BPE in addition to the case feature: `-bpe_case_insensitive`**
+!!! warning "Warning"
+    When a BPE_TRAINING_OPTION is used for learn_bpe.lua, the resulting BPE model already contains all the necessary BPE_INFERENCE_OPTIONS that tokenize.lua can automatically read from the model's header (BPE_INFERENCE_OPTIONS are those of Tokenizer options with the prefix `bpe_`), therefore if these options when passed to cmd for tokenize.lua, they will be OVERRIDDEN by those contained in the BPE model's header.
+
+**3\. Add case insensitive BPE in combination of case feature**
 
 OpenNMT's tokenization flow first applies BPE then add the case feature for each input token. With the standard BPE, "Constitution" and "constitution" may result in the different sequences of sub-tokens:
 
@@ -126,7 +128,7 @@ If you want a *caseless* split so that you can take the best from using case fea
 tools/learn_bpe.lua -size 30000 -save_bpe codes_lc -tok_case_feature [ OTHER_TOK_OPTIONS ] [ OTHER_BPE_TRAINING_OPTIONS ] < input_raw
 
 # The case information is preserved in the true case input
-tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive -case_feature [ SAME_TOK_OPTIONS ] [ OTHER_BPE_INFERENCE_OPTIONS ] < input_raw
+tools/tokenize.lua -bpe_model codes_lc -case_feature [ SAME_TOK_OPTIONS ] < input_raw
 ```
 
 The output of the previous example would be:
@@ -135,3 +137,7 @@ The output of the previous example would be:
 Constitution --> con￨C sti￨l tu￨l tion￨l
 constitution --> con￨l sti￨l tu￨l tion￨l
 ```
+!!! warning "Warning"
+    The BPE_INFERENCE_OPTIONS '-bpe_case_insensitive' in tokenize.lua is there only for the cases where the BPE models are not trained by lear_bpe.lua (typically by the original learn_bpe.py), but one still wants to use it for tokenization with case feature. It's not recommanded because it's tricky to handle 'manually' the compatibility issue between the tokenization used to learn BPE models and the tokenization on top of which these learnt models are applied.
+
+    LET WHAT'S BPE TO BPE!
