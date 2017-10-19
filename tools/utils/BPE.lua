@@ -1,9 +1,12 @@
+require('onmt.init')
+
 local unicode = require 'tools.utils.unicode'
 local separators = require('tools.utils.separators')
 
 local BPE = torch.class('BPE')
 
 function BPE:__init(opt)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   self.split = string.split
   -- to be able to run the code without torch
   if not self.split then
@@ -30,12 +33,20 @@ function BPE:__init(opt)
     self.case_insensitive = options[3] == "true"
     t = f:read("*line")
     if #options == 4 then
-      print ("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs")
+      _G.logger:warning("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs")
     end
+  elseif ( options[1] == 'v3' ) then
+    self.prefix = options[2] == "true"
+    self.suffix = options[3] == "true"
+    self.case_insensitive = options[4] == "true"
+    self.EOT_marker = options[5]
+    self.BOT_marker = options[6]
+    _G.logger:info("Parsing of BPE options from model done!")
   else
     self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
     self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"
     self.case_insensitive = opt.bpe_case_insensitive
+    _G.logger:info("No BPE options read from model, falling back to cmd or default options")
   end
   local i = 1
 
