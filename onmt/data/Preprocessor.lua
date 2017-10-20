@@ -1053,6 +1053,10 @@ function Preprocessor:makeData(dataset, dicts)
       else
         sampledCount = sampledCount - self.keepCount
       end
+      if self.totalCount == 0 and self.keepCount < self.args.gsample then
+        _G.logger:warning('You requested a sample of %d sentences but no files matched any sampling rules and only %d sentences are selected by keep rules. There could be issues with your distribution rules.',
+                          self.args.gsample, self.keepCount)
+      end
       if sampledCount < 0 then
         _G.logger:error('You requested a sample of %d sentences but %d are already reserved by keep rules. You should configure a larger sample or keep less sentences.',
                         self.args.gsample, self.keepCount)
