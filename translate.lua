@@ -215,7 +215,8 @@ local function main()
       end
 
       for b = 1, #results do
-        if (srcBatch[b].words and #srcBatch[b].words == 0) then
+        if (srcBatch[b].words and #srcBatch[b].words == 0
+            or srcBatch[b].vectors and srcBatch[b].vectors:dim() == 0) then
           _G.logger:warning('Line ' .. sentId .. ' is empty.')
           outFile:write('\n')
         else
