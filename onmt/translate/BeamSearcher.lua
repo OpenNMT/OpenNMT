@@ -189,7 +189,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
 
   local expandedConstraints, expandedConstraintSizes = beams[t]:_expandConstraints(self.beamSize, vocabSize)
 
-  local constraintNum = 0 
+  local constraintNum = 0
   local usedConstraintNum = nil
 
   if expandedConstraints and expandedConstraintSizes then
@@ -230,7 +230,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     newBeamConstraints = newBeamConstraints:view(-1, constraintNum)
   end
 
-  newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScores, newBeamBackPointer, self.beamSize, newBeamConstraints)
+  local newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScores, newBeamBackPointer, self.beamSize, newBeamConstraints)
   beams[t + 1] = newBeam
 
   -- Cleanup unused memory.
