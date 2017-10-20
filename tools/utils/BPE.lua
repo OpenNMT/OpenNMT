@@ -17,8 +17,8 @@ function BPE:__init(opt)
   self.codes = {}
   local f = assert(io.open(opt.bpe_model, "r"))
 
-  self.EOT_marker = opt.EOT_marker
-  self.BOT_marker = opt.BOT_marker
+  self.EOT_marker = opt.bpe_EOT_marker
+  self.BOT_marker = opt.bpe_BOT_marker
   self.joiner_new = opt.joiner_new
   self.joiner_annotate = opt.joiner_annotate
 
@@ -30,12 +30,20 @@ function BPE:__init(opt)
     self.case_insensitive = options[3] == "true"
     t = f:read("*line")
     if #options == 4 then
-      print ("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs")
+      io.stderr:write("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs\n")
     end
+  elseif ( options[1] == 'v3' ) then
+    self.prefix = options[2] == "true"
+    self.suffix = options[3] == "true"
+    self.case_insensitive = options[4] == "true"
+    self.EOT_marker = options[5]
+    self.BOT_marker = options[6]
+    io.stderr:write("Parsing of BPE options from model done!\n")
   else
     self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
     self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"
     self.case_insensitive = opt.bpe_case_insensitive
+    io.stderr:write("No BPE options read from model, falling back to cmd or default options\n")
   end
   local i = 1
 

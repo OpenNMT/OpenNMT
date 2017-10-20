@@ -93,6 +93,14 @@ The following rules apply:
 
 The weights are dynamically normalized to 1. Here we will make sure that 65% of the sample will be composed of sentences from `generic.{src,tgt}` and only 20% from `IT{1,2}.{src,tgt}` and `MSDN.{src,tgt}`. To build the sample, the sampling preparation algorithm might oversample some of the corpus if is too small.
 
+!!! tip "Tip"
+    If you want to use all sentences of some training files without sampling, use `*` as the weight value.
+
 !!! warning "Warning"
     If one file could not be match by a rule, it would be completely excluded.
 
+To test your distribution rules, it is possible to execute a dry run of the preprocessor:
+
+```bash
+th preprocess.lua -gsample_dist rules.txt -gsample 100000 -train_dir data/ -dry_run
+```

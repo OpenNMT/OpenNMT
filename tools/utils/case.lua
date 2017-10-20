@@ -4,47 +4,34 @@ local separators = require('tools.utils.separators')
 
 local case = {}
 
+case.CAPITAL = 'C'
+case.CAPITAL_FIRST = 'C1'
+case.LOWER = 'L'
+case.MIXED = 'M'
+case.NONE = 'N'
+case.UPPER = 'U'
+
 function case.combineCase(feat, thecase)
-  if feat == 'N' then
-    if thecase == 'lower' then feat = 'L' end
-    if thecase == 'upper' then feat = 'C1' end
-  elseif feat == 'L' then
-    if thecase == 'upper' then feat = 'M' end
-  elseif feat == 'C1' then
-    if thecase == 'upper' then feat = 'U' end
-    if thecase == 'lower' then feat = 'C' end
-  elseif feat == 'C' then
-    if thecase == 'upper' then feat = 'M' end
-  elseif feat == 'U' then
-    if thecase == 'lower' then feat = 'M' end
+  if feat == case.NONE then
+    if thecase == 'lower' then feat = case.LOWER end
+    if thecase == 'upper' then feat = case.CAPITAL_FIRST end
+  elseif feat == case.LOWER then
+    if thecase == 'upper' then feat = case.MIXED end
+  elseif feat == case.CAPITAL_FIRST then
+    if thecase == 'upper' then feat = case.UPPER end
+    if thecase == 'lower' then feat = case.CAPITAL end
+  elseif feat == case.CAPITAL then
+    if thecase == 'upper' then feat = case.MIXED end
+  elseif feat == case.UPPER then
+    if thecase == 'lower' then feat = case.MIXED end
   end
   return feat
-end
-
--- lowercase
-function case.lowerCase (toks)
-  for i=1, #toks do
-    local loweredTok = ''
-
-    for v, c in unicode.utf8_iter(toks[i]) do
-      local is_letter, _ = unicode.isLetter(v)
-      -- find lowercase equivalent
-      if is_letter then
-        local lu, lc = unicode.getLower(v)
-        if lu then c = lc end
-      end
-      loweredTok = loweredTok..c
-    end
-
-    toks[i] = loweredTok
-  end
-  return toks
 end
 
 -- add case feature to tokens
 function case.addCase (toks)
   for i=1, #toks do
-    local casefeat = 'N'
+    local casefeat = case.NONE
     local loweredTok = ''
 
     for v, c in unicode.utf8_iter(toks[i]) do
@@ -71,16 +58,16 @@ end
 function case.segmentCase (toks, separator)
   local caseSegment = {}
   for i=1, #toks do
-    local casefeat = 'N'
+    local casefeat = case.NONE
     local newTok = ''
 
     for v, c in unicode.utf8_iter(toks[i]) do
       local is_letter, thecase = unicode.isLetter(v)
       if is_letter then
-        if case.combineCase(casefeat, thecase) == 'M' then
+        if case.combineCase(casefeat, thecase) == case.MIXED then
           table.insert(caseSegment, newTok..separator)
           newTok = ''
-          casefeat = case.combineCase('N', thecase)
+          casefeat = case.combineCase(case.NONE, thecase)
         else
           casefeat = case.combineCase(casefeat, thecase)
         end
@@ -94,12 +81,12 @@ end
 
 function case.restoreCase(w, feats)
   assert(#feats>=1)
-  if feats[1] == 'L' or feats[1] == 'N' then
+  if feats[1] == case.LOWER or feats[1] == case.NONE then
     return w
   else
     local wr = ''
     for v, c in unicode.utf8_iter(w) do
-      if wr == '' or feats[1] == 'U' then
+      if wr == '' or feats[1] == case.UPPER then
         local _, cu = unicode.getUpper(v)
         if cu then c = cu end
       end
@@ -107,6 +94,16 @@ function case.restoreCase(w, feats)
     end
     return wr
   end
+end
+
+function case.getFeatures()
+  return {
+    case.CAPITAL,
+    case.LOWER,
+    case.NONE,
+    case.UPPER,
+    case.MIXED
+  }
 end
 
 return case

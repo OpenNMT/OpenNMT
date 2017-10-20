@@ -190,7 +190,7 @@ function ExtendedCmdLine:error(msg)
     error(msg)
   else
     io.stderr:write(self.script .. ': ' .. msg .. '\n')
-    io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or visit the online documentation at http://opennmt.net/OpenNMT/.\n')
+    io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or browse the documentation in the docs/ directory.\n')
     os.exit(1)
   end
 end

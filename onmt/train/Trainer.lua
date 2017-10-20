@@ -211,7 +211,11 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   if not self.args.async_parallel then
     -- Synchronous training.
     local iter = startIteration
-    for i = startIteration, data:batchCount(), onmt.utils.Parallel.count do
+    local firstI = startIteration
+    if firstI > 1 then
+      firstI = firstI * onmt.utils.Parallel.count
+    end
+    for i = firstI, data:batchCount(), onmt.utils.Parallel.count do
       local batches = {}
       local totalSize = 0
       needLog = true
