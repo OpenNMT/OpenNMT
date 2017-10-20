@@ -232,6 +232,7 @@ local function main()
             goldScoreTotal = goldScoreTotal + results[b].goldScore
             goldWordsTotal = goldWordsTotal + #goldBatch[b].words
           end
+
           if opt.dump_input_encoding then
             outFile:write(sentId, ' ', table.concat(torch.totable(results[b]), " "), '\n')
           else
@@ -241,28 +242,33 @@ local function main()
                 sentence = tokenizer.detokenize(sentence, tokenizers[2])
               end
               outFile:write(sentence .. '\n')
+
               if withAttention then
                 local attentions = results[b].preds[n].attention
-                for k,v in pairs(attentions) do
-                  if v ~= nil then
-                    local ttable = torch.totable(v)
-                    local attcount = #attentions
-                    local source = translator:buildOutput(srcBatch[b])
-                    local _,nt = sentence:gsub("%S+","")
-                    local _,ns = source:gsub("%S+","")
-                    if k == 1 then
-                      attFile:write(b..' ||| '..sentence..' ||| '..results[b].preds[n].score..' ||| '..source..' ||| '..ns..' '..nt..'\n')
-                    end
-                    for _,j in pairs(ttable) do
-                      attFile:write(j..' ')
-                    end
+                local score = results[b].preds[n].score
+                local targetLength = #attentions
+
+                if translator:srcFeat() then
+                  attFile:write(string.format('%d ||| %s ||| %f ||| %d\n',
+                                              sentId, sentence, score, targetLength))
+                else
+                  local source = translator:buildOutput(srcBatch[b])
+                  local sourceLength = #srcBatch[b].words
+                  attFile:write(string.format('%d ||| %s ||| %f ||| %s ||| %d %d\n',
+                                              sentId, sentence, score, source,
+                                              sourceLength, targetLength))
+                end
+
+                for _, attention in ipairs(attentions) do
+                  if attention ~= nil then
+                    attFile:write(table.concat(torch.totable(attention), ' '))
                     attFile:write('\n')
-                    if k == attcount then
-                      attFile:write('\n')
-                    end
                   end
                 end
+
+                attFile:write('\n')
               end
+
               if n == 1 then
                 predScoreTotal = predScoreTotal + results[b].preds[n].score
                 predWordsTotal = predWordsTotal + #results[b].preds[n].words
