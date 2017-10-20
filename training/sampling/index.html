@@ -1022,6 +1022,10 @@ generic 65
 <li><code>* 5</code> maches <code>news.{src,tgt}</code></li>
 </ul>
 <p>The weights are dynamically normalized to 1. Here we will make sure that 65% of the sample will be composed of sentences from <code>generic.{src,tgt}</code> and only 20% from <code>IT{1,2}.{src,tgt}</code> and <code>MSDN.{src,tgt}</code>. To build the sample, the sampling preparation algorithm might oversample some of the corpus if is too small.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you want to use all sentences of some training files without sampling, use <code>*</code> as the weight value.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>If one file could not be match by a rule, it would be completely excluded.</p>

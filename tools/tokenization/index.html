@@ -1003,14 +1003,13 @@ tools/tokenize.lua -bpe_model codes &lt; input_tokenized
 <p>with three additional features:</p>
 <p><strong>1. Accept raw text as input and use OpenNMT's tokenizer for pre-tokenization before BPE training</strong></p>
 <div class="codehilite"><pre><span></span>tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes -tok_mode aggressive -tok_segment_alphabet_change <span class="o">[</span> OTHER_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_TRAINING_OPTIONS <span class="o">]</span> &lt; input_raw
-tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change <span class="o">[</span> SAME_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_INFERENCE_OPTIONS <span class="o">]</span> &lt; input_raw
+tools/tokenize.lua -bpe_model codes -mode aggressive -segment_alphabet_change <span class="o">[</span> SAME_TOK_OPTIONS <span class="o">]</span> &lt; input_raw
 </pre></div>
 
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>All TOK_OPTIONS for learn_bpe.lua have their equivalent for tokenize.lua without the prefix <code>tok_</code>
-BPE_INFERENCE_OPTIONS for tokenize.lua are those of Tokenizer options with the prefix <code>bpe_</code></p>
+<p>All TOK_OPTIONS for learn_bpe.lua have their equivalent for tokenize.lua without the prefix <code>tok_</code></p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -1023,7 +1022,11 @@ BPE_INFERENCE_OPTIONS for tokenize.lua are those of Tokenizer options with the p
 <li><code>both</code>: <code>suffix</code> + <code>prefix</code></li>
 <li><code>none</code>: No artificial marker is appended to input tokens, a sub-token is treated equally whether it is in the middle or at the beginning or at the end of a token.</li>
 </ul>
-<p><strong>3. Add BPE_INFERENCE_OPTION for BPE in addition to the case feature: <code>-bpe_case_insensitive</code></strong></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>When a BPE_TRAINING_OPTION is used for learn_bpe.lua, the resulting BPE model already contains all the necessary BPE_INFERENCE_OPTIONS that tokenize.lua can automatically read from the model's header (BPE_INFERENCE_OPTIONS are those of Tokenizer options with the prefix <code>bpe_</code>), therefore if these options when passed to cmd for tokenize.lua, they will be OVERRIDDEN by those contained in the BPE model's header.</p>
+</div>
+<p><strong>3. Add case insensitive BPE in combination of case feature</strong></p>
 <p>OpenNMT's tokenization flow first applies BPE then add the case feature for each input token. With the standard BPE, "Constitution" and "constitution" may result in the different sequences of sub-tokens:</p>
 <div class="codehilite"><pre><span></span>Constitution --&gt; con￨C sti￨l tu￨l tion￨l
 constitution --&gt; consti￨l tu￨l tion￨l
@@ -1035,7 +1038,7 @@ constitution --&gt; consti￨l tu￨l tion￨l
 tools/learn_bpe.lua -size <span class="m">30000</span> -save_bpe codes_lc -tok_case_feature <span class="o">[</span> OTHER_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_TRAINING_OPTIONS <span class="o">]</span> &lt; input_raw
 
 <span class="c1"># The case information is preserved in the true case input</span>
-tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive -case_feature <span class="o">[</span> SAME_TOK_OPTIONS <span class="o">]</span> <span class="o">[</span> OTHER_BPE_INFERENCE_OPTIONS <span class="o">]</span> &lt; input_raw
+tools/tokenize.lua -bpe_model codes_lc -case_feature <span class="o">[</span> SAME_TOK_OPTIONS <span class="o">]</span> &lt; input_raw
 </pre></div>
 
 
@@ -1043,6 +1046,13 @@ tools/tokenize.lua -bpe_model codes_lc -bpe_case_insensitive -case_feature <span
 <div class="codehilite"><pre><span></span>Constitution --&gt; con￨C sti￨l tu￨l tion￨l
 constitution --&gt; con￨l sti￨l tu￨l tion￨l
 </pre></div>
+
+
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The BPE_INFERENCE_OPTIONS '-bpe_case_insensitive' in tokenize.lua is there only for the cases where the BPE models are not trained by lear_bpe.lua (typically by the original learn_bpe.py), but one still wants to use it for tokenization with case feature. It's not recommanded because it's tricky to handle 'manually' the compatibility issue between the tokenization used to learn BPE models and the tokenization on top of which these learnt models are applied.</p>
+<p>LET WHAT'S BPE TO BPE!</p>
+</div>
                 
                   
                 
