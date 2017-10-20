@@ -393,12 +393,44 @@ function Beam:_expandScores(scores, beamSize)
   return expandedScores:view(remaining, -1), normExpandedScores:view(remaining, -1)
 end
 
--- Create a new beam given new token, scores and backpointer.
-function Beam:_nextBeam(token, scores, backPointer, beamSize, constraintMask)
+-- Expand lexical constraints
+function Beam:_expandConstraints(beamSize, vocabSize)
+
+  local expandedConstraints, expandedConstraintSizes = nil
+
+  if #self._state > 11 and self._state[11] and self._state[12] then
+    local constraints = self._state[11]
+    local constraintNum = constraints:size(2)
+    local constraintSizes = self._state[12]
+
+    -- Expand constraints and constraint sizes
+    expandedConstraints = constraints:view(self._remaining, beamSize, constraintNum, 1):expand(self._remaining, beamSize, constraintNum, vocabSize):transpose(3,4):clone()
+    expandedConstraintSizes = constraintSizes:view(self._remaining,beamSize,1):expand(self._remaining, beamSize, vocabSize):clone()
+
+    -- Update "used constraints" for tokens corresponding to one of the available constraints
+    for i=1,self._remaining do
+      for j=1,beamSize do
+        for c=1,constraintNum do
+          local cIdx = expandedConstraints[i][j][1][c]
+          if cIdx ~= 0 then
+            local constr = expandedConstraints[i][j][cIdx]
+            constr[c] = 0
+          end
+        end
+      end
+    end
+  end
+
+  return expandedConstraints, expandedConstraintSizes
+
+end
+
+-- Create a new beam given new token, scores, backpointer and new used constraints.
+function Beam:_nextBeam(token, scores, backPointer, beamSize, constraints)
   local remaining = math.floor(token:size(1) / beamSize)
   local params = self._params
   local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
-                           self:_nextState(backPointer, beamSize, constraintMask),
+                           self:_nextState(backPointer, beamSize, constraints),
                            params,
                            remaining)
   newBeam:setScores(scores)
@@ -409,10 +441,10 @@ function Beam:_nextBeam(token, scores, backPointer, beamSize, constraintMask)
 end
 
 -- Select the on-beam states using the pointers
-function Beam:_nextState(backPointer, beamSize, constraintMask)
+function Beam:_nextState(backPointer, beamSize, constraints)
   local nextState = selectBeam(self._state, backPointer, beamSize)
-  if constraintMask then
-    nextState[11]:maskedFill(constraintMask, 1)
+  if constraints then
+    nextState[11] = constraints
   end
   return nextState
 end

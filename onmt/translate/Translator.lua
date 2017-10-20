@@ -44,6 +44,10 @@ local options = {
     '-replace_unk_tagged', false,
     [[The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.]]},
   {
+    '-lexical_constraints', false,
+    [[Force the beam search to apply the translations from the phrase table.]]
+  },
+  {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
     {
@@ -145,11 +149,10 @@ function Translator:__init(args, model, dicts)
   self.model:evaluate()
   onmt.utils.Cuda.convert(self.model.models)
 
+  -- TODO : extend phrase table to phrases with several words
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
-
-  -- TODO : extend phrase table to phrases with several words
 
   if args.lm_model ~= '' then
     local tmodel = args.model
@@ -249,15 +252,18 @@ function Translator:buildData(src, gold)
                        onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
         end
 
-	local ct = {}
-	for _,w in pairs(src[b].words) do
-	  if (self.phraseTable:lookup(w)) then
-	    -- TODO : phrases and sources
-	    -- ct[self.dicts.src.words:lookup(w)] =  self.dicts.tgt.words:lookup(self.phraseTable:lookup(w))
-	    table.insert(ct, self.phraseTable:lookup(w))
+
+	if self.phraseTable and self.args.lexical_constraints then
+	  local c = {}
+	  for _,w in pairs(src[b].words) do
+	    if (self.phraseTable:contains(w)) then
+	      -- TODO : deal with phrases and source words
+	      table.insert(c, self.phraseTable:lookup(w))
+	    end
 	  end
+	  table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
 	end
-	table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(ct, onmt.Constants.UNK_WORD))
+
       else
         table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
       end

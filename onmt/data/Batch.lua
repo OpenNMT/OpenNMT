@@ -84,9 +84,13 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures, constraints)
     end
   end
 
-  -- batch size x max constraints number x max number of tokens per constraints
+  -- Create constraint tensors if there are any
+  -- batch size x max constraint number per sentence
   self.cLength, self.cSize = getLength(constraints)
-  self.constraints = torch.LongTensor(self.size, self.cLength):fill(1)
+  if self.cLength > 0 then
+    self.constraints = torch.LongTensor(self.size, self.cLength):fill(0)
+    self.constraintSizes = torch.LongTensor(self.size):fill(0)
+  end
 
   -- Allocate target tensors if defined.
   if tgt ~= nil then
@@ -114,10 +118,11 @@ function Batch:__init(src, srcFeatures, tgt, tgtFeatures, constraints)
 
     self.sourceInput[window]:copy(src[b])
 
-    if self.cSize[b] > 0 then
+    if self.cLength > 0 and self.cSize[b] > 0 then
       local cWindow = {b, {1, self.cSize[b]}}
 
       self.constraints[cWindow]:copy(constraints[b])
+      self.constraintSizes[b] = self.cSize[b]
     end
 
     for i = 1, #self.sourceInputFeatures do
