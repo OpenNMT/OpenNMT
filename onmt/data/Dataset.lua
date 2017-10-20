@@ -126,7 +126,7 @@ function Dataset:getBatch(idx)
       end
     end
 
-    if self.constraints[i] then
+    if self.constraints and self.constraints[i] then
       table.insert(constraints, self.constraints[i])
     end
   end
