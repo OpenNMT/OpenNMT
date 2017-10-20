@@ -11,6 +11,8 @@
 
 * `-size <string>` (default: `30000`)<br/>The number of merge operations to learn.
 * `-bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. `prefix`: append `<w>` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `</w>` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
+* `-bpe_EOT_marker <string>` (default: `</w>`)<br/>Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.
+* `-bpe_BOT_marker <string>` (default: `<w>`)<br/>Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.
 * `-save_bpe <string>` (required)<br/>Path to save the output model.
 
 ## Tokenizer options

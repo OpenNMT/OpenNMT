@@ -2,7 +2,6 @@
 
 ### Breaking changes
 
-* Enable tokenization with tokenizer's non-BPE related options for `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
 * Fix some wrong tokenization rules (punctuation-numbers)
 * `-report_every` option is renamed to `-report_progress_every`

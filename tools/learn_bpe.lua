@@ -26,6 +26,14 @@ local options = {
     }
   },
   {
+    '-bpe_EOT_marker', separators.EOT,
+    [[Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.]]
+  },
+  {
+    '-bpe_BOT_marker', separators.BOT,
+    [[Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.]]
+  },
+  {
     '-save_bpe', '',
     [[Path to save the output model.]],
     {
@@ -64,7 +72,7 @@ local opt = cmd:parse(arg)
 
 local function string2word(s)
   local t = {}
-  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, separators.BOT) end
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_BOT_marker) end
   if s:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
     table.insert(t, s)
   else
@@ -72,7 +80,7 @@ local function string2word(s)
       table.insert(t, c)
     end
   end
-  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, separators.EOT) end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_EOT_marker) end
   return table.concat(t, " ")
 end
 
@@ -297,9 +305,17 @@ local function main()
   local big_stats = clone(stats)
   local threshold = stats[maxKey(stats)] / 10
 
+  local bpe_options = {'v3'}
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.tok_case_feature then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  table.insert(bpe_options, opt.bpe_BOT_marker)
+  table.insert(bpe_options, opt.bpe_EOT_marker)
+
   _G.logger:info('Generating merge operations to output')
 
   local f = assert(io.open(opt.save_bpe, 'w'))
+  f:write(table.concat(bpe_options, ";") .. "\n")
 
   for i = 1, opt.size do
     local most_frequent
