@@ -1,8 +1,8 @@
 require('torch')
 require('onmt.init')
 
+local tokenizer = require('tools.utils.tokenizer')
 local unicode = require('tools.utils.unicode')
-local case = require ('tools.utils.case')
 local separators = require('tools.utils.separators')
 local tds = require('tds')
 
@@ -12,10 +12,6 @@ local options = {
   {
     '-size', '30000',
     [[The number of merge operations to learn.]]
-  },
-  {
-    '-lc', false,
-    [[Lowercase input tokens before learning BPE.]]
   },
   {
     '-bpe_mode', 'suffix',
@@ -30,6 +26,14 @@ local options = {
     }
   },
   {
+    '-bpe_EOT_marker', separators.EOT,
+    [[Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.]]
+  },
+  {
+    '-bpe_BOT_marker', separators.BOT,
+    [[Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.]]
+  },
+  {
     '-save_bpe', '',
     [[Path to save the output model.]],
     {
@@ -40,17 +44,43 @@ local options = {
 
 cmd:setCmdLineOptions(options, 'BPE')
 
+-- prepare tokenization option
+options = {}
+local topts = tokenizer.getOpts()
+for _, v in ipairs(topts) do
+  if v[1]:sub(1,4)  ~= '-bpe' then
+    -- change mode option to include disabling mode (default)
+    if v[1] == '-mode' then
+      v = { '-mode', 'space',
+            [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
+            {
+              enum = {'conservative', 'aggressive', 'space'}
+            }
+      }
+    end
+    local opttmp = {table.unpack(v)}
+    opttmp[1] = '-tok_' .. v[1]:sub(2)
+    table.insert(options, {table.unpack(opttmp)})
+  end
+end
+
+cmd:setCmdLineOptions(options, "Tokenizer")
+
 onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
 local function string2word(s)
   local t = {}
-  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, separators.BOT) end
-  for _, c in unicode.utf8_iter(s) do
-    table.insert(t, c)
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_BOT_marker) end
+  if s:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
+    table.insert(t, s)
+  else
+    for _, c in unicode.utf8_iter(s) do
+      table.insert(t, c)
+    end
   end
-  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, separators.EOT) end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_EOT_marker) end
   return table.concat(t, " ")
 end
 
@@ -81,17 +111,6 @@ local function replace(word, bigram)
   return table.concat(new_word, " ")
 end
 
-local function defaultdict(dvalue)
-  local tbl = {}
-  local mtbl = {}
-  mtbl.__index = function(t, key)
-    local val = rawget(t, key)
-    return val or dvalue
-  end
-  setmetatable(tbl, mtbl)
-  return tbl
-end
-
 local function updatedict(d, key1, key2, value)
   if d[key1] == nil then
     d[key1] = tds.Hash({ [key2] = value})
@@ -108,19 +127,28 @@ local function get_vocabulary()
   local vocab = tds.Hash()
   local l = io.read()
 
-  local segmentor = function (a) return string.split(a, " ") end
-  if opt.lc then
-    segmentor = function (a) return case.lowerCase(string.split(a, " ")) end
+  -- tokenization options
+  local tokopts = {}
+  for k, v in pairs(opt) do
+    if k:sub(1,4) == 'tok_' then
+      k = k:sub(5)
+      tokopts[k] = v
+    end
   end
+  _G.logger:info("Using on-the-fly '%s' tokenization for input", tokopts["mode"])
+
+  local segmentor = function (line) return tokenizer.tokenize(tokopts, line, nil) end
+
   _G.logger:info('Building vocabulary from STDIN')
   local count = 1
   while not(l == nil) do
     local toks = segmentor(l)
-    for i = 1, #toks do
-      local word = toks[i]
+    local words = onmt.utils.Features.extract(toks)
+    for i = 1, #words do
+      local word = words[i]
       vocab[word] = (vocab[word] or 0) + 1
     end
-    l=io.read()
+    l = io.read()
     count = count + 1
     if count % 100000 == 0 then _G.logger:info('... ' .. count .. ' sentences processed') end
   end
@@ -132,7 +160,7 @@ local function get_vocabulary()
 end
 
 local function get_pair_statistics(vocab)
-  local stats = defaultdict(0)
+  local stats = tds.Hash()
   local indices = tds.Hash()
   for idx, word_freq in ipairs(vocab) do
     local word = word_freq[1]
@@ -141,7 +169,7 @@ local function get_pair_statistics(vocab)
     local prev_char = chars[1]
     for i=2, #chars do
       local bigram = prev_char .. " " .. chars[i]
-      stats[bigram] = stats[bigram] + freq
+      stats[bigram] = ( stats[bigram] or 0 ) + freq
       updatedict(indices, bigram, idx, 1)
       prev_char = chars[i]
     end
@@ -194,13 +222,13 @@ local function update_pair_statistics(pair, changed, stats, indices)
       if i < #old_word and old_word[i+1] == second then
         if i > 1 then
           local prev = old_word[i-1] .. " " .. old_word[i]
-          stats[prev] = stats[prev] - freq
+          stats[prev] = ( stats[prev] or 0 ) - freq
           updatedict(indices, prev, idx, -1)
         end
         if i <= #old_word-2 then
           if old_word[i+2] ~= first or i >= #old_word-3 or old_word[i+3] ~= second then
             local nex = old_word[i+1] .. " " .. old_word[i+2]
-            stats[nex] = stats[nex] - freq
+            stats[nex] = ( stats[nex] or 0 ) - freq
             updatedict(indices, nex, idx, -1)
           end
         end
@@ -215,12 +243,12 @@ local function update_pair_statistics(pair, changed, stats, indices)
       if i == nil then break end
       if i > 1 then
         local prev = new_word[i-1] .. " " .. new_word[i]
-        stats[prev] = stats[prev] + freq
+        stats[prev] = ( stats[prev] or 0 ) + freq
         updatedict(indices, prev, idx, 1)
       end
       if i <= #new_word-1 and new_word[i+1] ~= new_pair then
         local nex = new_word[i] .. " " .. new_word[i+1]
-        stats[nex] = stats[nex] + freq
+        stats[nex] = ( stats[nex] or 0 ) + freq
         updatedict(indices, nex, idx, 1)
       end
       i = i + 1
@@ -243,14 +271,28 @@ local function maxKey(map)
   return max_key[1]
 end
 
+local function prune_stats(stats, big_stats, threshold)
+  for item, freq in pairs(stats) do
+    if freq < threshold then
+      stats[item] = nil
+      if freq < 0 then
+        big_stats[item] = ( big_stats[item] or 0 ) + freq
+      else
+        big_stats[item] = freq
+      end
+    end
+  end
+end
+
+local function clone (t) -- shallow-copy a tds hash
+    local target = tds.Hash()
+    for k, v in pairs(t) do target[k] = v end
+    return target
+end
+
 local function main()
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
-
-  local bpe_options = {}
-  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  if opt.lc then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
 
   local vocab = get_vocabulary()
   local sorted_vocab = tds.Vec()
@@ -260,13 +302,39 @@ local function main()
   _G.logger:info('Getting pair statistics from vocabulary')
   local stats, indices = get_pair_statistics (sorted_vocab)
 
+  local big_stats = clone(stats)
+  local threshold = stats[maxKey(stats)] / 10
+
+  local bpe_options = {'v3'}
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.tok_case_feature then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  table.insert(bpe_options, opt.bpe_BOT_marker)
+  table.insert(bpe_options, opt.bpe_EOT_marker)
+
   _G.logger:info('Generating merge operations to output')
 
   local f = assert(io.open(opt.save_bpe, 'w'))
   f:write(table.concat(bpe_options, ";") .. "\n")
 
   for i = 1, opt.size do
-    local most_frequent = maxKey(stats)
+    local most_frequent
+    if stats ~= nil then
+      most_frequent = maxKey(stats)
+    end
+
+    -- we probably missed the best pair because of pruning; go back to full statistics
+
+    if stats == nil or stats[most_frequent] < threshold then
+      prune_stats(stats, big_stats, threshold)
+      stats = clone(big_stats)
+      most_frequent = maxKey(stats)
+
+      -- threshold is inspired by Zipfian assumption, but should only affect speed
+      threshold = stats[most_frequent] * i/(i+10000.0)
+      prune_stats(stats, big_stats, threshold)
+    end
+
     if stats[most_frequent] < 2 then
       io.stderr:write("No pair has frequency > 1. Stopping\n")
       break

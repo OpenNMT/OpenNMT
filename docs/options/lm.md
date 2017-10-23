@@ -1,6 +1,6 @@
 <!--- This file was automatically generated. Do not modify it manually but use the docs/options/generate.sh script instead. -->
 
-`tag.lua` options:
+`lm.lua` options:
 
 * `-h [<boolean>]` (default: `false`)<br/>This help.
 * `-md [<boolean>]` (default: `false`)<br/>Dump help in Markdown format.
@@ -9,14 +9,16 @@
 
 ## Data options
 
-* `-src <string>` (required)<br/>Source sequences to tag.
-* `-output <string>` (default: `pred.txt`)<br/>Output file.
-* `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
+* `<mode>` (accepted: `score`, `sample`)<br/>'score' apply lm to input text, 'sample' samples output based on input text.
+* `-src <string>` (required)<br/>Source sequences to sample/score.
+* `-output <string>` (default: `output.txt`)<br/>Output file depend on `<mode>`.
 
-## Tagger options
+## LM options
 
 * `-model <string>` (required)<br/>Path to the serialized model file.
 * `-batch_size <number>` (default: `30`)<br/>Batch size.
+* `-max_length <number>` (default: `100`)<br/>Maximal length of sentences in sample mode.
+* `-temperature <number>` (default: `1`)<br/>For `sample` mode, higher temperatures cause the model to take more chances and increase diversity of results, but at a cost of more mistakes.
 
 ## Cuda options
 

@@ -24,6 +24,7 @@ OpenNMT only requires a Torch installation with few dependencies.
 
 ```bash
 luarocks install tds
+luarocks install bit32 # if using LuaJIT
 ```
 
 For other installation methods including Docker, visit the [documentation](http://opennmt.net/OpenNMT/installation/).

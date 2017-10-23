@@ -1,4 +1,4 @@
-OpenNMT provides native implementation of scoring metrics - BLEU, TER, DLRATION
+OpenNMT provides native implementation of scoring metrics - BLEU, TER, DLRATIO
 
 All metrics can be used as a validation metric (see [option `-validation_metric`](../options/train/#trainer-options)) during training or standalone using `tools/score.lua`:
 
@@ -45,11 +45,11 @@ where:
 
 # TER
 
-[TER](http://www.cs.umd.edu/~snover/tercom/) is an error metric for machine translation that messures the number of edits required to change a system output into one of the references. It is generally prefered to BLEU for estimation of sentence post-editing.
+[TER](http://www.cs.umd.edu/~snover/tercom/) is an error metric for machine translation that messures the number of edits required to change a system output into one of the references. It is generally prefered to BLEU for estimation of sentence post-editing effort.
 
 # DLRATIO
 
-[Damerau-Levenshtein edit distance](https://en.wikipedia.org/wiki/Damerau–Levenshtein_distance) is edit distance between 2 sentences. It is a simplified version of `TER` that also integrates numbers of sequence shift.
+[Damerau-Levenshtein edit distance](https://en.wikipedia.org/wiki/Damerau–Levenshtein_distance) is edit distance between 2 sentences. It is a simplified version of `TER` (in particular, `TER` that also integrates numbers of sequence shift).
 
 
 

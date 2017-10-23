@@ -16,8 +16,12 @@ extra:
 google_analytics: ['UA-89222039-1', 'opennmt.net']
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML
+  - http://opennmt.net/OpenNMT/js/version-select.js
+  - https://code.jquery.com/jquery-3.2.1.slim.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.4/js/select2.min.js
 extra_css:
   - css/extra.css
+  - https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.4/css/select2.min.css
 
 markdown_extensions:
   - math
@@ -59,6 +63,7 @@ pages:
       - "train.lua": options/train.md
       - "translate.lua": options/translate.md
       - "tag.lua": options/tag.md
+      - "lm.lua": options/lm.md
       - "tools/build_vocab.lua": options/build_vocab.md
       - "tools/release_model.lua": options/release_model.md
       - "tools/tokenize.lua": options/tokenize.md
@@ -67,5 +72,6 @@ pages:
       - "tools/rest_translation_server.lua": options/rest_server.md
       - "tools/embeddings.lua": options/embeddings.md
       - "tools/average_models.lua": options/average_models.md
+  - "Lua and Python OpenNMT": lua_python_comparison.md
   - References: references.md
   - "Common issues": issues.md

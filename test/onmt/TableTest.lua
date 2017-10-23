@@ -126,6 +126,14 @@ function tableTest.reorder_reversedWithTds()
   reorder({ 1, 2, 3, 4 }, { 4, 3, 2, 1 }, { 4, 3, 2, 1 }, true)
 end
 
+function tableTest.deepCopy()
+  local t = {'a',{b=2,c=3}}
+  local u = onmt.utils.Table.deepCopy(t)
+  tester:eq(t[1],u[1])
+  tester:eq(t[2]['a'], u[2]['a'])
+  u[2]['a'] = 0
+  tester:ne(t[2]['a'], u[2]['a'])
+end
 
 function tableTest.hasValue_empty()
   tester:eq(onmt.utils.Table.hasValue({}, 4), false)

@@ -2,21 +2,41 @@
 
 ### Breaking changes
 
-* Remove tokenization options from `learn_bpe.lua`
+* Learning rate is also decayed when using Adam
+* Fix some wrong tokenization rules (punctuation-numbers)
+* `-report_every` option is renamed to `-report_progress_every`
+* `-EOT_marker` option is renamed to `-bpe_EOT_marker` for `tokenize.lua`
+* `-BOT_marker` option is renamed to `-bpe_BOT_marker` for `tokenize.lua`
+* `bit32` package is now required for LuaJIT users
 
 ### New features
 
-* Add TER calculation
-* Add CNN encoder
-* Add option to save the validation translation to a file
+* Dynamic dataset to train on large and raw training data repository
+* Convolutional encoder
+* Shallow fusion of language model in decoder
+* TER validation metric
+* Protection blocks for tokenization
+* Hook to call external normalization
+* JSON log formatting when the log file suffix is `.json`
+* Training option to save the validation translation to a file
+* Training option to reset the optimizer states when the learning rate is decayed
+* Translation option to save alignment history
+* Translation translation option to mark replaced tokens with `｟unk:xxxxx｠`
+* Tokenization option to split numbers on each digit
 
 ### Fixes and improvements
 
 * Allow disabling gradients clipping with `-max_grad_norm 0`
 * Allow disabling global parameters initialization with `-param_init 0`
 * Introduce error estimation in scorer for all metrics
+* Reduce memory footprint of Adam, Adadelta and Adagrad optimizers
+* Make validation data optional for training
+* Faster tokenization (up to x2 speedup)
+* Fix missing final model with some values of `-save_every_epochs`
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
+* Fix documentation generation of embedded tokenization options
+* Fix release of sequence tagger models
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 

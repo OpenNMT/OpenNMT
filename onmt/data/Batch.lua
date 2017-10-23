@@ -178,7 +178,7 @@ end
 local function addInputFeatures(inputs, featuresSeq, t)
   local features = {}
   for j = 1, #featuresSeq do
-    table.insert(features, (t and featuresSeq[j][t]) or featuresSeq[j]:t())
+    table.insert(features, (t and featuresSeq[j][t]) or featuresSeq[j]:transpose(1,2))
   end
   if #features > 1 then
     table.insert(inputs, features)
@@ -190,7 +190,7 @@ end
 --[[ Get source input batch at timestep `t`. If `t` is nil, returns the whole sequence. --]]
 function Batch:getSourceInput(t)
   -- If a regular input, return word id, otherwise a table with features.
-  local inputs = (t and self.sourceInput[t]) or self.sourceInput:t()
+  local inputs = (t and self.sourceInput[t]) or self.sourceInput:transpose(1,2)
 
   if #self.sourceInputFeatures > 0 then
     inputs = { inputs }

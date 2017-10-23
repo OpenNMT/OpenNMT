@@ -16,8 +16,18 @@ local restserver = require("restserver")
 local cmd = onmt.utils.ExtendedCmdLine.new('rest_translation_server.lua')
 
 local options = {
-   {'-port', '7784', [[Port to run the server on.]]},
-   {'-withAttn', false, [[If set returns by default attn vector.]]}
+  {
+    '-host', '127.0.0.1',
+    [[Host to run the server on.]]
+  },
+  {
+    '-port', '7784',
+    [[Port to run the server on.]]
+  },
+  {
+    '-withAttn', false,
+    [[If set returns by default attn vector.]]
+  }
 }
 
 cmd:setCmdLineOptions(options, 'Server')
@@ -110,8 +120,8 @@ local function translateMessage(translator, lines)
   return translations
 end
 
-local function init_server(port, translator)
-  local server = restserver:new():port(port)
+local function init_server(host, port, translator)
+  local server = restserver:new():host(host):port(port)
 
   server:add_resource("translator", {
     {
@@ -141,7 +151,7 @@ local function main()
   _G.logger:info("Loading model")
   local translator = onmt.translate.Translator.new(opt)
   _G.logger:info("Launch server")
-  local server = init_server(opt.port, translator)
+  local server = init_server(opt.host, opt.port, translator)
   -- This loads the restserver.xavante plugin
   server:enable("restserver.xavante"):start()
 end

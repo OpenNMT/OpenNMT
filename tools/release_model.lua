@@ -30,25 +30,34 @@ onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
+local function isModel(object)
+  return torch.type(object) == 'table' and object.modules
+end
+
+local function releaseModule(object, tensorCache)
+  tensorCache = tensorCache or {}
+  if object.release then
+    object:release()
+  end
+  object:float(tensorCache)
+  object:clearState()
+  object:apply(function (m)
+    nn.utils.clear(m, 'gradWeight', 'gradBias')
+    for k, v in pairs(m) do
+      if type(v) == 'function' then
+        m[k] = nil
+      end
+    end
+  end)
+end
+
 local function releaseModel(model, tensorCache)
   tensorCache = tensorCache or {}
-  for _, submodule in pairs(model.modules) do
-    if submodule.release then
-      submodule:release()
-    end
-    if torch.type(submodule) == 'table' and submodule.modules then
-      releaseModel(submodule, tensorCache)
+  for _, object in pairs(model.modules) do
+    if isModel(object) then
+      releaseModel(object, tensorCache)
     else
-      submodule:float(tensorCache)
-      submodule:clearState()
-      submodule:apply(function (m)
-        nn.utils.clear(m, 'gradWeight', 'gradBias')
-        for k, v in pairs(m) do
-          if type(v) == 'function' then
-            m[k] = nil
-          end
-        end
-      end)
+      releaseModule(object, tensorCache)
     end
   end
 end
@@ -88,8 +97,12 @@ local function main()
 
   _G.logger:info('Converting model...')
   checkpoint.info = nil
-  for _, model in pairs(checkpoint.models) do
-    releaseModel(model)
+  for _, object in pairs(checkpoint.models) do
+    if isModel(object) then
+      releaseModel(object)
+    else
+      releaseModule(object)
+    end
   end
   _G.logger:info('... done.')
 
