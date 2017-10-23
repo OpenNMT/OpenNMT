@@ -69,7 +69,7 @@ local function updateTensorByDict(tensor, dict, updatedDict)
   updateTensor:resize(updatedDict.words:size(), tensor:size(2)):fill(0.00000)
   for i = 1, updatedDict.words:size() do
     local label = updatedDict.words.idxToLabel[i]
-    idx = dict.words.labelToIdx[label]
+    local idx = dict.words.labelToIdx[label]
     -- Copy a word's vector if it exists in the two dictionaries
     if idx ~= nil then
       updateTensor[{ i,{} }] = tensor[{ idx,{} }]
@@ -151,6 +151,7 @@ local function loadModel(opt, dicts)
     _G.logger:info(' * Found different vocabularies in the new train-set')
 
     local encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder)
+    local decoder
     if checkpoint.models.decoder then
       decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
     end
