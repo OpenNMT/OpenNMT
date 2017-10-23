@@ -63,6 +63,22 @@ local function loadData(opt, filename)
   return data
 end
 
+local function updateTensorByDict(tensor, dict, updatedDict)
+
+  local updateTensor = tensor:clone()
+  updateTensor:resize(updatedDict.words:size(), tensor:size(2)):fill(0.00000)
+  for i = 1, updatedDict.words:size() do
+    local label = updatedDict.words.idxToLabel[i]
+    idx = dict.words.labelToIdx[label]
+    -- Copy a word's vector if it exists in the two dictionaries
+    if idx ~= nil then
+      updateTensor[{ i,{} }] = tensor[{ idx,{} }]
+    end
+  end
+
+  return updateTensor
+end
+
 local function buildDataset(opt, data)
   local trainDataset, validDataset
 
@@ -130,6 +146,70 @@ local function loadModel(opt, dicts)
   local paramChanges
 
   checkpoint, opt, paramChanges = onmt.train.Saver.loadCheckpoint(opt)
+
+  if checkpoint.dicts ~= dicts and opt.update_vocab then
+    _G.logger:info(' * Found different vocabularies in the new train-set')
+
+    local encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder)
+    if checkpoint.models.decoder then
+      decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
+    end
+
+    encoder:apply(function(m)
+        if torch.type(m) == "onmt.WordEmbedding" then
+          _G.logger:info(' * Found source embeddings of size: %d', m.net.weight:size(1))
+          if m.net.weight:size(1) == checkpoint.dicts.src.words:size() then
+            m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.src, dicts.src)
+          end
+          if m.net.gradWeight:size(1) == checkpoint.dicts.src.words:size() then
+            m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.src, dicts.src)
+          end
+          _G.logger:info(' * Updated source embeddings of size: %d', m.net.weight:size(1))
+          return
+        end
+    end)
+
+    if decoder then
+      decoder:apply(function(m)
+          if torch.type(m) == "onmt.WordEmbedding" then
+            _G.logger:info(' * Found target embeddings of size: %d', m.net.weight:size(1))
+            if m.net.weight:size(1) == checkpoint.dicts.tgt.words:size() then
+              m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.tgt, dicts.tgt)
+            end
+            if m.net.gradWeight:size(1) == checkpoint.dicts.tgt.words:size() then
+              m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.tgt, dicts.tgt)
+            end
+            _G.logger:info(' * Updated target embeddings of size: %d', m.net.weight:size(1))
+            return
+          elseif torch.type(m) == "onmt.Generator" then
+            local generator = nn.ConcatTable()
+            local sizes = onmt.Factory.getOutputSizes(dicts.tgt)
+            for i = 1, #sizes do
+
+                local linear = nn.Linear(opt.rnn_size, sizes[i])
+                _G.logger:info(' * Found generator of size: %d', m.rindexLinear.weight:size(1))
+                if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
+                  linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt, dicts.tgt)
+                end
+                if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
+                  linear.gradWeight = updateTensorByDict(m.rindexLinear.gradWeight, checkpoint.dicts.tgt, dicts.tgt)
+                end
+                _G.logger:info(' * Updated generator of size: %d', linear.weight:size(1))
+                if i == 1 then
+                  m.rindexLinear = linear
+                end
+                generator:add(nn.Sequential()
+                                :add(linear)
+                                :add(nn.LogSoftMax()))
+            end
+            m:set(generator)
+            return
+          end
+      end)
+    end
+
+    checkpoint.dicts = dicts
+  end
 
   cmd:logConfig(opt)
 
