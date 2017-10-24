@@ -63,4 +63,4 @@ Another use case it to use a base model and train it further with new training o
 
 ## Updating the vocabularies
 
-In the spirit of infinite training, we could have different vocabularies in dynamic dataset and the pre-trained model. Instead of re-initializing the whole network, the pre-trained states of the common words in the new/previous dictionaries can be kept with option `--update_vocab`. This option is enabled by default.
+It is possible that we restart the training with a new dataset such as dynamic dataset, we could have different vocabularies in dynamic dataset and the pre-trained model. Instead of re-initializing the whole network, the pre-trained states of the common words in the new/previous dictionaries can be kept with option `-update_vocab`. This option is disabled by default and the update of word features isn't supported for instant.
