@@ -48,6 +48,10 @@ local options = {
     [[Force the beam search to apply the translations from the phrase table.]]
   },
   {
+    '-limit_lexical_constraints', false,
+    [[Prevents producing each lexical constraint more than required.]]
+  },
+  {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
     {
@@ -372,6 +376,7 @@ function Translator:translateBatch(batch)
                                                       context,
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
+                                                      self.args.limit_lexical_constraints,
                                                       decInitStates,
                                                       self.lm and self.lm.model.models,
                                                       lmStates, lmContext, self.args.lm_weight,

@@ -12,13 +12,14 @@ Parameters:
   * `context` - encoder output (batch x n x rnnSize).
   * `max_sent_length` - optional, maximum output sentence length.
   * `max_num_unks` - optional, maximum number of UNKs.
+  * `limit_lexical_constraints` - optional, prevents producing each lexical constraint more than required.
   * `decStates` - optional, initial decoder states.
   * `lmModel` - optional, the language model object.
   * `lmStates`, `lmContext` - option initial language model states and context - initialized with BOS
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates,
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, limit_lexical_constraints, decStates,
                                 lmModel, lmStates, lmContext, lm_weight,
                                 dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
@@ -26,6 +27,7 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.context = context
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
+  self.limit_lexical_constraints = limit_lexical_constraints or false
   self.length_norm = length_norm or 0.0
   self.coverage_norm = coverage_norm or 0.0
   self.eos_norm = eos_norm or 0.0
@@ -206,11 +208,24 @@ function DecoderAdvancer:filter(beam)
   -- Disallow too many UNKs
   local pruned = numUnks:gt(self.max_num_unks)
 
-  -- If we use lexical constraints, disallow hypotheses that did not consume all of the constraints
+  -- In case we use lexical constraints.
   if beam:getState()[11] then
+
+    -- Disallow hypotheses that did not consume all of the constraints.
     local finished = tokens[#tokens]:eq(onmt.Constants.EOS)
-    local unfinished_constraints = beam:getState()[11]:ne(0):sum(2):gt(0)
-    pruned:add(torch.cmul(unfinished_constraints, finished))
+    local cNum = beam:getState()[11]:ne(0):sum(2)
+    local unfinishedConstraints = cNum:gt(0)
+    pruned:add(torch.cmul(unfinishedConstraints, finished))
+
+    -- Do not produce each constraint more than allowed.
+    if self.limit_lexical_constraints then
+      local flatConstraints = self.batch.constraints:view(-1)
+      for c=1,flatConstraints:size(1) do
+        local constraintNotAvailable = beam:getState()[11]:eq(flatConstraints[c]):sum(2):eq(0)
+        local isConstraint = tokens[#tokens]:eq(flatConstraints[c])
+        pruned:add(torch.cmul(constraintNotAvailable, isConstraint))
+      end
+    end
   end
 
   -- Disallow empty hypotheses
