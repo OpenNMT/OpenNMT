@@ -218,7 +218,7 @@ local function loadModel(opt, dicts)
     checkpoint = updateVocab(checkpoint, dicts, opt)
   elseif checkpoint.dicts.src.words:size() ~= dicts.src.words:size() or checkpoint.dicts.tgt.words:size() ~= dicts.tgt.words:size() then
     _G.logger:warning('Dictionary size changed, you may need to activate -update_vocab option')
-  end    
+  end
 
   cmd:logConfig(opt)
 
