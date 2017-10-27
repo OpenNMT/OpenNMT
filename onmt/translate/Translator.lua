@@ -262,7 +262,10 @@ function Translator:buildData(src, gold)
 	  for _,w in pairs(src[b].words) do
 	    if (self.phraseTable:contains(w)) then
 	      -- TODO : deal with phrases and source words
-	      table.insert(c, self.phraseTable:lookup(w))
+	      local tgt = self.phraseTable:lookup(w)
+	      if (self.dicts.tgt.words:lookup(tgt)) then
+	        table.insert(c, tgt)
+	      end
 	    end
 	  end
 	  table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
