@@ -60,3 +60,7 @@ Additionally, the `-continue` flag retrieves from the previous training:
 ## Training from pre-trained parameters
 
 Another use case it to use a base model and train it further with new training options (in particular the optimization method and the learning rate). Using `-train_from` without `-continue` will start a new training with parameters initialized from a pre-trained model.
+
+## Updating the vocabularies
+
+It is possible that we restart the training with a new dataset such as dynamic dataset, we could have different vocabularies in dynamic dataset and the pre-trained model. Instead of re-initializing the whole network, the pre-trained states of the common words in the new/previous dictionaries can be kept with option `-update_vocab`. This option is disabled by default and the update of word features isn't supported for instant.

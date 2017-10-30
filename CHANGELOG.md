@@ -2,7 +2,6 @@
 
 ### Breaking changes
 
-* Enable tokenization with tokenizer's non-BPE related options for `learn_bpe.lua`
 * Learning rate is also decayed when using Adam
 * Fix some wrong tokenization rules (punctuation-numbers)
 * `-report_every` option is renamed to `-report_progress_every`
@@ -12,29 +11,29 @@
 
 ### New features
 
-* Add TER metric
-* Add CNN encoder
-* Add option to save the validation translation to a file
-* Add "Shallow Fusion" of language model in decoder
-* Add option to reset the optimizer states when the learning rate is decayed
-* Introduce dynamic dataset to bypass tokenization, preprocessing, and sampling
-* Introduce protection blocks for tokenization
-* Introduce possibility to hook normalization command part of tokenization
-* Add option to dump attention in `translate.lua`
-* Add option to replace unknown words with the original wrapped in a `｟unk:xxxxx｠` tag `-replace_unk_tagged`
-* Add `-segment_numbers` option
+* Dynamic dataset to train on large and raw training data repository
+* Convolutional encoder
+* Shallow fusion of language model in decoder
+* TER validation metric
+* Protection blocks for tokenization
+* Hook to call external normalization
+* JSON log formatting when the log file suffix is `.json`
+* Training option to save the validation translation to a file
+* Training option to reset the optimizer states when the learning rate is decayed
+* Training option to update the vocabularies during a retraining
+* Translation option to save alignment history
+* Translation translation option to mark replaced tokens with `｟unk:xxxxx｠`
+* Tokenization option to split numbers on each digit
 
 ### Fixes and improvements
 
 * Allow disabling gradients clipping with `-max_grad_norm 0`
 * Allow disabling global parameters initialization with `-param_init 0`
 * Introduce error estimation in scorer for all metrics
-* More graceful error handling
 * Reduce memory footprint of Adam, Adadelta and Adagrad optimizers
-* Validation data is now optional in training
-* Faster tokenization (x2)
-* Revisit Dockerfile
-* Always save the model of the last epoch
+* Make validation data optional for training
+* Faster tokenization (up to x2 speedup)
+* Fix missing final model with some values of `-save_every_epochs`
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
 * Fix documentation generation of embedded tokenization options

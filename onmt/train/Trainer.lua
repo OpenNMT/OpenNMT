@@ -77,6 +77,10 @@ local options = {
     [[When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the
     translation every this many epochs to the file `<save_model>_epochN_validation_translation.txt`.
     If = 0, will not save validation translation.]]
+  },
+  {
+    '-update_vocab', false,
+    [[When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).]]
   }
 }
 

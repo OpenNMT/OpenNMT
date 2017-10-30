@@ -231,7 +231,8 @@ function Translator:buildData(src, gold)
   local index = 1
 
   for b = 1, #src do
-    if src[b].words and #src[b].words == 0 then
+    if (src[b].words and #src[b].words == 0
+        or src[b].vectors and src[b].vectors:dim() == 0) then
       table.insert(ignored, b)
     else
       indexMap[index] = b
