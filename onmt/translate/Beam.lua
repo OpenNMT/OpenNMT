@@ -384,10 +384,7 @@ function Beam:_expandScores(scores, beamSize)
   end
 
   self._scores = self._scores:typeAs(scores)
-  local expandedScores
-    = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
-         + self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize)
-      )
+  local expandedScores = scores:typeAs(self._scores):view(remaining, beamSize, -1):add(self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize))
 
   local normExpandedScores = self:_normalizeScores(expandedScores)
   return expandedScores:view(remaining, -1), normExpandedScores:view(remaining, -1)

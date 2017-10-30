@@ -199,20 +199,25 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     newBeamConstraints = torch.Tensor()
   end
 
+  local maskedScores, maskedNormScores
+  if expandedConstraintSizes then
+    maskedScores  = expandedScores:clone()
+    maskedNormScores = expandedNormScores:clone()
+  else
+    maskedScores = expandedScores
+    maskedNormScores = expandedNormScores
+  end
+
   -- for each possible number of used constraints, get kbest scores and create a part of the new beam
   for i = 0, constraintNum do
-    local maskedScores, maskedNormScores
 
     if usedConstraintNum then
       -- mask scores for all other number of used constraints
-      maskedScores  = expandedScores:clone()
-      maskedNormScores = expandedNormScores:clone()
+      maskedScores:copy(expandedScores)
+      maskedNormScores:copy(expandedNormScores)
 
       maskedScores:maskedFill(usedConstraintNum:ne(i), -math.huge)
       maskedNormScores:maskedFill(usedConstraintNum:ne(i), -math.huge)
-    else
-      maskedScores = expandedScores
-      maskedNormScores = expandedNormScores
     end
 
     -- get kbest scores
