@@ -673,10 +673,10 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                 break
               end
               if maps[i][idx] then
-                return 1, string.format('duplicate idx in %s file: '..idx, nameSources[i])
+                return _G.__threadid, 1, string.format('duplicate idx in %s file: '..idx, nameSources[i])
               end
               if i > 1 and not maps[1][idx] then
-                return 1, string.format('%s Idx not defined in %s: '..idx, nameSources[i], nameSources[1])
+                return _G.__threadid, 1, string.format('%s Idx not defined in %s: '..idx, nameSources[i], nameSources[1])
               end
               if isInputVector[i] then
                 maps[i][idx] = torch.Tensor(tokens)
