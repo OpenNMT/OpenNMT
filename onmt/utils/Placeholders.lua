@@ -11,10 +11,11 @@ local function norm(t)
     return v, vrep
   end
   if t:sub(1, string.len('｟')) == '｟' then
-    assert(t:sub(-string.len('｠')) == '｠', 'invalid placeholder tag: '..t)
-    local tcontent = t:sub(string.len('｟')+1, -string.len('｠')-1)
+    local p = t:find('｠')
+    assert(p, 'invalid placeholder tag: '..t)
+    local tcontent = t:sub(string.len('｟')+1, p-1)
     local fields = onmt.utils.String.split(tcontent, '：')
-    return '｟'..fields[1]..'｠', fields[2] or fields[1]
+    return '｟'..fields[1]..t:sub(p), fields[2] or fields[1]
   end
   return t
 end
