@@ -1,4 +1,6 @@
 require('onmt.init')
+local tokenizer = require 'tools.utils.tokenizer'
+local BPE = require ('tools.utils.BPE')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
 
@@ -38,6 +40,33 @@ local options = {
 cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
+
+  -- prepare tokenization option
+local tok_options = {}
+local topts = tokenizer.getOpts()
+for _, v in ipairs(topts) do
+  -- change mode option to include disabling mode (default)
+  if v[1] == '-mode' then
+    v = { '-mode', 'space',
+        [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
+          {
+            enum = {'conservative', 'aggressive', 'space'}
+          }
+        }
+  end
+  local opt = onmt.utils.Table.deepCopy(v)
+  opt[1] = '-tok_src_' .. v[1]:sub(2)
+  table.insert(tok_options, opt)
+  opt = onmt.utils.Table.deepCopy(v)
+  opt[1] = '-tok_tgt_' .. v[1]:sub(2)
+  table.insert(tok_options, opt)
+end
+table.insert(tok_options, {
+  '-detokenize_output', false,
+  [[Detokenize output.]]
+})
+cmd:setCmdLineOptions(tok_options, "Tokenizer")
+
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
@@ -66,6 +95,56 @@ local function main()
   local srcReader = onmt.utils.FileReader.new(opt.src, opt.idx_files, translator:srcFeat())
   local srcBatch = {}
   local srcIdBatch = {}
+
+    -- tokenization options
+  local tokenizers = { {}, {} }
+  local bpes = {}
+  for k, v in pairs(opt) do
+    if k:sub(1,4) == 'tok_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      tokenizers[idx][k] = v
+    end
+  end
+
+  if opt.tok_src_bpe_model ~= '' then
+     local myopt = {}
+     myopt.bpe_model = opt.tok_src_bpe_model
+     myopt.bpe_EOT_marker = opt.tok_src_bpe_EOT_marker
+     myopt.bpe_BOT_marker = opt.tok_src_bpe_BOT_marker
+     myopt.joiner_new = opt.tok_src_joiner_new
+     myopt.joiner_annotate = opt.tok_src_joiner_annotate
+     myopt.bpe_mode = opt.tok_src_bpe_mode
+     myopt.bpe_case_insensitive = opt.tok_src_bpe_case_insensitive
+     bpes[1] = BPE.new(myopt)
+  end
+  if opt.tok_tgt_bpe_model ~= '' then
+     local myopt = {}
+     myopt.bpe_model = opt.tok_tgt_bpe_model
+     myopt.bpe_EOT_marker = opt.tok_tgt_bpe_EOT_marker
+     myopt.bpe_BOT_marker = opt.tok_tgt_bpe_BOT_marker
+     myopt.joiner_new = opt.tok_tgt_joiner_new
+     myopt.joiner_annotate = opt.tok_sgt_joiner_annotate
+     myopt.bpe_mode = opt.tok_tgt_bpe_mode
+     myopt.bpe_case_insensitive = opt.tok_tgt_bpe_case_insensitive
+     bpes[2] = BPE.new(myopt)
+  end
+
+  for i = 1, 2 do
+    _G.logger:info("Using on-the-fly '%s' tokenization for input "..i, tokenizers[i]["mode"])
+  end
+
+  -- if source features - no tokenization
+  if translator:srcFeat() then
+    tokenizers[1] = nil
+  end
 
   local goldReader
   local goldBatch
@@ -100,14 +179,20 @@ local function main()
   end
 
   while true do
-    local srcSeq, srcSeqId = srcReader:next()
+    local srcSeq, srcSeqId = srcReader:next(false)
 
     local goldOutputSeq
     if withGoldScore then
-      goldOutputSeq = goldReader:next()
+      goldOutputSeq = goldReader:next(false)
+      if goldOutputSeq then
+        goldOutputSeq = tokenizer.tokenize(tokenizers[2], goldOutputSeq, bpes[2])
+      end
     end
 
-    if srcSeq ~= nil then
+    if srcSeq then
+      if tokenizers[1] then
+        srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
+      end
       table.insert(srcBatch, translator:buildInput(srcSeq))
       table.insert(srcIdBatch, srcSeqId)
 
@@ -130,7 +215,8 @@ local function main()
       end
 
       for b = 1, #results do
-        if (srcBatch[b].words and #srcBatch[b].words == 0) then
+        if (srcBatch[b].words and #srcBatch[b].words == 0
+            or srcBatch[b].vectors and srcBatch[b].vectors:dim() == 0) then
           _G.logger:warning('Line ' .. sentId .. ' is empty.')
           outFile:write('\n')
         else
@@ -146,34 +232,43 @@ local function main()
             goldScoreTotal = goldScoreTotal + results[b].goldScore
             goldWordsTotal = goldWordsTotal + #goldBatch[b].words
           end
+
           if opt.dump_input_encoding then
             outFile:write(sentId, ' ', table.concat(torch.totable(results[b]), " "), '\n')
           else
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
+              if opt.detokenize_output then
+                sentence = tokenizer.detokenize(sentence, tokenizers[2])
+              end
               outFile:write(sentence .. '\n')
+
               if withAttention then
                 local attentions = results[b].preds[n].attention
-                for k,v in pairs(attentions) do
-                  if v ~= nil then
-                    local ttable = torch.totable(v)
-                    local attcount = #attentions
-                    local source = translator:buildOutput(srcBatch[b])
-                    local _,nt = sentence:gsub("%S+","")
-                    local _,ns = source:gsub("%S+","")
-                    if k == 1 then
-                      attFile:write(b..' ||| '..sentence..' ||| '..results[b].preds[n].score..' ||| '..source..' ||| '..ns..' '..nt..'\n')
-                    end
-                    for _,j in pairs(ttable) do
-                      attFile:write(j..' ')
-                    end
+                local score = results[b].preds[n].score
+                local targetLength = #attentions
+
+                if translator:srcFeat() then
+                  attFile:write(string.format('%d ||| %s ||| %f ||| %d\n',
+                                              sentId, sentence, score, targetLength))
+                else
+                  local source = translator:buildOutput(srcBatch[b])
+                  local sourceLength = #srcBatch[b].words
+                  attFile:write(string.format('%d ||| %s ||| %f ||| %s ||| %d %d\n',
+                                              sentId, sentence, score, source,
+                                              sourceLength, targetLength))
+                end
+
+                for _, attention in ipairs(attentions) do
+                  if attention ~= nil then
+                    attFile:write(table.concat(torch.totable(attention), ' '))
                     attFile:write('\n')
-                    if k == attcount then
-                      attFile:write('\n')
-                    end
                   end
                 end
+
+                attFile:write('\n')
               end
+
               if n == 1 then
                 predScoreTotal = predScoreTotal + results[b].preds[n].score
                 predWordsTotal = predWordsTotal + #results[b].preds[n].words

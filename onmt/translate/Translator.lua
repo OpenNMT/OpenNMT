@@ -41,6 +41,9 @@ local options = {
       target token. If it is not provided (or the identified source token
       does not exist in the table) then it will copy the source token]]},
   {
+    '-replace_unk_tagged', false,
+    [[The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.]]},
+  {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
     {
@@ -182,8 +185,9 @@ function Translator:buildInput(tokens)
     data.vectors = torch.Tensor(tokens)
   else
     local words, features = onmt.utils.Features.extract(tokens)
+    local vocabs = onmt.utils.Placeholders.norm(words)
 
-    data.words = words
+    data.words = vocabs
 
     if #features > 0 then
       data.features = features
@@ -228,7 +232,8 @@ function Translator:buildData(src, gold)
   local index = 1
 
   for b = 1, #src do
-    if src[b].words and #src[b].words == 0 then
+    if (src[b].words and #src[b].words == 0
+        or src[b].vectors and src[b].vectors:dim() == 0) then
       table.insert(ignored, b)
     else
       indexMap[index] = b
@@ -266,7 +271,7 @@ end
 function Translator:buildTargetWords(pred, src, attn)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  if self.args.replace_unk then
+  if self.args.replace_unk or self.args.replace_unk_tagged then
     for i = 1, #tokens do
       if tokens[i] == onmt.Constants.UNK_WORD then
         local _, maxIndex = attn[i]:max(1)
@@ -274,8 +279,12 @@ function Translator:buildTargetWords(pred, src, attn)
 
         if self.phraseTable and self.phraseTable:contains(source) then
           tokens[i] = self.phraseTable:lookup(source)
-        else
+
+        elseif self.args.replace_unk then
           tokens[i] = source
+
+        elseif self.args.replace_unk_tagged then
+          tokens[i] = '｟unk:' .. source .. '｠'
         end
       end
     end

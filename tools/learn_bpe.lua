@@ -1,8 +1,8 @@
 require('torch')
 require('onmt.init')
 
+local tokenizer = require('tools.utils.tokenizer')
 local unicode = require('tools.utils.unicode')
-local case = require ('tools.utils.case')
 local separators = require('tools.utils.separators')
 local tds = require('tds')
 
@@ -12,10 +12,6 @@ local options = {
   {
     '-size', '30000',
     [[The number of merge operations to learn.]]
-  },
-  {
-    '-lc', false,
-    [[Lowercase input tokens before learning BPE.]]
   },
   {
     '-bpe_mode', 'suffix',
@@ -30,6 +26,14 @@ local options = {
     }
   },
   {
+    '-bpe_EOT_marker', separators.EOT,
+    [[Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.]]
+  },
+  {
+    '-bpe_BOT_marker', separators.BOT,
+    [[Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.]]
+  },
+  {
     '-save_bpe', '',
     [[Path to save the output model.]],
     {
@@ -40,17 +44,43 @@ local options = {
 
 cmd:setCmdLineOptions(options, 'BPE')
 
+-- prepare tokenization option
+options = {}
+local topts = tokenizer.getOpts()
+for _, v in ipairs(topts) do
+  if v[1]:sub(1,4)  ~= '-bpe' then
+    -- change mode option to include disabling mode (default)
+    if v[1] == '-mode' then
+      v = { '-mode', 'space',
+            [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
+            {
+              enum = {'conservative', 'aggressive', 'space'}
+            }
+      }
+    end
+    local opttmp = {table.unpack(v)}
+    opttmp[1] = '-tok_' .. v[1]:sub(2)
+    table.insert(options, {table.unpack(opttmp)})
+  end
+end
+
+cmd:setCmdLineOptions(options, "Tokenizer")
+
 onmt.utils.Logger.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
 local function string2word(s)
   local t = {}
-  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, separators.BOT) end
-  for _, c in unicode.utf8_iter(s) do
-    table.insert(t, c)
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_BOT_marker) end
+  if s:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
+    table.insert(t, s)
+  else
+    for _, c in unicode.utf8_iter(s) do
+      table.insert(t, c)
+    end
   end
-  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, separators.EOT) end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(t, opt.bpe_EOT_marker) end
   return table.concat(t, " ")
 end
 
@@ -97,19 +127,28 @@ local function get_vocabulary()
   local vocab = tds.Hash()
   local l = io.read()
 
-  local segmentor = function (a) return string.split(a, " ") end
-  if opt.lc then
-    segmentor = function (a) return case.lowerCase(string.split(a, " ")) end
+  -- tokenization options
+  local tokopts = {}
+  for k, v in pairs(opt) do
+    if k:sub(1,4) == 'tok_' then
+      k = k:sub(5)
+      tokopts[k] = v
+    end
   end
+  _G.logger:info("Using on-the-fly '%s' tokenization for input", tokopts["mode"])
+
+  local segmentor = function (line) return tokenizer.tokenize(tokopts, line, nil) end
+
   _G.logger:info('Building vocabulary from STDIN')
   local count = 1
   while not(l == nil) do
     local toks = segmentor(l)
-    for i = 1, #toks do
-      local word = toks[i]
+    local words = onmt.utils.Features.extract(toks)
+    for i = 1, #words do
+      local word = words[i]
       vocab[word] = (vocab[word] or 0) + 1
     end
-    l=io.read()
+    l = io.read()
     count = count + 1
     if count % 100000 == 0 then _G.logger:info('... ' .. count .. ' sentences processed') end
   end
@@ -255,11 +294,6 @@ local function main()
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
 
-  local bpe_options = {}
-  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-  if opt.lc then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
-
   local vocab = get_vocabulary()
   local sorted_vocab = tds.Vec()
   for k, v in pairs(vocab) do sorted_vocab[#sorted_vocab+1] = tds.Vec({k, v}) end
@@ -270,6 +304,13 @@ local function main()
 
   local big_stats = clone(stats)
   local threshold = stats[maxKey(stats)] / 10
+
+  local bpe_options = {'v3'}
+  if opt.bpe_mode == 'prefix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.bpe_mode == 'suffix' or opt.bpe_mode == 'both' then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  if opt.tok_case_feature then table.insert(bpe_options, "true") else table.insert(bpe_options, "false") end
+  table.insert(bpe_options, opt.bpe_BOT_marker)
+  table.insert(bpe_options, opt.bpe_EOT_marker)
 
   _G.logger:info('Generating merge operations to output')
 

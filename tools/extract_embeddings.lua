@@ -40,7 +40,10 @@ local function main()
   end
   local dicts = checkpoint.dicts
   local encoder = onmt.Factory.loadEncoder(checkpoint.models.encoder)
-  local decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
+  local decoder
+  if checkpoint.models.decoder then
+    decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
+  end
   local encoder_embeddings, decoder_embeddings
 
   encoder:apply(function(m)
@@ -53,22 +56,25 @@ local function main()
       end
   end)
 
-  decoder:apply(function(m)
-      if torch.type(m) == "onmt.WordEmbedding" then
-        print("Found target embeddings of size " ..  m.net.weight:size(1))
-        if m.net.weight:size(1) == dicts.tgt.words:size() then
-          decoder_embeddings = m.net.weight
+  if decoder then
+    decoder:apply(function(m)
+        if torch.type(m) == "onmt.WordEmbedding" then
+          print("Found target embeddings of size " ..  m.net.weight:size(1))
+          if m.net.weight:size(1) == dicts.tgt.words:size() then
+            decoder_embeddings = m.net.weight
+          end
+          return
         end
-        return
-      end
-  end)
+    end)
+  end
 
   print("Writing source embeddings")
   write_embeddings(opt.output_dir .. "/src_embeddings.txt", dicts.src.words, encoder_embeddings)
 
-  print("Writing target embeddings")
-  write_embeddings(opt.output_dir .. "/tgt_embeddings.txt", dicts.tgt.words, decoder_embeddings)
-
+  if checkpoint.models.decoder then
+    print("Writing target embeddings")
+    write_embeddings(opt.output_dir .. "/tgt_embeddings.txt", dicts.tgt.words, decoder_embeddings)
+  end
   print('... done.')
 end
 

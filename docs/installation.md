@@ -6,6 +6,7 @@
 
 ```bash
 luarocks install tds
+luarocks install bit32 # if using LuaJIT
 ```
 
 3\. Clone the OpenNMT repository:
@@ -17,33 +18,21 @@ cd OpenNMT
 
 And you are ready to go! Take a look at the [quickstart](quickstart.md) to familiarize yourself with the main training workflow.
 
-## Docker (Ubuntu)
+## Docker
 
-First you need to install `nvidia-docker`:
+1\. [Install `nvidia-docker`](https://github.com/NVIDIA/nvidia-docker) if using GPUs
+
+2\. Pull and run the latest OpenNMT image:
 
 ```bash
-wget -P /tmp https://github.com/NVIDIA/nvidia-docker/releases/download/v1.0.0-rc.3/nvidia-docker_1.0.0.rc.3-1_amd64.deb
-sudo dpkg -i /tmp/nvidia-docker*.deb
+sudo nvidia-docker run -it opennmt/opennmt:latest
 ```
 
-If this command does not work, you may need to run the following updates:
+3\. Clone the OpenNMT repository:
 
 ```bash
-sudo apt-add-repository 'deb https://apt.dockerproject.org/repo ubuntu-xenial main'
-sudo apt-get update
-sudo apt-get install docker-engine nvidia-modprobe
-```
-
-Then simply run our Docker container:
-
-```bash
-sudo nvidia-docker run -it harvardnlp/opennmt:8.0
-```
-
-Once in the instance, check out the latest code:
-
-```bash
-git clone https://github.com/OpenNMT/OpenNMT
+git clone https://github.com/OpenNMT/OpenNMT ~/OpenNMT
+cd ~/OpenNMT
 ```
 
 ## Amazon EC2

@@ -24,6 +24,7 @@
 * `-beam_size <number>` (default: `5`)<br/>Beam size.
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
 * `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token
+* `-replace_unk_tagged [<boolean>]` (default: `false`)<br/>The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.
 * `-phrase_table <string>` (default: `''`)<br/>Path to source-target dictionary to replace `<unk>` tokens.
 * `-n_best <number>` (default: `1`)<br/>If > 1, it will also output an n-best list of decoded sentences.
 * `-max_num_unks <number>` (default: `inf`)<br/>All sequences with more `<unk>`s than this will be ignored during beam search.
@@ -35,6 +36,40 @@
 * `-dump_input_encoding [<boolean>]` (default: `false`)<br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.
 * `-save_beam_to <string>` (default: `''`)<br/>Path to a file where the beam search exploration will be saved in a JSON format. Requires the `dkjson` package.
 
+## Tokenizer options
+
+* `-tok_src_mode <string>` (accepted: `conservative`, `aggressive`, `space`; default: `space`)<br/>Define how aggressive should the tokenization be. `space` is space-tokenization.
+* `-tok_tgt_mode <string>` (accepted: `conservative`, `aggressive`, `space`; default: `space`)<br/>Define how aggressive should the tokenization be. `space` is space-tokenization.
+* `-tok_src_joiner_annotate [<boolean>]` (default: `false`)<br/>Include joiner annotation using `-joiner` character.
+* `-tok_tgt_joiner_annotate [<boolean>]` (default: `false`)<br/>Include joiner annotation using `-joiner` character.
+* `-tok_src_joiner <string>` (default: `￭`)<br/>Character used to annotate joiners.
+* `-tok_tgt_joiner <string>` (default: `￭`)<br/>Character used to annotate joiners.
+* `-tok_src_joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
+* `-tok_tgt_joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
+* `-tok_src_case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
+* `-tok_tgt_case_feature [<boolean>]` (default: `false`)<br/>Generate case feature.
+* `-tok_src_segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
+* `-tok_tgt_segment_case [<boolean>]` (default: `false`)<br/>Segment case feature, splits AbC to Ab C to be able to restore case
+* `-tok_src_segment_alphabet <table>` (accepted: `Tagalog`, `Hanunoo`, `Limbu`, `Yi`, `Hebrew`, `Latin`, `Devanagari`, `Thaana`, `Lao`, `Sinhala`, `Georgian`, `Kannada`, `Cherokee`, `Kanbun`, `Buhid`, `Malayalam`, `Han`, `Thai`, `Katakana`, `Telugu`, `Greek`, `Myanmar`, `Armenian`, `Hangul`, `Cyrillic`, `Ethiopic`, `Tagbanwa`, `Gurmukhi`, `Ogham`, `Khmer`, `Arabic`, `Oriya`, `Hiragana`, `Mongolian`, `Kangxi`, `Syriac`, `Gujarati`, `Braille`, `Bengali`, `Tamil`, `Bopomofo`, `Tibetan`)<br/>Segment all letters from indicated alphabet.
+* `-tok_tgt_segment_alphabet <table>` (accepted: `Tagalog`, `Hanunoo`, `Limbu`, `Yi`, `Hebrew`, `Latin`, `Devanagari`, `Thaana`, `Lao`, `Sinhala`, `Georgian`, `Kannada`, `Cherokee`, `Kanbun`, `Buhid`, `Malayalam`, `Han`, `Thai`, `Katakana`, `Telugu`, `Greek`, `Myanmar`, `Armenian`, `Hangul`, `Cyrillic`, `Ethiopic`, `Tagbanwa`, `Gurmukhi`, `Ogham`, `Khmer`, `Arabic`, `Oriya`, `Hiragana`, `Mongolian`, `Kangxi`, `Syriac`, `Gujarati`, `Braille`, `Bengali`, `Tamil`, `Bopomofo`, `Tibetan`)<br/>Segment all letters from indicated alphabet.
+* `-tok_src_segment_numbers [<boolean>]` (default: `false`)<br/>Segment numbers into single digits.
+* `-tok_tgt_segment_numbers [<boolean>]` (default: `false`)<br/>Segment numbers into single digits.
+* `-tok_src_segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
+* `-tok_tgt_segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
+* `-tok_src_bpe_model <string>` (default: `''`)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, BPE related options will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_tgt_bpe_model <string>` (default: `''`)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, BPE related options will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_src_bpe_EOT_marker <string>` (default: `</w>`)<br/>Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.
+* `-tok_tgt_bpe_EOT_marker <string>` (default: `</w>`)<br/>Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.
+* `-tok_src_bpe_BOT_marker <string>` (default: `<w>`)<br/>Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.
+* `-tok_tgt_bpe_BOT_marker <string>` (default: `<w>`)<br/>Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.
+* `-tok_src_bpe_case_insensitive [<boolean>]` (default: `false`)<br/>Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_tgt_bpe_case_insensitive [<boolean>]` (default: `false`)<br/>Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
+* `-tok_src_bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-bpe_BOT_marker` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `-bpe_EOT_marker` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
+* `-tok_tgt_bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-bpe_BOT_marker` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `-bpe_EOT_marker` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
+* `-tok_src_normalize_cmd <string>` (default: `''`)<br/>Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.
+* `-tok_tgt_normalize_cmd <string>` (default: `''`)<br/>Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.
+* `-detokenize_output [<boolean>]` (default: `false`)<br/>Detokenize output.
+
 ## Cuda options
 
 * `-gpuid <table>` (default: `0`)<br/>List of GPU identifiers (1-indexed). CPU is used when set to 0.
@@ -44,9 +79,9 @@
 
 ## Logger options
 
-* `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout.
+* `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout - if file name ending with json, output structure json.
 * `-disable_logs [<boolean>]` (default: `false`)<br/>If set, output nothing.
-* `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`; default: `INFO`)<br/>Output logs at this level and above.
+* `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `NOERROR`; default: `INFO`)<br/>Output logs at this level and above.
 
 ## Other options
 

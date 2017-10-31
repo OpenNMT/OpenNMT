@@ -27,9 +27,9 @@
 
 ## Logger options
 
-* `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout.
+* `-log_file <string>` (default: `''`)<br/>Output logs to a file under this path instead of stdout - if file name ending with json, output structure json.
 * `-disable_logs [<boolean>]` (default: `false`)<br/>If set, output nothing.
-* `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`; default: `INFO`)<br/>Output logs at this level and above.
+* `-log_level <string>` (accepted: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `NOERROR`; default: `INFO`)<br/>Output logs at this level and above.
 
 ## Other options
 

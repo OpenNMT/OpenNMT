@@ -2,7 +2,7 @@
 --]]
 local Error = torch.class('Error')
 
-function Error.assert(condition, message)
+function Error.assert(condition, message, ...)
   if not condition then
     local trace = onmt.utils.String.split(debug.traceback(), "\n")
     local msgtrace = ""
@@ -15,9 +15,9 @@ function Error.assert(condition, message)
       msgtrace = msgtrace .. ")"
     end
     if _G.logger then
-      _G.logger:error(message..msgtrace.."\nABORTING...")
+      _G.logger:error(message..msgtrace.."\nABORTING...", ...)
     else
-      print("ERROR:",message..msgtrace.."\nABORTING...")
+      print("ERROR:",string.format(message..msgtrace.."\nABORTING...", ...))
     end
     os.exit(0)
   end
