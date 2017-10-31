@@ -61,8 +61,9 @@ function LM:buildInput(tokens)
   local data = {}
 
   local words, features = onmt.utils.Features.extract(tokens)
+  local vocabs = onmt.utils.Placeholders.norm(words)
 
-  data.words = words
+  data.words = vocabs
   data.features = features
 
   return data
