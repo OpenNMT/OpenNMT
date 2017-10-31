@@ -119,6 +119,12 @@ function tokenizerTest.bpebasic()
   end
 end
 
+function tokenizerTest.test_substitute()
+  local opt = cmd:parse({'-mode','conservative'})
+  testTok(opt, [[test￭ protect￨, ：, and ％ or ＃...]],
+               [[test ■ protect │ , : , and % or # . . .]], false)
+end
+
 function tokenizerTest.case_feature()
   local opt = cmd:parse({'-mode','conservative','-joiner_annotate', '-case_feature'})
   testTok(opt, [[test \\\\a Capitalized lowercased UPPERCASÉ miXêd - cyrillic-Б]],

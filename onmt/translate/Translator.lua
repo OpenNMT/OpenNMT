@@ -185,8 +185,9 @@ function Translator:buildInput(tokens)
     data.vectors = torch.Tensor(tokens)
   else
     local words, features = onmt.utils.Features.extract(tokens)
+    local vocabs = onmt.utils.Placeholders.norm(words)
 
-    data.words = words
+    data.words = vocabs
 
     if #features > 0 then
       data.features = features

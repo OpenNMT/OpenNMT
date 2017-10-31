@@ -15,11 +15,12 @@
 * Convolutional encoder
 * Shallow fusion of language model in decoder
 * TER validation metric
-* Protection blocks for tokenization
+* Protection blocks for tokenization - and implement placeholder
 * Hook to call external normalization
 * JSON log formatting when the log file suffix is `.json`
 * Training option to save the validation translation to a file
 * Training option to reset the optimizer states when the learning rate is decayed
+* Training option to update the vocabularies during a retraining
 * Translation option to save alignment history
 * Translation translation option to mark replaced tokens with `｟unk:xxxxx｠`
 * Tokenization option to split numbers on each digit

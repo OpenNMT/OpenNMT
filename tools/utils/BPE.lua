@@ -36,9 +36,8 @@ function BPE:__init(opt)
     self.prefix = options[2] == "true"
     self.suffix = options[3] == "true"
     self.case_insensitive = options[4] == "true"
-    self.EOT_marker = options[5]
-    self.BOT_marker = options[6]
-    io.stderr:write("Parsing of BPE options from model done!\n")
+    self.BOT_marker = options[5]
+    self.EOT_marker = options[6]
   else
     self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
     self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"

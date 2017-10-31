@@ -145,6 +145,7 @@
 * `-curriculum <number>` (default: `0`)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.
 * `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`, `ter`, `dlratio`; default: `perplexity`)<br/>Metric to use for validation.
 * `-save_validation_translation_every <number>` (default: `0`)<br/>When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the translation every this many epochs to the file `<save_model>_epochN_validation_translation.txt`. If = 0, will not save validation translation.
+* `-update_vocab [<boolean>]` (default: `false`)<br/>When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).
 
 ## Optimization options
 
