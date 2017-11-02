@@ -181,7 +181,7 @@ Parameters:
   start with `beamSize` hypotheses per sequence. [`token:size(1)`]
 
 --]]
-function Beam:__init(token, state, params, batchSize)
+function Beam:__init(token, state, params, batchSize, updateConstraints)
   self._remaining = batchSize or token:size(1)
 
   if torch.type(token) == 'table' then
@@ -190,6 +190,18 @@ function Beam:__init(token, state, params, batchSize)
     self._tokens = { token }
   end
   self._state = state
+
+  if updateConstraints and self._state[11] then
+    for t=1,self._tokens[#self._tokens]:size(1) do
+      local tok = self._tokens[#self._tokens][t]
+      for c=1,self._state[11]:size(2) do
+        if self._state[11][t][c] == tok then
+	  self._state[11][t][c] = 0
+	  break
+	end
+      end
+    end
+  end
 
   self._params = {}
   if params then
@@ -391,45 +403,54 @@ function Beam:_expandScores(scores, beamSize)
 end
 
 -- Expand lexical constraints
-function Beam:_expandConstraints(beamSize, vocabSize)
+function Beam:_expandUsedConstraints(beamSize, vocabSize)
 
-  local expandedConstraints, expandedConstraintSizes = nil
+  local usedConstraintNum, expandedConstraints, expandedConstraintSizes = nil
+
+  local constraintNum = 0
 
   if #self._state > 11 and self._state[11] and self._state[12] then
     local constraints = self._state[11]
-    local constraintNum = constraints:size(2)
+    constraintNum = constraints:size(2)
     local constraintSizes = self._state[12]
 
     -- Expand constraints and constraint sizes
-    expandedConstraints = constraints:view(self._remaining, beamSize, constraintNum, 1):expand(self._remaining, beamSize, constraintNum, vocabSize):transpose(3,4):clone()
+    expandedConstraints = constraints:view(self._remaining, beamSize, constraintNum, 1):expand(self._remaining, beamSize, constraintNum, vocabSize):transpose(3,4)
     expandedConstraintSizes = constraintSizes:view(self._remaining,beamSize,1):expand(self._remaining, beamSize, vocabSize):clone()
+    usedConstraintNum = expandedConstraintSizes:csub(expandedConstraints:ne(0):sum(4):typeAs(expandedConstraintSizes))
 
     -- Update "used constraints" for tokens corresponding to one of the available constraints
     for i=1,self._remaining do
       for j=1,beamSize do
+        local usedConstraints = {}
         for c=1,constraintNum do
           local cIdx = expandedConstraints[i][j][1][c]
           if cIdx ~= 0 then
-            local constr = expandedConstraints[i][j][cIdx]
-            constr[c] = 0
+            if usedConstraints[cIdx] then -- constraint has already been used
+              usedConstraints[cIdx] = usedConstraints[cIdx]+1
+            else
+              usedConstraintNum[i][j][cIdx] = usedConstraintNum[i][j][cIdx]+1
+              usedConstraints[cIdx] = 1
+            end
           end
         end
       end
     end
   end
 
-  return expandedConstraints, expandedConstraintSizes
+  return usedConstraintNum, constraintNum
 
 end
 
--- Create a new beam given new token, scores, backpointer and new used constraints.
-function Beam:_nextBeam(token, scores, backPointer, beamSize, constraints)
+-- Create a new beam given new token, scores, backpointer.
+-- We can also update used lexical constraints
+function Beam:_nextBeam(token, scores, backPointer, beamSize, updateConstraints)
   local remaining = math.floor(token:size(1) / beamSize)
   local params = self._params
   local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
-                           self:_nextState(backPointer, beamSize, constraints),
+                           self:_nextState(backPointer, beamSize),
                            params,
-                           remaining)
+                           remaining, updateConstraints)
   newBeam:setScores(scores)
   newBeam:setBackPointer(backPointer)
   newBeam._prevBeam = self
@@ -438,11 +459,8 @@ function Beam:_nextBeam(token, scores, backPointer, beamSize, constraints)
 end
 
 -- Select the on-beam states using the pointers
-function Beam:_nextState(backPointer, beamSize, constraints)
+function Beam:_nextState(backPointer, beamSize)
   local nextState = selectBeam(self._state, backPointer, beamSize)
-  if constraints then
-    nextState[11] = constraints
-  end
   return nextState
 end
 
