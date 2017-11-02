@@ -871,18 +871,6 @@
 
 
   <li class="md-nav__item">
-    <a href="../../lua_python_comparison/" title="Lua and Python OpenNMT" class="md-nav__link">
-      Lua and Python OpenNMT
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
     <a href="../../references/" title="References" class="md-nav__link">
       References
     </a>
@@ -1197,6 +1185,7 @@
 <li><code>-curriculum &lt;number&gt;</code> (default: <code>0</code>)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.</li>
 <li><code>-validation_metric &lt;string&gt;</code> (accepted: <code>perplexity</code>, <code>loss</code>, <code>bleu</code>, <code>ter</code>, <code>dlratio</code>; default: <code>perplexity</code>)<br/>Metric to use for validation.</li>
 <li><code>-save_validation_translation_every &lt;number&gt;</code> (default: <code>0</code>)<br/>When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the translation every this many epochs to the file <code>&lt;save_model&gt;_epochN_validation_translation.txt</code>. If = 0, will not save validation translation.</li>
+<li><code>-update_vocab [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).</li>
 </ul>
 <h2 id="optimization-options">Optimization options<a class="headerlink" href="#optimization-options" title="Permanent link">&para;</a></h2>
 <ul>

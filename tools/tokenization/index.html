@@ -815,18 +815,6 @@
 
 
   <li class="md-nav__item">
-    <a href="../../lua_python_comparison/" title="Lua and Python OpenNMT" class="md-nav__link">
-      Lua and Python OpenNMT
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
     <a href="../../references/" title="References" class="md-nav__link">
       References
     </a>
@@ -980,7 +968,12 @@
 <ul>
 <li><code>￨</code> (U+FFE8) is the feature separator symbol. If such character is used in source text, it is replaced by its non presentation form <code>│</code> (U+2502).</li>
 <li><code>￭</code> (U+FFED) is the default joiner marker (generated in <code>-joiner_annotate marker</code> mode). If such character is used in source text, it is replaced by its non presentation form <code>■</code> (U+25A0)</li>
-<li><code>｟...｠</code> (U+FF5F, U+FF60) are marking a sequence as protected - it won't be tokenized and its case feature is <code>N</code>.</li>
+<li><code>｟...｠</code> (U+FF5F, U+FF60) are marking a sequence as protected - it won't be tokenized and its case feature is <code>N</code>.
+    Protected sequences can be used to code placeholders - typically document format tags and may have additional fields:<ul>
+<li>if the protected sequence content is containing the character <code>：</code> (U+FF1A) - the first part of the protected sequence is a placeholder and will be used as the vocab during the translation. For instance, in <code>｟URL：http://www.opennmt.net｠</code>, the protected sequence will be seen as <code>｟URL｠</code> which is a <em>placeholder</em> for the complete URL.</li>
+<li>if the protected sequence is containing the character <code>＃</code> (U+FF03) - then the sequence is considered as unique and is particularily useful to enforce translation of tags using GBS.</li>
+</ul>
+</li>
 </ul>
 <h2 id="mixed-casing-words">Mixed casing words<a class="headerlink" href="#mixed-casing-words" title="Permanent link">&para;</a></h2>
 <p><code>-segment_case</code> feature enables tokenizer to segment words into subwords with one of 3 casing types (truecase ('House'), uppercase ('HOUSE') or lowercase ('house')), which helps  restore right casing during  detokenization. This feature is especially useful for texts with a signficant number of words with mixed casing ('WiFi' -&gt; 'Wi' and 'Fi').</p>
