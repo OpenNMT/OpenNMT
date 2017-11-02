@@ -66,25 +66,29 @@ function GlobalAttention:__init(opt, dim)
   parent.__init(self, self:_buildModel(dim, self.args.global_attention))
 end
 
-function GlobalAttention:buildAttention(hs, ht, global_attention, dim)
-  local score_ht_hs
-  if global_attention ~= 'concat' then
-    if global_attention == 'general' then
-      ht = nn.Linear(dim, dim, false)(ht) -- batchL x dim
+--[[Builds attention model
+    computes score given query and keys with attention function
+    returns softmax(f(keys,query))
+--]]
+function GlobalAttention:buildAttention(keys, query, attentionType, attentionDim)
+  local score
+  if attentionType ~= 'concat' then
+    if attentionType == 'general' then
+      query = nn.Linear(attentionDim, attentionDim, false)(query) -- batchL x dim
     end
-    score_ht_hs = nn.MM()({hs, nn.Replicate(1,3)(ht)}) -- batchL x sourceL x 1
-    if global_attention == 'dot_scaled' then
-      score_ht_hs = nn.MulConstant(1/math.sqrt(dim))(score_ht_hs)
+    score = nn.MM()({keys, nn.Replicate(1,3)(query)}) -- batchL x sourceL x 1
+    if attentionType == 'dot_scaled' then
+      score = nn.MulConstant(1/math.sqrt(attentionDim))(score)
     end
   else
-    local ht2 = nn.Replicate(1,2)(ht) -- batchL x 1 x dim
-    local ht_hs = onmt.JoinReplicateTable(2,3)({ht2, hs})
-    local Wa_ht_hs = nn.Bottle(nn.Linear(dim*2, dim, false),2)(ht_hs)
-    local tanh_Wa_ht_hs = nn.Tanh()(Wa_ht_hs)
-    score_ht_hs = nn.Bottle(nn.Linear(dim,1),2)(tanh_Wa_ht_hs)
+    query = nn.Replicate(1,2)(query) -- batchL x 1 x dim
+    local query_keys = onmt.JoinReplicateTable(2,3)({query, keys})
+    local prod = nn.Bottle(nn.Linear(attentionDim*2, attentionDim, false),2)(query_keys)
+    local tanh_prod = nn.Tanh()(prod)
+    score = nn.Bottle(nn.Linear(attentionDim,1),2)(tanh_prod)
   end
 
-  local attn = nn.Squeeze(3)(score_ht_hs) -- batchL x sourceL
+  local attn = nn.Squeeze(3)(score) -- batchL x sourceL
   local softmaxAttn = nn.SoftMax()
   softmaxAttn.name = 'softmaxAttn'
   attn = softmaxAttn(attn)
@@ -104,19 +108,14 @@ function GlobalAttention:_buildModel(dim, global_attention)
   local contextCombined
 
   if self.args.multi_head_attention and self.args.multi_head_attention > 1 then
-    -- linear layer on context and ht
     local sdim = dim / self.args.multi_head_attention
-
-
-    local ht_l = nn.Linear(dim, dim, false)(ht)
-    local context_l = nn.Bottle(nn.Linear(dim, dim, false), 2)(context)
 
     local contextCombined_l = {}
 
     -- split and build attentions
-    for i = 1, self.args.multi_head_attention do
-      local sht_l = nn.Narrow(2, (i-1)*sdim + 1, sdim)(ht_l)
-      local scontext_l = nn.Narrow(3, (i-1)*sdim + 1, sdim)(context_l)
+    for _ = 1, self.args.multi_head_attention do
+      local sht_l = nn.Linear(dim, sdim, false)(ht)
+      local scontext_l = nn.Bottle(nn.Linear(dim, sdim, false), 2)(context)
       local sattn = self:buildAttention(scontext_l, sht_l, global_attention, sdim)
       sattn = nn.Replicate(1,2)(sattn) -- batchL x 1 x sourceL
       table.insert(contextCombined_l, nn.Squeeze(2)(nn.MM()({sattn, scontext_l}))) -- batchL x sdim
@@ -125,8 +124,6 @@ function GlobalAttention:_buildModel(dim, global_attention)
     -- concat
     contextCombined = nn.JoinTable(2)(contextCombined_l) -- batchL x { n x sdim } => batchL x dim
 
-    -- last linear
-    contextCombined = nn.Linear(dim, dim, false)(contextCombined)
   else
     attn = self:buildAttention(context, ht, global_attention, dim)
     attn = nn.Replicate(1,2)(attn) -- batchL x 1 x sourceL
