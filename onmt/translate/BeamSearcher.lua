@@ -65,7 +65,6 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
     self.beamSize = self.beamSize * (beams[1]:getState()[11]:size(2)+1)
   end
 
-
   local remaining = beams[1]:getRemaining()
   if beams[1]:getTokens()[1]:size(1) ~= remaining * beamSize then
     beams[1]:_replicate(self.beamSize)
@@ -115,8 +114,6 @@ function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expand
   local consideredNormScores, consideredIds = topk(expandedNormScores, considered, 2, true, true)
   local consideredScores = expandedScores:gather(2, consideredIds)
 
-  local batchSize = expandedScores:size(1)
-
   consideredIds:add(-1)
 
   local consideredBackPointer = (consideredIds:clone():div(vocabSize)):add(1)
@@ -157,7 +154,7 @@ function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expand
       :view(-1)
   end
 
-  return consideredScores, consideredBackPointer, consideredToken, consideredConstraints
+  return consideredScores, consideredBackPointer, consideredToken
 
 end
 
