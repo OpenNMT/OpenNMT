@@ -197,7 +197,7 @@ Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
   which beams shall be pruned.
 
 ]]
-function DecoderAdvancer:filter(beam)
+function DecoderAdvancer:filter(beam,considered)
   local tokens = beam:getTokens()
   local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
   for t = 1, #tokens do
@@ -219,12 +219,22 @@ function DecoderAdvancer:filter(beam)
 
     -- Do not produce each constraint more than allowed.
     if self.limit_lexical_constraints then
-      local flatConstraints = self.batch.constraints:view(-1)
-      for c=1,flatConstraints:size(1) do
-        local constraintNotAvailable = beam:getState()[11]:eq(flatConstraints[c]):sum(2):eq(0)
-        local isConstraint = tokens[#tokens]:eq(flatConstraints[c])
-        pruned:add(torch.cmul(constraintNotAvailable, isConstraint))
+
+      local tok = tokens[#tokens]:view(-1,considered)
+      local availableConstraint = beam:getState()[11]:view(-1, considered, beam:getState()[11]:size(2))
+
+      local isConstraint = tokens[#tokens]:clone():fill(0)
+      local constraintNotAvailable = tokens[#tokens]:clone():fill(0)
+
+      for b=1,tok:size(1) do
+        local ob = beam:_getOrigId(b)
+        for t=1,tok:size(2) do
+          isConstraint:viewAs(tok)[b][t] = self.batch.constraints[ob]:eq(tok[b][t]):sum()
+          constraintNotAvailable:viewAs(tok)[b][t] = availableConstraint[b][t]:ne(tok[b][t]):min()
+	end
       end
+
+      pruned:add(torch.cmul(constraintNotAvailable, isConstraint):typeAs(pruned))
     end
   end
 

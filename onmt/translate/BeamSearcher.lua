@@ -139,7 +139,7 @@ function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expand
                                     consideredBackPointer, self.beamSize)
 
   -- Prune hypotheses if necessary.
-  local pruned = self.advancer:filter(newBeam)
+  local pruned = self.advancer:filter(newBeam,considered)
   if pruned and pruned:any() then
     consideredScores:view(-1):maskedFill(pruned, -math.huge)
     consideredNormScores:view(-1):maskedFill(pruned, -math.huge)
