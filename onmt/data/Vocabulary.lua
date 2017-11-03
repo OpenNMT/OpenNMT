@@ -28,9 +28,12 @@ function Vocabulary.make(filename, validFunc, idxFile)
     lineId = lineId + 1
 
     if validFunc(sent) then
-      local words, features, numFeatures
+      local features, numFeatures
+      local vocabs
       local _, err = pcall(function ()
+        local words
         words, features, numFeatures = onmt.utils.Features.extract(sent)
+        vocabs = onmt.utils.Placeholders.norm(words)
       end)
 
       if err then
@@ -47,8 +50,8 @@ function Vocabulary.make(filename, validFunc, idxFile)
                'all sentences must have the same numbers of additional features (' .. filename .. ':' .. lineId .. ')')
       end
 
-      for i = 1, #words do
-        wordVocab:add(words[i])
+      for i = 1, #vocabs do
+        wordVocab:add(vocabs[i])
 
         for j = 1, numFeatures do
           featuresVocabs[j]:add(features[j][i])

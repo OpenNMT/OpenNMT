@@ -577,7 +577,8 @@ local function processSentence(n, idx, tokens, parallelCheck, isValid, isInputVe
         vectors[i]:insert(tokens[i])
       else
         local words, feats = onmt.utils.Features.extract(tokens[i])
-        local vec = dicts[i].words:convertToIdx(words, table.unpack(constants[i]))
+        local vocabs = onmt.utils.Placeholders.norm(words)
+        local vec = dicts[i].words:convertToIdx(vocabs, table.unpack(constants[i]))
         local pruned = vec:eq(onmt.Constants.UNK):sum() / vec:size(1)
 
         prunedRatio[i] = prunedRatio[i] * (#vectors[i] / (#vectors[i] + 1)) + pruned / (#vectors[i] + 1)
@@ -673,10 +674,10 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                 break
               end
               if maps[i][idx] then
-                return 1, string.format('duplicate idx in %s file: '..idx, nameSources[i])
+                return _G.__threadid, 1, string.format('duplicate idx in %s file: '..idx, nameSources[i])
               end
               if i > 1 and not maps[1][idx] then
-                return 1, string.format('%s Idx not defined in %s: '..idx, nameSources[i], nameSources[1])
+                return _G.__threadid, 1, string.format('%s Idx not defined in %s: '..idx, nameSources[i], nameSources[1])
               end
               if isInputVector[i] then
                 maps[i][idx] = torch.Tensor(tokens)
