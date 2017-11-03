@@ -50,6 +50,9 @@ th tools/detokenize.lua OPTIONS < file.tok > file.detok
 * `￨` (U+FFE8) is the feature separator symbol. If such character is used in source text, it is replaced by its non presentation form `│` (U+2502).
 * `￭` (U+FFED) is the default joiner marker (generated in `-joiner_annotate marker` mode). If such character is used in source text, it is replaced by its non presentation form `■` (U+25A0)
 * `｟...｠` (U+FF5F, U+FF60) are marking a sequence as protected - it won't be tokenized and its case feature is `N`.
+    Protected sequences can be used to code placeholders - typically document format tags and may have additional fields:
+    * if the protected sequence content is containing the character `：` (U+FF1A) - the first part of the protected sequence is a placeholder and will be used as the vocab during the translation. For instance, in `｟URL：http://www.opennmt.net｠`, the protected sequence will be seen as `｟URL｠` which is a *placeholder* for the complete URL.
+    * if the protected sequence is containing the character `＃` (U+FF03) - then the sequence is considered as unique and is particularily useful to enforce translation of tags using GBS.
 
 ## Mixed casing words
 `-segment_case` feature enables tokenizer to segment words into subwords with one of 3 casing types (truecase ('House'), uppercase ('HOUSE') or lowercase ('house')), which helps  restore right casing during  detokenization. This feature is especially useful for texts with a signficant number of words with mixed casing ('WiFi' -> 'Wi' and 'Fi').

@@ -30,7 +30,7 @@ function FileReader:next(doTokenize)
 
   if not self.featSequence then
     if doTokenize then
-      for word in line:gmatch'([^%s]+)' do
+      for word in line:gmatch'([^ ]+)' do
         table.insert(sent, word)
       end
     else

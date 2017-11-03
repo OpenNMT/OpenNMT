@@ -15,7 +15,7 @@
 * Convolutional encoder
 * Shallow fusion of language model in decoder
 * TER validation metric
-* Protection blocks for tokenization
+* Protection blocks for tokenization - and implement placeholder
 * Hook to call external normalization
 * JSON log formatting when the log file suffix is `.json`
 * Training option to save the validation translation to a file
