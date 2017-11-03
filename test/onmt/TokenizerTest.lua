@@ -17,7 +17,7 @@ local function testTok(opt, a, b, detok)
 
   local tok = tokenizer.tokenize(opt, a, bpe)
   tester:eq(table.concat(tok, '◊'), string.gsub(b, ' ', '◊'))
-  if detok == nil then return end
+  if not detok then return end
   tester:assert((tokenizer.detokenize(table.concat(tok, ' '), opt)==a)==detok)
 end
 
@@ -52,14 +52,14 @@ end
 
 function tokenizerTest.protectedSequence()
   local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
-  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭km", true)
-  testTok(opt, "A｟380｠", "A￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠km", "｟1,023｠￭ km", true)
+  testTok(opt, "A｟380｠", "A ￭｟380｠", true)
   testTok(opt, "｟1,023｠｟380｠", "｟1,023｠￭ ｟380｠", true)
   testTok(opt, "｟1023｠.", "｟1023｠ ￭.", true)
   testTok(opt, "$｟0.23｠", "$￭ ｟0.23｠", true)
   testTok(opt, "｟0.23｠$", "｟0.23｠ ￭$", true)
-  testTok(opt, "｟US$｠23", "｟US$｠ ￭23", true)
-  testTok(opt, "1｟ABCD｠0", "1￭ ｟ABCD｠ ￭0", true)
+  testTok(opt, "｟US$｠23", "｟US$｠￭ 23", true)
+  testTok(opt, "1｟ABCD｠0", "1 ￭｟ABCD｠￭ 0", true)
   testTok(opt, "$1", "$￭ 1", true)
   opt = cmd:parse({'-mode','conservative','-joiner_annotate','-joiner_new'})
   testTok(opt, "｟1,023｠km", "｟1,023｠ ￭ km", true)
@@ -70,14 +70,14 @@ end
 
 function tokenizerTest.aggressive()
   local opt = cmd:parse({'-mode','aggressive','-joiner_annotate'})
-  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭km", true)
-  testTok(opt, "A｟380｠", "A￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠km", "｟1,023｠￭ km", true)
+  testTok(opt, "A｟380｠", "A ￭｟380｠", true)
   testTok(opt, "｟1,023｠｟380｠", "｟1,023｠￭ ｟380｠", true)
   testTok(opt, "｟1023｠.", "｟1023｠ ￭.", true)
   testTok(opt, "$｟0.23｠", "$￭ ｟0.23｠", true)
   testTok(opt, "｟0.23｠$", "｟0.23｠ ￭$", true)
-  testTok(opt, "｟US$｠23", "｟US$｠ ￭23", true)
-  testTok(opt, "1｟ABCD｠0", "1￭ ｟ABCD｠ ￭0", true)
+  testTok(opt, "｟US$｠23", "｟US$｠￭ 23", true)
+  testTok(opt, "1｟ABCD｠0", "1 ￭｟ABCD｠￭ 0", true)
   testTok(opt, "$1", "$￭ 1", true)
   testTok(opt, "A380", "A ￭380", true)
 end
@@ -148,6 +148,17 @@ end
 function tokenizerTest.segment_alphabet_change()
   local opt = cmd:parse({'-segment_alphabet_change'})
   testTok(opt, "rawБ", "raw Б")
+end
+
+function tokenizerTest.placeholder_joiners()
+  local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
+  testTok(opt, "｟ph｠abc", "｟ph｠￭ abc", false)
+  testTok(opt, "｟ph｠123", "｟ph｠￭ 123", false)
+  testTok(opt, "｟ph｠.", "｟ph｠ ￭.", false)
+  testTok(opt, "abc｟ph｠", "abc ￭｟ph｠", false)
+  testTok(opt, "123｟ph｠", "123 ￭｟ph｠", false)
+  testTok(opt, "-｟ph｠", "-￭ ｟ph｠", false)
+  testTok(opt, "｟ph｠｟ph｠", "｟ph｠￭ ｟ph｠", false)
 end
 
 function tokenizerTest.real()
