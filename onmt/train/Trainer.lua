@@ -79,8 +79,11 @@ local options = {
     If = 0, will not save validation translation.]]
   },
   {
-    '-update_vocab', false,
-    [[When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).]]
+    '-update_vocab', 'none',
+    [[When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).]],
+    {
+      enum = { 'none', 'replace', 'merge' }
+    }
   }
 }
 
