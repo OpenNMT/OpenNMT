@@ -66,6 +66,14 @@ A [technical report](https://arxiv.org/abs/1701.02810) on OpenNMT is available. 
 }
 ```
 
+## Acknowledgments
+
+Our implementation utilizes code from the following:
+
+* [Andrej Karpathy's char-rnn repo](https://github.com/karpathy/char-rnn)
+* [Wojciech Zaremba's lstm repo](https://github.com/wojzaremba/lstm)
+* [Element rnn library](https://github.com/Element-Research/rnn)
+
 ## Additional resources
 
 * [Documentation](http://opennmt.net/OpenNMT)

@@ -7,6 +7,7 @@ local tester = ...
 local vocabularyTest = torch.TestSuite()
 
 local dataDir = 'data'
+local testDataDir = 'test/data'
 local noFilter = function (_) return true end
 local filterShortSentences = function(sent) return #sent>10 end
 
@@ -69,6 +70,11 @@ function vocabularyTest.filterSent()
   local vocabs = onmt.data.Vocabulary.init('source', dataDir .. '/src-val.txt', '', { 0 }, { 5 }, '', filterShortSentences)
 
   tester:eq(vocabs.words:size(), 1864)
+end
+
+function vocabularyTest.placeholder()
+  local vocabs = onmt.data.Vocabulary.init('source', testDataDir .. '/text-placeholder.tok', '', { 1000 }, { 1 }, '', noFilter, true)
+  tester:assert(vocabs.words:lookup("｟ent_url＃1｠￭") ~= nil)
 end
 
 function vocabularyTest.initFeatures()
