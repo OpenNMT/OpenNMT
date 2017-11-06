@@ -85,14 +85,14 @@ for i=1, #server_cfg do
 end
 
 
-local function translateMessage(server,lines)
+local function translateMessage(server, lines)
   local batch = {}
- -- We need to tokenize the input line before translation
+  -- We need to tokenize the input line before translation
   local bpe
   local res
   local err
- -- first item contains both the src (to translate) AND the id of the engine
- -- these local variables are set to match the previous version of code
+  -- first item contains both the src (to translate) AND the id of the engine
+  -- these local variables are set to match the previous version of code
   local options = server.opt[lines[1].id]
   local translator = server.translator[lines[1].id]
 
@@ -105,14 +105,14 @@ local function translateMessage(server,lines)
     local tokens
     local srcTokens = {}
     res, err = pcall(function() tokens = tokenizer.tokenize(options, lines[i].src, bpe) end)
-     -- it can generate an exception if there are utf-8 issues in the text
-     if not res then
-       if string.find(err, "interrupted") then
-         error("interrupted")
-        else
-         error("unicode error in line " .. err)
-       end
-     end
+    -- it can generate an exception if there are utf-8 issues in the text
+    if not res then
+      if string.find(err, "interrupted") then
+        error("interrupted")
+       else
+        error("unicode error in line " .. err)
+      end
+    end
     table.insert(srcTokenized, table.concat(tokens, ' '))
     -- Extract from the line.
     for word in srcTokenized[1]:gmatch'([^%s]+)' do
@@ -134,11 +134,11 @@ local function translateMessage(server,lines)
     for i = 1, translator.args.n_best do
       local srcSent = translator:buildOutput(batch[b])
       local lineres = {
-          tgt = "",
-          src = srcSent,
-          n_best = 1,
-          pred_score = 0
-        }
+        tgt = "",
+        src = srcSent,
+        n_best = 1,
+        pred_score = 0
+      }
       local oline = ""
       if results[b].preds ~= nil then
         local predSent = translator:buildOutput(results[b].preds[i])
@@ -186,14 +186,14 @@ local function init_server(options)
         -- remember the first item contains also the id of the engine
         -- for backward compatibility maybe if req[1].id not defined, set it to 1
         if req[1].id == nil then
-           req[1].id = 1
+          req[1].id = 1
         end
         if not server.model_loaded[req[1].id] then
           -- TODO
-          -- I need to test here I f I have enough memory to load the model
+          -- I need to test here if I have enough memory to load the model
           -- if not then I need to unload the oldest one
-          local freeMemory, totalMemory = cutorch.getMemoryUsage()
-          if ( freeMemory > 3100000000 ) then
+          local freeMemory = onmt.utils.Cuda.freeMemory()
+          if ( not onmt.utils.Cuda.activated or freeMemory > 3100000000 ) then
             _G.logger:info("Loading model id %d",req[1].id)
             server.translator[req[1].id] = onmt.translate.Translator.new(server.opt[req[1].id])
             server.model_loaded[req[1].id] = true
@@ -213,19 +213,19 @@ end
 
 
 local function is_finished(server)
-   for i=1, #server_cfg do
-     server.elapsed[i] = server.timer[i]:time().real
-     if server.elapsed[i] > opt_server.unload_time then
-       if server.model_loaded[i] then
-         print("unloading model %d",i)
-         server.translator[i] = nil
-         collectgarbage()
-         server.model_loaded[i] = false
-       end
-     end
-     io.stdout:flush()
-     io.stderr:flush()
-   end
+  for i=1, #server_cfg do
+    server.elapsed[i] = server.timer[i]:time().real
+    if server.elapsed[i] > opt_server.unload_time then
+      if server.model_loaded[i] then
+        _G.logger:info("unloading model %d",i)
+        server.translator[i] = nil
+        collectgarbage()
+        server.model_loaded[i] = false
+      end
+    end
+    io.stdout:flush()
+    io.stderr:flush()
+  end
   return false
 end
 
@@ -241,15 +241,15 @@ local function main()
   _G.logger:info("Launch server")
   local server = init_server(opt)
 
-   for i=1, #server_cfg do
-      server.timer[i] = torch.Timer()
-      server.elapsed[i] = 0
-      server.model_loaded[i] = false
-      server.translator[i] = nil
-   end
+  for i=1, #server_cfg do
+    server.timer[i] = torch.Timer()
+    server.elapsed[i] = 0
+    server.model_loaded[i] = false
+    server.translator[i] = nil
+  end
 
   -- This loads the restserver.xavante plugin
-  server:enable("tools.restserver.restserver.xavante"):start(function() is_finished(server); end,3)
+  server:enable("tools.restserver.restserver.xavante"):start(function() is_finished(server); end, 3)
 end
 
 main()
