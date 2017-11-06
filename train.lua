@@ -162,7 +162,7 @@ local function updateVocab(checkpoint, dicts, opt)
     end)
   end
   _G.logger:info(' * Updated source dictionary size: %d', dicts.src.words:size())
-  _G.logger:info(' * Updated target dictionary size: %d', dicts.tgt.words:size())  
+  _G.logger:info(' * Updated target dictionary size: %d', dicts.tgt.words:size())
   checkpoint.dicts = dicts
 
   return checkpoint
@@ -240,7 +240,7 @@ local function loadModel(opt, dicts)
     _G.logger:info(' * new source dictionary size: %d', dicts.src.words:size())
     _G.logger:info(' * new target dictionary size: %d', dicts.tgt.words:size())
     _G.logger:info(' * old source dictionary size: %d', checkpoint.dicts.src.words:size())
-    _G.logger:info(' * old target dictionary size: %d', checkpoint.dicts.tgt.words:size())    
+    _G.logger:info(' * old target dictionary size: %d', checkpoint.dicts.tgt.words:size())
     if opt.update_vocab == 'merge' then
       _G.logger:info(' * Merging new / old dictionaries...')
       dicts = mergeDicts(checkpoint.dicts, dicts)

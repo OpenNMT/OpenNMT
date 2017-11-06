@@ -64,6 +64,6 @@ Another use case it to use a base model and train it further with new training o
 ## Updating the vocabularies
 * `-update_vocab <string>` (accepted: `none`, `replace`, `merge`; default: `none`)
 
-It is possible that we restart the training with a new dataset such as dynamic dataset, we could have different vocabularies in dynamic dataset and the pre-trained model. Instead of re-initializing the whole network, the pre-trained states of the common words in the new/previous dictionaries can be kept with option `-update_vocab`.
+It is possible that we restart the training with a new dataset such as dynamic dataset, we could have different vocabularies in dynamic dataset and the pre-trained model. Instead of re-initializing the whole network, the pre-trained states of the common words in the new/previous dictionaries can be kept with option `-update_vocab`. This option is disabled by default and the update of word features isn't supported for instant.
 `replace` mode will only keep the common words. For non-common words, the old ones will be deleted and the new onse will be initialized.
 `merge` mode will keep the state of all the old words. The new words will be initialized.
