@@ -31,7 +31,7 @@ curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "Hello World"
 
 Answer will be embedded in a JSON format, translated sentence in the `tgt` section. Additionally you can get the attention matrix with the `-withAttn` option in the server command line.
 
-Multi Model Rest server
+#### Multi Model Rest server
 
 ```bash
 luarocks install yaml
