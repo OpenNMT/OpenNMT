@@ -37,11 +37,11 @@ Answer will be embedded in a JSON format, translated sentence in the `tgt` secti
 luarocks install yaml
 ```
 
-This version supports multi models listed in a yml config file.
+This version supports multi models listed in a YAML config file.
 
 Here is an example with two models:
 
-```bash
+```yaml
 -
   model: '/NMTModels/en-fr/model-enfr_epoch600_3.03.t7'
   replace_unk: true
@@ -61,7 +61,7 @@ Here is an example with two models:
   beam_size: 5
 ```
 
-By default, it uses the file in tools/rest_config.yml but you can modify with ```--mode_config the location.
+By default, it uses the file in tools/rest_config.yml but you can modify with `--mode_config the location`.
 
 
 ```bash
@@ -69,7 +69,7 @@ th tools/rest_multi_models.lua -gpuid 1
 ```
 
 !!! note "Note"
-    The default host is set to `127.0.0.1` which only allows local access. If you want to support remote access, use `0.0.0.0` instead. Default port is 7784. You can change the unload time with --unload_time Xsec
+    The default host is set to `127.0.0.1` which only allows local access. If you want to support remote access, use `0.0.0.0` instead. Default port is 7784. You can change the unload time with `--unload_time Xsec`
 
 You can test it with a `curl` command locally or from any other client:
 
