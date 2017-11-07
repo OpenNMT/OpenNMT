@@ -77,7 +77,7 @@ You need to select the model id in the order of the config file.
 
 ```bash
 curl -v -H "Content-Type: application/json" -X POST -d '[{ "src" : "Hello World" , "id" : 1 }]' http://IP_address:7784/translator/translate
-``
+```
 
 
 ## ZeroMQ
