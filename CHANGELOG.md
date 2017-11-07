@@ -14,6 +14,7 @@
 * Dynamic dataset to train on large and raw training data repository
 * Convolutional encoder
 * Shallow fusion of language model in decoder
+* Lexically constrained beam search
 * TER validation metric
 * Protection blocks for tokenization - and implement placeholder
 * Hook to call external normalization
