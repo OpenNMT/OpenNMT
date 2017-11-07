@@ -545,6 +545,26 @@
     REST
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-model-rest-server" title="Multi Model Rest server" class="md-nav__link">
+    Multi Model Rest server
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zeromq" title="ZeroMQ" class="md-nav__link">
+    ZeroMQ
+  </a>
+  
 </li>
       
       
@@ -800,6 +820,26 @@
     REST
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-model-rest-server" title="Multi Model Rest server" class="md-nav__link">
+    Multi Model Rest server
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zeromq" title="ZeroMQ" class="md-nav__link">
+    ZeroMQ
+  </a>
+  
 </li>
       
       
@@ -846,54 +886,51 @@
 
 
 <p>Answer will be embedded in a JSON format, translated sentence in the <code>tgt</code> section. Additionally you can get the attention matrix with the <code>-withAttn</code> option in the server command line.</p>
-<p>Multi Model Rest server</p>
+<h4 id="multi-model-rest-server">Multi Model Rest server<a class="headerlink" href="#multi-model-rest-server" title="Permanent link">&para;</a></h4>
 <div class="codehilite"><pre><span></span>luarocks install yaml
 </pre></div>
 
 
-<p>This version supports multi models listed in a yml config file.</p>
+<p>This version supports multi models listed in a YAML config file.</p>
 <p>Here is an example with two models:</p>
-<div class="codehilite"><pre><span></span>-
-  model: <span class="s1">&#39;/NMTModels/en-fr/model-enfr_epoch600_3.03.t7&#39;</span>
-  replace_unk: <span class="nb">true</span>
-  mode: aggressive
-  joiner_annotate: <span class="nb">true</span>
-  case_feature: <span class="nb">true</span>
-  segment_case: <span class="nb">true</span>
-  beam_size: <span class="m">5</span>
+<div class="codehilite"><pre><span></span><span class="p p-Indicator">-</span>
+  <span class="l l-Scalar l-Scalar-Plain">model</span><span class="p p-Indicator">:</span> <span class="s">&#39;/NMTModels/en-fr/model-enfr_epoch600_3.03.t7&#39;</span>
+  <span class="l l-Scalar l-Scalar-Plain">replace_unk</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">mode</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">aggressive</span>
+  <span class="l l-Scalar l-Scalar-Plain">joiner_annotate</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">case_feature</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">segment_case</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">beam_size</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
 
--
-  model: <span class="s1">&#39;/NMTModels/en-it/model-enit_epoch600_4.17.t7&#39;</span>
-  replace_unk: <span class="nb">true</span>
-  mode: aggressive
-  joiner_annotate: <span class="nb">true</span>
-  case_feature: <span class="nb">true</span>
-  segment_case: <span class="nb">true</span>
-  beam_size: <span class="m">5</span>
+<span class="p p-Indicator">-</span>
+  <span class="l l-Scalar l-Scalar-Plain">model</span><span class="p p-Indicator">:</span> <span class="s">&#39;/NMTModels/en-it/model-enit_epoch600_4.17.t7&#39;</span>
+  <span class="l l-Scalar l-Scalar-Plain">replace_unk</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">mode</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">aggressive</span>
+  <span class="l l-Scalar l-Scalar-Plain">joiner_annotate</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">case_feature</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">segment_case</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="l l-Scalar l-Scalar-Plain">beam_size</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
 </pre></div>
 
 
-<p>By default, it uses the file in tools/rest_config.yml but you can modify with ```--mode_config the location.</p>
+<p>By default, it uses the file in tools/rest_config.yml but you can modify with <code>--mode_config the location</code>.</p>
 <div class="codehilite"><pre><span></span>th tools/rest_multi_models.lua -gpuid <span class="m">1</span>
 </pre></div>
 
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The default host is set to <code>127.0.0.1</code> which only allows local access. If you want to support remote access, use <code>0.0.0.0</code> instead. Default port is 7784. You can change the unload time with --unload_time Xsec</p>
+<p>The default host is set to <code>127.0.0.1</code> which only allows local access. If you want to support remote access, use <code>0.0.0.0</code> instead. Default port is 7784. You can change the unload time with <code>--unload_time Xsec</code></p>
 </div>
 <p>You can test it with a <code>curl</code> command locally or from any other client:</p>
 <p>You need to select the model id in the order of the config file.</p>
 <div class="codehilite"><pre><span></span>curl -v -H <span class="s2">&quot;Content-Type: application/json&quot;</span> -X POST -d <span class="s1">&#39;[{ &quot;src&quot; : &quot;Hello World&quot; , &quot;id&quot; : 1 }]&#39;</span> http://IP_address:7784/translator/translate
-<span class="sb">``</span>
+</pre></div>
 
 
-<span class="c1">## ZeroMQ</span>
-
-The server uses the 0MQ <span class="k">for</span> RPC. You can install 0MQ and the Lua bindings on Ubuntu by running:
-
-<span class="sb">```</span>bash
-sudo apt-get install libzmq-dev
+<h2 id="zeromq">ZeroMQ<a class="headerlink" href="#zeromq" title="Permanent link">&para;</a></h2>
+<p>The server uses the 0MQ for RPC. You can install 0MQ and the Lua bindings on Ubuntu by running:</p>
+<div class="codehilite"><pre><span></span>sudo apt-get install libzmq-dev
 luarocks install dkjson
 luarocks install lua-zmq <span class="nv">ZEROMQ_LIBDIR</span><span class="o">=</span>/usr/lib/x86_64-linux-gnu/ <span class="nv">ZEROMQ_INCDIR</span><span class="o">=</span>/usr/include
 </pre></div>
