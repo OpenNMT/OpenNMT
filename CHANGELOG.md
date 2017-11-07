@@ -24,6 +24,7 @@
 * Translation option to save alignment history
 * Translation translation option to mark replaced tokens with `｟unk:xxxxx｠`
 * Tokenization option to split numbers on each digit
+* Multi-model rest server using yaml config file
 
 ### Fixes and improvements
 
