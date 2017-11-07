@@ -2,6 +2,8 @@ OpenNMT provides simple translation servers to easily showcase your results remo
 
 ### REST
 
+Please use ```export THC_CACHING_ALLOCATOR=0``` to save memory on server side.
+
 You can use an easy REST syntax to simply send plain text. Sentences will be tokenized, translated and then detokenized using OpenNMT tools.
 
 The server uses the `restserver-xavante` dependency, you need to install it by running:
