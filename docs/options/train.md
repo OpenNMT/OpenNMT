@@ -145,7 +145,7 @@
 * `-curriculum <number>` (default: `0`)<br/>For this many epochs, order the minibatches based on source length (from smaller to longer). Sometimes setting this to 1 will increase convergence speed.
 * `-validation_metric <string>` (accepted: `perplexity`, `loss`, `bleu`, `ter`, `dlratio`; default: `perplexity`)<br/>Metric to use for validation.
 * `-save_validation_translation_every <number>` (default: `0`)<br/>When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the translation every this many epochs to the file `<save_model>_epochN_validation_translation.txt`. If = 0, will not save validation translation.
-* `-update_vocab [<boolean>]` (default: `false`)<br/>When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).
+* `-update_vocab <string>` (accepted: `none`, `replace`, `merge`; default: `none`)<br/>When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).
 
 ## Optimization options
 
@@ -176,6 +176,8 @@
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
 * `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token
 * `-replace_unk_tagged [<boolean>]` (default: `false`)<br/>The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.
+* `-lexical_constraints [<boolean>]` (default: `false`)<br/>Force the beam search to apply the translations from the phrase table.
+* `-limit_lexical_constraints [<boolean>]` (default: `false`)<br/>Prevents producing each lexical constraint more than required.
 * `-phrase_table <string>` (default: `''`)<br/>Path to source-target dictionary to replace `<unk>` tokens.
 * `-n_best <number>` (default: `1`)<br/>If > 1, it will also output an n-best list of decoded sentences.
 * `-max_num_unks <number>` (default: `inf`)<br/>All sequences with more `<unk>`s than this will be ignored during beam search.
