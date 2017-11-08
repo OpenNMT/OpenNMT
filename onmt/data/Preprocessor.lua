@@ -402,7 +402,7 @@ function Preprocessor:poolSynchronize()
 end
 
 -- initialization of threads and tokenizers
-local function init_thread(tokenizers)
+local function init_thread(args, tokenizers)
   _G.paths = require 'paths'
   _G.path = require 'pl.path'
   _G.onmt = require 'onmt.init'
@@ -413,14 +413,10 @@ local function init_thread(tokenizers)
   _G.BPE = require ('tools.utils.BPE')
   _G.bpes = {}
   _G.tokenizers = tokenizers
-  _G.normalizers = {}
+  _G.hookManager = onmt.utils.HookManager.new(args)
   for i, v in ipairs(tokenizers) do
     if v and v["bpe_model"] and v["bpe_model"] ~= '' then
       _G.bpes[i] = _G.BPE.new(v)
-    end
-    if v and v["normalize_cmd"] and v["normalize_cmd"] ~= '' then
-      local N = require('tools.utils.normalizer')
-      _G.normalizers[i] = N.new(v["normalize_cmd"])
     end
   end
 end
@@ -474,11 +470,11 @@ function Preprocessor:__init(args, dataType)
     threads.Threads.serialization('threads.sharedserialize')
     self.pool = threads.Threads(
       args.preprocess_pthreads,
-      function() init_thread(tokenizers) end,
+      function() init_thread(args, tokenizers) end,
       function() _G.logger = globalLogger end
     )
   else
-    init_thread(tokenizers)
+    init_thread(args, tokenizers)
   end
 
   -- sanity check on options: train_dir is exclusive all direct file settings
@@ -564,11 +560,15 @@ local function processSentence(n, idx, tokens, parallelCheck, isValid, isInputVe
     sentenceDists[i][idxRange] = sentenceDists[i][idxRange]+1
   end
 
+  local valid = true
+
   if parallelCheck then
-    parallelCheck(idx, isInputVector, dicts, tokens)
+    valid = parallelCheck(idx, isInputVector, dicts, tokens)
   end
 
-  if isValid(tokens, src_seq_length, tgt_seq_length) then
+  valid = valid and _G.hookManager:call("parallelPreprocess", idx, isInputVector, dicts, tokens) ~= false
+
+  if valid and isValid(tokens, src_seq_length, tgt_seq_length) then
     for i = 1, n do
       local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
       avgLength[i] = avgLength[i] * (#vectors[i] / (#vectors[i] + 1)) + length / (#vectors[i] + 1)
@@ -751,17 +751,11 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
               idx = idx + 1
             end
 
-            -- normalize and tokenize
+            -- preprocess and tokenize
             for i = 1, n do
-              if _G.normalizers[i] then
-                local nsentences = _G.normalizers[i]:normalize(sentences[i+1])
-                if nsentences == nil then
-                  return _G.__threadid, 1, string.format('normalizer does not preserve sentence count')
-                end
-                sentences[i+1] = nsentences
-              end
-              for j = 1, #sentences[i+1] do
-                sentences[i+1][j] =  _G.tokenizer.tokenize(_G.tokenizers[i], sentences[i+1][j], _G.bpes[i])
+              local psentences = _G.hookManager:call("preprocess", sentences[i+1]) or sentences[i+1]
+              for j = 1, #psentences do
+                sentences[i+1][j] =  _G.tokenizer.tokenize(_G.tokenizers[i], psentences[j], _G.bpes[i])
               end
             end
 

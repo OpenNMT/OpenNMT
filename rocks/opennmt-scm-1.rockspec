@@ -99,6 +99,7 @@ build = {
     ["onmt.utils.Features"] = "onmt/utils/Features.lua",
     ["onmt.utils.FileReader"] = "onmt/utils/FileReader.lua",
     ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",
+    ["onmt.utils.HookManager"] = "onmt/utils/HookManager.lua",
     ["onmt.utils.Profiler"] = "onmt/utils/Profiler.lua",
     ["onmt.utils.Memory"] = "onmt/utils/Memory.lua",
     ["onmt.utils.Error"] = "onmt/utils/Error.lua",

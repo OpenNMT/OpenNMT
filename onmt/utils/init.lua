@@ -15,6 +15,7 @@ utils.Logger = require('onmt.utils.Logger')
 utils.Profiler = require('onmt.utils.Profiler')
 utils.ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
 utils.CrayonLogger = require('onmt.utils.CrayonLogger')
+utils.HookManager = require('onmt.utils.HookManager')
 utils.Error = require('onmt.utils.Error')
 
 return utils
