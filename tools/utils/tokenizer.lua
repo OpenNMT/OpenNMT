@@ -86,10 +86,6 @@ local options = {
     {
       enum = {'suffix', 'prefix', 'both', 'none'}
     }
-  },
-  {
-    '-normalize_cmd', '',
-    [[Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.]]
   }
 }
 
