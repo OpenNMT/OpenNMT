@@ -8,6 +8,7 @@
 
 * Fix missing normalization during translation
 * Fix incorrect TER normalization (#424)
+* Fix empty translation returned by the REST translation server
 
 ## [v0.9.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.0) (2017-11-07)
 
