@@ -62,6 +62,10 @@ for _, v in ipairs(topts) do
   opt[1] = '-tok_tgt_' .. v[1]:sub(2)
   table.insert(tok_options, opt)
 end
+table.insert(tok_options, {
+  '-detokenize_output', false,
+  [[Detokenize output.]]
+})
 cmd:setCmdLineOptions(tok_options, "Tokenizer")
 
 onmt.utils.Cuda.declareOpts(cmd)
@@ -249,9 +253,8 @@ local function main()
           else
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
-              sentence = tokenizer.detokenize(sentence, tokenizers[2])
-              if normalizers[2] then
-                sentence = normalizers[2]:normalize(sentence)
+              if opt.detokenize_output then
+                sentence = tokenizer.detokenize(sentence, tokenizers[2])
               end
               outFile:write(sentence .. '\n')
 
