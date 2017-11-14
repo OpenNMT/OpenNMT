@@ -5,6 +5,8 @@
 ### New features
 
 ### Fixes and improvements
+
+* Fix missing normalization during translation
 * Fix incorrect TER normalization (#424)
 
 ## [v0.9.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.0) (2017-11-07)

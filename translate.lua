@@ -1,5 +1,6 @@
 require('onmt.init')
 local tokenizer = require 'tools.utils.tokenizer'
+local normalizer = require('tools.utils.normalizer')
 local BPE = require ('tools.utils.BPE')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
@@ -61,10 +62,6 @@ for _, v in ipairs(topts) do
   opt[1] = '-tok_tgt_' .. v[1]:sub(2)
   table.insert(tok_options, opt)
 end
-table.insert(tok_options, {
-  '-detokenize_output', false,
-  [[Detokenize output.]]
-})
 cmd:setCmdLineOptions(tok_options, "Tokenizer")
 
 onmt.utils.Cuda.declareOpts(cmd)
@@ -98,6 +95,7 @@ local function main()
 
     -- tokenization options
   local tokenizers = { {}, {} }
+  local normalizers = {}
   local bpes = {}
   for k, v in pairs(opt) do
     if k:sub(1,4) == 'tok_' then
@@ -135,6 +133,13 @@ local function main()
      myopt.bpe_mode = opt.tok_tgt_bpe_mode
      myopt.bpe_case_insensitive = opt.tok_tgt_bpe_case_insensitive
      bpes[2] = BPE.new(myopt)
+  end
+
+  if opt.tok_src_normalize_cmd ~= '' then
+    normalizers[1] = normalizer.new(opt.tok_src_normalize_cmd)
+  end
+  if opt.tok_tgt_normalize_cmd ~= '' then
+    normalizers[2] = normalizer.new(opt.tok_tgt_normalize_cmd)
   end
 
   for i = 1, 2 do
@@ -185,11 +190,17 @@ local function main()
     if withGoldScore then
       goldOutputSeq = goldReader:next(false)
       if goldOutputSeq then
+        if normalizers[2] then
+          goldOutputSeq = normalizers[2]:normalize(goldOutputSeq)
+        end
         goldOutputSeq = tokenizer.tokenize(tokenizers[2], goldOutputSeq, bpes[2])
       end
     end
 
     if srcSeq then
+      if normalizers[1] then
+        srcSeq = normalizers[1]:normalize(srcSeq)
+      end
       if tokenizers[1] then
         srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
       end
@@ -238,8 +249,9 @@ local function main()
           else
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
-              if opt.detokenize_output then
-                sentence = tokenizer.detokenize(sentence, tokenizers[2])
+              sentence = tokenizer.detokenize(sentence, tokenizers[2])
+              if normalizers[2] then
+                sentence = normalizers[2]:normalize(sentence)
               end
               outFile:write(sentence .. '\n')
 
