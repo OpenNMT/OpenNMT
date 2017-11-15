@@ -28,8 +28,8 @@ function hookManagerTest.options()
   local hookManager
   local _, err = pcall(
     function()
-      hookManager = HookManager.new(arg)
-      tester:ne(hookManager.hooks["declareOpts"], {hook_file='test.data.testhooks'})
+      hookManager = HookManager.new({hook_file='test.data.testhooks'})
+      tester:ne(hookManager.hooks["declareOpts"], nil)
     end)
   tester:assert(err==nil)
 
@@ -64,18 +64,24 @@ end
 
 function hookManagerTest.function_call()
   local logger_save = _G.logger
+  local hookmanager_save = _G.hookManager
   _G.logger=nil
   local hookManager
   local _, err = pcall(
     function()
-      hookManager = HookManager.new(arg)
-      tester:ne(hookManager.hooks["declareOpts"], {hook_file='test.data.testhooks'})
+      hookManager = HookManager.new({hook_file='test.data.testhooks'})
+      tester:ne(hookManager.hooks["declareOpts"], nil)
     end)
   tester:assert(err==nil)
 
   if hookManager then
+    tokenizer = require('tools.utils.tokenizer')
+    tester:ne(tokenizer.tokenize({segment_alphabet={}},"it is a test"), "XX")
+    _G.hookManager = hookManager
+    tester:eq(tokenizer.tokenize({segment_alphabet={}},"it is a test"), "XX")
   end
   _G.logger = logger_save
+  _G.hookManager = hookmanager_save
 end
 
 return hookManagerTest
