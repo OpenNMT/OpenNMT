@@ -680,8 +680,12 @@ function ExtendedCmdLine:merge(new_cmd)
       end
     else
       if current_block and type(option) == 'table' and option["key"] then
+        if new_cmd.options[option["key"]].default == '__REMOVE__' then
+          self.options[option["key"]] = nil
+        else
+          self.options[option["key"]] = new_cmd.options[option["key"]]
+        end
         new_help_blocks[current_block][option["key"]]=option
-        self.options[option["key"]] = new_cmd.options[option["key"]]
       end
     end
     if current_block then
@@ -700,8 +704,13 @@ function ExtendedCmdLine:merge(new_cmd)
                 not(type(self.helplines[idx+1])=='string' and self.helplines[idx+1]~='') do
             option = self.helplines[idx+1]
             if type(option) == 'table' and new_help_blocks[current_block][option["key"]] then
-              -- option exists - remove it
-              self.helplines[idx+1] = new_help_blocks[current_block][option["key"]]
+              -- option exists - change or remove it
+              if new_cmd.options[option["key"]].default == '__REMOVE__' then
+                table.remove(self.helplines, idx+1)
+                idx = idx - 1
+              else
+                self.helplines[idx+1] = new_help_blocks[current_block][option["key"]]
+              end
               new_help_blocks[current_block][option["key"]] = nil
             end
             idx = idx + 1

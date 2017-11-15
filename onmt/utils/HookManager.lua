@@ -20,7 +20,7 @@ Parameters:
 ]]
 function HookManager:__init(args)
   self.hooks = {}
-  if args.hook_file ~= '' then
+  if args and args.hook_file and args.hook_file ~= '' then
     local _, err = pcall(function()
       local hooks = require(args.hook_file)
       assert(type(hooks) == 'table')

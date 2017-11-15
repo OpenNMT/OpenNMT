@@ -28,6 +28,7 @@ local function main()
   torch.setnumthreads(1)
 
   _G.logger = onmt.utils.Logger.new('', true)
+  _G.hookManager = onmt.utils.HookManager.new()
 
   local argstart = 0
   if #arg > 1 and arg[1] == '-e' then
