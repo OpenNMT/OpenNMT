@@ -181,7 +181,7 @@ Parameters:
   start with `beamSize` hypotheses per sequence. [`token:size(1)`]
 
 --]]
-function Beam:__init(token, state, params, batchSize)
+function Beam:__init(token, state, params, batchSize, updateConstraints)
   self._remaining = batchSize or token:size(1)
 
   if torch.type(token) == 'table' then
@@ -190,6 +190,18 @@ function Beam:__init(token, state, params, batchSize)
     self._tokens = { token }
   end
   self._state = state
+
+  if updateConstraints and self._state[11] then
+    for t=1,self._tokens[#self._tokens]:size(1) do
+      local tok = self._tokens[#self._tokens][t]
+      for c=1,self._state[11]:size(2) do
+        if self._state[11][t][c] == tok then
+	  self._state[11][t][c] = 0
+	  break
+	end
+      end
+    end
+  end
 
   self._params = {}
   if params then
@@ -384,23 +396,61 @@ function Beam:_expandScores(scores, beamSize)
   end
 
   self._scores = self._scores:typeAs(scores)
-  local expandedScores
-    = (scores:typeAs(self._scores):view(remaining, beamSize, -1)
-         + self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize)
-      )
+  local expandedScores = scores:typeAs(self._scores):view(remaining, beamSize, -1):add(self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize))
 
   local normExpandedScores = self:_normalizeScores(expandedScores)
   return expandedScores:view(remaining, -1), normExpandedScores:view(remaining, -1)
 end
 
--- Create a new beam given new token, scores and backpointer.
-function Beam:_nextBeam(token, scores, backPointer, beamSize)
+-- Expand lexical constraints
+function Beam:_expandUsedConstraints(beamSize, vocabSize)
+
+  local usedConstraintNum, expandedConstraints, expandedConstraintSizes = nil
+
+  local constraintNum = 0
+
+  if #self._state > 11 and self._state[11] and self._state[12] then
+    local constraints = self._state[11]
+    constraintNum = constraints:size(2)
+    local constraintSizes = self._state[12]
+
+    -- Expand constraints and constraint sizes
+    expandedConstraints = constraints:view(self._remaining, beamSize, constraintNum, 1):expand(self._remaining, beamSize, constraintNum, vocabSize):transpose(3,4)
+    expandedConstraintSizes = constraintSizes:view(self._remaining,beamSize,1):expand(self._remaining, beamSize, vocabSize):clone()
+    usedConstraintNum = expandedConstraintSizes:csub(expandedConstraints:ne(0):sum(4):typeAs(expandedConstraintSizes))
+
+    -- Update "used constraints" for tokens corresponding to one of the available constraints
+    for i=1,self._remaining do
+      for j=1,beamSize do
+        local usedConstraints = {}
+        for c=1,constraintNum do
+          local cIdx = expandedConstraints[i][j][1][c]
+          if cIdx ~= 0 then
+            if usedConstraints[cIdx] then -- constraint has already been used
+              usedConstraints[cIdx] = usedConstraints[cIdx]+1
+            else
+              usedConstraintNum[i][j][cIdx] = usedConstraintNum[i][j][cIdx]+1
+              usedConstraints[cIdx] = 1
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return usedConstraintNum, constraintNum
+
+end
+
+-- Create a new beam given new token, scores, backpointer.
+-- We can also update used lexical constraints
+function Beam:_nextBeam(token, scores, backPointer, beamSize, updateConstraints)
   local remaining = math.floor(token:size(1) / beamSize)
   local params = self._params
   local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
                            self:_nextState(backPointer, beamSize),
                            params,
-                           remaining)
+                           remaining, updateConstraints)
   newBeam:setScores(scores)
   newBeam:setBackPointer(backPointer)
   newBeam._prevBeam = self

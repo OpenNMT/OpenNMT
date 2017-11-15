@@ -97,6 +97,7 @@ build = {
     ["onmt.utils.SubDict"] = "onmt/utils/SubDict.lua",
     ["onmt.utils.Error"] = "onmt/utils/Error.lua",
     ["onmt.utils.Features"] = "onmt/utils/Features.lua",
+    ["onmt.utils.Placeholders"] = "onmt/utils/Placeholders.lua",
     ["onmt.utils.FileReader"] = "onmt/utils/FileReader.lua",
     ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",
     ["onmt.utils.HookManager"] = "onmt/utils/HookManager.lua",

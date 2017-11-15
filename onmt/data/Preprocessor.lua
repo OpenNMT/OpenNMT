@@ -577,7 +577,8 @@ local function processSentence(n, idx, tokens, parallelCheck, isValid, isInputVe
         vectors[i]:insert(tokens[i])
       else
         local words, feats = onmt.utils.Features.extract(tokens[i])
-        local vec = dicts[i].words:convertToIdx(words, table.unpack(constants[i]))
+        local vocabs = onmt.utils.Placeholders.norm(words)
+        local vec = dicts[i].words:convertToIdx(vocabs, table.unpack(constants[i]))
         local pruned = vec:eq(onmt.Constants.UNK):sum() / vec:size(1)
 
         prunedRatio[i] = prunedRatio[i] * (#vectors[i] / (#vectors[i] + 1)) + pruned / (#vectors[i] + 1)
