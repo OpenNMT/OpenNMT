@@ -30,6 +30,7 @@ onmt.train.Trainer.declareOpts(cmd)
 onmt.utils.CrayonLogger.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
+onmt.utils.HookManager.declareOpts(cmd)
 
 cmd:text('')
 cmd:text('Other options')
@@ -39,6 +40,9 @@ onmt.utils.Memory.declareOpts(cmd)
 onmt.utils.Profiler.declareOpts(cmd)
 
 cmd:option('-seed', 3435, [[Random seed.]], {valid=onmt.utils.ExtendedCmdLine.isUInt()})
+
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
 
 local function loadData(opt, filename)
 

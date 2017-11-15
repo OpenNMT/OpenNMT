@@ -17,11 +17,15 @@ cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not ch
 
 HookManager.declareOpts(cmd)
 
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+
 local opt = cmd:parse(arg)
 
 local pool = threads.Threads(
   opt.nparallel,
   function()
+    local HookManager = require('onmt.utils.HookManager')
     _G.separators = require('tools.utils.separators')
     _G.tokenizer = require('tools.utils.tokenizer')
     _G.BPE = require ('tools.utils.BPE')
