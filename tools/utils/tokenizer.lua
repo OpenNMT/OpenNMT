@@ -112,7 +112,6 @@ end
 -- - skip any other non control character [U+0001-U+002F]
 -- - keep sequence of letters/numbers and tokenize everything else
 local function tokenize(line, opt)
-
   if opt.mode == 'space' then
     local index = 1
     local tokens = {}
@@ -334,10 +333,14 @@ local function tokenize(line, opt)
 end
 
 function tokenizer.tokenize(opt, line, bpe)
-  -- tokenize
-  local tokens = tokenize(line, opt)
+  -- if tokenize hook, skip lua tokenization
+  local tokens = _G.hookManager:call("tokenize", opt, line, bpe)
+  if tokens then return tokens end
 
-  -- apply segmetn feature if requested
+  -- tokenize
+  tokens = tokenize(line, opt)
+
+  -- apply segment feature if requested
   if opt.segment_case then
     local sep = ''
     if opt.joiner_annotate then sep = opt.joiner end
@@ -410,8 +413,13 @@ end
 
 
 function tokenizer.detokenize(line, opt)
+
+  -- if tokenize hook, skip lua tokenization
+  local tokens = _G.hookManager:call("detokenize", line, opt)
+  if tokens then return tokens end
+
   local dline = ""
-  local tokens = getTokens(line, opt.joiner)
+  tokens = getTokens(line, opt.joiner)
   for j = 1, #tokens do
     local token = tokens[j].w
     if j > 1 and not tokens[j-1].rightsep and not tokens[j].leftsep then

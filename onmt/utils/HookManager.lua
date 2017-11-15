@@ -18,7 +18,7 @@ end
 Parameters:
   * `args` - commandline args, including  HookManager specific options
 ]]
-function HookManager:__init(args)
+function HookManager:__init(args, minimal)
   self.hooks = {}
   if args.hook_file ~= '' then
     local _, err = pcall(function()
@@ -28,10 +28,25 @@ function HookManager:__init(args)
         assert(type(n) == 'string')
         assert(type(v) == 'function')
         self.hooks[n] = v
-        _G.logger:info("Register hook '"..n.."' from "..args.hook_file)
+        if not minimal then
+          _G.logger:info("Register hook '"..n.."' from "..args.hook_file)
+        end
       end
     end)
     onmt.utils.Error.assert(not err, 'Cannot load hooks ('..args.hook_file..') - %s', err)
+  end
+end
+
+function HookManager.updateOpt(arg, cmd)
+  for i, k in ipairs(arg) do
+    if k == '-hook_file' then
+      local hookManager = HookManager.new({hook_file=arg[i+1]}, true)
+      if hookManager.hooks["declareOpts"] then
+        local hook_cmd = onmt.utils.ExtendedCmdLine.new('hook options')
+        hookManager:call("declareOpts", hook_cmd)
+        cmd:merge(hook_cmd)
+      end
+    end
   end
 end
 

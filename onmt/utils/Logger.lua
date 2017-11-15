@@ -78,6 +78,7 @@ function Logger:log(message, level)
   if self.jsonLog then
     if message:len() > 0 then
       self.logFile:write('["'..level..'","'..timeStamp..'","'..jsonize(message)..'"],\n')
+      self.logFile:flush()
     end
   else
     local msgFormatted = string.format('[%s %s] %s', timeStamp, level, message)
