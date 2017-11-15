@@ -22,6 +22,8 @@
 * `-max_sent_length <number>` (default: `250`)<br/>Maximum output sentence length.
 * `-replace_unk [<boolean>]` (default: `false`)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If `-phrase_table` is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token
 * `-replace_unk_tagged [<boolean>]` (default: `false`)<br/>The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.
+* `-lexical_constraints [<boolean>]` (default: `false`)<br/>Force the beam search to apply the translations from the phrase table.
+* `-limit_lexical_constraints [<boolean>]` (default: `false`)<br/>Prevents producing each lexical constraint more than required.
 * `-phrase_table <string>` (default: `''`)<br/>Path to source-target dictionary to replace `<unk>` tokens.
 * `-n_best <number>` (default: `1`)<br/>If > 1, it will also output an n-best list of decoded sentences.
 * `-max_num_unks <number>` (default: `inf`)<br/>All sequences with more `<unk>`s than this will be ignored during beam search.

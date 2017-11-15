@@ -168,11 +168,17 @@ local function tokenize(line, opt)
         curtok = curtok .. c
       end
     elseif c == separators.ph_marker_open then
+      local initc = ''
       if space == false then
         if opt.joiner_annotate and not(opt.joiner_new) then
-          curtok = curtok .. opt.joiner
+          if (letter and prev_alphabet ~= 'placeholder') or number then
+            initc = opt.joiner
+          else
+            curtok = curtok .. opt.joiner
+          end
         end
         table.insert(tokens, curtok)
+        curtok = initc
         if opt.joiner_annotate and opt.joiner_new then
           table.insert(tokens, opt.joiner)
         end
@@ -184,7 +190,7 @@ local function tokenize(line, opt)
           end
         end
       end
-      curtok = c
+      curtok = curtok .. c
       placeholder = true
     elseif unicode.isSeparator(v) then
       if space == false then
@@ -211,9 +217,9 @@ local function tokenize(line, opt)
       -- skip special characters and BOM and
       if v > 32 and not(v == 0xFEFF) then
         -- normalize the separator marker and feat separator
-        if c == separators.joiner_marker then c = separators.joiner_marker_substitute end
-        if c == separators.feat_marker then c = separators.feat_marker_substitute end
-
+        if separators.substitutes[c] then
+          c = separators.substitutes[c]
+        end
 
         local is_letter = unicode.isLetter(v)
         local is_alphabet
@@ -240,7 +246,7 @@ local function tokenize(line, opt)
               (prev_alphabet == 'placeholder' or
                (prev_alphabet == is_alphabet and inTable(is_alphabet, opt.segment_alphabet)) or
                (prev_alphabet ~= is_alphabet and opt.segment_alphabet_change))) then
-            if opt.joiner_annotate and not(opt.joiner_new) and prev_alphabet ~= 'placeholder' then
+            if opt.joiner_annotate and not(opt.joiner_new) then
               curtok = curtok .. opt.joiner
             end
             table.insert(tokens, curtok)
@@ -248,9 +254,6 @@ local function tokenize(line, opt)
               table.insert(tokens, opt.joiner)
             end
             curtok = ''
-            if opt.joiner_annotate and not(opt.joiner_new) and prev_alphabet == 'placeholder' then
-              curtok = curtok .. opt.joiner
-            end
           elseif other == true then
             if opt.joiner_annotate then
               if curtok == '' then
@@ -272,7 +275,7 @@ local function tokenize(line, opt)
               if opt.joiner_new then
                 addjoiner = true
               else
-                if not(letter) and not(placeholder) then
+                if not(letter and prev_alphabet ~= 'placeholder') then
                   curtok = curtok .. opt.joiner
                 else
                   c = opt.joiner .. c

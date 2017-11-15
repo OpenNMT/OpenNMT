@@ -1,32 +1,33 @@
 -- tds is lazy loaded.
 local tds
 
---[[ Separate words and features (if any). ]]
+--[[ Separate words, features (if any) and normalize placeholders. ]]
 local function extract(tokens)
   local words = {}
   local features = {}
   local numFeatures = nil
 
   for t = 1, #tokens do
-    local field = onmt.utils.String.split(tokens[t], '￨')
-    local word = field[1]
+    local fields = onmt.utils.String.split(tokens[t], '￨')
+    local word = fields[1]
 
     if word:len() > 0 then
+
       table.insert(words, word)
 
       if numFeatures == nil then
-        numFeatures = #field - 1
+        numFeatures = #fields - 1
       else
-        assert(#field - 1 == numFeatures,
+        assert(#fields - 1 == numFeatures,
                'all words must have the same number of features')
       end
 
-      if #field > 1 then
-        for i = 2, #field do
+      if #fields > 1 then
+        for i = 2, #fields do
           if features[i - 1] == nil then
             features[i - 1] = {}
           end
-          table.insert(features[i - 1], field[i])
+          table.insert(features[i - 1], fields[i])
         end
       end
     end

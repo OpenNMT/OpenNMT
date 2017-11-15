@@ -2,6 +2,17 @@
 
 ### Breaking changes
 
+### New features
+
+### Fixes and improvements
+
+* Fix missing normalization during translation
+* Fix incorrect TER normalization (#424)
+
+## [v0.9.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.0) (2017-11-07)
+
+### Breaking changes
+
 * Learning rate is also decayed when using Adam
 * Fix some wrong tokenization rules (punctuation-numbers)
 * `-report_every` option is renamed to `-report_progress_every`
@@ -14,8 +25,9 @@
 * Dynamic dataset to train on large and raw training data repository
 * Convolutional encoder
 * Shallow fusion of language model in decoder
+* Lexically constrained beam search
 * TER validation metric
-* Protection blocks for tokenization
+* Protection blocks for tokenization - and implement placeholder
 * Hook to call external normalization
 * JSON log formatting when the log file suffix is `.json`
 * Training option to save the validation translation to a file
@@ -24,6 +36,7 @@
 * Translation option to save alignment history
 * Translation translation option to mark replaced tokens with `｟unk:xxxxx｠`
 * Tokenization option to split numbers on each digit
+* Multi-model rest server using yaml config file
 
 ### Fixes and improvements
 

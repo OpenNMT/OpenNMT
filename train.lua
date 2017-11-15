@@ -79,6 +79,33 @@ local function updateTensorByDict(tensor, dict, updatedDict)
   return updateTensor
 end
 
+local function mergeDicts(dicts, mergedDicts)
+
+  for i = 1, dicts.src.words:size() do
+    local label = dicts.src.words.idxToLabel[i]
+    local idx = mergedDicts.src.words.labelToIdx[label]
+    -- add a old word to the end of new dicts
+    if idx == nil then
+      idx = mergedDicts.src.words:size() + 1
+      mergedDicts.src.words.idxToLabel[idx] = label
+      mergedDicts.src.words.labelToIdx[label] = idx
+    end
+  end
+
+  for i = 1, dicts.tgt.words:size() do
+    local label = dicts.tgt.words.idxToLabel[i]
+    local idx = mergedDicts.tgt.words.labelToIdx[label]
+    -- add a old word to the end of new dicts
+    if idx == nil then
+      idx = mergedDicts.tgt.words:size() + 1
+      mergedDicts.tgt.words.idxToLabel[idx] = label
+      mergedDicts.tgt.words.labelToIdx[label] = idx
+    end
+  end
+
+  return mergedDicts
+end
+
 local function updateVocab(checkpoint, dicts, opt)
 
   _G.logger:info('Updating the state by the vocabularies of the new train-set...')
@@ -88,17 +115,14 @@ local function updateVocab(checkpoint, dicts, opt)
   if checkpoint.models.decoder then
     decoder = onmt.Factory.loadDecoder(checkpoint.models.decoder)
   end
-
   encoder:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
-        _G.logger:info(' * Found source embeddings of size: %d', m.net.weight:size(1))
         if m.net.weight:size(1) == checkpoint.dicts.src.words:size() then
           m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.src, dicts.src)
         end
         if m.net.gradWeight:size(1) == checkpoint.dicts.src.words:size() then
           m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.src, dicts.src)
         end
-        _G.logger:info(' * Updated source embeddings of size: %d', m.net.weight:size(1))
         return
       end
   end)
@@ -106,14 +130,12 @@ local function updateVocab(checkpoint, dicts, opt)
   if decoder then
     decoder:apply(function(m)
         if torch.type(m) == "onmt.WordEmbedding" then
-          _G.logger:info(' * Found target embeddings of size: %d', m.net.weight:size(1))
           if m.net.weight:size(1) == checkpoint.dicts.tgt.words:size() then
             m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.tgt, dicts.tgt)
           end
           if m.net.gradWeight:size(1) == checkpoint.dicts.tgt.words:size() then
             m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.tgt, dicts.tgt)
           end
-          _G.logger:info(' * Updated target embeddings of size: %d', m.net.weight:size(1))
           return
         elseif torch.type(m) == "onmt.Generator" then
           local generator = nn.ConcatTable()
@@ -121,14 +143,12 @@ local function updateVocab(checkpoint, dicts, opt)
           for i = 1, #sizes do
 
               local linear = nn.Linear(opt.rnn_size, sizes[i])
-              _G.logger:info(' * Found generator of size: %d', m.rindexLinear.weight:size(1))
               if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
                 linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt, dicts.tgt)
               end
               if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
                 linear.gradWeight = updateTensorByDict(m.rindexLinear.gradWeight, checkpoint.dicts.tgt, dicts.tgt)
               end
-              _G.logger:info(' * Updated generator of size: %d', linear.weight:size(1))
               if i == 1 then
                 m.rindexLinear = linear
               end
@@ -141,6 +161,8 @@ local function updateVocab(checkpoint, dicts, opt)
         end
     end)
   end
+  _G.logger:info(' * Updated source dictionary size: %d', dicts.src.words:size())
+  _G.logger:info(' * Updated target dictionary size: %d', dicts.tgt.words:size())
   checkpoint.dicts = dicts
 
   return checkpoint
@@ -214,7 +236,17 @@ local function loadModel(opt, dicts)
 
   checkpoint, opt, paramChanges = onmt.train.Saver.loadCheckpoint(opt)
 
-  if opt.update_vocab then
+  if opt.update_vocab ~= 'none' then
+    _G.logger:info(' * new source dictionary size: %d', dicts.src.words:size())
+    _G.logger:info(' * new target dictionary size: %d', dicts.tgt.words:size())
+    _G.logger:info(' * old source dictionary size: %d', checkpoint.dicts.src.words:size())
+    _G.logger:info(' * old target dictionary size: %d', checkpoint.dicts.tgt.words:size())
+    if opt.update_vocab == 'merge' then
+      _G.logger:info(' * Merging new / old dictionaries...')
+      dicts = mergeDicts(checkpoint.dicts, dicts)
+    else
+      _G.logger:info(' * Replacing old dictionaries by new dictionaries...')
+    end
     checkpoint = updateVocab(checkpoint, dicts, opt)
   elseif checkpoint.dicts.src.words:size() ~= dicts.src.words:size() or checkpoint.dicts.tgt.words:size() ~= dicts.tgt.words:size() then
     _G.logger:warning('Dictionary size changed, you may need to activate -update_vocab option')
