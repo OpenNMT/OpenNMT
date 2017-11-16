@@ -167,6 +167,13 @@ function tokenizerTest.placeholder_joiners()
   testTok(opt, "｟ph｠｟ph｠", "｟ph｠￭ ｟ph｠", false)
 end
 
+function tokenizerTest.bugCTok56()
+  local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
+  testTok(opt, "61.\tSet", "61 ￭. Set")
+  opt.joiner_annotate = false
+  testTok(opt, "￭￨％＃：", "■ │ % # :", false)
+end
+
 function tokenizerTest.real()
   local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
   local raw = {

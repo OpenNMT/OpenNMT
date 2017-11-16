@@ -20,23 +20,25 @@ Parameters:
 ]]
 function HookManager:__init(args)
   self.hooks = {}
-  if args and args.hook_file and args.hook_file ~= '' then
+  local hook_file = (type(args) == "string" and args) or
+                    (type(args) == "table" and args.hook_file)
+  if hook_file and hook_file ~= '' then
     local _, err = pcall(function()
-      local hooks = require(args.hook_file)
+      local hooks = require(hook_file)
       assert(type(hooks) == 'table')
       for n, v in pairs(hooks) do
         assert(type(n) == 'string')
         assert(type(v) == 'function')
         self.hooks[n] = v
         if _G.logger then
-          _G.logger:info("Register hook '"..n.."' from "..args.hook_file)
+          _G.logger:info("Register hook '"..n.."' from "..hook_file)
         end
       end
     end)
     if _G.logger then
-      onmt.utils.Error.assert(not err, 'Cannot load hooks ('..args.hook_file..') - %s', err)
+      onmt.utils.Error.assert(not err, 'Cannot load hooks ('..hook_file..') - %s', err)
     else
-      assert(not err, 'Cannot load hooks ('..args.hook_file..')')
+      assert(not err, 'Cannot load hooks ('..hook_file..')')
     end
   end
 end

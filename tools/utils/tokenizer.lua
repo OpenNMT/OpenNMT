@@ -209,7 +209,7 @@ local function tokenize(line, opt)
       space = true
       other = false
     else
-      -- skip special characters and BOM and
+      -- skip special characters and BOM
       if v > 32 and not(v == 0xFEFF) then
         -- normalize the separator marker and feat separator
         if separators.substitutes[c] then
