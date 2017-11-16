@@ -203,12 +203,12 @@ function SentenceNLLCriterion:updateOutput(input, target)
   --   loss
 
   local F = torch.DoubleTensor(input:size(1), input:size(2), input:size(3)+1) -- extra T dimension for EOS
-  F[{{},{},{1,input:size(3)}}]:copy(input:clone():double())
+  F[{{},{},{1,input:size(3)}}]:copy(input:double())
   F[{{},                 {}, input:size(3)+1}] = 0.000001
   F[{{}, onmt.Constants.EOS, input:size(3)+1}] = 1
   F[{{},                 {}, input:size(3)+1}]:log()
 
-  local Y = target:clone():double()
+  local Y = target:double()
   local B = F:size(1)
   local N = F:size(2) -- should equal self.outputSize
   local T = F:size(3)
@@ -231,7 +231,7 @@ function SentenceNLLCriterion:updateOutput(input, target)
     -- init state
     local t = 1 + tOffset
     local referenceScore = self.A0[Y[b][t]] + F[b][Y[b][t]][t]
-    delta[{{},t}] = torch.add(F[{b,{},t}], self.A0:clone():double())
+    delta[{{},t}] = torch.add(F[{b,{},t}], self.A0:double())
 
     -- fwd transition recursion
     for t = 2 + tOffset, T do
@@ -240,7 +240,7 @@ function SentenceNLLCriterion:updateOutput(input, target)
 
       referenceScore = referenceScore + self.A[Y_t_1][Y_t] + F[b][Y_t][t]
 
-      local delta_tmp = torch.add(self.A:clone():double(), nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
+      local delta_tmp = torch.add(self.A:double(), nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
       delta[{{},t}] = torch.add(F[{b,{},t}], logsumexp(delta_tmp))
     end
 
@@ -256,14 +256,14 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   -- Output: dF, dA0, dA w.r.t Loss in target
 
 --  local F = torch.DoubleTensor(input:size(1), input:size(2), input:size(3)+1) -- extra T dimension for EOS
---  F[{{},{},{1,input:size(3)}}]:copy(input:clone():double())
+--  F[{{},{},{1,input:size(3)}}]:copy(input:double())
 --  F[{{},                 {}, input:size(3)+1}] = 0.000001
 --  F[{{}, onmt.Constants.EOS, input:size(3)+1}] = 1
 --  F[{{},                 {}, input:size(3)+1}]:log()
 
-  local dF = input:clone():double():zero()
+  local dF = input:double():zero()
   self.gradInput = dF
-  local Y = target:clone():double()
+  local Y = target:double()
   local B = input:size(1)
   local N = input:size(2) -- should equal self.outputSize
   local T = input:size(3)+1
@@ -274,10 +274,10 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   --  print('input:\n' .. tostring(input))
   --  print('F:\n' .. tostring(F))
 
-  local dA_sum = self.dA:clone():double():zero()
-  local dA0_sum = self.dA0:clone():double():zero()
-  local dA = self.A:clone():double():zero()
-  local dA0 = self.A0:clone():double():zero()
+  local dA_sum = self.dA:double():zero()
+  local dA0_sum = self.dA0:double():zero()
+  local dA = self.A:double():zero()
+  local dA0 = self.A0:double():zero()
 
   -- TODO vectorize for Batch dimension
   for b = 1, B do
@@ -306,7 +306,7 @@ function SentenceNLLCriterion:updateGradInput(input, target)
       dA[{Y_t_1,Y_t}] = dA[{Y_t_1,Y_t}] - 1
 
       -- compute and add partial derivatives w.r.t transition scores
-      local path_transition_probs = torch.exp(torch.add(self.A:clone():double(), nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N)))
+      local path_transition_probs = torch.exp(torch.add(self.A:double(), nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N)))
       path_transition_probs = torch.cdiv(path_transition_probs, path_transition_probs:sum(1):expand(N,N))
       path_transition_probs[path_transition_probs:ne(path_transition_probs)] = 0
 
@@ -338,8 +338,8 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   --  print('dA:\n' .. tostring(dA_sum))
   --  print('dF:\n' .. tostring(dF))
 
-  self.dA:add(onmt.utils.Cuda.convert(dA_sum))
-  self.dA0:add(onmt.utils.Cuda.convert(dA0_sum))
+  self.dA:add(onmt.utils.Cuda.convert(dA_sum/B))
+  self.dA0:add(onmt.utils.Cuda.convert(dA0_sum/B))
 
   return onmt.utils.Cuda.convert(self.gradInput)
 end

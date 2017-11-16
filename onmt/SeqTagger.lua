@@ -165,7 +165,7 @@ function SeqTagger:forwardComputeLoss(batch)
       tagsScore = nn.utils.addSingletonDimension(tagsScore[1], 3):clone() -- B x TagSize x 1
       table.insert(tagsScoreTable, tagsScore)
     end
-    local tagsScores = onmt.utils.Cuda.convert(nn.JoinTable(3):forward(tagsScoreTable))  -- B x TagSize x SeqLen
+    local tagsScores = nn.JoinTable(3):forward(tagsScoreTable)  -- B x TagSize x SeqLen
     loss = self.models.criterion:forward(tagsScores, reference)
   else -- 'word'
     for t = 1, batch.sourceLength do
@@ -204,7 +204,7 @@ function SeqTagger:trainNetwork(batch)
       tagsScore = nn.utils.addSingletonDimension(tagsScore[1], 3):clone() -- B x TagSize x 1
       table.insert(tagsScoreTable, tagsScore)
     end
-    local tagsScores = onmt.utils.Cuda.convert(nn.JoinTable(3):forward(tagsScoreTable)) -- B x TagSize x SeqLen
+    local tagsScores = nn.JoinTable(3):forward(tagsScoreTable) -- B x TagSize x SeqLen
 
     loss = loss + self.criterion:forward(tagsScores, reference)
 
