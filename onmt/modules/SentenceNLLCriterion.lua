@@ -33,11 +33,42 @@ function SentenceNLLCriterion:__init(args, outputSize)
   end
 end
 
+function SentenceNLLCriterion:initCache()
+  local N = self.outputSize
+
+  self.dtype = onmt.utils.Cuda.activated and 'torch.CudaDoubleTensor' or 'torch.DoubleTensor'
+
+  self.cache_dA_sum = torch.Tensor():type(self.dtype):resize(N,N)
+  self.cache_dA0_sum = torch.Tensor():type(self.dtype):resize(N)
+  self.cache_dA_tmp = torch.Tensor():type(self.dtype):resize(N,N)
+  self.cache_dA0_tmp = torch.Tensor():type(self.dtype):resize(N)
+  self.cache_path_transition_probs = torch.Tensor():type(self.dtype):resize(N,N)
+
+  self.cache_F = torch.Tensor():type(self.dtype):resize(1,N,1)
+  self.cache_dF = torch.Tensor():type(self.dtype):resize(1,N,1)
+  self.cache_delta = torch.Tensor():type(self.dtype):resize(1,N,1)
+  self.cache_delta_tmp = torch.Tensor():type(self.dtype):resize(N,N)
+end
+
 function SentenceNLLCriterion:training()
+  self:initCache()
 end
 
 function SentenceNLLCriterion:evaluate()
   self:renormalizeParams()
+end
+
+function SentenceNLLCriterion:release()
+  self.dtype = nil
+  self.cache_dA_sum = nil
+  self.cache_dA0_sum = nil
+  self.cache_dA_tmp = nil
+  self.cache_dA0_tmp = nil
+  self.cache_path_transition_probs = nil
+  self.cache_F = nil
+  self.cache_dF = nil
+  self.cache_delta = nil
+  self.cache_delta_tmp = nil
 end
 
 function SentenceNLLCriterion:float()
@@ -129,10 +160,13 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
 
   local preds = onmt.utils.Cuda.convert(torch.LongTensor(B,T+1):zero()) -- extra dimension in T for EOS handling
 
+  local maxScore = onmt.utils.Cuda.convert(torch.Tensor(N, T+1))
+  local backPointer = onmt.utils.Cuda.convert(torch.LongTensor(N, T+1))
+
   for b = 1, B do
 
-    local maxScore = onmt.utils.Cuda.convert(torch.Tensor(N, T+1):zero())
-    local backPointer = onmt.utils.Cuda.convert(torch.LongTensor(N, T+1):zero())
+    maxScore:zero()
+    backPointer:zero()
 
     -- OpenNMT mini batches are currently padded to the left of source sequences
     local tOffset = T - sourceSizes[b]
@@ -186,11 +220,11 @@ function logsumexp(x)
   local N = x:size(1) -- should equal self.outputSize
 
   local max, _ = x:max(1)  --  1 or 1 x N
-  local log_sum_exp = torch.log(torch.sum(torch.exp(x - torch.repeatTensor(max, N, 1)),1)) -- 1 or 1 x N
+  local log_sum_exp = (x - torch.repeatTensor(max, N, 1)):exp():sum(1):log() -- 1 or 1 x N
   -- find NaN values and assign a valid value
   local NaN_mask = log_sum_exp:ne(log_sum_exp)
   log_sum_exp[NaN_mask] = max:max()
-  return torch.squeeze(max + log_sum_exp, 1)  -- 1 or N
+  return log_sum_exp:add(max):squeeze(1) -- 1 or N
 end
 
 function SentenceNLLCriterion:updateOutput(input, target)
@@ -202,25 +236,32 @@ function SentenceNLLCriterion:updateOutput(input, target)
   -- Output variable
   --   loss
 
-  local F = torch.DoubleTensor(input:size(1), input:size(2), input:size(3)+1) -- extra T dimension for EOS
-  F[{{},{},{1,input:size(3)}}]:copy(input:double())
-  F[{{},                 {}, input:size(3)+1}] = 0.000001
-  F[{{}, onmt.Constants.EOS, input:size(3)+1}] = 1
-  F[{{},                 {}, input:size(3)+1}]:log()
+  local Y = target
+  local B = input:size(1)
+  local N = input:size(2) -- should equal self.outputSize
+  local T = input:size(3) + 1 -- extra T dimension for EOS
 
-  local Y = target:double()
-  local B = F:size(1)
-  local N = F:size(2) -- should equal self.outputSize
-  local T = F:size(3)
+  if not self.cache_F then -- Initialize cache when updateOutput() is called at inference time (e.g. to compute loss)
+    self:initCache()
+  end
 
-  self.delta = F:clone():zero() -- B,N,T
+  local F = self.cache_F:resize(B, N, T)
+  F[{{},{},{1,input:size(3)}}]:copy(input)
+  F[{{},                 {}, -1}] = 0.000001
+  F[{{}, onmt.Constants.EOS, -1}] = 1
+  F[{{},                 {}, -1}]:log()
+
+  self.cache_delta:resize(F:size()):zero() -- B,N,T
+
+  local A0_dtype = self.A0:type(self.dtype)
+  local A_dtype = self.A:type(self.dtype)
 
   local loss = 0.0
 
   -- TODO vectorize for Batch dimension
   for b = 1, B do
 
-    local delta = self.delta[b]
+    local delta = self.cache_delta[b]
 
     -- OpenNMT mini batches are currently padded to the left of source sequences
     local tOffset = 0
@@ -231,7 +272,7 @@ function SentenceNLLCriterion:updateOutput(input, target)
     -- init state
     local t = 1 + tOffset
     local referenceScore = self.A0[Y[b][t]] + F[b][Y[b][t]][t]
-    delta[{{},t}] = torch.add(F[{b,{},t}], self.A0:double())
+    delta[{{},t}]:add(F[{b,{},t}], A0_dtype)
 
     -- fwd transition recursion
     for t = 2 + tOffset, T do
@@ -240,8 +281,8 @@ function SentenceNLLCriterion:updateOutput(input, target)
 
       referenceScore = referenceScore + self.A[Y_t_1][Y_t] + F[b][Y_t][t]
 
-      local delta_tmp = torch.add(self.A:double(), nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
-      delta[{{},t}] = torch.add(F[{b,{},t}], logsumexp(delta_tmp))
+      self.cache_delta_tmp:add(A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
+      delta[{{},t}]:add(F[{b,{},t}], logsumexp(self.cache_delta_tmp))
     end
 
     local loglik = referenceScore - logsumexp(delta[{{},T}])
@@ -255,15 +296,8 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   -- Input: F, A0, A
   -- Output: dF, dA0, dA w.r.t Loss in target
 
---  local F = torch.DoubleTensor(input:size(1), input:size(2), input:size(3)+1) -- extra T dimension for EOS
---  F[{{},{},{1,input:size(3)}}]:copy(input:double())
---  F[{{},                 {}, input:size(3)+1}] = 0.000001
---  F[{{}, onmt.Constants.EOS, input:size(3)+1}] = 1
---  F[{{},                 {}, input:size(3)+1}]:log()
-
-  local dF = input:double():zero()
-  self.gradInput = dF
-  local Y = target:double()
+  local dF = self.cache_dF:resize(input:size()):zero()
+  local Y = target
   local B = input:size(1)
   local N = input:size(2) -- should equal self.outputSize
   local T = input:size(3)+1
@@ -274,10 +308,10 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   --  print('input:\n' .. tostring(input))
   --  print('F:\n' .. tostring(F))
 
-  local dA_sum = self.dA:double():zero()
-  local dA0_sum = self.dA0:double():zero()
-  local dA = self.A:double():zero()
-  local dA0 = self.A0:double():zero()
+  local A_dtype = self.A:type(self.dtype)
+
+  local dA_sum = self.cache_dA_sum:zero()
+  local dA0_sum = self.cache_dA0_sum:zero()
 
   -- TODO vectorize for Batch dimension
   for b = 1, B do
@@ -287,12 +321,13 @@ function SentenceNLLCriterion:updateGradInput(input, target)
       tOffset = tOffset + 1
     end
 
-    local delta = self.delta[b]    --  N x T
+    local delta = self.cache_delta[b]    --  N x T
 
-    dA:zero()
-    dA0:zero()
+    local dA = self.cache_dA_tmp:zero()
+    local dA0 = self.cache_dA0_tmp:zero()
 
-    local deriv_Clogadd = torch.exp(delta[{{},T}]) / torch.sum(torch.exp(delta[{{},T}]))
+    local deriv_Clogadd = delta[{{},T}]:exp()
+    deriv_Clogadd:div(deriv_Clogadd:sum())
     deriv_Clogadd[deriv_Clogadd:ne(deriv_Clogadd)] = 0
 
     for t= T, (2+tOffset), -1 do
@@ -306,14 +341,17 @@ function SentenceNLLCriterion:updateGradInput(input, target)
       dA[{Y_t_1,Y_t}] = dA[{Y_t_1,Y_t}] - 1
 
       -- compute and add partial derivatives w.r.t transition scores
-      local path_transition_probs = torch.exp(torch.add(self.A:double(), nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N)))
-      path_transition_probs = torch.cdiv(path_transition_probs, path_transition_probs:sum(1):expand(N,N))
+      local path_transition_probs = self.cache_path_transition_probs
+      path_transition_probs:add(A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
+      path_transition_probs:exp()
+      path_transition_probs:cdiv(path_transition_probs:sum(1):expand(N,N))
       path_transition_probs[path_transition_probs:ne(path_transition_probs)] = 0
 
       if t < T then
         dF[{b,{},t}]:add(deriv_Clogadd)
       end
-      local dAt = torch.cmul(nn.utils.addSingletonDimension(deriv_Clogadd, 1):expand(N,N), path_transition_probs)
+      path_transition_probs:cmul(nn.utils.addSingletonDimension(deriv_Clogadd, 1):expand(N,N))
+      local dAt = path_transition_probs
       dA:add(dAt)
       deriv_Clogadd = dAt:sum(2):squeeze(2)
 
@@ -328,8 +366,6 @@ function SentenceNLLCriterion:updateGradInput(input, target)
     dF[{b,{},t}]:add(deriv_Clogadd)
     dA0:add(deriv_Clogadd)
 
-    --    dA_sum = dA_sum + 1/(T-tOffset) * dA
-    --    dA0_sum = dA0_sum + 1/(T-tOffset) * dA0
     dA_sum:add(dA)
     dA0_sum:add(dA0)
   end
@@ -341,7 +377,13 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   self.dA:add(onmt.utils.Cuda.convert(dA_sum/B))
   self.dA0:add(onmt.utils.Cuda.convert(dA0_sum/B))
 
-  return onmt.utils.Cuda.convert(self.gradInput)
+  if not self.gradInput then
+    self.gradInput = onmt.utils.Cuda.convert(torch.Tensor())
+  end
+  self.gradInput:resize(input:size())
+  self.gradInput:copy(dF)
+
+  return self.gradInput
 end
 
 --function SentenceNLLCriterion:updateParameters(learningRate)
