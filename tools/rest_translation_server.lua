@@ -11,7 +11,7 @@ require('onmt.init')
 
 local tokenizer = require('tools.utils.tokenizer')
 local BPE = require ('tools.utils.BPE')
-local restserver = require("restserver")
+local restserver = require("tools.restserver.restserver")
 
 local cmd = onmt.utils.ExtendedCmdLine.new('rest_translation_server.lua')
 
