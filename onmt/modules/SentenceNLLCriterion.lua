@@ -69,6 +69,9 @@ function SentenceNLLCriterion:release()
   self.cache_dF = nil
   self.cache_delta = nil
   self.cache_delta_tmp = nil
+
+  self.dA0 = nil
+  self.dA = nil
 end
 
 function SentenceNLLCriterion:float()
