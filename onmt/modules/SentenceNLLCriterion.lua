@@ -154,64 +154,96 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
   local N = input:size(2) -- should equal self.outputSize
   local T = input:size(3)
 
-  --    print('A0:\n' .. tostring(self.A0))
-  --    print('A:\n' .. tostring(self.A))
-  --    print('F:\n' .. tostring(F))
-  --    print('B: ' .. B)
-  --    print('N: ' .. N)
-  --    print('T: ' .. T)
-
   local preds = onmt.utils.Cuda.convert(torch.LongTensor(B,T+1):zero()) -- extra dimension in T for EOS handling
 
-  local maxScore = onmt.utils.Cuda.convert(torch.Tensor(N, T+1))
-  local backPointer = onmt.utils.Cuda.convert(torch.LongTensor(N, T+1))
-
-  for b = 1, B do
-
-    maxScore:zero()
-    backPointer:zero()
-
+  function _viterbiSearch_batch()
     -- OpenNMT mini batches are currently padded to the left of source sequences
-    local tOffset = T - sourceSizes[b]
+    local isOnMask = onmt.utils.Cuda.convert(torch.ones(B, T+1))
+    local isA0Mask = onmt.utils.Cuda.convert(torch.zeros(B, T+1))
+    for b = 1, B do
+      for t = 1, (T - sourceSizes[b]) do
+        isOnMask[{b,t}] = 0
+      end
+      isA0Mask[{b, T+1-sourceSizes[b]}] = 1
+    end
+    local isAMask = isOnMask - isA0Mask
+    local isMaxMask = isAMask
+    local isFMask = isOnMask[{{}, {1,T}}]
 
-    --    print('A0'..tostring(self.A0))
-    --    print('F'..tostring(F[{b,{},1+tOffset}]))
-    --    print(nn.utils.addSingletonDimension(torch.add(self.A0, F[{b,{},1+tOffset}]),2):max(2))
-    maxScore[{{},1+tOffset}], backPointer[{{},1+tOffset}] = nn.utils.addSingletonDimension(torch.add(self.A0, F[{b,{},1+tOffset}]),2):max(2)
+    local maxScore = onmt.utils.Cuda.convert(torch.Tensor(B, N, T+1))
+    local backPointer = onmt.utils.Cuda.convert(torch.LongTensor(B, N, T+1))
 
-    --    print('T=1')
-    --    print(maxScore[{{},1}])
-    --    print(backpointer[{{},1}])
+    -- A0
+    local A0Score = nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(self.A0, 1):expand(N, N), 1):expand(B, N, N)
+    -- A
+    local AScore = nn.utils.addSingletonDimension(self.A:t(), 1):expand(B, N, N)
 
-    for t = 2+tOffset, T+1 do
+    for t = 1, T + 1 do
+      local scores = onmt.utils.Cuda.convert(torch.Tensor(B, N, N):zero())
 
-      --      print('max(t-1):\n'..tostring(nn.utils.addSingletonDimension(maxScore[{{},t-1}],1):expand(N, N)))
-      --      print('F(t):\n'..tostring(nn.utils.addSingletonDimension(F[{b,{},t}],2):expand(N,N)))
-      --      print('A:\n'..tostring(self.A:t()))
+      local A0ScoreMasked = torch.cmul(A0Score, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isA0Mask[{{},t}],2),3):expand(B, N, N))
+      scores:add(A0ScoreMasked)
 
-      local scores = torch.add(nn.utils.addSingletonDimension(maxScore[{{},t-1}],1):expand(N, N), self.A:t())
-      if t <= T then
-        scores:add(nn.utils.addSingletonDimension(F[{b,{},t}],2):expand(N,N))
+      if t > 1 then
+        local AScoreMasked = torch.cmul(AScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isAMask[{{},t}],2),3):expand(B, N, N))
+        scores:add(AScoreMasked)
+
+        -- maxScore
+        local MaxScore = nn.utils.addSingletonDimension(maxScore[{{},{},t-1}],2):expand(B, N, N)
+        local MaxScoreMasked = torch.cmul(MaxScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isMaxMask[{{},t}],2),3):expand(B, N, N))
+        scores:add(MaxScoreMasked)
       end
 
-      --      print('scores:\n'..tostring(scores))
+      if t < T + 1 then
+        -- F
+        local FScore = nn.utils.addSingletonDimension(F[{{},{},t}],3):expand(B, N, N)
+        local FScoreMasked = torch.cmul(FScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isFMask[{{},t}],2),3):expand(B, N, N))
+        scores:add(FScoreMasked)
+      end
 
-      maxScore[{{},t}], backPointer[{{},t}] = scores:max(2)
-
-      --      print('T='..t)
-      --      print(maxScore[{{},t}])
-      --      print(backpointer[{{},t}])
+      maxScore[{{},{},t}], backPointer[{{},{},t}] = scores:max(3)
     end
 
-    local pred = preds[b]
-    _, pred[T+1] = maxScore[{{},T+1}]:max(1)
-    for t=T+1,2+tOffset,-1 do
-      pred[t-1] = backPointer[{pred[t], t}]
+    for b=1,B do
+      local pred = preds[b]
+      _, pred[T+1] = maxScore[{b,{},T+1}]:max(1)
+      for t=T+1,2+(T-sourceSizes[b]),-1 do
+        pred[t-1] = backPointer[{b,pred[t],t}]
+      end
     end
-
-    --    print(maxScore)
-    --    print(backPointer)
   end
+
+  function _viterbiSearch_loop()
+    local maxScore = onmt.utils.Cuda.convert(torch.Tensor(N, T+1))
+    local backPointer = onmt.utils.Cuda.convert(torch.LongTensor(N, T+1))
+
+    for b = 1, B do
+      maxScore:zero()
+      backPointer:zero()
+
+      -- OpenNMT mini batches are currently padded to the left of source sequences
+      local tOffset = T - sourceSizes[b]
+
+      maxScore[{{},1+tOffset}], backPointer[{{},1+tOffset}] = nn.utils.addSingletonDimension(torch.add(self.A0, F[{b,{},1+tOffset}]),2):max(2)
+
+      for t = 2+tOffset, T+1 do
+        local scores = torch.add(nn.utils.addSingletonDimension(maxScore[{{},t-1}],1):expand(N, N), self.A:t())
+        if t <= T then
+          scores:add(nn.utils.addSingletonDimension(F[{b,{},t}],2):expand(N,N))
+        end
+        maxScore[{{},t}], backPointer[{{},t}] = scores:max(2)
+      end
+
+      local pred = preds[b]
+      _, pred[T+1] = maxScore[{{},T+1}]:max(1)
+      for t=T+1,2+tOffset,-1 do
+        pred[t-1] = backPointer[{pred[t], t}]
+      end
+    end
+  end
+
+  _viterbiSearch_batch()
+--  _viterbiSearch_loop()
 
   return preds[{{},{1,T}}]:clone()
 end
