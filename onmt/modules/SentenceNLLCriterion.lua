@@ -33,25 +33,34 @@ function SentenceNLLCriterion:__init(args, outputSize)
   end
 end
 
-function SentenceNLLCriterion:initCache()
-  local N = self.outputSize
+--[[ Return a new SentenceNLLCriterion using the serialized data `pretrained`. ]]
+function SentenceNLLCriterion.load(pretrained)
+  local self = torch.factory('onmt.SentenceNLLCriterion')()
 
-  self.dtype = onmt.utils.Cuda.activated and 'torch.CudaDoubleTensor' or 'torch.DoubleTensor'
+  parent.__init(self)
+  self.A0 = pretrained.A0
+  self.A = pretrained.A
+  self.outputSize = pretrained.outputSize
+  self.max_grad_norm = pretrained.max_grad_norm
 
-  self.cache_dA_sum = torch.Tensor():type(self.dtype):resize(N,N)
-  self.cache_dA0_sum = torch.Tensor():type(self.dtype):resize(N)
-  self.cache_dA_tmp = torch.Tensor():type(self.dtype):resize(N,N)
-  self.cache_dA0_tmp = torch.Tensor():type(self.dtype):resize(N)
-  self.cache_path_transition_probs = torch.Tensor():type(self.dtype):resize(N,N)
+  return self
+end
 
-  self.cache_F = torch.Tensor():type(self.dtype):resize(1,N,1)
-  self.cache_dF = torch.Tensor():type(self.dtype):resize(1,N,1)
-  self.cache_delta = torch.Tensor():type(self.dtype):resize(1,N,1)
-  self.cache_delta_tmp = torch.Tensor():type(self.dtype):resize(N,N)
+--[[ Return data to serialize. ]]
+function SentenceNLLCriterion:serialize()
+  return {
+    A0 = self.A0,
+    A = self.A,
+    outputSize = self.outputSize,
+    max_grad_norm = self.max_grad_norm,
+    float = self.float,
+    clearState = self.clearState,
+    apply = self.apply
+  }
 end
 
 function SentenceNLLCriterion:training()
-  self:initCache()
+  self:_initTrainCache()
 end
 
 function SentenceNLLCriterion:evaluate()
@@ -59,17 +68,8 @@ function SentenceNLLCriterion:evaluate()
 end
 
 function SentenceNLLCriterion:release()
-  self.dtype = nil
-  self.cache_dA_sum = nil
-  self.cache_dA0_sum = nil
-  self.cache_dA_tmp = nil
-  self.cache_dA0_tmp = nil
-  self.cache_path_transition_probs = nil
-  self.cache_F = nil
-  self.cache_dF = nil
-  self.cache_delta = nil
-  self.cache_delta_tmp = nil
-
+  self:_freeTrainCache()
+  self:_freeViterbiCache()
   self.dA0 = nil
   self.dA = nil
 end
@@ -110,36 +110,6 @@ function SentenceNLLCriterion:parameters()
 end
 
 --[[
-Copied from nn.Module
---]]
-function SentenceNLLCriterion:getParameters()
-  -- get parameters
-  local parameters,gradParameters = self:parameters()
-  local p, g = nn.Module.flatten(parameters), nn.Module.flatten(gradParameters)
-  assert(p:nElement() == g:nElement(),
-    'check that you are sharing parameters and gradParameters')
-  if parameters then
-    for i=1,#parameters do
-      assert(parameters[i]:storageOffset() == gradParameters[i]:storageOffset(),
-        'misaligned parameter at ' .. tostring(i))
-    end
-  end
-  return p, g
-end
-
---[[
-Copied from nn.Module
---]]
-function SentenceNLLCriterion:apply(callback)
-  callback(self)
-  if self.modules then
-    for _, module in ipairs(self.modules) do
-      module:apply(callback)
-    end
-  end
-end
-
---[[
   Viterbi search
 --]]
 function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
@@ -154,24 +124,29 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
   local N = input:size(2) -- should equal self.outputSize
   local T = input:size(3)
 
-  local preds = onmt.utils.Cuda.convert(torch.LongTensor(B,T+1):zero()) -- extra dimension in T for EOS handling
+  if not self.cache_viterbi_preds then
+    self:_initViterbiCache()
+  end
+
+  local preds = self.cache_viterbi_preds:resize(B,T+1):zero() -- extra dimension in T for EOS handling
 
   function _viterbiSearch_batch()
     -- OpenNMT mini batches are currently padded to the left of source sequences
-    local isOnMask = onmt.utils.Cuda.convert(torch.ones(B, T+1))
-    local isA0Mask = onmt.utils.Cuda.convert(torch.zeros(B, T+1))
+    local isOnMask = self.cache_viterbi_isOnMask:resize(B,T+1):fill(1)
+    local isA0Mask = self.cache_viterbi_isA0Mask:resize(B,T+1):zero()
     for b = 1, B do
       for t = 1, (T - sourceSizes[b]) do
         isOnMask[{b,t}] = 0
       end
       isA0Mask[{b, T+1-sourceSizes[b]}] = 1
     end
-    local isAMask = isOnMask - isA0Mask
+    local isAMask = self.cache_viterbi_isAMask
+    isAMask:add(isOnMask, -isA0Mask)
     local isMaxMask = isAMask
     local isFMask = isOnMask[{{}, {1,T}}]
 
-    local maxScore = onmt.utils.Cuda.convert(torch.Tensor(B, N, T+1))
-    local backPointer = onmt.utils.Cuda.convert(torch.LongTensor(B, N, T+1))
+    local maxScore = self.cache_viterbi_maxScore:resize(B, N, T+1)
+    local backPointer = self.cache_viterbi_backPointer:resize(B, N, T+1)
 
     -- A0
     local A0Score = nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(self.A0, 1):expand(N, N), 1):expand(B, N, N)
@@ -179,25 +154,29 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
     local AScore = nn.utils.addSingletonDimension(self.A:t(), 1):expand(B, N, N)
 
     for t = 1, T + 1 do
-      local scores = onmt.utils.Cuda.convert(torch.Tensor(B, N, N):zero())
+      local scores = self.cache_viterbi_scores:resize(B,N,N):zero()
 
-      local A0ScoreMasked = torch.cmul(A0Score, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isA0Mask[{{},t}],2),3):expand(B, N, N))
+      local A0ScoreMasked = self.cache_viterbi_XScoreMasked:resize(B,N,N)
+      A0ScoreMasked:cmul(A0Score, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isA0Mask[{{},t}],2),3):expand(B, N, N))
       scores:add(A0ScoreMasked)
 
       if t > 1 then
-        local AScoreMasked = torch.cmul(AScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isAMask[{{},t}],2),3):expand(B, N, N))
+        local AScoreMasked = self.cache_viterbi_XScoreMasked:resize(B,N,N)
+        AScoreMasked:cmul(AScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isAMask[{{},t}],2),3):expand(B, N, N))
         scores:add(AScoreMasked)
 
         -- maxScore
         local MaxScore = nn.utils.addSingletonDimension(maxScore[{{},{},t-1}],2):expand(B, N, N)
-        local MaxScoreMasked = torch.cmul(MaxScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isMaxMask[{{},t}],2),3):expand(B, N, N))
+        local MaxScoreMasked = self.cache_viterbi_XScoreMasked:resize(B,N,N)
+        MaxScoreMasked:cmul(MaxScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isMaxMask[{{},t}],2),3):expand(B, N, N))
         scores:add(MaxScoreMasked)
       end
 
       if t < T + 1 then
         -- F
         local FScore = nn.utils.addSingletonDimension(F[{{},{},t}],3):expand(B, N, N)
-        local FScoreMasked = torch.cmul(FScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isFMask[{{},t}],2),3):expand(B, N, N))
+        local FScoreMasked = self.cache_viterbi_XScoreMasked:resize(B,N,N)
+        FScoreMasked:cmul(FScore, nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isFMask[{{},t}],2),3):expand(B, N, N))
         scores:add(FScoreMasked)
       end
 
@@ -277,7 +256,7 @@ function SentenceNLLCriterion:updateOutput(input, target)
   local T = input:size(3) + 1 -- extra T dimension for EOS
 
   if not self.cache_F then -- Initialize cache when updateOutput() is called at inference time (e.g. to compute loss)
-    self:initCache()
+    self:_initTrainCache()
   end
 
   local F = self.cache_F:resize(B, N, T)
@@ -421,38 +400,85 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   return self.gradInput
 end
 
---function SentenceNLLCriterion:updateParameters(learningRate)
---  self.A0:add(-learningRate * self.dA0)
---  self.A:add(-learningRate * self.dA)
---end
---
---function SentenceNLLCriterion:zeroGradParameters()
---  self.dA0:zero()
---  self.dA:zero()
---end
-
---[[ Return a new SentenceNLLCriterion using the serialized data `pretrained`. ]]
-function SentenceNLLCriterion.load(pretrained)
-  local self = torch.factory('onmt.SentenceNLLCriterion')()
-
-  parent.__init(self)
-  self.A0 = pretrained.A0
-  self.A = pretrained.A
-  self.outputSize = pretrained.outputSize
-  self.max_grad_norm = pretrained.max_grad_norm
-
-  return self
+function SentenceNLLCriterion:_initViterbiCache()
+  local N = self.outputSize
+  self.cache_viterbi_preds = onmt.utils.Cuda.convert(torch.LongTensor(1,1))
+  self.cache_viterbi_maxScore = onmt.utils.Cuda.convert(torch.Tensor(1, N, 1))
+  self.cache_viterbi_backPointer = onmt.utils.Cuda.convert(torch.LongTensor(1, N, 1))
+  self.cache_viterbi_isOnMask = onmt.utils.Cuda.convert(torch.Tensor(1, 1))
+  self.cache_viterbi_isA0Mask = onmt.utils.Cuda.convert(torch.Tensor(1, 1))
+  self.cache_viterbi_isAMask = onmt.utils.Cuda.convert(torch.Tensor(1, 1))
+  self.cache_viterbi_scores = onmt.utils.Cuda.convert(torch.Tensor(1, N, N))
+  self.cache_viterbi_XScoreMasked = onmt.utils.Cuda.convert(torch.Tensor(1, N, N))
 end
 
---[[ Return data to serialize. ]]
-function SentenceNLLCriterion:serialize()
-  return {
-    A0 = self.A0,
-    A = self.A,
-    outputSize = self.outputSize,
-    max_grad_norm = self.max_grad_norm,
-    float = self.float,
-    clearState = self.clearState,
-    apply = self.apply
-  }
+function SentenceNLLCriterion:_freeViterbiCache()
+  self.cache_viterbi_preds = nil
+  self.cache_viterbi_maxScore = nil
+  self.cache_viterbi_backPointer = nil
+  self.cache_viterbi_isOnMask = nil
+  self.cache_viterbi_isA0Mask = nil
+  self.cache_viterbi_isAMask = nil
+  self.cache_viterbi_scores = nil
+  self.cache_viterbi_XScoreMasked = nil
+end
+
+function SentenceNLLCriterion:_initTrainCache()
+  local N = self.outputSize
+
+  self.dtype = onmt.utils.Cuda.activated and 'torch.CudaDoubleTensor' or 'torch.DoubleTensor'
+
+  self.cache_dA_sum = torch.Tensor():type(self.dtype):resize(N,N)
+  self.cache_dA0_sum = torch.Tensor():type(self.dtype):resize(N)
+  self.cache_dA_tmp = torch.Tensor():type(self.dtype):resize(N,N)
+  self.cache_dA0_tmp = torch.Tensor():type(self.dtype):resize(N)
+  self.cache_path_transition_probs = torch.Tensor():type(self.dtype):resize(N,N)
+
+  self.cache_F = torch.Tensor():type(self.dtype):resize(1,N,1)
+  self.cache_dF = torch.Tensor():type(self.dtype):resize(1,N,1)
+  self.cache_delta = torch.Tensor():type(self.dtype):resize(1,N,1)
+  self.cache_delta_tmp = torch.Tensor():type(self.dtype):resize(N,N)
+end
+
+function SentenceNLLCriterion:_freeTrainCache()
+  self.dtype = nil
+  self.cache_dA_sum = nil
+  self.cache_dA0_sum = nil
+  self.cache_dA_tmp = nil
+  self.cache_dA0_tmp = nil
+  self.cache_path_transition_probs = nil
+  self.cache_F = nil
+  self.cache_dF = nil
+  self.cache_delta = nil
+  self.cache_delta_tmp = nil
+end
+
+--[[
+Copied from nn.Module
+--]]
+function SentenceNLLCriterion:getParameters()
+  -- get parameters
+  local parameters,gradParameters = self:parameters()
+  local p, g = nn.Module.flatten(parameters), nn.Module.flatten(gradParameters)
+  assert(p:nElement() == g:nElement(),
+    'check that you are sharing parameters and gradParameters')
+  if parameters then
+    for i=1,#parameters do
+      assert(parameters[i]:storageOffset() == gradParameters[i]:storageOffset(),
+        'misaligned parameter at ' .. tostring(i))
+    end
+  end
+  return p, g
+end
+
+--[[
+Copied from nn.Module
+--]]
+function SentenceNLLCriterion:apply(callback)
+  callback(self)
+  if self.modules then
+    for _, module in ipairs(self.modules) do
+      module:apply(callback)
+    end
+  end
 end
