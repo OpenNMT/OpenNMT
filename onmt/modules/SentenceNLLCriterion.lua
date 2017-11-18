@@ -131,7 +131,7 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
   local preds = self.cache_viterbi_preds:resize(B,T+1):zero() -- extra dimension in T for EOS handling
 
   function _viterbiSearch_batch()
-    -- OpenNMT mini batches are currently padded to the left of source sequences
+    -- OpenNMT mini batches are padded to the left of source sequences
     local isOnMask = self.cache_viterbi_isOnMask:resize(B,T+1):fill(1)
     local isA0Mask = self.cache_viterbi_isA0Mask:resize(B,T+1):zero()
     for b = 1, B do
@@ -140,8 +140,7 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
       end
       isA0Mask[{b, T+1-sourceSizes[b]}] = 1
     end
-    local isAMask = self.cache_viterbi_isAMask
-    isAMask:add(isOnMask, -isA0Mask)
+    local isAMask = self.cache_viterbi_isAMask:add(isOnMask, -isA0Mask)
     local isMaxMask = isAMask
     local isFMask = isOnMask[{{}, {1,T}}]
 
@@ -200,7 +199,7 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
       maxScore:zero()
       backPointer:zero()
 
-      -- OpenNMT mini batches are currently padded to the left of source sequences
+      -- OpenNMT mini batches are padded to the left of source sequences
       local tOffset = T - sourceSizes[b]
 
       maxScore[{{},1+tOffset}], backPointer[{{},1+tOffset}] = nn.utils.addSingletonDimension(torch.add(self.A0, F[{b,{},1+tOffset}]),2):max(2)
@@ -234,11 +233,36 @@ function logsumexp(x)
   local N = x:size(1) -- should equal self.outputSize
 
   local max, _ = x:max(1)  --  1 or 1 x N
-  local log_sum_exp = (x - torch.repeatTensor(max, N, 1)):exp():sum(1):log() -- 1 or 1 x N
+  local log_sum_exp
+  if x:nDimension() == 1 then
+    log_sum_exp = (x - max:expand(N)):exp():sum(1):log() -- 1
+  else
+    log_sum_exp = (x - max:expand(N,N)):exp():sum(1):log() -- 1 x N
+  end
   -- find NaN values and assign a valid value
   local NaN_mask = log_sum_exp:ne(log_sum_exp)
   log_sum_exp[NaN_mask] = max:max()
   return log_sum_exp:add(max):squeeze(1) -- 1 or N
+end
+
+function logsumexp_batch(x)
+  -- Input
+  --   x:  B x N or B x N x N
+
+  local B = x:size(1)
+  local N = x:size(2) -- should equal self.outputSize
+
+  local max, _ = x:max(2)  --  B x 1  or B x 1 x N
+  local log_sum_exp
+  if x:nDimension() == 2 then
+    log_sum_exp = (x - max:expand(B,N)):exp():sum(2):log() -- B x 1
+  else
+    log_sum_exp = (x - max:expand(B,N,N)):exp():sum(2):log() -- B x 1 x N
+  end
+  -- find NaN values and assign a valid value
+  local NaN_mask = log_sum_exp:ne(log_sum_exp)
+  log_sum_exp[NaN_mask] = max:max()
+  return log_sum_exp:add(max):squeeze(2) -- B x 1 or B x N
 end
 
 function SentenceNLLCriterion:updateOutput(input, target)
@@ -272,36 +296,102 @@ function SentenceNLLCriterion:updateOutput(input, target)
 
   local loss = 0.0
 
-  -- TODO vectorize for Batch dimension
-  for b = 1, B do
+  function _updateOutput_batch()
+    -- OpenNMT mini batches are padded to the left of source sequences
+    local isOnMask = self.cache_isOnMask:resize(B,T):fill(1)
+    local isA0Mask = self.cache_isA0Mask:resize(B,T):zero()
+    local yLookupTensor = self.cache_dF:resize(B,N,T):zero()
+    for b = 1, B do
+      for t = 1, T do
+        if Y[b][t] == onmt.Constants.PAD then
+          isOnMask[b][t] = 0
+        else
+          if t == 1 or (t > 1 and Y[b][t-1] == onmt.Constants.PAD) then
+            isA0Mask[b][t] = 1
+          end
+          yLookupTensor[b][ Y[b][t] ][t] = 1
+        end
+      end
+    end
+    local isAMask = self.cache_isAMask:add(isOnMask, -isA0Mask)
+    local isFMask = isOnMask
 
-    local delta = self.cache_delta[b]
+    local delta = self.cache_delta
+    local delta_tmp = self.cache_delta_tmp:resize(B,N,N)
 
-    -- OpenNMT mini batches are currently padded to the left of source sequences
-    local tOffset = 0
-    while Y[{b,1+tOffset}] == onmt.Constants.PAD do
-      tOffset = tOffset + 1
+    local refScores = torch.Tensor(B):type(self.dtype):zero()
+    local logLiks = torch.Tensor(B):type(self.dtype):zero()
+
+    -- A0
+    local A0_dtype_batch = nn.utils.addSingletonDimension(A0_dtype, 1):expand(B,N)
+    -- A
+    local A_dtype_batch = nn.utils.addSingletonDimension(A_dtype, 1):expand(B,N,N)
+
+    for t = 1, T do
+      -- refScore
+      refScores:add(torch.cmul(A0_dtype_batch,
+                              yLookupTensor[{{},{},t}])
+                        :cmul(nn.utils.addSingletonDimension(isA0Mask[{{},t}],2):expand(B,N))
+                     :sum(2):squeeze(2) -- B
+                  )
+      refScores:add(torch.cmul(F[{{},{},t}], yLookupTensor[{{},{},t}]):sum(2):squeeze(2)) -- B; yLookupTensor is already masked
+      if t > 1 then
+        refScores:add(torch.cmul(A_dtype_batch,
+                        nn.utils.addSingletonDimension(yLookupTensor[{{},{},t-1}],3):expand(B,N,N)):sum(2) -- select t-1
+                        :cmul(yLookupTensor[{{},{},t}]):sum(3):squeeze(3):squeeze(2) -- select t
+                 ) -- B; yLookupTensor is already masked
+      end
+
+      --loglik
+      delta[{{},{},t}]:add(torch.cmul(A0_dtype_batch, nn.utils.addSingletonDimension(isA0Mask[{{},t}],2):expand(B,N))) -- B x N
+      delta[{{},{},t}]:add(torch.cmul(F[{{},{},t}], nn.utils.addSingletonDimension(isFMask[{{},t}],2):expand(B,N)))
+      if t > 1 then
+        delta_tmp:add( A_dtype_batch,
+                       nn.utils.addSingletonDimension(delta[{{},{},t-1}],3):expand(B,N,N)
+                     ):cmul(nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isAMask[{{},t}],2),3):expand(B,N,N)) -- B x N x N
+
+        delta[{{},{},t}]:add(logsumexp_batch(delta_tmp)) -- B x N
+      end
     end
 
-    -- init state
-    local t = 1 + tOffset
-    local referenceScore = self.A0[Y[b][t]] + F[b][Y[b][t]][t]
-    delta[{{},t}]:add(F[{b,{},t}], A0_dtype)
-
-    -- fwd transition recursion
-    for t = 2 + tOffset, T do
-      local Y_t = Y[b][t]
-      local Y_t_1 = Y[b][t-1]
-
-      referenceScore = referenceScore + self.A[Y_t_1][Y_t] + F[b][Y_t][t]
-
-      self.cache_delta_tmp:add(A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
-      delta[{{},t}]:add(F[{b,{},t}], logsumexp(self.cache_delta_tmp))
-    end
-
-    local loglik = referenceScore - logsumexp(delta[{{},T}])
-    loss = loss - loglik
+    logLiks:add(refScores, -logsumexp_batch(delta[{{},{},T}]))
+    loss = -logLiks:sum()
   end
+
+  function _updateOutput_loop()
+    for b = 1, B do
+
+      local delta = self.cache_delta[b]
+
+      -- OpenNMT mini batches are currently padded to the left of source sequences
+      local tOffset = 0
+      while Y[{b,1+tOffset}] == onmt.Constants.PAD do
+        tOffset = tOffset + 1
+      end
+
+      -- init state
+      local t = 1 + tOffset
+      local referenceScore = self.A0[Y[b][t]] + F[b][Y[b][t]][t]
+      delta[{{},t}]:add(A0_dtype, F[{b,{},t}])
+
+      -- fwd transition recursion
+      for t = 2 + tOffset, T do
+        local Y_t = Y[b][t]
+        local Y_t_1 = Y[b][t-1]
+
+        referenceScore = referenceScore + self.A[Y_t_1][Y_t] + F[b][Y_t][t]
+
+        self.cache_delta_tmp:add(A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
+        delta[{{},t}]:add(F[{b,{},t}], logsumexp(self.cache_delta_tmp))
+      end
+
+      local loglik = referenceScore - logsumexp(delta[{{},T}])
+      loss = loss - loglik
+    end
+  end
+
+  _updateOutput_batch()
+--  _updateOutput_loop()
 
   return loss
 end
@@ -329,7 +419,7 @@ function SentenceNLLCriterion:updateGradInput(input, target)
 
   -- TODO vectorize for Batch dimension
   for b = 1, B do
-    -- OpenNMT mini batches are currently padded to the left of source sequences
+    -- OpenNMT mini batches are padded to the left of source sequences
     local tOffset = 0
     while Y[{b,1+tOffset}] == onmt.Constants.PAD do
       tOffset = tOffset + 1
@@ -438,6 +528,10 @@ function SentenceNLLCriterion:_initTrainCache()
   self.cache_dF = torch.Tensor():type(self.dtype):resize(1,N,1)
   self.cache_delta = torch.Tensor():type(self.dtype):resize(1,N,1)
   self.cache_delta_tmp = torch.Tensor():type(self.dtype):resize(N,N)
+
+  self.cache_isOnMask = torch.Tensor(1, 1):type(self.dtype)
+  self.cache_isA0Mask = torch.Tensor(1, 1):type(self.dtype)
+  self.cache_isAMask = torch.Tensor(1, 1):type(self.dtype)
 end
 
 function SentenceNLLCriterion:_freeTrainCache()
@@ -447,10 +541,15 @@ function SentenceNLLCriterion:_freeTrainCache()
   self.cache_dA_tmp = nil
   self.cache_dA0_tmp = nil
   self.cache_path_transition_probs = nil
+
   self.cache_F = nil
   self.cache_dF = nil
   self.cache_delta = nil
   self.cache_delta_tmp = nil
+
+  self.cache_isOnMask = nil
+  self.cache_isA0Mask = nil
+  self.cache_isAMask = nil
 end
 
 --[[

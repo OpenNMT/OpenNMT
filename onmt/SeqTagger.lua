@@ -198,7 +198,7 @@ function SeqTagger:trainNetwork(batch)
     local N = self.models.criterion.outputSize
 
     local tagsScoreTable = {}
-    for t = 1, batch.sourceLength do
+    for t = 1, T do
       local tagsScore = self.models.generator:forward(context:select(2, t)) -- B x TagSize
       -- tagsScore is a table
       tagsScore = nn.utils.addSingletonDimension(tagsScore[1], 3):clone() -- B x TagSize x 1
@@ -223,7 +223,7 @@ function SeqTagger:trainNetwork(batch)
     --    print('wLoss: ' .. tostring(wordLoss))
 
     gradCriterion = torch.div(gradCriterion, B)
-    for t = 1, batch.sourceLength do
+    for t = 1, T do
       gradContexts:select(2,t):copy(self.models.generator:backward(context:select(2, t), {gradCriterion:select(3,t)}))
     end
 
