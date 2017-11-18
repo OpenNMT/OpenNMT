@@ -67,7 +67,7 @@ while true do
         local inputs = batches_input[i]
 
         -- preprocessing hook
-        local pinputs = _G.hookManager:call("preprocess", 0, inputs)
+        local pinputs = _G.hookManager:call("mpreprocess", opt, inputs)
         assert(pinputs ~= false)
         inputs = pinputs or inputs
 
