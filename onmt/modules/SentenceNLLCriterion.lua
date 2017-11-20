@@ -291,8 +291,8 @@ function SentenceNLLCriterion:updateOutput(input, target)
 
   self.cache_delta:resize(F:size()):zero() -- B,N,T
 
-  local A0_dtype = self.A0:type(self.dtype)
-  local A_dtype = self.A:type(self.dtype)
+  self.cache_A0_dtype = self.A0:type(self.dtype)
+  self.cache_A_dtype = self.A:type(self.dtype)
 
   local loss = 0.0
 
@@ -323,9 +323,11 @@ function SentenceNLLCriterion:updateOutput(input, target)
     local logLiks = torch.Tensor(B):type(self.dtype):zero()
 
     -- A0
-    local A0_dtype_batch = nn.utils.addSingletonDimension(A0_dtype, 1):expand(B,N)
+    self.cache_A0_dtype_batch = nn.utils.addSingletonDimension(self.cache_A0_dtype, 1):expand(B,N)
+    local A0_dtype_batch = self.cache_A0_dtype_batch
     -- A
-    local A_dtype_batch = nn.utils.addSingletonDimension(A_dtype, 1):expand(B,N,N)
+    self.cache_A_dtype_batch = nn.utils.addSingletonDimension(self.cache_A_dtype, 1):expand(B,N,N)
+    local A_dtype_batch = self.cache_A_dtype_batch
 
     for t = 1, T do
       -- refScore
@@ -372,7 +374,7 @@ function SentenceNLLCriterion:updateOutput(input, target)
       -- init state
       local t = 1 + tOffset
       local referenceScore = self.A0[Y[b][t]] + F[b][Y[b][t]][t]
-      delta[{{},t}]:add(A0_dtype, F[{b,{},t}])
+      delta[{{},t}]:add(self.cache_A0_dtype, F[{b,{},t}])
 
       -- fwd transition recursion
       for t = 2 + tOffset, T do
@@ -381,7 +383,7 @@ function SentenceNLLCriterion:updateOutput(input, target)
 
         referenceScore = referenceScore + self.A[Y_t_1][Y_t] + F[b][Y_t][t]
 
-        self.cache_delta_tmp:add(A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
+        self.cache_delta_tmp:add(self.cache_A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
         delta[{{},t}]:add(F[{b,{},t}], logsumexp(self.cache_delta_tmp))
       end
 
@@ -406,77 +408,135 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   local N = input:size(2) -- should equal self.outputSize
   local T = input:size(3)+1
 
-  --  print('A0:\n' .. tostring(self.A0))
-  --  print('A:\n' .. tostring(self.A))
-  --  print('Y:\n' .. tostring(Y))
-  --  print('input:\n' .. tostring(input))
-  --  print('F:\n' .. tostring(F))
-
-  local A_dtype = self.A:type(self.dtype)
-
   local dA_sum = self.cache_dA_sum:zero()
   local dA0_sum = self.cache_dA0_sum:zero()
 
-  -- TODO vectorize for Batch dimension
-  for b = 1, B do
-    -- OpenNMT mini batches are padded to the left of source sequences
-    local tOffset = 0
-    while Y[{b,1+tOffset}] == onmt.Constants.PAD do
-      tOffset = tOffset + 1
+  function _updateGradInput_batch()
+
+    local delta = self.cache_delta    --  B x N x T; cached calculations from fwd path
+
+    -- Assume cached masks and batched A0, A are still valid
+    local isA0Mask = self.cache_isA0Mask
+    local isFMask = self.cache_isOnMask
+
+    local A_dtype_batch = self.cache_A_dtype_batch
+    local path_transition_probs = self.cache_path_transition_probs:resize(B,N,N)
+    local dA = self.cache_dA_tmp:resize(B,N,N):zero() -- B x N x N
+    local dA0 = self.cache_dA0_tmp:resize(B,N):zero() -- B x N
+
+    for b = 1, B do
+      for t = 1, T do
+        if Y[b][t] ~= onmt.Constants.PAD then
+          if t == 1 or (t > 1 and Y[b][t-1] == onmt.Constants.PAD) then
+            dA0[{b,Y[b][t]}] = dA0[{b,Y[b][t]}] - 1 -- A0
+          end
+          if t > 1 then
+            dA[{b,Y[b][t-1],Y[b][t]}] = dA[{b,Y[b][t-1],Y[b][t]}] - 1 -- A
+          end
+          if t < T then -- dF for the last EOS token does not exist
+            dF[{b,Y[b][t],t}] = dF[{b,Y[b][t],t}] - 1 -- F
+          end
+        end
+      end
     end
 
-    local delta = self.cache_delta[b]    --  N x T
-
-    local dA = self.cache_dA_tmp:zero()
-    local dA0 = self.cache_dA0_tmp:zero()
-
-    local deriv_Clogadd = delta[{{},T}]:exp()
-    deriv_Clogadd:div(deriv_Clogadd:sum())
+    local deriv_Clogadd = delta[{{},{},T}]:exp()
+    deriv_Clogadd:cdiv(deriv_Clogadd:sum(2):expand(B,N))
     deriv_Clogadd[deriv_Clogadd:ne(deriv_Clogadd)] = 0
 
-    for t= T, (2+tOffset), -1 do
-
-      local Y_t = Y[b][t]
-      local Y_t_1 = Y[b][t-1]
-
-      if t < T then -- dF for the last EOS token does not exist
-        dF[{b,Y_t,t}] = dF[{b,Y_t,t}] - 1
-      end
-      dA[{Y_t_1,Y_t}] = dA[{Y_t_1,Y_t}] - 1
-
-      -- compute and add partial derivatives w.r.t transition scores
-      local path_transition_probs = self.cache_path_transition_probs
-      path_transition_probs:add(A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
-      path_transition_probs:exp()
-      path_transition_probs:cdiv(path_transition_probs:sum(1):expand(N,N))
-      path_transition_probs[path_transition_probs:ne(path_transition_probs)] = 0
-
+    for t = T,1,-1 do
       if t < T then
-        dF[{b,{},t}]:add(deriv_Clogadd)
+        -- F
+        dF[{{},{},t}]:add(torch.cmul(deriv_Clogadd, nn.utils.addSingletonDimension(isFMask[{{},t}],2):expand(B,N)))
+        -- A0
+        dA0:add(torch.cmul(deriv_Clogadd, nn.utils.addSingletonDimension(isA0Mask[{{},t}],2):expand(B,N)))
       end
-      path_transition_probs:cmul(nn.utils.addSingletonDimension(deriv_Clogadd, 1):expand(N,N))
-      local dAt = path_transition_probs
-      dA:add(dAt)
-      deriv_Clogadd = dAt:sum(2):squeeze(2)
+      -- A
+      if t > 1 then
+        path_transition_probs:add(A_dtype_batch,
+                                  nn.utils.addSingletonDimension(
+                                     delta[{{},{},t-1}] -- delta is calculated from masked
+                                     ,3):expand(B,N,N))
+        path_transition_probs:exp()
+        path_transition_probs:cdiv(path_transition_probs:sum(2):expand(B,N,N))
+        path_transition_probs[path_transition_probs:ne(path_transition_probs)] = 0
+        path_transition_probs:cmul(nn.utils.addSingletonDimension(deriv_Clogadd, 2):expand(B,N,N))
 
-      onmt.train.Optim.clipGradByNorm({deriv_Clogadd}, self.max_grad_norm)
+        local dAt = path_transition_probs
+        dA:add(dAt)
+
+        deriv_Clogadd = dAt:sum(3):squeeze(3)
+        for b = 1, B do
+          onmt.train.Optim.clipGradByNorm({deriv_Clogadd[b]}, self.max_grad_norm)
+        end
+      end
     end
 
-    local t = 1 + tOffset
-    local Y_t = Y[b][t]
-    dF[{b,Y_t,t}] = dF[{b,Y_t,t}] - 1
-    dA0[Y_t] = dA0[Y_t] - 1
-
-    dF[{b,{},t}]:add(deriv_Clogadd)
-    dA0:add(deriv_Clogadd)
-
-    dA_sum:add(dA)
-    dA0_sum:add(dA0)
+    dA_sum:add(dA:sum(1):squeeze(1))
+    dA0_sum:add(dA0:sum(1):squeeze(1))
   end
 
-  --  print('dA0:\n' .. tostring(dA0_sum))
-  --  print('dA:\n' .. tostring(dA_sum))
-  --  print('dF:\n' .. tostring(dF))
+  function _updateGradInput_loop()
+    local A_dtype = self.cache_A_dtype
+
+    for b = 1, B do
+      -- OpenNMT mini batches are padded to the left of source sequences
+      local tOffset = 0
+      while Y[{b,1+tOffset}] == onmt.Constants.PAD do
+        tOffset = tOffset + 1
+      end
+
+      local delta = self.cache_delta[b]    --  N x T
+
+      local dA = self.cache_dA_tmp:zero()
+      local dA0 = self.cache_dA0_tmp:zero()
+
+      local deriv_Clogadd = delta[{{},T}]:exp()
+      deriv_Clogadd:div(deriv_Clogadd:sum())
+      deriv_Clogadd[deriv_Clogadd:ne(deriv_Clogadd)] = 0
+
+      for t= T, (2+tOffset), -1 do
+        local Y_t = Y[b][t]
+        local Y_t_1 = Y[b][t-1]
+
+        if t < T then -- dF for the last EOS token does not exist
+          dF[{b,Y_t,t}] = dF[{b,Y_t,t}] - 1
+        end
+        dA[{Y_t_1,Y_t}] = dA[{Y_t_1,Y_t}] - 1
+
+        -- compute and add partial derivatives w.r.t transition scores
+        local path_transition_probs = self.cache_path_transition_probs
+        path_transition_probs:add(A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
+        path_transition_probs:exp()
+        path_transition_probs:cdiv(path_transition_probs:sum(1):expand(N,N))
+        path_transition_probs[path_transition_probs:ne(path_transition_probs)] = 0
+
+        if t < T then
+          dF[{b,{},t}]:add(deriv_Clogadd)
+        end
+        path_transition_probs:cmul(nn.utils.addSingletonDimension(deriv_Clogadd, 1):expand(N,N))
+        local dAt = path_transition_probs
+        dA:add(dAt)
+        deriv_Clogadd = dAt:sum(2):squeeze(2)
+
+        onmt.train.Optim.clipGradByNorm({deriv_Clogadd}, self.max_grad_norm)
+      end
+
+      local t = 1 + tOffset
+      local Y_t = Y[b][t]
+      dF[{b,Y_t,t}] = dF[{b,Y_t,t}] - 1
+      dA0[Y_t] = dA0[Y_t] - 1
+
+      dF[{b,{},t}]:add(deriv_Clogadd)
+      dA0:add(deriv_Clogadd)
+
+      dA_sum:add(dA)
+      dA0_sum:add(dA0)
+    end
+  end
+
+--  _updateGradInput_loop()
+  _updateGradInput_batch()
 
   self.dA:add(onmt.utils.Cuda.convert(dA_sum/B))
   self.dA0:add(onmt.utils.Cuda.convert(dA0_sum/B))
