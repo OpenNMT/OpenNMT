@@ -4,6 +4,8 @@
 
 ### New features
 
+* Introduce hook mechanism for additional customization of workflows
+
 ### Fixes and improvements
 
 * Fix missing normalization during translation
