@@ -295,6 +295,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, keep_rules, typ
             local fdesc = { countLines, flist }
             fdesc.fname = fprefix
             fdesc.weight = 0
+            fdesc.options = {}
             return _G.__threadid, 0, fdesc
           else
             return _G.__threadid, error, errors
@@ -340,6 +341,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, keep_rules, typ
             keepCount = keepCount + list_files[i][1]
             list_files[i].rule_idx = rule_idx
             list_files[i].weight = math.huge
+            list_files[i].options = keep_rules[rule_idx][3]
             _G.logger:info(" * file '%s' is covered by the keep rule %d",
                            list_files[i].fname, list_files[i].rule_idx or 0)
             break
@@ -380,6 +382,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, keep_rules, typ
         local rule_idx = list_files[i].rule_idx
         list_files[i].weight = dist_rules[rule_idx][2] / weight_norm * list_files[i][1] / weight_rule[rule_idx]
         sum_weight = sum_weight + list_files[i].weight
+        list_files[i].options = dist_rules[rule_idx][3]
       end
     end
 
@@ -450,6 +453,23 @@ local function init_thread(id, args, optTok, optMPr)
       _G.bpes[i] = _G.BPE.new(v)
     end
   end
+end
+
+-- parse k=v options from distribution file, and build real key-value based on args
+local function parseTextOptions(args, optList)
+  local foptions = {}
+  for _, o in ipairs(optList) do
+    local kv = onmt.utils.String.split(o, "=")
+    onmt.utils.Error.assert(#kv==1 or #kv==2, "incorrect option in distribution rules: "..o)
+    -- boolean option
+    if #kv == 1 then table.insert(kv, true) end
+    onmt.utils.Error.assert(args[kv[1]] ~= nil, "option not defined in distribution rules: "..o)
+    if type(args[kv[1]]) == "number" then kv[2]=tonumber(kv[2]) end
+    if type(args[kv[1]]) == "boolean" then kv[2]=kv[2]~="" and kv[2]~="false" end
+    foptions[kv[1]]=kv[2]
+  end
+  foptions.textOpt = table.concat(optList,";");
+  return foptions
 end
 
 function Preprocessor:__init(args, dataType)
@@ -541,7 +561,11 @@ function Preprocessor:__init(args, dataType)
       local dist_rule = f:read()
       if not dist_rule then break end
       local trule = onmt.utils.String.split(dist_rule, " ")
-      onmt.utils.Error.assert(#trule == 2, "invalid syntax for sample distribution rule: "..dist_rule)
+      local pattern = trule[1]
+      local weight = trule[2]
+      table.remove(trule,1)
+      table.remove(trule,1)
+      trule = { pattern, weight, parseTextOptions(args, trule) }
       if trule[2] == "*" then
         table.insert(self.keep_rules, trule)
       else
@@ -571,6 +595,7 @@ function Preprocessor:__init(args, dataType)
     self.list_train = { { self.totalCount, list_files } }
     self.list_train[1].fname = self.args[self.trains[1]]
     self.list_train[1].weight = 1
+    self.list_train[1].options = {}
   end
 
   if args[self.valids[1]] ~= '' then
@@ -584,6 +609,7 @@ function Preprocessor:__init(args, dataType)
     end
     self.list_valid[1].fname = self.args[self.valids[1]]
     self.list_valid[1].weight = 1
+    self.list_valid[1].options = {}
   end
 
 end
@@ -796,19 +822,39 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
 
             -- preprocess and tokenize
             for i = 1, n do
+              -- adapt local options
+              local savOpt = {}
+              for k, v in pairs(df.options) do
+                savOpt[k] = _G.optMPr[i][k]
+                _G.optMPr[i][k] = v
+              end
               local psentences = _G.hookManager:call("mpreprocess", _G.optMPr[i], sentences[i+1])
               if psentences then
                 sentences[i+1] = psentences
+              end
+              -- restore options
+              for k, v in pairs(df.options) do
+                _G.optMPr[i][k] = savOpt[k]
               end
             end
 
             if n == 2 then
               local asentences = { sentences[2], sentences[3] }
+              -- adapt local options
+              local savOpt = {}
+              for k, v in pairs(df.options) do
+                savOpt[k] = _G.args[k]
+                _G.args[k] = v
+              end
               local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
               if psentences then
                 _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
                 sentences[2] = psentences[1]
                 sentences[3] = psentences[2]
+              end
+              -- restore options
+              for k, v in pairs(df.options) do
+                _G.args[k] = savOpt[k]
               end
             end
 
@@ -871,8 +917,8 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
           msgPrune = msgPrune .. nameSources[i] .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
         end
 
-        _G.logger:info(' * ['..__threadid..'] file \'%s\': %d total, %d drawn, %d kept - unknown words: %s',
-                          _df.fname, _df[1], kept, #vectors[1], msgPrune)
+        _G.logger:info(' * ['..__threadid..'] file \'%s\' (%s): %d total, %d drawn, %d kept - unknown words: %s',
+                          _df.fname, _df.options.textOpt or '', _df[1], kept, #vectors[1], msgPrune)
 
         gCount = gCount + count
         gIgnored = gIgnored + ignored
