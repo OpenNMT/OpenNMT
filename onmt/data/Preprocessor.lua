@@ -15,6 +15,8 @@ local tokenizer = require('tools.utils.tokenizer')
 local tds
 local threads
 
+local preprocess_batchsize = 10000
+
 local commonOptions = {
   {
     '-features_vocabs_prefix', '',
@@ -784,7 +786,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
               table.insert(sentences, {})
             end
             -- keep maximum a batch of 10000 sentences
-            while not hasNil and (not sampling or sampling_idx <= #sampling) and #sentences[1] < 10000 do
+            while not hasNil and (not sampling or sampling_idx <= #sampling) and #sentences[1] < preprocess_batchsize do
               local allNil = true
               local keepSentence = not sampling or sampling[sampling_idx] == idx
 
@@ -820,64 +822,66 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
               idx = idx + 1
             end
 
-            -- preprocess and tokenize
-            for i = 1, n do
-              -- adapt local options
-              local savOpt = {}
-              for k, v in pairs(df.options) do
-                savOpt[k] = _G.optMPr[i][k]
-                _G.optMPr[i][k] = v
-              end
-              local psentences = _G.hookManager:call("mpreprocess", _G.optMPr[i], sentences[i+1])
-              if psentences then
-                sentences[i+1] = psentences
-              end
-              -- restore options
-              for k, v in pairs(df.options) do
-                _G.optMPr[i][k] = savOpt[k]
-              end
-            end
-
-            if n == 2 then
-              local asentences = { sentences[2], sentences[3] }
-              -- adapt local options
-              local savOpt = {}
-              for k, v in pairs(df.options) do
-                savOpt[k] = _G.args[k]
-                _G.args[k] = v
-              end
-              local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
-              if psentences then
-                _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
-                sentences[2] = psentences[1]
-                sentences[3] = psentences[2]
-              end
-              -- restore options
-              for k, v in pairs(df.options) do
-                _G.args[k] = savOpt[k]
-              end
-            end
-
-            for i = 1, n do
-              for j = 1, #sentences[i+1] do
-                sentences[i+1][j] =  _G.tokenizer.tokenize(_G.optTok[i], sentences[i+1][j], _G.bpes[i])
-              end
-            end
-
-            for j = 1, #sentences[2] do
-              local tokens = {}
+            if #sentences[1] > 0 then
+              -- preprocess and tokenize
               for i = 1, n do
-                table.insert(tokens, sentences[i+1][j])
-                if verbose then
-                  _G.logger:debug("[%d:%d] %s", j, i, table.concat(tokens[i], " "))
+                -- adapt local options
+                local savOpt = {}
+                for k, v in pairs(df.options) do
+                  savOpt[k] = _G.optMPr[i][k]
+                  _G.optMPr[i][k] = v
+                end
+                local psentences = _G.hookManager:call("mpreprocess", _G.optMPr[i], sentences[i+1])
+                if psentences then
+                  sentences[i+1] = psentences
+                end
+                -- restore options
+                for k, v in pairs(df.options) do
+                  _G.optMPr[i][k] = savOpt[k]
                 end
               end
-              for _ = 1, sentences[1][j] do
-                ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
-                                                        constants, prunedRatio, generateFeatures, time_shift_feature,
-                                                        sentenceDists, vectors, features, avgLength, sizes,
-                                                        src_seq_length, tgt_seq_length)
-                count = count + 1
+
+              if n == 2 then
+                local asentences = { sentences[2], sentences[3] }
+                -- adapt local options
+                local savOpt = {}
+                for k, v in pairs(df.options) do
+                  savOpt[k] = _G.args[k]
+                  _G.args[k] = v
+                end
+                local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
+                if psentences then
+                  _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
+                  sentences[2] = psentences[1]
+                  sentences[3] = psentences[2]
+                end
+                -- restore options
+                for k, v in pairs(df.options) do
+                  _G.args[k] = savOpt[k]
+                end
+              end
+
+              for i = 1, n do
+                for j = 1, #sentences[i+1] do
+                  sentences[i+1][j] =  _G.tokenizer.tokenize(_G.optTok[i], sentences[i+1][j], _G.bpes[i])
+                end
+              end
+
+              for j = 1, #sentences[2] do
+                local tokens = {}
+                for i = 1, n do
+                  table.insert(tokens, sentences[i+1][j])
+                  if verbose then
+                    _G.logger:debug("[%d:%d] %s", j, i, table.concat(tokens[i], " "))
+                  end
+                end
+                for _ = 1, sentences[1][j] do
+                  ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
+                                                          constants, prunedRatio, generateFeatures, time_shift_feature,
+                                                          sentenceDists, vectors, features, avgLength, sizes,
+                                                          src_seq_length, tgt_seq_length)
+                  count = count + 1
+                end
               end
             end
           end
