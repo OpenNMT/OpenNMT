@@ -119,6 +119,26 @@ function tokenizerTest.bpebasic()
   end
 end
 
+function tokenizerTest.bpeModePrefix()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_prefix.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "S e u lement seulement il v ais n on se u lement seulement n on à V er d un", false)
+end
+
+function tokenizerTest.bpeModeNofix()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_nofix.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "S e u lement seulement il v ais n on seulement seulement n on à V er d un", false)
+end
+
+function tokenizerTest.bpeModeBothfix()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_bothfix.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "S eu lement seulement il va is n on s eu lement seu l emen t n on à V er du n", false)
+end
+
+function tokenizerTest.bpeCaseInsensitive()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_suffix_case_insensitive.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "Seulement seulement il va is n on seulement seu l em ent n on à Ver d un", false)
+end
+
 function tokenizerTest.test_substitute()
   local opt = cmd:parse({'-mode','conservative'})
   testTok(opt, [[test￭ protect￨, ：, and ％ or ＃...]],

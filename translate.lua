@@ -202,11 +202,15 @@ local function main()
     end
 
     if srcSeq then
-      if normalizers[1] then
-        srcSeq = normalizers[1]:normalize(srcSeq)
-      end
-      if tokenizers[1] then
-        srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
+      if srcSeq:len() > 0 then
+        if normalizers[1] then
+          srcSeq = normalizers[1]:normalize(srcSeq)
+        end
+        if tokenizers[1] then
+          srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
+        end
+      else
+        srcSeq = {}
       end
       table.insert(srcBatch, translator:buildInput(srcSeq))
       table.insert(srcIdBatch, srcSeqId)

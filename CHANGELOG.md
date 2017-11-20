@@ -8,8 +8,16 @@
 
 ### Fixes and improvements
 
+* Fix empty translation returned by the REST translation server
+
+## [v0.9.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.1) (2017-11-16)
+
+### Fixes and improvements
+
 * Fix missing normalization during translation
+* Fix normalization when the command contains pipes
 * Fix incorrect TER normalization (#424)
+* Fix error when the file to translate contains empty lines
 
 ## [v0.9.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.0) (2017-11-07)
 

@@ -17,13 +17,14 @@ function normalizer:normalize(lines)
   local f = io.open(name, "w")
   f:write(input)
   f:close()
-  local fout = io.popen(self.cmd.." < "..name)
+  local fout = io.popen("cat " .. name .. " | " .. self.cmd)
   local out = {}
   while true do
     local line = fout:read("*l")
     if not line then break end
     table.insert(out, line)
   end
+  fout:close()
   os.remove(name)
   if type(lines) == "table" then
     if #out ~= #lines then
