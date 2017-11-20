@@ -196,7 +196,6 @@ function Preprocessor.declareOpts(cmd, dataType)
   cmd:setCmdLineOptions(options, 'Data')
 
   -- prepare tokenization option
-  options = {}
   local topts = tokenizer.getOpts()
   for i, v in ipairs(topts) do
     if v[1] == '-mode' then
@@ -836,7 +835,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                   sentences[i+1] = psentences
                 end
                 -- restore options
-                for k, v in pairs(df.options) do
+                for k, _ in pairs(df.options) do
                   _G.optMPr[i][k] = savOpt[k]
                 end
               end
@@ -856,7 +855,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                   sentences[3] = psentences[2]
                 end
                 -- restore options
-                for k, v in pairs(df.options) do
+                for k, _ in pairs(df.options) do
                   _G.args[k] = savOpt[k]
                 end
               end

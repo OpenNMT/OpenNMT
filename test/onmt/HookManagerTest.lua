@@ -5,9 +5,9 @@ local tester = ...
 local hookManagerTest = torch.TestSuite()
 
 function hookManagerTest.nohook()
-  local hookManager = HookManager.new({})
+  local hookManager = onmt.utils.HookManager.new({})
   tester:eq(hookManager.hooks, {})
-  hookManager = HookManager.new({hook_file=''})
+  hookManager = onmt.utils.HookManager.new({hook_file=''})
   tester:eq(hookManager.hooks, {})
 end
 
@@ -16,7 +16,7 @@ function hookManagerTest.badhook()
   _G.logger=nil
   local _, err = pcall(
     function()
-      hookManager = HookManager.new({hook_file='bad'})
+      onmt.utils.HookManager.new({hook_file='bad'})
     end)
   tester:assert(err~=nil)
   _G.logger = logger_save
@@ -28,7 +28,7 @@ function hookManagerTest.options()
   local hookManager
   local _, err = pcall(
     function()
-      hookManager = HookManager.new({hook_file='test.data.testhooks'})
+      hookManager = onmt.utils.HookManager.new({hook_file='test.data.testhooks'})
       tester:ne(hookManager.hooks["declareOpts"], nil)
     end)
   tester:assert(err==nil)
@@ -69,13 +69,13 @@ function hookManagerTest.function_call()
   local hookManager
   local _, err = pcall(
     function()
-      hookManager = HookManager.new({hook_file='test.data.testhooks'})
+      hookManager = onmt.utils.HookManager.new({hook_file='test.data.testhooks'})
       tester:ne(hookManager.hooks["declareOpts"], nil)
     end)
   tester:assert(err==nil)
 
   if hookManager then
-    tokenizer = require('tools.utils.tokenizer')
+    local tokenizer = require('tools.utils.tokenizer')
     tester:ne(tokenizer.tokenize({segment_alphabet={}},"it is a test"), "XX")
     _G.hookManager = hookManager
     tester:eq(tokenizer.tokenize({segment_alphabet={}},"it is a test"), "XX")

@@ -26,13 +26,13 @@ local jean_options = {
   }
 }
 
-function declareOptsFn(cmd)
+local function declareOptsFn(cmd)
   cmd:setCmdLineOptions(options_sampledvocab, 'Sampled Vocabulary')
   cmd:setCmdLineOptions(jean_options, 'Jean\'s')
   cmd:setCmdLineOptions(other_options, 'Other')
 end
 
-function tokenizeFn(line)
+local function tokenizeFn()
   return "XX"
 end
 

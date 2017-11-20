@@ -4,7 +4,6 @@ require('onmt.init')
 local threads = require 'threads'
 local tokenizer = require('tools.utils.tokenizer')
 local cmd = onmt.utils.ExtendedCmdLine.new('tokenize.lua')
-local HookManager = require('onmt.utils.HookManager')
 
 tokenizer.declareOpts(cmd)
 
@@ -18,7 +17,7 @@ cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not ch
 -- insert on the fly the option depending if there is a hook selected
 onmt.utils.HookManager.updateOpt(arg, cmd)
 
-HookManager.declareOpts(cmd)
+onmt.utils.HookManager.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
