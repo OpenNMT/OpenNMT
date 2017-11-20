@@ -24,12 +24,12 @@ local opt = cmd:parse(arg)
 
 local pool = threads.Threads(
   opt.nparallel,
-  function()
+  function(id)
     local HookManager = require('onmt.utils.HookManager')
     _G.separators = require('tools.utils.separators')
     _G.tokenizer = require('tools.utils.tokenizer')
     _G.BPE = require ('tools.utils.BPE')
-    _G.hookManager = HookManager.new(opt)
+    _G.hookManager = HookManager.new(opt, "thread "..id)
     if opt.bpe_model ~= '' then
       _G.bpe = _G.BPE.new(opt)
     end

@@ -18,7 +18,8 @@ end
 Parameters:
   * `args` - commandline args, including  HookManager specific options
 ]]
-function HookManager:__init(args)
+function HookManager:__init(args, context)
+  _G.luaopen_context = context
   self.hooks = {}
   local hook_file = (type(args) == "string" and args) or
                     (type(args) == "table" and args.hook_file)
@@ -30,7 +31,7 @@ function HookManager:__init(args)
         assert(type(n) == 'string')
         assert(type(v) == 'function')
         self.hooks[n] = v
-        if _G.logger then
+            if _G.logger then
           _G.logger:info("Register hook '"..n.."' from "..hook_file)
         end
       end
@@ -38,7 +39,7 @@ function HookManager:__init(args)
     if _G.logger then
       onmt.utils.Error.assert(not err, 'Cannot load hooks ('..hook_file..') - %s', err)
     else
-      assert(not err, 'Cannot load hooks ('..hook_file..')')
+      assert(not err, 'Cannot load hooks ('..hook_file..'): '..(err or ""))
     end
   end
 end

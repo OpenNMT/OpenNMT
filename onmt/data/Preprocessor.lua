@@ -431,7 +431,7 @@ function Preprocessor:poolSynchronize()
 end
 
 -- initialization of threads and optTok
-local function init_thread(args, optTok, optMPr)
+local function init_thread(id, args, optTok, optMPr)
   _G.paths = require 'paths'
   _G.path = require 'pl.path'
   _G.onmt = require 'onmt.init'
@@ -443,7 +443,7 @@ local function init_thread(args, optTok, optMPr)
   _G.bpes = {}
   _G.optTok = optTok
   _G.optMPr = optMPr
-  _G.hookManager = onmt.utils.HookManager.new(args)
+  _G.hookManager = onmt.utils.HookManager.new(args, id)
   _G.args = args
   for i, v in ipairs(optTok) do
     if v and v["bpe_model"] and v["bpe_model"] ~= '' then
@@ -514,11 +514,11 @@ function Preprocessor:__init(args, dataType)
     threads.Threads.serialization('threads.sharedserialize')
     self.pool = threads.Threads(
       args.preprocess_pthreads,
-      function() init_thread(args, optTok, optMPr) end,
+      function(id) init_thread(id, args, optTok, optMPr) end,
       function() _G.logger = globalLogger end
     )
   else
-    init_thread(args, optTok, optMPr)
+    init_thread("-", args, optTok, optMPr)
   end
 
   -- sanity check on options: train_dir is exclusive all direct file settings
@@ -803,10 +803,10 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
             end
 
             if n == 2 then
-              print('sysbpreprocessing-----------------')
               local asentences = { sentences[2], sentences[3] }
               local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
               if psentences then
+                _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
                 sentences[2] = psentences[1]
                 sentences[3] = psentences[2]
               end
@@ -818,7 +818,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
               end
             end
 
-            for j = 1, #sentences[1] do
+            for j = 1, #sentences[2] do
               local tokens = {}
               for i = 1, n do
                 table.insert(tokens, sentences[i+1][j])
