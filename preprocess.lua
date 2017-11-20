@@ -35,6 +35,12 @@ local options = {
 cmd:setCmdLineOptions(options, 'Preprocess')
 
 onmt.data.Preprocessor.declareOpts(cmd, dataType)
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+
+-- expand options depending on source or target (tokenization, mpreprocessing)
+onmt.data.Preprocessor.expandOpts(cmd, dataType)
+
 onmt.utils.HookManager.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 

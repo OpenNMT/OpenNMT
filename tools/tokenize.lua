@@ -15,10 +15,10 @@ cmd:text('')
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
-HookManager.declareOpts(cmd)
-
 -- insert on the fly the option depending if there is a hook selected
 onmt.utils.HookManager.updateOpt(arg, cmd)
+
+HookManager.declareOpts(cmd)
 
 local opt = cmd:parse(arg)
 
