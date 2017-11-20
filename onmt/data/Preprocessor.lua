@@ -609,7 +609,6 @@ local function processSentence(n, idx, tokens, parallelCheck, isValid, isInputVe
   if parallelCheck then
     valid = parallelCheck(idx, isInputVector, dicts, tokens)
   end
-  valid = valid and _G.hookManager:call("bpreprocess", _G.args, idx, isInputVector, dicts, tokens) ~= false
 
   if valid and isValid(tokens, src_seq_length, tgt_seq_length) then
     for i = 1, n do
@@ -804,6 +803,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
             end
 
             if n == 2 then
+              print('sysbpreprocessing-----------------')
               local asentences = { sentences[2], sentences[3] }
               local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
               if psentences then
