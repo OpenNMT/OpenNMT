@@ -920,7 +920,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
           msgPrune = msgPrune .. nameSources[i] .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
         end
 
-        _G.logger:info(' * ['..__threadid..'] file \'%s\': %d total, %d drawn, %d kept - unknown words: %s',
+        _G.logger:info(' * ['..__threadid..'] file \'%s\' (%s): %d total, %d drawn, %d kept - unknown words: %s',
                           _df.fname or "n/a", _df.options.textOpt or '', _df[1], kept, #vectors[1], msgPrune)
 
         gCount = gCount + count
