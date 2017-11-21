@@ -4,6 +4,8 @@
 
 ### New features
 
+* '-' stands for stdin for inference tools (translate, lm, tag)
+
 ### Fixes and improvements
 
 * Fix missing normalization during translation
