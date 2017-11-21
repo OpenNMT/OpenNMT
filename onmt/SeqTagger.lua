@@ -210,18 +210,6 @@ function SeqTagger:trainNetwork(batch)
 
     local gradCriterion = self.models.criterion:backward(tagsScores, reference) -- B x TagSize x SeqLen
 
-    --    local wordLoss = 0
-    --    local wordGrad = {}
-    --    for t = 1, batch.sourceLength do
-    --      wordLoss = wordLoss + onmt.utils.Cuda.convert(nn.ClassNLLCriterion()):forward(tagsScores:select(3,t), reference:t():select(1,t))
-    --      local wgrad = onmt.utils.Cuda.convert(nn.ClassNLLCriterion()):backward(tagsScores:select(3,t), reference:t():select(1,t))
-    --      table.insert(wordGrad, wgrad)
-    --      print('sGrad: ' .. tostring(gradCriterion:select(3,t)))
-    --      print('wGrad: ' .. tostring(wgrad))
-    --    end
-    --    print('sLoss: ' .. tostring(loss))
-    --    print('wLoss: ' .. tostring(wordLoss))
-
     gradCriterion = torch.div(gradCriterion, B)
     for t = 1, T do
       gradContexts:select(2,t):copy(self.models.generator:backward(context:select(2, t), {gradCriterion:select(3,t)}))
