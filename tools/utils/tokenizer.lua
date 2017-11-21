@@ -98,7 +98,7 @@ function tokenizer.declareOpts(cmd)
 end
 
 local function inTable(v, t)
-  for _, vt in ipairs(t) do
+  for _, vt in ipairs(t or {}) do
     if v == vt then
       return true
     end
@@ -218,7 +218,7 @@ local function tokenize(line, opt)
 
         local is_letter = unicode.isLetter(v)
         local is_alphabet
-        if is_letter and (opt.segment_alphabet_change or #opt.segment_alphabet>0) then
+        if is_letter and (opt.segment_alphabet_change or (opt.segment_alphabet and #opt.segment_alphabet>0)) then
           is_alphabet = alphabet.findAlphabet(v)
         end
 

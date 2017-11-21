@@ -826,7 +826,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
               for i = 1, n do
                 -- adapt local options
                 local savOpt = {}
-                for k, v in pairs(df.options) do
+                for k, v in pairs(df.options or {}) do
                   savOpt[k] = _G.optMPr[i][k]
                   _G.optMPr[i][k] = v
                 end
@@ -835,7 +835,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                   sentences[i+1] = psentences
                 end
                 -- restore options
-                for k, _ in pairs(df.options) do
+                for k, _ in pairs(df.options or {}) do
                   _G.optMPr[i][k] = savOpt[k]
                 end
               end
@@ -844,7 +844,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                 local asentences = { sentences[2], sentences[3] }
                 -- adapt local options
                 local savOpt = {}
-                for k, v in pairs(df.options) do
+                for k, v in pairs(df.options or {}) do
                   savOpt[k] = _G.args[k]
                   _G.args[k] = v
                 end
@@ -855,7 +855,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                   sentences[3] = psentences[2]
                 end
                 -- restore options
-                for k, _ in pairs(df.options) do
+                for k, _ in pairs(df.options or {}) do
                   _G.args[k] = savOpt[k]
                 end
               end
@@ -921,7 +921,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         end
 
         _G.logger:info(' * ['..__threadid..'] file \'%s\' (%s): %d total, %d drawn, %d kept - unknown words: %s',
-                          _df.fname or "n/a", _df.options.textOpt or '', _df[1], kept, #vectors[1], msgPrune)
+                          _df.fname or "n/a", (_df.options and _df.options.textOpt) or '', _df[1], kept, #vectors[1], msgPrune)
 
         gCount = gCount + count
         gIgnored = gIgnored + ignored
