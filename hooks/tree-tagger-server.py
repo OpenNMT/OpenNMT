@@ -4,19 +4,14 @@ import subprocess
 import os
 import sys
 
-# check if tree-tagger-flush exists
-
 def start_model(path,m):
   global treetagger
   global nbuf
-  try:
-    treetagger = subprocess.Popen([path+'/tree-tagger-flush', m], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
-    nbuf = 10
-  except:
-    sys.stderr.write('Cannot find tree-tagger-flush, use tree-tagger: it will be less efficient\n')
-    treetagger = subprocess.Popen([path+'/tree-tagger', '/Users/senellart/Downloads/french.par'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
-    # this parameter should be adjusted for each os - it forces tree-tagger to flush by following this many sentence ends
-    nbuf = 3000
+  treetagger = subprocess.Popen([path+'/tree-tagger', m], 
+                           stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'),
+			   universal_newlines=True)
+  # this parameter should be adjusted for each os - it forces tree-tagger to flush by following this many sentence ends
+  nbuf = 3000
 
 extraneous = 0
 
@@ -28,6 +23,7 @@ def tag(s):
   treetagger.stdin.write('\n')
   for _ in range(nbuf):
     treetagger.stdin.write('.\n')
+  treetagger.stdin.flush()
   result = []
   for tag in treetagger.stdout:
     tag = tag.strip()
@@ -41,8 +37,8 @@ def tag(s):
   extraneous = nbuf
   return " ".join(result)
 
-from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
-from SocketServer import ThreadingMixIn
+from http.server import BaseHTTPRequestHandler,HTTPServer
+from socketserver import ThreadingMixIn
 import threading
 import argparse
 import re
@@ -54,16 +50,11 @@ class LocalData(object):
 class HTTPRequestHandler(BaseHTTPRequestHandler):
   def do_POST(self):
     if None != re.search('/pos', self.path):
-      length = int(self.headers.getheader('content-length'))
-      data = cgi.parse_qs(self.rfile.read(length), keep_blank_values=1)
-      print("received sentence %s" % data)
-      if 'sent' in data:
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(tag(data['sent'][0]))
-      else:
-        self.send_response(403)
-        self.end_headers()
+      length = int(self.headers.get('Content-Length'))
+      sent=self.rfile.read(length).decode('utf-8')
+      self.send_response(200)
+      self.end_headers()
+      self.wfile.write(tag(sent).encode('utf-8'))
     return
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
