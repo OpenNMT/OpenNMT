@@ -338,29 +338,36 @@ end
 function tokenizer.tokenize(opt, line, bpe)
   -- if tokenize hook, skip lua tokenization
   local tokens = _G.hookManager:call("tokenize", opt, line, bpe)
-  if tokens then return tokens end
 
-  -- tokenize
-  tokens = tokenize(line, opt)
+  -- otherwise internal tokenization
+  if not tokens then
 
-  -- apply segment feature if requested
-  if opt.segment_case then
-    local sep = ''
-    if opt.joiner_annotate then sep = opt.joiner end
-    tokens = case.segmentCase(tokens, sep)
+    -- tokenize
+    tokens = tokenize(line, opt)
+
+    -- apply segment feature if requested
+    if opt.segment_case then
+      local sep = ''
+      if opt.joiner_annotate then sep = opt.joiner end
+      tokens = case.segmentCase(tokens, sep)
+    end
+
+    -- apply bpe if requested
+    if bpe then
+      local sep = ''
+      if opt.joiner_annotate then sep = opt.joiner end
+      tokens = bpe:segment(tokens, sep)
+    end
+
+    -- add-up case feature if requested
+    if opt.case_feature then
+      tokens = case.addCase(tokens)
+    end
+
   end
 
-  -- apply bpe if requested
-  if bpe then
-    local sep = ''
-    if opt.joiner_annotate then sep = opt.joiner end
-    tokens = bpe:segment(tokens, sep)
-  end
-
-  -- add-up case feature if requested
-  if opt.case_feature then
-    tokens = case.addCase(tokens)
-  end
+  -- post_tokenize hook for more features
+  tokens = _G.hookManager:call("post_tokenize", opt, tokens) or tokens
 
   return tokens
 end
