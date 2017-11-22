@@ -6,15 +6,15 @@ import sys
 
 # check if tree-tagger-flush exists
 
-def start_model(m):
+def start_model(path,m):
   global treetagger
   global nbuf
   try:
-    treetagger = subprocess.Popen(['tree-tagger-flush', m], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
+    treetagger = subprocess.Popen([path+'/tree-tagger-flush', m], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
     nbuf = 10
   except:
     sys.stderr.write('Cannot find tree-tagger-flush, use tree-tagger: it will be less efficient\n')
-    treetagger = subprocess.Popen(['tree-tagger', '/Users/senellart/Downloads/french.par'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
+    treetagger = subprocess.Popen([path+'/tree-tagger', '/Users/senellart/Downloads/french.par'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
     # this parameter should be adjusted for each os - it forces tree-tagger to flush by following this many sentence ends
     nbuf = 3000
 
@@ -98,9 +98,10 @@ if __name__=='__main__':
   parser.add_argument('-port', default=3000, type=int, help='Listening port for HTTP Server')
   parser.add_argument('-ip', default="localhost", help='HTTP Server IP')
   parser.add_argument('-model', type=str, help='model to serve')
+  parser.add_argument('-path', type=str, help='path to tree-tagger binaries')
   args = parser.parse_args()
 
-  start_model(args.model)
+  start_model(args.path, args.model)
 
   if args.sent and len(args.sent):
     print tag(args.sent)
