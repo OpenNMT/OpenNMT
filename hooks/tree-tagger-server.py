@@ -56,7 +56,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     if None != re.search('/pos', self.path):
       length = int(self.headers.getheader('content-length'))
       data = cgi.parse_qs(self.rfile.read(length), keep_blank_values=1)
-      print "received sentence %s" % data
+      print("received sentence %s" % data)
       if 'sent' in data:
         self.send_response(200)
         self.end_headers()
@@ -104,9 +104,9 @@ if __name__=='__main__':
   start_model(args.path, args.model)
 
   if args.sent and len(args.sent):
-    print tag(args.sent)
+    print(tag(args.sent))
   else:
     server = SimpleHttpServer(args.ip, args.port)
-    print 'HTTP Server Running (%s,%d)' % (args.ip, args.port)
+    print('HTTP Server Running (%s,%d)' % (args.ip, args.port))
     server.start()
     server.waitForThread()
