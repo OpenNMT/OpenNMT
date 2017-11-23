@@ -195,7 +195,6 @@ function SeqTagger:trainNetwork(batch)
     local reference = batch.targetOutput:t() -- SeqLen x B  -> B x SeqLen
     local B = batch.size
     local T = batch.sourceLength
-    local N = self.models.criterion.outputSize
 
     local tagsScoreTable = {}
     for t = 1, T do
@@ -253,11 +252,6 @@ function SeqTagger:tagBatch(batch)
   local _, context = self.models.encoder:forward(batch)
 
   if self.loglikelihood == 'sentence' then
-    --[[
-    --]]
-    local B = batch.size
-    local T = batch.sourceLength
-    local N = self.models.criterion.outputSize
 
     local tagsScoreTable = {}
     for t = 1, batch.sourceLength do

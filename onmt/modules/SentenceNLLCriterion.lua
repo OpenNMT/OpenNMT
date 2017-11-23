@@ -2,12 +2,12 @@
   Define SentenceNLLCriterion.
   Implements Sentence-level log-likelihood as described in
   Collobert et al., Natural Language Processing (almost) from Scratch, JMLR 12(2011).
-  
+
   This class tries to be both nn.Criterion and nn.Module at the same time.
   (Criterion with learnable parameters that are required for run-time.)
-  
+
   This module requires double-precision calculations so internally, input/model parameters/output are cloned as double
-  then converted back to moddel default types after the calculations.   
+  then converted back to moddel default types after the calculations.
 --]]
 local SentenceNLLCriterion, parent = torch.class('onmt.SentenceNLLCriterion', 'nn.Criterion')
 
@@ -123,6 +123,7 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
   local B = input:size(1)
   local N = input:size(2) -- should equal self.outputSize
   local T = input:size(3)
+  local _
 
   if not self.cache_viterbi_preds then
     self:_initViterbiCache()
@@ -130,7 +131,7 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
 
   local preds = self.cache_viterbi_preds:resize(B,T+1):zero() -- extra dimension in T for EOS handling
 
-  function _viterbiSearch_batch()
+  function SentenceNLLCriterion:_viterbiSearch_batch()
     -- OpenNMT mini batches are padded to the left of source sequences
     local isOnMask = self.cache_viterbi_isOnMask:resize(B,T+1):fill(1)
     local isA0Mask = self.cache_viterbi_isA0Mask:resize(B,T+1):zero()
@@ -191,7 +192,7 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
     end
   end
 
-  function _viterbiSearch_loop()
+  function SentenceNLLCriterion:_viterbiSearch_loop()
     local maxScore = onmt.utils.Cuda.convert(torch.Tensor(N, T+1))
     local backPointer = onmt.utils.Cuda.convert(torch.LongTensor(N, T+1))
 
@@ -220,13 +221,13 @@ function SentenceNLLCriterion:viterbiSearch(input, sourceSizes)
     end
   end
 
-  _viterbiSearch_batch()
---  _viterbiSearch_loop()
+  self:_viterbiSearch_batch()
+--  self:_viterbiSearch_loop()
 
   return preds[{{},{1,T}}]:clone()
 end
 
-function logsumexp(x)
+function SentenceNLLCriterion:logsumexp(x)
   -- Input
   --   x:  TagSize (N) or TagSize (N) x TagSize (N)
 
@@ -245,7 +246,7 @@ function logsumexp(x)
   return log_sum_exp:add(max):squeeze(1) -- 1 or N
 end
 
-function logsumexp_batch(x)
+function SentenceNLLCriterion:logsumexp_batch(x)
   -- Input
   --   x:  B x N or B x N x N
 
@@ -296,7 +297,7 @@ function SentenceNLLCriterion:updateOutput(input, target)
 
   local loss = 0.0
 
-  function _updateOutput_batch()
+  function SentenceNLLCriterion:_updateOutput_batch()
     -- OpenNMT mini batches are padded to the left of source sequences
     local isOnMask = self.cache_isOnMask:resize(B,T):fill(1)
     local isA0Mask = self.cache_isA0Mask:resize(B,T):zero()
@@ -352,15 +353,15 @@ function SentenceNLLCriterion:updateOutput(input, target)
                        nn.utils.addSingletonDimension(delta[{{},{},t-1}],3):expand(B,N,N)
                      ):cmul(nn.utils.addSingletonDimension(nn.utils.addSingletonDimension(isAMask[{{},t}],2),3):expand(B,N,N)) -- B x N x N
 
-        delta[{{},{},t}]:add(logsumexp_batch(delta_tmp)) -- B x N
+        delta[{{},{},t}]:add(self:logsumexp_batch(delta_tmp)) -- B x N
       end
     end
 
-    logLiks:add(refScores, -logsumexp_batch(delta[{{},{},T}]))
+    logLiks:add(refScores, -self:logsumexp_batch(delta[{{},{},T}]))
     loss = -logLiks:sum()
   end
 
-  function _updateOutput_loop()
+  function SentenceNLLCriterion:_updateOutput_loop()
     for b = 1, B do
 
       local delta = self.cache_delta[b]
@@ -372,9 +373,9 @@ function SentenceNLLCriterion:updateOutput(input, target)
       end
 
       -- init state
-      local t = 1 + tOffset
-      local referenceScore = self.A0[Y[b][t]] + F[b][Y[b][t]][t]
-      delta[{{},t}]:add(self.cache_A0_dtype, F[{b,{},t}])
+      local t_1 = 1 + tOffset
+      local referenceScore = self.A0[Y[b][t_1]] + F[b][Y[b][t_1]][t_1]
+      delta[{{},t_1}]:add(self.cache_A0_dtype, F[{b,{},t_1}])
 
       -- fwd transition recursion
       for t = 2 + tOffset, T do
@@ -384,16 +385,16 @@ function SentenceNLLCriterion:updateOutput(input, target)
         referenceScore = referenceScore + self.A[Y_t_1][Y_t] + F[b][Y_t][t]
 
         self.cache_delta_tmp:add(self.cache_A_dtype, nn.utils.addSingletonDimension(delta[{{},t-1}],2):expand(N,N))
-        delta[{{},t}]:add(F[{b,{},t}], logsumexp(self.cache_delta_tmp))
+        delta[{{},t}]:add(F[{b,{},t}], self:logsumexp(self.cache_delta_tmp))
       end
 
-      local loglik = referenceScore - logsumexp(delta[{{},T}])
+      local loglik = referenceScore - self:logsumexp(delta[{{},T}])
       loss = loss - loglik
     end
   end
 
-  _updateOutput_batch()
---  _updateOutput_loop()
+  self:_updateOutput_batch()
+--  self:_updateOutput_loop()
 
   return loss
 end
@@ -411,7 +412,7 @@ function SentenceNLLCriterion:updateGradInput(input, target)
   local dA_sum = self.cache_dA_sum:zero()
   local dA0_sum = self.cache_dA0_sum:zero()
 
-  function _updateGradInput_batch()
+  function SentenceNLLCriterion:_updateGradInput_batch()
 
     local delta = self.cache_delta    --  B x N x T; cached calculations from fwd path
 
@@ -476,7 +477,7 @@ function SentenceNLLCriterion:updateGradInput(input, target)
     dA0_sum:add(dA0:sum(1):squeeze(1))
   end
 
-  function _updateGradInput_loop()
+  function SentenceNLLCriterion:_updateGradInput_loop()
     local A_dtype = self.cache_A_dtype
 
     for b = 1, B do
@@ -535,8 +536,8 @@ function SentenceNLLCriterion:updateGradInput(input, target)
     end
   end
 
---  _updateGradInput_loop()
-  _updateGradInput_batch()
+--  self:_updateGradInput_loop()
+  self:_updateGradInput_batch()
 
   self.dA:add(onmt.utils.Cuda.convert(dA_sum/B))
   self.dA0:add(onmt.utils.Cuda.convert(dA0_sum/B))

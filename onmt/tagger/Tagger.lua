@@ -230,7 +230,7 @@ end
 function Tagger:computeLosses(src, tgt)
   local losses = {}
   for b=1,#src do
-    local data, ignored = self:buildGoldData({src[b]}, {tgt[b]})
+    local data, _ = self:buildGoldData({src[b]}, {tgt[b]})
     local batch = onmt.utils.Cuda.convert(data:getBatch())
     local loss = self.model:forwardComputeLoss(batch)
     table.insert(losses, loss)
