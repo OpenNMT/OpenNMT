@@ -283,4 +283,8 @@ function Factory.buildAttention(args)
   end
 end
 
+function Factory.loadSentenceNLLCriterion(pretrained)
+  return onmt.SentenceNLLCriterion.load(pretrained)
+end
+
 return Factory

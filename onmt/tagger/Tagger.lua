@@ -61,6 +61,20 @@ function Tagger:buildInput(tokens)
   return data
 end
 
+function Tagger:buildInputGold(tokens)
+  local data = {}
+
+  local words, features = onmt.utils.Features.extract(tokens)
+
+  data.words = words
+
+  if #features > 0 then
+    data.features = features
+  end
+
+  return data
+end
+
 function Tagger:buildOutput(data)
   return table.concat(onmt.utils.Features.annotate(data.words, data.features), ' ')
 end
@@ -97,6 +111,57 @@ function Tagger:buildData(src)
   return onmt.data.Dataset.new(srcData), ignored, indexMap
 end
 
+function Tagger:buildGoldData(src, tgt)
+  local srcData = {}
+  srcData.words = {}
+  srcData.features = {}
+
+  local tgtData = {}
+  tgtData.words = {}
+  tgtData.features = {}
+
+  local ignored = {}
+  local indexMap = {}
+  local index = 1
+
+  for b = 1, #src do
+    if (src[b].words and #src[b].words == 0) or (tgt[b].words and #tgt[b].words == 0) then
+      table.insert(ignored, b)
+    else
+      indexMap[index] = b
+      index = index + 1
+
+      if self.dicts.src then
+        table.insert(srcData.words,
+          self.dicts.src.words:convertToIdx(src[b].words, onmt.Constants.UNK_WORD))
+        if #self.dicts.src.features > 0 then
+          table.insert(srcData.features,
+            onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
+        end
+      else
+        table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
+      end
+
+      if self.dicts.tgt then
+        table.insert(tgtData.words,
+          self.dicts.tgt.words:convertToIdx(tgt[b].words,
+            onmt.Constants.UNK_WORD,
+            onmt.Constants.BOS_WORD,
+            onmt.Constants.EOS_WORD))
+
+        if #self.dicts.tgt.features > 0 then
+          table.insert(tgtData.features,
+            onmt.utils.Features.generateTarget(self.dicts.tgt.features, tgt[b].features))
+        end
+      else
+        table.insert(tgtData.words,onmt.utils.Cuda.convert(tgt[b].vectors))
+      end
+    end
+  end
+
+  return onmt.data.Dataset.new(srcData, tgtData), ignored, indexMap
+end
+
 function Tagger:buildTargetWords(pred)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
@@ -124,40 +189,6 @@ function Tagger:buildTargetFeatures(predFeats)
   return feats
 end
 
-function Tagger:tagBatch(batch)
-  local pred = {}
-  local feats = {}
-  for _ = 1, batch.size do
-    table.insert(pred, {})
-    table.insert(feats, {})
-  end
-  local _, context = self.model.models.encoder:forward(batch)
-
-  for t = 1, batch.sourceLength do
-    local out = self.model.models.generator:forward(context:select(2, t))
-    if type(out[1]) == 'table' then
-      out = out[1]
-    end
-    local _, best = out[1]:max(2)
-    for b = 1, batch.size do
-      if t > batch.sourceLength - batch.sourceSize[b] then
-        pred[b][t - batch.sourceLength + batch.sourceSize[b]] = best[b][1]
-        feats[b][t - batch.sourceLength + batch.sourceSize[b]] = {}
-      end
-    end
-    for j = 2, #out do
-      _, best = out[j]:max(2)
-      for b = 1, batch.size do
-        if t > batch.sourceLength - batch.sourceSize[b] then
-          feats[b][t - batch.sourceLength + batch.sourceSize[b]][j - 1] = best[b][1]
-        end
-      end
-    end
-  end
-
-  return pred, feats
-end
-
 --[[ Tag a batch of source sequences.
 
 Parameters:
@@ -180,7 +211,7 @@ function Tagger:tag(src)
   if data:batchCount() > 0 then
     local batch = onmt.utils.Cuda.convert(data:getBatch())
 
-    local pred, predFeats = self:tagBatch(batch)
+    local pred, predFeats = self.model:tagBatch(batch)
 
     for b = 1, batch.size do
       results[b] = {}
@@ -194,6 +225,17 @@ function Tagger:tag(src)
   end
 
   return results
+end
+
+function Tagger:computeLosses(src, tgt)
+  local losses = {}
+  for b=1,#src do
+    local data, _ = self:buildGoldData({src[b]}, {tgt[b]})
+    local batch = onmt.utils.Cuda.convert(data:getBatch())
+    local loss = self.model:forwardComputeLoss(batch)
+    table.insert(losses, loss)
+  end
+  return losses
 end
 
 return Tagger
