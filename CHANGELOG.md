@@ -5,6 +5,7 @@
 ### New features
 
 * Introduce hook mechanism for additional customization of workflows
+* '-' stands for stdin for inference tools (translate, lm, tag)
 
 ### Fixes and improvements
 
