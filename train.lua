@@ -153,7 +153,7 @@ local function updateVocab(checkpoint, dicts, opt)
                 end
                 m.rindexLinear = linear
               elseif #checkpoint.dicts.tgt.features == #dicts.tgt.features then
-                j = i - 1
+                local j = i - 1
                 if m.net:get(i):get(1).weight:size(1) == checkpoint.dicts.tgt.features[j]:size() then
                   linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt.features[j], dicts.tgt.features[j])
                 end
