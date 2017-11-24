@@ -66,10 +66,10 @@ end
 local function updateTensorByDict(tensor, dict, updatedDict)
 
   local updateTensor = tensor:clone()
-  updateTensor:resize(updatedDict.words:size(), tensor:size(2)):fill(0.00000)
-  for i = 1, updatedDict.words:size() do
-    local label = updatedDict.words.idxToLabel[i]
-    local idx = dict.words.labelToIdx[label]
+  updateTensor:resize(updatedDict:size(), tensor:size(2)):fill(0.00000)
+  for i = 1, updatedDict:size() do
+    local label = updatedDict.idxToLabel[i]
+    local idx = dict.labelToIdx[label]
     -- Copy a word's vector if it exists in the two dictionaries
     if idx ~= nil then
       updateTensor[{ i,{} }] = tensor[{ idx,{} }]
@@ -118,10 +118,10 @@ local function updateVocab(checkpoint, dicts, opt)
   encoder:apply(function(m)
       if torch.type(m) == "onmt.WordEmbedding" then
         if m.net.weight:size(1) == checkpoint.dicts.src.words:size() then
-          m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.src, dicts.src)
+          m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.src.words, dicts.src.words)
         end
         if m.net.gradWeight:size(1) == checkpoint.dicts.src.words:size() then
-          m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.src, dicts.src)
+          m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.src.words, dicts.src.words)
         end
         return
       end
@@ -131,27 +131,37 @@ local function updateVocab(checkpoint, dicts, opt)
     decoder:apply(function(m)
         if torch.type(m) == "onmt.WordEmbedding" then
           if m.net.weight:size(1) == checkpoint.dicts.tgt.words:size() then
-            m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.tgt, dicts.tgt)
+            m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.tgt.words, dicts.tgt.words)
           end
           if m.net.gradWeight:size(1) == checkpoint.dicts.tgt.words:size() then
-            m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.tgt, dicts.tgt)
+            m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.tgt.words, dicts.tgt.words)
           end
           return
         elseif torch.type(m) == "onmt.Generator" then
           local generator = nn.ConcatTable()
           local sizes = onmt.Factory.getOutputSizes(dicts.tgt)
+
           for i = 1, #sizes do
 
               local linear = nn.Linear(opt.rnn_size, sizes[i])
-              if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
-                linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt, dicts.tgt)
-              end
-              if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
-                linear.gradWeight = updateTensorByDict(m.rindexLinear.gradWeight, checkpoint.dicts.tgt, dicts.tgt)
-              end
               if i == 1 then
+                if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
+                  linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt.words, dicts.tgt.words)
+                end
+                if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
+                  linear.gradWeight = updateTensorByDict(m.rindexLinear.gradWeight, checkpoint.dicts.tgt.words, dicts.tgt.words)
+                end
                 m.rindexLinear = linear
+              elseif #checkpoint.dicts.tgt.features == #dicts.tgt.features then
+                j = i - 1
+                if m.net:get(i):get(1).weight:size(1) == checkpoint.dicts.tgt.features[j]:size() then
+                  linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt.features[j], dicts.tgt.features[j])
+                end
+                if m.net:get(i):get(1).weight:size(1) == checkpoint.dicts.tgt.features[j]:size() then
+                  linear.gradWeight = updateTensorByDict(m.rindexLinear.gradWeight, checkpoint.dicts.tgt.features[j], dicts.tgt.features[j])
+                end
               end
+
               generator:add(nn.Sequential()
                               :add(linear)
                               :add(nn.LogSoftMax()))
