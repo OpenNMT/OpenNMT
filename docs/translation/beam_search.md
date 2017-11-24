@@ -53,6 +53,15 @@ To activate the language model, simply use `-lm_model lm.t7`.
 !!! warning "Warning"
     The language model cannot use bidirectional RNN and needs to share the same vocabulary (tokens and features) than the translation model.
 
+## Decoding with lexical constraints
+
+Beam search can be constrained to produce translations from a phrase table in its output, whenever corresponding source tokens are found on the input side.
+The implementation is based on the Grid Beam Search approach described in [Hokamp and Liu (2017)](../references.md#GBS).
+For the moment, only simple one-token constraints are accepted.
+
+To activate lexical constraints, use `-lexical_constraints` option together with `-phrase_table` to specify the list of constraints.
+The `-limit_lexical_constraints` option may be used to produce each constraint translation token only as many times as the correspoding source token is found in the input.
+
 ## Output attention to a file
 
 The option `-save_attention FILE` can be used to save attention state to a file during translation. The format of the file is as following (compatible with NEMATUS):

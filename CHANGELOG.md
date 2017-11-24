@@ -2,6 +2,29 @@
 
 ### Breaking changes
 
+### New features
+
+* Sentence-level negative log-likelihood criterion for sequence tagging
+* '-' stands for stdin for inference tools (translate, lm, tag)
+
+### Fixes and improvements
+
+* Fix empty translation returned by the REST translation server
+* Fix random split of protected sequences by BPE (#441)
+
+## [v0.9.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.1) (2017-11-16)
+
+### Fixes and improvements
+
+* Fix missing normalization during translation
+* Fix normalization when the command contains pipes
+* Fix incorrect TER normalization (#424)
+* Fix error when the file to translate contains empty lines
+
+## [v0.9.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.0) (2017-11-07)
+
+### Breaking changes
+
 * Learning rate is also decayed when using Adam
 * Fix some wrong tokenization rules (punctuation-numbers)
 * `-report_every` option is renamed to `-report_progress_every`
@@ -14,6 +37,7 @@
 * Dynamic dataset to train on large and raw training data repository
 * Convolutional encoder
 * Shallow fusion of language model in decoder
+* Lexically constrained beam search
 * TER validation metric
 * Protection blocks for tokenization - and implement placeholder
 * Hook to call external normalization
@@ -24,6 +48,7 @@
 * Translation option to save alignment history
 * Translation translation option to mark replaced tokens with `｟unk:xxxxx｠`
 * Tokenization option to split numbers on each digit
+* Multi-model rest server using yaml config file
 
 ### Fixes and improvements
 

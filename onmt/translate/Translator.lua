@@ -44,6 +44,14 @@ local options = {
     '-replace_unk_tagged', false,
     [[The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.]]},
   {
+    '-lexical_constraints', false,
+    [[Force the beam search to apply the translations from the phrase table.]]
+  },
+  {
+    '-limit_lexical_constraints', false,
+    [[Prevents producing each lexical constraint more than required.]]
+  },
+  {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
     {
@@ -145,6 +153,7 @@ function Translator:__init(args, model, dicts)
   self.model:evaluate()
   onmt.utils.Cuda.convert(self.model.models)
 
+  -- TODO : extend phrase table to phrases with several words
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
@@ -219,6 +228,7 @@ function Translator:buildData(src, gold)
   local srcData = {}
   srcData.words = {}
   srcData.features = {}
+  srcData.constraints = {}
 
   local goldData
   if gold then
@@ -246,6 +256,22 @@ function Translator:buildData(src, gold)
           table.insert(srcData.features,
                        onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
         end
+
+
+	if self.phraseTable and self.args.lexical_constraints then
+	  local c = {}
+	  for _,w in pairs(src[b].words) do
+	    if (self.phraseTable:contains(w)) then
+	      -- TODO : deal with phrases and source words
+	      local tgt = self.phraseTable:lookup(w)
+	      if (self.dicts.tgt.words:lookup(tgt)) then
+	        table.insert(c, tgt)
+	      end
+	    end
+	  end
+	  table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
+	end
+
       else
         table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
       end
@@ -354,6 +380,7 @@ function Translator:translateBatch(batch)
                                                       context,
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
+                                                      self.args.limit_lexical_constraints,
                                                       decInitStates,
                                                       self.lm and self.lm.model.models,
                                                       lmStates, lmContext, self.args.lm_weight,

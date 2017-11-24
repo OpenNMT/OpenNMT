@@ -645,12 +645,12 @@ end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v), 'the file must exist'
+  return v == '-' or path.exists(v), 'the file must exist'
 end
 
 -- Check non set or if the corresponding file exists.
 function ExtendedCmdLine.fileNullOrExists(v)
-  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file must exist'
+  return v == '' or v == '-' or ExtendedCmdLine.fileExists(v), 'if set, the file must exist'
 end
 
 -- Check it is a directory and some file exists

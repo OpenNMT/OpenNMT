@@ -59,6 +59,12 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
 
   -- Initialize the beam.
   beams[1] = self.advancer:initBeam()
+
+  -- If we use lexical constraints, we need as many beams as the number of used constraints
+  if beams[1]:getState()[11] then
+    self.beamSize = self.beamSize * (beams[1]:getState()[11]:size(2)+1)
+  end
+
   local remaining = beams[1]:getRemaining()
   if beams[1]:getTokens()[1]:size(1) ~= remaining * beamSize then
     beams[1]:_replicate(self.beamSize)
@@ -71,8 +77,8 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
     -- Expand beams by all possible tokens and return the scores.
     local scores = self.advancer:expand(beams[t])
 
-    -- Find k best next beams (maintained by BeamSearcher).
-    self:_findKBest(beams, scores)
+    -- Find next best tokens and create a new beam (maintained by BeamSearcher).
+    self:_makeNewBeam(beams, scores)
 
     -- Determine which hypotheses are complete.
     local completed = self.advancer:isComplete(beams[t + 1])
@@ -91,8 +97,8 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   return finished, histories
 end
 
--- Find the top beamSize hypotheses (satisfying filters).
-function BeamSearcher:_findKBest(beams, scores)
+-- Generate kBest tokens based on top scores.
+function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expandedNormScores)
 
   local function topk(tensor, ...)
     if torch.typename(tensor) == 'torch.CudaHalfTensor' then
@@ -102,11 +108,9 @@ function BeamSearcher:_findKBest(beams, scores)
   end
 
   local t = #beams
-  local vocabSize = scores:size(2)
-  local expandedScores, expandedNormScores = beams[t]:_expandScores(scores, self.beamSize)
 
-  -- Find top beamSize * preFilterFactor hypotheses.
-  local considered = self.beamSize * self.preFilterFactor
+  -- Find top kBest * preFilterFactor hypotheses.
+  local considered = kBest * self.preFilterFactor
   local consideredNormScores, consideredIds = topk(expandedNormScores, considered, 2, true, true)
   local consideredScores = expandedScores:gather(2, consideredIds)
 
@@ -127,30 +131,79 @@ function BeamSearcher:_findKBest(beams, scores)
     self.advancer.dicts.subdict:fullIdx(consideredToken)
   end
 
+  -- TODO : do the filtering without creating a new beam ?
   local newBeam = beams[t]:_nextBeam(consideredToken, consideredScores,
                                     consideredBackPointer, self.beamSize)
 
   -- Prune hypotheses if necessary.
-  local pruned = self.advancer:filter(newBeam)
+  local pruned = self.advancer:filter(newBeam,considered)
   if pruned and pruned:any() then
     consideredScores:view(-1):maskedFill(pruned, -math.huge)
     consideredNormScores:view(-1):maskedFill(pruned, -math.huge)
   end
 
-  -- Find top beamSize hypotheses.
-  if ((not pruned) or (not pruned:any())) and (self.preFilterFactor == 1) then
-    beams[t + 1] = newBeam
-  else
-    local _, kBestIds = topk(consideredNormScores, self.beamSize, 2, true, true)
-    local kBestScores = consideredScores:gather(2, kBestIds)
-    local backPointer = consideredBackPointer:gather(2, kBestIds)
-    local token = consideredToken
+  -- Find top kBest hypotheses.
+  if (pruned and pruned:any()) or self.preFilterFactor ~= 1 then
+    local _, kBestIds = topk(consideredNormScores, kBest, 2, true, true)
+    consideredScores = consideredScores:gather(2, kBestIds)
+    consideredBackPointer = consideredBackPointer:gather(2, kBestIds)
+
+    consideredToken = consideredToken
       :viewAs(consideredIds)
       :gather(2, kBestIds)
       :view(-1)
-    newBeam = beams[t]:_nextBeam(token, kBestScores, backPointer, self.beamSize)
-    beams[t + 1] = newBeam
   end
+
+  return consideredScores, consideredBackPointer, consideredToken
+
+end
+
+-- Find the top beamSize hypotheses (satisfying filters).
+function BeamSearcher:_makeNewBeam(beams, scores)
+
+  local t = #beams
+  local vocabSize = scores:size(2)
+  local batchSize = beams[t]:getRemaining()
+
+  local expandedScores, expandedNormScores = beams[t]:_expandScores(scores, self.beamSize)
+
+  local newBeamScores = torch.Tensor()
+  local newBeamBackPointer = torch.Tensor()
+  local newBeamToken = torch.Tensor()
+
+  local usedConstraintNum, constraintNum = beams[t]:_expandUsedConstraints(self.beamSize, vocabSize)
+
+  local maskedScores, maskedNormScores
+  if usedConstraintNum then
+    maskedScores  = expandedScores:clone()
+    maskedNormScores = expandedNormScores:clone()
+  else
+    maskedScores = expandedScores
+    maskedNormScores = expandedNormScores
+  end
+
+  -- for each possible number of used constraints, get kbest scores and create a part of the new beam
+  for i = 0, constraintNum do
+
+    if usedConstraintNum then
+      -- mask scores for all other number of used constraints
+      maskedScores:copy(expandedScores)
+      maskedNormScores:copy(expandedNormScores)
+
+      maskedScores:maskedFill(usedConstraintNum:ne(i), -math.huge)
+      maskedNormScores:maskedFill(usedConstraintNum:ne(i), -math.huge)
+    end
+
+    -- get kbest scores
+    local consideredScores, consideredBackPointer, consideredToken = self:_findKBest(beams, vocabSize, self.beamSize/(constraintNum+1), maskedScores, maskedNormScores)
+
+    newBeamScores = newBeamScores:typeAs(consideredScores):cat(consideredScores, 2)
+    newBeamBackPointer = newBeamBackPointer:typeAs(consideredBackPointer):cat(consideredBackPointer,2)
+    newBeamToken = newBeamToken:typeAs(consideredToken):cat(consideredToken:view(batchSize,-1),2)
+  end
+
+  local newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScores, newBeamBackPointer, self.beamSize, true)
+  beams[t + 1] = newBeam
 
   -- Cleanup unused memory.
   beams[t]:_cleanUp(self.advancer.keptStateIndexes)

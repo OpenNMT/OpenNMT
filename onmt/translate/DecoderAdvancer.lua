@@ -12,13 +12,14 @@ Parameters:
   * `context` - encoder output (batch x n x rnnSize).
   * `max_sent_length` - optional, maximum output sentence length.
   * `max_num_unks` - optional, maximum number of UNKs.
+  * `limit_lexical_constraints` - optional, prevents producing each lexical constraint more than required.
   * `decStates` - optional, initial decoder states.
   * `lmModel` - optional, the language model object.
   * `lmStates`, `lmContext` - option initial language model states and context - initialized with BOS
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates,
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, limit_lexical_constraints, decStates,
                                 lmModel, lmStates, lmContext, lm_weight,
                                 dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
@@ -26,6 +27,7 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.context = context
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
+  self.limit_lexical_constraints = limit_lexical_constraints or false
   self.length_norm = length_norm or 0.0
   self.coverage_norm = coverage_norm or 0.0
   self.eos_norm = eos_norm or 0.0
@@ -72,8 +74,8 @@ function DecoderAdvancer:initBeam()
   end
 
   -- Define state to be { decoder states, decoder output, context,
-  -- attentions, features, sourceSizes, step, cumulated attention probablities, lmStates, lmContext }.
-  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba, self.lmStates, self.lmContext }
+  -- attentions, features, sourceSizes, step, cumulated attention probablities, lmStates, lmContext, lexical constraints, lexical constraintSizes }.
+  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba, self.lmStates, self.lmContext, self.batch.constraints, self.batch.constraintSizes }
   local params = {}
   params.length_norm = self.length_norm
   params.coverage_norm = self.coverage_norm
@@ -90,8 +92,9 @@ Parameters:
 ]]
 function DecoderAdvancer:update(beam)
   local state = beam:getState()
-  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba, lmStates, lmContext
-    = table.unpack(state, 1, 10)
+  local decStates, decOut, context, _, features, sourceSizes, t, cumAttnProba, lmStates, lmContext, constraints, constraintSizes
+    = table.unpack(state, 1, 12)
+
   local tokens = beam:getTokens()
   local token = tokens[#tokens]
   local inputs
@@ -125,7 +128,7 @@ function DecoderAdvancer:update(beam)
     cumAttnProba = cumAttnProba:add(attention)
   end
 
-  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba, lmStates, lmContext}
+  local nextState = {decStates, decOut, context, attention, nil, sourceSizes, t, cumAttnProba, lmStates, lmContext, constraints, constraintSizes}
   beam:setState(nextState)
 end
 
@@ -194,7 +197,7 @@ Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
   which beams shall be pruned.
 
 ]]
-function DecoderAdvancer:filter(beam)
+function DecoderAdvancer:filter(beam,considered)
   local tokens = beam:getTokens()
   local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
   for t = 1, #tokens do
@@ -204,6 +207,36 @@ function DecoderAdvancer:filter(beam)
 
   -- Disallow too many UNKs
   local pruned = numUnks:gt(self.max_num_unks)
+
+  -- In case we use lexical constraints.
+  if beam:getState()[11] then
+
+    -- Disallow hypotheses that did not consume all of the constraints.
+    local finished = tokens[#tokens]:eq(onmt.Constants.EOS)
+    local cNum = beam:getState()[11]:ne(0):sum(2)
+    local unfinishedConstraints = cNum:gt(0)
+    pruned:add(torch.cmul(unfinishedConstraints, finished))
+
+    -- Do not produce each constraint more than allowed.
+    if self.limit_lexical_constraints then
+
+      local tok = tokens[#tokens]:view(-1,considered)
+      local availableConstraint = beam:getState()[11]:view(-1, considered, beam:getState()[11]:size(2))
+
+      local isConstraint = tokens[#tokens]:clone():fill(0)
+      local constraintNotAvailable = tokens[#tokens]:clone():fill(0)
+
+      for b=1,tok:size(1) do
+        local ob = beam:_getOrigId(b)
+        for t=1,tok:size(2) do
+          isConstraint:viewAs(tok)[b][t] = self.batch.constraints[ob]:eq(tok[b][t]):sum()
+          constraintNotAvailable:viewAs(tok)[b][t] = availableConstraint[b][t]:ne(tok[b][t]):min()
+	end
+      end
+
+      pruned:add(torch.cmul(constraintNotAvailable, isConstraint):typeAs(pruned))
+    end
+  end
 
   -- Disallow empty hypotheses
   if #tokens == 2 then

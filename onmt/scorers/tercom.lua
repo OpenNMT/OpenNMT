@@ -466,29 +466,32 @@ local function score_sent(id, HYP, REFS)
 
   rlen = rlen / #REFS
 
-  return best_score/rlen, best_path, best_ref, best_hyp, best_allshift
+  return best_score/rlen, best_path, best_ref, best_hyp, best_allshift, rlen
 end
 
 local function calculate_ter(cand, refs)
   local score = 0
-  local nb = 0
-  local score_breakdown = torch.Tensor(5)
+  local num_tok = 0
+  local score_breakdown = torch.Tensor(5):zero()
   for k,_ in ipairs(cand) do
-    local best_score, best_path, _, _, best_allshift =
+    local best_score, best_path, _, _, best_allshift, rlen =
               score_sent(k, cand, refs)
 
-    score = score + best_score
-    score_breakdown:add(get_score_breakdown(best_path, best_allshift))
+    -- rlen is the average length of the reference (if there are multiple references)
+    num_tok = num_tok + rlen
 
-    nb = nb + 1
+    -- document level score are based on the total number of tokens
+    score = score + best_score * rlen
+    local gsb = torch.Tensor(get_score_breakdown(best_path, best_allshift))
+    score_breakdown:add(gsb * rlen)
   end
-  score_breakdown:div(nb)
+  score_breakdown:div(num_tok)
   local score_detail =
       string.format("TER = %.2f (Ins %.1f, Del %.1f, Sub %.1f, Shft %.1f, WdSh %.1f)",
-          score*100/nb, score_breakdown[1], score_breakdown[2], score_breakdown[3],
+          score*100/num_tok, score_breakdown[1], score_breakdown[2], score_breakdown[3],
           score_breakdown[4], score_breakdown[5]
       )
-  return score/nb, score_detail
+  return score/num_tok, score_detail
 end
 
 return calculate_ter

@@ -820,7 +820,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         end
 
         _G.logger:info(' * ['..__threadid..'] file \'%s\': %d total, %d drawn, %d kept - unknown words: %s',
-                          _df.fname, _df[1], kept, #vectors[1], msgPrune)
+                          _df.fname or "n/a", _df[1], kept, #vectors[1], msgPrune)
 
         gCount = gCount + count
         gIgnored = gIgnored + ignored
