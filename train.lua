@@ -119,9 +119,17 @@ local function updateVocab(checkpoint, dicts, opt)
       if torch.type(m) == "onmt.WordEmbedding" then
         if m.net.weight:size(1) == checkpoint.dicts.src.words:size() then
           m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.src.words, dicts.src.words)
-        end
-        if m.net.gradWeight:size(1) == checkpoint.dicts.src.words:size() then
           m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.src.words, dicts.src.words)
+        end
+        return
+      elseif torch.type(m) == "onmt.FeaturesEmbedding" then
+        local tables = m.net:findModules("nn.LookupTable")
+        for i = 1, #dicts.src.features do
+          local table = tables[i]
+          if tables[i].weight:size(1) == checkpoint.dicts.src.features[i]:size() then
+            tables[i].weight = updateTensorByDict(tables[i].weight, checkpoint.dicts.src.features[i], dicts.src.features[i])
+            tables[i].gradWeight = updateTensorByDict(tables[i].gradWeight, checkpoint.dicts.src.features[i], dicts.src.features[i])
+          end
         end
         return
       end
@@ -132,36 +140,37 @@ local function updateVocab(checkpoint, dicts, opt)
         if torch.type(m) == "onmt.WordEmbedding" then
           if m.net.weight:size(1) == checkpoint.dicts.tgt.words:size() then
             m.net.weight = updateTensorByDict(m.net.weight, checkpoint.dicts.tgt.words, dicts.tgt.words)
-          end
-          if m.net.gradWeight:size(1) == checkpoint.dicts.tgt.words:size() then
             m.net.gradWeight = updateTensorByDict(m.net.gradWeight, checkpoint.dicts.tgt.words, dicts.tgt.words)
+          end
+          return
+        elseif torch.type(m) == "onmt.FeaturesEmbedding" then
+          local tables = m.net:findModules("nn.LookupTable")
+          for i = 1, #dicts.tgt.features do
+            local table = tables[i]
+            if tables[i].weight:size(1) == checkpoint.dicts.tgt.features[i]:size() then
+              tables[i].weight = updateTensorByDict(tables[i].weight, checkpoint.dicts.tgt.features[i], dicts.tgt.features[i])
+              tables[i].gradWeight = updateTensorByDict(tables[i].gradWeight, checkpoint.dicts.tgt.features[i], dicts.tgt.features[i])
+            end
           end
           return
         elseif torch.type(m) == "onmt.Generator" then
           local generator = nn.ConcatTable()
           local sizes = onmt.Factory.getOutputSizes(dicts.tgt)
-
           for i = 1, #sizes do
-
               local linear = nn.Linear(opt.rnn_size, sizes[i])
               if i == 1 then
                 if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
                   linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt.words, dicts.tgt.words)
-                end
-                if m.rindexLinear.weight:size(1) == checkpoint.dicts.tgt.words:size() then
                   linear.gradWeight = updateTensorByDict(m.rindexLinear.gradWeight, checkpoint.dicts.tgt.words, dicts.tgt.words)
                 end
                 m.rindexLinear = linear
               elseif #checkpoint.dicts.tgt.features == #dicts.tgt.features then
                 local j = i - 1
                 if m.net:get(i):get(1).weight:size(1) == checkpoint.dicts.tgt.features[j]:size() then
-                  linear.weight = updateTensorByDict(m.rindexLinear.weight, checkpoint.dicts.tgt.features[j], dicts.tgt.features[j])
-                end
-                if m.net:get(i):get(1).weight:size(1) == checkpoint.dicts.tgt.features[j]:size() then
-                  linear.gradWeight = updateTensorByDict(m.rindexLinear.gradWeight, checkpoint.dicts.tgt.features[j], dicts.tgt.features[j])
+                  linear.weight = updateTensorByDict(m.net:get(i):get(1).weight, checkpoint.dicts.tgt.features[j], dicts.tgt.features[j])
+                  linear.gradWeight = updateTensorByDict(m.net:get(i):get(1).weight, checkpoint.dicts.tgt.features[j], dicts.tgt.features[j])
                 end
               end
-
               generator:add(nn.Sequential()
                               :add(linear)
                               :add(nn.LogSoftMax()))
