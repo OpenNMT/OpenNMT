@@ -125,7 +125,6 @@ local function updateVocab(checkpoint, dicts, opt)
       elseif torch.type(m) == "onmt.FeaturesEmbedding" then
         local tables = m.net:findModules("nn.LookupTable")
         for i = 1, #dicts.src.features do
-          local table = tables[i]
           if tables[i].weight:size(1) == checkpoint.dicts.src.features[i]:size() then
             tables[i].weight = updateTensorByDict(tables[i].weight, checkpoint.dicts.src.features[i], dicts.src.features[i])
             tables[i].gradWeight = updateTensorByDict(tables[i].gradWeight, checkpoint.dicts.src.features[i], dicts.src.features[i])
@@ -146,7 +145,6 @@ local function updateVocab(checkpoint, dicts, opt)
         elseif torch.type(m) == "onmt.FeaturesEmbedding" then
           local tables = m.net:findModules("nn.LookupTable")
           for i = 1, #dicts.tgt.features do
-            local table = tables[i]
             if tables[i].weight:size(1) == checkpoint.dicts.tgt.features[i]:size() then
               tables[i].weight = updateTensorByDict(tables[i].weight, checkpoint.dicts.tgt.features[i], dicts.tgt.features[i])
               tables[i].gradWeight = updateTensorByDict(tables[i].gradWeight, checkpoint.dicts.tgt.features[i], dicts.tgt.features[i])
