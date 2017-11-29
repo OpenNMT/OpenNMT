@@ -5,11 +5,13 @@
 ### New features
 
 * Introduce hook mechanism for additional customization of workflows
+* Sentence-level negative log-likelihood criterion for sequence tagging
 * '-' stands for stdin for inference tools (translate, lm, tag)
 
 ### Fixes and improvements
 
 * Fix empty translation returned by the REST translation server
+* Fix random split of protected sequences by BPE (#441)
 
 ## [v0.9.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.1) (2017-11-16)
 
