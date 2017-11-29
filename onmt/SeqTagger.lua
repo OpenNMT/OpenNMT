@@ -49,6 +49,16 @@ local options = {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0
     }
+  },
+  {
+    '-loglikelihood', 'word',
+    [[Specifies the type of loglikelihood of the tagger model;
+    'word' indicates tags are predicted at the word-level, and
+    'sentence' indicates tagging process is treated as a markov chain]],
+    {
+      enum = {'word', 'sentence'},
+      structural = 1
+    }
   }
 }
 
@@ -70,7 +80,18 @@ function SeqTagger:__init(args, dicts)
 
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
   self.models.generator = onmt.Factory.buildGenerator(args, dicts.tgt)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+
+  onmt.utils.Error.assert(args.loglikelihood == 'word' or args.loglikelihood == 'sentence',
+    'Invalid loglikelihood type of SeqTagger `%s\'', args.loglikelihood)
+
+  self.loglikelihood = args.loglikelihood
+
+  if self.loglikelihood == 'word' then
+    self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  elseif self.loglikelihood == 'sentence' then
+    self.criterion = onmt.SentenceNLLCriterion(args, onmt.Factory.getOutputSizes(dicts.tgt))
+    self.models.criterion = self.criterion -- criterion is model parameter
+  end
 end
 
 function SeqTagger.load(args, models, dicts)
@@ -81,7 +102,27 @@ function SeqTagger.load(args, models, dicts)
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.generator = onmt.Factory.loadGenerator(models.generator)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+
+  onmt.utils.Error.assert(args.loglikelihood == 'word' or args.loglikelihood == 'sentence',
+                                  'Invalid loglikelihood type of SeqTagger `%s\'', args.loglikelihood)
+
+  if args.loglikelihood == 'word' then
+    self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+    self.loglikelihood = 'word'
+  elseif args.loglikelihood == 'sentence' then
+    if not models.criterion then -- loading pre-trained word model to further train sentence model
+      _G.logger:info('Creating a new SentenceNLLCriterion')
+      self.criterion = onmt.SentenceNLLCriterion(args, onmt.Factory.getOutputSizes(dicts.tgt))
+      local p, g = self.criterion:getParameters()
+      p:uniform(-args.param_init, args.param_init)
+      g:uniform(-args.param_init, args.param_init)
+      self.criterion:postParametersInitialization()
+    else
+      self.criterion = onmt.Factory.loadSentenceNLLCriterion(models.criterion)
+    end
+    self.models.criterion = self.criterion
+    self.loglikelihood = 'sentence'
+  end
 
   return self
 end
@@ -115,15 +156,28 @@ function SeqTagger:forwardComputeLoss(batch)
 
   local loss = 0
 
-  for t = 1, batch.sourceLength do
-    local genOutputs = self.models.generator:forward(context:select(2, t))
+  if self.loglikelihood == 'sentence' then
+    local reference = batch.targetOutput:t() -- SeqLen x B  -> B x SeqLen
+    local tagsScoreTable = {}
+    for t = 1, batch.sourceLength do
+      local tagsScore = self.models.generator:forward(context:select(2, t)) -- B x TagSize
+      -- tagsScore is a table
+      tagsScore = nn.utils.addSingletonDimension(tagsScore[1], 3):clone() -- B x TagSize x 1
+      table.insert(tagsScoreTable, tagsScore)
+    end
+    local tagsScores = nn.JoinTable(3):forward(tagsScoreTable)  -- B x TagSize x SeqLen
+    loss = self.models.criterion:forward(tagsScores, reference)
+  else -- 'word'
+    for t = 1, batch.sourceLength do
+      local genOutputs = self.models.generator:forward(context:select(2, t))
 
-    local output = batch:getTargetOutput(t)
+      local output = batch:getTargetOutput(t)
 
-    -- Same format with and without features.
-    if torch.type(output) ~= 'table' then output = { output } end
+      -- Same format with and without features.
+      if torch.type(output) ~= 'table' then output = { output } end
 
-    loss = loss + self.criterion:forward(genOutputs, output)
+      loss = loss + self.criterion:forward(genOutputs, output)
+    end
   end
 
   return loss
@@ -136,28 +190,117 @@ function SeqTagger:trainNetwork(batch)
 
   local gradContexts = context:clone():zero()
 
-  -- For each word of the sentence, generate target.
-  for t = 1, batch.sourceLength do
-    local genOutputs = self.models.generator:forward(context:select(2, t))
+  if self.loglikelihood == 'sentence' then
 
-    local output = batch:getTargetOutput(t)
+    local reference = batch.targetOutput:t() -- SeqLen x B  -> B x SeqLen
+    local B = batch.size
+    local T = batch.sourceLength
 
-    -- Same format with and without features.
-    if torch.type(output) ~= 'table' then output = { output } end
+    local tagsScoreTable = {}
+    for t = 1, T do
+      local tagsScore = self.models.generator:forward(context:select(2, t)) -- B x TagSize
+      -- tagsScore is a table
+      tagsScore = nn.utils.addSingletonDimension(tagsScore[1], 3):clone() -- B x TagSize x 1
+      table.insert(tagsScoreTable, tagsScore)
+    end
+    local tagsScores = nn.JoinTable(3):forward(tagsScoreTable) -- B x TagSize x SeqLen
 
-    loss = loss + self.criterion:forward(genOutputs, output)
+    loss = loss + self.criterion:forward(tagsScores, reference)
 
-    local genGradOutput = self.criterion:backward(genOutputs, output)
-    for j = 1, #genGradOutput do
-      genGradOutput[j]:div(batch.totalSize)
+    local gradCriterion = self.models.criterion:backward(tagsScores, reference) -- B x TagSize x SeqLen
+
+    gradCriterion = torch.div(gradCriterion, B)
+    for t = 1, T do
+      gradContexts:select(2,t):copy(self.models.generator:backward(context:select(2, t), {gradCriterion:select(3,t)}))
     end
 
-    gradContexts[{{}, t}]:copy(self.models.generator:backward(context:select(2, t), genGradOutput))
+  else -- 'word'
+    -- For each word of the sentence, generate target.
+    for t = 1, batch.sourceLength do
+      local genOutputs = self.models.generator:forward(context:select(2, t))
+
+      local output = batch:getTargetOutput(t)
+
+      -- Same format with and without features.
+      if torch.type(output) ~= 'table' then output = { output } end
+
+      loss = loss + self.criterion:forward(genOutputs, output)
+
+      local genGradOutput = self.criterion:backward(genOutputs, output)
+
+      for j = 1, #genGradOutput do
+        genGradOutput[j]:div(batch.totalSize)
+      end
+
+      gradContexts[{{}, t}]:copy(self.models.generator:backward(context:select(2, t), genGradOutput))
+    end
   end
 
   self.models.encoder:backward(batch, nil, gradContexts)
 
   return loss
+end
+
+function SeqTagger:tagBatch(batch)
+  local pred = {}
+  local feats = {}
+
+  for _ = 1, batch.size do
+    table.insert(pred, {})
+    table.insert(feats, {})
+  end
+  local _, context = self.models.encoder:forward(batch)
+
+  if self.loglikelihood == 'sentence' then
+
+    local tagsScoreTable = {}
+    for t = 1, batch.sourceLength do
+      local tagsScore = self.models.generator:forward(context:select(2, t)) -- B x TagSize
+      -- tagsScore is a table
+      tagsScore = nn.utils.addSingletonDimension(tagsScore[1], 3):clone() -- B x TagSize x 1
+      table.insert(tagsScoreTable, tagsScore)
+    end
+    local tagsScores = onmt.utils.Cuda.convert(nn.JoinTable(3):forward(tagsScoreTable))  -- B x TagSize x SeqLen
+
+    -- viterbi search
+    local senPreds = self.criterion:viterbiSearch(tagsScores, batch.sourceSize) -- B x SeqLen (type Long)
+
+    for t = 1, batch.sourceLength do
+      for b = 1, batch.size do
+        -- padded in the beginning
+        if t > batch.sourceLength - batch.sourceSize[b] then
+          pred[b][t - batch.sourceLength + batch.sourceSize[b]] = senPreds[b][t]
+          feats[b][t - batch.sourceLength + batch.sourceSize[b]] = {}
+        end
+      end
+    end
+
+  else -- 'word'
+    for t = 1, batch.sourceLength do
+      local out = self.models.generator:forward(context:select(2, t))
+      if type(out[1]) == 'table' then
+        out = out[1]
+      end
+      local _, best = out[1]:max(2)
+      for b = 1, batch.size do
+        if t > batch.sourceLength - batch.sourceSize[b] then
+          pred[b][t - batch.sourceLength + batch.sourceSize[b]] = best[b][1]
+          feats[b][t - batch.sourceLength + batch.sourceSize[b]] = {}
+        end
+      end
+      for j = 2, #out do
+        _, best = out[j]:max(2)
+        for b = 1, batch.size do
+          if t > batch.sourceLength - batch.sourceSize[b] then
+            feats[b][t - batch.sourceLength + batch.sourceSize[b]][j - 1] = best[b][1]
+          end
+        end
+      end
+    end
+
+  end
+
+  return pred, feats
 end
 
 return SeqTagger

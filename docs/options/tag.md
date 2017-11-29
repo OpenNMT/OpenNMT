@@ -10,6 +10,7 @@
 ## Data options
 
 * `-src <string>` (required)<br/>Source sequences to tag.
+* `-tgt <string>` (default: `''`)<br/>Optional true target sequences.
 * `-output <string>` (default: `pred.txt`)<br/>Output file.
 * `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
 

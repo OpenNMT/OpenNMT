@@ -4,6 +4,7 @@
 
 ### New features
 
+* Sentence-level negative log-likelihood criterion for sequence tagging
 * '-' stands for stdin for inference tools (translate, lm, tag)
 
 ### Fixes and improvements
