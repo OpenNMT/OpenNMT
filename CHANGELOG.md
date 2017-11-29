@@ -11,7 +11,7 @@
 ### Fixes and improvements
 
 * Fix empty translation returned by the REST translation server
-* Fix random split of protected sequences by BPE (#441)
+* Fix random split of protected sequences by BPE (#441) and vocabulary extraction (#444)
 * Fix error when using `-update_vocab` with additional word features
 
 ## [v0.9.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.1) (2017-11-16)
