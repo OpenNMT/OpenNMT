@@ -6,6 +6,10 @@
 
 ### Fixes and improvements
 
+## [v0.9.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.3) (2017-11-30)
+
+### Fixes and improvements
+
 * Fix vocabulary extraction of protected sequences (#444)
 
 ## [v0.9.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.2) (2017-11-27)
