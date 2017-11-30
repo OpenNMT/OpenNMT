@@ -6,6 +6,8 @@
 
 ### Fixes and improvements
 
+* Fix regression when normalizing protected sequences
+
 ## [v0.9.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.3) (2017-11-30)
 
 ### Fixes and improvements
