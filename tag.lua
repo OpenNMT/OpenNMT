@@ -11,6 +11,10 @@ local options = {
     }
   },
   {
+    '-tgt', '',
+    [[Optional true target sequences.]]
+  },
+  {
     '-output', 'pred.txt',
     [[Output file.]]
   },
@@ -44,6 +48,14 @@ local function main()
   local srcBatch = {}
   local srcIdBatch = {}
 
+  local goldReader
+  local goldBatch
+  local withGoldScore = opt.tgt:len() > 0
+  if withGoldScore then
+    goldReader = onmt.utils.FileReader.new(opt.tgt, opt.idx_files)
+    goldBatch = {}
+  end
+
   local outFile = io.open(opt.output, 'w')
 
   local sentId = 1
@@ -59,9 +71,17 @@ local function main()
   while true do
     local srcTokens, srcSeqId = srcReader:next()
 
+    local goldOutputTokens
+    if withGoldScore then
+      goldOutputTokens = goldReader:next()
+    end
+
     if srcTokens ~= nil then
       table.insert(srcBatch, tagger:buildInput(srcTokens))
       table.insert(srcIdBatch, srcSeqId)
+      if withGoldScore then
+        table.insert(goldBatch, tagger:buildInputGold(goldOutputTokens))
+      end
     elseif #srcBatch == 0 then
       break
     end
@@ -72,6 +92,10 @@ local function main()
       end
 
       local results = tagger:tag(srcBatch)
+      local goldScores
+      if withGoldScore then
+        goldScores = tagger:computeLosses(srcBatch, goldBatch)
+      end
 
       if opt.time then
         timer:stop()
@@ -86,6 +110,11 @@ local function main()
             _G.logger:info('SENT %d: %s', sentId, tagger:buildOutput(srcBatch[b]))
           else
             _G.logger:info('FEATS %d: IDX - %s - SIZE %d', sentId, srcIdBatch[b], srcBatch[b].vectors:size(1))
+          end
+
+          if withGoldScore then
+            _G.logger:info('GOLD %d: %s', sentId, tagger:buildOutput(goldBatch[b]))
+            _G.logger:info("GOLD SCORE: %.2f", goldScores[b])
           end
 
           local sentence = tagger:buildOutput(results[b])
@@ -105,6 +134,7 @@ local function main()
 
       batchId = batchId + 1
       srcBatch = {}
+      goldBatch = {}
       collectgarbage()
     end
   end

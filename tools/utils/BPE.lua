@@ -171,7 +171,7 @@ function BPE:segment(tokens, separator)
   local bpeSegment = {}
   for i=1, #tokens do
     local token = tokens[i]
-    if token:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
+    if token:find(separators.ph_marker_open) then
       table.insert(bpeSegment, token)
     else
       local left_sep = false

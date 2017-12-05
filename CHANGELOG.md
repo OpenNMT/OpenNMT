@@ -4,9 +4,30 @@
 
 ### New features
 
+* Sentence-level negative log-likelihood criterion for sequence tagging
+* '-' stands for stdin for inference tools (translate, lm, tag)
+
+### Fixes and improvements
+
+## [v0.9.4](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.4) (2017-11-30)
+
+### Fixes and improvements
+
+* Fix regression when normalizing protected sequences
+
+## [v0.9.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.3) (2017-11-30)
+
+### Fixes and improvements
+
+* Fix vocabulary extraction of protected sequences (#444)
+
+## [v0.9.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.2) (2017-11-27)
+
 ### Fixes and improvements
 
 * Fix empty translation returned by the REST translation server
+* Fix random split of protected sequences by BPE (#441)
+* Fix error when using `-update_vocab` with additional word features
 
 ## [v0.9.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.1) (2017-11-16)
 

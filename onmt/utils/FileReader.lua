@@ -1,7 +1,11 @@
 local FileReader = torch.class("FileReader")
 
 function FileReader:__init(filename, idxSent, featSequence)
-  self.file = assert(io.open(filename, "r"))
+  if filename == '-' then
+    self.file = io.stdin
+  else
+    self.file = assert(io.open(filename, "r"))
+  end
   self.idxSent = idxSent
   self.featSequence = featSequence
 end

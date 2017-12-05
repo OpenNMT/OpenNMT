@@ -75,6 +75,9 @@ end
 function vocabularyTest.placeholder()
   local vocabs = onmt.data.Vocabulary.init('source', testDataDir .. '/text-placeholder.tok', '', { 1000 }, { 1 }, '', noFilter, true)
   tester:assert(vocabs.words:lookup("｟ent_url＃1｠￭") ~= nil)
+  tester:assert(vocabs.words:lookup("￭｟TAB｠￭") ~= nil)
+  tester:assert(vocabs.words:lookup("｟ept_CrossReference＃1｠") ~= nil)
+  tester:assert(vocabs.words:lookup("｟ept_AutoNumber＃1｠￭") ~= nil)
 end
 
 function vocabularyTest.initFeatures()
