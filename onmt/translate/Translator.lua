@@ -265,7 +265,7 @@ function Translator:buildData(src, gold)
         if self.args.placeholder_constraints then
 	  self.args.limit_lexical_constraints = true
           local c = {}
-          for ph,rpl in pairs(src[b].placeholders) do
+          for ph,_ in pairs(src[b].placeholders) do
             if (self.dicts.tgt.words:lookup(ph)) then
               table.insert(c, ph)
             end
