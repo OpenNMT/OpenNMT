@@ -1,5 +1,3 @@
-local path = require('pl.path')
-
 local hc = require('httpclient').new()
 
 local myopt =
@@ -49,5 +47,6 @@ end
 
 return {
   post_tokenize = treetaggerFn,
+  hookName = function() return "treetagger" end,
   declareOpts = declareOptsFn
 }

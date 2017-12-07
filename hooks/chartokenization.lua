@@ -23,7 +23,7 @@ local function mytokenization(opt, line)
     local tokens = {}
     for v, c, _ in unicode.utf8_iter(line) do
       if unicode.isSeparator(v) then
-        table.insert(tokens, '_')
+        table.insert(tokens, '▁')
       else
         table.insert(tokens, c)
       end
@@ -32,7 +32,15 @@ local function mytokenization(opt, line)
   end
 end
 
+local function mydetokenization(line, _)
+  if line:find("▁") then
+    return line:gsub(" ",""):gsub("▁"," ")
+  end
+end
+
 return {
   tokenize = mytokenization,
+  detokenize = mydetokenization,
+  hookName = function() return "chartok" end,
   declareOpts = declareOptsFn
 }

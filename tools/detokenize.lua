@@ -1,8 +1,9 @@
 require('torch')
+require('onmt.init')
 
 local threads = require 'threads'
 
-local cmd = torch.CmdLine()
+local cmd = onmt.utils.ExtendedCmdLine.new('detokenize.lua')
 
 local separators = require('tools.utils.separators')
 
@@ -15,13 +16,20 @@ cmd:option('-joiner', separators.joiner_marker, [[the joiner marker]])
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+
+onmt.utils.HookManager.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
 local pool = threads.Threads(
    opt.nparallel,
-   function()
+   function(id)
+     local HookManager = require('onmt.utils.HookManager')
      _G.separators = require('tools.utils.separators')
      _G.tokenizer = require('tools.utils.tokenizer')
+     _G.hookManager = HookManager.new(opt, "thread "..id)
    end
 )
 pool:specific(true)

@@ -424,7 +424,7 @@ end
 
 function tokenizer.detokenize(line, opt)
 
-  -- if tokenize hook, skip lua tokenization
+  -- if tokenize hook, skip lua detokenization
   local tokens = _G.hookManager:call("detokenize", line, opt)
   if tokens then return tokens end
 

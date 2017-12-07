@@ -8,6 +8,10 @@ local BPE = require ('tools.utils.BPE')
 local cmd = onmt.utils.ExtendedCmdLine.new()
 tokenizer.declareOpts(cmd)
 
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+onmt.utils.HookManager.declareOpts(cmd)
+
 -- check if tokenization of a is b - and if detok is set, if the detokenization results is back to original
 local function testTok(opt, a, b, detok)
   local bpe
@@ -16,7 +20,7 @@ local function testTok(opt, a, b, detok)
   end
 
   local tok = tokenizer.tokenize(opt, a, bpe)
-  tester:eq(table.concat(tok, '◊'), string.gsub(b, ' ', '◊'))
+  tester:eq(table.concat(tok, ' '), string.gsub(b, ' ', ' '))
   if not detok then return end
   tester:assert((tokenizer.detokenize(table.concat(tok, ' '), opt)==a)==detok)
 end
@@ -220,6 +224,19 @@ function tokenizerTest.real()
   }
   for i = 1, #raw do
     testTok(opt, raw[i], tok[i], true)
+  end
+end
+
+function tokenizerTest.hooks()
+  local hookName = _G.hookManager:call("hookName")
+  if hookName == "chartok" then
+    local opt = cmd:parse({'-mode','char'})
+    testTok(opt, "49th meeting Social and human rights questions [14 (g)]",
+                 "4 9 t h ▁ m e e t i n g ▁ S o c i a l ▁ a n d ▁ h u m a n ▁ r i g h t s ▁ q u e s t i o n s ▁ [ 1 4 ▁ ( g ) ]")
+  elseif hookName == "sentencepiece" then
+    local opt = cmd:parse({'-mode','none', '-sentencepiece' ,'hooks/lua-sentencepiece/test/sample.model'})
+    testTok(opt, "une impulsion Berry-Siniora pourraient changer quoi",
+                 "▁un e ▁imp ul s ion ▁B erry - S i nior a ▁po ur ra i ent ▁change r ▁ quoi")
   end
 end
 
