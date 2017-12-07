@@ -9,6 +9,8 @@
 
 ### Fixes and improvements
 
+* Enable constrained beam search for protected sequence
+
 ## [v0.9.4](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.4) (2017-11-30)
 
 ### Fixes and improvements

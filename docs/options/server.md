@@ -23,6 +23,7 @@
 * `-replace_unk_tagged [<boolean>]` (default: `false`)<br/>The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.
 * `-lexical_constraints [<boolean>]` (default: `false`)<br/>Force the beam search to apply the translations from the phrase table.
 * `-limit_lexical_constraints [<boolean>]` (default: `false`)<br/>Prevents producing each lexical constraint more than required.
+* `-placeholder_constraints [<boolean>]` (default: `false`)<br/>Force the beam search to reproduce placeholders in the translation.
 * `-phrase_table <string>` (default: `''`)<br/>Path to source-target dictionary to replace `<unk>` tokens.
 * `-n_best <number>` (default: `1`)<br/>If > 1, it will also output an n-best list of decoded sentences.
 * `-max_num_unks <number>` (default: `inf`)<br/>All sequences with more `<unk>`s than this will be ignored during beam search.
