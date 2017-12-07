@@ -8,7 +8,9 @@ local function norm(t)
       local vt, vtrep
       vt, vtrep = norm(tokt)
       table.insert(v, vt)
-      table.insert(vrep, vtrep)
+      if vtrep then
+        vrep[vt] = vtrep
+      end
     end
     return v, vrep
   end
