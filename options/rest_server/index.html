@@ -28,7 +28,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-0.17.1, mkdocs-material-2.0.2">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.2.1">
     
     
       
@@ -36,11 +36,11 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/application-5b1b46901f.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/application.41c6761c.css">
       
     
     
-      <script src="../../assets/javascripts/modernizr-e826f8942a.js"></script>
+      <script src="../../assets/javascripts/modernizr.1aa3b519.js"></script>
     
     
       
@@ -85,18 +85,18 @@
         <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
       </div>
       <div class="md-flex__cell md-flex__cell--stretch">
-        <span class="md-flex__ellipsis md-header-nav__title">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
           
             
-              
-                <span class="md-header-nav__parent">
-                  Reference: Options
-                </span>
-              
+              <span class="md-header-nav__topic">
+                OpenNMT
+              </span>
+              <span class="md-header-nav__topic">
+                tools/rest_translation_server.lua
+              </span>
             
-            tools/rest_translation_server.lua
           
-        </span>
+        </div>
       </div>
       <div class="md-flex__cell md-flex__cell--shrink">
         
@@ -156,6 +156,9 @@
 </header>
     
     <div class="md-container">
+      
+        
+      
       
       <main class="md-main">
         <div class="md-main__inner md-grid" data-md-component="container">
@@ -699,69 +702,9 @@
     <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
     
     
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        tools/rest_translation_server.lua
-      </label>
-    
     <a href="./" title="tools/rest_translation_server.lua" class="md-nav__link md-nav__link--active">
       tools/rest_translation_server.lua
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#server-options" title="Server options" class="md-nav__link">
-    Server options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#translator-options" title="Translator options" class="md-nav__link">
-    Translator options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cuda-options" title="Cuda options" class="md-nav__link">
-    Cuda options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#logger-options" title="Logger options" class="md-nav__link">
-    Logger options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tokenizer-options" title="Tokenizer options" class="md-nav__link">
-    Tokenizer options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-options" title="Other options" class="md-nav__link">
-    Other options
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
     
   </li>
 
@@ -801,6 +744,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../../hooks/" title="Misc" class="md-nav__link">
+      Misc
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="../../references/" title="References" class="md-nav__link">
       References
     </a>
@@ -826,68 +781,6 @@
               </div>
             
             
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#server-options" title="Server options" class="md-nav__link">
-    Server options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#translator-options" title="Translator options" class="md-nav__link">
-    Translator options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cuda-options" title="Cuda options" class="md-nav__link">
-    Cuda options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#logger-options" title="Logger options" class="md-nav__link">
-    Logger options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tokenizer-options" title="Tokenizer options" class="md-nav__link">
-    Tokenizer options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#other-options" title="Other options" class="md-nav__link">
-    Other options
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
@@ -899,77 +792,6 @@
                   <h1>tools/rest_translation_server.lua</h1>
                 
                 <!--- This file was automatically generated. Do not modify it manually but use the docs/options/generate.sh script instead. -->
-
-<p><code>rest_translation_server.lua</code> options:</p>
-<ul>
-<li><code>-h [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>This help.</li>
-<li><code>-md [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Dump help in Markdown format.</li>
-<li><code>-config &lt;string&gt;</code> (default: <code>''</code>)<br/>Load options from this file.</li>
-<li><code>-save_config &lt;string&gt;</code> (default: <code>''</code>)<br/>Save options to this file.</li>
-</ul>
-<h2 id="server-options">Server options<a class="headerlink" href="#server-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-host &lt;string&gt;</code> (default: <code>127.0.0.1</code>)<br/>Host to run the server on.</li>
-<li><code>-port &lt;string&gt;</code> (default: <code>7784</code>)<br/>Port to run the server on.</li>
-<li><code>-withAttn [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set returns by default attn vector.</li>
-</ul>
-<h2 id="translator-options">Translator options<a class="headerlink" href="#translator-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-model &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the serialized model file.</li>
-<li><code>-lm_model &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to serialized language model file.</li>
-<li><code>-lm_weight &lt;number&gt;</code> (default: <code>0.1</code>)<br/>Relative weight of language model.</li>
-<li><code>-beam_size &lt;number&gt;</code> (default: <code>5</code>)<br/>Beam size.</li>
-<li><code>-max_sent_length &lt;number&gt;</code> (default: <code>250</code>)<br/>Maximum output sentence length.</li>
-<li><code>-replace_unk [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Replace the generated <unk> tokens with the source token that has the highest attention weight. If <code>-phrase_table</code> is provided, it will lookup the identified source token and give the corresponding target token. If it is not provided (or the identified source token does not exist in the table) then it will copy the source token</li>
-<li><code>-replace_unk_tagged [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.</li>
-<li><code>-lexical_constraints [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Force the beam search to apply the translations from the phrase table.</li>
-<li><code>-limit_lexical_constraints [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Prevents producing each lexical constraint more than required.</li>
-<li><code>-phrase_table &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to source-target dictionary to replace <code>&lt;unk&gt;</code> tokens.</li>
-<li><code>-n_best &lt;number&gt;</code> (default: <code>1</code>)<br/>If &gt; 1, it will also output an n-best list of decoded sentences.</li>
-<li><code>-max_num_unks &lt;number&gt;</code> (default: <code>inf</code>)<br/>All sequences with more <code>&lt;unk&gt;</code>s than this will be ignored during beam search.</li>
-<li><code>-target_subdict &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to target words dictionary corresponding to the source.</li>
-<li><code>-pre_filter_factor &lt;number&gt;</code> (default: <code>1</code>)<br/>Optional, set this only if filter is being used. Before applying filters, hypotheses with top <code>beam_size * pre_filter_factor</code> scores will be considered. If the returned hypotheses voilate filters, then set this to a larger value to consider more.</li>
-<li><code>-length_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Length normalization coefficient (alpha). If set to 0, no length normalization.</li>
-<li><code>-coverage_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>Coverage normalization coefficient (beta). An extra coverage term multiplied by beta is added to hypotheses scores. If is set to 0, no coverage normalization.</li>
-<li><code>-eos_norm &lt;number&gt;</code> (default: <code>0</code>)<br/>End of sentence normalization coefficient (gamma). If set to 0, no EOS normalization.</li>
-<li><code>-dump_input_encoding [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Instead of generating target tokens conditional on the source tokens, we print the representation (encoding/embedding) of the input.</li>
-<li><code>-save_beam_to &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to a file where the beam search exploration will be saved in a JSON format. Requires the <code>dkjson</code> package.</li>
-</ul>
-<h2 id="cuda-options">Cuda options<a class="headerlink" href="#cuda-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-gpuid &lt;table&gt;</code> (default: <code>0</code>)<br/>List of GPU identifiers (1-indexed). CPU is used when set to 0.</li>
-<li><code>-fallback_to_cpu [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If GPU can't be used, rollback on the CPU.</li>
-<li><code>-fp16 [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Use half-precision float on GPU.</li>
-<li><code>-no_nccl [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Disable usage of nccl in parallel mode.</li>
-</ul>
-<h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-log_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Output logs to a file under this path instead of stdout - if file name ending with json, output structure json.</li>
-<li><code>-disable_logs [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, output nothing.</li>
-<li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>, <code>NOERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
-</ul>
-<h2 id="tokenizer-options">Tokenizer options<a class="headerlink" href="#tokenizer-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-mode &lt;string&gt;</code> (accepted: <code>space</code>, <code>conservative</code>, <code>aggressive</code>; default: <code>conservative</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc. <code>space</code> is doing space tokenization.</li>
-<li><code>-joiner_annotate [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Include joiner annotation using <code>-joiner</code> character.</li>
-<li><code>-joiner &lt;string&gt;</code> (default: <code>￭</code>)<br/>Character used to annotate joiners.</li>
-<li><code>-joiner_new [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>In <code>-joiner_annotate</code> mode, <code>-joiner</code> is an independent token.</li>
-<li><code>-case_feature [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Generate case feature.</li>
-<li><code>-segment_case [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment case feature, splits AbC to Ab C to be able to restore case</li>
-<li><code>-segment_alphabet &lt;table&gt;</code> (accepted: <code>Tagalog</code>, <code>Hanunoo</code>, <code>Limbu</code>, <code>Yi</code>, <code>Hebrew</code>, <code>Latin</code>, <code>Devanagari</code>, <code>Thaana</code>, <code>Lao</code>, <code>Sinhala</code>, <code>Georgian</code>, <code>Kannada</code>, <code>Cherokee</code>, <code>Kanbun</code>, <code>Buhid</code>, <code>Malayalam</code>, <code>Han</code>, <code>Thai</code>, <code>Katakana</code>, <code>Telugu</code>, <code>Greek</code>, <code>Myanmar</code>, <code>Armenian</code>, <code>Hangul</code>, <code>Cyrillic</code>, <code>Ethiopic</code>, <code>Tagbanwa</code>, <code>Gurmukhi</code>, <code>Ogham</code>, <code>Khmer</code>, <code>Arabic</code>, <code>Oriya</code>, <code>Hiragana</code>, <code>Mongolian</code>, <code>Kangxi</code>, <code>Syriac</code>, <code>Gujarati</code>, <code>Braille</code>, <code>Bengali</code>, <code>Tamil</code>, <code>Bopomofo</code>, <code>Tibetan</code>)<br/>Segment all letters from indicated alphabet.</li>
-<li><code>-segment_numbers [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment numbers into single digits.</li>
-<li><code>-segment_alphabet_change [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment if alphabet change between 2 letters.</li>
-<li><code>-bpe_model &lt;string&gt;</code> (default: <code>''</code>)<br/>Apply Byte Pair Encoding if the BPE model path is given. If the option is used, BPE related options will be overridden/set automatically if the BPE model specified by <code>-bpe_model</code> is learnt using <code>learn_bpe.lua</code>.</li>
-<li><code>-bpe_EOT_marker &lt;string&gt;</code> (default: <code>&lt;/w&gt;</code>)<br/>Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.</li>
-<li><code>-bpe_BOT_marker &lt;string&gt;</code> (default: <code>&lt;w&gt;</code>)<br/>Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.</li>
-<li><code>-bpe_case_insensitive [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by <code>-bpe_model</code> is learnt using <code>learn_bpe.lua</code>.</li>
-<li><code>-bpe_mode &lt;string&gt;</code> (accepted: <code>suffix</code>, <code>prefix</code>, <code>both</code>, <code>none</code>; default: <code>suffix</code>)<br/>Define the BPE mode. This option will be overridden/set automatically if the BPE model specified by <code>-bpe_model</code> is learnt using <code>learn_bpe.lua</code>. <code>prefix</code>: append <code>-bpe_BOT_marker</code> to the begining of each word to learn prefix-oriented pair statistics; <code>suffix</code>: append <code>-bpe_EOT_marker</code> to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; <code>both</code>: <code>suffix</code> and <code>prefix</code>; <code>none</code>: no <code>suffix</code> nor <code>prefix</code>.</li>
-<li><code>-normalize_cmd &lt;string&gt;</code> (default: <code>''</code>)<br/>Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.</li>
-</ul>
-<h2 id="other-options">Other options<a class="headerlink" href="#other-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-batchsize &lt;number&gt;</code> (default: <code>1000</code>)<br/>Size of each parallel batch - you should not change except if low memory.</li>
-</ul>
                 
                   
                 
@@ -1025,9 +847,9 @@
       <div class="md-footer-copyright">
         
         powered by
-        <a href="http://www.mkdocs.org" title="MkDocs">MkDocs</a>
+        <a href="http://www.mkdocs.org">MkDocs</a>
         and
-        <a href="http://squidfunk.github.io/mkdocs-material/" title="Material for MkDocs">
+        <a href="https://squidfunk.github.io/mkdocs-material/">
           Material for MkDocs</a>
       </div>
       
@@ -1049,9 +871,9 @@
       
     </div>
     
-      <script src="../../assets/javascripts/application-84693e5e49.js"></script>
+      <script src="../../assets/javascripts/application.6cdc17f0.js"></script>
       
-      <script>app.initialize({version:"0.17.1",url:{base:"../.."}})</script>
+      <script>app.initialize({version:"0.17.2",url:{base:"../.."}})</script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
       
@@ -1064,7 +886,7 @@
     
     
       
-      <script>!function(e,t,a,n,o,c,i){e.GoogleAnalyticsObject=o,e[o]=e[o]||function(){(e[o].q=e[o].q||[]).push(arguments)},e[o].l=1*new Date,c=t.createElement(a),i=t.getElementsByTagName(a)[0],c.async=1,c.src=n,i.parentNode.insertBefore(c,i)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-89222039-1","opennmt.net"),ga("set","anonymizeIp",!0),ga("send","pageview");var links=document.getElementsByTagName("a");Array.prototype.map.call(links,function(e){e.host!=document.location.host&&e.addEventListener("click",function(){var t=e.getAttribute("data-md-action")||"follow";ga("send","event","outbound",t,e.href)})});var query=document.forms.search.query;query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})</script>
+        <script>!function(e,a,t,n,o,c,i){e.GoogleAnalyticsObject=o,e.ga=e.ga||function(){(e.ga.q=e.ga.q||[]).push(arguments)},e.ga.l=1*new Date,c=a.createElement(t),i=a.getElementsByTagName(t)[0],c.async=1,c.src="https://www.google-analytics.com/analytics.js",i.parentNode.insertBefore(c,i)}(window,document,"script",0,"ga"),ga("create","UA-89222039-1","opennmt.net"),ga("set","anonymizeIp",!0),ga("send","pageview");var links=document.getElementsByTagName("a");Array.prototype.map.call(links,function(e){e.host!=document.location.host&&e.addEventListener("click",function(){var a=e.getAttribute("data-md-action")||"follow";ga("send","event","outbound",a,e.href)})});var query=document.forms.search.query;query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})</script>
       
     
   </body>

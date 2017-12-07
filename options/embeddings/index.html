@@ -28,7 +28,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-0.17.1, mkdocs-material-2.0.2">
+      <meta name="generator" content="mkdocs-0.17.2, mkdocs-material-2.2.1">
     
     
       
@@ -36,11 +36,11 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/application-5b1b46901f.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/application.41c6761c.css">
       
     
     
-      <script src="../../assets/javascripts/modernizr-e826f8942a.js"></script>
+      <script src="../../assets/javascripts/modernizr.1aa3b519.js"></script>
     
     
       
@@ -85,18 +85,18 @@
         <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
       </div>
       <div class="md-flex__cell md-flex__cell--stretch">
-        <span class="md-flex__ellipsis md-header-nav__title">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
           
             
-              
-                <span class="md-header-nav__parent">
-                  Reference: Options
-                </span>
-              
+              <span class="md-header-nav__topic">
+                OpenNMT
+              </span>
+              <span class="md-header-nav__topic">
+                tools/embeddings.lua
+              </span>
             
-            tools/embeddings.lua
           
-        </span>
+        </div>
       </div>
       <div class="md-flex__cell md-flex__cell--shrink">
         
@@ -156,6 +156,9 @@
 </header>
     
     <div class="md-container">
+      
+        
+      
       
       <main class="md-main">
         <div class="md-main__inner md-grid" data-md-component="container">
@@ -711,48 +714,9 @@
     <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
     
     
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        tools/embeddings.lua
-      </label>
-    
     <a href="./" title="tools/embeddings.lua" class="md-nav__link md-nav__link--active">
       tools/embeddings.lua
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#data-options" title="Data options" class="md-nav__link">
-    Data options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embedding-options" title="Embedding options" class="md-nav__link">
-    Embedding options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#logger-options" title="Logger options" class="md-nav__link">
-    Logger options
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
     
   </li>
 
@@ -771,6 +735,18 @@
         
       </ul>
     </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../hooks/" title="Misc" class="md-nav__link">
+      Misc
+    </a>
   </li>
 
     
@@ -805,47 +781,6 @@
               </div>
             
             
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#data-options" title="Data options" class="md-nav__link">
-    Data options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embedding-options" title="Embedding options" class="md-nav__link">
-    Embedding options
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#logger-options" title="Logger options" class="md-nav__link">
-    Logger options
-  </a>
-  
-</li>
-      
-      
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
@@ -857,35 +792,6 @@
                   <h1>tools/embeddings.lua</h1>
                 
                 <!--- This file was automatically generated. Do not modify it manually but use the docs/options/generate.sh script instead. -->
-
-<p><code>embeddings.lua</code> options:</p>
-<ul>
-<li><code>-h [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>This help.</li>
-<li><code>-md [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Dump help in Markdown format.</li>
-<li><code>-config &lt;string&gt;</code> (default: <code>''</code>)<br/>Load options from this file.</li>
-<li><code>-save_config &lt;string&gt;</code> (default: <code>''</code>)<br/>Save options to this file.</li>
-</ul>
-<h2 id="data-options">Data options<a class="headerlink" href="#data-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-dict_file &lt;string&gt;</code> (required)<br/>Path to outputted dict file from <code>preprocess.lua</code>.</li>
-<li><code>-embed_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to the embedding file. Ignored if <code>-lang</code> is used.</li>
-<li><code>-save_data &lt;string&gt;</code> (required)<br/>Output file path/label.</li>
-<li><code>-save_unknown_dict &lt;string&gt;</code> (default: <code>''</code>)<br/>Path to file for saving vocabs not found in embedding.</li>
-</ul>
-<h2 id="embedding-options">Embedding options<a class="headerlink" href="#embedding-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-lang &lt;string&gt;</code> (default: <code>''</code>)<br/>Wikipedia Language Code to autoload embeddings.</li>
-<li><code>-embed_type &lt;string&gt;</code> (accepted: <code>word2vec-bin</code>, <code>word2vec-txt</code>, <code>glove</code>; default: <code>word2vec-bin</code>)<br/>Embeddings file origin. Ignored if <code>-lang</code> is used.</li>
-<li><code>-normalize [&lt;boolean&gt;]</code> (default: <code>true</code>)<br/>Boolean to normalize the word vectors, or not.</li>
-<li><code>-approximate [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, will also look for variants (case, joiner annotate) to match dictionary and word embedding.</li>
-<li><code>-report_every &lt;number&gt;</code> (default: <code>100000</code>)<br/>Print stats every this many lines read from embedding file.</li>
-</ul>
-<h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>-log_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Output logs to a file under this path instead of stdout - if file name ending with json, output structure json.</li>
-<li><code>-disable_logs [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>If set, output nothing.</li>
-<li><code>-log_level &lt;string&gt;</code> (accepted: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>, <code>NOERROR</code>; default: <code>INFO</code>)<br/>Output logs at this level and above.</li>
-</ul>
                 
                   
                 
@@ -941,9 +847,9 @@
       <div class="md-footer-copyright">
         
         powered by
-        <a href="http://www.mkdocs.org" title="MkDocs">MkDocs</a>
+        <a href="http://www.mkdocs.org">MkDocs</a>
         and
-        <a href="http://squidfunk.github.io/mkdocs-material/" title="Material for MkDocs">
+        <a href="https://squidfunk.github.io/mkdocs-material/">
           Material for MkDocs</a>
       </div>
       
@@ -965,9 +871,9 @@
       
     </div>
     
-      <script src="../../assets/javascripts/application-84693e5e49.js"></script>
+      <script src="../../assets/javascripts/application.6cdc17f0.js"></script>
       
-      <script>app.initialize({version:"0.17.1",url:{base:"../.."}})</script>
+      <script>app.initialize({version:"0.17.2",url:{base:"../.."}})</script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
       
@@ -980,7 +886,7 @@
     
     
       
-      <script>!function(e,t,a,n,o,c,i){e.GoogleAnalyticsObject=o,e[o]=e[o]||function(){(e[o].q=e[o].q||[]).push(arguments)},e[o].l=1*new Date,c=t.createElement(a),i=t.getElementsByTagName(a)[0],c.async=1,c.src=n,i.parentNode.insertBefore(c,i)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-89222039-1","opennmt.net"),ga("set","anonymizeIp",!0),ga("send","pageview");var links=document.getElementsByTagName("a");Array.prototype.map.call(links,function(e){e.host!=document.location.host&&e.addEventListener("click",function(){var t=e.getAttribute("data-md-action")||"follow";ga("send","event","outbound",t,e.href)})});var query=document.forms.search.query;query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})</script>
+        <script>!function(e,a,t,n,o,c,i){e.GoogleAnalyticsObject=o,e.ga=e.ga||function(){(e.ga.q=e.ga.q||[]).push(arguments)},e.ga.l=1*new Date,c=a.createElement(t),i=a.getElementsByTagName(t)[0],c.async=1,c.src="https://www.google-analytics.com/analytics.js",i.parentNode.insertBefore(c,i)}(window,document,"script",0,"ga"),ga("create","UA-89222039-1","opennmt.net"),ga("set","anonymizeIp",!0),ga("send","pageview");var links=document.getElementsByTagName("a");Array.prototype.map.call(links,function(e){e.host!=document.location.host&&e.addEventListener("click",function(){var a=e.getAttribute("data-md-action")||"follow";ga("send","event","outbound",a,e.href)})});var query=document.forms.search.query;query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})</script>
       
     
   </body>
