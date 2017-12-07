@@ -114,7 +114,7 @@ gives the new: c ' e s t _ é p a t a n t
 
 ## Sample Hooks
 
-Several hooks are available in `hooks` directory - see description [here](http://github.com/OpenNMT/OpenNMT/hooks/README.md).
+Several hooks are available in `hooks` directory - see description [here](https://github.com/OpenNMT/OpenNMT/blob/master/hooks/README.md).
 
 ## Testing hooks
 
@@ -152,8 +152,8 @@ Special entry points:
 
 Normal entry points:
 
-* `tokenize`: replace or extend internal tokenization - prototype is: `function mytokenization(opt, line, bpe)` that has to return a table of tokens (and possible features). See [hooks/chartokenization.lua](http://github.com/OpenNMT/OpenNMT/hooks/chartokenization.lua) for an example.
-* `detokenize`: replace or extend internal detokenization - prototype is: `function mytokenization(line, opt)` that has to return a detokenized string. See [hooks/chartokenization.lua](http://github.com/OpenNMT/OpenNMT/hooks/chartokenization.lua) for an example.
-* `post_tokenize`: performs a transformation of the tokens list just after tokenization. Typically interesting to add features. See [[hooks/chartokenization.lua](http://github.com/OpenNMT/OpenNMT/hooks/treetagger-tag.lua) for an example.
+* `tokenize`: replace or extend internal tokenization - prototype is: `function mytokenization(opt, line, bpe)` that has to return a table of tokens (and possible features). See [hooks/chartokenization.lua](https://github.com/OpenNMT/OpenNMT/blob/master/hooks/chartokenization.lua) for an example.
+* `detokenize`: replace or extend internal detokenization - prototype is: `function mytokenization(line, opt)` that has to return a detokenized string. See [hooks/chartokenization.lua](https://github.com/OpenNMT/OpenNMT/blob/master/hooks/chartokenization.lua) for an example.
+* `post_tokenize`: performs a transformation of the tokens list just after tokenization. Typically interesting to add features. See [[hooks/chartokenization.lua](https://github.com/OpenNMT/OpenNMT/blob/master/hooks/treetagger-tag.lua) for an example.
 * `mpreprocess`: on the fly normalization on source and target strings during preprocessing. `function mpreprocessFn(opt, line)` that returns normalized line. Note that the options associated to the source or target options are dynamically changed for the call.
 * `bpreprocess`: performs a bilingual normalization of the source and target sentences during preprocessing. `function bpreprocessFn(opt, sentences)`. `sentences` is a `{srcs,tgts}` where `srcs` and `tgts` are respectively list of source and target sentences. Sentences are sent by batch of 10000.
