@@ -52,6 +52,10 @@ local options = {
     [[Prevents producing each lexical constraint more than required.]]
   },
   {
+    '-placeholder_constraints', false,
+    [[Force the beam search to reproduce placeholders in the translation.]]
+  },
+  {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
     {
@@ -194,9 +198,10 @@ function Translator:buildInput(tokens)
     data.vectors = torch.Tensor(tokens)
   else
     local words, features = onmt.utils.Features.extract(tokens)
-    local vocabs = onmt.utils.Placeholders.norm(words)
+    local vocabs, placeholders = onmt.utils.Placeholders.norm(words)
 
     data.words = vocabs
+    data.placeholders = placeholders
 
     if #features > 0 then
       data.features = features
@@ -257,20 +262,30 @@ function Translator:buildData(src, gold)
                        onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
         end
 
+        if self.args.placeholder_constraints then
+          self.args.limit_lexical_constraints = true
+          local c = {}
+          for ph,_ in pairs(src[b].placeholders) do
+            if (self.dicts.tgt.words:lookup(ph)) then
+              table.insert(c, ph)
+            end
+          end
+          table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
+        end
 
-	if self.phraseTable and self.args.lexical_constraints then
-	  local c = {}
-	  for _,w in pairs(src[b].words) do
-	    if (self.phraseTable:contains(w)) then
-	      -- TODO : deal with phrases and source words
-	      local tgt = self.phraseTable:lookup(w)
-	      if (self.dicts.tgt.words:lookup(tgt)) then
-	        table.insert(c, tgt)
-	      end
-	    end
-	  end
-	  table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
-	end
+        if self.phraseTable and self.args.lexical_constraints then
+          local c = {}
+          for _,w in pairs(src[b].words) do
+            if (self.phraseTable:contains(w)) then
+              -- TODO : deal with phrases and source words
+              local tgt = self.phraseTable:lookup(w)
+              if (self.dicts.tgt.words:lookup(tgt)) then
+                table.insert(c, tgt)
+              end
+            end
+          end
+          table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
+        end
 
       else
         table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
@@ -294,12 +309,12 @@ function Translator:buildData(src, gold)
   return onmt.data.Dataset.new(srcData, goldData), ignored, indexMap
 end
 
-function Translator:buildTargetWords(pred, src, attn)
+function Translator:buildTargetWords(pred, src, attn, placeholders)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  if self.args.replace_unk or self.args.replace_unk_tagged then
+  if self.args.replace_unk or self.args.replace_unk_tagged or self.args.placeholder_constraints then
     for i = 1, #tokens do
-      if tokens[i] == onmt.Constants.UNK_WORD then
+      if tokens[i] == onmt.Constants.UNK_WORD and (self.args.replace_unk or self.args.replace_unk_tagged) then
         local _, maxIndex = attn[i]:max(1)
         local source = src[maxIndex[1]]
 
@@ -312,6 +327,9 @@ function Translator:buildTargetWords(pred, src, attn)
         elseif self.args.replace_unk_tagged then
           tokens[i] = '｟unk:' .. source .. '｠'
         end
+      end
+      if placeholders[tokens[i]] and self.args.placeholder_constraints then
+        tokens[i] = placeholders[tokens[i]]
       end
     end
   end
@@ -554,7 +572,7 @@ function Translator:translate(src, gold)
         results[b].preds = {}
         for n = 1, self.args.n_best do
           results[b].preds[n] = {}
-          results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
+          results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n], src[indexMap[b]].placeholders)
           results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
           results[b].preds[n].attention = attn[b][n]
           results[b].preds[n].score = predScore[b][n]
