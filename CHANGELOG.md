@@ -9,6 +9,10 @@
 
 ### Fixes and improvements
 
+## [v0.9.5](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.5) (2017-12-07)
+
+### Fixes and improvements
+
 * Enable constrained beam search for protected sequence
 * Fix invalid `NOERROR` log level (rename it to `NONE`)
 
