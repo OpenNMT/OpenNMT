@@ -263,7 +263,7 @@ function Translator:buildData(src, gold)
         end
 
         if self.args.placeholder_constraints then
-	  self.args.limit_lexical_constraints = true
+          self.args.limit_lexical_constraints = true
           local c = {}
           for ph,_ in pairs(src[b].placeholders) do
             if (self.dicts.tgt.words:lookup(ph)) then
@@ -273,19 +273,19 @@ function Translator:buildData(src, gold)
           table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
         end
 
-	if self.phraseTable and self.args.lexical_constraints then
-	  local c = {}
-	  for _,w in pairs(src[b].words) do
-	    if (self.phraseTable:contains(w)) then
-	      -- TODO : deal with phrases and source words
-	      local tgt = self.phraseTable:lookup(w)
-	      if (self.dicts.tgt.words:lookup(tgt)) then
-	        table.insert(c, tgt)
-	      end
-	    end
-	  end
-	  table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
-	end
+        if self.phraseTable and self.args.lexical_constraints then
+          local c = {}
+          for _,w in pairs(src[b].words) do
+            if (self.phraseTable:contains(w)) then
+              -- TODO : deal with phrases and source words
+              local tgt = self.phraseTable:lookup(w)
+              if (self.dicts.tgt.words:lookup(tgt)) then
+                table.insert(c, tgt)
+              end
+            end
+          end
+          table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
+        end
 
       else
         table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
@@ -329,7 +329,7 @@ function Translator:buildTargetWords(pred, src, attn, placeholders)
         end
       end
       if placeholders[tokens[i]] and self.args.placeholder_constraints then
-	tokens[i] = placeholders[tokens[i]]
+        tokens[i] = placeholders[tokens[i]]
       end
     end
   end
