@@ -28,12 +28,20 @@ local function main()
   torch.setnumthreads(1)
 
   _G.logger = onmt.utils.Logger.new('', true)
+  local hookfile = ''
 
   local argstart = 0
   if #arg > 1 and arg[1] == '-e' then
     _G.luacmd = arg[2]
     argstart = 2
   end
+
+  if argstart+1 < #arg and arg[argstart+1] == '-hook_file' then
+    hookfile = arg[argstart+2]
+    argstart = argstart + 2
+  end
+
+  _G.hookManager = onmt.utils.HookManager.new(hookfile)
 
   registerTestDirectory(testDir)
 

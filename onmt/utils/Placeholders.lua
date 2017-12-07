@@ -1,3 +1,5 @@
+local separators = require('tools.utils.separators')
+
 local function norm(t)
   if type(t) == "table" then
     local v = {}
@@ -6,17 +8,34 @@ local function norm(t)
       local vt, vtrep
       vt, vtrep = norm(tokt)
       table.insert(v, vt)
-      table.insert(vrep, vtrep)
+      if vtrep then
+        vrep[vt] = vtrep
+      end
     end
     return v, vrep
   end
-  if t:find('｟') then
-    local p = t:find('｠')
-    assert(p, 'invalid placeholder tag: '..t)
-    local fields = onmt.utils.String.split(t, '：')
-    return fields[1]..t:sub(p), fields[2] or fields[1]
+
+  local phStart = t:find(separators.ph_marker_open)
+
+  if not phStart then
+    return t
   end
-  return t
+
+  local phEnd = t:find(separators.ph_marker_close)
+  assert(phEnd, 'invalid placeholder tag: ' .. t)
+
+  local prefix = t:sub(1, phStart + separators.ph_marker_open:len() - 1)
+  local suffix = t:sub(phEnd)
+  local content = t:sub(prefix:len() + 1, phEnd - 1)
+  local fields = onmt.utils.String.split(content, '：')
+
+  if #fields == 1 then
+    return t, nil
+  else
+    local placeholder = fields[1]
+    local value = fields[2]
+    return prefix .. placeholder .. suffix, value
+  end
 end
 
 return {

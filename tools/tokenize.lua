@@ -14,20 +14,23 @@ cmd:text('')
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+
+onmt.utils.HookManager.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
 local pool = threads.Threads(
   opt.nparallel,
-  function()
+  function(id)
+    local HookManager = require('onmt.utils.HookManager')
     _G.separators = require('tools.utils.separators')
     _G.tokenizer = require('tools.utils.tokenizer')
     _G.BPE = require ('tools.utils.BPE')
+    _G.hookManager = HookManager.new(opt, "thread "..id)
     if opt.bpe_model ~= '' then
       _G.bpe = _G.BPE.new(opt)
-    end
-    if opt.normalize_cmd ~= '' then
-      local N = require('tools.utils.normalizer')
-      _G.normalizer = N.new(opt.normalize_cmd)
     end
   end
 )
@@ -61,13 +64,12 @@ while true do
       function()
         local output = {}
         local inputs = batches_input[i]
-        if _G.normalizer then
-          inputs = _G.normalizer:normalize(inputs)
-          if inputs == nil then
-            inputs = batches_input[i]
-            print("pb with normalizer - skipping "..#inputs)
-          end
-        end
+
+        -- preprocessing hook
+        local pinputs = _G.hookManager:call("mpreprocess", opt, inputs)
+        assert(pinputs ~= false)
+        inputs = pinputs or inputs
+
         for b = 1,#inputs do
           local aline = inputs[b]
           local res

@@ -4,10 +4,30 @@
 
 ### New features
 
+* Introduce hook mechanism for additional customization of workflows
 * Sentence-level negative log-likelihood criterion for sequence tagging
 * '-' stands for stdin for inference tools (translate, lm, tag)
 
 ### Fixes and improvements
+
+## [v0.9.5](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.5) (2017-12-07)
+
+### Fixes and improvements
+
+* Enable constrained beam search for protected sequence
+* Fix invalid `NOERROR` log level (rename it to `NONE`)
+
+## [v0.9.4](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.4) (2017-11-30)
+
+### Fixes and improvements
+
+* Fix regression when normalizing protected sequences
+
+## [v0.9.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.3) (2017-11-30)
+
+### Fixes and improvements
+
+* Fix vocabulary extraction of protected sequences (#444)
 
 ## [v0.9.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.2) (2017-11-27)
 

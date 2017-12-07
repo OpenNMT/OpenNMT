@@ -1,6 +1,7 @@
 --[[ Logger is a class used for maintaining logs in a log file.
 --]]
 local Logger = torch.class('Logger')
+local levels =  { DEBUG = 0, INFO = 1, WARNING = 2, ERROR = 3, NONE = 4 }
 
 local options = {
   {
@@ -15,7 +16,7 @@ local options = {
     '-log_level', 'INFO',
     [[Output logs at this level and above.]],
     {
-      enum = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'NOERROR'}
+      enum = { 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'NONE' }
     }
   }
 }
@@ -29,7 +30,7 @@ end
 Parameters:
   * `logFile` - Outputs logs to a file under this path instead of stdout. ['']
   * `disableLogs` - If = true, output nothing. [false]
-  * `logLevel` - Outputs logs at this level and above. Possible options are: DEBUG, INFO, WARNING and ERROR. ['INFO']
+  * `logLevel` - Outputs logs at this level and above. ['INFO']
 
 Example:
 
@@ -46,7 +47,7 @@ function Logger:__init(logFile, disableLogs, logLevel)
 
   self.mute = (logFile:len() > 0)
   if disableLogs then
-    self:setVisibleLevel('ERROR')
+    self:setVisibleLevel('NONE')
   else
     self:setVisibleLevel(logLevel)
   end
@@ -58,7 +59,6 @@ function Logger:__init(logFile, disableLogs, logLevel)
   else
     self.logFile = nil
   end
-  self.LEVELS = { DEBUG = 0, INFO = 1, WARNING = 2, ERROR = 3 }
 end
 
 local function jsonize(msg)
@@ -78,6 +78,7 @@ function Logger:log(message, level)
   if self.jsonLog then
     if message:len() > 0 then
       self.logFile:write('["'..level..'","'..timeStamp..'","'..jsonize(message)..'"],\n')
+      self.logFile:flush()
     end
   else
     local msgFormatted = string.format('[%s %s] %s', timeStamp, level, message)
@@ -135,20 +136,22 @@ end
 --[[ Set the visible message level. Lower level messages will be muted.
 
 Parameters:
-  * `level` - 'DEBUG', 'INFO', 'WARNING' or 'ERROR'.
+  * `level` - 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'NONE'.
 
 ]]
 function Logger:setVisibleLevel(level)
-  assert (level == 'DEBUG' or level == 'INFO' or
-          level == 'WARNING' or level == 'ERROR' or level == 'NOERROR')
+  assert(levels[level])
   self.level = level
 end
 
--- Private function for comparing level against visible level.
--- `level` - 'DEBUG', 'INFO', 'WARNING' or 'ERROR'.
+--[[ Private function for comparing level against visible level.
+
+Parameters:
+  * `level` - 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'NONE'.
+
+]]
 function Logger:_isVisible(level)
-  self.level = self.level or 'INFO'
-  return self.LEVELS[level] >= self.LEVELS[self.level]
+  return levels[level] >= levels[self.level]
 end
 
 function Logger:_format(...)

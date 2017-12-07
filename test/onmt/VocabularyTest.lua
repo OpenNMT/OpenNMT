@@ -77,6 +77,7 @@ function vocabularyTest.placeholder()
   tester:assert(vocabs.words:lookup("｟ent_url＃1｠￭") ~= nil)
   tester:assert(vocabs.words:lookup("￭｟TAB｠￭") ~= nil)
   tester:assert(vocabs.words:lookup("｟ept_CrossReference＃1｠") ~= nil)
+  tester:assert(vocabs.words:lookup("｟ept_AutoNumber＃1｠￭") ~= nil)
 end
 
 function vocabularyTest.initFeatures()

@@ -15,6 +15,8 @@ local tokenizer = require('tools.utils.tokenizer')
 local tds
 local threads
 
+local preprocess_batchsize = 10000
+
 local commonOptions = {
   {
     '-features_vocabs_prefix', '',
@@ -194,36 +196,64 @@ function Preprocessor.declareOpts(cmd, dataType)
   cmd:setCmdLineOptions(options, 'Data')
 
   -- prepare tokenization option
-  options = {}
   local topts = tokenizer.getOpts()
-  for _, v in ipairs(topts) do
-    -- change mode option to include disabling mode (default)
+  for i, v in ipairs(topts) do
     if v[1] == '-mode' then
-      v = { '-mode', 'space',
+      topts[i] = {
+          '-mode', 'space',
           [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
             {
               enum = {'conservative', 'aggressive', 'space'}
             }
           }
     end
-    if dataType == 'bitext' then
-      local opt = onmt.utils.Table.deepCopy(v)
-      opt[1] = '-tok_src_' .. v[1]:sub(2)
-      table.insert(options, opt)
-      opt = onmt.utils.Table.deepCopy(v)
-      opt[1] = '-tok_tgt_' .. v[1]:sub(2)
-      table.insert(options, opt)
-    elseif dataType == 'feattext' then
-      local opt = onmt.utils.Table.deepCopy(v)
-      opt[1] = '-tok_tgt_' .. v[1]:sub(2)
-      table.insert(options, opt)
-    elseif dataType == 'monotext' then
-      local opt = onmt.utils.Table.deepCopy(v)
-      opt[1] = '-tok_' .. v[1]:sub(2)
-      table.insert(options, opt)
+  end
+
+  cmd:setCmdLineOptions(topts, "Tokenizer")
+end
+
+function Preprocessor.expandOpts(cmd, dataType)
+  local torenameOpts = {};
+  local current_block;
+  local pref = "{src,tgt}_"
+  if dataType == "monotext" then pref = "" end
+  if dataType == "feattext" then pref = "tgt_" end
+  for i, v in ipairs(cmd.helplines) do
+    if type(v) == "string" then
+      local p = v:find(" options")
+      if p then
+        current_block = v:sub(1,p-1);
+        if current_block == "MPreprocessing" or current_block == "Tokenizer" then
+          cmd.helplines[i] = cmd.helplines[i]
+        end
+      end
+    else
+      if current_block == "MPreprocessing" or current_block == "Tokenizer" then
+        torenameOpts[v.key] = current_block:sub(1,3):lower()
+        v.key="-"..current_block:sub(1,3):lower().."_"..pref..v.key:sub(2)
+      end
     end
   end
-  cmd:setCmdLineOptions(options, "Tokenizer")
+  local newOpts = {}
+  for k, v in pairs(cmd.options) do
+    if torenameOpts[k] then
+      cmd.options[k] = nil
+      if dataType == 'monotext' then
+        local ksrc = '-'..torenameOpts[k]..'_'..k:sub(2)
+        newOpts[ksrc] = onmt.utils.Table.deepCopy(v)
+      elseif dataType == 'bitext' then
+        local ksrc = '-'..torenameOpts[k]..'_src_'..k:sub(2)
+        newOpts[ksrc] = onmt.utils.Table.deepCopy(v)
+      end
+      if dataType ~= 'monotext' then
+        local ktgt = '-'..torenameOpts[k]..'_tgt_'..k:sub(2)
+        newOpts[ktgt] = onmt.utils.Table.deepCopy(v)
+      end
+    end
+  end
+  for k, v in pairs(newOpts) do
+    cmd.options[k] = v
+  end
 end
 
 local function ruleMatch(s, rule)
@@ -266,6 +296,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, keep_rules, typ
             local fdesc = { countLines, flist }
             fdesc.fname = fprefix
             fdesc.weight = 0
+            fdesc.options = {}
             return _G.__threadid, 0, fdesc
           else
             return _G.__threadid, error, errors
@@ -311,6 +342,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, keep_rules, typ
             keepCount = keepCount + list_files[i][1]
             list_files[i].rule_idx = rule_idx
             list_files[i].weight = math.huge
+            list_files[i].options = keep_rules[rule_idx][3]
             _G.logger:info(" * file '%s' is covered by the keep rule %d",
                            list_files[i].fname, list_files[i].rule_idx or 0)
             break
@@ -351,6 +383,7 @@ function Preprocessor:parseDirectory(args, datalist, dist_rules, keep_rules, typ
         local rule_idx = list_files[i].rule_idx
         list_files[i].weight = dist_rules[rule_idx][2] / weight_norm * list_files[i][1] / weight_rule[rule_idx]
         sum_weight = sum_weight + list_files[i].weight
+        list_files[i].options = dist_rules[rule_idx][3]
       end
     end
 
@@ -401,8 +434,8 @@ function Preprocessor:poolSynchronize()
   end
 end
 
--- initialization of threads and tokenizers
-local function init_thread(tokenizers)
+-- initialization of threads and optTok
+local function init_thread(id, args, optTok, optMPr)
   _G.paths = require 'paths'
   _G.path = require 'pl.path'
   _G.onmt = require 'onmt.init'
@@ -412,17 +445,32 @@ local function init_thread(tokenizers)
   _G.tokenizer = require('tools.utils.tokenizer')
   _G.BPE = require ('tools.utils.BPE')
   _G.bpes = {}
-  _G.tokenizers = tokenizers
-  _G.normalizers = {}
-  for i, v in ipairs(tokenizers) do
+  _G.optTok = optTok
+  _G.optMPr = optMPr
+  _G.hookManager = onmt.utils.HookManager.new(args, id)
+  _G.args = args
+  for i, v in ipairs(optTok) do
     if v and v["bpe_model"] and v["bpe_model"] ~= '' then
       _G.bpes[i] = _G.BPE.new(v)
     end
-    if v and v["normalize_cmd"] and v["normalize_cmd"] ~= '' then
-      local N = require('tools.utils.normalizer')
-      _G.normalizers[i] = N.new(v["normalize_cmd"])
-    end
   end
+end
+
+-- parse k=v options from distribution file, and build real key-value based on args
+local function parseTextOptions(args, optList)
+  local foptions = {}
+  for _, o in ipairs(optList) do
+    local kv = onmt.utils.String.split(o, "=")
+    onmt.utils.Error.assert(#kv==1 or #kv==2, "incorrect option in distribution rules: "..o)
+    -- boolean option
+    if #kv == 1 then table.insert(kv, true) end
+    onmt.utils.Error.assert(args[kv[1]] ~= nil, "option not defined in distribution rules: "..o)
+    if type(args[kv[1]]) == "number" then kv[2]=tonumber(kv[2]) end
+    if type(args[kv[1]]) == "boolean" then kv[2]=kv[2]~="" and kv[2]~="false" end
+    foptions[kv[1]]=kv[2]
+  end
+  foptions.textOpt = table.concat(optList,";");
+  return foptions
 end
 
 function Preprocessor:__init(args, dataType)
@@ -447,8 +495,9 @@ function Preprocessor:__init(args, dataType)
     return count
   end
 
-  -- tokenization options
-  local tokenizers = { {}, {} }
+  -- tokenization and preprocessing options
+  local optTok = { {}, {} }
+  local optMPr = { {}, {} }
   for k, v in pairs(args) do
     if k:sub(1,4) == 'tok_' then
       local idx = 1
@@ -460,11 +509,23 @@ function Preprocessor:__init(args, dataType)
       else
         k = k:sub(5)
       end
-      tokenizers[idx][k] = v
+      optTok[idx][k] = v
+    end
+    if k:sub(1,4) == 'mpr_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      optMPr[idx][k] = v
     end
   end
   for i = 1, 2 do
-    _G.logger:info("Using on-the-fly '%s' tokenization for input "..i, tokenizers[i]["mode"])
+    _G.logger:info("Using on-the-fly '%s' tokenization for input "..i, optTok[i]["mode"])
   end
 
   if args.preprocess_pthreads > 1 and args.train_dir ~= '' then
@@ -474,11 +535,11 @@ function Preprocessor:__init(args, dataType)
     threads.Threads.serialization('threads.sharedserialize')
     self.pool = threads.Threads(
       args.preprocess_pthreads,
-      function() init_thread(tokenizers) end,
+      function(id) init_thread(id, args, optTok, optMPr) end,
       function() _G.logger = globalLogger end
     )
   else
-    init_thread(tokenizers)
+    init_thread("-", args, optTok, optMPr)
   end
 
   -- sanity check on options: train_dir is exclusive all direct file settings
@@ -501,7 +562,11 @@ function Preprocessor:__init(args, dataType)
       local dist_rule = f:read()
       if not dist_rule then break end
       local trule = onmt.utils.String.split(dist_rule, " ")
-      onmt.utils.Error.assert(#trule == 2, "invalid syntax for sample distribution rule: "..dist_rule)
+      local pattern = trule[1]
+      local weight = trule[2]
+      table.remove(trule,1)
+      table.remove(trule,1)
+      trule = { pattern, weight, parseTextOptions(args, trule) }
       if trule[2] == "*" then
         table.insert(self.keep_rules, trule)
       else
@@ -531,6 +596,7 @@ function Preprocessor:__init(args, dataType)
     self.list_train = { { self.totalCount, list_files } }
     self.list_train[1].fname = self.args[self.trains[1]]
     self.list_train[1].weight = 1
+    self.list_train[1].options = {}
   end
 
   if args[self.valids[1]] ~= '' then
@@ -544,6 +610,7 @@ function Preprocessor:__init(args, dataType)
     end
     self.list_valid[1].fname = self.args[self.valids[1]]
     self.list_valid[1].weight = 1
+    self.list_valid[1].options = {}
   end
 
 end
@@ -564,11 +631,13 @@ local function processSentence(n, idx, tokens, parallelCheck, isValid, isInputVe
     sentenceDists[i][idxRange] = sentenceDists[i][idxRange]+1
   end
 
+  local valid = true
+
   if parallelCheck then
-    parallelCheck(idx, isInputVector, dicts, tokens)
+    valid = parallelCheck(idx, isInputVector, dicts, tokens)
   end
 
-  if isValid(tokens, src_seq_length, tgt_seq_length) then
+  if valid and isValid(tokens, src_seq_length, tgt_seq_length) then
     for i = 1, n do
       local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
       avgLength[i] = avgLength[i] * (#vectors[i] / (#vectors[i] + 1)) + length / (#vectors[i] + 1)
@@ -716,7 +785,7 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
               table.insert(sentences, {})
             end
             -- keep maximum a batch of 10000 sentences
-            while not hasNil and (not sampling or sampling_idx <= #sampling) and #sentences[1] < 10000 do
+            while not hasNil and (not sampling or sampling_idx <= #sampling) and #sentences[1] < preprocess_batchsize do
               local allNil = true
               local keepSentence = not sampling or sampling[sampling_idx] == idx
 
@@ -752,34 +821,66 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
               idx = idx + 1
             end
 
-            -- normalize and tokenize
-            for i = 1, n do
-              if _G.normalizers[i] then
-                local nsentences = _G.normalizers[i]:normalize(sentences[i+1])
-                if nsentences == nil then
-                  return _G.__threadid, 1, string.format('normalizer does not preserve sentence count')
-                end
-                sentences[i+1] = nsentences
-              end
-              for j = 1, #sentences[i+1] do
-                sentences[i+1][j] =  _G.tokenizer.tokenize(_G.tokenizers[i], sentences[i+1][j], _G.bpes[i])
-              end
-            end
-
-            for j = 1, #sentences[1] do
-              local tokens = {}
+            if #sentences[1] > 0 then
+              -- preprocess and tokenize
               for i = 1, n do
-                table.insert(tokens, sentences[i+1][j])
-                if verbose then
-                  _G.logger:debug("[%d:%d] %s", j, i, table.concat(tokens[i], " "))
+                -- adapt local options
+                local savOpt = {}
+                for k, v in pairs(df.options or {}) do
+                  savOpt[k] = _G.optMPr[i][k]
+                  _G.optMPr[i][k] = v
+                end
+                local psentences = _G.hookManager:call("mpreprocess", _G.optMPr[i], sentences[i+1])
+                if psentences then
+                  sentences[i+1] = psentences
+                end
+                -- restore options
+                for k, _ in pairs(df.options or {}) do
+                  _G.optMPr[i][k] = savOpt[k]
                 end
               end
-              for _ = 1, sentences[1][j] do
-                ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
-                                                        constants, prunedRatio, generateFeatures, time_shift_feature,
-                                                        sentenceDists, vectors, features, avgLength, sizes,
-                                                        src_seq_length, tgt_seq_length)
-                count = count + 1
+
+              if n == 2 then
+                local asentences = { sentences[2], sentences[3] }
+                -- adapt local options
+                local savOpt = {}
+                for k, v in pairs(df.options or {}) do
+                  savOpt[k] = _G.args[k]
+                  _G.args[k] = v
+                end
+                local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
+                if psentences then
+                  _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
+                  sentences[2] = psentences[1]
+                  sentences[3] = psentences[2]
+                end
+                -- restore options
+                for k, _ in pairs(df.options or {}) do
+                  _G.args[k] = savOpt[k]
+                end
+              end
+
+              for i = 1, n do
+                for j = 1, #sentences[i+1] do
+                  sentences[i+1][j] =  _G.tokenizer.tokenize(_G.optTok[i], sentences[i+1][j], _G.bpes[i])
+                end
+              end
+
+              for j = 1, #sentences[2] do
+                local tokens = {}
+                for i = 1, n do
+                  table.insert(tokens, sentences[i+1][j])
+                  if verbose then
+                    _G.logger:debug("[%d:%d] %s", j, i, table.concat(tokens[i], " "))
+                  end
+                end
+                for _ = 1, sentences[1][j] do
+                  ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
+                                                          constants, prunedRatio, generateFeatures, time_shift_feature,
+                                                          sentenceDists, vectors, features, avgLength, sizes,
+                                                          src_seq_length, tgt_seq_length)
+                  count = count + 1
+                end
               end
             end
           end
@@ -819,8 +920,8 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
           msgPrune = msgPrune .. nameSources[i] .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
         end
 
-        _G.logger:info(' * ['..__threadid..'] file \'%s\': %d total, %d drawn, %d kept - unknown words: %s',
-                          _df.fname or "n/a", _df[1], kept, #vectors[1], msgPrune)
+        _G.logger:info(' * ['..__threadid..'] file \'%s\' (%s): %d total, %d drawn, %d kept - unknown words: %s',
+                          _df.fname or "n/a", (_df.options and _df.options.textOpt) or '', _df[1], kept, #vectors[1], msgPrune)
 
         gCount = gCount + count
         gIgnored = gIgnored + ignored
