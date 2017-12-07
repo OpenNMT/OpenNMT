@@ -86,10 +86,6 @@ local options = {
     {
       enum = {'suffix', 'prefix', 'both', 'none'}
     }
-  },
-  {
-    '-normalize_cmd', '',
-    [[Command for on-the-fly corpus normalization. It should work in 'pipeline' mode.]]
   }
 }
 
@@ -102,7 +98,7 @@ function tokenizer.declareOpts(cmd)
 end
 
 local function inTable(v, t)
-  for _, vt in ipairs(t) do
+  for _, vt in ipairs(t or {}) do
     if v == vt then
       return true
     end
@@ -116,7 +112,6 @@ end
 -- - skip any other non control character [U+0001-U+002F]
 -- - keep sequence of letters/numbers and tokenize everything else
 local function tokenize(line, opt)
-
   if opt.mode == 'space' then
     local index = 1
     local tokens = {}
@@ -214,7 +209,7 @@ local function tokenize(line, opt)
       space = true
       other = false
     else
-      -- skip special characters and BOM and
+      -- skip special characters and BOM
       if v > 32 and not(v == 0xFEFF) then
         -- normalize the separator marker and feat separator
         if separators.substitutes[c] then
@@ -223,7 +218,7 @@ local function tokenize(line, opt)
 
         local is_letter = unicode.isLetter(v)
         local is_alphabet
-        if is_letter and (opt.segment_alphabet_change or #opt.segment_alphabet>0) then
+        if is_letter and (opt.segment_alphabet_change or (opt.segment_alphabet and #opt.segment_alphabet>0)) then
           is_alphabet = alphabet.findAlphabet(v)
         end
 
@@ -341,27 +336,38 @@ local function tokenize(line, opt)
 end
 
 function tokenizer.tokenize(opt, line, bpe)
-  -- tokenize
-  local tokens = tokenize(line, opt)
+  -- if tokenize hook, skip lua tokenization
+  local tokens = _G.hookManager:call("tokenize", opt, line, bpe)
 
-  -- apply segmetn feature if requested
-  if opt.segment_case then
-    local sep = ''
-    if opt.joiner_annotate then sep = opt.joiner end
-    tokens = case.segmentCase(tokens, sep)
+  -- otherwise internal tokenization
+  if not tokens then
+
+    -- tokenize
+    tokens = tokenize(line, opt)
+
+    -- apply segment feature if requested
+    if opt.segment_case then
+      local sep = ''
+      if opt.joiner_annotate then sep = opt.joiner end
+      tokens = case.segmentCase(tokens, sep)
+    end
+
+    -- apply bpe if requested
+    if bpe then
+      local sep = ''
+      if opt.joiner_annotate then sep = opt.joiner end
+      tokens = bpe:segment(tokens, sep)
+    end
+
+    -- add-up case feature if requested
+    if opt.case_feature then
+      tokens = case.addCase(tokens)
+    end
+
   end
 
-  -- apply bpe if requested
-  if bpe then
-    local sep = ''
-    if opt.joiner_annotate then sep = opt.joiner end
-    tokens = bpe:segment(tokens, sep)
-  end
-
-  -- add-up case feature if requested
-  if opt.case_feature then
-    tokens = case.addCase(tokens)
-  end
+  -- post_tokenize hook for more features
+  tokens = _G.hookManager:call("post_tokenize", opt, tokens) or tokens
 
   return tokens
 end
@@ -417,8 +423,13 @@ end
 
 
 function tokenizer.detokenize(line, opt)
+
+  -- if tokenize hook, skip lua detokenization
+  local tokens = _G.hookManager:call("detokenize", line, opt)
+  if tokens then return tokens end
+
   local dline = ""
-  local tokens = getTokens(line, opt.joiner)
+  tokens = getTokens(line, opt.joiner)
   for j = 1, #tokens do
     local token = tokens[j].w
     if j > 1 and not tokens[j-1].rightsep and not tokens[j].leftsep then

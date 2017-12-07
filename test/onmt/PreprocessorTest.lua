@@ -11,6 +11,7 @@ local noFilter = function(_) return true end
 local function buildPreprocessor(mode)
   local cmd = onmt.utils.ExtendedCmdLine.new()
   onmt.data.Preprocessor.declareOpts(cmd, mode == 'parsedir' and 'bitext' or mode)
+  onmt.data.Preprocessor.expandOpts(cmd, mode == 'parsedir' and 'bitext' or mode)
 
   local commandLine
   if not mode or mode == 'bitext' then
@@ -61,7 +62,7 @@ local function makeDicts(srctgt, file)
 end
 
 function preprocessorTest.bitext()
-  local preprocessor, opt = buildPreprocessor()
+  local preprocessor, opt = buildPreprocessor("bitext")
 
   local srcDicts = makeDicts('source',opt.train_src)
   local tgtDicts = makeDicts('target',opt.train_tgt)

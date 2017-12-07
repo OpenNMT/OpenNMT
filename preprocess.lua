@@ -35,6 +35,13 @@ local options = {
 cmd:setCmdLineOptions(options, 'Preprocess')
 
 onmt.data.Preprocessor.declareOpts(cmd, dataType)
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+
+-- expand options depending on source or target (tokenization, mpreprocessing)
+onmt.data.Preprocessor.expandOpts(cmd, dataType)
+
+onmt.utils.HookManager.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 
 local otherOptions = {
@@ -55,6 +62,8 @@ local function main()
   torch.manualSeed(opt.seed)
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+
+  _G.hookManager = onmt.utils.HookManager.new(opt)
 
   local Preprocessor = onmt.data.Preprocessor.new(opt, dataType)
 

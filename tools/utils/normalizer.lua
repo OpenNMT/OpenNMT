@@ -28,12 +28,12 @@ function normalizer:normalize(lines)
   os.remove(name)
   if type(lines) == "table" then
     if #out ~= #lines then
-      return nil
+      return false
     end
     return out
   else
     if #out ~= 1 then
-      return nil
+      return false
     end
     return out[1]
   end

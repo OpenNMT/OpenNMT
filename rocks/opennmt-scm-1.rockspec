@@ -100,6 +100,7 @@ build = {
     ["onmt.utils.Placeholders"] = "onmt/utils/Placeholders.lua",
     ["onmt.utils.FileReader"] = "onmt/utils/FileReader.lua",
     ["onmt.utils.Logger"] = "onmt/utils/Logger.lua",
+    ["onmt.utils.HookManager"] = "onmt/utils/HookManager.lua",
     ["onmt.utils.Profiler"] = "onmt/utils/Profiler.lua",
     ["onmt.utils.Memory"] = "onmt/utils/Memory.lua",
     ["onmt.utils.MemoryOptimizer"] = "onmt/utils/MemoryOptimizer.lua",
