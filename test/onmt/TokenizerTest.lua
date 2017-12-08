@@ -8,6 +8,10 @@ local BPE = require ('tools.utils.BPE')
 local cmd = onmt.utils.ExtendedCmdLine.new()
 tokenizer.declareOpts(cmd)
 
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+onmt.utils.HookManager.declareOpts(cmd)
+
 -- check if tokenization of a is b - and if detok is set, if the detokenization results is back to original
 local function testTok(opt, a, b, detok)
   local bpe
@@ -16,8 +20,8 @@ local function testTok(opt, a, b, detok)
   end
 
   local tok = tokenizer.tokenize(opt, a, bpe)
-  tester:eq(table.concat(tok, '◊'), string.gsub(b, ' ', '◊'))
-  if detok == nil then return end
+  tester:eq(table.concat(tok, ' '), string.gsub(b, ' ', ' '))
+  if not detok then return end
   tester:assert((tokenizer.detokenize(table.concat(tok, ' '), opt)==a)==detok)
 end
 
@@ -43,6 +47,45 @@ function tokenizerTest.combiningMark()
   testTok(opt, "वर्तमान लिपि (स्क्रिप्ट) खो जाएगी।", "वर्तमान लिपि (￭ स्क्रिप्ट ￭) खो जाएगी ￭।", true)
 end
 
+function tokenizerTest.spaceTokenization()
+  local opt = cmd:parse({'-mode','space'})
+  testTok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions: human rights [14 (g)]")
+  opt = cmd:parse({'-mode','space', '-case_feature'})
+  testTok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th￨L meeting￨L social￨C and￨L human￨L rights￨L questions:￨L human￨L rights￨L [14￨N (g)]￨L")
+end
+
+function tokenizerTest.protectedSequence()
+  local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠￭ km", true)
+  testTok(opt, "A｟380｠", "A ￭｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭.", true)
+  testTok(opt, "$｟0.23｠", "$￭ ｟0.23｠", true)
+  testTok(opt, "｟0.23｠$", "｟0.23｠ ￭$", true)
+  testTok(opt, "｟US$｠23", "｟US$｠￭ 23", true)
+  testTok(opt, "1｟ABCD｠0", "1 ￭｟ABCD｠￭ 0", true)
+  testTok(opt, "$1", "$￭ 1", true)
+  opt = cmd:parse({'-mode','conservative','-joiner_annotate','-joiner_new'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠ ￭ km", true)
+  testTok(opt, "A｟380｠", "A ￭ ｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠ ￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭ .", true)
+end
+
+function tokenizerTest.aggressive()
+  local opt = cmd:parse({'-mode','aggressive','-joiner_annotate'})
+  testTok(opt, "｟1,023｠km", "｟1,023｠￭ km", true)
+  testTok(opt, "A｟380｠", "A ￭｟380｠", true)
+  testTok(opt, "｟1,023｠｟380｠", "｟1,023｠￭ ｟380｠", true)
+  testTok(opt, "｟1023｠.", "｟1023｠ ￭.", true)
+  testTok(opt, "$｟0.23｠", "$￭ ｟0.23｠", true)
+  testTok(opt, "｟0.23｠$", "｟0.23｠ ￭$", true)
+  testTok(opt, "｟US$｠23", "｟US$｠￭ 23", true)
+  testTok(opt, "1｟ABCD｠0", "1 ￭｟ABCD｠￭ 0", true)
+  testTok(opt, "$1", "$￭ 1", true)
+  testTok(opt, "A380", "A ￭380", true)
+end
+
 function tokenizerTest.basicDetokenization()
   local opt = cmd:parse({'-mode','conservative'})
   testTokDetok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions : human rights [ 14 ( g ) ]")
@@ -56,7 +99,7 @@ function tokenizerTest.bpebasic()
 
   opt = cmd:parse({'-bpe_model','test/data/bpe-models/fr500','-joiner_annotate','-mode','aggressive'})
   local raw = {
-    [[Il n'y a encore aucun décompte de corps, c'est notre estimation, a-t-il déclaré depuis Genève.]],
+    [[Il n'y a encore aucun décompte de corps, c'est notre estimation, a-t-il déclaré ｟depuis Genève｠.]],
     [[Le SMR mesure notamment l'efficacité et les effets indésirables d'un produit.]],
     [[Yasmina Reza retrouve le Théâtre Antoine (01.42.08.77.71) qui propose une reprise de Conversations après un enterrement, sa première pièce qui la révéla au public.]],
     [[Dans tous les cas, il y a eu une très bonne réactivité médicale.]],
@@ -66,9 +109,9 @@ function tokenizerTest.bpebasic()
     [[Nous ne faisons que de bonnes expériences avec cette façon décontractée d'accueillir nos clients.]]
   }
   local tok = {
-    [[Il n ￭'￭ y a en￭ co￭ re au￭ c￭ un dé￭ com￭ p￭ te de c￭ or￭ p￭ s ￭, c ￭'￭ est no￭ tre esti￭ m￭ ation ￭, a ￭-￭ t ￭-￭ il déclar￭ é depuis G￭ en￭ è￭ ve ￭.]],
+    [[Il n ￭'￭ y a en￭ co￭ re au￭ c￭ un dé￭ com￭ p￭ te de c￭ or￭ p￭ s ￭, c ￭'￭ est no￭ tre esti￭ m￭ ation ￭, a ￭-￭ t ￭-￭ il déclar￭ é ｟depuis％0020Genève｠ ￭.]],
     [[Le S￭ M￭ R m￭ es￭ u￭ re no￭ ta￭ m￭ ment l ￭'￭ e￭ ffi￭ ca￭ ci￭ té et les eff￭ e￭ ts in￭ dé￭ si￭ ra￭ b￭ les d ￭'￭ un produ￭ it ￭.]],
-    [[Y￭ as￭ min￭ a R￭ e￭ z￭ a re￭ tr￭ ouv￭ e le T￭ h￭ é￭ â￭ tre A￭ n￭ to￭ ine ( ￭0￭ 1 ￭. ￭4￭ 2 ￭. ￭0￭ 8 ￭. ￭7￭ 7 ￭. ￭7￭ 1 ￭) qui pro￭ po￭ se une re￭ pr￭ ise de C￭ on￭ ver￭ s￭ ations après un en￭ ter￭ r￭ ement ￭, sa premi￭ ère pi￭ è￭ ce qui la ré￭ v￭ é￭ la au publi￭ c ￭.]],
+    [[Y￭ as￭ min￭ a R￭ e￭ z￭ a re￭ tr￭ ouv￭ e le T￭ h￭ é￭ â￭ tre A￭ n￭ to￭ ine (￭ 0￭ 1 ￭.￭ 4￭ 2 ￭.￭ 0￭ 8 ￭.￭ 7￭ 7 ￭.￭ 7￭ 1 ￭) qui pro￭ po￭ se une re￭ pr￭ ise de C￭ on￭ ver￭ s￭ ations après un en￭ ter￭ r￭ ement ￭, sa premi￭ ère pi￭ è￭ ce qui la ré￭ v￭ é￭ la au publi￭ c ￭.]],
     [[Dans tou￭ s les ca￭ s ￭, il y a eu une tr￭ ès b￭ on￭ ne ré￭ ac￭ ti￭ vi￭ té mé￭ di￭ ca￭ le ￭.]],
     [[«￭ J ￭'￭ ai re￭ ç￭ u pl￭ usi￭ eurs o￭ ff￭ res d ￭'￭ em￭ pl￭ o￭ i de tr￭ ès gran￭ des entr￭ e￭ pr￭ is￭ es ￭» ￭, ann￭ on￭ ce ￭-￭ t ￭-￭ il ￭, sans en di￭ re plus ￭.]],
     [[Le t￭ emp￭ s man￭ qu￭ er￭ ait pu￭ is￭ que c￭ el￭ u￭ i ￭-￭ c￭ i s ￭'￭ est en￭ g￭ ag￭ é à con￭ fi￭ r￭ m￭ er la nom￭ in￭ ation deux jou￭ rs plus t￭ ar￭ d ￭, s￭ oit le 1￭ er mar￭ s ￭.]],
@@ -78,6 +121,32 @@ function tokenizerTest.bpebasic()
   for i = 1, #raw do
     testTok(opt, raw[i], tok[i], true)
   end
+end
+
+function tokenizerTest.bpeModePrefix()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_prefix.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "S e u lement seulement il v ais n on se u lement seulement n on à V er d un", false)
+end
+
+function tokenizerTest.bpeModeNofix()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_nofix.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "S e u lement seulement il v ais n on seulement seulement n on à V er d un", false)
+end
+
+function tokenizerTest.bpeModeBothfix()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_bothfix.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "S eu lement seulement il va is n on s eu lement seu l emen t n on à V er du n", false)
+end
+
+function tokenizerTest.bpeCaseInsensitive()
+  local opt = cmd:parse({'-bpe_model','test/data/bpe-models/codes_suffix_case_insensitive.fr','-mode','aggressive'})
+  testTok(opt, "Seulement seulement il vais nonseulement seulementnon à Verdun", "Seulement seulement il va is n on seulement seu l em ent n on à Ver d un", false)
+end
+
+function tokenizerTest.test_substitute()
+  local opt = cmd:parse({'-mode','conservative'})
+  testTok(opt, [[test￭ protect￨, ：, and ％ or ＃...]],
+               [[test ■ protect │ , : , and % or # . . .]], false)
 end
 
 function tokenizerTest.case_feature()
@@ -101,9 +170,32 @@ function tokenizerTest.segment_alphabet()
   testTok(opt, raw, tok)
 end
 
+function tokenizerTest.segment_numbers()
+  local opt = cmd:parse({'-segment_numbers','-joiner_annotate','-mode','aggressive'})
+  testTok(opt, "1984 mille neuf cent quatrevingt-quatre", "1￭ 9￭ 8￭ 4 mille neuf cent quatrevingt ￭-￭ quatre", true)
+end
+
 function tokenizerTest.segment_alphabet_change()
   local opt = cmd:parse({'-segment_alphabet_change'})
   testTok(opt, "rawБ", "raw Б")
+end
+
+function tokenizerTest.placeholder_joiners()
+  local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
+  testTok(opt, "｟ph｠abc", "｟ph｠￭ abc", false)
+  testTok(opt, "｟ph｠123", "｟ph｠￭ 123", false)
+  testTok(opt, "｟ph｠.", "｟ph｠ ￭.", false)
+  testTok(opt, "abc｟ph｠", "abc ￭｟ph｠", false)
+  testTok(opt, "123｟ph｠", "123 ￭｟ph｠", false)
+  testTok(opt, "-｟ph｠", "-￭ ｟ph｠", false)
+  testTok(opt, "｟ph｠｟ph｠", "｟ph｠￭ ｟ph｠", false)
+end
+
+function tokenizerTest.bugCTok56()
+  local opt = cmd:parse({'-mode','conservative','-joiner_annotate'})
+  testTok(opt, "61.\tSet", "61 ￭. Set")
+  opt.joiner_annotate = false
+  testTok(opt, "￭￨％＃：", "■ │ % # :", false)
 end
 
 function tokenizerTest.real()
@@ -132,6 +224,19 @@ function tokenizerTest.real()
   }
   for i = 1, #raw do
     testTok(opt, raw[i], tok[i], true)
+  end
+end
+
+function tokenizerTest.hooks()
+  local hookName = _G.hookManager:call("hookName")
+  if hookName == "chartok" then
+    local opt = cmd:parse({'-mode','char'})
+    testTok(opt, "49th meeting Social and human rights questions [14 (g)]",
+                 "4 9 t h ▁ m e e t i n g ▁ S o c i a l ▁ a n d ▁ h u m a n ▁ r i g h t s ▁ q u e s t i o n s ▁ [ 1 4 ▁ ( g ) ]")
+  elseif hookName == "sentencepiece" then
+    local opt = cmd:parse({'-mode','none', '-sentencepiece' ,'hooks/lua-sentencepiece/test/sample.model'})
+    testTok(opt, "une impulsion Berry-Siniora pourraient changer quoi",
+                 "▁un e ▁imp ul s ion ▁B erry - S i nior a ▁po ur ra i ent ▁change r ▁ quoi")
   end
 end
 

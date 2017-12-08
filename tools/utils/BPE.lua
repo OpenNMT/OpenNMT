@@ -1,4 +1,6 @@
 local unicode = require 'tools.utils.unicode'
+local separators = require('tools.utils.separators')
+
 local BPE = torch.class('BPE')
 
 function BPE:__init(opt)
@@ -15,22 +17,32 @@ function BPE:__init(opt)
   self.codes = {}
   local f = assert(io.open(opt.bpe_model, "r"))
 
-  self.EOT_marker = opt.EOT_marker
-  self.BOT_marker = opt.BOT_marker
+  self.EOT_marker = opt.bpe_EOT_marker
+  self.BOT_marker = opt.bpe_BOT_marker
   self.joiner_new = opt.joiner_new
   self.joiner_annotate = opt.joiner_annotate
 
   local t = f:read("*line")
   local options = self.split(t, ";")
-  if (#options == 3) then
+  if (#options == 3 or #options == 4 ) then
     self.prefix = options[1] == "true"
     self.suffix = options[2] == "true"
     self.case_insensitive = options[3] == "true"
     t = f:read("*line")
+    if #options == 4 then
+      io.stderr:write("Warning: The 'mode' parameter for tokenization compatibility between train and test has been depreciated, please make sure that the same tokenization parameters are applied while training BPE models and applying them on raw text inputs\n")
+    end
+  elseif ( options[1] == 'v3' ) then
+    self.prefix = options[2] == "true"
+    self.suffix = options[3] == "true"
+    self.case_insensitive = options[4] == "true"
+    self.BOT_marker = options[5]
+    self.EOT_marker = options[6]
   else
     self.prefix = opt.bpe_mode == "prefix" or opt.bpe_mode == "both"
     self.suffix = opt.bpe_mode == "suffix" or opt.bpe_mode == "both"
     self.case_insensitive = opt.bpe_case_insensitive
+    io.stderr:write("No BPE options read from model, falling back to cmd or default options\n")
   end
   local i = 1
 
@@ -159,40 +171,44 @@ function BPE:segment(tokens, separator)
   local bpeSegment = {}
   for i=1, #tokens do
     local token = tokens[i]
-    local left_sep = false
-    local right_sep = false
-    if self.joiner_annotate and not self.joiner_new then
-      if token:sub(1, #separator) == separator then
-        token = token:sub(#separator + 1)
-        left_sep = true
+    if token:find(separators.ph_marker_open) then
+      table.insert(bpeSegment, token)
+    else
+      local left_sep = false
+      local right_sep = false
+      if self.joiner_annotate and not self.joiner_new then
+        if token:sub(1, #separator) == separator then
+          token = token:sub(#separator + 1)
+          left_sep = true
+        end
+        if token:sub(-#separator, -1) == separator then
+          token = token:sub(1, -#separator-1)
+          right_sep = true
+        end
       end
-      if token:sub(-#separator, -1) == separator then
-        token = token:sub(1, -#separator-1)
-        right_sep = true
+      local bpeTokens = self:encode(token)
+      if self.joiner_annotate and not self.joiner_new then
+        if left_sep then
+          bpeTokens[1] = separator .. bpeTokens[1]
+        end
+        if right_sep then
+          bpeTokens[#bpeTokens] = bpeTokens[#bpeTokens] .. separator
+        end
       end
-    end
-    local bpeTokens = self:encode(token)
-    if self.joiner_annotate and not self.joiner_new then
-      if left_sep then
-        bpeTokens[1] = separator .. bpeTokens[1]
-      end
-      if right_sep then
-        bpeTokens[#bpeTokens] = bpeTokens[#bpeTokens] .. separator
-      end
-    end
-    for j=1, #bpeTokens-1 do
-      if self.joiner_annotate then
-        if not self.joiner_new then
-          table.insert(bpeSegment, bpeTokens[j] .. separator)
+      for j=1, #bpeTokens-1 do
+        if self.joiner_annotate then
+          if not self.joiner_new then
+            table.insert(bpeSegment, bpeTokens[j] .. separator)
+          else
+            table.insert(bpeSegment, bpeTokens[j])
+            table.insert(bpeSegment, separator)
+          end
         else
           table.insert(bpeSegment, bpeTokens[j])
-          table.insert(bpeSegment, separator)
         end
-      else
-        table.insert(bpeSegment, bpeTokens[j])
       end
+      table.insert(bpeSegment, bpeTokens[#bpeTokens])
     end
-    table.insert(bpeSegment, bpeTokens[#bpeTokens])
   end
   return bpeSegment
 end

@@ -89,6 +89,11 @@ local function justForward(encoder)
   encoder:forward(batch)
 end
 
+local function justForwardOne(encoder, value, clone)
+  local inputs =torch.IntTensor(3):fill(value)
+  encoder:training()
+  return encoder:forwardOne(inputs, nil, clone)
+end
 
 local function genericCheckMasking(encoder)
   local src = {
@@ -144,6 +149,14 @@ function encoderTest.simple_LSTM_dropouts()
   justForward(encoder)
   tester:eq(count, 4)
   tester:eq(vcount, 0)
+
+  local context1, context2
+  context1 = select(2, justForwardOne(encoder, 2, false))
+  context2 = select(2, justForwardOne(encoder, 3, false))
+  tester:assertTensorEq(context1, context2)
+  context1 = select(2, justForwardOne(encoder, 2, true))
+  context2 = select(2, justForwardOne(encoder, 3, true))
+  tester:assertTensorNe(context1, context2)
 
   count = 0
   encoder = buildEncoder(onmt.Encoder, 'LSTM', 'sum', 0.2, 'variational')

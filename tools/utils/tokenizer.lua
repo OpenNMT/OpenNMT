@@ -15,9 +15,9 @@ local options = {
     '-mode', 'conservative',
     [[Define how aggressive should the tokenization be. `aggressive` only keeps sequences
       of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65",
-      "soft-landing", etc.]],
+      "soft-landing", etc. `space` is doing space tokenization.]],
     {
-      enum = {'conservative', 'aggressive'}
+      enum = {'space', 'conservative', 'aggressive'}
     }
   },
   {
@@ -48,6 +48,10 @@ local options = {
     }
   },
   {
+    '-segment_numbers', false,
+    [[Segment numbers into single digits.]]
+  },
+  {
     '-segment_alphabet_change', false,
     [[Segment if alphabet change between 2 letters.]]
   },
@@ -58,12 +62,12 @@ local options = {
       is learnt using `learn_bpe.lua`.]]
   },
   {
-    '-EOT_marker', separators.EOT,
-    [[Marker used to mark the end of token.]]
+    '-bpe_EOT_marker', separators.EOT,
+    [[Marker used to mark the End of Token while applying BPE in mode 'prefix' or 'both'.]]
   },
   {
-    '-BOT_marker', separators.BOT,
-    [[Marker used to mark the beginning of token.]]
+    '-bpe_BOT_marker', separators.BOT,
+    [[Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.]]
   },
   {
     '-bpe_case_insensitive', false,
@@ -74,9 +78,9 @@ local options = {
   {
     '-bpe_mode', 'suffix',
     [[Define the BPE mode. This option will be overridden/set automatically if the BPE model
-      specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-BOT_marker`
+      specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-bpe_BOT_marker`
       to the begining of each word to learn prefix-oriented pair statistics;
-      `suffix`: append `-EOT_marker` to the end of each word to learn suffix-oriented pair
+      `suffix`: append `-bpe_EOT_marker` to the end of each word to learn suffix-oriented pair
       statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`:
       no `suffix` nor `prefix`.]],
     {
@@ -85,12 +89,16 @@ local options = {
   }
 }
 
+function tokenizer.getOpts()
+  return options
+end
+
 function tokenizer.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Tokenizer')
 end
 
 local function inTable(v, t)
-  for _, vt in ipairs(t) do
+  for _, vt in ipairs(t or {}) do
     if v == vt then
       return true
     end
@@ -104,6 +112,30 @@ end
 -- - skip any other non control character [U+0001-U+002F]
 -- - keep sequence of letters/numbers and tokenize everything else
 local function tokenize(line, opt)
+  if opt.mode == 'space' then
+    local index = 1
+    local tokens = {}
+    while index <= line:len() do
+      local sepStart, sepEnd = line:find(' ', index)
+      local sub
+      if not sepStart then
+        sub = line:sub(index)
+        if sub ~= '' then
+          table.insert(tokens, sub)
+        end
+        break
+      else
+        sub = line:sub(index, sepStart - 1)
+        if sub ~= '' then
+          table.insert(tokens, sub)
+        end
+        index = sepEnd + 1
+      end
+    end
+
+    return tokens
+  end
+
   local tokens = {}
   -- contains the current token
   local curtok = ''
@@ -113,10 +145,49 @@ local function tokenize(line, opt)
   local prev_alphabet
   local number = false
   local other = false
+  local placeholder = false
 
   -- iterate on utf-8 characters
   for v, c, nextv in unicode.utf8_iter(line) do
-    if unicode.isSeparator(v) then
+    if placeholder then
+      if c == separators.ph_marker_close then
+        curtok = curtok .. c
+        letter = true
+        prev_alphabet = 'placeholder'
+        placeholder = false
+        space = false
+      else
+        if unicode.isSeparator(v) then
+          c = string.format(separators.protected_character.."%04x", v)
+        end
+        curtok = curtok .. c
+      end
+    elseif c == separators.ph_marker_open then
+      local initc = ''
+      if space == false then
+        if opt.joiner_annotate and not(opt.joiner_new) then
+          if (letter and prev_alphabet ~= 'placeholder') or number then
+            initc = opt.joiner
+          else
+            curtok = curtok .. opt.joiner
+          end
+        end
+        table.insert(tokens, curtok)
+        curtok = initc
+        if opt.joiner_annotate and opt.joiner_new then
+          table.insert(tokens, opt.joiner)
+        end
+      elseif other == true then
+        if opt.joiner_annotate then
+          if curtok == '' then
+            if opt.joiner_new then table.insert(tokens, opt.joiner)
+            else tokens[#tokens] = tokens[#tokens] .. opt.joiner end
+          end
+        end
+      end
+      curtok = curtok .. c
+      placeholder = true
+    elseif unicode.isSeparator(v) then
       if space == false then
         table.insert(tokens, curtok)
         curtok = ''
@@ -138,16 +209,16 @@ local function tokenize(line, opt)
       space = true
       other = false
     else
-      -- skip special characters and BOM and
+      -- skip special characters and BOM
       if v > 32 and not(v == 0xFEFF) then
         -- normalize the separator marker and feat separator
-        if c == separators.joiner_marker then c = separators.joiner_marker_substitute end
-        if c == separators.feat_marker then c = separators.feat_marker_substitute end
-
+        if separators.substitutes[c] then
+          c = separators.substitutes[c]
+        end
 
         local is_letter = unicode.isLetter(v)
         local is_alphabet
-        if is_letter and (opt.segment_alphabet_change or #opt.segment_alphabet>0) then
+        if is_letter and (opt.segment_alphabet_change or (opt.segment_alphabet and #opt.segment_alphabet>0)) then
           is_alphabet = alphabet.findAlphabet(v)
         end
 
@@ -166,8 +237,10 @@ local function tokenize(line, opt)
         end
         if is_letter then
           if not(letter == true or space == true) or
-             (letter == true and not is_mark and prev_alphabet == is_alphabet and inTable(is_alphabet, opt.segment_alphabet)) or
-             (letter == true and not is_mark and prev_alphabet ~= is_alphabet and opt.segment_alphabet_change) then
+             (letter == true and not is_mark and
+              (prev_alphabet == 'placeholder' or
+               (prev_alphabet == is_alphabet and inTable(is_alphabet, opt.segment_alphabet)) or
+               (prev_alphabet ~= is_alphabet and opt.segment_alphabet_change))) then
             if opt.joiner_annotate and not(opt.joiner_new) then
               curtok = curtok .. opt.joiner
             end
@@ -191,13 +264,13 @@ local function tokenize(line, opt)
           letter = true
           prev_alphabet = is_alphabet
         elseif is_number then
-          if not(number == true or space == true) then
+          if letter == true or (number and opt.segment_numbers) or not(number == true or space == true) then
             local addjoiner = false
             if opt.joiner_annotate then
               if opt.joiner_new then
                 addjoiner = true
               else
-                if not(letter) then
+                if not(letter and prev_alphabet ~= 'placeholder') then
                   curtok = curtok .. opt.joiner
                 else
                   c = opt.joiner .. c
@@ -214,7 +287,7 @@ local function tokenize(line, opt)
               if opt.joiner_new then
                 table.insert(tokens, opt.joiner)
               else
-                curtok = opt.joiner
+                tokens[#tokens] = tokens[#tokens] .. opt.joiner
               end
             end
           end
@@ -263,27 +336,38 @@ local function tokenize(line, opt)
 end
 
 function tokenizer.tokenize(opt, line, bpe)
-  -- tokenize
-  local tokens = tokenize(line, opt)
+  -- if tokenize hook, skip lua tokenization
+  local tokens = _G.hookManager:call("tokenize", opt, line, bpe)
 
-  -- apply segmetn feature if requested
-  if opt.segment_case then
-    local sep = ''
-    if opt.joiner_annotate then sep = opt.joiner end
-    tokens = case.segmentCase(tokens, sep)
+  -- otherwise internal tokenization
+  if not tokens then
+
+    -- tokenize
+    tokens = tokenize(line, opt)
+
+    -- apply segment feature if requested
+    if opt.segment_case then
+      local sep = ''
+      if opt.joiner_annotate then sep = opt.joiner end
+      tokens = case.segmentCase(tokens, sep)
+    end
+
+    -- apply bpe if requested
+    if bpe then
+      local sep = ''
+      if opt.joiner_annotate then sep = opt.joiner end
+      tokens = bpe:segment(tokens, sep)
+    end
+
+    -- add-up case feature if requested
+    if opt.case_feature then
+      tokens = case.addCase(tokens)
+    end
+
   end
 
-  -- apply bpe if requested
-  if bpe then
-    local sep = ''
-    if opt.joiner_annotate then sep = opt.joiner end
-    tokens = bpe:segment(tokens, sep)
-  end
-
-  -- add-up case feature if requested
-  if opt.case_feature then
-    tokens = case.addCase(tokens)
-  end
+  -- post_tokenize hook for more features
+  tokens = _G.hookManager:call("post_tokenize", opt, tokens) or tokens
 
   return tokens
 end
@@ -337,18 +421,46 @@ local function getTokens(t, joiner)
   return fields
 end
 
+
 function tokenizer.detokenize(line, opt)
+
+  -- if tokenize hook, skip lua detokenization
+  local tokens = _G.hookManager:call("detokenize", line, opt)
+  if tokens then return tokens end
+
   local dline = ""
-  local tokens = getTokens(line, opt.joiner)
+  tokens = getTokens(line, opt.joiner)
   for j = 1, #tokens do
+    local token = tokens[j].w
     if j > 1 and not tokens[j-1].rightsep and not tokens[j].leftsep then
       dline = dline .. " "
     end
-    local word = tokens[j].w
-    if opt.case_feature then
-      word = case.restoreCase(word, tokens[j].feats)
+    if token:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
+      local inProtected = false
+      local protectSeq = ''
+      local rtok = ''
+      for _, c, _ in unicode.utf8_iter(token) do
+        if inProtected then
+          protectSeq = protectSeq .. c
+          if protectSeq:len() == 4 then
+            rtok = rtok .. unicode._cp_to_utf8(tonumber(protectSeq, 16))
+            inProtected = false
+          end
+        elseif c == separators.protected_character then
+          inProtected = true
+        else
+          rtok = rtok .. c
+          if c == separators.ph_marker_close then
+            break
+          end
+        end
+      end
+      token = rtok
     end
-    dline = dline .. word
+    if opt.case_feature then
+      token = case.restoreCase(token, tokens[j].feats)
+    end
+    dline = dline .. token
   end
   return dline
 end

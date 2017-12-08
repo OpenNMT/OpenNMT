@@ -31,4 +31,6 @@ require('onmt.modules.JoinReplicateTable')
 require('onmt.modules.ParallelClassNLLCriterion')
 require('onmt.modules.RIndexLinear')
 
+require('onmt.modules.SentenceNLLCriterion')
+
 return onmt

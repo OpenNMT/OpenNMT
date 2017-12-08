@@ -9,7 +9,13 @@ local function vecToTensor(vec)
 end
 
 local Preprocessor = torch.class('Preprocessor')
+local paths = require 'paths'
+local tokenizer = require('tools.utils.tokenizer')
+
 local tds
+local threads
+
+local preprocess_batchsize = 10000
 
 local commonOptions = {
   {
@@ -25,6 +31,22 @@ local commonOptions = {
     [[Keep frequency of words in dictionary.]]
   },
   {
+    '-gsample', 0,
+    [[If not zero, extract a new sample from the corpus. In training mode, file sampling is done at each epoch. Values between 0 and 1 indicate ratio,
+      values higher than 1 indicate data size]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isFloat(0)
+    }
+  },
+  {
+    '-gsample_dist', '',
+    [[Configuration file with data class distribution to use for sampling training corpus. If not set, sampling is uniform.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists,
+      depends = function(opt) return opt.gsample_dist == '' or opt.gsample > 0, "option `gsample_dist` requires `gsample`" end
+    }
+  },
+  {
     '-sort', true,
     [[If set, sort the sequences by size to build batches without source padding.]]
   },
@@ -37,56 +59,80 @@ local commonOptions = {
     [[If set, source and target files are 'key value' with key match between source and target.]]
   },
   {
-    '-report_every', 100000,
+    '-report_progress_every', 100000,
     [[Report status every this many sentences.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isInt(1)
+    }
+  },
+  {
+    '-preprocess_pthreads', 4,
+    [[Number of parallel threads for preprocessing.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isInt(1)
     }
   }
 }
 
---[[
-  Generic function to generate options for the different modes
-]]
-local function declareDataOptions(mode)
-  local function prefix(data)
-    if data.short then return data.short.."_" end
-    return ""
-  end
-  local function suffix(data)
-    if data.short then return "_"..data.short end
-    return ""
-  end
-  local function nameWithSpace(data)
-    if data.name then return " "..data.name end
-    return ""
-  end
+function Preprocessor.getDataList(dataType)
   local datalist
-  if mode == 'bitext' then
-    datalist = { {name="source",short="src",hasVocab=true} , {name="target",short="tgt",hasVocab=true} }
-  elseif mode == 'monotext' then
-    datalist = { {hasVocab=true} }
+  if dataType == 'bitext' or dataType == 'seq2seq' then
+    datalist = { {name="source",short="src",hasVocab=true,suffix=".src"} , {name="target",short="tgt",hasVocab=true,suffix=".tgt"} }
+  elseif dataType == 'monotext' then
+    datalist = { {hasVocab=true,suffix=".tok"} }
   else
-    datalist = { {name="source",short="src",hasVocab=false} , {name="target",short="tgt",hasVocab=true} }
+    datalist = { {name="source",short="src",hasVocab=false,suffix=".src"} , {name="target",short="tgt",hasVocab=true,suffix=".tgt"} }
   end
+  return datalist
+end
+
+-- utility functions
+local function prefix(data)
+  if data.short then return data.short.."_" end
+  return ""
+end
+local function suffix(data)
+  if data.short then return "_"..data.short end
+  return ""
+end
+local function nameWithSpace(data)
+  if data.name then return " "..data.name end
+  return ""
+end
+
+--[[
+  Generic function to generate options for the different dataTypes
+]]
+local function declareDataOptions(dataType)
+  local datalist = Preprocessor.getDataList(dataType)
   local options = {}
+
+  table.insert(options,
+    {
+      '-train_dir', '',
+      [[Path to training files directory.]],
+      {
+        valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+      }
+    })
   for i = 1, #datalist do
     table.insert(options,
       {
         '-train'..suffix(datalist[i]), '',
         "Path to the training"..nameWithSpace(datalist[i]).." data.",
         {
-          valid=onmt.utils.ExtendedCmdLine.fileExists
+          valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
         }
       })
   end
+
   for i = 1, #datalist do
     table.insert(options,
       {
         '-valid'..suffix(datalist[i]), '',
         "Path to the validation"..nameWithSpace(datalist[i]).." data.",
         {
-          valid=onmt.utils.ExtendedCmdLine.fileExists
+          valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
         }
       })
   end
@@ -99,6 +145,11 @@ local function declareDataOptions(mode)
           {
             valid=onmt.utils.ExtendedCmdLine.fileNullOrExists
           }
+        })
+      table.insert(options,
+        {
+          '-'..prefix(datalist[i])..'suffix', datalist[i].suffix,
+          "Suffix for"..nameWithSpace(datalist[i]).." files in train/valid directories."
         })
       table.insert(options,
         {
@@ -124,28 +175,498 @@ local function declareDataOptions(mode)
         }
       })
   end
+
+  if dataType ~= 'monotext' then
+    table.insert(options,
+      {
+        '-check_plength', false,
+        [[Check source and target have same length (for seq tagging).]]
+      })
+  end
+
   return options
 end
 
-function Preprocessor.declareOpts(cmd, mode)
-  mode = mode or 'bitext'
-  local options = declareDataOptions(mode)
+function Preprocessor.declareOpts(cmd, dataType)
+  dataType = dataType or 'bitext'
+  local options = declareDataOptions(dataType)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
   cmd:setCmdLineOptions(options, 'Data')
+
+  -- prepare tokenization option
+  local topts = tokenizer.getOpts()
+  for i, v in ipairs(topts) do
+    if v[1] == '-mode' then
+      topts[i] = {
+          '-mode', 'space',
+          [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
+            {
+              enum = {'conservative', 'aggressive', 'space'}
+            }
+          }
+    end
+  end
+
+  cmd:setCmdLineOptions(topts, "Tokenizer")
 end
 
-function Preprocessor:__init(args, mode)
+function Preprocessor.expandOpts(cmd, dataType)
+  local torenameOpts = {};
+  local current_block;
+  local pref = "{src,tgt}_"
+  if dataType == "monotext" then pref = "" end
+  if dataType == "feattext" then pref = "tgt_" end
+  for i, v in ipairs(cmd.helplines) do
+    if type(v) == "string" then
+      local p = v:find(" options")
+      if p then
+        current_block = v:sub(1,p-1);
+        if current_block == "MPreprocessing" or current_block == "Tokenizer" then
+          cmd.helplines[i] = cmd.helplines[i]
+        end
+      end
+    else
+      if current_block == "MPreprocessing" or current_block == "Tokenizer" then
+        torenameOpts[v.key] = current_block:sub(1,3):lower()
+        v.key="-"..current_block:sub(1,3):lower().."_"..pref..v.key:sub(2)
+      end
+    end
+  end
+  local newOpts = {}
+  for k, v in pairs(cmd.options) do
+    if torenameOpts[k] then
+      cmd.options[k] = nil
+      if dataType == 'monotext' then
+        local ksrc = '-'..torenameOpts[k]..'_'..k:sub(2)
+        newOpts[ksrc] = onmt.utils.Table.deepCopy(v)
+      elseif dataType == 'bitext' then
+        local ksrc = '-'..torenameOpts[k]..'_src_'..k:sub(2)
+        newOpts[ksrc] = onmt.utils.Table.deepCopy(v)
+      end
+      if dataType ~= 'monotext' then
+        local ktgt = '-'..torenameOpts[k]..'_tgt_'..k:sub(2)
+        newOpts[ktgt] = onmt.utils.Table.deepCopy(v)
+      end
+    end
+  end
+  for k, v in pairs(newOpts) do
+    cmd.options[k] = v
+  end
+end
+
+local function ruleMatch(s, rule)
+  if rule == '*' then return true end
+  local pat = onmt.utils.String.split(rule, ",")
+  for _, r in ipairs(pat) do
+    if string.match(s, r) then return true end
+  end
+end
+
+function Preprocessor:parseDirectory(args, datalist, dist_rules, keep_rules, type)
+  local dir = args[type.."_dir"]
+  assert(dir ~= '', 'missing \''..type..'_dir\' parameter')
+  _G.logger:info('Parsing '..type..' data from directory \''..dir..'\':')
+  local firstSuffix = args[prefix(datalist[1])..'suffix']
+
+  local totalCount = 0
+  local totalError = 0
+  local list_files = {}
+
+  for candf in paths.iterfiles(dir) do
+    if firstSuffix == '' or candf:sub(-firstSuffix:len()) == firstSuffix then
+      self:poolAddJob(
+        function(f)
+          local flist = {}
+          local errors = {}
+          local fprefix = f:sub(1, -firstSuffix:len()-1)
+          table.insert(flist, _G.paths.concat(dir,f))
+          local error = 0
+          local countLines = onmt.utils.FileReader.countLines(flist[1], args.idx_files)
+          for i = 2, #datalist do
+            local tfile = _G.paths.concat(dir,fprefix..args[prefix(datalist[i])..'suffix'])
+            table.insert(flist, tfile)
+            if not _G.path.exists(tfile) or onmt.utils.FileReader.countLines(tfile, args.idx_files) ~= countLines then
+              table.insert(errors, '* ['.._G.__threadid..'] invalid file - '..tfile..' - not aligned with '..f)
+              error = error + 1
+            end
+          end
+          if error == 0 then
+            local fdesc = { countLines, flist }
+            fdesc.fname = fprefix
+            fdesc.weight = 0
+            fdesc.options = {}
+            return _G.__threadid, 0, fdesc
+          else
+            return _G.__threadid, error, errors
+          end
+        end,
+        function(threadid, error, fdesc)
+          if error > 0 then
+            totalError = totalError + error
+            for _, m in ipairs(fdesc) do
+              _G.logger:error(m)
+            end
+          else
+            _G.logger:info(' * ['..threadid..'] Reading files \''..fdesc.fname..'\' - '..fdesc[1]..' sentences')
+            table.insert(list_files, fdesc)
+            totalCount = totalCount + fdesc[1]
+          end
+        end,
+        candf)
+    end
+  end
+
+  self:poolSynchronize()
+
+  if totalError > 0 then
+    _G.logger:error('Errors in training directory - fix them first')
+    os.exit(0)
+  end
+  if totalCount == 0 then
+    _G.logger:error('No '..type..' data found in directory \''..dir..'\'')
+    os.exit(0)
+  end
+  _G.logger:info(totalCount..' sentences, in '..#list_files..' files, in '..type..' directory')
+  _G.logger:info('')
+
+  local keepCount = 0
+
+  if #keep_rules > 0 then
+    _G.logger:info('Matching files with keep rules:')
+    for i = 1, #list_files do
+      if list_files[i].weight == 0 then
+        for rule_idx = 1, #keep_rules do
+          if ruleMatch(list_files[i].fname, keep_rules[rule_idx][1]) then
+            keepCount = keepCount + list_files[i][1]
+            list_files[i].rule_idx = rule_idx
+            list_files[i].weight = math.huge
+            list_files[i].options = keep_rules[rule_idx][3]
+            _G.logger:info(" * file '%s' is covered by the keep rule %d",
+                           list_files[i].fname, list_files[i].rule_idx or 0)
+            break
+          end
+        end
+      end
+    end
+    _G.logger:info('')
+
+    -- Files matched with keep rules are not part of the global sampling.
+    totalCount = totalCount - keepCount
+  end
+
+  if #dist_rules > 0 then
+    _G.logger:info('Matching files with sample rules:')
+    local weight_norm = 0
+    local weight_rule = {}
+
+    for i = 1, #list_files do
+      if list_files[i].weight == 0 then
+        for rule_idx = 1, #dist_rules do
+          if ruleMatch(list_files[i].fname, dist_rules[rule_idx][1]) then
+            list_files[i].rule_idx = rule_idx
+            if not weight_rule[rule_idx] then
+              weight_norm = weight_norm + dist_rules[rule_idx][2]
+              weight_rule[rule_idx] = 0
+            end
+            weight_rule[rule_idx] = weight_rule[rule_idx] + list_files[i][1]
+            break
+          end
+        end
+      end
+    end
+
+    local sum_weight = 0
+    for i = 1, #list_files do
+      if list_files[i].rule_idx and list_files[i].weight ~= math.huge then
+        local rule_idx = list_files[i].rule_idx
+        list_files[i].weight = dist_rules[rule_idx][2] / weight_norm * list_files[i][1] / weight_rule[rule_idx]
+        sum_weight = sum_weight + list_files[i].weight
+        list_files[i].options = dist_rules[rule_idx][3]
+      end
+    end
+
+    for i = 1, #list_files do
+      if list_files[i].weight ~= math.huge then
+        list_files[i].weight = list_files[i].weight / sum_weight
+        if list_files[i].weight > 0 then
+          _G.logger:info(" * file '%s' is covered by the sampling rule %d - uniform weight: %.4f, distribution weight: %.4f",
+                         list_files[i].fname,
+                         list_files[i].rule_idx or 0,
+                         100 * list_files[i][1] / totalCount,
+                         100 * list_files[i].weight)
+        end
+      end
+    end
+
+    _G.logger:info('')
+  else
+    for i = 1, #list_files do
+      list_files[i].weight = list_files[i][1] / totalCount
+    end
+  end
+
+  for i = 1, #list_files do
+    if list_files[i].weight == 0 then
+      _G.logger:warning(" * file '%s' is not covered by any rules and will not be used",
+                        list_files[i].fname)
+    end
+  end
+
+  return totalCount, keepCount, list_files
+end
+
+-- helper functions for threading
+function Preprocessor:poolAddJob(f, r, ...)
+  if self.pool then
+    self.pool:addjob(f, r, ...)
+  else
+    _G.__threadid = '-'
+    _G.tds = tds
+    r(f(...))
+  end
+end
+
+function Preprocessor:poolSynchronize()
+  if self.pool then
+    self.pool:synchronize()
+  end
+end
+
+-- initialization of threads and optTok
+local function init_thread(id, args, optTok, optMPr)
+  _G.paths = require 'paths'
+  _G.path = require 'pl.path'
+  _G.onmt = require 'onmt.init'
+  _G.tds = require 'tds'
+  -- if on-the-fly tokenization
+  _G.separators = require('tools.utils.separators')
+  _G.tokenizer = require('tools.utils.tokenizer')
+  _G.BPE = require ('tools.utils.BPE')
+  _G.bpes = {}
+  _G.optTok = optTok
+  _G.optMPr = optMPr
+  _G.hookManager = onmt.utils.HookManager.new(args, id)
+  _G.args = args
+  for i, v in ipairs(optTok) do
+    if v and v["bpe_model"] and v["bpe_model"] ~= '' then
+      _G.bpes[i] = _G.BPE.new(v)
+    end
+  end
+end
+
+-- parse k=v options from distribution file, and build real key-value based on args
+local function parseTextOptions(args, optList)
+  local foptions = {}
+  for _, o in ipairs(optList) do
+    local kv = onmt.utils.String.split(o, "=")
+    onmt.utils.Error.assert(#kv==1 or #kv==2, "incorrect option in distribution rules: "..o)
+    -- boolean option
+    if #kv == 1 then table.insert(kv, true) end
+    onmt.utils.Error.assert(args[kv[1]] ~= nil, "option not defined in distribution rules: "..o)
+    if type(args[kv[1]]) == "number" then kv[2]=tonumber(kv[2]) end
+    if type(args[kv[1]]) == "boolean" then kv[2]=kv[2]~="" and kv[2]~="false" end
+    foptions[kv[1]]=kv[2]
+  end
+  foptions.textOpt = table.concat(optList,";");
+  return foptions
+end
+
+function Preprocessor:__init(args, dataType)
   tds = require('tds')
 
-  mode = mode or 'bitext'
+  self.dataType = dataType or 'bitext'
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, commonOptions)
-  local options = declareDataOptions(mode)
+  local options = declareDataOptions(self.dataType)
   for _, v in ipairs(commonOptions) do
     table.insert(options, v)
   end
-  self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
+
+  self.args = args
+
+  local function isempty(t)
+    local count = 0
+    for _, v in ipairs(t) do
+      if self.args[v] == '' then
+        count = count + 1
+      end
+    end
+    return count
+  end
+
+  -- tokenization and preprocessing options
+  local optTok = { {}, {} }
+  local optMPr = { {}, {} }
+  for k, v in pairs(args) do
+    if k:sub(1,4) == 'tok_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      optTok[idx][k] = v
+    end
+    if k:sub(1,4) == 'mpr_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      optMPr[idx][k] = v
+    end
+  end
+  for i = 1, 2 do
+    _G.logger:info("Using on-the-fly '%s' tokenization for input "..i, optTok[i]["mode"])
+  end
+
+  if args.preprocess_pthreads > 1 and args.train_dir ~= '' then
+    local globalLogger = _G.logger
+    -- try to load threads if available
+    threads = require('threads')
+    threads.Threads.serialization('threads.sharedserialize')
+    self.pool = threads.Threads(
+      args.preprocess_pthreads,
+      function(id) init_thread(id, args, optTok, optMPr) end,
+      function() _G.logger = globalLogger end
+    )
+  else
+    init_thread("-", args, optTok, optMPr)
+  end
+
+  -- sanity check on options: train_dir is exclusive all direct file settings
+  -- and for train_dir, we do need pre-build vocabulary
+  if dataType == 'monotext' then
+    self.trains = { 'train' }
+    self.valids = { 'valid' }
+    self.vocabs = { 'vocab' }
+  else
+    self.trains = { 'train_src', 'train_tgt' }
+    self.valids = { 'valid_src', 'valid_tgt' }
+    self.vocabs = { 'src_vocab', 'tgt_vocab' }
+  end
+
+  self.dist_rules = {}
+  self.keep_rules = {}
+  if args.gsample_dist ~= '' then
+    local f = io.input(args.gsample_dist)
+    while true do
+      local dist_rule = f:read()
+      if not dist_rule then break end
+      local trule = onmt.utils.String.split(dist_rule, " ")
+      local pattern = trule[1]
+      local weight = trule[2]
+      table.remove(trule,1)
+      table.remove(trule,1)
+      trule = { pattern, weight, parseTextOptions(args, trule) }
+      if trule[2] == "*" then
+        table.insert(self.keep_rules, trule)
+      else
+        table.insert(self.dist_rules, trule)
+      end
+    end
+  end
+  -- list and check training files
+  if args.train_dir ~= '' then
+    onmt.utils.Error.assert(isempty(self.trains) == #self.trains, 'For directory mode, file mode options (training) should not be set')
+    if not args.dry_run then
+      onmt.utils.Error.assert(isempty(self.vocabs) == 0, 'For directory mode, vocabs should be predefined')
+    end
+    self.totalCount, self.keepCount, self.list_train = self:parseDirectory(self.args, Preprocessor.getDataList(self.dataType), self.dist_rules, self.keep_rules, 'train')
+  else
+    onmt.utils.Error.assert(isempty(self.trains) == 0)
+    self.totalCount = onmt.utils.FileReader.countLines(self.args[self.trains[1]], args.idx_files)
+    self.keepCount = 0
+    local list_files = { self.args[self.trains[1]] }
+    for i = 2, #self.trains do
+      table.insert(list_files, args[self.trains[i]])
+      if not args.idx_files then
+        onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.trains[i]], args.idx_files) == self.totalCount,
+                                "line count in "..args[self.trains[i]].." do not match "..args[self.trains[1]])
+      end
+    end
+    self.list_train = { { self.totalCount, list_files } }
+    self.list_train[1].fname = self.args[self.trains[1]]
+    self.list_train[1].weight = 1
+    self.list_train[1].options = {}
+  end
+
+  if args[self.valids[1]] ~= '' then
+    self.list_valid = { {onmt.utils.FileReader.countLines(args[self.valids[1]], args.idx_files), {args[self.valids[1]]}}}
+    for i = 2, #self.valids do
+      if not args.idx_files then
+        onmt.utils.Error.assert(onmt.utils.FileReader.countLines(args[self.valids[i]], args.idx_files) == self.list_valid[1][1],
+                                "line count in "..args[self.valids[i]].." do not match "..args[self.valids[1]])
+      end
+      table.insert(self.list_valid[1][2], args[self.valids[i]])
+    end
+    self.list_valid[1].fname = self.args[self.valids[1]]
+    self.list_valid[1].weight = 1
+    self.list_valid[1].options = {}
+  end
+
+end
+
+--[[ Process on given tokenized sentence - check for validity and prepare structure ]]
+local function processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
+                               constants, prunedRatio, generateFeatures, time_shift_feature,
+                               sentenceDists, vectors, features, avgLength, sizes,
+                               src_seq_length, tgt_seq_length)
+  local ignored = 0
+
+  for i = 1, n do
+    local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
+    local idxRange = math.floor(length/10)+1
+    if idxRange > #sentenceDists[i] then
+      idxRange = #sentenceDists[i]
+    end
+    sentenceDists[i][idxRange] = sentenceDists[i][idxRange]+1
+  end
+
+  local valid = true
+
+  if parallelCheck then
+    valid = parallelCheck(idx, isInputVector, dicts, tokens)
+  end
+
+  if valid and isValid(tokens, src_seq_length, tgt_seq_length) then
+    for i = 1, n do
+      local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
+      avgLength[i] = avgLength[i] * (#vectors[i] / (#vectors[i] + 1)) + length / (#vectors[i] + 1)
+
+      if isInputVector[i] then
+        vectors[i]:insert(tokens[i])
+      else
+        local words, feats = onmt.utils.Features.extract(tokens[i])
+        local vocabs = onmt.utils.Placeholders.norm(words)
+        local vec = dicts[i].words:convertToIdx(vocabs, table.unpack(constants[i]))
+        local pruned = vec:eq(onmt.Constants.UNK):sum() / vec:size(1)
+
+        prunedRatio[i] = prunedRatio[i] * (#vectors[i] / (#vectors[i] + 1)) + pruned / (#vectors[i] + 1)
+        vectors[i]:insert(vec)
+
+        if not(isInputVector[i]) and #dicts[i].features > 0 then
+          features[i]:insert(generateFeatures[i](dicts[i].features, feats, true, time_shift_feature))
+        end
+      end
+
+      if i == 1 then
+        sizes:insert(length)
+      end
+    end
+  else
+    ignored = 1
+  end
+
+  return ignored
 end
 
 --[[
@@ -157,201 +678,318 @@ end
   * `constants`: constant to add to the vocabulary for each source
   * `isValid`: validation function taking prepared table of tokens from each source
   * `generateFeatures`: table of feature extraction fucnction for each source
+  * `parallelCheck`: function to check parallely source/target(s)
+  * `sample_file`: possible torch mapping vector
 ]]
-function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants, isValid, generateFeatures, parallelCheck)
-  assert(#files==#dicts, "dict table should match files table")
-  local n = #files
-  local sentenceDists = {}
-  local vectors = {}
-  local features = {}
-  local avgLength = {}
-  local prunedRatio = {}
-  local readers = {}
-  local sizes = tds.Vec()
+function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants,
+                                      isValid, generateFeatures, parallelCheck, sample_file)
+  local verbose = _G.logger.level == 'DEBUG'
+  sample_file = sample_file or {}
+  local n = #files[1][2]
 
-  for i = 1, n do
-    table.insert(sentenceDists, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
-    table.insert(vectors, tds.Vec())
-    table.insert(features, tds.Vec())
-    table.insert(avgLength, 0)
-    table.insert(prunedRatio, 0)
-    table.insert(readers, onmt.utils.FileReader.new(files[i], self.args.idx_files, isInputVector[i]))
+  local gSentenceDists = {}
+  local gVectors = {}
+  local gFeatures = {}
+  local gAvgLength = {}
+  local gSizes = tds.Vec()
+
+  local gCount = 0
+  local gIgnored = 0
+  local gEmptyCount = 0
+
+  for _ = 1, n do
+    table.insert(gSentenceDists, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+    table.insert(gVectors, tds.Vec())
+    table.insert(gFeatures, tds.Vec())
+    table.insert(gAvgLength, 0)
   end
 
-  local count = 0
-  local ignored = 0
-  local emptyCount = 0
+  -- iterate on each file
+  for _m, _df in ipairs(files) do
+    self:poolAddJob(
+      function(df, idx_files, time_shift_feature, src_seq_length, tgt_seq_length, sampling)
+        local count = 0
+        local ignored = 0
+        local emptyCount = 0
 
-  local function processSentence(idx, tokens)
-    for i = 1, n do
-      local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
-      local idxRange = math.floor(length/10)+1
-      if idxRange > #sentenceDists[i] then
-        idxRange = #sentenceDists[i]
-      end
-      sentenceDists[i][idxRange] = sentenceDists[i][idxRange]+1
-    end
+        local sentenceDists = {}
+        local vectors = {}
+        local features = {}
+        local avgLength = {}
+        local sizes = _G.tds.Vec()
 
-    if parallelCheck then
-      parallelCheck(idx, isInputVector, dicts, tokens)
-    end
+        for _ = 1, n do
+          table.insert(sentenceDists, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+          table.insert(vectors, _G.tds.Vec())
+          table.insert(features, _G.tds.Vec())
+          table.insert(avgLength, 0)
+        end
 
-    if isValid(tokens) then
-      for i = 1, n do
-        local length = (type(tokens[i])=='table' and #tokens[i]) or (tokens[i]:dim()==0 and 0) or tokens[i]:size(1)
-        avgLength[i] = avgLength[i] * (#vectors[i] / (#vectors[i] + 1)) + length / (#vectors[i] + 1)
+        -- if there is a sampling for this file
+        local readers = {}
+        local prunedRatio = {}
+        for i = 1, n do
+          table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i]))
+          table.insert(prunedRatio, 0)
+        end
 
-        if isInputVector[i] then
-          vectors[i]:insert(tokens[i])
+        if idx_files then
+          local maps = {}
+          for i = 1, n do
+            table.insert(maps, {})
+            while true do
+              local tokens, idx = readers[i]:next()
+              if not tokens then
+                break
+              end
+              if maps[i][idx] then
+                return _G.__threadid, 1, string.format('duplicate idx in %s file: '..idx, nameSources[i])
+              end
+              if i > 1 and not maps[1][idx] then
+                return _G.__threadid, 1, string.format('%s Idx not defined in %s: '..idx, nameSources[i], nameSources[1])
+              end
+              if isInputVector[i] then
+                maps[i][idx] = torch.Tensor(tokens)
+              else
+                maps[i][idx] = tokens
+              end
+            end
+          end
+          for k,_ in pairs(maps[1]) do
+            local tokens = {}
+            local hasNil = false
+            for i = 1, n do
+              hasNil = hasNil or maps[i][k] == nil
+              table.insert(tokens, maps[i][k])
+            end
+            if not hasNil then
+              ignored = ignored + processSentence(n, k, tokens, parallelCheck, isValid, isInputVector, dicts,
+                                                  constants, prunedRatio, generateFeatures, time_shift_feature,
+                                                  sentenceDists, vectors, features, avgLength, sizes,
+                                                  src_seq_length, tgt_seq_length)
+              count = count + 1
+            else
+              emptyCount = emptyCount + 1
+            end
+          end
         else
-          local words, feats = onmt.utils.Features.extract(tokens[i])
-          local vec = dicts[i].words:convertToIdx(words, table.unpack(constants[i]))
-          local pruned = vec:eq(onmt.Constants.UNK):sum() / vec:size(1)
+          local idx = 1
+          local sampling_idx = 1
+          local hasNil = false
+          -- read all the available sentences or as long as we have not reached sampling size
+          -- sampling table is an ordered sentence of sentences id to keep
+          while not hasNil and (not sampling or sampling_idx <= #sampling) do
+            -- keep in sentences the different sentences and number of times it repeats
+            local sentences = { {} }
+            for _ = 1, n do
+              table.insert(sentences, {})
+            end
+            -- keep maximum a batch of 10000 sentences
+            while not hasNil and (not sampling or sampling_idx <= #sampling) and #sentences[1] < preprocess_batchsize do
+              local allNil = true
+              local keepSentence = not sampling or sampling[sampling_idx] == idx
 
-          prunedRatio[i] = prunedRatio[i] * (#vectors[i] / (#vectors[i] + 1)) + pruned / (#vectors[i] + 1)
-          vectors[i]:insert(vec)
+              for i = 1, n do
+                local sentence = readers[i]:next(false)
+                hasNil = hasNil or sentence == nil
+                allNil = allNil and sentence == nil
+                if sentence and keepSentence then
+                  table.insert(sentences[i+1], sentence)
+                end
+              end
 
-          if not(isInputVector[i]) and #dicts[i].features > 0 then
-            features[i]:insert(generateFeatures[i](dicts[i].features, feats, true, self.args.time_shift_feature))
+              if hasNil then
+                if not allNil then
+                  return _G.__threadid, 1, string.format('all data sources do not have the same number of sentences')
+                end
+                break
+              end
+
+              local repeatSentence = 1
+              if sampling then
+                while sampling_idx+repeatSentence <= #sampling and sampling[sampling_idx+repeatSentence] == idx do
+                  repeatSentence = repeatSentence + 1
+                end
+              end
+
+              if keepSentence then
+                if sampling then
+                  sampling_idx = sampling_idx + repeatSentence
+                end
+                table.insert(sentences[1], repeatSentence)
+              end
+              idx = idx + 1
+            end
+
+            if #sentences[1] > 0 then
+              -- preprocess and tokenize
+              for i = 1, n do
+                -- adapt local options
+                local savOpt = {}
+                for k, v in pairs(df.options or {}) do
+                  savOpt[k] = _G.optMPr[i][k]
+                  _G.optMPr[i][k] = v
+                end
+                local psentences = _G.hookManager:call("mpreprocess", _G.optMPr[i], sentences[i+1])
+                if psentences then
+                  sentences[i+1] = psentences
+                end
+                -- restore options
+                for k, _ in pairs(df.options or {}) do
+                  _G.optMPr[i][k] = savOpt[k]
+                end
+              end
+
+              if n == 2 then
+                local asentences = { sentences[2], sentences[3] }
+                -- adapt local options
+                local savOpt = {}
+                for k, v in pairs(df.options or {}) do
+                  savOpt[k] = _G.args[k]
+                  _G.args[k] = v
+                end
+                local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
+                if psentences then
+                  _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
+                  sentences[2] = psentences[1]
+                  sentences[3] = psentences[2]
+                end
+                -- restore options
+                for k, _ in pairs(df.options or {}) do
+                  _G.args[k] = savOpt[k]
+                end
+              end
+
+              for i = 1, n do
+                for j = 1, #sentences[i+1] do
+                  sentences[i+1][j] =  _G.tokenizer.tokenize(_G.optTok[i], sentences[i+1][j], _G.bpes[i])
+                end
+              end
+
+              for j = 1, #sentences[2] do
+                local tokens = {}
+                for i = 1, n do
+                  table.insert(tokens, sentences[i+1][j])
+                  if verbose then
+                    _G.logger:debug("[%d:%d] %s", j, i, table.concat(tokens[i], " "))
+                  end
+                end
+                for _ = 1, sentences[1][j] do
+                  ignored = ignored + processSentence(n, idx, tokens, parallelCheck, isValid, isInputVector, dicts,
+                                                          constants, prunedRatio, generateFeatures, time_shift_feature,
+                                                          sentenceDists, vectors, features, avgLength, sizes,
+                                                          src_seq_length, tgt_seq_length)
+                  count = count + 1
+                end
+              end
+            end
           end
         end
 
-        if i == 1 then
-          sizes:insert(length)
+        for i = 1, n do
+          readers[i]:close()
         end
-      end
-    else
-      ignored = ignored + 1
-    end
 
-    count = count + 1
+        return _G.__threadid, false, sentenceDists, vectors, features, avgLength, sizes, prunedRatio, count, ignored, emptyCount,
+               sampling and #sampling or _df[1]
+      end,
+      -- aggregate the results together
+      function(__threadid, error, sentenceDists, vectors, features, avgLength, sizes, prunedRatio, count, ignored, emptyCount, kept)
+        if error then
+          _G.logger:error(sentenceDists)
+          os.exit(1)
+        end
+        for i = 1, n do
+          for j=1, #gSentenceDists[i] do
+            gSentenceDists[i][j] = gSentenceDists[i][j] + sentenceDists[i][j]
+          end
+          for j=1, #vectors[i] do
+            gVectors[i]:insert(vectors[i][j])
+          end
+          for j=1, #features[i] do
+            gFeatures[i]:insert(features[i][j])
+          end
+          gAvgLength[i] = (gAvgLength[i] * (#gVectors[i]-#vectors[i]) + avgLength[i] * #vectors[i])/#gVectors[i]
+        end
+        for j=1, #sizes do
+          gSizes:insert(sizes[j])
+        end
+        local msgPrune = ''
+        for i = 1, n do
+          msgPrune = msgPrune .. (i==1 and '' or ', ')
+          msgPrune = msgPrune .. nameSources[i] .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
+        end
 
-    if count % self.args.report_every == 0 then
-      _G.logger:info('... ' .. count .. ' sentences prepared')
-    end
+        _G.logger:info(' * ['..__threadid..'] file \'%s\' (%s): %d total, %d drawn, %d kept - unknown words: %s',
+                          _df.fname or "n/a", (_df.options and _df.options.textOpt) or '', _df[1], kept, #vectors[1], msgPrune)
+
+        gCount = gCount + count
+        gIgnored = gIgnored + ignored
+        gEmptyCount = gEmptyCount + emptyCount
+
+      end,
+      _df, self.args.idx_files, self.args.time_shift_feature, self.args.src_seq_length or self.args.seq_length, self.args.tgt_seq_length, sample_file[_m])
   end
 
-  if self.args.idx_files then
-    local maps = {}
-    for i = 1, n do
-      table.insert(maps, {})
-      while true do
-        local tokens, idx = readers[i]:next()
-        if not tokens then
-          break
-        end
-        if maps[i][idx] then
-          _G.logger:error('duplicate idx in %s file: '..idx, nameSources[i])
-          os.exit(1)
-        end
-        if i > 1 and not maps[1][idx] then
-          _G.logger:error('%s Idx not defined in %s: '..idx, nameSources[i], nameSources[1])
-          os.exit(1)
-        end
-        if isInputVector[i] then
-          maps[i][idx] = torch.Tensor(tokens)
-        else
-          maps[i][idx] = tokens
-        end
-      end
-    end
-    for k,_ in pairs(maps[1]) do
-      local tokens = {}
-      local hasNil = false
-      for i = 1, n do
-        hasNil = hasNil or maps[i][k] == nil
-        table.insert(tokens, maps[i][k])
-      end
-      if not hasNil then
-        processSentence(k, tokens)
-      else
-        emptyCount = emptyCount + 1
-      end
-    end
-  else
-    local idx = 1
-    while true do
-      local tokens = {}
-      local hasNil = false
-      local allNil = true
-      for i = 1, n do
-        tokens[i] = readers[i]:next()
-        hasNil = hasNil or tokens[i] == nil
-        allNil = allNil and tokens[i] == nil
-      end
-
-      if hasNil then
-        if not allNil then
-          _G.logger:error('all data sources do not have the same number of sentences')
-          os.exit(1)
-        end
-        break
-      end
-      processSentence(idx, tokens)
-      idx = idx + 1
-    end
-  end
+  self:poolSynchronize()
 
   for i = 1, n do
-    for j=1, #sentenceDists[i] do
-      sentenceDists[i][j] = sentenceDists[i][j]/count
+    for j=1, #gSentenceDists[i] do
+      gSentenceDists[i][j] = gSentenceDists[i][j] / gCount
     end
-    readers[i]:close()
   end
 
   local function reorderData(perm)
     for i = 1, n do
-      vectors[i] = onmt.utils.Table.reorder(vectors[i], perm, true, isInputVector and isInputVector[i])
+      gVectors[i] = onmt.utils.Table.reorder(gVectors[i], perm, true, isInputVector and isInputVector[i])
       if not(isInputVector[i]) and #dicts[i].features > 0 then
-        features[i] = onmt.utils.Table.reorder(features[i], perm, true)
+        gFeatures[i] = onmt.utils.Table.reorder(gFeatures[i], perm, true)
       end
     end
   end
 
+  onmt.utils.Error.assert(#gVectors[1] > 0, "empty dataset")
+
   if self.args.shuffle then
     _G.logger:info('... shuffling sentences')
-    local perm = torch.randperm(#vectors[1])
-    sizes = onmt.utils.Table.reorder(sizes, perm, true)
+    local perm = torch.randperm(#gVectors[1])
+    gSizes = onmt.utils.Table.reorder(gSizes, perm, true)
     reorderData(perm)
   end
 
   if self.args.sort then
     _G.logger:info('... sorting sentences by size')
-    local _, perm = torch.sort(vecToTensor(sizes))
+    local _, perm = torch.sort(vecToTensor(gSizes))
     reorderData(perm)
   end
 
-  _G.logger:info('Prepared %d sentences:', #vectors[1])
-  _G.logger:info(' * %d sequences not validated (length, other)', ignored)
+  _G.logger:info('Prepared %d sentences:', #gVectors[1])
+  _G.logger:info(' * %d sequences not validated (length, other)', gIgnored)
   local msgLength = ''
-  local msgPrune = ''
   for i = 1, n do
     msgLength = msgLength .. (i==1 and '' or ', ')
-    msgLength = msgLength .. nameSources[i] .. ' = '..string.format("%.1f", avgLength[i])
-    msgPrune = msgPrune .. (i==1 and '' or ', ')
-    msgPrune = msgPrune .. nameSources[i] .. ' = '..string.format("%.1f%%", prunedRatio[i] * 100)
+    msgLength = msgLength .. nameSources[i] .. ' = '..string.format("%.1f", gAvgLength[i])
   end
 
   _G.logger:info(' * average sequence length: '..msgLength)
-  _G.logger:info(' * % of unknown words: '..msgPrune)
 
   local data = {}
 
   for i = 1, n do
     local dist='[ '
-    for j = 1, #sentenceDists[1] do
+    for j = 1, #gSentenceDists[1] do
       if j>1 then
         dist = dist..' ; '
       end
-      dist = dist..math.floor(sentenceDists[i][j]*100)..'%%'
+      dist = dist..math.floor(gSentenceDists[i][j]*100)..'%%'
     end
     dist = dist..' ]'
     _G.logger:info(' * %s sentence length (range of 10): '..dist, nameSources[i])
 
     if isInputVector[i] then
-      table.insert(data, { vectors = vectors[i], features = features[i] })
+      table.insert(data, { vectors = gVectors[i], features = gFeatures[i] })
     else
-      table.insert(data, { words = vectors[i], features = features[i] })
+      table.insert(data, { words = gVectors[i], features = gFeatures[i] })
     end
 
   end
@@ -359,9 +997,24 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
   return data
 end
 
-function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, isValid, parallelCheck)
+--[[ Check data validity ]]
+local function isValid(seq, maxSeqLength)
+  if torch.isTensor(seq) then
+    return seq:size(1) > 0 and seq:size(1) <= maxSeqLength
+  end
+  return #seq > 0 and #seq <= maxSeqLength
+end
+
+local function validBilingual(tokens, src_seq_length, tgt_seq_length)
+  return #tokens[1] > 0 and
+         isValid(tokens[1], src_seq_length) and
+         #tokens[2] > 0 and
+         isValid(tokens[2], tgt_seq_length)
+end
+
+function Preprocessor:makeBilingualData(files, srcDicts, tgtDicts, sample_file)
   local data = self:makeGenericData(
-                              { srcFile, tgtFile },
+                              files,
                               { false, false },
                               { srcDicts, tgtDicts },
                               { 'source', 'target' },
@@ -375,23 +1028,26 @@ function Preprocessor:makeBilingualData(srcFile, tgtFile, srcDicts, tgtDicts, is
                                   onmt.Constants.EOS_WORD
                                 }
                               },
-                              function(tokens)
-                                return #tokens[1] > 0 and
-                                       isValid(tokens[1], self.args.src_seq_length) and
-                                       #tokens[2] > 0 and
-                                       isValid(tokens[2], self.args.tgt_seq_length)
-                              end,
+                              validBilingual,
                               {
                                 onmt.utils.Features.generateSource,
                                 onmt.utils.Features.generateTarget
                               },
-                              parallelCheck)
+                              self.args.check_plength and self.parallelCheck,
+                              sample_file)
   return data[1], data[2]
 end
 
-function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid, parallelCheck)
+local function validFeat(tokens, src_seq_length, tgt_seq_length)
+  return tokens[1]:dim() > 0 and
+         isValid(tokens[1], src_seq_length) and
+         #tokens[2] > 0 and
+         isValid(tokens[2], tgt_seq_length)
+end
+
+function Preprocessor:makeFeatTextData(files, tgtDicts, sample_file)
   local data = self:makeGenericData(
-                              { srcFile, tgtFile },
+                              files,
                               { true, false },
                               { {}, tgtDicts },
                               { 'source', 'target' },
@@ -403,23 +1059,23 @@ function Preprocessor:makeFeatTextData(srcFile, tgtFile, tgtDicts, isValid, para
                                   onmt.Constants.EOS_WORD
                                 }
                               },
-                              function(tokens)
-                                return tokens[1]:dim() > 0 and
-                                       isValid(tokens[1], self.args.src_seq_length) and
-                                       #tokens[2] > 0 and
-                                       isValid(tokens[2], self.args.tgt_seq_length)
-                              end,
+                              validFeat,
                               {
                                 false,
                                 onmt.utils.Features.generateTarget
                               },
-                              parallelCheck)
+                              self.args.check_plength and self.parallelCheck,
+                              sample_file)
   return data[1], data[2]
 end
 
-function Preprocessor:makeMonolingualData(file, dicts, isValid)
+local function ValidMono(tokens, seq_length)
+  return #tokens[1] > 0 and isValid(tokens[1], seq_length)
+end
+
+function Preprocessor:makeMonolingualData(files, dicts, sample_file)
   local data = self:makeGenericData(
-                              { file },
+                              files,
                               { false },
                               { dicts },
                               { 'source' },
@@ -430,13 +1086,122 @@ function Preprocessor:makeMonolingualData(file, dicts, isValid)
                                   onmt.Constants.EOS_WORD
                                 }
                               },
-                              function(tokens)
-                                return #tokens[1] > 0 and isValid(tokens[1], self.args.seq_length)
-                              end,
+                              ValidMono,
                               {
                                 onmt.utils.Features.generateTarget
-                              })
+                              },
+                              nil,
+                              sample_file)
   return data[1]
+end
+
+function Preprocessor.parallelCheck(idx, _, _, tokens)
+  local length1 = (type(tokens[1])=='table' and #tokens[1]) or (tokens[1]:dim()==0 and 0) or tokens[1]:size(1)
+  local length2 = (type(tokens[2])=='table' and #tokens[2]) or (tokens[2]:dim()==0 and 0) or tokens[2]:size(1)
+  if length1~=length2 then
+    _G.logger:warning('SENT %s: source/target not aligned (%d/%d)', tostring(idx), length1, length2)
+    return false
+  end
+  return true
+end
+
+function Preprocessor:getVocabulary()
+  local dicts = {}
+  -- use the first source file to count source features
+  local src_file = self.list_train[1][2][1]
+  if self.dataType ~= 'feattext' then
+    dicts.src = onmt.data.Vocabulary.init('source',
+                                     src_file,
+                                     self.args.src_vocab or self.args.vocab,
+                                     self.args.src_vocab_size or self.args.vocab_size,
+                                     self.args.src_words_min_frequency or self.args.words_min_frequency,
+                                     self.args.features_vocabs_prefix,
+                                     function(s) return isValid(s, self.args.src_seq_length or self.args.seq_length) end,
+                                     self.args.keep_frequency,
+                                     self.args.idx_files,
+                                     self.args.tok_src_case_feature)
+  end
+  if self.dataType ~= 'monotext' then
+    -- use the first target file to count target features
+    local tgt_file = self.list_train[1][2][2]
+    dicts.tgt = onmt.data.Vocabulary.init('target',
+                                     tgt_file,
+                                     self.args.tgt_vocab,
+                                     self.args.tgt_vocab_size,
+                                     self.args.tgt_words_min_frequency,
+                                     self.args.features_vocabs_prefix,
+                                     function(s) return isValid(s, self.args.tgt_seq_length) end,
+                                     self.args.keep_frequency,
+                                     self.args.idx_files,
+                                     self.args.tok_tgt_case_feature)
+  end
+  return dicts
+end
+
+function Preprocessor:makeData(dataset, dicts)
+  if dataset ~= 'valid' or
+     (self.args.valid and self.args.valid ~= '') or
+     (self.args.valid_src and self.args.valid_src ~= '') or
+     (self.args.valid_tgt and self.args.valid_tgt ~= '') then
+
+    _G.logger:info("--- Preparing "..dataset.." sample")
+
+    local sample_file = {}
+    if dataset == 'train' and self.args.gsample ~= 0 then
+      -- sample data using sample and sample_dict
+      local sampledCount = self.args.gsample
+      if sampledCount < 1 then
+        sampledCount = sampledCount * self.totalCount
+      else
+        sampledCount = sampledCount - self.keepCount
+      end
+      if self.totalCount == 0 and self.keepCount < self.args.gsample then
+        _G.logger:warning('You requested a sample of %d sentences but no files matched any sampling rules and only %d sentences are selected by keep rules. There could be issues with your distribution rules.',
+                          self.args.gsample, self.keepCount)
+      end
+      if sampledCount < 0 then
+        _G.logger:error('You requested a sample of %d sentences but %d are already reserved by keep rules. You should configure a larger sample or keep less sentences.',
+                        self.args.gsample, self.keepCount)
+        os.exit(1)
+      end
+      -- check how many sentences per file
+      for _, f in ipairs(self.list_train) do
+        if f.weight == math.huge then
+          table.insert(sample_file, tds.Vec(torch.range(1, f[1]):totable()))
+        else
+          local n = math.ceil(sampledCount * f.weight)
+          local t = torch.LongTensor(n)
+          if n > 0 then
+            for i = 1, n do
+              t[i] = torch.random(1, f[1])
+            end
+            t = torch.sort(t)
+          end
+          table.insert(sample_file, tds.Vec(t:totable()))
+        end
+      end
+    end
+
+    local data = {}
+    if self.dataType == 'monotext' then
+      data.src = self:makeMonolingualData(self["list_"..dataset], dicts.src, sample_file)
+    elseif self.dataType == 'feattext' then
+      data.src, data.tgt = self:makeFeatTextData(self["list_"..dataset], dicts.tgt, sample_file)
+      if not dicts.srcInputSize then
+        dicts.srcInputSize = data.src.vectors[1]:size(2)
+      else
+        onmt.utils.Error.assert(dicts.srcInputSize==data.src.vectors[1]:size(2), "feature size is not matching in all files")
+      end
+    else
+      data.src, data.tgt = self:makeBilingualData(self["list_"..dataset], dicts.src, dicts.tgt, sample_file)
+    end
+
+    _G.logger:info("")
+
+    return data
+  else
+    _G.logger:warning('No validation data')
+  end
 end
 
 return Preprocessor

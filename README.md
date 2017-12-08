@@ -24,6 +24,7 @@ OpenNMT only requires a Torch installation with few dependencies.
 
 ```bash
 luarocks install tds
+luarocks install bit32 # if using LuaJIT
 ```
 
 For other installation methods including Docker, visit the [documentation](http://opennmt.net/OpenNMT/installation/).
@@ -64,6 +65,14 @@ A [technical report](https://arxiv.org/abs/1701.02810) on OpenNMT is available. 
   eprint = {1701.02810}
 }
 ```
+
+## Acknowledgments
+
+Our implementation utilizes code from the following:
+
+* [Andrej Karpathy's char-rnn repo](https://github.com/karpathy/char-rnn)
+* [Wojciech Zaremba's lstm repo](https://github.com/wojzaremba/lstm)
+* [Element rnn library](https://github.com/Element-Research/rnn)
 
 ## Additional resources
 

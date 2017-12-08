@@ -14,18 +14,25 @@ cmd:text('')
 cmd:option('-nparallel', 1, [[Number of parallel thread to run the tokenization]])
 cmd:option('-batchsize', 1000, [[Size of each parallel batch - you should not change except if low memory]])
 
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+
+onmt.utils.HookManager.declareOpts(cmd)
+
 local opt = cmd:parse(arg)
 
 local pool = threads.Threads(
-   opt.nparallel,
-   function()
-     _G.separators = require('tools.utils.separators')
-     _G.tokenizer = require('tools.utils.tokenizer')
-     _G.BPE = require ('tools.utils.BPE')
-     if opt.bpe_model ~= '' then
-       _G.bpe = _G.BPE.new(opt)
-     end
-   end
+  opt.nparallel,
+  function(id)
+    local HookManager = require('onmt.utils.HookManager')
+    _G.separators = require('tools.utils.separators')
+    _G.tokenizer = require('tools.utils.tokenizer')
+    _G.BPE = require ('tools.utils.BPE')
+    _G.hookManager = HookManager.new(opt, "thread "..id)
+    if opt.bpe_model ~= '' then
+      _G.bpe = _G.BPE.new(opt)
+    end
+  end
 )
 pool:specific(true)
 
@@ -56,13 +63,21 @@ while true do
       i,
       function()
         local output = {}
-        for b = 1,#batches_input[i] do
+        local inputs = batches_input[i]
+
+        -- preprocessing hook
+        local pinputs = _G.hookManager:call("mpreprocess", opt, inputs)
+        assert(pinputs ~= false)
+        inputs = pinputs or inputs
+
+        for b = 1,#inputs do
+          local aline = inputs[b]
           local res
           local err
 
           local tokens
 
-          res, err = pcall(function() tokens = _G.tokenizer.tokenize(opt, batches_input[i][b], _G.bpe) end)
+          res, err = pcall(function() tokens = _G.tokenizer.tokenize(opt, aline, _G.bpe) end)
 
           -- it can generate an exception if there are utf-8 issues in the text
           if not res then

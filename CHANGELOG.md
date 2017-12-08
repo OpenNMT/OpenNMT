@@ -2,21 +2,92 @@
 
 ### Breaking changes
 
-* Remove tokenization options from `learn_bpe.lua`
+### New features
+
+* Introduce hook mechanism for additional customization of workflows
+* Sentence-level negative log-likelihood criterion for sequence tagging
+* '-' stands for stdin for inference tools (translate, lm, tag)
+
+### Fixes and improvements
+
+## [v0.9.5](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.5) (2017-12-07)
+
+### Fixes and improvements
+
+* Enable constrained beam search for protected sequence
+* Fix invalid `NOERROR` log level (rename it to `NONE`)
+
+## [v0.9.4](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.4) (2017-11-30)
+
+### Fixes and improvements
+
+* Fix regression when normalizing protected sequences
+
+## [v0.9.3](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.3) (2017-11-30)
+
+### Fixes and improvements
+
+* Fix vocabulary extraction of protected sequences (#444)
+
+## [v0.9.2](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.2) (2017-11-27)
+
+### Fixes and improvements
+
+* Fix empty translation returned by the REST translation server
+* Fix random split of protected sequences by BPE (#441)
+* Fix error when using `-update_vocab` with additional word features
+
+## [v0.9.1](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.1) (2017-11-16)
+
+### Fixes and improvements
+
+* Fix missing normalization during translation
+* Fix normalization when the command contains pipes
+* Fix incorrect TER normalization (#424)
+* Fix error when the file to translate contains empty lines
+
+## [v0.9.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.0) (2017-11-07)
+
+### Breaking changes
+
+* Learning rate is also decayed when using Adam
+* Fix some wrong tokenization rules (punctuation-numbers)
+* `-report_every` option is renamed to `-report_progress_every`
+* `-EOT_marker` option is renamed to `-bpe_EOT_marker` for `tokenize.lua`
+* `-BOT_marker` option is renamed to `-bpe_BOT_marker` for `tokenize.lua`
+* `bit32` package is now required for LuaJIT users
 
 ### New features
 
-* Add TER calculation
-* Add CNN encoder
-* Add option to save the validation translation to a file
+* Dynamic dataset to train on large and raw training data repository
+* Convolutional encoder
+* Shallow fusion of language model in decoder
+* Lexically constrained beam search
+* TER validation metric
+* Protection blocks for tokenization - and implement placeholder
+* Hook to call external normalization
+* JSON log formatting when the log file suffix is `.json`
+* Training option to save the validation translation to a file
+* Training option to reset the optimizer states when the learning rate is decayed
+* Training option to update the vocabularies during a retraining
+* Translation option to save alignment history
+* Translation translation option to mark replaced tokens with `｟unk:xxxxx｠`
+* Tokenization option to split numbers on each digit
+* Multi-model rest server using yaml config file
 
 ### Fixes and improvements
 
 * Allow disabling gradients clipping with `-max_grad_norm 0`
 * Allow disabling global parameters initialization with `-param_init 0`
 * Introduce error estimation in scorer for all metrics
+* Reduce memory footprint of Adam, Adadelta and Adagrad optimizers
+* Make validation data optional for training
+* Faster tokenization (up to x2 speedup)
+* Fix missing final model with some values of `-save_every_epochs`
 * Fix validation score delta that was applied in the incorrect direction
 * Fix LuaJIT out of memory issues in `learn_bpe.lua`
+* Fix documentation generation of embedded tokenization options
+* Fix release of sequence tagger models
 
 ## [v0.8.0](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.8.0) (2017-06-28)
 

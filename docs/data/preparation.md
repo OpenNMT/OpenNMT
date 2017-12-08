@@ -1,5 +1,12 @@
 The data preparation (or preprocessing) passes over the data to generate word vocabularies and sequences of indices used by the training.
 
+Generally the global process includes several steps:
+* tokenization (for text files): is splitting the corpus into space-separated tokens, possibly associated to features. See [tokenization tool here](../../tools/tokenization/).
+* preprocessing: is building a `data file` from tokenized source training and validation corpus, optionally shuffling the sentences, and sorting by sentence length.
+
+!!! note "Note"
+    It is possible to perform tokenization and preprocessing dynamically during the training using so-called "Dynamic Datasets" as documented [here](../../training/sampling/#dynamic-dataset)
+
 ## Data type
 
 By default, the data type is `bitext` which are aligned source and target files. Alignment is by default done at the line level, but can also be done through aligned index (see [Index files](#index-files)).

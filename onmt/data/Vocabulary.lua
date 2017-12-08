@@ -1,4 +1,5 @@
 local path = require('pl.path')
+local case = require('tools.utils.case')
 
 --[[ Vocabulary management utility functions. ]]
 local Vocabulary = torch.class("Vocabulary")
@@ -27,9 +28,12 @@ function Vocabulary.make(filename, validFunc, idxFile)
     lineId = lineId + 1
 
     if validFunc(sent) then
-      local words, features, numFeatures
+      local features, numFeatures
+      local vocabs
       local _, err = pcall(function ()
+        local words
         words, features, numFeatures = onmt.utils.Features.extract(sent)
+        vocabs = onmt.utils.Placeholders.norm(words)
       end)
 
       if err then
@@ -46,8 +50,8 @@ function Vocabulary.make(filename, validFunc, idxFile)
                'all sentences must have the same numbers of additional features (' .. filename .. ':' .. lineId .. ')')
       end
 
-      for i = 1, #words do
-        wordVocab:add(words[i])
+      for i = 1, #vocabs do
+        wordVocab:add(vocabs[i])
 
         for j = 1, numFeatures do
           featuresVocabs[j]:add(features[j][i])
@@ -66,10 +70,15 @@ function Vocabulary.make(filename, validFunc, idxFile)
   return wordVocab, featuresVocabs
 end
 
-function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency, idxFile)
+function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency, featuresVocabsFiles, validFunc, keepFrequency, idxFile, case_feature)
   local wordVocab
   local featuresVocabs = {}
   local numFeatures = countFeatures(dataFile, idxFile)
+  local correctedNumFeatures = numFeatures
+
+  if numFeatures == 0 and case_feature then
+    correctedNumFeatures = 1
+  end
 
   if vocabFile:len() > 0 then
     -- If given, load existing word dictionary.
@@ -79,7 +88,7 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
     _G.logger:info(' * Loaded ' .. wordVocab:size() .. ' ' .. name .. ' words')
   end
 
-  if featuresVocabsFiles:len() > 0 and numFeatures > 0 then
+  if featuresVocabsFiles:len() > 0 and correctedNumFeatures > 0 then
     -- If given, discover existing features dictionaries.
     local j = 1
 
@@ -100,9 +109,20 @@ function Vocabulary.init(name, dataFile, vocabFile, vocabSize, wordsMinFrequency
 
     assert(#featuresVocabs > 0,
            'dictionary \'' .. featuresVocabsFiles .. '.' .. name .. '_feature_1.dict\' not found')
-    assert(#featuresVocabs == numFeatures,
-           'the data contains ' .. numFeatures .. ' ' .. name
+    assert(#featuresVocabs == correctedNumFeatures,
+           'the data contains ' .. correctedNumFeatures .. ' ' .. name
              .. ' features but only ' .. #featuresVocabs .. ' dictionaries were found')
+  end
+
+  if #featuresVocabs == 0 and case_feature then
+    -- build default case feature
+    _G.logger:info(' * Building default case feature vocabularies...')
+    featuresVocabs[1] = onmt.utils.Dict.new({onmt.Constants.PAD_WORD, onmt.Constants.UNK_WORD,
+                                             onmt.Constants.BOS_WORD, onmt.Constants.EOS_WORD})
+    local regCaseFeat = case.getFeatures()
+    for _, f in ipairs(regCaseFeat) do
+      featuresVocabs[1]:add(f)
+    end
   end
 
   if wordVocab == nil or keepFrequency or (#featuresVocabs == 0 and numFeatures > 0) then

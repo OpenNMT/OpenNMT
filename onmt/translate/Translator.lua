@@ -9,6 +9,17 @@ local options = {
     }
   },
   {
+    '-lm_model', '',
+    [[Path to serialized language model file.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.fileNullOrExists
+    }
+  },
+  {
+    '-lm_weight', 0.1,
+    [[Relative weight of language model.]]
+  },
+  {
     '-beam_size', 5,
     [[Beam size.]],
     {
@@ -29,6 +40,21 @@ local options = {
       it will lookup the identified source token and give the corresponding
       target token. If it is not provided (or the identified source token
       does not exist in the table) then it will copy the source token]]},
+  {
+    '-replace_unk_tagged', false,
+    [[The same as -replace_unk, but wrap the replaced token in ｟unk:xxxxx｠ if it is not found in the phrase table.]]},
+  {
+    '-lexical_constraints', false,
+    [[Force the beam search to apply the translations from the phrase table.]]
+  },
+  {
+    '-limit_lexical_constraints', false,
+    [[Prevents producing each lexical constraint more than required.]]
+  },
+  {
+    '-placeholder_constraints', false,
+    [[Force the beam search to reproduce placeholders in the translation.]]
+  },
   {
     '-phrase_table', '',
     [[Path to source-target dictionary to replace `<unk>` tokens.]],
@@ -122,7 +148,7 @@ function Translator:__init(args, model, dicts)
     self.modelType = checkpoint.options.model_type or 'seq2seq'
     _G.logger:info('Model %s trained on %s', self.modelType, self.dataType)
 
-    assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
+    onmt.utils.Error.assert(self.modelType == 'seq2seq', "Translator can only manage seq2seq models")
 
     self.model = onmt.Seq2Seq.load(args, checkpoint.models, checkpoint.dicts)
     self.dicts = checkpoint.dicts
@@ -131,8 +157,24 @@ function Translator:__init(args, model, dicts)
   self.model:evaluate()
   onmt.utils.Cuda.convert(self.model.models)
 
+  -- TODO : extend phrase table to phrases with several words
   if self.args.phrase_table:len() > 0 then
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
+  end
+
+  if args.lm_model ~= '' then
+    local tmodel = args.model
+    args.model = args.lm_model
+    self.lm = onmt.lm.LM.new(args)
+
+    -- check that lm has the same dictionary than translation model
+    onmt.utils.Error.assert(self.dicts.tgt.words == self.lm.dicts.src.words, "Language model dictionary does not match seq2seq target dictionary")
+    onmt.utils.Error.assert(#self.dicts.tgt.features == #self.lm.dicts.src.features, "Language model should have same number of features than translation model")
+    for i = 1 , #self.dicts.tgt.features do
+      onmt.utils.Error.assert(self.dicts.tgt.features[i] == self.lm.dicts.src.features[i], "LM feature ["..i.."] does not match translation tgt feature")
+    end
+
+    args.model = tmodel
   end
 
   if self.args.target_subdict:len() > 0 then
@@ -156,8 +198,10 @@ function Translator:buildInput(tokens)
     data.vectors = torch.Tensor(tokens)
   else
     local words, features = onmt.utils.Features.extract(tokens)
+    local vocabs, placeholders = onmt.utils.Placeholders.norm(words)
 
-    data.words = words
+    data.words = vocabs
+    data.placeholders = placeholders
 
     if #features > 0 then
       data.features = features
@@ -189,6 +233,7 @@ function Translator:buildData(src, gold)
   local srcData = {}
   srcData.words = {}
   srcData.features = {}
+  srcData.constraints = {}
 
   local goldData
   if gold then
@@ -202,7 +247,8 @@ function Translator:buildData(src, gold)
   local index = 1
 
   for b = 1, #src do
-    if src[b].words and #src[b].words == 0 then
+    if (src[b].words and #src[b].words == 0
+        or src[b].vectors and src[b].vectors:dim() == 0) then
       table.insert(ignored, b)
     else
       indexMap[index] = b
@@ -215,6 +261,32 @@ function Translator:buildData(src, gold)
           table.insert(srcData.features,
                        onmt.utils.Features.generateSource(self.dicts.src.features, src[b].features))
         end
+
+        if self.args.placeholder_constraints then
+          self.args.limit_lexical_constraints = true
+          local c = {}
+          for ph,_ in pairs(src[b].placeholders) do
+            if (self.dicts.tgt.words:lookup(ph)) then
+              table.insert(c, ph)
+            end
+          end
+          table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
+        end
+
+        if self.phraseTable and self.args.lexical_constraints then
+          local c = {}
+          for _,w in pairs(src[b].words) do
+            if (self.phraseTable:contains(w)) then
+              -- TODO : deal with phrases and source words
+              local tgt = self.phraseTable:lookup(w)
+              if (self.dicts.tgt.words:lookup(tgt)) then
+                table.insert(c, tgt)
+              end
+            end
+          end
+          table.insert(srcData.constraints, self.dicts.tgt.words:convertToIdx(c, onmt.Constants.UNK_WORD))
+        end
+
       else
         table.insert(srcData.words,onmt.utils.Cuda.convert(src[b].vectors))
       end
@@ -237,20 +309,27 @@ function Translator:buildData(src, gold)
   return onmt.data.Dataset.new(srcData, goldData), ignored, indexMap
 end
 
-function Translator:buildTargetWords(pred, src, attn)
+function Translator:buildTargetWords(pred, src, attn, placeholders)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  if self.args.replace_unk then
+  if self.args.replace_unk or self.args.replace_unk_tagged or self.args.placeholder_constraints then
     for i = 1, #tokens do
-      if tokens[i] == onmt.Constants.UNK_WORD then
+      if tokens[i] == onmt.Constants.UNK_WORD and (self.args.replace_unk or self.args.replace_unk_tagged) then
         local _, maxIndex = attn[i]:max(1)
         local source = src[maxIndex[1]]
 
         if self.phraseTable and self.phraseTable:contains(source) then
           tokens[i] = self.phraseTable:lookup(source)
-        else
+
+        elseif self.args.replace_unk then
           tokens[i] = source
+
+        elseif self.args.replace_unk_tagged then
+          tokens[i] = '｟unk:' .. source .. '｠'
         end
+      end
+      if placeholders[tokens[i]] and self.args.placeholder_constraints then
+        tokens[i] = placeholders[tokens[i]]
       end
     end
   end
@@ -285,6 +364,26 @@ function Translator:translateBatch(batch)
     return encStates[#encStates]
   end
 
+  -- if we have a language model - initialize lm state with BOS
+  local lmStates, lmContext
+  if self.lm then
+    local bos_inputs = torch.IntTensor(batch.size):fill(onmt.Constants.BOS)
+    if #self.lm.dicts.src.features > 0 then
+      local inputs = { bos_inputs }
+      if #self.lm.dicts.src.features > 1 then
+        table.insert(inputs, {})
+        for _ = 1, #self.lm.dicts.src.features do
+          table.insert(inputs[2], bos_inputs)
+        end
+      else
+        table.insert(inputs, bos_inputs)
+      end
+      bos_inputs = inputs
+    end
+    onmt.utils.Cuda.convert(bos_inputs)
+    lmStates, lmContext = self.lm.model.models.encoder:forwardOne(bos_inputs, nil, true)
+  end
+
   local decInitStates = self.model.models.bridge:forward(encStates)
 
   -- Compute gold score.
@@ -299,7 +398,10 @@ function Translator:translateBatch(batch)
                                                       context,
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
+                                                      self.args.limit_lexical_constraints,
                                                       decInitStates,
+                                                      self.lm and self.lm.model.models,
+                                                      lmStates, lmContext, self.args.lm_weight,
                                                       self.dicts,
                                                       self.args.length_norm,
                                                       self.args.coverage_norm,
@@ -412,7 +514,7 @@ function Translator:saveBeamHistories(file)
     table.insert(data.scores, beamScores)
   end
 
-  local output = assert(io.open(file, 'w'))
+  local output = onmt.utils.Error.assert(io.open(file, 'w'), "Cannot open file '"..file.."' for writing.")
   output:write(require('dkjson').encode(data))
   self.beamHistories = {}
 end
@@ -470,7 +572,7 @@ function Translator:translate(src, gold)
         results[b].preds = {}
         for n = 1, self.args.n_best do
           results[b].preds[n] = {}
-          results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n])
+          results[b].preds[n].words = self:buildTargetWords(pred[b][n], src[indexMap[b]].words, attn[b][n], src[indexMap[b]].placeholders)
           results[b].preds[n].features = self:buildTargetFeatures(predFeats[b][n])
           results[b].preds[n].attention = attn[b][n]
           results[b].preds[n].score = predScore[b][n]

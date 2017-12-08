@@ -37,12 +37,12 @@ function terTest.basic()
   local candtok = tok(cand)
   -- one reference
   local ter = onmt.scorers['ter'](candtok, refs)
-  tester:eq(ter,0.659,0.01)
+  tester:eq(ter,0.64,0.01)
   table.insert(refs, tok(ref2))
   -- two references
   local details
   ter, details = onmt.scorers['ter'](candtok, refs)
-  tester:eq(ter,0.646,0.01)
+  tester:eq(ter,0.6448,0.01)
   tester:assert(details:find("20.5") ~= 0)
   tester:assert(details:find("+/- 0") ~= 0)
 end

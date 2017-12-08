@@ -6,7 +6,14 @@ local options = {
     [[Encoder type.]],
     {
       enum = { 'rnn', 'brnn', 'dbrnn', 'pdbrnn', 'gnmt', 'cnn' },
-      structural = 0
+      structural = 0,
+      depends = function(opt)
+                  if opt.encoder_type == 'cnn' then
+                    if opt.bridge == 'copy' then
+                      return false, "CNN encoder doesn't work with copy bridge. Please use either 'none' or 'dense'." end
+                  end
+                  return true
+                end
     }
   },
   {
@@ -274,6 +281,10 @@ function Factory.buildAttention(args)
     _G.logger:info('   - attention: global (%s)', args.global_attention)
     return onmt.GlobalAttention(args, args.rnn_size)
   end
+end
+
+function Factory.loadSentenceNLLCriterion(pretrained)
+  return onmt.SentenceNLLCriterion.load(pretrained)
 end
 
 return Factory

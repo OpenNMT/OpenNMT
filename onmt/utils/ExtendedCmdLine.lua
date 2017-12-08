@@ -190,7 +190,7 @@ function ExtendedCmdLine:error(msg)
     error(msg)
   else
     io.stderr:write(self.script .. ': ' .. msg .. '\n')
-    io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or visit the online documentation at http://opennmt.net/OpenNMT/.\n')
+    io.stderr:write('Try \'' .. self.script .. ' -h\' for more information, or browse the documentation in the docs/ directory.\n')
     os.exit(1)
   end
 end
@@ -202,7 +202,7 @@ function ExtendedCmdLine:argument(key, type, help, _meta_)
     end
   end
 
-  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+  onmt.utils.Error.assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
 
   parent.argument(self, key, help, type)
 
@@ -221,7 +221,7 @@ function ExtendedCmdLine:option(key, default, help, _meta_)
     end
   end
 
-  assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
+  onmt.utils.Error.assert(not(self.options[key]) and not(self.arguments[key]), "Duplicate options/arguments: "..key)
 
   parent.option(self, key, default, help)
 
@@ -230,13 +230,13 @@ function ExtendedCmdLine:option(key, default, help, _meta_)
   if _meta_ and (
     (_meta_.valid and not _meta_.valid(default)) or
     (_meta_.enum and type(default) ~= 'table' and not onmt.utils.Table.hasValue(_meta_.enum, default))) then
-    assert(default=='',"Invalid option default definition: "..key.."="..default)
+    onmt.utils.Error.assert(default=='',"Invalid option default definition: "..key.."="..default)
     _meta_.required = true
   end
 
   if _meta_ and _meta_.enum and type(default) == 'table' then
     for _,k in ipairs(default) do
-      assert(onmt.utils.Table.hasValue(_meta_.enum, k), "table option not compatible with enum: "..key)
+      onmt.utils.Error.assert(onmt.utils.Table.hasValue(_meta_.enum, k), "table option not compatible with enum: "..key)
     end
   end
 
@@ -245,13 +245,13 @@ end
 
 --[[ Override options with option values set in file `filename`. ]]
 function ExtendedCmdLine:loadConfig(filename, opt)
-  local file = assert(io.open(filename, 'r'))
+  local file = onmt.utils.Error.assert(io.open(filename, 'r'))
 
   for line in file:lines() do
     -- Ignore empty or commented out lines.
     if line:len() > 0 and string.sub(line, 1, 1) ~= '#' then
       local field = onmt.utils.String.split(line, '=')
-      assert(#field == 2, 'badly formatted config file')
+      onmt.utils.Error.assert(#field == 2, 'badly formatted config file')
 
       local key = onmt.utils.String.strip(field[1])
       local val = onmt.utils.String.strip(field[2])
@@ -299,7 +299,7 @@ function ExtendedCmdLine:logConfig(opt)
 end
 
 function ExtendedCmdLine:dumpConfig(opt, filename)
-  local file = assert(io.open(filename, 'w'))
+  local file = onmt.utils.Error.assert(io.open(filename, 'w'), "Cannot open file '"..filename.."' for writing")
 
   for key, val in pairs(opt) do
     if key:sub(1, 1) ~= '_' then
@@ -645,12 +645,12 @@ end
 
 -- Check if the corresponding file exists.
 function ExtendedCmdLine.fileExists(v)
-  return path.exists(v), 'the file must exist'
+  return v == '-' or path.exists(v), 'the file must exist'
 end
 
 -- Check non set or if the corresponding file exists.
 function ExtendedCmdLine.fileNullOrExists(v)
-  return v == '' or ExtendedCmdLine.fileExists(v), 'if set, the file must exist'
+  return v == '' or v == '-' or ExtendedCmdLine.fileExists(v), 'if set, the file must exist'
 end
 
 -- Check it is a directory and some file exists
@@ -662,6 +662,75 @@ function ExtendedCmdLine.dirStructure(files)
       end
     end
     return true
+  end
+end
+
+-- merge 2 cmdline objects
+function ExtendedCmdLine:merge(new_cmd)
+  local new_help_blocks = {}
+  local new_help_blocks_list = {}
+  local current_block
+  -- parse the new cmd blocks
+  for _, option in ipairs(new_cmd.helplines) do
+    if type(option) == 'string' then
+      if option ~= '' then
+        current_block = option
+        new_help_blocks[current_block] = {}
+        new_help_blocks_list[current_block] = {}
+      end
+    else
+      if current_block and type(option) == 'table' and option["key"] then
+        if new_cmd.options[option["key"]].default == '__REMOVE__' then
+          self.options[option["key"]] = nil
+        else
+          self.options[option["key"]] = new_cmd.options[option["key"]]
+        end
+        new_help_blocks[current_block][option["key"]]=option
+      end
+    end
+    if current_block then
+      table.insert(new_help_blocks_list[current_block], option)
+    end
+  end
+  -- parse current help and update it
+  local idx = 1
+  while idx <= #self.helplines do
+    local option = self.helplines[idx]
+    if type(option) == 'string' then
+      if option ~= '' then
+        current_block = option
+        if new_help_blocks[current_block] then
+          while idx+1 < #self.helplines and
+                not(type(self.helplines[idx+1])=='string' and self.helplines[idx+1]~='') do
+            option = self.helplines[idx+1]
+            if type(option) == 'table' and new_help_blocks[current_block][option["key"]] then
+              -- option exists - change or remove it
+              if new_cmd.options[option["key"]].default == '__REMOVE__' then
+                table.remove(self.helplines, idx+1)
+                idx = idx - 1
+              else
+                self.helplines[idx+1] = new_help_blocks[current_block][option["key"]]
+              end
+              new_help_blocks[current_block][option["key"]] = nil
+            end
+            idx = idx + 1
+          end
+          -- add the documentation for the new options
+          for _, o in pairs(new_help_blocks[current_block]) do
+            table.insert(self.helplines, idx, o)
+            idx = idx + 1
+          end
+          new_help_blocks_list[current_block] = nil
+        end
+      end
+    end
+    idx = idx + 1
+  end
+  -- last add new option blocks
+  for _, n in pairs(new_help_blocks_list) do
+    for _, v in ipairs(n) do
+      table.insert(self.helplines, v)
+    end
   end
 end
 

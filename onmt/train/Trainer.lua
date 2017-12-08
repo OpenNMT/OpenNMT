@@ -77,6 +77,13 @@ local options = {
     [[When using translation-based validation metrics (e.g. BLEU, TER, etc.), also save the
     translation every this many epochs to the file `<save_model>_epochN_validation_translation.txt`.
     If = 0, will not save validation translation.]]
+  },
+  {
+    '-update_vocab', 'none',
+    [[When training on a new train-set with a different vocabulary, update the vocabulary and save the common words' information (embedding, generator ...).]],
+    {
+      enum = { 'none', 'replace', 'merge' }
+    }
   }
 }
 
@@ -182,12 +189,15 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
     return batchOrder and batchOrder[idx] or idx
   end
 
-  -- if vocabulary for the batch is provided and generator support setting vocabulary
-  if data.vocabTensor and self.model.setGeneratorVocab then
-    onmt.utils.Parallel.launch(function(_)
+  onmt.utils.Parallel.launch(function(_)
+    -- if vocabulary for the batch is provided and generator support setting vocabulary
+    if data.vocabTensor and self.model.setGeneratorVocab then
       _G.model:setGeneratorVocab(data.vocabTensor)
-    end)
-  end
+    end
+    if _G.model.updateRates then
+      _G.model:updateRates(epoch)
+    end
+  end)
 
   startIteration = startIteration or 1
 
@@ -208,7 +218,11 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
   if not self.args.async_parallel then
     -- Synchronous training.
     local iter = startIteration
-    for i = startIteration, data:batchCount(), onmt.utils.Parallel.count do
+    local firstI = startIteration
+    if firstI > 1 then
+      firstI = firstI * onmt.utils.Parallel.count
+    end
+    for i = firstI, data:batchCount(), onmt.utils.Parallel.count do
       local batches = {}
       local totalSize = 0
       needLog = true
@@ -423,12 +437,16 @@ function Trainer:train(trainData, validData, trainStates)
     end
 
     local epochState = self:trainEpoch(trainData, epoch, self.args.start_iteration, batchOrder)
-    local validScore = self:eval(validData, epoch)
+
+    local validScore = 0
+    if validData then
+      validScore = self:eval(validData, epoch)
+    end
 
     self.optim:updateLearningRate(validScore, epoch, self.evaluator)
 
     unsavedEpochs = unsavedEpochs + 1
-    if unsavedEpochs == self.args.save_every_epochs then
+    if unsavedEpochs == self.args.save_every_epochs or epoch == endEpoch then
       self.saver:saveEpoch(validScore, epochState)
       unsavedEpochs = 0
     end
