@@ -38,7 +38,6 @@ extraneous = 0
 def tag(s):
   global extraneous
   joiner_char = '￭'
-  joiner_pos = []
   l=s.split()
   for w in l:
     #if there's a joiner before the word, get rid of the joiner
