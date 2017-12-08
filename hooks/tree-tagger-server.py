@@ -4,10 +4,30 @@ import subprocess
 import os
 import sys
 
-def start_model(path,m):
+def start_model(path,m,l,l_first):
   global treetagger
   global nbuf
-  treetagger = subprocess.Popen([path+'/tree-tagger', m], 
+  global only_lemma
+  global lemma_first
+  lemma_first = l_first
+  
+  only_lemma = False
+
+  tagger_option = ''
+  lemma = False
+  lemma_no_uknown = ''
+  if l == 'none':
+      tagger_option = None 
+  elif l == 'with' or l == 'only':
+      if l == 'only':
+          only_lemma = True
+      tagger_option = '-lemma'
+      lemma_no_uknown = '-no-unknown'
+  
+  if tagger_option is not None:
+      lemma = True
+
+  treetagger = subprocess.Popen([path+'/tree-tagger']+[tagger_option] * lemma + [lemma_no_uknown] * lemma + [m], 
                            stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'),
 			   universal_newlines=True)
   # this parameter should be adjusted for each os - it forces tree-tagger to flush by following this many sentence ends
@@ -17,9 +37,15 @@ extraneous = 0
 
 def tag(s):
   global extraneous
+  joiner_char = '￭'
+  joiner_pos = []
   l=s.split()
   for w in l:
-    treetagger.stdin.write(w+'\n')
+    #if there's a joiner before the word, get rid of the joiner
+    if w[0] == joiner_char:
+      treetagger.stdin.write(w[1:]+'\n')
+    else:
+      treetagger.stdin.write(w+'\n')
   treetagger.stdin.write('\n')
   for _ in range(nbuf):
     treetagger.stdin.write('.\n')
@@ -27,14 +53,19 @@ def tag(s):
   result = []
   for tag in treetagger.stdout:
     tag = tag.strip()
-    if tag != '':
+    if tag != '':  
       if extraneous == 0:
+        if only_lemma:
+            tag = tag[tag.index('\t')+1:]
+        if lemma_first:
+            tag = tag[tag.index('\t')+1:]+'\t'+tag[0:tag.index('\t')]
         result.append(tag)
       else:
         extraneous -= 1
       if len(result)==len(l):
         break
   extraneous = nbuf
+
   return " ".join(result)
 
 from http.server import BaseHTTPRequestHandler,HTTPServer
@@ -90,9 +121,12 @@ if __name__=='__main__':
   parser.add_argument('-ip', default="localhost", help='HTTP Server IP')
   parser.add_argument('-model', type=str, help='model to serve')
   parser.add_argument('-path', type=str, help='path to tree-tagger binaries')
+  parser.add_argument('-lemma', default="none", choices=['none','with','only'], help='Tag with lemmas. \
+          \'with\' appends the lemma after the tag, \'only\' appends only the lemma')
+  parser.add_argument('-lemma_first', action='store_true', help='when tagging both with pos and lemmas, append the lemma first')
   args = parser.parse_args()
 
-  start_model(args.path, args.model)
+  start_model(args.path, args.model, args.lemma, args.lemma_first)
 
   if args.sent and len(args.sent):
     print(tag(args.sent))
