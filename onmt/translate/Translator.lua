@@ -133,6 +133,61 @@ function Translator.declareOpts(cmd)
   cmd:setCmdLineOptions(options, 'Translator')
 end
 
+function Translator.expandOpts(cmd, dataType)
+  local torenameOpts = {};
+  local current_block;
+  local pref = "{src,tgt}_"
+  if dataType == "monotext" then pref = "" end
+  if dataType == "feattext" then pref = "tgt_" end
+  for i, v in ipairs(cmd.helplines) do
+    if type(v) == "string" then
+      local p = v:find(" options")
+      if p then
+        current_block = v:sub(1,p-1);
+        if current_block == "MPreprocessing" or current_block == "Tokenizer" then
+          cmd.helplines[i] = cmd.helplines[i]
+        end
+      end
+    else
+      if current_block == "MPreprocessing" or current_block == "Tokenizer" then
+        torenameOpts[v.key] = current_block:sub(1,3):lower()
+        v.key="-"..current_block:sub(1,3):lower().."_"..pref..v.key:sub(2)
+      end
+    end
+  end
+
+  cmd.options['-mode'] =
+    {
+      type= "string",
+      key= cmd.options['-mode'].key,
+      default= 'space',
+      help= [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
+      meta= {
+          enum = {'conservative', 'aggressive', 'space'}
+      }
+    }
+
+  local newOpts = {}
+  for k, v in pairs(cmd.options) do
+    if torenameOpts[k] then
+      cmd.options[k] = nil
+      if dataType == 'monotext' then
+        local ksrc = '-'..torenameOpts[k]..'_'..k:sub(2)
+        newOpts[ksrc] = onmt.utils.Table.deepCopy(v)
+      elseif dataType == 'bitext' then
+        local ksrc = '-'..torenameOpts[k]..'_src_'..k:sub(2)
+        newOpts[ksrc] = onmt.utils.Table.deepCopy(v)
+      end
+      if dataType ~= 'monotext' then
+        local ktgt = '-'..torenameOpts[k]..'_tgt_'..k:sub(2)
+        newOpts[ktgt] = onmt.utils.Table.deepCopy(v)
+      end
+    end
+  end
+  for k, v in pairs(newOpts) do
+    cmd.options[k] = v
+  end
+end
 
 function Translator:__init(args, model, dicts)
   self.args = args
