@@ -40,7 +40,6 @@ local function norm(t)
   else
     local placeholder = fields[1]
     local value = fields[2]
-    local p = 0
     value = value:gsub(separators.protected_character.."%d%d%d%d", convertToUtf8)
     return prefix .. placeholder .. suffix, value
   end
