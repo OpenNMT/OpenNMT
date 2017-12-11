@@ -34,19 +34,19 @@ function case.addCase (toks)
     local casefeat = case.NONE
     local loweredTok = ''
 
-    for v, c in unicode.utf8_iter(toks[i]) do
-      if loweredTok == '' and c == separators.ph_marker_open then
-        loweredTok = toks[i]
-        break
+    if toks[i]:find(separators.ph_marker_open) then
+      loweredTok = toks[i]
+    else
+      for v, c in unicode.utf8_iter(toks[i]) do
+        local is_letter, thecase = unicode.isLetter(v)
+        -- find lowercase equivalent
+        if is_letter then
+          local lu, lc = unicode.getLower(v)
+          if lu then c = lc end
+          casefeat = case.combineCase(casefeat, thecase)
+        end
+        loweredTok = loweredTok..c
       end
-      local is_letter, thecase = unicode.isLetter(v)
-      -- find lowercase equivalent
-      if is_letter then
-        local lu, lc = unicode.getLower(v)
-        if lu then c = lc end
-        casefeat = case.combineCase(casefeat, thecase)
-      end
-      loweredTok = loweredTok..c
     end
 
     toks[i] = loweredTok..separators.feat_marker..string.sub(casefeat,1,1)

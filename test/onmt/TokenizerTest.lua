@@ -72,6 +72,14 @@ function tokenizerTest.protectedSequence()
   testTok(opt, "｟1023｠.", "｟1023｠ ￭ .", true)
 end
 
+function tokenizerTest.protectedSequenceAndCaseFeature()
+  local opt = cmd:parse({'-mode', 'conservative', '-case_feature', '-joiner_annotate'})
+  testTok(opt, "｟AbC｠", "｟AbC｠￨N", true)
+  testTok(opt, "｟AbC｠.", "｟AbC｠￨N ￭.￨N", true)
+  testTok(opt, "Abc｟DeF｠.", "abc￨C ￭｟DeF｠￨N ￭.￨N", true)
+  testTok(opt, "Abc｟DeF｠ghi", "abc￨C ￭｟DeF｠￭￨N ghi￨L", true)
+end
+
 function tokenizerTest.aggressive()
   local opt = cmd:parse({'-mode','aggressive','-joiner_annotate'})
   testTok(opt, "｟1,023｠km", "｟1,023｠￭ km", true)
