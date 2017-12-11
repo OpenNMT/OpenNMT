@@ -32,6 +32,11 @@ local function testTokDetok(opt, a, b)
   tester:eq(b, detok)
 end
 
+-- check if detokenization of a is b
+local function testDetok(opt, a, b)
+  tester:eq(b, tokenizer.detokenize(a, opt))
+end
+
 function tokenizerTest.basic()
   local opt = cmd:parse('')
   testTok(opt, "Your Hardware-Enablement Stack (HWE) is supported until April 2019.", "Your Hardware-Enablement Stack ( HWE ) is supported until April 2019 .", false)
@@ -78,6 +83,9 @@ function tokenizerTest.protectedSequenceAndCaseFeature()
   testTok(opt, "｟AbC｠.", "｟AbC｠￨N ￭.￨N", true)
   testTok(opt, "Abc｟DeF｠.", "abc￨C ￭｟DeF｠￨N ￭.￨N", true)
   testTok(opt, "Abc｟DeF｠ghi", "abc￨C ￭｟DeF｠￭￨N ghi￨L", true)
+  testDetok(opt, "｟abc｠￨U", "｟abc｠")
+  local opt = cmd:parse({'-mode', 'conservative', '-case_feature', '-segment_case'})
+  testTok(opt, "｟WiFi｠", "｟WiFi｠￨N", true)
 end
 
 function tokenizerTest.aggressive()
