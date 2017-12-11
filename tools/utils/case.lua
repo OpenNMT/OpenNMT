@@ -61,19 +61,24 @@ function case.segmentCase (toks, separator)
     local casefeat = case.NONE
     local newTok = ''
 
-    for v, c in unicode.utf8_iter(toks[i]) do
-      local is_letter, thecase = unicode.isLetter(v)
-      if is_letter then
-        if case.combineCase(casefeat, thecase) == case.MIXED then
-          table.insert(caseSegment, newTok..separator)
-          newTok = ''
-          casefeat = case.combineCase(case.NONE, thecase)
-        else
-          casefeat = case.combineCase(casefeat, thecase)
+    if toks[i]:find(separators.ph_marker_open) then
+      newTok = toks[i]
+    else
+      for v, c in unicode.utf8_iter(toks[i]) do
+        local is_letter, thecase = unicode.isLetter(v)
+        if is_letter then
+          if case.combineCase(casefeat, thecase) == case.MIXED then
+            table.insert(caseSegment, newTok..separator)
+            newTok = ''
+            casefeat = case.combineCase(case.NONE, thecase)
+          else
+            casefeat = case.combineCase(casefeat, thecase)
+          end
         end
+        newTok = newTok..c
       end
-      newTok = newTok..c
     end
+
     table.insert(caseSegment, newTok)
   end
   return caseSegment
@@ -81,7 +86,7 @@ end
 
 function case.restoreCase(w, feats)
   assert(#feats>=1)
-  if feats[1] == case.LOWER or feats[1] == case.NONE then
+  if feats[1] == case.LOWER or feats[1] == case.NONE or w:find(separators.ph_marker_open) then
     return w
   else
     local wr = ''
