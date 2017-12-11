@@ -34,10 +34,11 @@ local function treetaggerFn(opt, tokens)
       end
       tok_nofeats = tok_nofeats..v
     end
-    local res = hc:post("http://"..opt.pos_server_host..':'..opt.pos_server_port..'/pos', 'sent='..tok_nofeats)
+    local res = hc:post("http://"..opt.pos_server_host..':'..opt.pos_server_port..'/pos', tok_nofeats)
     assert(res.code==200)
+    local s = string.gsub(res.body, "\t", "￨")
     local idx = 1
-    for pos in string.gmatch(res.body, "%S+") do
+    for pos in string.gmatch(s, "%S+") do
       tokens[idx] = tokens[idx] .. '￨' .. pos
       idx = idx + 1
     end

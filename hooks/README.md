@@ -23,19 +23,23 @@ echo "It is a test-sample" | th tools/tokenize.lua -hook_file hooks/chartokeniza
 I t ▁ i s ▁ a ▁ t e s t - s a m p l e
 ```
 
-## Tree-Tagger Part-of-Speech annotation
+## TreeTagger Part-of-Speech annotation
 
-This hook is interfacing with [TreeTagger](http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/) and provides token pos annotation during tokenization.
+This hook is interfacing with [TreeTagger](http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/) and provides POS and/or lemma annotation during tokenization.
 
-To run it, you need to run a treetagger as a rest service using provided script:
+First start TreeTagger as a REST service using the provided script:
 
 ```
-python -u hooks/tree-tagger-server.py -model ~/french.par -path ~/bin/
+python -u hooks/tree-tagger-server.py -model /TREE-TAGGER-lib-dir/your-language.par -path /TREE-TAGGER-bin-dir/
 ```
 
-which runs the REST service on the port 3000 of localhost.
+This runs the REST service on port 3000 of localhost.
+To see all available options, just type:
+```
+python hooks/tree-tagger-server.py -h
+```
 
-and you can then use it during tokenization as follow:
+Once the REST server is running, you can use it during tokenization as follows:
 
 ```
 th tools/tokenize.lua -hook_file hooks.tree-tagger -pos_feature < file
