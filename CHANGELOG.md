@@ -10,6 +10,8 @@
 
 ### Fixes and improvements
 
+* Protected sequence outputs correctly deserialize protected characters (％abcd)
+
 ## [v0.9.5](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.5) (2017-12-07)
 
 ### Fixes and improvements
