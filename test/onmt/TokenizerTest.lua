@@ -80,7 +80,7 @@ function tokenizerTest.protectedSequenceAndCaseFeature()
   testTok(opt, "Abc｟DeF｠.", "abc￨C ￭｟DeF｠￨N ￭.￨N", true)
   testTok(opt, "Abc｟DeF｠ghi", "abc￨C ￭｟DeF｠￭￨N ghi￨L", true)
   testDetok(opt, "｟abc｠￨U", "｟abc｠")
-  local opt = cmd:parse({'-mode', 'conservative', '-case_feature', '-segment_case'})
+  opt = cmd:parse({'-mode', 'conservative', '-case_feature', '-segment_case'})
   testTok(opt, "｟WiFi｠", "｟WiFi｠￨N", true)
 end
 
