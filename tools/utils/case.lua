@@ -34,19 +34,19 @@ function case.addCase (toks)
     local casefeat = case.NONE
     local loweredTok = ''
 
-    for v, c in unicode.utf8_iter(toks[i]) do
-      if loweredTok == '' and c == separators.ph_marker_open then
-        loweredTok = toks[i]
-        break
+    if toks[i]:find(separators.ph_marker_open) then
+      loweredTok = toks[i]
+    else
+      for v, c in unicode.utf8_iter(toks[i]) do
+        local is_letter, thecase = unicode.isLetter(v)
+        -- find lowercase equivalent
+        if is_letter then
+          local lu, lc = unicode.getLower(v)
+          if lu then c = lc end
+          casefeat = case.combineCase(casefeat, thecase)
+        end
+        loweredTok = loweredTok..c
       end
-      local is_letter, thecase = unicode.isLetter(v)
-      -- find lowercase equivalent
-      if is_letter then
-        local lu, lc = unicode.getLower(v)
-        if lu then c = lc end
-        casefeat = case.combineCase(casefeat, thecase)
-      end
-      loweredTok = loweredTok..c
     end
 
     toks[i] = loweredTok..separators.feat_marker..string.sub(casefeat,1,1)
@@ -61,19 +61,24 @@ function case.segmentCase (toks, separator)
     local casefeat = case.NONE
     local newTok = ''
 
-    for v, c in unicode.utf8_iter(toks[i]) do
-      local is_letter, thecase = unicode.isLetter(v)
-      if is_letter then
-        if case.combineCase(casefeat, thecase) == case.MIXED then
-          table.insert(caseSegment, newTok..separator)
-          newTok = ''
-          casefeat = case.combineCase(case.NONE, thecase)
-        else
-          casefeat = case.combineCase(casefeat, thecase)
+    if toks[i]:find(separators.ph_marker_open) then
+      newTok = toks[i]
+    else
+      for v, c in unicode.utf8_iter(toks[i]) do
+        local is_letter, thecase = unicode.isLetter(v)
+        if is_letter then
+          if case.combineCase(casefeat, thecase) == case.MIXED then
+            table.insert(caseSegment, newTok..separator)
+            newTok = ''
+            casefeat = case.combineCase(case.NONE, thecase)
+          else
+            casefeat = case.combineCase(casefeat, thecase)
+          end
         end
+        newTok = newTok..c
       end
-      newTok = newTok..c
     end
+
     table.insert(caseSegment, newTok)
   end
   return caseSegment
@@ -81,7 +86,7 @@ end
 
 function case.restoreCase(w, feats)
   assert(#feats>=1)
-  if feats[1] == case.LOWER or feats[1] == case.NONE then
+  if feats[1] == case.LOWER or feats[1] == case.NONE or w:find(separators.ph_marker_open) then
     return w
   else
     local wr = ''

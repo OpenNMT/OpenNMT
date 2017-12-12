@@ -1,6 +1,5 @@
 require('onmt.init')
 local tokenizer = require 'tools.utils.tokenizer'
-local normalizer = require('tools.utils.normalizer')
 local BPE = require ('tools.utils.BPE')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('translate.lua')
@@ -43,32 +42,21 @@ cmd:setCmdLineOptions(options, 'Data')
 onmt.translate.Translator.declareOpts(cmd)
 
   -- prepare tokenization option
-local tok_options = {}
 local topts = tokenizer.getOpts()
-for _, v in ipairs(topts) do
-  -- change mode option to include disabling mode (default)
-  if v[1] == '-mode' then
-    v = { '-mode', 'space',
-        [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
-          {
-            enum = {'conservative', 'aggressive', 'space'}
-          }
-        }
-  end
-  local opt = onmt.utils.Table.deepCopy(v)
-  opt[1] = '-tok_src_' .. v[1]:sub(2)
-  table.insert(tok_options, opt)
-  opt = onmt.utils.Table.deepCopy(v)
-  opt[1] = '-tok_tgt_' .. v[1]:sub(2)
-  table.insert(tok_options, opt)
-end
-table.insert(tok_options, {
+table.insert(topts, {
   '-detokenize_output', false,
   [[Detokenize output.]]
 })
-cmd:setCmdLineOptions(tok_options, "Tokenizer")
+cmd:setCmdLineOptions(topts, "Tokenizer")
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+
+-- expand options depending on source or target (tokenization, mpreprocessing)
+onmt.translate.Translator.expandOpts(cmd, "bitext")
 
 onmt.utils.Cuda.declareOpts(cmd)
+onmt.utils.HookManager.declareOpts(cmd)
+
 onmt.utils.Logger.declareOpts(cmd)
 
 cmd:text('')
@@ -88,6 +76,7 @@ local function main()
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   _G.profiler = onmt.utils.Profiler.new()
+  _G.hookManager = onmt.utils.HookManager.new(opt)
 
   onmt.utils.Cuda.init(opt)
 
@@ -98,8 +87,9 @@ local function main()
   local srcIdBatch = {}
 
     -- tokenization options
-  local tokenizers = { {}, {} }
-  local normalizers = {}
+  -- tokenization and preprocessing options
+  local optTok = { {}, {} }
+  local optMPr = { {}, {} }
   local bpes = {}
   for k, v in pairs(opt) do
     if k:sub(1,4) == 'tok_' then
@@ -112,7 +102,19 @@ local function main()
       else
         k = k:sub(5)
       end
-      tokenizers[idx][k] = v
+      optTok[idx][k] = v
+    end
+    if k:sub(1,4) == 'mpr_' then
+      local idx = 1
+      if k:sub(5, 8) == 'tgt_' then
+        idx = 2
+        k = k:sub(9)
+      elseif k:sub(5,8) == 'src_' then
+        k = k:sub(9)
+      else
+        k = k:sub(5)
+      end
+      optMPr[idx][k] = v
     end
   end
 
@@ -139,20 +141,13 @@ local function main()
      bpes[2] = BPE.new(myopt)
   end
 
-  if opt.tok_src_normalize_cmd ~= '' then
-    normalizers[1] = normalizer.new(opt.tok_src_normalize_cmd)
-  end
-  if opt.tok_tgt_normalize_cmd ~= '' then
-    normalizers[2] = normalizer.new(opt.tok_tgt_normalize_cmd)
-  end
-
   for i = 1, 2 do
-    _G.logger:info("Using on-the-fly '%s' tokenization for input "..i, tokenizers[i]["mode"])
+    _G.logger:info("Using on-the-fly '"..optTok[i]["mode"].."' tokenization for input "..i)
   end
 
   -- if source features - no tokenization
   if translator:srcFeat() then
-    tokenizers[1] = nil
+    optTok[1] = nil
   end
 
   local goldReader
@@ -194,20 +189,16 @@ local function main()
     if withGoldScore then
       goldOutputSeq = goldReader:next(false)
       if goldOutputSeq then
-        if normalizers[2] then
-          goldOutputSeq = normalizers[2]:normalize(goldOutputSeq)
-        end
-        goldOutputSeq = tokenizer.tokenize(tokenizers[2], goldOutputSeq, bpes[2])
+        goldOutputSeq =  _G.hookManager:call("mpreprocess", optMPr[2], goldOutputSeq) or goldOutputSeq
+        goldOutputSeq = tokenizer.tokenize(optTok[2], goldOutputSeq, bpes[2])
       end
     end
 
     if srcSeq then
       if srcSeq:len() > 0 then
-        if normalizers[1] then
-          srcSeq = normalizers[1]:normalize(srcSeq)
-        end
-        if tokenizers[1] then
-          srcSeq = tokenizer.tokenize(tokenizers[1], srcSeq, bpes[1])
+        srcSeq = _G.hookManager:call("mpreprocess", optMPr[1], srcSeq) or srcSeq
+        if optTok[1] then
+          srcSeq = tokenizer.tokenize(optTok[1], srcSeq, bpes[1])
         end
       else
         srcSeq = {}
@@ -258,7 +249,7 @@ local function main()
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
               if opt.detokenize_output then
-                sentence = tokenizer.detokenize(sentence, tokenizers[2])
+                sentence = tokenizer.detokenize(sentence, optTok[2])
               end
               outFile:write(sentence .. '\n')
 

@@ -1,4 +1,10 @@
 local separators = require('tools.utils.separators')
+local unicode = require('tools.utils.unicode')
+
+local function convertToUtf8(s)
+  local cp = tonumber('0x'..s:sub(#separators.protected_character+1))
+  return unicode._cp_to_utf8(cp)
+end
 
 local function norm(t)
   if type(t) == "table" then
@@ -34,6 +40,7 @@ local function norm(t)
   else
     local placeholder = fields[1]
     local value = fields[2]
+    value = value:gsub(separators.protected_character.."%d%d%d%d", convertToUtf8)
     return prefix .. placeholder .. suffix, value
   end
 end
