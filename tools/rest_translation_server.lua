@@ -8,7 +8,7 @@
 ]]
 
 require('onmt.init')
-
+require('copas')
 local tokenizer = require('tools.utils.tokenizer')
 local BPE = require ('tools.utils.BPE')
 local restserver = require("tools.restserver.restserver")
@@ -37,6 +37,8 @@ onmt.translate.Translator.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 tokenizer.declareOpts(cmd)
+onmt.utils.HookManager.updateOpt(arg, cmd)
+onmt.utils.HookManager.declareOpts(cmd)
 
 cmd:text("")
 cmd:text("Other options")
@@ -144,6 +146,8 @@ local function main()
   -- load logger
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   onmt.utils.Cuda.init(opt)
+
+  _G.hookManager = onmt.utils.HookManager.new(opt)
 
   -- disable profiling
   _G.profiler = onmt.utils.Profiler.new(false)
