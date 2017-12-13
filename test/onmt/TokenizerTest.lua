@@ -32,6 +32,11 @@ local function testTokDetok(opt, a, b)
   tester:eq(b, detok)
 end
 
+-- check if detokenization of a is b
+local function testDetok(opt, a, b)
+  tester:eq(b, tokenizer.detokenize(a, opt))
+end
+
 function tokenizerTest.basic()
   local opt = cmd:parse('')
   testTok(opt, "Your Hardware-Enablement Stack (HWE) is supported until April 2019.", "Your Hardware-Enablement Stack ( HWE ) is supported until April 2019 .", false)
@@ -70,6 +75,17 @@ function tokenizerTest.protectedSequence()
   testTok(opt, "A｟380｠", "A ￭ ｟380｠", true)
   testTok(opt, "｟1,023｠｟380｠", "｟1,023｠ ￭ ｟380｠", true)
   testTok(opt, "｟1023｠.", "｟1023｠ ￭ .", true)
+end
+
+function tokenizerTest.protectedSequenceAndCaseFeature()
+  local opt = cmd:parse({'-mode', 'conservative', '-case_feature', '-joiner_annotate'})
+  testTok(opt, "｟AbC｠", "｟AbC｠￨N", true)
+  testTok(opt, "｟AbC｠.", "｟AbC｠￨N ￭.￨N", true)
+  testTok(opt, "Abc｟DeF｠.", "abc￨C ￭｟DeF｠￨N ￭.￨N", true)
+  testTok(opt, "Abc｟DeF｠ghi", "abc￨C ￭｟DeF｠￭￨N ghi￨L", true)
+  testDetok(opt, "｟abc｠￨U", "｟abc｠")
+  opt = cmd:parse({'-mode', 'conservative', '-case_feature', '-segment_case'})
+  testTok(opt, "｟WiFi｠", "｟WiFi｠￨N", true)
 end
 
 function tokenizerTest.aggressive()
@@ -234,9 +250,9 @@ function tokenizerTest.hooks()
     testTok(opt, "49th meeting Social and human rights questions [14 (g)]",
                  "4 9 t h ▁ m e e t i n g ▁ S o c i a l ▁ a n d ▁ h u m a n ▁ r i g h t s ▁ q u e s t i o n s ▁ [ 1 4 ▁ ( g ) ]")
   elseif hookName == "sentencepiece" then
-    local opt = cmd:parse({'-mode','none', '-sentencepiece' ,'hooks/lua-sentencepiece/test/sample.model'})
+    local opt = cmd:parse({'-mode','none', '-sentencepiece' ,'test/data/sample.model'})
     testTok(opt, "une impulsion Berry-Siniora pourraient changer quoi",
-                 "▁un e ▁imp ul s ion ▁B erry - S i nior a ▁po ur ra i ent ▁change r ▁ quoi")
+                 "▁une ▁impu l sion ▁B erry - S ini or a ▁pourraient ▁change r ▁quoi")
   end
 end
 
