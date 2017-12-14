@@ -249,11 +249,16 @@ function tokenizerTest.hooks()
     local opt = cmd:parse({'-mode','char'})
     testTok(opt, "49th meeting Social and human rights questions [14 (g)]",
                  "4 9 t h ▁ m e e t i n g ▁ S o c i a l ▁ a n d ▁ h u m a n ▁ r i g h t s ▁ q u e s t i o n s ▁ [ 1 4 ▁ ( g ) ]")
-  elseif hookName == "sentencepiece" then
+  end
+end
+
+function tokenizerTest.sentencepiece()
+  if cmd.options['-sentencepiece'] then
     local opt = cmd:parse({'-mode','none', '-sentencepiece' ,'test/data/sample.model'})
     testTok(opt, "une impulsion Berry-Siniora pourraient changer quoi",
                  "▁une ▁impu l sion ▁B erry - S ini or a ▁pourraient ▁change r ▁quoi")
   end
 end
+
 
 return tokenizerTest
