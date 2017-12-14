@@ -3,6 +3,7 @@ require('onmt.init')
 local tester = ...
 
 local preprocessorTest = torch.TestSuite()
+local hookManager_save
 
 local dataDir = 'data'
 
@@ -54,7 +55,9 @@ local function buildPreprocessor(mode)
 
   local opt = cmd:parse(commandLine)
 
-  return onmt.data.Preprocessor.new(opt, mode == 'parsedir' and 'bitext' or mode), opt
+  local preprocessor = onmt.data.Preprocessor.new(opt, mode == 'parsedir' and 'bitext' or mode)
+
+  return preprocessor, opt
 end
 
 local function makeDicts(srctgt, file)
@@ -62,6 +65,8 @@ local function makeDicts(srctgt, file)
 end
 
 function preprocessorTest.bitext()
+  hookManager_save = _G.hookManager
+
   local preprocessor, opt = buildPreprocessor("bitext")
 
   local srcDicts = makeDicts('source',opt.train_src)
@@ -89,9 +94,12 @@ function preprocessorTest.bitext()
   os.remove('ddict.src.dict')
   os.remove('ddict.tgt.dict')
 
+  _G.hookManager = hookManager_save
 end
 
 function preprocessorTest.monotext()
+  hookManager_save = _G.hookManager
+
   local preprocessor, opt = buildPreprocessor('monotext')
 
   local dicts = makeDicts('source',opt.train)
@@ -102,9 +110,13 @@ function preprocessorTest.monotext()
   tester:eq(torch.typename(data.features), 'tds.Vec')
   tester:eq(#data.words, 2857)
   tester:eq(#data.features, 2857)
+
+  _G.hookManager = hookManager_save
 end
 
 function preprocessorTest.feattext()
+  hookManager_save = _G.hookManager
+
   local preprocessor, opt = buildPreprocessor('feattext')
 
   local tgtDicts = makeDicts('target',opt.train_tgt)
@@ -117,6 +129,8 @@ function preprocessorTest.feattext()
   tester:eq(srcData.vectors[1]:size(2), 2)
   tester:eq(#srcData.vectors, 947)
   tester:eq(#tgtData.features, 0)
+
+  _G.hookManager = hookManager_save
 end
 
 return preprocessorTest

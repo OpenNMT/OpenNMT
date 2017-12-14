@@ -75,6 +75,7 @@ function hookManagerTest.function_call()
   tester:assert(err==nil)
 
   if hookManager then
+    _G.hookManager = onmt.utils.HookManager.new()
     local tokenizer = require('tools.utils.tokenizer')
     tester:ne(tokenizer.tokenize({segment_alphabet={}},"it is a test"), "XX")
     _G.hookManager = hookManager
