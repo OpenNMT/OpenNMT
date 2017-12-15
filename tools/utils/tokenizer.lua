@@ -414,10 +414,17 @@ end
 
 local function getTokens(t, joiner)
   local fields = {}
-  t:gsub("([^ ]+)", function(tok)
-    local w, leftsep, rightsep, feats =  analyseToken(tok, joiner)
-    table.insert(fields, { w=w, leftsep=leftsep, rightsep=rightsep, feats=feats })
-  end)
+  if type(t) == "string" then
+    t:gsub("([^ ]+)", function(tok)
+      local w, leftsep, rightsep, feats =  analyseToken(tok, joiner)
+      table.insert(fields, { w=w, leftsep=leftsep, rightsep=rightsep, feats=feats })
+    end)
+  else
+    for _, tok in ipairs(t) do
+      local w, leftsep, rightsep, feats =  analyseToken(tok, joiner)
+      table.insert(fields, { w=w, leftsep=leftsep, rightsep=rightsep, feats=feats })
+    end
+  end
   return fields
 end
 
