@@ -8,7 +8,6 @@
 ]]
 
 require('onmt.init')
---require('copas')
 local tokenizer = require('tools.utils.tokenizer')
 local BPE = require ('tools.utils.BPE')
 local restserver = require("tools.restserver.restserver")
