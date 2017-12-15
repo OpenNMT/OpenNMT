@@ -56,21 +56,24 @@ local function translateMessage(translator, lines)
   local err
   _G.logger:debug("Start Tokenization")
   if opt.bpe_model ~= '' then
-     bpe = BPE.new(opt)
+    bpe = BPE.new(opt)
   end
   for i = 1, #lines do
     local srcTokenized = {}
     local tokens
     local srcTokens = {}
-    res, err = pcall(function() tokens = tokenizer.tokenize(opt, lines[i].src, bpe) end)
+    res, err = pcall(function()
+      local preprocessed = _G.hookManager:call("mpreprocess", opt, lines[i].src) or lines[i]
+      tokens = tokenizer.tokenize(opt, preprocessed, bpe)
+    end)
      -- it can generate an exception if there are utf-8 issues in the text
-     if not res then
-       if string.find(err, "interrupted") then
-         error("interrupted")
-        else
-         error("unicode error in line " .. err)
-       end
-     end
+    if not res then
+      if string.find(err, "interrupted") then
+        error("interrupted")
+      else
+        error("unicode error in line " .. err)
+      end
+    end
     table.insert(srcTokenized, table.concat(tokens, ' '))
     -- Extract from the line.
     for word in srcTokenized[1]:gmatch'([^%s]+)' do
