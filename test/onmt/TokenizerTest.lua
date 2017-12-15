@@ -260,5 +260,15 @@ function tokenizerTest.sentencepiece()
   end
 end
 
+function tokenizerTest.detokenizeTable()
+  local t = {
+    '<bpt i="1"><ChrStyle name="bold"><bpt/>￨N',
+    'a￨C',
+    '￭4￭￨N',
+    'r￨C',
+    '<ept i="1"></ChrStyle><ept/>￨N'
+  }
+  tester:eq(tokenizer.detokenize(t, {joiner='￭', case_feature=true}), '<bpt i="1"><ChrStyle name="bold"><bpt/> A4R <ept i="1"></ChrStyle><ept/>')
+end
 
 return tokenizerTest
