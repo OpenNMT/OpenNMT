@@ -32,9 +32,9 @@ local function mytokenization(opt, line)
   end
 end
 
-local function mydetokenization(line, _)
-  if line:find("▁") then
-    return line:gsub(" ",""):gsub("▁"," ")
+local function mydetokenization(opt, words, _)
+  if opt.mode == "char" then
+    return table.concat(words, ''):gsub('▁', ' ')
   end
 end
 
