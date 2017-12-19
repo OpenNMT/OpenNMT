@@ -92,10 +92,12 @@ local function translateMessage(translator, lines)
     local ret = {}
     for i = 1, translator.args.n_best do
       local srcSent = translator:buildOutput(batch[b])
-      local predSent = translator:buildOutput(results[b].preds[i])
-
-      local oline
-      res, err = pcall(function() oline = tokenizer.detokenize(predSent, opt) end)
+      local predSent
+      res, err = pcall(function()
+        predSent = tokenizer.detokenize(opt,
+                                        results[b].preds[i].words,
+                                        results[b].preds[i].features)
+      end)
       if not res then
         if string.find(err,"interrupted") then
           error("interrupted")
@@ -105,7 +107,7 @@ local function translateMessage(translator, lines)
       end
 
       local lineres = {
-        tgt = oline,
+        tgt = predSent,
         src = srcSent,
         n_best = i,
         pred_score = results[b].preds[i].score
