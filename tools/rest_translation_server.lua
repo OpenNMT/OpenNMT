@@ -8,7 +8,6 @@
 ]]
 
 require('onmt.init')
-
 local tokenizer = require('tools.utils.tokenizer')
 local BPE = require ('tools.utils.BPE')
 local restserver = require("tools.restserver.restserver")
@@ -37,6 +36,8 @@ onmt.translate.Translator.declareOpts(cmd)
 onmt.utils.Cuda.declareOpts(cmd)
 onmt.utils.Logger.declareOpts(cmd)
 tokenizer.declareOpts(cmd)
+onmt.utils.HookManager.updateOpt(arg, cmd)
+onmt.utils.HookManager.declareOpts(cmd)
 
 cmd:text("")
 cmd:text("Other options")
@@ -54,21 +55,24 @@ local function translateMessage(translator, lines)
   local err
   _G.logger:debug("Start Tokenization")
   if opt.bpe_model ~= '' then
-     bpe = BPE.new(opt)
+    bpe = BPE.new(opt)
   end
   for i = 1, #lines do
     local srcTokenized = {}
     local tokens
     local srcTokens = {}
-    res, err = pcall(function() tokens = tokenizer.tokenize(opt, lines[i].src, bpe) end)
+    res, err = pcall(function()
+      local preprocessed = _G.hookManager:call("mpreprocess", opt, lines[i].src) or lines[i]
+      tokens = tokenizer.tokenize(opt, preprocessed, bpe)
+    end)
      -- it can generate an exception if there are utf-8 issues in the text
-     if not res then
-       if string.find(err, "interrupted") then
-         error("interrupted")
-        else
-         error("unicode error in line " .. err)
-       end
-     end
+    if not res then
+      if string.find(err, "interrupted") then
+        error("interrupted")
+      else
+        error("unicode error in line " .. err)
+      end
+    end
     table.insert(srcTokenized, table.concat(tokens, ' '))
     -- Extract from the line.
     for word in srcTokenized[1]:gmatch'([^%s]+)' do
@@ -146,6 +150,8 @@ local function main()
   -- load logger
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
   onmt.utils.Cuda.init(opt)
+
+  _G.hookManager = onmt.utils.HookManager.new(opt)
 
   -- disable profiling
   _G.profiler = onmt.utils.Profiler.new(false)
