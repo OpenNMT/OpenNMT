@@ -67,14 +67,13 @@ local function split(str, sep)
   return res
 end
 
-local function mydetokenization(line, opt)
+local function mydetokenization(opt, words, _)
   if opt.sentencepiece ~= '' then
-    local tokens = split(line, ' ')
-    local str = sentencepiece.decode(opt.sentencepiece, tokens)
+    local str = sentencepiece.decode(opt.sentencepiece, words)
     if str:find("■") then
       local save_hooks = _G.hookManager.hooks
       _G.hookManager.hooks = {}
-      str = tokenizer.detokenize(str, {joiner="■"})
+      str = tokenizer.detokenizeLine({joiner="■"}, str)
       _G.hookManager.hooks = save_hooks
     end
     return str

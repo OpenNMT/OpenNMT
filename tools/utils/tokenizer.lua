@@ -372,69 +372,46 @@ function tokenizer.tokenize(opt, line, bpe)
   return tokens
 end
 
-local function analyseToken(t, joiner)
-  local feats = {}
-  local tok = ""
-  local p
-  local leftsep = false
-  local rightsep = false
-  local i = 1
-  while i <= #t do
-    if t:sub(i, i+#separators.feat_marker-1) == separators.feat_marker then
-      p = i
-      break
-    end
-    tok = tok .. t:sub(i, i)
-    i = i + 1
+local function extractJoiners(word, joiner)
+  local leftJoin = false
+  local rightJoin = false
+
+  if word:sub(1, #joiner) == joiner then
+    word = word:sub(1 + #joiner)
+    leftJoin = true
+    rightJoin = (word == '')
   end
-  if tok:sub(1,#joiner) == joiner then
-    tok = tok:sub(1+#joiner)
-    leftsep = true
-    if tok == '' then rightsep = true end
+  if word:sub(-#joiner, -1) == joiner then
+    word = word:sub(1, -#joiner - 1)
+    rightJoin = true
   end
-  if tok:sub(-#joiner,-1) == joiner then
-    tok = tok:sub(1,-#joiner-1)
-    rightsep = true
-  end
-  if p then
-    p = p + #separators.feat_marker
-    local j = p
-    while j <= #t do
-      if t:sub(j, j+#separators.feat_marker-1) == separators.feat_marker then
-        table.insert(feats, t:sub(p, j-1))
-        j = j + #separators.feat_marker - 1
-        p = j + 1
-      end
-      j = j + 1
-    end
-    table.insert(feats, t:sub(p))
-  end
-  return tok, leftsep, rightsep, feats
+
+  return word, leftJoin, rightJoin
 end
 
-local function getTokens(t, joiner)
-  local fields = {}
-  t:gsub("([^ ]+)", function(tok)
-    local w, leftsep, rightsep, feats =  analyseToken(tok, joiner)
-    table.insert(fields, { w=w, leftsep=leftsep, rightsep=rightsep, feats=feats })
-  end)
-  return fields
-end
-
-
-function tokenizer.detokenize(line, opt)
-
+function tokenizer.detokenize(opt, words, features)
   -- if tokenize hook, skip lua detokenization
-  local tokens = _G.hookManager:call("detokenize", line, opt)
-  if tokens then return tokens end
+  local line = _G.hookManager:call("detokenize", opt, words, features)
+  if line then
+    return line
+  end
 
-  local dline = ""
-  tokens = getTokens(line, opt.joiner)
-  for j = 1, #tokens do
-    local token = tokens[j].w
-    if j > 1 and not tokens[j-1].rightsep and not tokens[j].leftsep then
-      dline = dline .. " "
+  line = ""
+  local prevRightJoin = false
+
+  for i = 1, #words do
+    local token, leftJoin, rightJoin = extractJoiners(words[i], opt.joiner)
+    local feats = {}
+    if features then
+      for j = 1, #features do
+        table.insert(feats, features[j][i])
+      end
     end
+
+    if i > 1 and not prevRightJoin and not leftJoin then
+      line = line .. " "
+    end
+
     if token:sub(1, separators.ph_marker_open:len()) == separators.ph_marker_open then
       local inProtected = false
       local protectSeq = ''
@@ -457,12 +434,53 @@ function tokenizer.detokenize(line, opt)
       end
       token = rtok
     end
-    if opt.case_feature then
-      token = case.restoreCase(token, tokens[j].feats)
+
+    if opt.case_feature and #features > 0 then
+      token = case.restoreCase(token, feats)
     end
-    dline = dline .. token
+
+    line = line .. token
+    prevRightJoin = rightJoin
   end
-  return dline
+
+  return line
+end
+
+function tokenizer.detokenizeLine(opt, line)
+  -- TODO: use utility functions from onmt.utils.
+  local words, features = {}, {}
+
+  line:gsub("([^ ]+)", function(token)
+    local p = token:find(separators.feat_marker)
+
+    if p then
+      table.insert(words, token:sub(1, p - 1))
+
+      local feats = {}
+      p = p + #separators.feat_marker
+      local j = p
+      while j <= #token do
+        if token:sub(j, j+#separators.feat_marker-1) == separators.feat_marker then
+          table.insert(feats, token:sub(p, j-1))
+          j = j + #separators.feat_marker - 1
+          p = j + 1
+        end
+        j = j + 1
+      end
+      table.insert(feats, token:sub(p))
+
+      for j = 1, #feats do
+        if j > #features then
+          table.insert(features, {})
+        end
+        table.insert(features[j], feats[j])
+      end
+    else
+      table.insert(words, token)
+    end
+  end)
+
+  return tokenizer.detokenize(opt, words, features)
 end
 
 return tokenizer
