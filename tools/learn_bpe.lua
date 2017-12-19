@@ -4,6 +4,7 @@ require('onmt.init')
 local tokenizer = require('tools.utils.tokenizer')
 local unicode = require('tools.utils.unicode')
 local separators = require('tools.utils.separators')
+local HookManager = require('onmt.utils.HookManager')
 local tds = require('tds')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('learn_bpe.lua')
@@ -51,12 +52,7 @@ for _, v in ipairs(topts) do
   if v[1]:sub(1,4)  ~= '-bpe' then
     -- change mode option to include disabling mode (default)
     if v[1] == '-mode' then
-      v = { '-mode', 'space',
-            [[Define how aggressive should the tokenization be. `space` is space-tokenization.]],
-            {
-              enum = {'conservative', 'aggressive', 'space'}
-            }
-      }
+      v[2] = 'space'
     end
     local opttmp = {table.unpack(v)}
     opttmp[1] = '-tok_' .. v[1]:sub(2)
@@ -65,6 +61,10 @@ for _, v in ipairs(topts) do
 end
 
 cmd:setCmdLineOptions(options, "Tokenizer")
+
+-- insert on the fly the option depending if there is a hook selected
+onmt.utils.HookManager.updateOpt(arg, cmd)
+onmt.utils.HookManager.declareOpts(cmd)
 
 onmt.utils.Logger.declareOpts(cmd)
 
@@ -293,6 +293,7 @@ end
 local function main()
 
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.hookManager = HookManager.new(opt)
 
   local vocab = get_vocabulary()
   local sorted_vocab = tds.Vec()
