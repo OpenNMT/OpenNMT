@@ -10,7 +10,7 @@
 
 ### Fixes and improvements
 
-* fix integration of hook with `learn_bpe` (#456)
+* Fix integration of hook with `learn_bpe` (#456)
 * Fix detokenization when replaced target tokens contain spaces
 
 ## [v0.9.6](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.6) (2017-12-11)
