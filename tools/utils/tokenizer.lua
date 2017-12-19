@@ -469,11 +469,11 @@ function tokenizer.detokenizeLine(opt, line)
       end
       table.insert(feats, token:sub(p))
 
-      for j = 1, #feats do
-        if j > #features then
+      for f = 1, #feats do
+        if f > #features then
           table.insert(features, {})
         end
-        table.insert(features[j], feats[j])
+        table.insert(features[f], feats[f])
       end
     else
       table.insert(words, token)

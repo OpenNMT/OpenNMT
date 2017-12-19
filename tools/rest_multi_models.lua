@@ -139,7 +139,6 @@ local function translateMessage(server, lines)
         n_best = 1,
         pred_score = 0
       }
-      local oline = ""
       if results[b].preds ~= nil then
         local predSent
         res, err = pcall(function()
