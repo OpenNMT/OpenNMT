@@ -10,6 +10,8 @@
 
 ### Fixes and improvements
 
+* fix integration of hook with `learn_bpe` (#456)
+
 ## [v0.9.6](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.6) (2017-12-11)
 
 ### Fixes and improvements
