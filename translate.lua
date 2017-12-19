@@ -256,9 +256,13 @@ local function main()
             outFile:write(sentId, ' ', table.concat(torch.totable(results[b]), " "), '\n')
           else
             for n = 1, #results[b].preds do
-              local sentence = translator:buildOutput(results[b].preds[n])
+              local sentence
               if opt.detokenize_output then
-                sentence = tokenizer.detokenize(sentence, tokenizers[2])
+                sentence = tokenizer.detokenize(tokenizers[2],
+                                                results[b].preds[n].words,
+                                                results[b].preds[n].features)
+              else
+                sentence = translator:buildOutput(results[b].preds[n])
               end
               outFile:write(sentence .. '\n')
 

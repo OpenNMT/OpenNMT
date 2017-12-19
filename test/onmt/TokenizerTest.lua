@@ -18,19 +18,19 @@ local function testTok(opt, a, b, detok)
   local tok = tokenizer.tokenize(opt, a, bpe)
   tester:eq(table.concat(tok, '◊'), string.gsub(b, ' ', '◊'))
   if not detok then return end
-  tester:assert((tokenizer.detokenize(table.concat(tok, ' '), opt)==a)==detok)
+  tester:assert((tokenizer.detokenizeLine(opt, table.concat(tok, ' '))==a)==detok)
 end
 
 -- check if tokenization/detokenization of a is b
 local function testTokDetok(opt, a, b)
   local tok = table.concat(tokenizer.tokenize(opt, a), ' ')
-  local detok = tokenizer.detokenize(tok, opt)
+  local detok = tokenizer.detokenizeLine(opt, tok)
   tester:eq(b, detok)
 end
 
 -- check if detokenization of a is b
 local function testDetok(opt, a, b)
-  tester:eq(b, tokenizer.detokenize(a, opt))
+  tester:eq(b, tokenizer.detokenizeLine(opt, a))
 end
 
 function tokenizerTest.basic()
@@ -103,6 +103,19 @@ function tokenizerTest.basicDetokenization()
   testTokDetok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions : human rights [ 14 ( g ) ]")
   opt = cmd:parse({'-joiner_annotate'})
   testTokDetok(opt, "49th meeting Social and human rights questions: human rights [14 (g)]", "49th meeting Social and human rights questions: human rights [14 (g)]")
+end
+
+function tokenizerTest.detokenizeTable()
+  local words = {
+    '<bpt i="1"><ChrStyle name="bold"><bpt/>',
+    'a', '￭4￭', 'r', '<ept i="1"></ChrStyle><ept/>'
+  }
+  local features = { { 'N', 'C', 'N', 'C', 'N' } }
+
+  tester:eq(tokenizer.detokenize({joiner='￭', case_feature=true}, words, features),
+            '<bpt i="1"><ChrStyle name="bold"><bpt/> A4R <ept i="1"></ChrStyle><ept/>')
+  tester:eq(tokenizer.detokenize({joiner='￭'}, words),
+            '<bpt i="1"><ChrStyle name="bold"><bpt/> a4r <ept i="1"></ChrStyle><ept/>')
 end
 
 function tokenizerTest.bpebasic()

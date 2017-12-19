@@ -55,7 +55,7 @@ while true do
         local output = {}
         for b = 1,#batches_input[i] do
           local oline
-          local res, err = pcall(function() oline = _G.tokenizer.detokenize(batches_input[i][b], opt) end)
+          local res, err = pcall(function() oline = _G.tokenizer.detokenizeLine(opt, batches_input[i][b]) end)
           table.insert(output, oline)
           if not res then
             if string.find(err,"interrupted") then
