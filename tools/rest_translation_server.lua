@@ -62,7 +62,7 @@ local function translateMessage(translator, lines)
     local tokens
     local srcTokens = {}
     res, err = pcall(function()
-      local preprocessed = _G.hookManager:call("mpreprocess", opt, lines[i].src) or lines[i]
+      local preprocessed = _G.hookManager:call("mpreprocess", opt, lines[i].src) or lines[i].src
       tokens = tokenizer.tokenize(opt, preprocessed, bpe)
     end)
      -- it can generate an exception if there are utf-8 issues in the text
@@ -73,6 +73,18 @@ local function translateMessage(translator, lines)
         error("unicode error in line " .. err)
       end
     end
+
+    -- Add custom source features if they are provided in the request. This is usually used for domain control.
+    if lines[i].feats then
+      for j, tok in ipairs(tokens) do
+        for _, feat in ipairs(lines[i].feats) do
+          if feat ~= '' then
+            tokens[j] = tokens[j] .. '￨' .. feat
+          end
+        end
+      end
+    end
+
     table.insert(srcTokenized, table.concat(tokens, ' '))
     -- Extract from the line.
     for word in srcTokenized[1]:gmatch'([^%s]+)' do
