@@ -76,7 +76,7 @@ local function translateMessage(translator, lines)
 
     -- Add custom source features if they are provided in the request. This is usually used for domain control.
     if lines[i].feats then
-      for j, tok in ipairs(tokens) do
+      for j=1, #tokens do
         for _, feat in ipairs(lines[i].feats) do
           if feat ~= '' then
             tokens[j] = tokens[j] .. '￨' .. feat
