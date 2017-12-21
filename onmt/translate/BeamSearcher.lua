@@ -66,7 +66,7 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   end
 
   local remaining = beams[1]:getRemaining()
-  if beams[1]:getTokens()[1]:size(1) ~= remaining * beamSize then
+  if beams[1]:getTokens()[1]:size(1) ~= remaining * self.beamSize then
     beams[1]:_replicate(self.beamSize)
   end
   local t = 1
