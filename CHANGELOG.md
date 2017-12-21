@@ -12,6 +12,12 @@
 
 * Fix beam-size 1 broken with lexical constraints
 
+## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
+
+### Fixes and improvements
+
+* Fix detokenization when replaced target tokens contain spaces
+
 ## [v0.9.6](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.6) (2017-12-11)
 
 ### Fixes and improvements

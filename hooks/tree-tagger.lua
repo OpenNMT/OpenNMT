@@ -1,3 +1,4 @@
+require('copas')
 local hc = require('httpclient').new()
 
 local myopt =
