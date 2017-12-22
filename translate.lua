@@ -34,20 +34,17 @@ local options = {
   {
     '-idx_files', false,
     [[If set, source and target files are 'key value' with key match between source and target.]]
+  },
+  {
+    '-detokenize_output', false,
+    [[Detokenize output.]]
   }
 }
 
 cmd:setCmdLineOptions(options, 'Data')
 
 onmt.translate.Translator.declareOpts(cmd)
-
-  -- prepare tokenization option
-local topts = tokenizer.getOpts()
-table.insert(topts, {
-  '-detokenize_output', false,
-  [[Detokenize output.]]
-})
-cmd:setCmdLineOptions(topts, "Tokenizer")
+tokenizer.declareOpts(cmd)
 -- insert on the fly the option depending if there is a hook selected
 onmt.utils.HookManager.updateOpt(arg, cmd)
 
