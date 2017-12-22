@@ -706,6 +706,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hookmanager-options" title="HookManager options" class="md-nav__link">
+    HookManager options
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logger-options" title="Logger options" class="md-nav__link">
     Logger options
   </a>
@@ -843,6 +850,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hookmanager-options" title="HookManager options" class="md-nav__link">
+    HookManager options
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#logger-options" title="Logger options" class="md-nav__link">
     Logger options
   </a>
@@ -887,7 +901,7 @@
 </ul>
 <h2 id="tokenizer-options">Tokenizer options<a class="headerlink" href="#tokenizer-options" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>-tok_mode &lt;string&gt;</code> (accepted: <code>conservative</code>, <code>aggressive</code>, <code>space</code>; default: <code>space</code>)<br/>Define how aggressive should the tokenization be. <code>space</code> is space-tokenization.</li>
+<li><code>-tok_mode &lt;string&gt;</code> (accepted: <code>space</code>, <code>conservative</code>, <code>aggressive</code>; default: <code>space</code>)<br/>Define how aggressive should the tokenization be. <code>aggressive</code> only keeps sequences of letters/numbers, <code>conservative</code> allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc. <code>space</code> is doing space tokenization.</li>
 <li><code>-tok_joiner_annotate [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Include joiner annotation using <code>-joiner</code> character.</li>
 <li><code>-tok_joiner &lt;string&gt;</code> (default: <code>￭</code>)<br/>Character used to annotate joiners.</li>
 <li><code>-tok_joiner_new [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>In <code>-joiner_annotate</code> mode, <code>-joiner</code> is an independent token.</li>
@@ -896,6 +910,10 @@
 <li><code>-tok_segment_alphabet &lt;table&gt;</code> (accepted: <code>Tagalog</code>, <code>Hanunoo</code>, <code>Limbu</code>, <code>Yi</code>, <code>Hebrew</code>, <code>Latin</code>, <code>Devanagari</code>, <code>Thaana</code>, <code>Lao</code>, <code>Sinhala</code>, <code>Georgian</code>, <code>Kannada</code>, <code>Cherokee</code>, <code>Kanbun</code>, <code>Buhid</code>, <code>Malayalam</code>, <code>Han</code>, <code>Thai</code>, <code>Katakana</code>, <code>Telugu</code>, <code>Greek</code>, <code>Myanmar</code>, <code>Armenian</code>, <code>Hangul</code>, <code>Cyrillic</code>, <code>Ethiopic</code>, <code>Tagbanwa</code>, <code>Gurmukhi</code>, <code>Ogham</code>, <code>Khmer</code>, <code>Arabic</code>, <code>Oriya</code>, <code>Hiragana</code>, <code>Mongolian</code>, <code>Kangxi</code>, <code>Syriac</code>, <code>Gujarati</code>, <code>Braille</code>, <code>Bengali</code>, <code>Tamil</code>, <code>Bopomofo</code>, <code>Tibetan</code>)<br/>Segment all letters from indicated alphabet.</li>
 <li><code>-tok_segment_numbers [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment numbers into single digits.</li>
 <li><code>-tok_segment_alphabet_change [&lt;boolean&gt;]</code> (default: <code>false</code>)<br/>Segment if alphabet change between 2 letters.</li>
+</ul>
+<h2 id="hookmanager-options">HookManager options<a class="headerlink" href="#hookmanager-options" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>-hook_file &lt;string&gt;</code> (default: <code>''</code>)<br/>Pointer to a lua file registering hooks for the current process</li>
 </ul>
 <h2 id="logger-options">Logger options<a class="headerlink" href="#logger-options" title="Permanent link">&para;</a></h2>
 <ul>
