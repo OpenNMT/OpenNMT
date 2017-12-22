@@ -3,8 +3,13 @@
 local DynamicDataRepository, _ = torch.class("DynamicDataRepository")
 
 function DynamicDataRepository.declareOpts(cmd, modelClass)
-  local data_type = modelClass.dataType()
-  onmt.data.Preprocessor.declareOpts(cmd, data_type)
+  local dataType = modelClass.dataType()
+  onmt.data.Preprocessor.declareOpts(cmd, dataType)
+end
+
+function DynamicDataRepository.expandOpts(cmd, modelClass)
+  local dataType = modelClass.dataType()
+  onmt.data.Preprocessor.expandOpts(cmd, dataType)
 end
 
 function DynamicDataRepository:__init(args, modelClass)
