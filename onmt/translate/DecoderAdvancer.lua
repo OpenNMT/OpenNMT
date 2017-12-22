@@ -1,5 +1,5 @@
 --[[ DecoderAdvancer is an implementation of the interface Advancer for
-  specifyinghow to advance one step in decoder.
+  specifying how to advance one step in decoder.
 --]]
 local DecoderAdvancer = torch.class('DecoderAdvancer', 'Advancer')
 
@@ -74,8 +74,21 @@ function DecoderAdvancer:initBeam()
   end
 
   -- Define state to be { decoder states, decoder output, context,
-  -- attentions, features, sourceSizes, step, cumulated attention probablities, lmStates, lmContext, lexical constraints, lexical constraintSizes }.
-  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba, self.lmStates, self.lmContext, self.batch.constraints, self.batch.constraintSizes }
+  -- attentions, features, sourceSizes, step, , lmStates, lmContext, lexical constraints, lexical constraintSizes }.
+  local state = { self.decStates,             -- idx 1  : decoder states
+                  nil,                        -- idx 2  : decoder output
+                  self.context,               -- idx 3  : context
+                  nil,                        -- idx 4  : attentions
+                  features,                   -- idx 5  : features
+                  sourceSizes,                -- idx 6  : sourceSizes
+                  1,                          -- idx 7  : step
+                  attnProba,                  -- idx 8  : cumulated attention probablities
+                  self.lmStates,              -- idx 9  : lmStates
+                  self.lmContext,             -- idx 10 : lmContext
+                  self.batch.constraints,     -- idx 11 : lexical constraints remaining to apply to this node
+                  self.batch.constraintSizes  -- idx 12 : lexical constraints sizes
+  }
+
   local params = {}
   params.length_norm = self.length_norm
   params.coverage_norm = self.coverage_norm
