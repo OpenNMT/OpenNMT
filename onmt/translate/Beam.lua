@@ -281,6 +281,11 @@ function Beam:getRemaining()
   return self._remaining
 end
 
+--[[ Returns possible constraint mask - if any ]]
+function Beam:getConstraints()
+  return self._state[11]
+end
+
 --[[ Since finished sequences are being removed from the batch, this function
   provides a way to convert the remaining batch id to the original batch id.
 
@@ -386,60 +391,26 @@ end
 
 -- Given new scores, combine that with the previous total scores and find the
 -- top K hypotheses to form the next beam.
-function Beam:_expandScores(scores, beamSize)
-  local remaining = math.floor(scores:size(1) / beamSize)
-  local vocabSize = scores:size(2)
+function Beam:_expandScores(scores, beamSize, prevScores)
+  prevScores = prevScores or self._scores
+  local scoreSize = scores:size()
+  local remaining = scoreSize[1]
+  local vocabSize = scoreSize[scoreSize:size(1)]
 
   if #self._state == 8 and self._params.eos_norm > 0 then
     local EOS_penalty = torch.div(self._state[6]:view(remaining, beamSize), self._step/self._params.eos_norm)
     scores:view(remaining, beamSize, -1)[{{},{},onmt.Constants.EOS}]:cmul(EOS_penalty)
   end
 
-  self._scores = self._scores:typeAs(scores)
-  local expandedScores = scores:typeAs(self._scores):view(remaining, beamSize, -1):add(self._scores:view(remaining, beamSize, 1):expand(remaining, beamSize, vocabSize))
+  prevScores = prevScores:typeAs(scores)
+  local expandedScores = scores
+                          :view(remaining, beamSize, -1)
+                          :add(prevScores
+                                      :view(remaining, beamSize, 1)
+                                      :expand(remaining, beamSize, vocabSize))
 
   local normExpandedScores = self:_normalizeScores(expandedScores)
   return expandedScores:view(remaining, -1), normExpandedScores:view(remaining, -1)
-end
-
--- Expand lexical constraints
-function Beam:_expandUsedConstraints(beamSize, vocabSize)
-
-  local usedConstraintNum, expandedConstraints, expandedConstraintSizes = nil
-
-  local constraintNum = 0
-
-  if #self._state > 11 and self._state[11] and self._state[12] then
-    local constraints = self._state[11]
-    constraintNum = constraints:size(2)
-    local constraintSizes = self._state[12]
-
-    -- Expand constraints and constraint sizes
-    expandedConstraints = constraints:view(self._remaining, beamSize, constraintNum, 1):expand(self._remaining, beamSize, constraintNum, vocabSize):transpose(3,4)
-    expandedConstraintSizes = constraintSizes:view(self._remaining,beamSize,1):expand(self._remaining, beamSize, vocabSize):clone()
-    usedConstraintNum = expandedConstraintSizes:csub(expandedConstraints:ne(0):sum(4):typeAs(expandedConstraintSizes))
-
-    -- Update "used constraints" for tokens corresponding to one of the available constraints
-    for i=1,self._remaining do
-      for j=1,beamSize do
-        local usedConstraints = {}
-        for c=1,constraintNum do
-          local cIdx = expandedConstraints[i][j][1][c]
-          if cIdx ~= 0 then
-            if usedConstraints[cIdx] then -- constraint has already been used
-              usedConstraints[cIdx] = usedConstraints[cIdx]+1
-            else
-              usedConstraintNum[i][j][cIdx] = usedConstraintNum[i][j][cIdx]+1
-              usedConstraints[cIdx] = 1
-            end
-          end
-        end
-      end
-    end
-  end
-
-  return usedConstraintNum, constraintNum
-
 end
 
 -- Create a new beam given new token, scores, backpointer.

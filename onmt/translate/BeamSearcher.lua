@@ -48,8 +48,8 @@ Returns:
 ]]
 function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   self.nBest = nBest or 1
-  self.beamSize = beamSize or 1
-  assert(self.nBest <= self.beamSize, 'beam size must be greater or equal to the n-best list size')
+  self.realBeamSize = beamSize or 1
+  assert(self.nBest <= self.realBeamSize, 'beam size must be greater or equal to the n-best list size')
   self.preFilterFactor = preFilterFactor or 1
   self.keepInitial = keepInitial or false
 
@@ -60,15 +60,14 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
   -- Initialize the beam.
   beams[1] = self.advancer:initBeam()
 
-  -- If we use lexical constraints, we need as many beams as the number of used constraints
-  if beams[1]:getState()[11] then
-    self.beamSize = self.beamSize * (beams[1]:getState()[11]:size(2)+1)
-  end
+  self.gridHeight = (beams[1]:getState()[11] and beams[1]:getState()[11]:size(2)+1) or 1
+  self.beamSize = self.realBeamSize * self.gridHeight
 
   local remaining = beams[1]:getRemaining()
   if beams[1]:getTokens()[1]:size(1) ~= remaining * self.beamSize then
     beams[1]:_replicate(self.beamSize)
   end
+
   local t = 1
   while remaining > 0 do
     -- Update beam states based on new tokens.
@@ -132,27 +131,28 @@ function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expand
   end
 
   -- TODO : do the filtering without creating a new beam ?
-  local newBeam = beams[t]:_nextBeam(consideredToken, consideredScores,
-                                    consideredBackPointer, self.beamSize)
 
-  -- Prune hypotheses if necessary.
-  local pruned = self.advancer:filter(newBeam,considered)
-  if pruned and pruned:any() then
-    consideredScores:view(-1):maskedFill(pruned, -math.huge)
-    consideredNormScores:view(-1):maskedFill(pruned, -math.huge)
-  end
+  -- local newBeam = beams[t]:_nextBeam(consideredToken, consideredScores,
+  --                                    consideredBackPointer, kBest)
 
-  -- Find top kBest hypotheses.
-  if (pruned and pruned:any()) or self.preFilterFactor ~= 1 then
-    local _, kBestIds = topk(consideredNormScores, kBest, 2, true, true)
-    consideredScores = consideredScores:gather(2, kBestIds)
-    consideredBackPointer = consideredBackPointer:gather(2, kBestIds)
+  -- -- Prune hypotheses if necessary.
+  -- local pruned = self.advancer:filter(newBeam, considered)
+  -- if pruned and pruned:any() then
+  --   consideredScores:view(-1):maskedFill(pruned, -math.huge)
+  --   consideredNormScores:view(-1):maskedFill(pruned, -math.huge)
+  -- end
 
-    consideredToken = consideredToken
-      :viewAs(consideredIds)
-      :gather(2, kBestIds)
-      :view(-1)
-  end
+  -- -- Find top kBest hypotheses.
+  -- if (pruned and pruned:any()) or self.preFilterFactor ~= 1 then
+  --   local _, kBestIds = topk(consideredNormScores, kBest, 2, true, true)
+  --   consideredScores = consideredScores:gather(2, kBestIds)
+  --   consideredBackPointer = consideredBackPointer:gather(2, kBestIds)
+
+  --   consideredToken = consideredToken
+  --     :viewAs(consideredIds)
+  --     :gather(2, kBestIds)
+  --     :view(-1)
+  -- end
 
   return consideredScores, consideredBackPointer, consideredToken
 
@@ -161,48 +161,97 @@ end
 -- Find the top beamSize hypotheses (satisfying filters).
 function BeamSearcher:_makeNewBeam(beams, scores)
 
+  -- TODO: change self.gridHeight, change constraintPenalty (turn into mask?), enable EOS for exit, disable placeholders
+
   local t = #beams
+
   local vocabSize = scores:size(2)
   local batchSize = beams[t]:getRemaining()
+  local constraints = beams[t]:getConstraints()
+  local gridConstraints = constraints and constraints:view(batchSize, self.gridHeight, self.realBeamSize, -1)
 
-  local expandedScores, expandedNormScores = beams[t]:_expandScores(scores, self.beamSize)
+  local beamScore = onmt.utils.Cuda.convert(torch.Tensor(batchSize, self.gridHeight, self.realBeamSize))
+  local beamBackPointer = torch.LongTensor(batchSize, self.gridHeight, self.realBeamSize)
+  local beamToken = torch.LongTensor(batchSize, self.gridHeight, self.realBeamSize)
 
-  local newBeamScores = torch.Tensor()
-  local newBeamBackPointer = torch.Tensor()
-  local newBeamToken = torch.Tensor()
+  local gridScores = scores:clone():view(batchSize, self.gridHeight,  self.realBeamSize, -1)
+  local gridPrevScores = beams[t]:getScores():view(batchSize, self.gridHeight,  self.realBeamSize, -1)
 
-  local usedConstraintNum, constraintNum = beams[t]:_expandUsedConstraints(self.beamSize, vocabSize)
+  -- constraint Penalty on two layers (current and lower layer)
+  local constraintPenalty = torch.FloatTensor(batchSize, 2, self.realBeamSize, vocabSize):typeAs(scores)
 
-  local maskedScores, maskedNormScores
-  if usedConstraintNum then
-    maskedScores  = expandedScores:clone()
-    maskedNormScores = expandedNormScores:clone()
-  else
-    maskedScores = expandedScores
-    maskedNormScores = expandedNormScores
+  constraintPenalty[{{}, 2, {}, {}}]:fill(0)
+
+  -- first level of the grid - without the potential constraints
+  if constraints then
+    -- disable the constrained words if any on current layer
+    -- and reversly only enable constrained words on up-layer
+    for i = 1, batchSize do
+      for j = 1, self.realBeamSize do
+        for k = 1, gridConstraints:size(4) do
+          local idx = gridConstraints[{i, 1, j, k}]
+          if idx ~= 0 then constraintPenalty[{i, 2, j, idx}] = -math.huge end
+        end
+      end
+    end
+    constraintPenalty[{{},2,{}, onmt.Constants.EOS}] = -math.huge
   end
 
-  -- for each possible number of used constraints, get kbest scores and create a part of the new beam
-  for i = 0, constraintNum do
+  local firstLevelScores = gridScores:narrow(2, 1, 1)
+  firstLevelScores:add(constraintPenalty[{{},2,{},{}}])
 
-    if usedConstraintNum then
-      -- mask scores for all other number of used constraints
-      maskedScores:copy(expandedScores)
-      maskedNormScores:copy(expandedNormScores)
+  -- we operate on sentence x beam
+  local expandedScores, expandedNormScores = 
+      beams[t]:_expandScores(firstLevelScores, self.realBeamSize, gridPrevScores:narrow(2, 1, 1))
 
-      maskedScores:maskedFill(usedConstraintNum:ne(i), -math.huge)
-      maskedNormScores:maskedFill(usedConstraintNum:ne(i), -math.huge)
+  -- get kbest scores
+  local newBeamScores, newBeamBackPointer, newBeamToken = self:_findKBest(beams, vocabSize, self.realBeamSize, expandedScores, expandedNormScores)
+
+  beamScore[{{}, 1, {}}]:copy(newBeamScores)
+  beamBackPointer[{{}, 1, {}}]:copy(newBeamBackPointer)
+  beamToken[{{}, 1, {}}]:copy(newBeamToken)
+
+  for lvl = 2, self.gridHeight do
+    -- TODO: disable all of the placeholder in target vocabulary
+    constraintPenalty[{{}, 2, {}, {}}]:fill(0)
+    constraintPenalty[{{}, 1, {}, {}}]:fill(-math.huge)
+
+    -- disable the constrained words if any on current layer
+    -- and reversly only enable constrained words on up-layer
+    for i = 1, batchSize do
+      for j = 1, self.realBeamSize do
+        for k = 1, gridConstraints:size(4) do
+          local idx = gridConstraints[{i, lvl-1, j, k}]
+          if idx ~= 0 then constraintPenalty[{i, 1, j, idx}] = 0 end
+          idx = gridConstraints[{i, lvl, j, k}]
+          if idx ~= 0 then constraintPenalty[{i, 2, j, idx}] = -math.huge end
+        end
+      end
+      -- TODO: depends on the sentence
+      if lvl ~= self.gridHeight then
+        constraintPenalty[{{},{},{}, onmt.Constants.EOS}] = -math.huge
+      end
     end
 
-    -- get kbest scores
-    local consideredScores, consideredBackPointer, consideredToken = self:_findKBest(beams, vocabSize, self.beamSize/(constraintNum+1), maskedScores, maskedNormScores)
+    gridScores = scores:clone():view(batchSize, self.gridHeight,  self.realBeamSize, -1)
+    local twoLevelScores = gridScores:narrow(2, lvl-1, 2)
+    twoLevelScores:add(constraintPenalty)
 
-    newBeamScores = newBeamScores:typeAs(consideredScores):cat(consideredScores, 2)
-    newBeamBackPointer = newBeamBackPointer:typeAs(consideredBackPointer):cat(consideredBackPointer,2)
-    newBeamToken = newBeamToken:typeAs(consideredToken):cat(consideredToken:view(batchSize,-1),2)
+    -- we operate on sentence x beam
+    expandedScores, expandedNormScores = 
+        beams[t]:_expandScores(twoLevelScores, 2 * self.realBeamSize, gridPrevScores:narrow(2, lvl-1, 2))
+
+    -- get kbest scores
+    newBeamScores, newBeamBackPointer, newBeamToken = self:_findKBest(beams, vocabSize, self.realBeamSize, expandedScores, expandedNormScores)
+
+    -- TODO: fix the newBeamBackPointer
+
+    beamScore[{{}, lvl, {}}]:copy(newBeamScores)
+    beamBackPointer[{{}, lvl, {}}]:copy(newBeamBackPointer)
+    beamToken[{{}, lvl, {}}]:copy(newBeamToken)
   end
 
-  local newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScores, newBeamBackPointer, self.beamSize, true)
+  local newBeam = beams[t]:_nextBeam(beamToken:view(-1), beamScore, beamBackPointer:view(batchSize, -1), self.beamSize)
   beams[t + 1] = newBeam
 
   -- Cleanup unused memory.
