@@ -132,29 +132,25 @@ function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expand
     self.advancer.dicts.subdict:fullIdx(consideredToken)
   end
 
-  -- TODO : do the filtering without creating a new beam ?
+  -- Prune hypotheses if necessary.
+  local pruned = self.advancer:filter(beams[t], consideredToken, consideredScores, consideredBackPointer)
 
-  -- local newBeam = beams[t]:_nextBeam(consideredToken, consideredScores,
-  --                                    consideredBackPointer, kBest)
+  if pruned and pruned:any() then
+    consideredScores:view(-1):maskedFill(pruned, -math.huge)
+    consideredNormScores:view(-1):maskedFill(pruned, -math.huge)
+  end
 
-  -- -- Prune hypotheses if necessary.
-  -- local pruned = self.advancer:filter(newBeam, considered)
-  -- if pruned and pruned:any() then
-  --   consideredScores:view(-1):maskedFill(pruned, -math.huge)
-  --   consideredNormScores:view(-1):maskedFill(pruned, -math.huge)
-  -- end
+  -- Find top kBest hypotheses.
+  if (pruned and pruned:any()) or self.preFilterFactor ~= 1 then
+    local _, kBestIds = topk(consideredNormScores, kBest, 2, true, true)
+    consideredScores = consideredScores:gather(2, kBestIds)
+    consideredBackPointer = consideredBackPointer:gather(2, kBestIds)
 
-  -- -- Find top kBest hypotheses.
-  -- if (pruned and pruned:any()) or self.preFilterFactor ~= 1 then
-  --   local _, kBestIds = topk(consideredNormScores, kBest, 2, true, true)
-  --   consideredScores = consideredScores:gather(2, kBestIds)
-  --   consideredBackPointer = consideredBackPointer:gather(2, kBestIds)
-
-  --   consideredToken = consideredToken
-  --     :viewAs(consideredIds)
-  --     :gather(2, kBestIds)
-  --     :view(-1)
-  -- end
+    consideredToken = consideredToken
+      :viewAs(consideredIds)
+      :gather(2, kBestIds)
+      :view(-1)
+  end
 
   return consideredScores, consideredBackPointer, consideredToken
 
@@ -235,6 +231,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     beamBackPointer[{{}, 1, {}}]:copy(newBeamBackPointer)
     beamToken[{{}, 1, {}}]:copy(newBeamToken)
 
+    -- TODO - no need to evaluate all the grid levels at the first time-steps.
     for lvl = 2, self.gridHeight do
       gridScores = scores:clone():view(batchSize, self.gridHeight,  self.realBeamSize, -1)
       gridPrevScores = beams[t]:getScores():view(batchSize, self.gridHeight,  self.realBeamSize, -1):narrow(2, lvl-1, 2)

@@ -192,9 +192,10 @@ function Beam:__init(token, state, params, batchSize, updateConstraints, limitLe
   self._state = state
 
   if updateConstraints and self._state[11] then
-    for t=1,self._tokens[#self._tokens]:size(1) do
+    -- TODO: can take only last value of timestep t
+    for t = 1, self._tokens[#self._tokens]:size(1) do
       local tok = self._tokens[#self._tokens][t]
-      for c = 1,self._state[11]:size(2) do
+      for c = 1, self._state[11]:size(2) do
         if self._state[11][t][c] == tok then
           -- if limit_lexical_constraints, then cannot reuse a lexical constraint twice
       	  self._state[11][t][c] = (limitLexicalConstraints and -tok) or 0
@@ -443,6 +444,8 @@ function Beam:_nextTokens(token, backPointer, beamSize)
   nextTokens[#nextTokens + 1] = token
   return nextTokens
 end
+
+-- Given backpointers, build token history
 
 -- Remove finished sequences to save computation.
 function Beam:_removeFinishedBatches(remainingIds, beamSize)

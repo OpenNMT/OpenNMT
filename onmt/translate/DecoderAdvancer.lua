@@ -199,18 +199,20 @@ function DecoderAdvancer:isComplete(beam)
   return complete
 end
 
---[[Checks which hypotheses in the beam shall be pruned. We disallow empty
+--[[Checks which hypotheses shall be pruned. We disallow empty
  predictions, as well as predictions with more UNKs than `max_num_unks`.
 
 Parameters:
 
-  * `beam` - an `onmt.translate.Beam` object.
+  * `beam` current beam
+  * `consideredToken` hypotheses tokens
+  * `consideredScores` hypotheses scores
+  * `consideredBackPointer` back pointer
 
-Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
-  which beams shall be pruned.
+Returns: a binary flat tensor indicating which beams shall be pruned.
 
 ]]
-function DecoderAdvancer:filter(beam, considered)
+function DecoderAdvancer:filter(beam, consideredToken, _, consideredBackPointer)
   local tokens = beam:getTokens()
   local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
   for t = 1, #tokens do
@@ -218,12 +220,17 @@ function DecoderAdvancer:filter(beam, considered)
     numUnks:add(onmt.utils.Cuda.convert(token:eq(onmt.Constants.UNK):double()))
   end
 
-  -- Disallow too many UNKs
-  local pruned = numUnks:gt(self.max_num_unks)
+  local toks = consideredToken:view(-1)
+  local backPtr = consideredBackPointer:view(-1)
 
-  -- Disallow empty hypotheses
-  if #tokens == 2 then
-    pruned:add(tokens[2]:eq(onmt.Constants.EOS))
+  local pruned = onmt.utils.Cuda.convert(torch.zeros(toks:size(1)))
+
+  for i = 1, toks:size(1) do
+    local tok = toks[i]
+    if (tok == onmt.Constants.UNK and numUnks[backPtr[i]] >= self.max_num_unks) or
+       (#tokens == 1 and tok == onmt.Constants.EOS) then
+      pruned[i] = 1
+    end
   end
   return pruned:ge(1)
 end
