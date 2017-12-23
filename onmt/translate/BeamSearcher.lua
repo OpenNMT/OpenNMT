@@ -158,6 +158,33 @@ function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expand
 
 end
 
+local function addGridDecodingConstraints(lvl, batchSize, realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize)
+  -- TODO: disable all of the placeholder in target vocabulary
+  constraintPenalty[{{}, 2, {}, {}}]:fill(0)
+  if lvl > 1 then
+    constraintPenalty[{{}, 1, {}, {}}]:fill(-math.huge)
+  end
+
+  for i = 1, batchSize do
+    for j = 1, realBeamSize do
+      for k = 1, gridConstraints:size(4) do
+        local idx = gridConstraints[{i, lvl, j, k}]
+        if idx ~= 0 then constraintPenalty[{i, 2, j, idx}] = -math.huge end
+        if lvl > 1 then
+          -- uplevelling
+          idx = gridConstraints[{i, lvl-1, j, k}]
+          if idx ~= 0 then constraintPenalty[{i, 1, j, idx}] = 0 end
+        end
+      end
+      -- EOS only when no more constraint
+      if gridConstraintsSize[{i, lvl, j}] ~= lvl-1 then
+        constraintPenalty[{i, 2, j, onmt.Constants.EOS}] = -math.huge
+      end
+    end
+  end
+
+end
+
 -- Find the top beamSize hypotheses (satisfying filters).
 function BeamSearcher:_makeNewBeam(beams, scores)
 
@@ -183,22 +210,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
 
     -- constraint Penalty on two layers (current and lower layer)
     constraintPenalty = torch.FloatTensor(batchSize, 2, self.realBeamSize, vocabSize):typeAs(scores)
-    constraintPenalty[{{}, 2, {}, {}}]:fill(0)
-
-    -- disable the constrained words on current layer
-    for i = 1, batchSize do
-      for j = 1, self.realBeamSize do
-        for k = 1, gridConstraints:size(4) do
-          local idx = gridConstraints[{i, 1, j, k}]
-          if idx ~= 0 then constraintPenalty[{i, 2, j, idx}] = -math.huge end
-        end
-        -- EOS only when no more constraint
-        if gridConstraintsSize[{i, 1, j}] ~= 0 then
-          constraintPenalty[{i, 2, j, onmt.Constants.EOS}] = -math.huge
-        end
-      end
-    end
-  
+    addGridDecodingConstraints(1, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize)
     firstLevelScores = firstLevelScores:clone():add(constraintPenalty[{{},2,{},{}}]):contiguous()
   end
 
@@ -220,30 +232,11 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     beamToken[{{}, 1, {}}]:copy(newBeamToken)
 
     for lvl = 2, self.gridHeight do
-      -- TODO: disable all of the placeholder in target vocabulary
-      constraintPenalty[{{}, 2, {}, {}}]:fill(0)
-      constraintPenalty[{{}, 1, {}, {}}]:fill(-math.huge)
-
-      -- disable the constrained words if any on current layer and reversly only enable constrained words to move on upper-layer
-      for i = 1, batchSize do
-        for j = 1, self.realBeamSize do
-          for k = 1, gridConstraints:size(4) do
-            local idx = gridConstraints[{i, lvl-1, j, k}]
-            if idx ~= 0 then constraintPenalty[{i, 1, j, idx}] = 0 end
-            idx = gridConstraints[{i, lvl, j, k}]
-            if idx ~= 0 then constraintPenalty[{i, 2, j, idx}] = -math.huge end
-          end
-          -- EOS only when no more constraint
-          if gridConstraintsSize[{i, lvl, j}] ~= lvl-1 then
-            constraintPenalty[{i, 2, j, onmt.Constants.EOS}] = -math.huge
-          end
-        end
-      end
-
       gridScores = scores:clone():view(batchSize, self.gridHeight,  self.realBeamSize, -1)
       gridPrevScores = beams[t]:getScores():view(batchSize, self.gridHeight,  self.realBeamSize, -1):narrow(2, lvl-1, 2)
 
       local twoLevelScores = gridScores:narrow(2, lvl-1, 2)
+      addGridDecodingConstraints(lvl, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize)
       twoLevelScores:add(constraintPenalty)
 
       -- we operate on sentence x beam
