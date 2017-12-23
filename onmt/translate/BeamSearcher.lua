@@ -36,6 +36,7 @@ Parameters:
   be considered. If the returned hypotheses voilate filters, then set this to a
   larger value to consider more. [1]
   * `keepInitial` - optional, whether return the initial token or not. [false]
+  * `limitLexicalConstraint` - limit the use of lexical constraint
 
 Returns:
 
@@ -46,12 +47,13 @@ Returns:
     and `histories[b].scores` save the full beam search history of the b-th sample.
 
 ]]
-function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial)
+function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial, limitLexicalConstraint)
   self.nBest = nBest or 1
   self.realBeamSize = beamSize or 1
   assert(self.nBest <= self.realBeamSize, 'beam size must be greater or equal to the n-best list size')
   self.preFilterFactor = preFilterFactor or 1
   self.keepInitial = keepInitial or false
+  self.limitLexicalConstraint = limitLexicalConstraint
 
   local beams = {}
   local finished = {}
@@ -169,11 +171,13 @@ local function addGridDecodingConstraints(lvl, batchSize, realBeamSize, constrai
     for j = 1, realBeamSize do
       for k = 1, gridConstraints:size(4) do
         local idx = gridConstraints[{i, lvl, j, k}]
-        if idx ~= 0 then constraintPenalty[{i, 2, j, idx}] = -math.huge end
+        -- cannot use a constraint (not already used)
+        if idx ~= 0 then constraintPenalty[{i, 2, j, math.abs(idx)}] = -math.huge end
         if lvl > 1 then
           -- uplevelling
           idx = gridConstraints[{i, lvl-1, j, k}]
-          if idx ~= 0 then constraintPenalty[{i, 1, j, idx}] = 0 end
+          -- unused constraints are only for uplevelling
+          if idx > 0 then constraintPenalty[{i, 1, j, idx}] = 0 end
         end
       end
       -- EOS only when no more constraint
@@ -193,6 +197,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
   local vocabSize = scores:size(2)
   local batchSize = beams[t]:getRemaining()
 
+  -- variable for constraint decoding (Grid Beam Search)
   local constraints, constraintsSize = beams[t]:getConstraints()
   local gridConstraints = constraints and constraints:view(batchSize, self.gridHeight, self.realBeamSize, -1)
   local gridConstraintsSize = constraintsSize and constraintsSize:view(batchSize, self.gridHeight, self.realBeamSize)
@@ -203,7 +208,6 @@ function BeamSearcher:_makeNewBeam(beams, scores)
 
   local firstLevelScores = gridScores
 
-  -- first level of the grid - without the potential constraints
   if constraints then
     firstLevelScores = gridScores:narrow(2, 1, 1)
     gridPrevScores = beams[t]:getScores():view(batchSize, self.gridHeight,  self.realBeamSize, -1):narrow(2, 1, 1):contiguous()
@@ -221,7 +225,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
   local newBeamScore, newBeamBackPointer, newBeamToken =
       self:_findKBest(beams, vocabSize, self.realBeamSize, expandedScores, expandedNormScores)
 
-  -- if there are constraints, we continue the decoding on the grid
+  -- if there are constraints, we continue the decoding on the next level of the grid
   if constraints then
     local beamScore = onmt.utils.Cuda.convert(torch.Tensor(batchSize, self.gridHeight, self.realBeamSize))
     local beamBackPointer = torch.LongTensor(batchSize, self.gridHeight, self.realBeamSize)
@@ -249,7 +253,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
       -- we need to update newBeamBackPointer:
       --   ID in the full structure is:     IDf = 1+ sID * G * B + gId * B + b
       --   ID in the narrowed structure is: IDn = 1+ sID * 2 * B + (gID-lvl-2) * B + b
-      --   => sID = (IDn-1)/B/2
+      --   => sID = (IDn-1) /B /2
       --   => IDf = IDn + (lvl-2)*B + sID*(G-2)
 
       local sID = (newBeamBackPointer-1) / self.realBeamSize / 2
@@ -265,7 +269,8 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     newBeamToken = beamToken
   end
 
-  local newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScore, newBeamBackPointer:view(batchSize, -1), self.beamSize)
+  local newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScore, newBeamBackPointer:view(batchSize, -1), self.beamSize,
+                                     constraints, self.limitLexicalConstraint)
   beams[t + 1] = newBeam
 
   -- Cleanup unused memory.

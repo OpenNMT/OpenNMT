@@ -210,7 +210,7 @@ Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
   which beams shall be pruned.
 
 ]]
-function DecoderAdvancer:filter(beam,considered)
+function DecoderAdvancer:filter(beam, considered)
   local tokens = beam:getTokens()
   local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
   for t = 1, #tokens do
@@ -220,36 +220,6 @@ function DecoderAdvancer:filter(beam,considered)
 
   -- Disallow too many UNKs
   local pruned = numUnks:gt(self.max_num_unks)
-
-  -- In case we use lexical constraints.
-  if beam:getState()[11] then
-
-    -- Disallow hypotheses that did not consume all of the constraints.
-    local finished = tokens[#tokens]:eq(onmt.Constants.EOS)
-    local cNum = beam:getState()[11]:ne(0):sum(2)
-    local unfinishedConstraints = cNum:gt(0)
-    pruned:add(torch.cmul(unfinishedConstraints, finished))
-
-    -- Do not produce each constraint more than allowed.
-    if self.limit_lexical_constraints then
-
-      local tok = tokens[#tokens]:view(-1,considered)
-      local availableConstraint = beam:getState()[11]:view(-1, considered, beam:getState()[11]:size(2))
-
-      local isConstraint = tokens[#tokens]:clone():fill(0)
-      local constraintNotAvailable = tokens[#tokens]:clone():fill(0)
-
-      for b=1,tok:size(1) do
-        local ob = beam:_getOrigId(b)
-        for t=1,tok:size(2) do
-          isConstraint:viewAs(tok)[b][t] = self.batch.constraints[ob]:eq(tok[b][t]):sum()
-          constraintNotAvailable:viewAs(tok)[b][t] = availableConstraint[b][t]:ne(tok[b][t]):min()
-	end
-      end
-
-      pruned:add(torch.cmul(constraintNotAvailable, isConstraint):typeAs(pruned))
-    end
-  end
 
   -- Disallow empty hypotheses
   if #tokens == 2 then

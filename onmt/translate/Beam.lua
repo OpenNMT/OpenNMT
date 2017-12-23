@@ -181,7 +181,7 @@ Parameters:
   start with `beamSize` hypotheses per sequence. [`token:size(1)`]
 
 --]]
-function Beam:__init(token, state, params, batchSize, updateConstraints)
+function Beam:__init(token, state, params, batchSize, updateConstraints, limitLexicalConstraints)
   self._remaining = batchSize or token:size(1)
 
   if torch.type(token) == 'table' then
@@ -194,11 +194,12 @@ function Beam:__init(token, state, params, batchSize, updateConstraints)
   if updateConstraints and self._state[11] then
     for t=1,self._tokens[#self._tokens]:size(1) do
       local tok = self._tokens[#self._tokens][t]
-      for c=1,self._state[11]:size(2) do
+      for c = 1,self._state[11]:size(2) do
         if self._state[11][t][c] == tok then
-	  self._state[11][t][c] = 0
-	  break
-	end
+          -- if limit_lexical_constraints, then cannot reuse a lexical constraint twice
+      	  self._state[11][t][c] = (limitLexicalConstraints and -tok) or 0
+      	  break
+      	end
       end
     end
   end
@@ -415,13 +416,13 @@ end
 
 -- Create a new beam given new token, scores, backpointer.
 -- We can also update used lexical constraints
-function Beam:_nextBeam(token, scores, backPointer, beamSize, updateConstraints)
+function Beam:_nextBeam(token, scores, backPointer, beamSize, updateConstraints, limitLexicalConstraints)
   local remaining = math.floor(token:size(1) / beamSize)
   local params = self._params
   local newBeam = Beam.new(self:_nextTokens(token, backPointer, beamSize),
                            self:_nextState(backPointer, beamSize),
                            params,
-                           remaining, updateConstraints)
+                           remaining, updateConstraints, limitLexicalConstraints)
   newBeam:setScores(scores)
   newBeam:setBackPointer(backPointer)
   newBeam._prevBeam = self
