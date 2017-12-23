@@ -281,9 +281,9 @@ function Beam:getRemaining()
   return self._remaining
 end
 
---[[ Returns possible constraint mask - if any ]]
+--[[ Returns possible constraint and constraint number - if any ]]
 function Beam:getConstraints()
-  return self._state[11]
+  return self._state[11], self._state[12]
 end
 
 --[[ Since finished sequences are being removed from the batch, this function
