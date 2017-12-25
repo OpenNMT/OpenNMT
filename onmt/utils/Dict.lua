@@ -1,4 +1,5 @@
 local Dict = torch.class("Dict")
+local separators = require('tools.utils.separators')
 
 function Dict:__init(data)
   self.idxToLabel = {}
@@ -72,6 +73,17 @@ function Dict:writeFile(filename)
   end
 
   file:close()
+end
+
+--[[ Get placeholder mask from vocabulary. ]]
+function Dict:getPlaceholderMask()
+  local t = torch.ByteTensor(#self.idxToLabel):fill(0)
+  for i, k in ipairs(self.idxToLabel) do
+    if k:find(separators.ph_marker_open) then
+      t[i] = 1
+    end
+  end
+  return t
 end
 
 --[[ Drop or serialize the frequency tensor. ]]

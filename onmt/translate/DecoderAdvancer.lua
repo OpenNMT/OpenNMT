@@ -12,14 +12,13 @@ Parameters:
   * `context` - encoder output (batch x n x rnnSize).
   * `max_sent_length` - optional, maximum output sentence length.
   * `max_num_unks` - optional, maximum number of UNKs.
-  * `limit_lexical_constraints` - optional, prevents producing each lexical constraint more than required.
   * `decStates` - optional, initial decoder states.
   * `lmModel` - optional, the language model object.
   * `lmStates`, `lmContext` - option initial language model states and context - initialized with BOS
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, limit_lexical_constraints, decStates,
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates,
                                 lmModel, lmStates, lmContext, lm_weight,
                                 dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
@@ -27,7 +26,6 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.context = context
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
-  self.limit_lexical_constraints = limit_lexical_constraints or false
   self.length_norm = length_norm or 0.0
   self.coverage_norm = coverage_norm or 0.0
   self.eos_norm = eos_norm or 0.0

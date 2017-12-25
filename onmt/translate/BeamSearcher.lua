@@ -36,7 +36,7 @@ Parameters:
   be considered. If the returned hypotheses voilate filters, then set this to a
   larger value to consider more. [1]
   * `keepInitial` - optional, whether return the initial token or not. [false]
-  * `limitLexicalConstraint` - limit the use of lexical constraint
+  * `vocabMask` - limit the use of some vocabs
 
 Returns:
 
@@ -47,13 +47,14 @@ Returns:
     and `histories[b].scores` save the full beam search history of the b-th sample.
 
 ]]
-function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial, limitLexicalConstraint)
+function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial, vocabMask)
+
   self.nBest = nBest or 1
   self.realBeamSize = beamSize or 1
   assert(self.nBest <= self.realBeamSize, 'beam size must be greater or equal to the n-best list size')
   self.preFilterFactor = preFilterFactor or 1
   self.keepInitial = keepInitial or false
-  self.limitLexicalConstraint = limitLexicalConstraint
+  self.vocabMask = vocabMask
 
   local beams = {}
   local finished = {}
@@ -156,7 +157,7 @@ function BeamSearcher:_findKBest(beams, vocabSize, kBest, expandedScores, expand
 
 end
 
-local function addGridDecodingConstraints(lvl, batchSize, realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize)
+local function addGridDecodingConstraints(lvl, batchSize, realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize, vocabMask)
   -- TODO: disable all of the placeholder in target vocabulary
   constraintPenalty[{{}, 2, {}, {}}]:fill(0)
   if lvl > 1 then
@@ -165,10 +166,12 @@ local function addGridDecodingConstraints(lvl, batchSize, realBeamSize, constrai
 
   for i = 1, batchSize do
     for j = 1, realBeamSize do
+      if vocabMask then
+        constraintPenalty[{i, 2, j, {}}]:maskedFill(vocabMask, -math.huge)
+      end
       for k = 1, gridConstraints:size(4) do
         local idx = gridConstraints[{i, lvl, j, k}]
         -- cannot use a constraint (not already used)
-        if idx ~= 0 then constraintPenalty[{i, 2, j, math.abs(idx)}] = -math.huge end
         if lvl > 1 then
           -- uplevelling
           idx = gridConstraints[{i, lvl-1, j, k}]
@@ -210,7 +213,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
 
     -- constraint Penalty on two layers (current and lower layer)
     constraintPenalty = torch.FloatTensor(batchSize, 2, self.realBeamSize, vocabSize):typeAs(scores)
-    addGridDecodingConstraints(1, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize)
+    addGridDecodingConstraints(1, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize, self.vocabMask)
     firstLevelScores = firstLevelScores:clone():add(constraintPenalty[{{},2,{},{}}]):contiguous()
   end
 
@@ -237,7 +240,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
       gridPrevScores = beams[t]:getScores():view(batchSize, self.gridHeight,  self.realBeamSize, -1):narrow(2, lvl-1, 2)
 
       local twoLevelScores = gridScores:narrow(2, lvl-1, 2)
-      addGridDecodingConstraints(lvl, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize)
+      addGridDecodingConstraints(lvl, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize, self.vocabMask)
       twoLevelScores:add(constraintPenalty)
 
       -- we operate on sentence x beam
@@ -266,8 +269,8 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     newBeamToken = beamToken
   end
 
-  local newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScore, newBeamBackPointer:view(batchSize, -1), self.beamSize,
-                                     constraints, self.limitLexicalConstraint)
+  local newBeam = beams[t]:_nextBeam(newBeamToken:view(-1), newBeamScore, newBeamBackPointer:view(batchSize, -1),
+                                     self.beamSize, constraints)
   beams[t + 1] = newBeam
 
   -- Cleanup unused memory.
