@@ -110,12 +110,11 @@ end
 
 Parameters:
 
-  * `beam` current beam
   * `consideredToken` hypotheses tokens
   * `consideredScores` hypotheses scores
   * `consideredBackPointer` back pointer
 
-Returns: a binary flat tensor  indicating which hypothesis shall be pruned.
+Returns: a binary flat tensor indicating which hypothesis shall be pruned.
 
 ]]
 function Advancer:filter()

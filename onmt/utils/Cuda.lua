@@ -128,6 +128,8 @@ function Cuda.convert(obj)
       -- Defaults to float instead of double.
       if objtype:find('torch%..*LongTensor') then
         return obj:type('torch.LongTensor')
+      elseif objtype:find('torch%..*ByteTensor') then
+        return obj:type('torch.ByteTensor')
       else
         return obj:type('torch.FloatTensor')
       end
