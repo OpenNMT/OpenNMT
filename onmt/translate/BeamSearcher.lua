@@ -227,8 +227,8 @@ function BeamSearcher:_makeNewBeam(beams, scores)
   -- if there are constraints, we continue the decoding on the next level of the grid
   if constraints then
     local beamScore = onmt.utils.Cuda.convert(torch.Tensor(batchSize, self.gridHeight, self.realBeamSize))
-    local beamBackPointer = torch.LongTensor(batchSize, self.gridHeight, self.realBeamSize)
-    local beamToken = torch.LongTensor(batchSize, self.gridHeight, self.realBeamSize)
+    local beamBackPointer = onmt.utils.Cuda.convert(torch.LongTensor(batchSize, self.gridHeight, self.realBeamSize))
+    local beamToken = onmt.utils.Cuda.convert(torch.LongTensor(batchSize, self.gridHeight, self.realBeamSize))
 
     beamScore[{{}, 1, {}}]:copy(newBeamScore)
     beamBackPointer[{{}, 1, {}}]:copy(newBeamBackPointer)
@@ -257,7 +257,9 @@ function BeamSearcher:_makeNewBeam(beams, scores)
       --   => IDf = IDn + (lvl-2)*B + sID*(G-2)
 
       local sID = (newBeamBackPointer-1) / self.realBeamSize / 2
-      newBeamBackPointer:add((lvl-2)*self.realBeamSize):add((self.gridHeight-2)*sID)
+      newBeamBackPointer:add((lvl-2)*self.realBeamSize)
+      sID:mul(self.gridHeight-2)
+      newBeamBackPointer:add(sID)
 
       beamScore[{{}, lvl, {}}]:copy(newBeamScore)
       beamBackPointer[{{}, lvl, {}}]:copy(newBeamBackPointer)

@@ -77,7 +77,7 @@ end
 
 --[[ Get placeholder mask from vocabulary. ]]
 function Dict:getPlaceholderMask()
-  local t = torch.ByteTensor(#self.idxToLabel):fill(0)
+  local t = onmt.utils.Cuda.convert(torch.ByteTensor(#self.idxToLabel):fill(0))
   for i, k in ipairs(self.idxToLabel) do
     if k:find(separators.ph_marker_open) then
       t[i] = 1

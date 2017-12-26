@@ -117,6 +117,8 @@ function Cuda.convert(obj)
     if Cuda.activated and obj.cuda ~= nil then
       if objtype:find('torch%..*LongTensor') then
         return obj:type('torch.CudaLongTensor')
+      elseif objtype:find('torch%..*ByteTensor') then
+        return obj:type('torch.CudaByteTensor')
       elseif Cuda.fp16 then
         return obj:type('torch.CudaHalfTensor')
       else
