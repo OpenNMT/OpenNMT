@@ -1,7 +1,7 @@
 The data preparation (or preprocessing) passes over the data to generate word vocabularies and sequences of indices used by the training.
 
 Generally the global process includes several steps:
-* tokenization (for text files): is splitting the corpus into space-separated tokens, possibly associated to features. See [tokenization tool here](tools/tokenization.md).
+* tokenization (for text files): is splitting the corpus into space-separated tokens, possibly associated to features. See [tokenization tool here](tools/tokenization/).
 * preprocessing: is building a `data file` from tokenized source training and validation corpus, optionally shuffling the sentences, and sorting by sentence length.
 
 !!! note "Note"
