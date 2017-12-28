@@ -61,7 +61,7 @@ Here is an example with two models:
   beam_size: 5
 ```
 
-By default, it uses the file in tools/rest_config.yml but you can modify with `--mode_config the location`.
+By default, it uses the file in `test/data/rest_config.yml` but you can modify with `--mode_config the location`.
 
 
 ```bash
