@@ -43,7 +43,7 @@ local server_options = {
      [[Unload unused model from memory after this time.]]
    },
    {
-     '-model_config', 'tools/rest_config.yml',
+     '-model_config', 'test/data/rest_config.yml',
      [[Path to yaml configuration file.]],
      {
        valid = onmt.utils.ExtendedCmdLine.fileExists
