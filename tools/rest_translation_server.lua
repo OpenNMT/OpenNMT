@@ -76,7 +76,7 @@ local function translateMessage(translator, lines)
           error("unicode error in line " .. err)
         end
       end
- 
+
       -- Add custom source features if they are provided in the request. This is usually used for domain control.
       if lines[i].feats then
         for j = 1, #tokens do
