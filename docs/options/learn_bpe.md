@@ -17,7 +17,7 @@
 
 ## Tokenizer options
 
-* `-tok_mode <string>` (accepted: `conservative`, `aggressive`, `space`; default: `space`)<br/>Define how aggressive should the tokenization be. `space` is space-tokenization.
+* `-tok_mode <string>` (accepted: `space`, `conservative`, `aggressive`; default: `space`)<br/>Define how aggressive should the tokenization be. `aggressive` only keeps sequences of letters/numbers, `conservative` allows a mix of alphanumeric as in: "2,000", "E65", "soft-landing", etc. `space` is doing space tokenization.
 * `-tok_joiner_annotate [<boolean>]` (default: `false`)<br/>Include joiner annotation using `-joiner` character.
 * `-tok_joiner <string>` (default: `￭`)<br/>Character used to annotate joiners.
 * `-tok_joiner_new [<boolean>]` (default: `false`)<br/>In `-joiner_annotate` mode, `-joiner` is an independent token.
@@ -26,6 +26,10 @@
 * `-tok_segment_alphabet <table>` (accepted: `Tagalog`, `Hanunoo`, `Limbu`, `Yi`, `Hebrew`, `Latin`, `Devanagari`, `Thaana`, `Lao`, `Sinhala`, `Georgian`, `Kannada`, `Cherokee`, `Kanbun`, `Buhid`, `Malayalam`, `Han`, `Thai`, `Katakana`, `Telugu`, `Greek`, `Myanmar`, `Armenian`, `Hangul`, `Cyrillic`, `Ethiopic`, `Tagbanwa`, `Gurmukhi`, `Ogham`, `Khmer`, `Arabic`, `Oriya`, `Hiragana`, `Mongolian`, `Kangxi`, `Syriac`, `Gujarati`, `Braille`, `Bengali`, `Tamil`, `Bopomofo`, `Tibetan`)<br/>Segment all letters from indicated alphabet.
 * `-tok_segment_numbers [<boolean>]` (default: `false`)<br/>Segment numbers into single digits.
 * `-tok_segment_alphabet_change [<boolean>]` (default: `false`)<br/>Segment if alphabet change between 2 letters.
+
+## HookManager options
+
+* `-hook_file <string>` (default: `''`)<br/>Pointer to a lua file registering hooks for the current process
 
 ## Logger options
 

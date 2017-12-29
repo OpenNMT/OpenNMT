@@ -15,6 +15,7 @@
 * `-save_attention <string>` (default: `''`)<br/>Optional attention output file.
 * `-batch_size <number>` (default: `30`)<br/>Batch size.
 * `-idx_files [<boolean>]` (default: `false`)<br/>If set, source and target files are 'key value' with key match between source and target.
+* `-detokenize_output [<boolean>]` (default: `false`)<br/>Detokenize output.
 
 ## Translator options
 
@@ -55,7 +56,6 @@
 * `-tok_{src,tgt}_bpe_BOT_marker <string>` (default: `<w>`)<br/>Marker used to mark the Beginning of Token while applying BPE in mode 'suffix' or 'both'.
 * `-tok_{src,tgt}_bpe_case_insensitive [<boolean>]` (default: `false`)<br/>Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
 * `-tok_{src,tgt}_bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-bpe_BOT_marker` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `-bpe_EOT_marker` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
-* `-tok_{src,tgt}_detokenize_output [<boolean>]` (default: `false`)<br/>Detokenize output.
 
 ## Cuda options
 
