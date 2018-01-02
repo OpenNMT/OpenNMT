@@ -850,7 +850,9 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
                 end
                 local psentences = _G.hookManager:call("bpreprocess", _G.args, asentences)
                 if psentences then
-                  _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
+                  if verbose then
+                    _G.logger:info("bpreprocess results: %d remaining out of %d", #psentences[1], #sentences[2])
+                  end
                   sentences[2] = psentences[1]
                   sentences[3] = psentences[2]
                 end
