@@ -66,6 +66,10 @@
 * `-bpe_case_insensitive [<boolean>]` (default: `false`)<br/>Apply BPE internally in lowercase, but still output the truecase units. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`.
 * `-bpe_mode <string>` (accepted: `suffix`, `prefix`, `both`, `none`; default: `suffix`)<br/>Define the BPE mode. This option will be overridden/set automatically if the BPE model specified by `-bpe_model` is learnt using `learn_bpe.lua`. `prefix`: append `-bpe_BOT_marker` to the begining of each word to learn prefix-oriented pair statistics; `suffix`: append `-bpe_EOT_marker` to the end of each word to learn suffix-oriented pair statistics, as in the original Python script; `both`: `suffix` and `prefix`; `none`: no `suffix` nor `prefix`.
 
+## HookManager options
+
+* `-hook_file <string>` (default: `''`)<br/>Pointer to a lua file registering hooks for the current process
+
 ## Other options
 
-* `-batchsize <number>` (default: `1000`)<br/>Size of each parallel batch - you should not change except if low memory.
+* `-batch_size <number>` (default: `64`)<br/>Size of each parallel batch - you should not change except if low memory.

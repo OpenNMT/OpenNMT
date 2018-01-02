@@ -10,8 +10,8 @@
 
 ### Fixes and improvements
 
-* Integrate hooks with rest translation server
-* Fix integration of hook with `learn_bpe` (#456)
+* Fix beam-size 1 broken with lexical constraints
+* Fix batch size non function with `rest_translation_server.lua`
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 

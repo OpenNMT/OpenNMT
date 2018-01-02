@@ -1,0 +1,17 @@
+-
+  model: '/NMTModels/en-fr/model-enfr_epoch600_3.03.t7'
+  replace_unk: true
+  mode: aggressive
+  joiner_annotate: true
+  case_feature: true
+  segment_case: true
+  beam_size: 5
+
+-
+  model: '/NMTModels/en-it/model-enit_epoch600_4.17.t7'
+  replace_unk: true
+  mode: aggressive
+  joiner_annotate: true
+  case_feature: true
+  segment_case: true
+  beam_size: 5

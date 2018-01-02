@@ -43,6 +43,7 @@ cmd:option('-seed', 3435, [[Random seed.]], {valid=onmt.utils.ExtendedCmdLine.is
 
 -- insert on the fly the option depending if there is a hook selected
 onmt.utils.HookManager.updateOpt(arg, cmd)
+onmt.data.DynamicDataRepository.expandOpts(cmd, modelClass)
 
 local function loadData(opt, filename)
 
