@@ -41,7 +41,7 @@ local options = {
   {
     '-tokenizer',
     'space',
-    [[Tokenizer to use - space tokenization by default, `max` is corresponding to tokenizer -mode=aggressive, 
+    [[Tokenizer to use - space tokenization by default, `max` is corresponding to tokenizer -mode=aggressive,
       -segment_alphabet=Han,Kanbun,Katakana,Hiragana, -segment_alphabet_change. `max` is the best choice for all languages,
       detokenized translation, space applies for pre-tokenized corpus.]],
     {
