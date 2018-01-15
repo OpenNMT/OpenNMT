@@ -1,8 +1,8 @@
-
 require('torch')
 local path = require('pl.path')
 
 require('onmt.init')
+local tokenizer = require('tools.utils.tokenizer')
 
 local cmd = onmt.utils.ExtendedCmdLine.new('scorer.lua')
 
@@ -37,6 +37,16 @@ local options = {
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt()
     }
+  },
+  {
+    '-tokenizer',
+    'space',
+    [[Tokenizer to use - space tokenization by default, `max` is corresponding to tokenizer -mode=aggressive, 
+      -segment_alphabet=Han,Kanbun,Katakana,Hiragana, -segment_alphabet_change. `max` is the best choice for all languages,
+      detokenized translation, space applies for pre-tokenized corpus.]],
+    {
+      enum = { 'space', 'max' }
+    }
   }
 }
 
@@ -47,7 +57,15 @@ onmt.utils.Logger.declareOpts(cmd)
 local function main()
   local opt = cmd:parse(arg)
 
+  local tok_options = { mode='space' }
+  if opt.tokenizer == 'max' then
+    tok_options['segment_alphabet'] = { 'Han', 'Kanbun', 'Katakana', 'Hiragana' }
+    tok_options['segment_alphabet_change'] = true
+    tok_options['mode'] = 'aggressive'
+  end
+
   _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.hookManager = require('onmt.utils.HookManager').new()
 
   -- read the references
   local references = {}
@@ -59,11 +77,7 @@ local function main()
     while true do
       local line = file:read()
       if not line then break end
-      local sent = {}
-      for word in line:gmatch'([^%s]+)' do
-        table.insert(sent, word)
-      end
-      table.insert(ref, sent)
+      table.insert(ref, tokenizer.tokenize(tok_options, line))
     end
     onmt.utils.Error.assert(#references==0 or #references[#references] == #ref, "all references do not have same line count")
     table.insert(references, ref)
@@ -87,11 +101,7 @@ local function main()
   while true do
     local line = io.read()
     if not line then break end
-    local sent = {}
-    for word in line:gmatch'([^%s]+)' do
-      table.insert(sent, word)
-    end
-    table.insert(hyp, sent)
+    table.insert(hyp, tokenizer.tokenize(tok_options, line))
   end
 
   onmt.utils.Error.assert(#hyp==#references[1], "line count hyp/ref does not match")

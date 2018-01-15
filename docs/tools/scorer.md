@@ -16,11 +16,23 @@ The actual metric is selected with `scorer` option and the output is a line with
 The fields are:
 
 * numeric value of the score
-* 95% confidence error margin (1.96*standard deviation) for k samples of half-size
+* 95% confidence error margin (1.96\*standard deviation) for k samples of half-size
 * formated scorer output
 
 !!! tip "Tip"
     *Error margin* is a simple way to know if score variation is part of metric calculation variation or is significant.
+
+The scorer use by default `space` tokenization suited for evaluation of tokenized translation. For evaluation of tokenized translation,
+you can use `-tokenizer max` option applying on the fly the following tokenization options and suited for most language pairs:
+
+```
+-mode=aggressive
+-segment_alphabet=Han,Kanbun,Katakana,Hiragana
+-segment_alphabet_change
+```
+
+Alternatively, you can tokenized both translation output and translation reference with your favorite tokenization options and score 
+on this corpus using default `space` tokenization.
 
 # BLEU
 
