@@ -172,8 +172,10 @@ local function main()
   local goldScoreTotal = 0
   local goldWordsTotal = 0
 
-  local globalUnkCount = 0
-  local globalTotalCount = 0
+  local globalUnkCountSrc = 0
+  local globalTotalCountSrc = 0
+  local globalUnkCountTgt = 0
+  local globalTotalCountTgt = 0
 
   local timer
   if opt.time then
@@ -218,10 +220,10 @@ local function main()
         timer:resume()
       end
 
-      local results, unkCount, totalCount = translator:translate(srcBatch, goldBatch)
+      local results, unkCountSrc, totalCountSrc = translator:translate(srcBatch, goldBatch)
 
-      globalUnkCount = globalUnkCount + unkCount;
-      globalTotalCount = globalTotalCount + totalCount
+      globalUnkCountSrc = globalUnkCountSrc + unkCountSrc;
+      globalTotalCountSrc = globalTotalCountSrc + totalCountSrc
 
       if opt.time then
         timer:stop()
@@ -250,6 +252,13 @@ local function main()
             outFile:write(sentId, ' ', table.concat(torch.totable(results[b]), " "), '\n')
           else
             for n = 1, #results[b].preds do
+              -- count target unknown words and words generated on 1-best
+              if n == 1 then
+                globalTotalCountTgt = globalTotalCountTgt + #results[b].preds[n].words
+                for _, w in ipairs(results[b].preds[n].words) do
+                  globalUnkCountTgt = globalUnkCountTgt + (w==onmt.Constants.UNK_WORD and 1 or 0)
+                end
+              end
               local sentence
               if opt.detokenize_output then
                 sentence = tokenizer.detokenize(optTok[2],
@@ -323,8 +332,10 @@ local function main()
     end
   end
 
-  _G.logger:info("Translated "..globalTotalCount.." words, src unk count: "..globalUnkCount..", unk coverage: "..
-                 ((math.floor(globalUnkCount*1000/globalTotalCount))/10).."%")
+  _G.logger:info("Translated "..globalTotalCountSrc.." words, src unk count: "..globalUnkCountSrc..", coverage: "..
+                 ((math.floor(globalUnkCountSrc*1000/globalTotalCountSrc))/10).."%, "..
+                 "tgt words: "..globalTotalCountTgt.." words, tgt unk count: "..globalUnkCountTgt..", coverage: "..
+                 ((math.floor(globalUnkCountTgt*1000/globalTotalCountTgt))/10).."%, ")
 
   if opt.time then
     local time = timer:time()

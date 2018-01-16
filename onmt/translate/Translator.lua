@@ -596,15 +596,16 @@ Returns:
 function Translator:translate(src, gold)
   local data, ignored, indexMap = self:buildData(src, gold)
 
-  local unkCount = 0
-  local totalCount = 0
+  local UnkCountSrc = 0
+  local totalCountSrc = 0
 
+  -- calculate source unk counts
   for i = 1, #data.src do
-    unkCount = unkCount + data.src[i]:eq(onmt.Constants.UNK):sum()
+    UnkCountSrc = UnkCountSrc + data.src[i]:eq(onmt.Constants.UNK):sum()
     if src[indexMap[i]].words then
-      totalCount = totalCount + #src[indexMap[i]].words
+      totalCountSrc = totalCountSrc + #src[indexMap[i]].words
     else
-      totalCount = totalCount + src[indexMap[i]].vectors:size(1)
+      totalCountSrc = totalCountSrc + src[indexMap[i]].vectors:size(1)
     end
   end
 
@@ -656,7 +657,7 @@ function Translator:translate(src, gold)
     table.insert(results, ignored[i], {})
   end
 
-  return results, unkCount, totalCount
+  return results, UnkCountSrc, totalCountSrc
 end
 
 return Translator
