@@ -581,9 +581,11 @@ function Beam:_getTopHypotheses(remainingId, nBest, completed)
   local currId = 1
   completed = completed:view(self._remaining, -1)
   local scores = self._scores:view(self._remaining, -1)
-  local normScores = self:_normalizeScores(scores)
+
+  local normScores, normScoresIdx = self:_normalizeScores(scores):sort(2, true)
   local tokens = self._tokens[#self._tokens]:view(self._remaining, -1)
   local backPointers = self._backPointer:view(self._remaining, -1)
+
   for _ = 1, nBest do
     local hypothesis, finished
     if prevId <= #prevCompleted and prevCompleted[prevId][2] > normScores[remainingId][currId] then
@@ -594,8 +596,9 @@ function Beam:_getTopHypotheses(remainingId, nBest, completed)
       finished = (completed[remainingId][currId] == 1)
       if finished then
         local normScore = normScores[remainingId][currId]
-        local token = tokens[remainingId][currId]
-        local backPointer = backPointers[remainingId][currId]
+        local sortedId = normScoresIdx[remainingId][currId]
+        local token = tokens[remainingId][sortedId]
+        local backPointer = backPointers[remainingId][sortedId]
         hypothesis = {origId, normScore, token, backPointer, self._step}
       end
       currId = currId + 1
