@@ -8,6 +8,7 @@
 * Sentence-level negative log-likelihood criterion for sequence tagging
 * '-' stands for stdin for inference tools (translate, lm, tag)
 * Optional source features per request (for domain control) with rest translation server
+* Display unknow rate in translate
 
 ### Fixes and improvements
 

@@ -172,6 +172,9 @@ local function main()
   local goldScoreTotal = 0
   local goldWordsTotal = 0
 
+  local globalUnkCount = 0
+  local globalTotalCount = 0
+
   local timer
   if opt.time then
     timer = torch.Timer()
@@ -215,7 +218,10 @@ local function main()
         timer:resume()
       end
 
-      local results = translator:translate(srcBatch, goldBatch)
+      local results, unkCount, totalCount = translator:translate(srcBatch, goldBatch)
+
+      globalUnkCount = globalUnkCount + unkCount;
+      globalTotalCount = globalTotalCount + totalCount
 
       if opt.time then
         timer:stop()
@@ -316,6 +322,9 @@ local function main()
       collectgarbage()
     end
   end
+
+  _G.logger:info("Translated "..globalTotalCount.." words, src unk count: "..globalUnkCount..", unk coverage: "..
+                 ((math.floor(globalUnkCount*1000/globalTotalCount))/10).."%")
 
   if opt.time then
     local time = timer:time()

@@ -596,6 +596,18 @@ Returns:
 function Translator:translate(src, gold)
   local data, ignored, indexMap = self:buildData(src, gold)
 
+  local unkCount = 0
+  local totalCount = 0
+
+  for i = 1, #data.src do
+    unkCount = unkCount + data.src[i]:eq(onmt.Constants.UNK):sum()
+    if src[indexMap[i]].words then
+      totalCount = totalCount + #src[indexMap[i]].words
+    else
+      totalCount = totalCount + src[indexMap[i]].vectors:size(1)
+    end
+  end
+
   local results = {}
 
   if data:batchCount() > 0 then
@@ -644,7 +656,7 @@ function Translator:translate(src, gold)
     table.insert(results, ignored[i], {})
   end
 
-  return results
+  return results, unkCount, totalCount
 end
 
 return Translator
