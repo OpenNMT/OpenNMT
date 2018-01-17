@@ -217,7 +217,8 @@ function Translator:__init(args, model, dicts)
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
 
-  if args.limit_lexical_constraints and args.placeholder_constraints then
+  -- if args.limit_lexical_constraints and args.placeholder_constraints then
+  if args.placeholder_constraints then
     self.placeholderMask = self.dicts.tgt.words:getPlaceholderMask()
   end
 

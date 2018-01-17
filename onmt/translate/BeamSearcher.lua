@@ -96,6 +96,7 @@ function BeamSearcher:search(beamSize, nBest, preFilterFactor, keepInitial, voca
     t = t + 1
     remaining = beams[t]:getRemaining()
   end
+
   return finished, histories
 end
 
@@ -170,22 +171,21 @@ local function addGridDecodingConstraints(lvl, batchSize, realBeamSize, constrai
         constraintPenalty[{i, 2, j, {}}]:maskedFill(vocabMask, -math.huge)
       end
       for k = 1, gridConstraints:size(4) do
-        local idx = gridConstraints[{i, lvl, j, k}]
         -- cannot use a constraint (not already used)
         if lvl > 1 then
           -- uplevelling
-          idx = gridConstraints[{i, lvl-1, j, k}]
           -- unused constraints are only for uplevelling
+          local idx = gridConstraints[{i, lvl-1, j, k}]
           if idx > 0 then constraintPenalty[{i, 1, j, idx}] = 0 end
         end
       end
       -- EOS only when no more constraint
       if gridConstraintsSize[{i, lvl, j}] ~= lvl-1 then
+      -- TODO : we do not need GRID constraint sizes ?
         constraintPenalty[{i, 2, j, onmt.Constants.EOS}] = -math.huge
       end
     end
   end
-
 end
 
 -- Find the top beamSize hypotheses (satisfying filters).
