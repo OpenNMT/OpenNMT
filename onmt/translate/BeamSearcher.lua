@@ -234,32 +234,36 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     beamBackPointer[{{}, 1, {}}]:copy(newBeamBackPointer)
     beamToken[{{}, 1, {}}]:copy(newBeamToken)
 
-    -- TODO - no need to evaluate all the grid levels at the first time-steps.
     for lvl = 2, self.gridHeight do
-      gridScores = scores:clone():view(batchSize, self.gridHeight,  self.realBeamSize, -1)
-      gridPrevScores = beams[t]:getScores():view(batchSize, self.gridHeight,  self.realBeamSize, -1):narrow(2, lvl-1, 2)
+      -- We do not need to evaluate all the grid levels at the first time-steps.
+      if lvl <= t+1 then
+        gridScores = scores:clone():view(batchSize, self.gridHeight,  self.realBeamSize, -1)
+        gridPrevScores = beams[t]:getScores():view(batchSize, self.gridHeight,  self.realBeamSize, -1):narrow(2, lvl-1, 2)
 
-      local twoLevelScores = gridScores:narrow(2, lvl-1, 2)
-      addGridDecodingConstraints(lvl, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize, self.vocabMask)
-      twoLevelScores:add(constraintPenalty)
+        local twoLevelScores = gridScores:narrow(2, lvl-1, 2)
+        addGridDecodingConstraints(lvl, batchSize, self.realBeamSize, constraintPenalty, gridConstraints, gridConstraintsSize, self.vocabMask)
+        twoLevelScores:add(constraintPenalty)
 
-      -- we operate on sentence x beam
-      expandedScores, expandedNormScores = 
-          beams[t]:_expandScores(twoLevelScores:contiguous(), 2 * self.realBeamSize, gridPrevScores:contiguous())
+        -- we operate on sentence x beam
+        expandedScores, expandedNormScores =
+            beams[t]:_expandScores(twoLevelScores:contiguous(), 2 * self.realBeamSize, gridPrevScores:contiguous())
 
-      -- get kbest scores
-      newBeamScore, newBeamBackPointer, newBeamToken = self:_findKBest(beams, vocabSize, self.realBeamSize, expandedScores, expandedNormScores)
+        -- get kbest scores
+        newBeamScore, newBeamBackPointer, newBeamToken = self:_findKBest(beams, vocabSize, self.realBeamSize, expandedScores, expandedNormScores)
 
-      -- we need to update newBeamBackPointer:
-      --   ID in the full structure is:     IDf = 1+ sID * G * B + gId * B + b
-      --   ID in the narrowed structure is: IDn = 1+ sID * 2 * B + (gID-lvl-2) * B + b
-      --   => sID = (IDn-1) /B /2
-      --   => IDf = IDn + (lvl-2)*B + sID*(G-2)
+        -- we need to update newBeamBackPointer:
+        --   ID in the full structure is:     IDf = 1+ sID * G * B + gId * B + b
+        --   ID in the narrowed structure is: IDn = 1+ sID * 2 * B + (gID-lvl-2) * B + b
+        --   => sID = (IDn-1) /B /2
+        --   => IDf = IDn + (lvl-2)*B + sID*(G-2)
 
-      local sID = (newBeamBackPointer-1) / self.realBeamSize / 2
-      newBeamBackPointer:add((lvl-2)*self.realBeamSize)
-      sID:mul(self.gridHeight-2)
-      newBeamBackPointer:add(sID)
+        local sID = (newBeamBackPointer-1) / self.realBeamSize / 2
+        newBeamBackPointer:add((lvl-2)*self.realBeamSize)
+        sID:mul(self.gridHeight-2)
+        newBeamBackPointer:add(sID)
+      else
+        newBeamScore:fill(-math.huge)
+      end
 
       beamScore[{{}, lvl, {}}]:copy(newBeamScore)
       beamBackPointer[{{}, lvl, {}}]:copy(newBeamBackPointer)
