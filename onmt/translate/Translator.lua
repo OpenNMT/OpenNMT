@@ -371,25 +371,23 @@ end
 function Translator:buildTargetWords(pred, src, attn, placeholders)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  if self.args.replace_unk or self.args.replace_unk_tagged or self.args.placeholder_constraints then
-    for i = 1, #tokens do
-      if tokens[i] == onmt.Constants.UNK_WORD and (self.args.replace_unk or self.args.replace_unk_tagged) then
-        local _, maxIndex = attn[i]:max(1)
-        local source = src[maxIndex[1]]
+  for i = 1, #tokens do
+    if tokens[i] == onmt.Constants.UNK_WORD and (self.args.replace_unk or self.args.replace_unk_tagged) then
+      local _, maxIndex = attn[i]:max(1)
+      local source = src[maxIndex[1]]
 
-        if self.phraseTable and self.phraseTable:contains(source) then
-          tokens[i] = self.phraseTable:lookup(source)
+      if self.phraseTable and self.phraseTable:contains(source) then
+        tokens[i] = self.phraseTable:lookup(source)
 
-        elseif self.args.replace_unk then
-          tokens[i] = source
+      elseif self.args.replace_unk then
+        tokens[i] = source
 
-        elseif self.args.replace_unk_tagged then
-          tokens[i] = '｟unk:' .. source .. '｠'
-        end
+      elseif self.args.replace_unk_tagged then
+        tokens[i] = '｟unk:' .. source .. '｠'
       end
-      if placeholders[tokens[i]] and self.args.placeholder_constraints then
-        tokens[i] = placeholders[tokens[i]]
-      end
+    end
+    if placeholders[tokens[i]] then
+      tokens[i] = placeholders[tokens[i]]
     end
   end
 
