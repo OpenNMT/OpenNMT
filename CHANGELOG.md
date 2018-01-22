@@ -7,10 +7,13 @@
 * Introduce hook mechanism for additional customization of workflows
 * Sentence-level negative log-likelihood criterion for sequence tagging
 * '-' stands for stdin for inference tools (translate, lm, tag)
+* Optional source features per request (for domain control) with rest translation server
 
 ### Fixes and improvements
 
 * Fix beam-size 1 broken with lexical constraints
+* Fix batch size non function with `rest_translation_server.lua`
+* Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data.
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 
