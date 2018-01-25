@@ -217,7 +217,7 @@ function BeamSearcher:_makeNewBeam(beams, scores)
     firstLevelScores = firstLevelScores:clone():add(constraintPenalty[{{},2,{},{}}]):contiguous()
   end
 
-  local expandedScores, expandedNormScores = 
+  local expandedScores, expandedNormScores =
       beams[t]:_expandScores(firstLevelScores, self.realBeamSize, gridPrevScores)
 
   -- get kbest scores

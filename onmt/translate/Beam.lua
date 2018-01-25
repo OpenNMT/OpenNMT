@@ -197,9 +197,9 @@ function Beam:__init(token, state, params, batchSize, updateConstraints)
       local tok = self._tokens[#self._tokens][t]
       for c = 1, self._state[11]:size(2) do
         if self._state[11][t][c] == tok then
-      	  self._state[11][t][c] = 0
-      	  break
-      	end
+          self._state[11][t][c] = 0
+          break
+        end
       end
     end
   end
