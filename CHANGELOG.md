@@ -13,6 +13,8 @@
 * Fix beam-size 1 broken with lexical constraints
 * Fix batch size non function with `rest_translation_server.lua`
 * Fix non deterministic inference of language models
+* Fix retraining from a language model
+* Fix `-update_vocab` option for language models
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 
