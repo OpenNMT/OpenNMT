@@ -36,7 +36,7 @@ local function norm(t)
   local fields = onmt.utils.String.split(content, '：')
 
   if #fields == 1 then
-    return t, nil
+    return t, t
   else
     local placeholder = fields[1]
     local value = fields[2]

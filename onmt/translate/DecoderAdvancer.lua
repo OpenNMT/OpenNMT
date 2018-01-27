@@ -1,5 +1,5 @@
 --[[ DecoderAdvancer is an implementation of the interface Advancer for
-  specifyinghow to advance one step in decoder.
+  specifying how to advance one step in decoder.
 --]]
 local DecoderAdvancer = torch.class('DecoderAdvancer', 'Advancer')
 
@@ -12,14 +12,13 @@ Parameters:
   * `context` - encoder output (batch x n x rnnSize).
   * `max_sent_length` - optional, maximum output sentence length.
   * `max_num_unks` - optional, maximum number of UNKs.
-  * `limit_lexical_constraints` - optional, prevents producing each lexical constraint more than required.
   * `decStates` - optional, initial decoder states.
   * `lmModel` - optional, the language model object.
   * `lmStates`, `lmContext` - option initial language model states and context - initialized with BOS
   * `dicts` - optional, dictionary for additional features.
 
 --]]
-function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, limit_lexical_constraints, decStates,
+function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_num_unks, decStates,
                                 lmModel, lmStates, lmContext, lm_weight,
                                 dicts, length_norm, coverage_norm, eos_norm)
   self.decoder = decoder
@@ -27,7 +26,6 @@ function DecoderAdvancer:__init(decoder, batch, context, max_sent_length, max_nu
   self.context = context
   self.max_sent_length = max_sent_length or math.huge
   self.max_num_unks = max_num_unks or math.huge
-  self.limit_lexical_constraints = limit_lexical_constraints or false
   self.length_norm = length_norm or 0.0
   self.coverage_norm = coverage_norm or 0.0
   self.eos_norm = eos_norm or 0.0
@@ -74,8 +72,21 @@ function DecoderAdvancer:initBeam()
   end
 
   -- Define state to be { decoder states, decoder output, context,
-  -- attentions, features, sourceSizes, step, cumulated attention probablities, lmStates, lmContext, lexical constraints, lexical constraintSizes }.
-  local state = { self.decStates, nil, self.context, nil, features, sourceSizes, 1, attnProba, self.lmStates, self.lmContext, self.batch.constraints, self.batch.constraintSizes }
+  -- attentions, features, sourceSizes, step, , lmStates, lmContext, lexical constraints, lexical constraintSizes }.
+  local state = { self.decStates,             -- idx 1  : decoder states
+                  nil,                        -- idx 2  : decoder output
+                  self.context,               -- idx 3  : context
+                  nil,                        -- idx 4  : attentions
+                  features,                   -- idx 5  : features
+                  sourceSizes,                -- idx 6  : sourceSizes
+                  1,                          -- idx 7  : step
+                  attnProba,                  -- idx 8  : cumulated attention probablities
+                  self.lmStates,              -- idx 9  : lmStates
+                  self.lmContext,             -- idx 10 : lmContext
+                  self.batch.constraints,     -- idx 11 : lexical constraints remaining to apply to this node
+                  self.batch.constraintSizes  -- idx 12 : lexical constraints sizes
+  }
+
   local params = {}
   params.length_norm = self.length_norm
   params.coverage_norm = self.coverage_norm
@@ -186,18 +197,20 @@ function DecoderAdvancer:isComplete(beam)
   return complete
 end
 
---[[Checks which hypotheses in the beam shall be pruned. We disallow empty
+--[[Checks which hypotheses shall be pruned. We disallow empty
  predictions, as well as predictions with more UNKs than `max_num_unks`.
 
 Parameters:
 
-  * `beam` - an `onmt.translate.Beam` object.
+  * `beam` current beam
+  * `consideredToken` hypotheses tokens
+  * `consideredScores` hypotheses scores
+  * `consideredBackPointer` back pointer
 
-Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
-  which beams shall be pruned.
+Returns: a binary flat tensor indicating which beams shall be pruned.
 
 ]]
-function DecoderAdvancer:filter(beam,considered)
+function DecoderAdvancer:filter(beam, consideredToken, _, consideredBackPointer)
   local tokens = beam:getTokens()
   local numUnks = onmt.utils.Cuda.convert(torch.zeros(tokens[1]:size(1)))
   for t = 1, #tokens do
@@ -205,42 +218,17 @@ function DecoderAdvancer:filter(beam,considered)
     numUnks:add(onmt.utils.Cuda.convert(token:eq(onmt.Constants.UNK):double()))
   end
 
-  -- Disallow too many UNKs
-  local pruned = numUnks:gt(self.max_num_unks)
+  local toks = consideredToken:view(-1)
+  local backPtr = consideredBackPointer:view(-1)
 
-  -- In case we use lexical constraints.
-  if beam:getState()[11] then
+  local pruned = onmt.utils.Cuda.convert(torch.zeros(toks:size(1)))
 
-    -- Disallow hypotheses that did not consume all of the constraints.
-    local finished = tokens[#tokens]:eq(onmt.Constants.EOS)
-    local cNum = beam:getState()[11]:ne(0):sum(2)
-    local unfinishedConstraints = cNum:gt(0)
-    pruned:add(torch.cmul(unfinishedConstraints, finished))
-
-    -- Do not produce each constraint more than allowed.
-    if self.limit_lexical_constraints then
-
-      local tok = tokens[#tokens]:view(-1,considered)
-      local availableConstraint = beam:getState()[11]:view(-1, considered, beam:getState()[11]:size(2))
-
-      local isConstraint = tokens[#tokens]:clone():fill(0)
-      local constraintNotAvailable = tokens[#tokens]:clone():fill(0)
-
-      for b=1,tok:size(1) do
-        local ob = beam:_getOrigId(b)
-        for t=1,tok:size(2) do
-          isConstraint:viewAs(tok)[b][t] = self.batch.constraints[ob]:eq(tok[b][t]):sum()
-          constraintNotAvailable:viewAs(tok)[b][t] = availableConstraint[b][t]:ne(tok[b][t]):min()
-	end
-      end
-
-      pruned:add(torch.cmul(constraintNotAvailable, isConstraint):typeAs(pruned))
+  for i = 1, toks:size(1) do
+    local tok = toks[i]
+    if (tok == onmt.Constants.UNK and numUnks[backPtr[i]] >= self.max_num_unks) or
+       (#tokens == 1 and tok == onmt.Constants.EOS) then
+      pruned[i] = 1
     end
-  end
-
-  -- Disallow empty hypotheses
-  if #tokens == 2 then
-    pruned:add(tokens[2]:eq(onmt.Constants.EOS))
   end
   return pruned:ge(1)
 end
