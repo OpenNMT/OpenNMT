@@ -17,6 +17,7 @@
 * Fix non deterministic inference of language models
 * Fix retraining from a language model
 * Fix `-update_vocab` option for language models
+* Correct error handling for all file open commands
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 

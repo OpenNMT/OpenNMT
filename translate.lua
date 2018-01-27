@@ -158,10 +158,10 @@ local function main()
     goldBatch = {}
   end
 
-  local outFile = assert(io.open(opt.output, 'w'))
+  local outFile = onmt.utils.Error.assert(io.open(opt.output, 'w'))
   local attFile
   if withAttention then
-    attFile = assert(io.open(opt.save_attention, 'w'))
+    attFile = onmt.utils.Error.assert(io.open(opt.save_attention, 'w'))
   end
 
   local sentId = 1
