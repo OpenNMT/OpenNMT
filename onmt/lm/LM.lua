@@ -48,6 +48,7 @@ function LM:__init(args)
   end
 
   self.model = onmt.LanguageModel.load(self.checkpoint.options, self.checkpoint.models, self.checkpoint.dicts)
+  self.model:evaluate()
   onmt.utils.Cuda.convert(self.model)
 
   self.dicts = self.checkpoint.dicts
