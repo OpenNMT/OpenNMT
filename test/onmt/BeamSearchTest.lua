@@ -80,21 +80,25 @@ function beamSearchTest.beamSearch()
                        {tokens = {3, 4}, states = {}, score = math.log(.1*.9)}} }, 1e-6)
 
   -- Test filter
-  local filter = function(beam)
-    local tokens = beam:getTokens()
-    local batchSize = tokens[1]:size(1)
+  local filter = function(beam, consideredToken, _, consideredBackPointer)
+    local prevTokens = beam:getTokens()
+
+    local consTokens = consideredToken:view(-1)
+    local consBackPtr = consideredBackPointer:view(-1)
+
+    local batchByBeamSize = consTokens:size(1)
     -- Disallow {3, 4}
-    local prune = torch.ByteTensor(batchSize):zero()
-    for b = 1, batchSize do
-      if #tokens >= 3 then
-        if tokens[2][b] == 3 and tokens[3][b] == 4 then
+    local prune = torch.ByteTensor(batchByBeamSize):zero()
+    for b = 1, batchByBeamSize do
+      if #prevTokens == 2 then
+        if prevTokens[#prevTokens][consBackPtr[b]] == 3 and consTokens[b] == 4 then
           prune[b] = 1
         end
       end
     end
     return prune
   end
-  Advancer.filter = function(_, beam) return filter(beam) end
+  Advancer.filter = function(_, beam, consideredToken, _, consideredBackPointer) return filter(beam, consideredToken, _, consideredBackPointer) end
   advancer = Advancer.new()
   advancer.dicts = {}
   nBest = 1

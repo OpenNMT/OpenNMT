@@ -106,14 +106,15 @@ function Advancer:setKeptStateIndexes(indexes)
   self.keptStateIndexes = indexes
 end
 
---[[Checks which hypotheses in the beam shall be pruned.
+--[[Checks which hypotheses shall be pruned checking at current scores, tokens, backpointer and existing beam stack
 
 Parameters:
 
-  * `beam` - an `onmt.translate.Beam` object.
+  * `consideredToken` hypotheses tokens
+  * `consideredScores` hypotheses scores
+  * `consideredBackPointer` back pointer
 
-Returns: a binary flat tensor of size `(batchSize * beamSize)`, indicating
-  which beams shall be pruned.
+Returns: a binary flat tensor indicating which hypothesis shall be pruned.
 
 ]]
 function Advancer:filter()

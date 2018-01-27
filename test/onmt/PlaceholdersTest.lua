@@ -9,7 +9,7 @@ function placeholdersTest.extractKV()
   pack = table.pack(onmt.utils.Placeholders.norm("｟a：b｠"))
   tester:eq(pack, {"｟a｠","b", n=2})
   pack = table.pack(onmt.utils.Placeholders.norm("｟a｠"))
-  tester:eq(pack, {"｟a｠", n=2})
+  tester:eq(pack, {"｟a｠", "｟a｠", n=2})
 end
 
 function placeholdersTest.protectedChar()
@@ -23,7 +23,7 @@ function placeholdersTest.extractTable()
   tester:eq(keys[1], "｟a｠")
   tester:eq(keys[2], "｟b｠")
   tester:eq(values[keys[1]], "123")
-  tester:eq(values[keys[2]], nil)
+  tester:eq(values[keys[2]], "｟b｠")
 end
 
 return placeholdersTest
