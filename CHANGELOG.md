@@ -13,6 +13,7 @@
 
 * Fix beam-size 1 broken with lexical constraints
 * Fix batch size non function with `rest_translation_server.lua`
+* Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data.
 * Fix non deterministic inference of language models
 * Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data
 

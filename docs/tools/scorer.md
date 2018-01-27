@@ -31,7 +31,7 @@ you can use `-tokenizer max` option applying on the fly the following tokenizati
 -segment_alphabet_change
 ```
 
-Alternatively, you can tokenized both translation output and translation reference with your favorite tokenization options and score 
+Alternatively, you can tokenize both translation output and translation reference with your favorite tokenization options and score 
 on this corpus using default `space` tokenization.
 
 # BLEU
