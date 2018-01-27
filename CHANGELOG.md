@@ -11,11 +11,10 @@
 
 ### Fixes and improvements
 
-* Fix beam-size 1 broken with lexical constraints
+* Misc fixes on lexical beam search
 * Fix batch size non function with `rest_translation_server.lua`
 * Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data.
 * Fix non deterministic inference of language models
-* Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 
