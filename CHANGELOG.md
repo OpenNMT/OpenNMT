@@ -15,6 +15,8 @@
 * Fix batch size non function with `rest_translation_server.lua`
 * Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data.
 * Fix non deterministic inference of language models
+* Fix retraining from a language model
+* Fix `-update_vocab` option for language models
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 
