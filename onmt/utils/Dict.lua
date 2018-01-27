@@ -59,7 +59,7 @@ end
 
 --[[ Write entries to a file. ]]
 function Dict:writeFile(filename)
-  local file = assert(io.open(filename, 'w'))
+  local file = onmt.utils.Error.assert(io.open(filename, 'w'))
 
   for i = 1, self:size() do
     local label = self.idxToLabel[i]

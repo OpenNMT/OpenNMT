@@ -52,7 +52,7 @@ function Logger:__init(logFile, disableLogs, logLevel)
     self:setVisibleLevel(logLevel)
   end
   if string.len(logFile) > 0 then
-    self.logFile = io.open(logFile, (self.jsonLog and 'w') or 'a')
+    self.logFile = onmt.utils.Error.assert(io.open(logFile, (self.jsonLog and 'w') or 'a'))
     if self.jsonLog then
       self.logFile:write("[\n");
     end

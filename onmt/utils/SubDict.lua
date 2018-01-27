@@ -3,7 +3,7 @@
 local SubDict = torch.class('SubDict')
 
 function SubDict:__init(dict, filePath)
-  local f = assert(io.open(filePath, 'r'))
+  local f = onmt.utils.Error.assert(io.open(filePath, 'r'))
 
   self.vocabs = { onmt.Constants.UNK, onmt.Constants.BOS, onmt.Constants.EOS }
 
