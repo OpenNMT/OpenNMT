@@ -16,6 +16,7 @@ local function buildEncoder(class, rnnType, merge, dropout, dropout_type, dropou
   opt.dropout_type = dropout_type or 'naive'
   opt.dropout_input = dropout_input or false
   opt.max_batch_size = 64
+  opt.max_tokens = 1024
 
   if class == onmt.CNNEncoder then
     opt.cnn_size = 10

@@ -133,7 +133,8 @@
 
 ## Optimization options
 
-* `-max_batch_size <number>` (default: `64`)<br/>Maximum batch size.
+* `-max_batch_size <number>` (default: `160`)<br/>Maximum batch size.
+* `-max_tokens <number>` (default: `1800`)<br/>Maximum batch size.
 * `-uneven_batches [<boolean>]` (default: `false`)<br/>If set, batches are filled up to `-max_batch_size` even if the source lengths are different. Slower but needed for some tasks.
 * `-optim <string>` (accepted: `sgd`, `adagrad`, `adadelta`, `adam`; default: `sgd`)<br/>Optimization method.
 * `-learning_rate <number>` (default: `1`)<br/>Initial learning rate. If `adagrad` or `adam` is used, then this is the global learning rate. Recommended settings are: `sgd` = 1, `adagrad` = 0.1, `adam` = 0.0002.
