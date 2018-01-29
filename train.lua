@@ -194,10 +194,10 @@ local function buildDataset(opt, data)
     end
   end
 
-  local nTrainBatch, batchUsage = trainDataset:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+  local nTrainBatch, batchUsage = trainDataset:setBatchSize(opt.max_batch_size, opt.max_tokens, opt.uneven_batches)
 
   if validDataset then
-    validDataset:setBatchSize(opt.max_batch_size, opt.uneven_batches)
+    validDataset:setBatchSize(opt.max_batch_size, opt.max_tokens, opt.uneven_batches)
   else
     _G.logger:warning('No validation data')
   end
@@ -232,7 +232,7 @@ local function buildDataset(opt, data)
   _G.logger:info(' * number of training sentences: %d', #trainDataset.src)
   _G.logger:info(' * number of batches: %d',  nTrainBatch)
   _G.logger:info('   - source sequence lengths: %s', opt.uneven_batches and 'variable' or 'equal')
-  _G.logger:info('   - maximum size: %d', opt.max_batch_size)
+  _G.logger:info('   - maximum size: %d sentences / %d tokens', opt.max_batch_size, opt.max_tokens)
   _G.logger:info('   - average size: %.2f', trainDataset:instanceCount() / nTrainBatch)
   _G.logger:info('   - capacity: %.2f%%', math.ceil(batchUsage * 1000) / 10)
 
