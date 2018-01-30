@@ -16,6 +16,7 @@
 * Fix batch size non function with `rest_translation_server.lua`
 * Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data.
 * Fix non deterministic inference of language models
+* Fix language model sampling mode
 * Fix retraining from a language model
 * Fix `-update_vocab` option for language models
 * Correct error handling for all file open commands
