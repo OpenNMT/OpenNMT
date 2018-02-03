@@ -1,3 +1,5 @@
+tds = require 'tds'
+
 local Trainer = torch.class('Trainer')
 
 local options = {
@@ -139,6 +141,36 @@ function Trainer:__init(args, model, dicts, firstBatch)
     else
       onmt.utils.Memory.optimize(model, onmt.utils.Cuda.convert(firstBatch))
     end
+
+    _G.logger:info('Preallocating memory')
+    -- preallocate memory in encoder and decoder with highest batch size, and longest sentence
+    -- for target, we take args.tgt_seq_length as the longest possible (worse case). This could be refined
+    -- since in batch building, we can calculate tgt_max_tokens
+    local src_sentmax = math.ceil(args.max_tokens/args.max_batch_size)
+
+    src = {}
+    srcFeats = {}
+    tgt = {}
+    tgtFeats = {}
+    local sfeat = tds.Vec(#firstBatch.sourceInputFeatures)
+    for fi = 1, #firstBatch.sourceInputFeatures do
+      sfeat[fi] = torch.LongTensor(src_sentmax):fill(onmt.Constants.UNK)
+    end
+    local tfeat = tds.Vec(#firstBatch.targetInputFeatures)
+    for fi = 1, #firstBatch.targetInputFeatures do
+      tfeat[fi] = torch.LongTensor(args.tgt_seq_length):fill(onmt.Constants.UNK)
+    end
+    while #src < args.max_batch_size do
+      table.insert(src, torch.LongTensor(src_sentmax):fill(onmt.Constants.UNK))
+      table.insert(srcFeats, sfeat)
+      table.insert(tgt, torch.LongTensor(args.tgt_seq_length):fill(onmt.Constants.UNK))
+      table.insert(tgtFeats, tfeat)
+    end
+
+    -- memory should be stable now
+    local b = onmt.data.Batch.new(src, srcFeats, tgt, tgtFeats)
+    model:trainNetwork(b, true)
+
   end
 
   -- Add profiling hooks.
