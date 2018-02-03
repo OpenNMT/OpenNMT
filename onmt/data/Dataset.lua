@@ -39,7 +39,7 @@ function Dataset:setBatchSize(maxBatchSize, maxTokens, uneven_batches)
     -- correct size.
     local sourceLength = self.src[i]:size(1)
     TokensInBatch = TokensInBatch + sourceLength
-    if TokensInBatch >= maxTokens or i==1 or batchSize == maxBatchSize or
+    if TokensInBatch > maxTokens or i==1 or batchSize == maxBatchSize or
         (not(uneven_batches) and self.src[i]:size(1) ~= maxSourceLength) then
       if i > 1 then
         batchesCapacity = batchesCapacity + batchSize * maxSourceLength
