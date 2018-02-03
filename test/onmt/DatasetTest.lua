@@ -86,7 +86,7 @@ function datasetTest.inferenceDataset()
 
   local dataset = onmt.data.Dataset.new(srcData)
 
-  local count, _ = dataset:setBatchSize(2, 5)
+  local count, _ = dataset:setBatchSize(2, 500)
   tester:eq(count, 7)
   tester:eq(dataset.maxSourceLength, 5)
 
