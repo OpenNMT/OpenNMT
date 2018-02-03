@@ -162,9 +162,13 @@ function Trainer:__init(args, model, dicts, firstBatch)
     end
     while #src < args.max_batch_size do
       table.insert(src, torch.LongTensor(src_sentmax):fill(onmt.Constants.UNK))
-      table.insert(srcFeats, sfeat)
+      if #firstBatch.sourceInputFeatures > 0 then
+        table.insert(srcFeats, sfeat)
+      end
       table.insert(tgt, torch.LongTensor(args.tgt_seq_length):fill(onmt.Constants.UNK))
-      table.insert(tgtFeats, tfeat)
+      if #firstBatch.targetInputFeatures > 0 then
+        table.insert(tgtFeats, tfeat)
+      end
     end
 
     -- memory should be stable now
