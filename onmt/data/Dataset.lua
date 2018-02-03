@@ -44,7 +44,7 @@ function Dataset:setBatchSize(maxBatchSize, maxTokens, uneven_batches)
       if i > 1 then
         batchesCapacity = batchesCapacity + batchSize * maxSourceLength
         table.insert(self.batchRange, { ["begin"] = offset, ["end"] = i - 1 })
-        TokensInBatch = 0
+        TokensInBatch = sourceLength
       end
 
       offset = i
