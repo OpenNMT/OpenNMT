@@ -148,10 +148,10 @@ function Trainer:__init(args, model, dicts, firstBatch)
     -- since in batch building, we can calculate tgt_max_tokens
     local src_sentmax = math.ceil(args.max_tokens/args.max_batch_size)
 
-    src = {}
-    srcFeats = {}
-    tgt = {}
-    tgtFeats = {}
+    local src = {}
+    local srcFeats = {}
+    local tgt = {}
+    local tgtFeats = {}
     local sfeat = tds.Vec(#firstBatch.sourceInputFeatures)
     for fi = 1, #firstBatch.sourceInputFeatures do
       sfeat[fi] = torch.LongTensor(src_sentmax):fill(onmt.Constants.UNK)
