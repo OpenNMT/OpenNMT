@@ -44,14 +44,14 @@ function datasetTest.trainingDataset()
   local batch = dataset:getBatch(1)
   tester:eq(batch.size, 11)
 
-  local count, _ = dataset:setBatchSize(1,5)
+  local count, _ = dataset:setBatchSize(1, 500)
   tester:eq(count, 11)
   tester:eq(dataset.maxSourceLength, 5)
   tester:eq(dataset.maxTargetLength, 9 - 1)
 
-  count, _ = dataset:setBatchSize(2,5)
+  count, _ = dataset:setBatchSize(2, 500)
   tester:eq(count, 7)
-  count, _ = dataset:setBatchSize(3,5)
+  count, _ = dataset:setBatchSize(3, 500)
   tester:eq(count, 5)
 
   batch = dataset:getBatch()
@@ -59,7 +59,7 @@ function datasetTest.trainingDataset()
   batch = dataset:getBatch(1)
   tester:eq(batch.size, 3)
 
-  count, _ = dataset:setBatchSize(3, 5, true)
+  count, _ = dataset:setBatchSize(3, 500, true)
   tester:eq(count, 4)
 
   batch = dataset:getBatch(4)
