@@ -285,19 +285,11 @@ function Encoder:forwardOne(inputs, initial_states, clone)
   local states, context = self:forward(batch, initial_states)
 
   if clone then
-    -- clone the context and states
-    local copyStates, copyContext
-    copyStates = {}
-    for _, s in ipairs(states) do
-      table.insert(copyStates, s:clone())
-    end
-    copyContext = context:squeeze(2):clone()
-
-    return copyStates, copyContext
-  else
-    return states, context:squeeze(2)
+    states = onmt.utils.Tensor.recursiveClone(states)
+    context = context:clone()
   end
 
+  return states, context:squeeze(2)
 end
 
 --[[ Backward pass (only called during training)

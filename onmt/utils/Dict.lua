@@ -1,4 +1,5 @@
 local Dict = torch.class("Dict")
+local separators = require('tools.utils.separators')
 
 function Dict:__init(data)
   self.idxToLabel = {}
@@ -58,7 +59,7 @@ end
 
 --[[ Write entries to a file. ]]
 function Dict:writeFile(filename)
-  local file = assert(io.open(filename, 'w'))
+  local file = onmt.utils.Error.assert(io.open(filename, 'w'))
 
   for i = 1, self:size() do
     local label = self.idxToLabel[i]
@@ -72,6 +73,17 @@ function Dict:writeFile(filename)
   end
 
   file:close()
+end
+
+--[[ Get placeholder mask from vocabulary. ]]
+function Dict:getPlaceholderMask()
+  local t = onmt.utils.Cuda.convert(torch.ByteTensor(#self.idxToLabel):fill(0))
+  for i, k in ipairs(self.idxToLabel) do
+    if k:find(separators.ph_marker_open) then
+      t[i] = 1
+    end
+  end
+  return t
 end
 
 --[[ Drop or serialize the frequency tensor. ]]

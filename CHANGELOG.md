@@ -8,10 +8,18 @@
 * Sentence-level negative log-likelihood criterion for sequence tagging
 * '-' stands for stdin for inference tools (translate, lm, tag)
 * Optional source features per request (for domain control) with rest translation server
+* Display oov rate (source/target) in translate
+
 ### Fixes and improvements
 
-* Fix beam-size 1 broken with lexical constraints
+* Misc fixes on lexical beam search
 * Fix batch size non function with `rest_translation_server.lua`
+* Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data.
+* Fix non deterministic inference of language models
+* Fix language model sampling mode
+* Fix retraining from a language model
+* Fix `-update_vocab` option for language models
+* Correct error handling for all file open commands
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 

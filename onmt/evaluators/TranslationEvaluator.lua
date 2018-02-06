@@ -19,7 +19,7 @@ function TranslationEvaluator:eval(model, data, saveFile)
   local file
 
   if saveFile then
-    file = assert(io.open(saveFile, 'w'))
+    file = onmt.utils.Error.assert(io.open(saveFile, 'w'))
   end
 
   for i = 1, data:batchCount() do

@@ -217,6 +217,11 @@ function Translator:__init(args, model, dicts)
     self.phraseTable = onmt.translate.PhraseTable.new(self.args.phrase_table)
   end
 
+  -- if args.limit_lexical_constraints and args.placeholder_constraints then
+  if args.placeholder_constraints then
+    self.placeholderMask = self.dicts.tgt.words:getPlaceholderMask()
+  end
+
   if args.lm_model ~= '' then
     local tmodel = args.model
     args.model = args.lm_model
@@ -318,7 +323,6 @@ function Translator:buildData(src, gold)
         end
 
         if self.args.placeholder_constraints then
-          self.args.limit_lexical_constraints = true
           local c = {}
           for ph,_ in pairs(src[b].placeholders) do
             if (self.dicts.tgt.words:lookup(ph)) then
@@ -367,25 +371,23 @@ end
 function Translator:buildTargetWords(pred, src, attn, placeholders)
   local tokens = self.dicts.tgt.words:convertToLabels(pred, onmt.Constants.EOS)
 
-  if self.args.replace_unk or self.args.replace_unk_tagged or self.args.placeholder_constraints then
-    for i = 1, #tokens do
-      if tokens[i] == onmt.Constants.UNK_WORD and (self.args.replace_unk or self.args.replace_unk_tagged) then
-        local _, maxIndex = attn[i]:max(1)
-        local source = src[maxIndex[1]]
+  for i = 1, #tokens do
+    if tokens[i] == onmt.Constants.UNK_WORD and (self.args.replace_unk or self.args.replace_unk_tagged) then
+      local _, maxIndex = attn[i]:max(1)
+      local source = src[maxIndex[1]]
 
-        if self.phraseTable and self.phraseTable:contains(source) then
-          tokens[i] = self.phraseTable:lookup(source)
+      if self.phraseTable and self.phraseTable:contains(source) then
+        tokens[i] = self.phraseTable:lookup(source)
 
-        elseif self.args.replace_unk then
-          tokens[i] = source
+      elseif self.args.replace_unk then
+        tokens[i] = source
 
-        elseif self.args.replace_unk_tagged then
-          tokens[i] = '｟unk:' .. source .. '｠'
-        end
+      elseif self.args.replace_unk_tagged then
+        tokens[i] = '｟unk:' .. source .. '｠'
       end
-      if placeholders[tokens[i]] and self.args.placeholder_constraints then
-        tokens[i] = placeholders[tokens[i]]
-      end
+    end
+    if placeholders[tokens[i]] then
+      tokens[i] = placeholders[tokens[i]]
     end
   end
 
@@ -453,7 +455,6 @@ function Translator:translateBatch(batch)
                                                       context,
                                                       self.args.max_sent_length,
                                                       self.args.max_num_unks,
-                                                      self.args.limit_lexical_constraints,
                                                       decInitStates,
                                                       self.lm and self.lm.model.models,
                                                       lmStates, lmContext, self.args.lm_weight,
@@ -475,7 +476,9 @@ function Translator:translateBatch(batch)
   local beamSearcher = onmt.translate.BeamSearcher.new(advancer, self.args.save_beam_to:len() > 0)
   local results, histories = beamSearcher:search(self.args.beam_size,
                                                  self.args.n_best,
-                                                 self.args.pre_filter_factor)
+                                                 self.args.pre_filter_factor,
+                                                 false,
+                                                 self.placeholderMask)
 
   local allHyp = {}
   local allFeats = {}
@@ -596,6 +599,19 @@ Returns:
 function Translator:translate(src, gold)
   local data, ignored, indexMap = self:buildData(src, gold)
 
+  local UnkCountSrc = 0
+  local totalCountSrc = 0
+
+  -- calculate source unk counts
+  for i = 1, #data.src do
+    UnkCountSrc = UnkCountSrc + data.src[i]:eq(onmt.Constants.UNK):sum()
+    if src[indexMap[i]].words then
+      totalCountSrc = totalCountSrc + #src[indexMap[i]].words
+    else
+      totalCountSrc = totalCountSrc + src[indexMap[i]].vectors:size(1)
+    end
+  end
+
   local results = {}
 
   if data:batchCount() > 0 then
@@ -644,7 +660,7 @@ function Translator:translate(src, gold)
     table.insert(results, ignored[i], {})
   end
 
-  return results
+  return results, UnkCountSrc, totalCountSrc
 end
 
 return Translator

@@ -4,7 +4,7 @@ function FileReader:__init(filename, idxSent, featSequence)
   if filename == '-' then
     self.file = io.stdin
   else
-    self.file = assert(io.open(filename, "r"))
+    self.file = onmt.utils.Error.assert(io.open(filename, "r"))
   end
   self.idxSent = idxSent
   self.featSequence = featSequence
