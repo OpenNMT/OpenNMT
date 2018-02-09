@@ -65,7 +65,7 @@ end
 local function main()
   assert(path.exists(opt.model), 'model \'' .. opt.model .. '\' does not exist.')
 
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level, opt.log_tag)
 
   if opt.output_model:len() == 0 then
     if opt.model:sub(-3) == '.t7' then
