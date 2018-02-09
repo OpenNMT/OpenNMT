@@ -39,7 +39,7 @@ cmd:option('-time', false, [[Measure average translation time.]])
 local function main()
   local opt = cmd:parse(arg)
 
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level, opt.log_tag)
   onmt.utils.Cuda.init(opt)
 
   local tagger = onmt.tagger.Tagger.new(opt)

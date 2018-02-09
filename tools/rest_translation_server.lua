@@ -165,7 +165,7 @@ end
 
 local function main()
   -- load logger
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level, opt.log_tag)
   onmt.utils.Cuda.init(opt)
 
   _G.hookManager = onmt.utils.HookManager.new(opt)
