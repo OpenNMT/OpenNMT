@@ -5,14 +5,21 @@ ARG ONMT_REF
 
 RUN apt-get update && \
     apt-get install -y \
+        autoconf \
+        automake \
         build-essential \
         cmake \
         curl \
         g++ \
         gcc \
         git \
+        libprotobuf-dev \
+        libprotobuf9v5 \
         libreadline-dev \
+        libtool \
         libzmq-dev \
+        pkg-config \
+        protobuf-compiler \
         unzip
 
 # Compile Torch and OpenNMT dependencies.
@@ -32,6 +39,23 @@ RUN /root/torch/bin/luarocks install tds && \
     /root/torch/bin/luarocks install lua-zmq \
         ZEROMQ_LIBDIR=/usr/lib/x86_64-linux-gnu/ ZEROMQ_INCDIR=/usr/include
 
+# Install lua-sentencepiece
+RUN git clone https://github.com/google/sentencepiece.git /root/sentencepiece-git && \
+    cd /root/sentencepiece-git && \
+    ./autogen.sh && \
+    ./configure --prefix=/root/sentencepiece && \
+    make && \
+    make install && \
+    cd /root && \
+    rm -r /root/sentencepiece-git
+RUN git clone https://github.com/OpenNMT/lua-sentencepiece.git /root/lua-sentencepiece && \
+    cd /root/lua-sentencepiece && \
+    CMAKE_LIBRARY_PATH=/root/sentencepiece/lib CMAKE_INCLUDE_PATH=/root/sentencepiece/include \
+    /root/torch/bin/luarocks make lua-sentencepiece-scm-1.rockspec \
+        LIBSENTENCEPIECE_DIR=/root/sentencepiece && \
+    cd /root && \
+    rm -r /root/lua-sentencepiece
+
 # Fetch OpenNMT.
 ENV ONMT_URL=${ONMT_URL:-https://github.com/OpenNMT/OpenNMT.git}
 ENV ONMT_REF=${ONMT_REF:-master}
@@ -44,15 +68,18 @@ MAINTAINER OpenNMT <http://opennmt.net/>
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libgomp1 \
+        libprotobuf9v5 \
         libzmq1 \
         python3 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 ENV TORCH_DIR=/root/torch
+ENV SENTENCEPIECE_DIR=/root/sentencepiece
 ENV ONMT_DIR=/root/opennmt
 
 COPY --from=torch_builder /root/torch ${TORCH_DIR}
+COPY --from=torch_builder /root/sentencepiece ${SENTENCEPIECE_DIR}
 COPY --from=torch_builder /root/opennmt ${ONMT_DIR}
 
 ENV LUA_PATH="${TORCH_DIR}/share/lua/5.1/?.lua;${TORCH_DIR}/share/lua/5.1/?/init.lua;./?.lua"
