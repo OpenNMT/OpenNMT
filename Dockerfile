@@ -1,7 +1,4 @@
 FROM nvidia/cuda:8.0-devel-ubuntu16.04 as torch_builder
-ARG CUDA_ARCH
-ARG ONMT_URL
-ARG ONMT_REF
 
 RUN apt-get update && \
     apt-get install -y \
@@ -23,6 +20,7 @@ RUN apt-get update && \
         unzip
 
 # Compile Torch and OpenNMT dependencies.
+ARG CUDA_ARCH
 ENV CUDA_ARCH=${CUDA_ARCH:-Common}
 RUN git clone https://github.com/torch/distro.git /root/torch-distro --recursive && \
     cd /root/torch-distro && \
@@ -57,7 +55,9 @@ RUN git clone https://github.com/OpenNMT/lua-sentencepiece.git /root/lua-sentenc
     rm -r /root/lua-sentencepiece
 
 # Fetch OpenNMT.
+ARG ONMT_URL
 ENV ONMT_URL=${ONMT_URL:-https://github.com/OpenNMT/OpenNMT.git}
+ARG ONMT_REF
 ENV ONMT_REF=${ONMT_REF:-master}
 RUN git clone --depth 1 --branch ${ONMT_REF} --single-branch ${ONMT_URL} /root/opennmt
 
