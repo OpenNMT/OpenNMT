@@ -28,13 +28,6 @@ And you are ready to go! Take a look at the [quickstart](quickstart.md) to famil
 sudo nvidia-docker run -it opennmt/opennmt:latest
 ```
 
-3\. Clone the OpenNMT repository:
-
-```bash
-git clone https://github.com/OpenNMT/OpenNMT ~/OpenNMT
-cd ~/OpenNMT
-```
-
 ## Amazon EC2
 
 The best way to do this is through Docker. We have a public AMI with the preliminary CUDA drivers installed: `ami-c12f86a1`. Start a P2/G2 GPU instance with this AMI and run the `nvidia-docker` command above to get started.
