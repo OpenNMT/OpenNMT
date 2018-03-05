@@ -9,6 +9,7 @@
 * '-' stands for stdin for inference tools (translate, lm, tag)
 * Optional source features per request (for domain control) with rest translation server
 * Display oov rate (source/target) in translate
+* Introduce `max_tokens` allowing longer sentence handling and larger batch size
 * Add `-log_tag` option to add tag in logs for better automatic processing
 
 ### Fixes and improvements

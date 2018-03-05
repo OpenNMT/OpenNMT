@@ -8,7 +8,7 @@ function DynamicDataset:__init(opt, ddr)
 end
 
 --[[ define batch size ]]
-function DynamicDataset:setBatchSize(maxBatchSize, uneven_batches)
+function DynamicDataset:setBatchSize(maxBatchSize, maxTokens, uneven_batches)
   -- time to build first sample
   local data = self.ddr.preprocessor:makeData('train', self.ddr.dicts)
   self.first = true
@@ -18,8 +18,9 @@ function DynamicDataset:setBatchSize(maxBatchSize, uneven_batches)
     self.dataset = onmt.data.Dataset.new(data.src, data.tgt)
   end
   self.maxBatchSize = maxBatchSize
+  self.maxTokens = maxTokens
   self.uneven_batches = uneven_batches
-  local nTrainBatch, batchUsage = self.dataset:setBatchSize(maxBatchSize, uneven_batches)
+  local nTrainBatch, batchUsage = self.dataset:setBatchSize(maxBatchSize, maxTokens, uneven_batches)
   self.src = self.dataset.src
   self.tgt = self.dataset.tgt
   self.maxSourceLength = self.dataset.maxSourceLength
@@ -42,7 +43,7 @@ function DynamicDataset:sample()
       self.src = self.dataset.src
       self.tgt = self.dataset.tgt
       self:sampleVocabInit(self.opt, self.src, self.tgt)
-      local nTrainBatch, _ = self.dataset:setBatchSize(self.maxBatchSize, self.uneven_batches)
+      local nTrainBatch, _ = self.dataset:setBatchSize(self.maxBatchSize, self.maxTokens, self.uneven_batches)
       self.maxSourceLength = self.dataset.maxSourceLength
       self.maxTargetLength = self.dataset.maxTargetLength
       _G.logger:info('Sampling completed - %d sentences, %d mini-batch', #self.src, nTrainBatch)

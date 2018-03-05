@@ -9,7 +9,8 @@ This means your model was too large to fit on the available GPU memory.
 To work around this error during training, follow these steps in order and stop when the training no more fails:
 
 * Prefix your command line with `THC_CACHING_ALLOCATOR=0`
-* Reduce the `-max_batch_size` value (64 by default)
+* Reduce the `-max_batch_size` value (160 by default)
+* Reduce the `-max_tokens` value (1800 by default)
 * Reduce the `-src_seq_length` and `-tgt_seq_length` values during the preprocessing
 * Reduce your model size (`-layers`, `-rnn_size`, etc.)
 

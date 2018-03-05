@@ -74,6 +74,7 @@ function SampledDataset:__init(opt, srcData, tgtData)
     self.samplingProb = torch.ones(#self.src)
   end
 
+  self.maxTokens = opt.max_tokens
   self.sampled = nil
   self.sampledCnt = torch.zeros(#self.src)
 end
@@ -212,10 +213,13 @@ function SampledDataset:sample(logLevel)
   local sampleCntBegin = 1
   local batchSize = 1
   local maxSourceLength = -1
+  local TokensInBatch = 0
+
   for i = 1, #self.src do
     for j = 1, self.sampledCnt[i] do
       local sourceLength = self.src[i]:size(1)
-      if batchSize == self.maxBatchSize or offset == 1 or
+      TokensInBatch = TokensInBatch + sourceLength
+      if TokensInBatch > self.maxTokens or batchSize == self.maxBatchSize or offset == 1 or
          (not(self.uneven_batches) and self.src[i]:size(1) ~= maxSourceLength) then
         if offset > 0 then
           batchesCapacity = batchesCapacity + batchSize * maxSourceLength
@@ -228,6 +232,7 @@ function SampledDataset:sample(logLevel)
             ["sampleCntEnd"] = sampleCntEnd
           })
           sampleCntBegin = (j == 1) and 1 or j
+          TokensInBatch = sourceLength
         end
         offset = i
         batchSize = 1
