@@ -18,7 +18,7 @@ end
 
 --[[ Setup up the training data to respect `maxBatchSize`.
      If uneven_batches - then build up batches with different lengths ]]
-function Dataset:setBatchSize(maxBatchSize, uneven_batches)
+function Dataset:setBatchSize(maxBatchSize, maxTokens, uneven_batches)
 
   self.batchRange = {}
   self.maxSourceLength = 0
@@ -32,16 +32,19 @@ function Dataset:setBatchSize(maxBatchSize, uneven_batches)
   local batchSize = 1
   local maxSourceLength = 0
   local targetLength = 0
+  local TokensInBatch = 0
 
   for i = 1, #self.src do
     -- Set up the offsets to make same source size batches of the
     -- correct size.
     local sourceLength = self.src[i]:size(1)
-    if batchSize == maxBatchSize or i == 1 or
+    TokensInBatch = TokensInBatch + sourceLength
+    if TokensInBatch > maxTokens or i==1 or batchSize == maxBatchSize or
         (not(uneven_batches) and self.src[i]:size(1) ~= maxSourceLength) then
       if i > 1 then
         batchesCapacity = batchesCapacity + batchSize * maxSourceLength
         table.insert(self.batchRange, { ["begin"] = offset, ["end"] = i - 1 })
+        TokensInBatch = sourceLength
       end
 
       offset = i

@@ -2,8 +2,15 @@ local Optim = torch.class('Optim')
 
 local options = {
   {
-    '-max_batch_size', 64,
+    '-max_batch_size', 160,
     [[Maximum batch size.]],
+    {
+      valid = onmt.utils.ExtendedCmdLine.isUInt()
+    }
+  },
+  {
+    '-max_tokens', 1800,
+    [[Maximum tokens in a batch.]],
     {
       valid = onmt.utils.ExtendedCmdLine.isUInt()
     }

@@ -47,7 +47,7 @@ onmt.utils.Logger.declareOpts(cmd)
 local opt = cmd:parse(arg)
 
 local function main()
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level, opt.log_tag)
 
   local embeddingWeights = torch.load(opt.embed_data)
 

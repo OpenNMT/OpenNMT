@@ -17,6 +17,7 @@ function sampledDatasetTest.sample()
   opt.sample_perplexity_init = 100
   opt.sample_perplexity_max = 1000
   opt.sample_vocab = false
+  opt.max_tokens = 100000
 
   local tds = require('tds')
   local srcData = {words = tds.Vec(), features = tds.Vec()}
