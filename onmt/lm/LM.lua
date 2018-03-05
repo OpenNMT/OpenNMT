@@ -167,8 +167,10 @@ Returns:
 ]]
 function LM:sample(src, max_length, temperature)
   local data = self:buildData(src, false, true)
+  local batch = data:getBatch()
+  local numFeatures = #batch.sourceInputFeatures
 
-  local states, context = self.model.models.encoder:forward(data:getBatch())
+  local states, context = self.model.models.encoder:forward(batch)
 
   local foundEOS = 0
   local results = {}
@@ -177,10 +179,8 @@ function LM:sample(src, max_length, temperature)
   for i = 1, #data.src do
     table.insert(results, torch.totable(data.src[i]))
     table.insert(resultFeats, {})
-    if data.srcFeatures and data.srcFeatures[i] then
-      for k = 1, #data.srcFeatures[i] do
-        table.insert(resultFeats[i], torch.totable(data.srcFeatures[i][k]))
-      end
+    for k = 1, numFeatures do
+      table.insert(resultFeats[i], torch.totable(data.srcFeatures[i][k]))
     end
   end
 
@@ -191,7 +191,7 @@ function LM:sample(src, max_length, temperature)
     local nextsrc = {}
     -- prepare empty features
     local nextsrcFeats = {}
-    for _ = 1, #data.srcFeatures do
+    for _ = 1, numFeatures do
       table.insert(nextsrcFeats, {})
     end
 
@@ -216,7 +216,7 @@ function LM:sample(src, max_length, temperature)
             end
             table.insert(results[i], token)
           end
-          table.insert(nextsrc, torch.IntTensor{token})
+          table.insert(nextsrc, token)
           table.insert(justCompleted, changeComplete)
         else
           if not completed[i] or justCompleted[i] then
@@ -225,9 +225,14 @@ function LM:sample(src, max_length, temperature)
             end
             table.insert(resultFeats[i][k-1], token)
           end
-          table.insert(nextsrcFeats[i], torch.IntTensor{token})
+          table.insert(nextsrcFeats[k-1], token)
         end
       end
+    end
+
+    nextsrc = torch.LongTensor(nextsrc)
+    for i, v in ipairs(nextsrcFeats) do
+      nextsrcFeats[i] = torch.LongTensor(v)
     end
 
     local inputs
@@ -243,6 +248,7 @@ function LM:sample(src, max_length, temperature)
     onmt.utils.Cuda.convert(inputs)
 
     states, context = self.model.models.encoder:forwardOne(inputs, states)
+    context = nn.utils.addSingletonDimension(context, 2)
     t = t + 1
   end
 
@@ -251,12 +257,10 @@ function LM:sample(src, max_length, temperature)
     -- remove BOS/EOS
     table.remove(results[i], 1)
     table.remove(results[i])
-    if data.srcFeatures and data.srcFeatures[i] then
-      for k = 1, #data.srcFeatures[i] do
-        resultFeats[i][k] = self.dicts.src.features[k]:convertToLabels(resultFeats[i][k], onmt.Constants.EOS)
-        table.remove(resultFeats[i][k], 1)
-        table.remove(resultFeats[i][k])
-      end
+    for k = 1, numFeatures do
+      resultFeats[i][k] = self.dicts.src.features[k]:convertToLabels(resultFeats[i][k])
+      table.remove(resultFeats[i][k], 1)
+      table.remove(resultFeats[i][k])
     end
     results[i] = self:buildOutput({words=results[i],features=resultFeats[i]})
   end

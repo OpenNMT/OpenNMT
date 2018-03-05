@@ -10,6 +10,7 @@
 * Optional source features per request (for domain control) with rest translation server
 * Display oov rate (source/target) in translate
 * Introduce `max_tokens` allowing longer sentence handling and larger batch size
+* Add `-log_tag` option to add tag in logs for better automatic processing
 
 ### Fixes and improvements
 
@@ -17,9 +18,11 @@
 * Fix batch size non function with `rest_translation_server.lua`
 * Introduce `-tokenizer max` option to scorer for evaluation on non tokenized test data.
 * Fix non deterministic inference of language models
+* Fix language model sampling mode
 * Fix retraining from a language model
 * Fix `-update_vocab` option for language models
 * Correct error handling for all file open commands
+* Reduce the Docker image size
 
 ## [v0.9.7](https://github.com/OpenNMT/OpenNMT/releases/tag/v0.9.7) (2017-12-19)
 

@@ -66,7 +66,7 @@ local function main()
     assert(path.exists(f), 'model \'' .. f .. '\' does not exist.')
   end
 
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level, opt.log_tag)
 
   if not opt.force then
     assert(not path.exists(opt.output_model),

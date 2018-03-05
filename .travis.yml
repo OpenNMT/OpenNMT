@@ -1,10 +1,9 @@
-sudo: required 
+sudo: required
 language: c
 services:
   - docker
 before_install:
   - sudo docker pull opennmt/opennmt:latest
-  - sudo docker build -t opennmt/opennmt:latest --cache-from opennmt/opennmt:latest .
   - sudo docker run -itd --name build -v $(pwd):/repo -w /repo opennmt/opennmt:latest
 before_script:
   - export LUA=$(docker exec build which luajit lua | head -n 1)
@@ -15,9 +14,3 @@ script:
   - sudo docker exec build luacov
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - |
-        if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-            docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-            sudo docker tag opennmt/opennmt:latest opennmt/opennmt:$TRAVIS_BUILD_NUMBER
-            docker push opennmt/opennmt
-        fi

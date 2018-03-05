@@ -47,7 +47,7 @@ end
 local function main()
   local opt = cmd:parse(arg)
 
-  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level)
+  _G.logger = onmt.utils.Logger.new(opt.log_file, opt.disable_logs, opt.log_level, opt.log_tag)
 
   local vocab = onmt.data.Vocabulary.init('source', opt.data, '', opt.vocab_size, opt.words_min_frequency, '', isValid, opt.keep_frequency, opt.idx_files)
 
