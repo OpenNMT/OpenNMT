@@ -17,7 +17,22 @@ RUN apt-get update && \
         libzmq-dev \
         pkg-config \
         protobuf-compiler \
-        unzip
+        unzip \
+        wget
+
+# Fetch Intel MKL.
+RUN mkdir /root/mkl && \
+    wget https://anaconda.org/intel/mkl/2018.0.1/download/linux-64/mkl-2018.0.1-intel_4.tar.bz2 && \
+    tar -xf mkl-2018.0.1-intel_4.tar.bz2 -C /root/mkl && \
+    rm mkl-2018.0.1-intel_4.tar.bz2
+ENV MKL_ROOT=/root/mkl
+RUN rm -f $MKL_ROOT/lib/*vml* \
+          $MKL_ROOT/lib/*ilp64* \
+          $MKL_ROOT/lib/*blacs* \
+          $MKL_ROOT/lib/*scalapack* \
+          $MKL_ROOT/lib/*cdft* \
+          $MKL_ROOT/lib/libmkl_tbb_thread.so \
+          $MKL_ROOT/lib/libmkl_ao_worker.so
 
 # Compile Torch and OpenNMT dependencies.
 ARG CUDA_ARCH
@@ -25,8 +40,10 @@ ENV CUDA_ARCH=${CUDA_ARCH:-Common}
 RUN git clone https://github.com/torch/distro.git /root/torch-distro --recursive && \
     cd /root/torch-distro && \
     mkdir /root/torch && \
+    CMAKE_LIBRARY_PATH=$CMAKE_LIBRARY_PATH:$MKL_ROOT/lib \
     TORCH_CUDA_ARCH_LIST=${CUDA_ARCH} TORCH_NVCC_FLAGS="-Xfatbin -compress-all" \
     PREFIX=/root/torch ./install.sh
+RUN cp -r $MKL_ROOT/lib/* /root/torch/lib
 RUN /root/torch/bin/luarocks install tds && \
     /root/torch/bin/luarocks install dkjson && \
     /root/torch/bin/luarocks install wsapi && \
