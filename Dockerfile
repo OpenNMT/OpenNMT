@@ -46,7 +46,7 @@ RUN git clone https://github.com/torch/distro.git /root/torch-distro --recursive
 RUN cp -r $MKL_ROOT/lib/* /root/torch/lib
 RUN /root/torch/bin/luarocks install tds && \
     /root/torch/bin/luarocks install dkjson && \
-    /root/torch/bin/luarocks install wsapi && \
+    /root/torch/bin/luarocks install restserver-xavante && \
     /root/torch/bin/luarocks install yaml && \
     /root/torch/bin/luarocks install bit32 && \
     /root/torch/bin/luarocks install luacheck && \
