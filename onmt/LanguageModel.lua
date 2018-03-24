@@ -65,7 +65,7 @@ function LanguageModel:__init(args, dicts)
   self.models.encoder = onmt.Factory.buildWordEncoder(args, dicts.src)
   self.models.generator = onmt.Factory.buildGenerator(args, dicts.src)
 
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.src))
   self.srcVocabSize = dicts.src.words:size(1)
 
 end
@@ -78,7 +78,7 @@ function LanguageModel.load(args, models, dicts)
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.generator = onmt.Generator.load(models.generator)
-  self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.src))
+  self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.src))
   self.srcVocabSize = dicts.src.words:size(1)
 
   self.eosProto = {}

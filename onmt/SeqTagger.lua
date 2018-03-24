@@ -87,7 +87,7 @@ function SeqTagger:__init(args, dicts)
   self.loglikelihood = args.loglikelihood
 
   if self.loglikelihood == 'word' then
-    self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+    self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
   elseif self.loglikelihood == 'sentence' then
     self.criterion = onmt.SentenceNLLCriterion(args, onmt.Factory.getOutputSizes(dicts.tgt))
     self.models.criterion = self.criterion -- criterion is model parameter
@@ -107,7 +107,7 @@ function SeqTagger.load(args, models, dicts)
                                   'Invalid loglikelihood type of SeqTagger `%s\'', args.loglikelihood)
 
   if args.loglikelihood == 'word' then
-    self.criterion = onmt.ParallelClassNLLCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+    self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
     self.loglikelihood = 'word'
   elseif args.loglikelihood == 'sentence' then
     if not models.criterion then -- loading pre-trained word model to further train sentence model

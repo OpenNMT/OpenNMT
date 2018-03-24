@@ -4,7 +4,7 @@ local tester = ...
 
 local decoderTest = torch.TestSuite()
 
-local criterion = onmt.ParallelClassNLLCriterion({10})
+local criterion = onmt.ParallelCriterion({10})
 
 local function buildDecoder(inputFeed, rnnType, layers)
   local cmd = onmt.utils.ExtendedCmdLine.new()

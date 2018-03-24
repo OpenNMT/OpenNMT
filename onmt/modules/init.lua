@@ -28,7 +28,8 @@ require('onmt.modules.GlobalAttention')
 require('onmt.modules.Generator')
 
 require('onmt.modules.JoinReplicateTable')
-require('onmt.modules.ParallelClassNLLCriterion')
+require('onmt.modules.ParallelCriterion')
+require('onmt.modules.LabelSmoothingCriterion')
 require('onmt.modules.RIndexLinear')
 
 require('onmt.modules.SentenceNLLCriterion')
