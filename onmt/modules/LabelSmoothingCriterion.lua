@@ -44,9 +44,9 @@ end
 
 
 function LabelSmoothingCriterion:updateOutput(input, target)
-  self.weights:expand(1, input:size(0))
+  self.weights:expand(1, input:size(1))
   self.u:resize(input):copy(self.weights)
-  self.u:indexAdd(2, target, self.confidence:expand(1, input:size(0)))
+  self.u:indexAdd(2, target, self.confidence:expand(1, input:size(1)))
   return parent:updateOutput(self, input, self.one_hot)
 end
 

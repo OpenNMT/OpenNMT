@@ -25,7 +25,7 @@ function ParallelCriterion:_addCriterion(size, label_smoothing)
   label_smoothing = label_smoothing or 0
   local criterion
 
-  if label_smoothing and label_smoothing > 0 then
+  if not label_smoothing or label_smoothing == 0 then
     -- Ignores padding value.
     local w = torch.ones(size)
     w[onmt.Constants.PAD] = 0
