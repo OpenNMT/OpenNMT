@@ -96,6 +96,10 @@ local options = {
       valid = onmt.utils.ExtendedCmdLine.isUInt(),
       structural = 0
     }
+  },
+  {
+    '-label_smoothing', 0,
+    [[Label smoothing regularization in loss]]
   }
 }
 
@@ -130,7 +134,7 @@ function Seq2Seq:__init(args, dicts)
                                    decArgs.rnn_size,
                                    self.models.decoder.args.numStates)
 
-  self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.tgt), args.label_smoothing)
   self.tgtVocabSize = dicts.tgt.words:size(1)
 
 end
@@ -144,7 +148,7 @@ function Seq2Seq.load(args, models, dicts)
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
   self.models.bridge = onmt.Bridge.load(models.bridge)
-  self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.tgt))
+  self.criterion = onmt.ParallelCriterion(onmt.Factory.getOutputSizes(dicts.tgt), args.label_smoothing)
   self.tgtVocabSize = dicts.tgt.words:size(1)
 
   return self
