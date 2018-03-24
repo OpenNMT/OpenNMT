@@ -14,7 +14,7 @@ function LabelSmoothingCriterion:__init(size, epsilon, vocab_distribution)
   self.u = torch.Tensor(1, size)
   self.weights = torch.Tensor(1, size)
   self.size = size
-  self.confidence = torch.Tensor{1-epsilon}
+  self.confidence = torch.Tensor(1,1):fill(1-epsilon)
   if vocab_distribution then
     self.vocab_distribution = vocab_distribution
     self.vocab_distribution[onmt.Constants.PAD] = 0
@@ -43,13 +43,15 @@ function LabelSmoothingCriterion:updateVocab(vocab_index)
 end
 
 
-function LabelSmoothingCriterion:updateOutput(input, target)
-  self.weights:expand(1, input:size(1))
-  self.u:resize(input):copy(self.weights)
-  self.u:indexAdd(2, target, self.confidence:expand(1, input:size(1)))
-  return parent:updateOutput(self, input, self.one_hot)
+function LabelSmoothingCriterion:updateOutput(input, target)  
+  self.u:resize(input:size()):copy(self.weights:expand(input:size()))
+  self.u:scatter(2, target:view(-1,1),
+                            self.confidence:expand(input:size(1),1) +
+                            torch.gather(self.u, 2, target:view(-1,1)))
+  return parent:updateOutput(self, input, self.u)
 end
 
-function LabelSmoothingCriterion:updateGradInput(input)
-  return parent:updateGradInput(self, input, self.one_hot)
+function LabelSmoothingCriterion:updateGradInput(input, _)
+  print(input:dim(),self.u:dim())
+  return parent:updateGradInput(self, input, self.u)
 end
