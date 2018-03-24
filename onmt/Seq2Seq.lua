@@ -176,12 +176,12 @@ end
 
 function Seq2Seq:setGeneratorVocab(t)
   self.models.decoder.generator:setGeneratorVocab(t)
-  self.criterion:setGeneratorVocabSize(t:size(1))
+  self.criterion:updateVocav(t)
 end
 
 function Seq2Seq:unsetGeneratorVocab()
   self.models.decoder.generator:setGeneratorVocab()
-  self.criterion:setGeneratorVocabSize(self.tgtVocabSize)
+  self.criterion:updateVocab()
 end
 
 function Seq2Seq:updateRates(epoch)

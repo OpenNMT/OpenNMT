@@ -5,7 +5,8 @@
 local LabelSmoothingCriterion, parent = torch.class('nn.LabelSmoothingCriterion', 'nn.DistKLDivCriterion')
 
 -- initialization requires value for epsilon
--- if provided a prior vocab distribution define probability accordingly otherwise, just uniform
+-- if provided a prior vocab distribution use distribution to dispatch epsilon probability
+-- otherwise uniform dispatch
 function LabelSmoothingCriterion:__init(size, epsilon, vocab_distribution)
   parent.__init(self)
 

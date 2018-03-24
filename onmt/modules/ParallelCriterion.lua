@@ -3,7 +3,7 @@
 --]]
 local ParallelCriterion, parent = torch.class('onmt.ParallelCriterion', 'nn.ParallelCriterion')
 
-function ParallelCriterion:__init(outputSizes)
+function ParallelCriterion:__init(outputSizes, label_smoothing)
   parent.__init(self, false)
 
   for i = 1, #outputSizes do
@@ -13,8 +13,12 @@ function ParallelCriterion:__init(outputSizes)
   end
 end
 
-function Seq2Seq:setGeneratorVocabSize(size)
-  self.mainCriterion.weights:resize(size)
+function ParallelCriterion:updateVocab(vocab)
+  if self.mainCriterion.updateVocab then
+    self.mainCriterion:updateVocab(vocab)
+  else
+    self.mainCriterion.weights:resize(vocab:size(1))
+  end
 end
 
 function ParallelCriterion:_addCriterion(size, label_smoothing)
@@ -27,9 +31,7 @@ function ParallelCriterion:_addCriterion(size, label_smoothing)
     w[onmt.Constants.PAD] = 0
     criterion = nn.ClassNLLCriterion(w)
   else
-    criterion = nn.DistKLDivCriterion()
-    criterion.one_hot = torch.Tensor(1, size)
-    criterion.one_hot:fill(label_smoothing / (len(size) - 2))
+    criterion = onmt.LabelSmoothingCriterion(size, label_smoothing)
   end
 
   -- Let the training code manage loss normalization.
