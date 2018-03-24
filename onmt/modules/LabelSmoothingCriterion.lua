@@ -2,7 +2,7 @@
   Implement Label smoothing criterion as defined in Szegedy, 2015 (https://arxiv.org/pdf/1512.00567.pdf)
 --]]
 
-local LabelSmoothingCriterion, parent = torch.class('nn.LabelSmoothingCriterion', 'nn.DistKLDivCriterion')
+local LabelSmoothingCriterion, parent = torch.class('onmt.LabelSmoothingCriterion', 'nn.DistKLDivCriterion')
 
 -- initialization requires value for epsilon
 -- if provided a prior vocab distribution use distribution to dispatch epsilon probability
