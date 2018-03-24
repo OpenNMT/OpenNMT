@@ -48,10 +48,9 @@ function LabelSmoothingCriterion:updateOutput(input, target)
   self.u:scatter(2, target:view(-1,1),
                             self.confidence:expand(input:size(1),1) +
                             torch.gather(self.u, 2, target:view(-1,1)))
-  return parent:updateOutput(self, input, self.u)
+  return parent.updateOutput(self, input, self.u)
 end
 
 function LabelSmoothingCriterion:updateGradInput(input, _)
-  print(input:dim(),self.u:dim())
-  return parent:updateGradInput(self, input, self.u)
+  return parent.updateGradInput(self, input, self.u)
 end
