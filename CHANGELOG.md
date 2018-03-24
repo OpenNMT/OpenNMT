@@ -6,6 +6,7 @@
 
 * Introduce hook mechanism for additional customization of workflows
 * Sentence-level negative log-likelihood criterion for sequence tagging
+* Implement label smoothing (uniform)
 * '-' stands for stdin for inference tools (translate, lm, tag)
 * Optional source features per request (for domain control) with rest translation server
 * Display oov rate (source/target) in translate
