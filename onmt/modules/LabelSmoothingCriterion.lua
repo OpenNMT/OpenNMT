@@ -43,7 +43,7 @@ function LabelSmoothingCriterion:updateVocab(vocab_index)
 end
 
 
-function LabelSmoothingCriterion:updateOutput(input, target)  
+function LabelSmoothingCriterion:updateOutput(input, target)
   self.u:resize(input:size()):copy(self.weights:expand(input:size()))
   self.u:scatter(2, target:view(-1,1),
                             self.confidence:expand(input:size(1),1) +
