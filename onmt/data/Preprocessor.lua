@@ -47,6 +47,14 @@ local commonOptions = {
     }
   },
   {
+    '-src_reverse', false,
+    [[Reverse source sequences.]]
+  },
+  {
+    '-tgt_reverse', false,
+    [[Reverse target sequences.]]
+  },
+  {
     '-sort', true,
     [[If set, sort the sequences by size to build batches without source padding.]]
   },
@@ -682,7 +690,8 @@ end
   * `sample_file`: possible torch mapping vector
 ]]
 function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, constants,
-                                      isValid, generateFeatures, parallelCheck, sample_file)
+                                      isValid, generateFeatures, parallelCheck, sample_file,
+                                      reverseFile)
   local verbose = _G.logger.level == 'DEBUG'
   sample_file = sample_file or {}
   local n = #files[1][2]
@@ -729,7 +738,8 @@ function Preprocessor:makeGenericData(files, isInputVector, dicts, nameSources, 
         local readers = {}
         local prunedRatio = {}
         for i = 1, n do
-          table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files, isInputVector[i]))
+          table.insert(readers, onmt.utils.FileReader.new(df[2][i], idx_files,
+                                        isInputVector[i], reverseFile[i]))
           table.insert(prunedRatio, 0)
         end
 
@@ -1036,7 +1046,8 @@ function Preprocessor:makeBilingualData(files, srcDicts, tgtDicts, sample_file)
                                 onmt.utils.Features.generateTarget
                               },
                               self.args.check_plength and self.parallelCheck,
-                              sample_file)
+                              sample_file,
+                              { self.args.src_reverse, self.args.tgt_reverse })
   return data[1], data[2]
 end
 
@@ -1067,7 +1078,8 @@ function Preprocessor:makeFeatTextData(files, tgtDicts, sample_file)
                                 onmt.utils.Features.generateTarget
                               },
                               self.args.check_plength and self.parallelCheck,
-                              sample_file)
+                              sample_file,
+                              { self.args.src_reverse, self.args.tgt_reverse })
   return data[1], data[2]
 end
 
@@ -1093,7 +1105,8 @@ function Preprocessor:makeMonolingualData(files, dicts, sample_file)
                                 onmt.utils.Features.generateTarget
                               },
                               nil,
-                              sample_file)
+                              sample_file,
+                              { self.args.src_reverse })
   return data[1]
 end
 

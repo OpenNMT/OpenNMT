@@ -1,6 +1,6 @@
 local FileReader = torch.class("FileReader")
 
-function FileReader:__init(filename, idxSent, featSequence)
+function FileReader:__init(filename, idxSent, featSequence, reverse)
   if filename == '-' then
     self.file = io.stdin
   else
@@ -8,6 +8,16 @@ function FileReader:__init(filename, idxSent, featSequence)
   end
   self.idxSent = idxSent
   self.featSequence = featSequence
+  self.reverse = reverse
+end
+
+local function _reverse(do_reverse, tbl)
+  if do_reverse then
+    for i=1, math.floor(#tbl / 2) do
+      tbl[i], tbl[#tbl - i + 1] = tbl[#tbl - i + 1], tbl[i]
+    end
+  end
+  return tbl
 end
 
 --[[
@@ -38,7 +48,7 @@ function FileReader:next(doTokenize)
         table.insert(sent, word)
       end
     else
-      return line, idx
+      return _reverse(self.reverse, line), idx
     end
   else
     local p = 1
@@ -71,7 +81,7 @@ function FileReader:next(doTokenize)
       line = self.file:read()
     end
   end
-  return sent, idx
+  return _reverse(self.reverse, sent), idx
 end
 
 function FileReader.countLines(filename, idx_files)
