@@ -180,10 +180,11 @@ end
 
 function Seq2Seq:setGeneratorVocab(t)
   self.models.decoder.generator:setGeneratorVocab(t)
-  self.criterion:updateVocav(t)
+  self.criterion:updateVocab(t)
 end
 
 function Seq2Seq:unsetGeneratorVocab()
+  -- disable generator vocab (used in dictionary sampling)
   self.models.decoder.generator:setGeneratorVocab()
   self.criterion:updateVocab()
 end
