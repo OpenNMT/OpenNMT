@@ -41,7 +41,8 @@ function TranslationEvaluator:eval(model, data, saveFile)
 
       local predictedWords = translator:buildTargetWords(predictedTargets[b][1],
                                                          referenceWords,
-                                                         attention)
+                                                         attention,
+                                                         {})
 
       table.insert(predictions, predictedWords)
       table.insert(references, referenceWords)

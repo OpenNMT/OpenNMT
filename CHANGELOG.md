@@ -21,6 +21,7 @@
 * Fix language model sampling mode
 * Fix retraining from a language model
 * Fix `-update_vocab` option for language models
+* Fix error when using translation-based validation metrics
 * Correct error handling for all file open commands
 * Reduce the Docker image size
 
