@@ -1,7 +1,7 @@
 OpenNMT provides generic tokenization utilities to quickly process new training data. The goal of the tokenization is to convert raw sentences into sequences of tokens. In that process two main operations are performed in sequence:
 
 * normalization - which applies some uniform transformation on the source sequences to identify and protect some specific sequences (for instance url), normalize characters (for instance all types of quotes, unicode variants) or even to normalize some variants (like dates) into unique representation simpler for the translation process
-* the tokenization itself - which transform the actual normalized sentence into a sequence of space-separated tokens together with possible features (case).
+* the tokenization itself - which transforms the actual normalized sentence into a sequence of space-separated tokens together with possible features (case).
 
 ## Normalization
 
