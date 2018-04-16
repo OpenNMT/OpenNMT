@@ -16,5 +16,5 @@ utils.Profiler = require('onmt.utils.Profiler')
 utils.ExtendedCmdLine = require('onmt.utils.ExtendedCmdLine')
 utils.CrayonLogger = require('onmt.utils.CrayonLogger')
 utils.ThreadPool = require('onmt.utils.ThreadPool')
-
+utils.Error = require('onmt.utils.Error')
 return utils

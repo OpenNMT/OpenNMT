@@ -116,6 +116,9 @@ function Encoder.load(pretrained)
   local self = torch.factory('onmt.Encoder')()
 
   self.args = pretrained.args
+
+  -- forward compatibility
+  self.args.numEffectiveLayers = self.args.numStates or self.args.numEffectiveLayers
   parent.__init(self, pretrained.modules[1])
 
   self:resetPreallocation()

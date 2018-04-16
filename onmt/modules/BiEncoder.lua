@@ -103,6 +103,9 @@ function BiEncoder.load(pretrained)
   self.args.rnn_size = self.args.rnn_size or self.args.rnnSize
   self.args.brnn_merge = self.args.brnn_merge or self.args.merge
 
+  -- forward compatibility
+  self.args.numEffectiveLayers = self.args.numStates or self.args.numEffectiveLayers
+
   self:add(self.fwd)
   self:add(self.bwd)
 

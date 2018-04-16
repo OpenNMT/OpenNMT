@@ -18,6 +18,10 @@ local options = {
     '-output', 'pred.txt',
     [[Output file.]]
   },
+   {
+	       '-save_attention', '',
+	           [[Optional attention output file.]]
+  },
   {
     '-idx_files', false,
     [[If set, source and target files are 'key value' with key match between source and target.]]
@@ -60,6 +64,7 @@ local function main()
   local goldBatch
 
   local withGoldScore = opt.tgt:len() > 0
+  local withAttention = opt.save_attention:len() > 0
 
   if withGoldScore then
     goldReader = onmt.utils.FileReader.new(opt.tgt, opt.idx_files)
@@ -67,6 +72,10 @@ local function main()
   end
 
   local outFile = io.open(opt.output, 'w')
+  local attFile
+  if withAttention then
+    attFile = onmt.utils.Error.assert(io.open(opt.save_attention, 'w'))
+  end
 
   local sentId = 1
   local batchId = 1
@@ -136,6 +145,32 @@ local function main()
             for n = 1, #results[b].preds do
               local sentence = translator:buildOutput(results[b].preds[n])
               outFile:write(sentence .. '\n')
+
+	      --attention
+	      if withAttention then
+	        local attentions = results[b].preds[n].attention
+                local score = results[b].preds[n].score
+		local targetLength = #attentions
+
+		if translator:srcFeat() then
+		  attFile:write(string.format('%d ||| %s ||| %f ||| %d\n',
+		       sentId, sentence, score, targetLength))
+		else
+		  local source = translator:buildOutput(srcBatch[b])
+		  local sourceLength = #srcBatch[b].words
+                  attFile:write(string.format('%d ||| %s ||| %f ||| %s ||| %d %d\n',
+                                            sentId, sentence, score, source,
+		  sourceLength, targetLength))
+               end
+               for _, attention in ipairs(attentions) do
+                  if attention ~= nil then
+                      attFile:write(table.concat(torch.totable(attention), ' '))
+                      attFile:write('\n')
+                  end
+               end
+               attFile:write('\n')
+            end
+
               if n == 1 then
                 predScoreTotal = predScoreTotal + results[b].preds[n].score
                 predWordsTotal = predWordsTotal + #results[b].preds[n].words
