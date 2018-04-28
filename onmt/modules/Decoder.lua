@@ -18,6 +18,11 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 local options = {
   {
+    '-decoder_layers', 0,
+    [[Specify different number of layers for the decoder (by default share
+      number of encoder layers)]]
+  },
+  {
     '-input_feed', true,
     [[Feed the context vector at each time step as additional input
       (via concatenation with the word embeddings) to the decoder.]],
@@ -80,7 +85,12 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
     inputSize = inputSize + args.rnn_size
   end
 
-  local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
+  local nlayers = args.layers
+  if args.decoder_layers > 0 then
+    nlayers = args.decoder_layers
+  end
+
+  local rnn = RNN.new(nlayers, inputSize, args.rnn_size,
                       args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
