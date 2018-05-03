@@ -151,14 +151,10 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
   return inputNetwork
 end
 
-local function describeRNN(opt, decoder)
-  local nlayers = opt.layers
-  if decoder and opt.decoder_layers > 0 then
-    nlayers = opt.decoder_layers
-  end
+local function describeRNN(opt)
   _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = '
                    .. opt.dropout .. ' (%s)',
-                 opt.rnn_type, nlayers, opt.rnn_size, opt.dropout_type)
+                 opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout_type)
 end
 
 local function describeCNN(opt)
@@ -246,7 +242,7 @@ function Factory.loadEncoder(pretrained)
 end
 
 function Factory.buildDecoder(opt, inputNetwork, generator, attnModel)
-  describeRNN(opt, true)
+  describeRNN(opt)
 
   return onmt.Decoder.new(opt, inputNetwork, generator, attnModel)
 end

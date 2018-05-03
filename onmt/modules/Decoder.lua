@@ -18,17 +18,16 @@ local Decoder, parent = torch.class('onmt.Decoder', 'onmt.Sequencer')
 
 local options = {
   {
-    '-decoder_layers', 0,
-    [[Specify different number of layers for the decoder (by default share
-      number of encoder layers)]]
-  },
-  {
     '-input_feed', true,
     [[Feed the context vector at each time step as additional input
       (via concatenation with the word embeddings) to the decoder.]],
     {
       structural = 0
     }
+  },
+  {
+    '-decoder_fc_layers', 0,
+    [[Additional fully connected layers to reduce weight of decoder.]]
   },
   {
     '-scheduled_sampling', 1,
@@ -85,12 +84,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
     inputSize = inputSize + args.rnn_size
   end
 
-  local nlayers = args.layers
-  if args.decoder_layers > 0 then
-    nlayers = args.decoder_layers
-  end
-
-  local rnn = RNN.new(nlayers, inputSize, args.rnn_size,
+  local rnn = RNN.new(args.layers, inputSize, args.rnn_size,
                       args.dropout, args.residual, args.dropout_input, args.dropout_type)
 
   self.rnn = rnn
@@ -100,6 +94,8 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args.rnnSize = self.rnn.outputSize
   self.args.numStates = self.rnn.numStates
   self.args.dropout_type = args.dropout_type
+
+  self.args.decoder_fc_layers = self.decoder_fc_layers
 
   self.args.inputIndex = {}
   self.args.outputIndex = {}
@@ -248,6 +244,11 @@ function Decoder:_buildModel(attentionModel)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
+
+  if self.args.decoder_fc_layers then
+    attnOutput = nn.FC(self.args.decoder_fc_layers, self.args.rnnSize, args.dropout, true)
+  end
+
   table.insert(outputs, attnOutput)
   return nn.gModule(inputs, outputs)
 end
