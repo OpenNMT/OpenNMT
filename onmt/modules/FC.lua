@@ -17,7 +17,6 @@ function FC:__init(layers, inputSize, dropout, residual)
   dropout = dropout or 0
 
   self.dropout = dropout
-  self.outputSize = hiddenSize
 
   parent.__init(self, self:_buildModel(layers, inputSize, dropout, residual))
 end
@@ -31,16 +30,18 @@ function FC:_buildModel(layers, inputSize, dropout, residual)
   local h = inputs[#inputs]
   local hs = {}
 
-  for i = 1, L do
+  for L = 1, layers do
+    h = nn.Dropout(dropout)(h)
     h = nn.Linear(inputSize, inputSize)(h)
     if residual and L > 2 then
       h = nn.CAddTable()({h, hs[#hs-1]})
     end
-    if i < L then
+    if L < layers then
       h = nn.ReLU()(h)
     else
-      h = tanh()(h)
+      h = nn.Tanh()(h)
     end
+    table.insert(hs, h)
   end
 
   table.insert(outputs, h)

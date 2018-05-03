@@ -95,7 +95,7 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args.numStates = self.rnn.numStates
   self.args.dropout_type = args.dropout_type
 
-  self.args.decoder_fc_layers = self.decoder_fc_layers
+  self.args.decoder_fc_layers = args.decoder_fc_layers
 
   self.args.inputIndex = {}
   self.args.outputIndex = {}
@@ -246,7 +246,7 @@ function Decoder:_buildModel(attentionModel)
   end
 
   if self.args.decoder_fc_layers then
-    attnOutput = nn.FC(self.args.decoder_fc_layers, self.args.rnnSize, args.dropout, true)
+    attnOutput = onmt.FC(self.args.decoder_fc_layers, self.args.rnnSize, self.args.dropout, true)(attnOutput)
   end
 
   table.insert(outputs, attnOutput)
