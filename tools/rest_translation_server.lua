@@ -63,7 +63,7 @@ local function translateMessage(translator, lines)
     while i <= #lines and #batch < opt.batch_size do
       local srcTokens = {}
       local srcTokenized = {}
-      local tokens
+      tokens = {}
       res, err = pcall(function()
         local preprocessed = _G.hookManager:call("mpreprocess", opt, lines[i].src) or lines[i].src
         tokens = tokenizer.tokenize(opt, preprocessed, bpe)
@@ -93,6 +93,7 @@ local function translateMessage(translator, lines)
       for word in srcTokenized[1]:gmatch'([^%s]+)' do
         table.insert(srcTokens, word)
       end
+
       -- Currently just a single batch.
       table.insert(batch, translator:buildInput(srcTokens))
       i = i + 1
@@ -132,6 +133,15 @@ local function translateMessage(translator, lines)
           for j = 1, #results[b].preds[bi].attention do
             table.insert(attnTable, results[b].preds[bi].attention[j]:totable())
           end
+          local tok_nofeats = {}
+          for _,v in ipairs(tokens) do
+            local p = v:find('￨')
+            if p then
+              table.insert(tok_nofeats,v:sub(1,p-1))
+            end
+          end
+          lineres.src_tokens = tok_nofeats
+          lineres.tgt_tokens = results[b].preds[bi].words
           lineres.attn = attnTable
         end
         table.insert(ret, lineres)
