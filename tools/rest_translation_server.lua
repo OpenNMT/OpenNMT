@@ -63,7 +63,7 @@ local function translateMessage(translator, lines)
     while i <= #lines and #batch < opt.batch_size do
       local srcTokens = {}
       local srcTokenized = {}
-      tokens = {}
+      local tokens
       res, err = pcall(function()
         local preprocessed = _G.hookManager:call("mpreprocess", opt, lines[i].src) or lines[i].src
         tokens = tokenizer.tokenize(opt, preprocessed, bpe)
@@ -134,10 +134,10 @@ local function translateMessage(translator, lines)
             table.insert(attnTable, results[b].preds[bi].attention[j]:totable())
           end
           local tok_nofeats = {}
-          for _,v in ipairs(tokens) do
+          for _,v in ipairs(batch[b].words) do
             local p = v:find('￨')
             if p then
-              table.insert(tok_nofeats,v:sub(1,p-1))
+              table.insert(tok_nofeats, v:sub(1, p-1))
             end
           end
           lineres.src_tokens = tok_nofeats
