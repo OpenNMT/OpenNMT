@@ -140,6 +140,9 @@ local function translateMessage(translator, lines)
               table.insert(tok_nofeats, v:sub(1, p-1))
             end
           end
+          if #tok_nofeats == 0 then
+            tok_nofeats = batch[b].words
+          end
           lineres.src_tokens = tok_nofeats
           lineres.tgt_tokens = results[b].preds[bi].words
           lineres.attn = attnTable
