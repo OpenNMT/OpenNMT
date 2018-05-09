@@ -246,7 +246,7 @@ function Decoder:_buildModel(attentionModel)
   end
 
   if self.args.decoder_fc_layers then
-    attnOutput = onmt.FC(self.args.decoder_fc_layers, self.args.rnnSize, self.args.dropout, true)(attnOutput)
+    attnOutput = onmt.FC(self.args.decoder_fc_layers, self.args.rnnSize, 0, true)(attnOutput)
   end
 
   table.insert(outputs, attnOutput)

@@ -31,13 +31,16 @@ function FC:_buildModel(layers, inputSize, dropout, residual)
   local hs = {}
 
   for L = 1, layers do
-    h = nn.Dropout(dropout)(h)
+    if dropout > 0 then
+      h = nn.Dropout(dropout)(h)
+    end
     h = nn.Linear(inputSize, inputSize)(h)
-    if residual and L > 2 then
+    if residual and L > 2 and L % 2 == 1 then
       h = nn.CAddTable()({h, hs[#hs-1]})
     end
     if L < layers then
       h = nn.ReLU()(h)
+      h = nn.Clamp(-10, 10)(h)
     else
       h = nn.Tanh()(h)
     end
