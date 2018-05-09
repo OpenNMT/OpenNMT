@@ -30,6 +30,10 @@ local options = {
     [[Additional fully connected layers to reduce weight of decoder.]]
   },
   {
+    '-decoder_fc_size', 512,
+    [[Additional fully connected layers size.]]
+  },
+  {
     '-scheduled_sampling', 1,
     [[Probability of feeding true (vs. generated) previous token to decoder.]],
     {
@@ -246,7 +250,11 @@ function Decoder:_buildModel(attentionModel)
   end
 
   if self.args.decoder_fc_layers then
-    attnOutput = onmt.FC(self.args.decoder_fc_layers, self.args.rnnSize, 0, true)(attnOutput)
+    attnOutput = onmt.FC(self.args.decoder_fc_layers,
+                         self.args.rnnSize,
+                         self.args.decoder_fc_size,
+                         0,
+                         true)(attnOutput)
   end
 
   table.insert(outputs, attnOutput)

@@ -10,21 +10,23 @@ Parameters:
 
   * `layers` - Number of FC layers, L.
   * `inputSize` - Size of input layer
+  * `fcSize` - Size of the internal FC layer
   * `dropout` - Dropout rate to use (in $$[0,1]$$ range).
   * `residual` - Residual connections between layers.
 --]]
-function FC:__init(layers, inputSize, dropout, residual)
+function FC:__init(layers, inputSize, fcSize, dropout, residual)
   dropout = dropout or 0
 
   self.dropout = dropout
 
-  parent.__init(self, self:_buildModel(layers, inputSize, dropout, residual))
+  parent.__init(self, self:_buildModel(layers, inputSize, fcSize, dropout, residual))
 end
 
 --[[ Stack the FC units. ]]
-function FC:_buildModel(layers, inputSize, dropout, residual)
+function FC:_buildModel(layers, inputSize, fcSize, dropout, residual)
   local inputs = {}
   local outputs = {}
+  local inptSize = inputSize
 
   table.insert(inputs, nn.Identity()()) -- x: batchSize x inputSize
   local h = inputs[#inputs]
@@ -34,7 +36,9 @@ function FC:_buildModel(layers, inputSize, dropout, residual)
     if dropout > 0 then
       h = nn.Dropout(dropout)(h)
     end
-    h = nn.Linear(inputSize, inputSize)(h)
+    local outptSize = L == layers and inputSize or fcSize
+    h = nn.Linear(inptSize, outptSize)(h)
+    inptSize = outptSize
     if residual and L > 2 and L % 2 == 1 then
       h = nn.CAddTable()({h, hs[#hs-1]})
     end
