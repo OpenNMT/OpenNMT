@@ -41,6 +41,7 @@ local function isModel(object)
   return torch.type(object) == 'table' and object.modules
 end
 
+local sharedStorage={}
 local function releaseModule(object, tensorCache)
   tensorCache = tensorCache or {}
   if object.release then
@@ -49,9 +50,15 @@ local function releaseModule(object, tensorCache)
   object:apply(function (m)
     for k, v in pairs(m) do
       if torch.isTensor(v) and v:dim()>0 then
-        v:mul(1000)
-        m[k] = v:short()
-        m[k]:storage():resize(#m[k]:storage()+64)
+        local storage_key = string.format("%x",torch.pointer(v:storage()))..'-'..v:storageOffset()
+        if sharedStorage[storage_key]==nil then
+          v:mul(1000)
+          m[k] = v:short(tensorCache)
+          m[k]:storage():resize(#m[k]:storage()+64)
+          sharedStorage[storage_key] = m[k]
+        else
+          m[k] = sharedStorage[storage_key]
+        end
       end
     end
   end)
