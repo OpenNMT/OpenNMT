@@ -93,6 +93,7 @@ local function translateMessage(translator, lines)
       for word in srcTokenized[1]:gmatch'([^%s]+)' do
         table.insert(srcTokens, word)
       end
+
       -- Currently just a single batch.
       table.insert(batch, translator:buildInput(srcTokens))
       i = i + 1
@@ -132,6 +133,18 @@ local function translateMessage(translator, lines)
           for j = 1, #results[b].preds[bi].attention do
             table.insert(attnTable, results[b].preds[bi].attention[j]:totable())
           end
+          local tok_nofeats = {}
+          for _,v in ipairs(batch[b].words) do
+            local p = v:find('￨')
+            if p then
+              table.insert(tok_nofeats, v:sub(1, p-1))
+            end
+          end
+          if #tok_nofeats == 0 then
+            tok_nofeats = batch[b].words
+          end
+          lineres.src_tokens = tok_nofeats
+          lineres.tgt_tokens = results[b].preds[bi].words
           lineres.attn = attnTable
         end
         table.insert(ret, lineres)
