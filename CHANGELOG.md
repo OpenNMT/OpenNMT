@@ -12,6 +12,7 @@
 * Introduce `max_tokens` allowing longer sentence handling and larger batch size
 * Add `-log_tag` option to add tag in logs for better automatic processing
 * The `withAttn` option in rest translation server now also returns the source and target tokens
+* Add hook for korean and japanese tokenization 
 
 ### Fixes and improvements
 
