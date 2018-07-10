@@ -147,24 +147,34 @@ function Trainer:__init(args, model, dicts, trainDataset)
 
     local src = {}
     local srcFeats = {}
-    local tgt = {}
-    local tgtFeats = {}
-    local sfeat = tds.Vec(#firstBatch.sourceInputFeatures)
+    local tgt
+    local tgtFeats
+    local sfeat
+    local tfeat
+
+    sfeat = tds.Vec(#firstBatch.sourceInputFeatures)
     for fi = 1, #firstBatch.sourceInputFeatures do
       sfeat[fi] = torch.LongTensor(src_sentmax):fill(onmt.Constants.UNK)
     end
-    local tfeat = tds.Vec(#firstBatch.targetInputFeatures)
-    for fi = 1, #firstBatch.targetInputFeatures do
-      tfeat[fi] = torch.LongTensor(trainDataset.maxTargetLength):fill(onmt.Constants.UNK)
+    if firstBatch.tgt ~= nil then
+      tgt = {}
+      tgtFeats = {}
+      tfeat = tds.Vec(#firstBatch.targetInputFeatures)
+      for fi = 1, #firstBatch.targetInputFeatures do
+        tfeat[fi] = torch.LongTensor(trainDataset.maxTargetLength):fill(onmt.Constants.UNK)
+      end
     end
+
     while #src < args.max_batch_size do
       table.insert(src, torch.LongTensor(src_sentmax):fill(onmt.Constants.UNK))
       if #firstBatch.sourceInputFeatures > 0 then
         table.insert(srcFeats, sfeat)
       end
-      table.insert(tgt, torch.LongTensor(trainDataset.maxTargetLength):fill(onmt.Constants.UNK))
-      if #firstBatch.targetInputFeatures > 0 then
-        table.insert(tgtFeats, tfeat)
+      if firstBatch.tgt ~= nil then
+        table.insert(tgt, torch.LongTensor(trainDataset.maxTargetLength):fill(onmt.Constants.UNK))
+        if #firstBatch.targetInputFeatures > 0 then
+          table.insert(tgtFeats, tfeat)
+        end
       end
     end
 
