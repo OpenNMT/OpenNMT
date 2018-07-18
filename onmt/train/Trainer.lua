@@ -156,7 +156,7 @@ function Trainer:__init(args, model, dicts, trainDataset)
     for fi = 1, #firstBatch.sourceInputFeatures do
       sfeat[fi] = torch.LongTensor(src_sentmax):fill(onmt.Constants.UNK)
     end
-    if firstBatch.tgt ~= nil then
+    if firstBatch.targetInput ~= nil then
       tgt = {}
       tgtFeats = {}
       tfeat = tds.Vec(#firstBatch.targetInputFeatures)
@@ -170,7 +170,7 @@ function Trainer:__init(args, model, dicts, trainDataset)
       if #firstBatch.sourceInputFeatures > 0 then
         table.insert(srcFeats, sfeat)
       end
-      if firstBatch.tgt ~= nil then
+      if firstBatch.targetInput ~= nil then
         table.insert(tgt, torch.LongTensor(trainDataset.maxTargetLength):fill(onmt.Constants.UNK))
         if #firstBatch.targetInputFeatures > 0 then
           table.insert(tgtFeats, tfeat)
