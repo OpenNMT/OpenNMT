@@ -1,3 +1,5 @@
+**This project is considered obsolete as the Torch framework is no longer maintained. If you are starting a new project, please use an alternative in the OpenNMT family: [OpenNMT-tf](https://github.com/OpenNMT/OpenNMT-tf) (TensorFlow) or [OpenNMT-py](https://github.com/OpenNMT/OpenNMT-py) (PyTorch) depending on your requirements.**
+
 [![Build Status](https://api.travis-ci.org/OpenNMT/OpenNMT.svg?branch=master)](https://travis-ci.org/OpenNMT/OpenNMT) [![codecov](https://codecov.io/gh/OpenNMT/OpenNMT/branch/master/graph/badge.svg)](https://codecov.io/gh/OpenNMT/OpenNMT)
 
 # OpenNMT: Open-Source Neural Machine Translation
