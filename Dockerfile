@@ -59,10 +59,9 @@ RUN git clone https://github.com/google/sentencepiece.git /root/sentencepiece-gi
     cd /root/sentencepiece-git && \
     mkdir build && \
     cd build && \
-    cmake -DCMAKE_INSTALL_PREFIX:PATH=/root/sentencepiece .. && \
+    cmake -DCMAKE_INSTALL_PREFIX=/root/sentencepiece .. && \
     make -j $(nproc) && \
     make install && \
-    ldconfig -v && \
     rm -r /root/sentencepiece-git
 
 RUN git clone https://github.com/OpenNMT/lua-sentencepiece.git /root/lua-sentencepiece && \
