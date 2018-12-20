@@ -57,12 +57,13 @@ RUN /root/torch/bin/luarocks install tds && \
 # Install lua-sentencepiece
 RUN git clone https://github.com/google/sentencepiece.git /root/sentencepiece-git && \
     cd /root/sentencepiece-git && \
-    ./autogen.sh && \
-    ./configure --prefix=/root/sentencepiece && \
-    make && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/root/sentencepiece .. && \
+    make -j $(nproc) && \
     make install && \
-    cd /root && \
     rm -r /root/sentencepiece-git
+
 RUN git clone https://github.com/OpenNMT/lua-sentencepiece.git /root/lua-sentencepiece && \
     cd /root/lua-sentencepiece && \
     CMAKE_LIBRARY_PATH=/root/sentencepiece/lib CMAKE_INCLUDE_PATH=/root/sentencepiece/include \
