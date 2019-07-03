@@ -79,8 +79,5 @@ Our implementation utilizes code from the following:
 ## Additional resources
 
 * [Documentation](http://opennmt.net/OpenNMT)
-* [Example models](http://opennmt.net/Models)
 * [Forum](http://forum.opennmt.net)
 * [Gitter channel](https://gitter.im/OpenNMT/openmt)
-* [Live demo](https://demo-pnmt.systran.net)
-* [Bibliography](http://opennmt.net/about)
