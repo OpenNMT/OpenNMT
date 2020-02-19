@@ -22,9 +22,9 @@ RUN apt-get update && \
 
 # Fetch Intel MKL.
 RUN mkdir /root/mkl && \
-    wget https://anaconda.org/intel/mkl/2018.0.1/download/linux-64/mkl-2018.0.1-intel_4.tar.bz2 && \
-    tar -xf mkl-2018.0.1-intel_4.tar.bz2 -C /root/mkl && \
-    rm mkl-2018.0.1-intel_4.tar.bz2
+    wget https://anaconda.org/intel/mkl/2020.0/download/linux-64/mkl-2020.0-intel_166.tar.bz2 && \
+    tar -xf mkl-2020.0-intel_166.tar.bz2 -C /root/mkl && \
+    rm mkl-2020.0-intel_166.tar.bz2
 ENV MKL_ROOT=/root/mkl
 RUN rm -f $MKL_ROOT/lib/*vml* \
           $MKL_ROOT/lib/*ilp64* \
