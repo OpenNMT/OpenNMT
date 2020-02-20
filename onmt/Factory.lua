@@ -152,9 +152,8 @@ local function buildInputNetwork(opt, dicts, wordSizes, pretrainedWords, fixWord
 end
 
 local function describeRNN(opt)
-  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = '
-                   .. opt.dropout .. ' (%s)',
-                 opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout_type)
+  _G.logger:info('   - structure: cell = %s; layers = %d; rnn_size = %d; dropout = %0.2f (%s)',
+                 opt.rnn_type, opt.layers, opt.rnn_size, opt.dropout, opt.dropout_type)
 end
 
 local function describeCNN(opt)
@@ -278,7 +277,11 @@ function Factory.buildAttention(args)
     _G.logger:info('   - attention: none')
     return onmt.NoAttention(args, args.rnn_size)
   else
-    _G.logger:info('   - attention: global (%s)', args.global_attention)
+    local multi_head = ''
+    if args.multi_head_attention and args.multi_head_attention > 1 then
+      multi_head = ', multi head = '..args.multi_head_attention
+    end
+    _G.logger:info('   - attention: global (%s), dropout = %0.2f%s', args.global_attention, args.dropout_attention, multi_head)
     return onmt.GlobalAttention(args, args.rnn_size)
   end
 end

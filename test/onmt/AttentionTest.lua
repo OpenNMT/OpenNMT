@@ -19,8 +19,18 @@ function attentionTest.global_general()
   checkDim(attn, 50)
 end
 
+function attentionTest.global_general_multihead_dropout()
+  local attn = onmt.GlobalAttention({ global_attention = 'general', multi_head_attention = 2, dropout_attention = 0.2 }, 50)
+  checkDim(attn, 50)
+end
+
 function attentionTest.global_dot()
   local attn = onmt.GlobalAttention({ global_attention = 'dot' }, 50)
+  checkDim(attn, 50)
+end
+
+function attentionTest.global_dot_scaled()
+  local attn = onmt.GlobalAttention({ global_attention = 'dot_scaled' }, 50)
   checkDim(attn, 50)
 end
 

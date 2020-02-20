@@ -33,14 +33,14 @@ function PositionEmbedding:updateOutput(input)
 
    local sourceSize = input[2]
 
-   for b=1,self.input:size(1) do
-     local batch = self.input:select(1,b)
+   for b = 1, self.input:size(1) do
+     local batch = self.input:select(1, b)
      local start = self.input:size(2) - sourceSize[b]
-     for t=1,self.input:size(dim) do
+     for t = 1, self.input:size(dim) do
        if t <= start then
          batch[t] = 1
        else
-         batch[t] = math.min(t-start+1,self.max_pos+1)
+         batch[t] = math.min(t-start+1, self.max_pos+1)
        end
      end
    end
@@ -59,7 +59,7 @@ function PositionEmbedding:updateGradInput(input, _)
       self.gradInput:resizeAs(input[1]):zero()
    end
 
-   return {self.gradInput, nil}
+   return { self.gradInput, nil }
 end
 
 function PositionEmbedding:accGradParameters(_, gradOutput, scale)
