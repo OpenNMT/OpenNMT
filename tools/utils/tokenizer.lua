@@ -345,6 +345,9 @@ function tokenizer.tokenize(opt, line, bpe)
     -- tokenize
     tokens = tokenize(line, opt)
 
+    -- mecab tokenize hook, additional tokenize after lua tokenization
+    tokens = _G.hookManager:call("additional_tokenize", opt, tokens) or tokens
+
     -- apply segment feature if requested
     if opt.segment_case then
       local sep = ''

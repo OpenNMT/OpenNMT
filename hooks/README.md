@@ -44,3 +44,27 @@ Once the REST server is running, you can use it during tokenization as follows:
 ```
 th tools/tokenize.lua -hook_file hooks.tree-tagger -pos_feature < file
 ``` 
+
+## Mecab tokenization
+
+Processing additional tokenization after lua tokenization
+
+In the case of Korean and Japanese, there is a case where several words are combined into one word, meaning that they are separated by semantics.
+
+```
+ehco "이것은 테스트-셈플입니다." | th tools/tokenize.lua -hook_file hooks/mecab
+이것 은 테스트 - 셈플 입니다 .
+echo "이것은 테스트-셈플입니다." | th tools/tokenize.lua -hook_file hooks/mecab -joiner_annotate true
+이것￭ 은 테스트￭ -￭ 셈플￭ 입니다 ￭.
+echo "이것은 테스트-셈플입니다." | th tools/tokenize.lua -mode aggressive -hook_file hooks/mecab -joiner_annotate true
+이것￭ 은 테스트 ￭-￭ 셈플￭ 입니다 ￭.
+```
+
+Install mecab and mecab-dic
+* [Korean mecab and mecab-dic](https://bitbucket.org/eunjeon/mecab-ko)
+* [Japanese mecab and mecab-dic](http://taku910.github.io/mecab/)
+
+Install lua-mecab
+```
+luarocks install mecab
+``` 
