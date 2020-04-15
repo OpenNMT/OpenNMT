@@ -26,6 +26,14 @@ local options = {
     }
   },
   {
+    '-decoder_fc_layers', 0,
+    [[Additional fully connected layers to reduce weight of decoder.]]
+  },
+  {
+    '-decoder_fc_size', 512,
+    [[Additional fully connected layers size.]]
+  },
+  {
     '-scheduled_sampling', 1,
     [[Probability of feeding true (vs. generated) previous token to decoder.]],
     {
@@ -90,6 +98,8 @@ function Decoder:__init(args, inputNetwork, generator, attentionModel)
   self.args.rnnSize = self.rnn.outputSize
   self.args.numStates = self.rnn.numStates
   self.args.dropout_type = args.dropout_type
+
+  self.args.decoder_fc_layers = args.decoder_fc_layers
 
   self.args.inputIndex = {}
   self.args.outputIndex = {}
@@ -238,6 +248,15 @@ function Decoder:_buildModel(attentionModel)
   if self.rnn.dropout > 0 then
     attnOutput = nn.Dropout(self.rnn.dropout)(attnOutput)
   end
+
+  if self.args.decoder_fc_layers then
+    attnOutput = onmt.FC(self.args.decoder_fc_layers,
+                         self.args.rnnSize,
+                         self.args.decoder_fc_size,
+                         0,
+                         true)(attnOutput)
+  end
+
   table.insert(outputs, attnOutput)
   return nn.gModule(inputs, outputs)
 end

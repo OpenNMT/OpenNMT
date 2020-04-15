@@ -7,7 +7,7 @@ local options = {
     [[Define how to pass encoder states to the decoder. With `copy`, the encoder and decoder
       must have the same number of layers.]],
     {
-      enum = {'copy', 'dense', 'dense_nonlinear', 'none'},
+      enum = {'copy', 'dense', 'dense_nonlinear', 'last', 'none'},
       structural = 0
     }
   }
@@ -38,6 +38,11 @@ function Bridge:__init(bridgeType, encoderRnnSize, encoderNumStates, decoderRnnS
 
     bridge:add(nn.View(-1, decoderNumStates, decoderRnnSize))
     bridge:add(nn.SplitTable(2))
+  elseif bridgeType == 'last' then
+    assert(encoderRnnSize == decoderRnnSize and encoderNumStates > decoderNumStates,
+           'with the `last` bridge type, encoder and decoder must have same rnn size, and encoder should'
+           .. ' have more layers')
+    bridge = nn.NarrowTable(encoderNumStates-decoderNumStates+1, decoderNumStates)
   elseif bridgeType == 'none' then
     bridge = nil
   else
