@@ -13,6 +13,13 @@ local options = {
     }
   },
   {
+    '-quantize', '',
+    [[Quantization schema.]],
+    {
+      enum = { '', 'int16:1000' }
+    }
+  },
+  {
     '-output_model', '',
     [[Path the released model. If not set, the `release` suffix will be automatically
       added to the model filename.]]
@@ -34,12 +41,27 @@ local function isModel(object)
   return torch.type(object) == 'table' and object.modules
 end
 
+local sharedStorage={}
 local function releaseModule(object, tensorCache)
   tensorCache = tensorCache or {}
   if object.release then
     object:release()
   end
-  object:float(tensorCache)
+  object:apply(function (m)
+    for k, v in pairs(m) do
+      if torch.isTensor(v) and v:dim()>0 then
+        local storage_key = string.format("%x",torch.pointer(v:storage()))..'-'..v:storageOffset()
+        if sharedStorage[storage_key]==nil then
+          v:mul(1000)
+          m[k] = v:short(tensorCache)
+          m[k]:storage():resize(#m[k]:storage()+64)
+          sharedStorage[storage_key] = m[k]
+        else
+          m[k] = sharedStorage[storage_key]
+        end
+      end
+    end
+  end)
   object:clearState()
   object:apply(function (m)
     nn.utils.clear(m, 'gradWeight', 'gradBias')
@@ -73,7 +95,11 @@ local function main()
     else
       opt.output_model = opt.model
     end
-    opt.output_model = opt.output_model .. '_release.t7'
+    if opt.quantize == '' then
+      opt.output_model = opt.output_model .. '_release.t7'
+    else
+      opt.output_model = opt.output_model .. '_quantize_' .. opt.quantize .. '.t7'
+    end
   end
 
   if not opt.force then
@@ -95,6 +121,8 @@ local function main()
 
   _G.logger:info('... done.')
 
+  assert(not checkpoint.quantize, 'cannot release quantized model.')
+
   _G.logger:info('Converting model...')
   checkpoint.info = nil
   for _, object in pairs(checkpoint.models) do
@@ -105,6 +133,10 @@ local function main()
     end
   end
   _G.logger:info('... done.')
+
+  if opt.quantize ~= '' then
+    checkpoint.quantize = opt.quantize
+  end
 
   _G.logger:info('Releasing model \'' .. opt.output_model .. '\'...')
   torch.save(opt.output_model, checkpoint)
